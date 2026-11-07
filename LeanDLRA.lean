@@ -41,7 +41,12 @@ import LeanDLRA.Literature.Applications.P2308_08888a
 import LeanDLRA.Literature.Applications.P2405_18094a
 import LeanDLRA.Literature.Applications.P2503_18271a
 import LeanDLRA.Literature.Applications.P2508_04484a
+import LeanDLRA.Literature.Applications.P2510_19349a
+import LeanDLRA.Literature.Applications.P2511_01735a
 import LeanDLRA.Literature.Applications.P2606_24190a
+import LeanDLRA.Literature.Applications.P2606_30469a
+import LeanDLRA.Literature.Applications.P2610_06885a
+import LeanDLRA.Literature.Applications.P2610_08956a
 import LeanDLRA.Literature.Control.P2111_14540a
 import LeanDLRA.Literature.Control.P2501_07439a
 import LeanDLRA.Literature.Control.P2506_21405a
@@ -163,6 +168,7 @@ import LeanDLRA.Literature.Stochastic.P2402_03586a
 import LeanDLRA.Literature.Stochastic.P2501_06125a
 import LeanDLRA.Literature.Stochastic.P2502_08464a
 import LeanDLRA.Literature.Stochastic.P2509_11210a
+import LeanDLRA.Literature.Stochastic.P2601_21428a
 import LeanDLRA.Literature.Stochastic.P2602_06614a
 import LeanDLRA.Literature.Stochastic.P2602_06808a
 import LeanDLRA.Literature.Stochastic.P2606_15843a
