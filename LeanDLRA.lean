@@ -145,12 +145,15 @@ import LeanDLRA.Literature.Stiff.P2610_41606a
 import LeanDLRA.Literature.Stochastic.P1604_05706a
 import LeanDLRA.Literature.Stochastic.P1604_05706b
 import LeanDLRA.Literature.Stochastic.P1803_00499a
+import LeanDLRA.Literature.Stochastic.P2002_02356a
 import LeanDLRA.Literature.Stochastic.P2006_05211a
 import LeanDLRA.Literature.Stochastic.P2006_05211b
 import LeanDLRA.Literature.Stochastic.P2105_04358a
 import LeanDLRA.Literature.Stochastic.P2306_07774a
 import LeanDLRA.Literature.Stochastic.P2308_11581a
 import LeanDLRA.Literature.Stochastic.P2501_06125a
+import LeanDLRA.Literature.Stochastic.P2502_08464a
+import LeanDLRA.Literature.Stochastic.P2602_06614a
 import LeanDLRA.Literature.Stochastic.P2602_06808a
 import LeanDLRA.Literature.Stochastic.P2606_15843a
 import LeanDLRA.Literature.Stochastic.P2606_27888a
