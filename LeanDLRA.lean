@@ -34,6 +34,8 @@ import LeanDLRA.Integrators.PerturbedField
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Integrators.TuckerBUG
+import LeanDLRA.Literature.Control.P2506_21405a
+import LeanDLRA.Literature.Control.P2608_21545a
 import LeanDLRA.Literature.Foundations.P1710_03946a
 import LeanDLRA.Literature.Foundations.P2008_07427a
 import LeanDLRA.Literature.Foundations.P2008_07427b
@@ -124,9 +126,13 @@ import LeanDLRA.Literature.RankAdaptive.P2602_14854a
 import LeanDLRA.Literature.Stiff.P1705_10175a
 import LeanDLRA.Literature.Stiff.P1803_10473a
 import LeanDLRA.Literature.Stiff.P2010_05249a
+import LeanDLRA.Literature.Stiff.P2204_10896a
 import LeanDLRA.Literature.Stiff.P2305_11532a
 import LeanDLRA.Literature.Stiff.P2312_00172a
+import LeanDLRA.Literature.Stiff.P2602_07437a
 import LeanDLRA.Literature.Stiff.P2605_15382a
+import LeanDLRA.Literature.Stiff.P2610_18419a
+import LeanDLRA.Literature.Stochastic.P1803_00499a
 import LeanDLRA.Literature.TensorNetworks.P1709_02594a
 import LeanDLRA.Literature.TensorNetworks.P2002_11392a
 import LeanDLRA.Literature.TensorNetworks.P2407_11792a
