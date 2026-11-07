@@ -49,6 +49,7 @@ import LeanDLRA.Literature.HighOrder.P2501_06145a
 import LeanDLRA.Literature.HighOrder.P2502_07040a
 import LeanDLRA.Literature.HighOrder.P2502_07040b
 import LeanDLRA.Literature.HighOrder.P2608_12893a
+import LeanDLRA.Literature.HighOrder.P2608_17157a
 import LeanDLRA.Literature.HighOrder.P2608_27749a
 import LeanDLRA.Literature.HighOrder.P2608_27749b
 import LeanDLRA.Literature.HighOrder.P2610_11747a
