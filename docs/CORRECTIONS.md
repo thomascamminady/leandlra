@@ -36,6 +36,16 @@ true statements with a wrong intermediate step. Corrected forms are in the same 
 | Einkemmer, Hu, Kusch, [2212.12012](https://arxiv.org/abs/2212.12012) | Lemma 3.4, (3.11), Lemma 3.6, Thm 5.1 | Slips in the identities and in the rate | `lemma_3_4_printed_false`, `lemma_3_5_printed_false`, `lemma_3_6_printed_false`, `theorem_5_1_printed_false` |
 | Einkemmer, Hu, Wang, [2005.06571](https://arxiv.org/abs/2005.06571) | Prop 3.1 | Fails for special QR completions, when the components are dependent | `prop_3_1_false_without_independence`, `prop_3_1` |
 | Kusch, Einkemmer, Ceruti, [2107.07282](https://arxiv.org/abs/2107.07282) | Thms 2, 3 | CFL with λ_max(Ã); both hold with λ_max(A) | `scheme31_literal_false`, `scheme35_literal_false`, `scheme31_stable`, `scheme35_stable` |
+| Ceruti, Crouseilles, Einkemmer, [2505.19929](https://arxiv.org/abs/2505.19929) | Thm 4.2 | AP of GAP with no hypothesis; fails for all time when X ⊥ ∂ₓρ. Holds when the two parts of the L-limit are independent | `theorem_4_2_false`, `gap_ap_run` |
+| Einkemmer, Hu, Ying, [2101.07104](https://arxiv.org/abs/2101.07104) | Remark 4.2, §7 | Viscous stress of the isothermal model is ∇u + (∇u)ᵀ, not σ(u) of (2.10) | `remark_4_2_false`, `chapmanEnskog_stress` |
+| Einkemmer, Kormann, Kusch, McClarren, Qiu, [2412.05912](https://arxiv.org/abs/2412.05912) | §2 | "At most rank r + 1" misquotes [61], which gives m + 1 for m Fourier modes; the example has rank 3, not 2 | `linearized_rank_claim_false`, `linearized_example_rank_eq_three`, `full_rank_le_five` |
+| Patwardhan, Kusch, [2502.20883](https://arxiv.org/abs/2502.20883) | Lemma 7 | False for the order-two product rule; Thm 3 holds | `lemma_7_counterexample`, `lemma_7_iff`, `moment_sq_le`, `theorem_3` |
+| Einkemmer, Hu, Zhang, [2502.08951](https://arxiv.org/abs/2502.08951) | Thm 2.2 | Exactness stated for Ȧ = F(t, A); holds only for F(t, Y) = Ȧ(t) | `Counterexample.theorem_2_2_false_for_state_dependent_field`, `theorem_2_2` |
+| Patwardhan, Frank, Kusch, [2402.16746](https://arxiv.org/abs/2402.16746) | Lemmas 4, 6 | The slips of Lemmas 3.4, 3.6 of 2212.12012, quoted; Thm 2 holds | `lemma_4_false`, `lemma_6_false`, `Params.theorem_2` |
+| Kusch, Sulz, [2610.11747](https://arxiv.org/abs/2610.11747) | Thm 5.3, §5.1.4 | Parallel TTN integrator with the printed block C̃¹_τ is not second order; holds with the assembled child value | `soLit_counterexample`, `soParTTN_global_error` |
+| Kusch, Stammer, [2111.07160](https://arxiv.org/abs/2111.07160) | Thms 1, 2 | L²-stability under the CFL with ρ_min fails for variable density; holds for constant density | `theorem1_false_of_variable_density`, `theorem2_false_of_variable_density`, `theorem1` |
+| Kusch, [2403.02834](https://arxiv.org/abs/2403.02834) | Thm 5.1 | Second term not divided by ‖Y₁‖ + ‖Y₀‖, so C depends on the solution; the squared-norm bound holds | `theorem_5_1_counterexample`, `theorem_5_1_variant2` |
+| Yang, Yi, Yin, [2501.06145](https://arxiv.org/abs/2501.06145) | §2, C_g; Lemma 2.4 | C_g = ½ is false, since \|g′(0)\| = 1 + τ/2; with it Lemma 2.4 fails at τ = 2 | `not_Cg_half`, `lemma_2_4_fails_of_Cg_half`, `lemma_2_4`, `lemma_2_4_classical` |
 
 ## Loose
 
@@ -65,6 +75,17 @@ true statements with a wrong intermediate step. Corrected forms are in the same 
 | Einkemmer, [1804.04561](https://arxiv.org/abs/1804.04561) | (23), (25), §4 | Signs; constants; the backward S-step diverges, so the constraint is not enforced there | `eq23_printed_false`, `eq25_printed_false`, `sStep_diverges` |
 | Einkemmer, Hu, Wang, [2005.06571](https://arxiv.org/abs/2005.06571) | §3.3, (3.45) | Orderings beginning with L or S-L; (3.45) is a two-step scheme | `sec_3_3_false_without_rank`, `sec_3_4_sub_midpoint` |
 | Einkemmer, Lubich, [1807.02338](https://arxiv.org/abs/1807.02338) | (3.14) | Sign of Eρ | `printed_3_14_false` |
+| Baumann, Einkemmer, Klingenberg, Kusch, [2307.07538](https://arxiv.org/abs/2307.07538) | Thm 1, proof | Rate called strictly negative; it vanishes at equilibrium | `energy_rate_eq_zero_at_equilibrium` |
+| Li, Jiang, Zhang, Xiong, [2602.12337](https://arxiv.org/abs/2602.12337) | §4.2 | Range claims need (Vⁿ)ᵀMQˣ1 ≠ 0 and (Xⁿ)ᵀD^{x,+}ρ ≠ 0 | `ap_fails_of_degenerate_right`, `ap_fails_of_degenerate_left`, `formal_ap` |
+| Einkemmer, Hu, Ying, [2101.07104](https://arxiv.org/abs/2101.07104) | (4.19) | Missing factor Δt | `printed_update_iff`, `forwardEuler_momentum` |
+| Einkemmer, Lubich, [1807.02338](https://arxiv.org/abs/1807.02338) | §4, example | ⟨X₁¹, F(f)⟩ is −⟨X₁¹, ∇X₂¹⟩S₂₂β₂; the example needs S₂₂ ≠ 0 | `printed_identity_iff`, `sec4_counterexample`, `compatible_of_S₂₂_eq_zero` |
+| Einkemmer, Ostermann, Piazzola, [1902.00424](https://arxiv.org/abs/1902.00424) | (2), (16), §6 | Sign of j; index of d³; sign of the spectral Poisson solve | `gauss_not_propagated`, `predictor_gauss_of_continuity`, `sStep_printed_false`, `poisson_printed_false`, `spectral_poisson` |
+| Patwardhan, Frank, Kusch, [2402.16746](https://arxiv.org/abs/2402.16746) | Thms 3, 6, proofs | Invertibility assumed in Thm 3 impossible for r ≥ 2; Lemma 1 in Thm 6 inverts Ŝ^rem = 0 | `Params.theorem_3_invertible_rank_le_one`, `Params.IsAdaptiveStep.Sr_eq_zero`, `Params.theorem_3`, `Params.theorem_6` |
+| Koellermeier, Krah, Kusch, [2302.01391](https://arxiv.org/abs/2302.01391) | §5.1 E_cum, (15) | Unsquared norms; shifted indices make G₁ anti-dissipative | `Ecum_printed_false`, `Ecum_eq`, `G₁printed_singular` |
+| Einkemmer, Joseph, [2101.12571](https://arxiv.org/abs/2101.12571) | (15), §6.1 | Transposed index of S⁻¹; exact integration by parts in v holds only up to boundary terms | `eq15_as_printed_iff`, `not_velIBP_const` |
+| Coughlin, Hu, Shumlak, [2311.09425](https://arxiv.org/abs/2311.09425) | Prop 4.1, proof | "Strictly hyperbolic" should be "hyperbolic" | `fluxMatrix_not_strictlyHyperbolic`, `VelocitySetup.fluxMatrix_hyperbolic` |
+| Ceruti, Einkemmer, Kusch, Lubich, [2402.08607](https://arxiv.org/abs/2402.08607) | Remark 4 | Constant 1 in front of hε_r; holds with 2e^{Lh} | `remark4_constant_false`, `norm_bestTrunc_near_le` |
+| Li, Jiang, Cheng, [2412.09400](https://arxiv.org/abs/2412.09400) | §2.1 | The hard-threshold argmax need not exist | `hardThreshold_argmax_counterexample`, `norm_sub_hardThreshold_le` |
 
 ## Unresolved
 
