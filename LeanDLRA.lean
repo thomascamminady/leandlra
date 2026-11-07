@@ -105,7 +105,13 @@ import LeanDLRA.Literature.Kinetic.P2608_00397a
 import LeanDLRA.Literature.Kinetic.P2609_02721a
 import LeanDLRA.Literature.Randomized.P2308_16547b
 import LeanDLRA.Literature.Randomized.P2401_04249a
+import LeanDLRA.Literature.Randomized.P2402_18721a
+import LeanDLRA.Literature.Randomized.P2408_16591a
+import LeanDLRA.Literature.Randomized.P2411_15990a
 import LeanDLRA.Literature.Randomized.P2512_15703a
+import LeanDLRA.Literature.Randomized.P2601_18705a
+import LeanDLRA.Literature.Randomized.P2607_03402a
+import LeanDLRA.Literature.Randomized.P2610_07653a
 import LeanDLRA.Literature.RankAdaptive.P2007_13153a
 import LeanDLRA.Literature.RankAdaptive.P2007_13153b
 import LeanDLRA.Literature.RankAdaptive.P2104_05247a
