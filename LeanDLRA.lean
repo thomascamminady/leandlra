@@ -103,6 +103,7 @@ import LeanDLRA.Literature.Kinetic.P2606_31662a
 import LeanDLRA.Literature.Kinetic.P2607_27736a
 import LeanDLRA.Literature.Kinetic.P2608_00397a
 import LeanDLRA.Literature.Kinetic.P2609_02721a
+import LeanDLRA.Literature.Randomized.P2308_16547a
 import LeanDLRA.Literature.Randomized.P2308_16547b
 import LeanDLRA.Literature.Randomized.P2401_04249a
 import LeanDLRA.Literature.Randomized.P2402_18721a
@@ -120,6 +121,7 @@ import LeanDLRA.Literature.RankAdaptive.P2203_08455a
 import LeanDLRA.Literature.RankAdaptive.P2209_00550a
 import LeanDLRA.Literature.RankAdaptive.P2304_05660a
 import LeanDLRA.Literature.RankAdaptive.P2602_14854a
+import LeanDLRA.Literature.Stiff.P1803_10473a
 import LeanDLRA.Literature.TensorNetworks.P1709_02594a
 import LeanDLRA.Literature.TensorNetworks.P2002_11392a
 import LeanDLRA.Literature.TensorNetworks.P2407_11792a
