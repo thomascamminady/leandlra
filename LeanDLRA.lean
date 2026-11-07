@@ -150,7 +150,11 @@ import LeanDLRA.Literature.Stochastic.P2006_05211b
 import LeanDLRA.Literature.Stochastic.P2105_04358a
 import LeanDLRA.Literature.Stochastic.P2306_07774a
 import LeanDLRA.Literature.Stochastic.P2308_11581a
+import LeanDLRA.Literature.Stochastic.P2501_06125a
 import LeanDLRA.Literature.Stochastic.P2602_06808a
+import LeanDLRA.Literature.Stochastic.P2606_15843a
+import LeanDLRA.Literature.Stochastic.P2606_27888a
+import LeanDLRA.Literature.Stochastic.P2609_20292a
 import LeanDLRA.Literature.Stochastic.P2609_20317a
 import LeanDLRA.Literature.TensorNetworks.P1709_02594a
 import LeanDLRA.Literature.TensorNetworks.P2002_11392a
