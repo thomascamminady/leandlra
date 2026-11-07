@@ -34,7 +34,11 @@ import LeanDLRA.Integrators.PerturbedField
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Integrators.TuckerBUG
+import LeanDLRA.Literature.Applications.P2110_13481a
+import LeanDLRA.Literature.Applications.P2306_17526a
+import LeanDLRA.Literature.Applications.P2308_08888a
 import LeanDLRA.Literature.Applications.P2405_18094a
+import LeanDLRA.Literature.Applications.P2503_18271a
 import LeanDLRA.Literature.Applications.P2508_04484a
 import LeanDLRA.Literature.Control.P2111_14540a
 import LeanDLRA.Literature.Control.P2501_07439a
@@ -155,6 +159,7 @@ import LeanDLRA.Literature.Stochastic.P2306_07774a
 import LeanDLRA.Literature.Stochastic.P2308_11581a
 import LeanDLRA.Literature.Stochastic.P2501_06125a
 import LeanDLRA.Literature.Stochastic.P2502_08464a
+import LeanDLRA.Literature.Stochastic.P2509_11210a
 import LeanDLRA.Literature.Stochastic.P2602_06614a
 import LeanDLRA.Literature.Stochastic.P2602_06808a
 import LeanDLRA.Literature.Stochastic.P2606_15843a
