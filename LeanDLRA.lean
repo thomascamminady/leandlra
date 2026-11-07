@@ -112,6 +112,7 @@ import LeanDLRA.Literature.Randomized.P2308_16547b
 import LeanDLRA.Literature.Randomized.P2401_04249a
 import LeanDLRA.Literature.Randomized.P2402_18721a
 import LeanDLRA.Literature.Randomized.P2408_16591a
+import LeanDLRA.Literature.Randomized.P2409_06384a
 import LeanDLRA.Literature.Randomized.P2410_17091a
 import LeanDLRA.Literature.Randomized.P2411_15990a
 import LeanDLRA.Literature.Randomized.P2512_15703a
@@ -132,13 +133,18 @@ import LeanDLRA.Literature.Stiff.P2204_10896a
 import LeanDLRA.Literature.Stiff.P2206_14404a
 import LeanDLRA.Literature.Stiff.P2305_11532a
 import LeanDLRA.Literature.Stiff.P2308_05914a
+import LeanDLRA.Literature.Stiff.P2308_05914b
 import LeanDLRA.Literature.Stiff.P2312_00172a
 import LeanDLRA.Literature.Stiff.P2503_04932a
+import LeanDLRA.Literature.Stiff.P2506_15259a
 import LeanDLRA.Literature.Stiff.P2602_07437a
 import LeanDLRA.Literature.Stiff.P2605_15382a
 import LeanDLRA.Literature.Stiff.P2610_18419a
 import LeanDLRA.Literature.Stiff.P2610_18419b
+import LeanDLRA.Literature.Stiff.P2610_41606a
 import LeanDLRA.Literature.Stochastic.P1803_00499a
+import LeanDLRA.Literature.Stochastic.P2006_05211a
+import LeanDLRA.Literature.Stochastic.P2306_07774a
 import LeanDLRA.Literature.TensorNetworks.P1709_02594a
 import LeanDLRA.Literature.TensorNetworks.P2002_11392a
 import LeanDLRA.Literature.TensorNetworks.P2407_11792a
