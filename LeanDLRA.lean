@@ -34,6 +34,8 @@ import LeanDLRA.Integrators.PerturbedField
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Integrators.TuckerBUG
+import LeanDLRA.Literature.Applications.P2405_18094a
+import LeanDLRA.Literature.Applications.P2508_04484a
 import LeanDLRA.Literature.Control.P2111_14540a
 import LeanDLRA.Literature.Control.P2501_07439a
 import LeanDLRA.Literature.Control.P2506_21405a
