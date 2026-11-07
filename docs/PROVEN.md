@@ -238,6 +238,25 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
+| [`Literature/Applications/P2110_13481a`](../LeanDLRA/Literature/Applications/P2110_13481a.lean) | Results of arXiv 2110.13481: Ensign, efficient 6D Vlasov DLRA | 4 | [2110.13481](https://arxiv.org/abs/2110.13481) |
+| [`Literature/Applications/P2201_12340a`](../LeanDLRA/Literature/Applications/P2201_12340a.lean) | Results of arXiv 2201.12340: Low-rank power iteration for neutron criticality | 1 | [2201.12340](https://arxiv.org/abs/2201.12340) |
+| [`Literature/Applications/P2306_17526a`](../LeanDLRA/Literature/Applications/P2306_17526a.lean) | Results of arXiv 2306.17526: DLRA for kinetic shear Alfven waves | 3 | [2306.17526](https://arxiv.org/abs/2306.17526) |
+| [`Literature/Applications/P2308_08888a`](../LeanDLRA/Literature/Applications/P2308_08888a.lean) | Results of arXiv 2308.08888: Low-rank Strang splitting for strongly damped wave equations | 1 | [2308.08888](https://arxiv.org/abs/2308.08888) |
+| [`Literature/Applications/P2405_18094a`](../LeanDLRA/Literature/Applications/P2405_18094a.lean) | Results of arXiv 2405.18094 (Dupuy, Ehrlacher, Guillot): abstract cores | 3 | [2405.18094](https://arxiv.org/abs/2405.18094) |
+| [`Literature/Applications/P2407_03373a`](../LeanDLRA/Literature/Applications/P2407_03373a.lean) | Results of arXiv 2407.03373: low-rank plus diagonal approximations for Riccati-like ODEs | 46 | [2407.03373](https://arxiv.org/abs/2407.03373) |
+| [`Literature/Applications/P2503_18271a`](../LeanDLRA/Literature/Applications/P2503_18271a.lean) | Results of arXiv 2503.18271: On-the-fly ROM of the filter density function (TDB/DO) | 4 | [2503.18271](https://arxiv.org/abs/2503.18271) |
+| [`Literature/Applications/P2508_04484a`](../LeanDLRA/Literature/Applications/P2508_04484a.lean) | Results of arXiv 2508.04484: High-order deterministic DLRA for proton transport | 5 | [2508.04484](https://arxiv.org/abs/2508.04484) |
+| [`Literature/Applications/P2510_19349a`](../LeanDLRA/Literature/Applications/P2510_19349a.lean) | Scalable LinUCB with low-rank inverse updates (arXiv 2510.19349) | 8 | [2510.19349](https://arxiv.org/abs/2510.19349) |
+| [`Literature/Applications/P2511_01735a`](../LeanDLRA/Literature/Applications/P2511_01735a.lean) | Low-rank BUG solver for the Sylvester equation: exact bases (arXiv 2511.01735, Sec. 2) | 5 | [2511.01735](https://arxiv.org/abs/2511.01735) |
+| [`Literature/Applications/P2606_24190a`](../LeanDLRA/Literature/Applications/P2606_24190a.lean) | Results of arXiv 2606.24190: DLR methods for the Wigner equation I: separable difference potential | 1 | [2606.24190](https://arxiv.org/abs/2606.24190) |
+| [`Literature/Applications/P2606_30469a`](../LeanDLRA/Literature/Applications/P2606_30469a.lean) | Complex-matrix ODE results of arXiv 2606.30469 (structure-preserving DLRA for guided waves) | 21 | [2606.30469](https://arxiv.org/abs/2606.30469) |
+| [`Literature/Applications/P2610_06885a`](../LeanDLRA/Literature/Applications/P2610_06885a.lean) | Results of arXiv 2610.06885: DLR-NE, low-rank certificates (part a) | 5 | [2610.06885](https://arxiv.org/abs/2610.06885) |
+| [`Literature/Applications/P2610_06885b`](../LeanDLRA/Literature/Applications/P2610_06885b.lean) | Results of arXiv 2610.06885: local low-rank truncation error (Lemma 1, core) | 3 | [2610.06885](https://arxiv.org/abs/2610.06885) |
+| [`Literature/Applications/P2610_08956a`](../LeanDLRA/Literature/Applications/P2610_08956a.lean) | Results of arXiv 2610.08956: Numerical Bogoliubov approximation of boson dynamics | 3 | [2610.08956](https://arxiv.org/abs/2610.08956) |
+| [`Literature/Control/P2111_14540a`](../LeanDLRA/Literature/Control/P2111_14540a.lean) | Results of arXiv 2111.14540: empirical Dirac–Frenkel projection (Sec. 6, eqs. (22)–(24)) | 9 | [2111.14540](https://arxiv.org/abs/2111.14540) |
+| [`Literature/Control/P2501_07439a`](../LeanDLRA/Literature/Control/P2501_07439a.lean) | Results of arXiv 2501.07439 (Saluzzi–Strazzullo): sensitivity of closed-loop SDRE dynamics | 4 | [2501.07439](https://arxiv.org/abs/2501.07439) |
+| [`Literature/Control/P2506_21405a`](../LeanDLRA/Literature/Control/P2506_21405a.lean) | Results of arXiv 2506.21405: Adaptive DLR optimizer for kinetic parameter identification | 3 | [2506.21405](https://arxiv.org/abs/2506.21405) |
+| [`Literature/Control/P2608_21545a`](../LeanDLRA/Literature/Control/P2608_21545a.lean) | Results of arXiv 2608.21545: Time-reversible DLRA for memory-efficient adjoints | 3 | [2608.21545](https://arxiv.org/abs/2608.21545) |
 | [`Literature/Foundations/P1710_03946a`](../LeanDLRA/Literature/Foundations/P1710_03946a.lean) | Results of arXiv 1710.03946: Dynamics, numerical analysis and geometry (Lubich survey) | 6 | [1710.03946](https://arxiv.org/abs/1710.03946) |
 | [`Literature/Foundations/P2008_07427a`](../LeanDLRA/Literature/Foundations/P2008_07427a.lean) | Results of arXiv 2008.07427: dynamical reduced basis (symplectic DLRA) for Hamiltonian systems | 42 | [2008.07427](https://arxiv.org/abs/2008.07427) |
 | [`Literature/Foundations/P2008_07427b`](../LeanDLRA/Literature/Foundations/P2008_07427b.lean) | arXiv 2008.07427: quasi-optimality of the dynamical reduced basis | 3 | [2008.07427](https://arxiv.org/abs/2008.07427) |
@@ -253,6 +272,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Literature/HighOrder/P2502_07040a`](../LeanDLRA/Literature/HighOrder/P2502_07040a.lean) | Results of arXiv 2502.07040: convergence of the RK-BUG integrator | 53 | [2502.07040](https://arxiv.org/abs/2502.07040) |
 | [`Literature/HighOrder/P2502_07040b`](../LeanDLRA/Literature/HighOrder/P2502_07040b.lean) | Results of arXiv 2502.07040: truncation error of the RK-BUG integrator | 62 | [2502.07040](https://arxiv.org/abs/2502.07040) |
 | [`Literature/HighOrder/P2608_12893a`](../LeanDLRA/Literature/HighOrder/P2608_12893a.lean) | The counterexample family of arXiv 2608.12893 (Strang projector splitting) | 89 | [2608.12893](https://arxiv.org/abs/2608.12893) |
+| [`Literature/HighOrder/P2608_17157a`](../LeanDLRA/Literature/HighOrder/P2608_17157a.lean) | Robust high-order projector-splitting integrators (Zhang–Hu, arXiv 2608.17157) | 24 | [2608.17157](https://arxiv.org/abs/2608.17157) |
 | [`Literature/HighOrder/P2608_27749a`](../LeanDLRA/Literature/HighOrder/P2608_27749a.lean) | Results of arXiv 2608.27749: High-order robust BUG integrators (basis consistency, Lemma 2) | 2 | [2608.27749](https://arxiv.org/abs/2608.27749) |
 | [`Literature/HighOrder/P2608_27749b`](../LeanDLRA/Literature/HighOrder/P2608_27749b.lean) | Results of arXiv 2608.27749: High-order robust BUG integrators (Lemmas 3-5, parallel BUG-p) | 18 | [2608.27749](https://arxiv.org/abs/2608.27749) |
 | [`Literature/HighOrder/P2610_11747a`](../LeanDLRA/Literature/HighOrder/P2610_11747a.lean) | Results of arXiv 2610.11747: Robust second-order TTN/Tucker BUG | 2 | [2610.11747](https://arxiv.org/abs/2610.11747) |
@@ -306,6 +326,18 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Literature/Kinetic/P2607_27736a`](../LeanDLRA/Literature/Kinetic/P2607_27736a.lean) | Results of arXiv 2607.27736: AP low-rank semi-Lagrangian kinetic | 147 | [2607.27736](https://arxiv.org/abs/2607.27736) |
 | [`Literature/Kinetic/P2608_00397a`](../LeanDLRA/Literature/Kinetic/P2608_00397a.lean) | Structure-preserving DLRA for stochastic Vlasov–Poisson (arXiv 2608.00397) | 88 | [2608.00397](https://arxiv.org/abs/2608.00397) |
 | [`Literature/Kinetic/P2609_02721a`](../LeanDLRA/Literature/Kinetic/P2609_02721a.lean) | Stable rank-adaptive step-and-truncate finite volumes for Vlasov (arXiv 2609.02721) | 58 | [2609.02721](https://arxiv.org/abs/2609.02721) |
+| [`Literature/Randomized/P2308_16547a`](../LeanDLRA/Literature/Randomized/P2308_16547a.lean) | Results of arXiv 2308.16547: Adaptive symplectic hyper-reduction | 33 | [2008.07427](https://arxiv.org/abs/2008.07427), [2308.16547](https://arxiv.org/abs/2308.16547) |
+| [`Literature/Randomized/P2308_16547b`](../LeanDLRA/Literature/Randomized/P2308_16547b.lean) | Results of arXiv 2308.16547: Adaptive symplectic hyper-reduction (Proposition 3) | 10 | [2008.07427](https://arxiv.org/abs/2008.07427), [2308.16547](https://arxiv.org/abs/2308.16547) |
+| [`Literature/Randomized/P2401_04249a`](../LeanDLRA/Literature/Randomized/P2401_04249a.lean) | Results of arXiv 2401.04249: DEIM Tucker tensor cross for DLRA | 0 | [2401.04249](https://arxiv.org/abs/2401.04249) |
+| [`Literature/Randomized/P2402_18721a`](../LeanDLRA/Literature/Randomized/P2402_18721a.lean) | Results of arXiv 2402.18721: Collocation (cross-interpolation) methods on low-rank manifolds | 3 | [2402.18721](https://arxiv.org/abs/2402.18721) |
+| [`Literature/Randomized/P2408_16591a`](../LeanDLRA/Literature/Randomized/P2408_16591a.lean) | CUR for implicit DLRA of random PDEs (arXiv 2408.16591) | 62 | [2408.16591](https://arxiv.org/abs/2408.16591) |
+| [`Literature/Randomized/P2409_06384a`](../LeanDLRA/Literature/Randomized/P2409_06384a.lean) | Randomized low-rank Runge–Kutta methods (arXiv 2409.06384, Lam–Ceruti–Kressner) | 74 | [2409.06384](https://arxiv.org/abs/2409.06384) |
+| [`Literature/Randomized/P2410_17091a`](../LeanDLRA/Literature/Randomized/P2410_17091a.lean) | Results of arXiv 2410.17091: Randomized DLRA (DRSVD/DGN) | 7 | [2410.17091](https://arxiv.org/abs/2410.17091) |
+| [`Literature/Randomized/P2411_15990a`](../LeanDLRA/Literature/Randomized/P2411_15990a.lean) | Results of arXiv 2411.15990: DEIM well-posedness (Algorithm 1, invertibility part) | 2 | [2411.15990](https://arxiv.org/abs/2411.15990) |
+| [`Literature/Randomized/P2512_15703a`](../LeanDLRA/Literature/Randomized/P2512_15703a.lean) | Interpolative DLRA for quantized tensor trains (arXiv 2512.15703) | 28 | [2512.15703](https://arxiv.org/abs/2512.15703) |
+| [`Literature/Randomized/P2601_18705a`](../LeanDLRA/Literature/Randomized/P2601_18705a.lean) | Results of arXiv 2601.18705: SN-like and PN-like DLRA for thermal radiative transfer | 2 | [2601.18705](https://arxiv.org/abs/2601.18705) |
+| [`Literature/Randomized/P2607_03402a`](../LeanDLRA/Literature/Randomized/P2607_03402a.lean) | Results of arXiv 2607.03402: Sketched DLRA: orthogonal vs oblique projections | 2 | [2607.03402](https://arxiv.org/abs/2607.03402) |
+| [`Literature/Randomized/P2610_07653a`](../LeanDLRA/Literature/Randomized/P2610_07653a.lean) | Results of arXiv 2610.07653: Low-rank SI-DSA and GMRES-DSA for radiative transfer | 2 | [2610.07653](https://arxiv.org/abs/2610.07653) |
 | [`Literature/RankAdaptive/P2007_13153a`](../LeanDLRA/Literature/RankAdaptive/P2007_13153a.lean) | Results of arXiv 2007.13153: Rank-adaptive symplectic DLR model reduction of Hamiltonian systems | 27 | [2007.13153](https://arxiv.org/abs/2007.13153) |
 | [`Literature/RankAdaptive/P2007_13153b`](../LeanDLRA/Literature/RankAdaptive/P2007_13153b.lean) | Results of arXiv 2007.13153: Rank-adaptive symplectic DLR model reduction of Hamiltonian systems | 1 | [2007.13153](https://arxiv.org/abs/2007.13153) |
 | [`Literature/RankAdaptive/P2104_05247a`](../LeanDLRA/Literature/RankAdaptive/P2104_05247a.lean) | Results of arXiv 2104.05247: Rank-adaptive (augmented) BUG | 6 | [2104.05247](https://arxiv.org/abs/2104.05247) |
@@ -313,6 +345,58 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Literature/RankAdaptive/P2209_00550a`](../LeanDLRA/Literature/RankAdaptive/P2209_00550a.lean) | Results of arXiv 2209.00550: Predictor-corrector rank adaptivity for DLRA | 6 | [2209.00550](https://arxiv.org/abs/2209.00550) |
 | [`Literature/RankAdaptive/P2304_05660a`](../LeanDLRA/Literature/RankAdaptive/P2304_05660a.lean) | Results of arXiv 2304.05660: Parallel rank-adaptive BUG integrator | 3 | [2304.05660](https://arxiv.org/abs/2304.05660) |
 | [`Literature/RankAdaptive/P2602_14854a`](../LeanDLRA/Literature/RankAdaptive/P2602_14854a.lean) | Results of arXiv 2602.14854: Domain-decomposition DLRA for radiative transfer | 12 | [2602.14854](https://arxiv.org/abs/2602.14854) |
+| [`Literature/Stiff/P1705_10175a`](../LeanDLRA/Literature/Stiff/P1705_10175a.lean) | Results of arXiv 1705.10175: low-rank split-step integrator for differential Lyapunov equations | 7 | [1705.10175](https://arxiv.org/abs/1705.10175) |
+| [`Literature/Stiff/P1803_10473a`](../LeanDLRA/Literature/Stiff/P1803_10473a.lean) | Results of arXiv 1803.10473: Low-rank Lie-Trotter splitting for stiff matrix ODEs | 3 | [1803.10473](https://arxiv.org/abs/1803.10473) |
+| [`Literature/Stiff/P2002_12197a`](../LeanDLRA/Literature/Stiff/P2002_12197a.lean) | Lemma 4.4 of arXiv 2002.12197: energy estimates for the Rothe scheme | 3 | [2002.12197](https://arxiv.org/abs/2002.12197) |
+| [`Literature/Stiff/P2010_05249a`](../LeanDLRA/Literature/Stiff/P2010_05249a.lean) | Results of arXiv 2010.05249: Low-rank Lie-Trotter for fractional Ginzburg-Landau | 5 | [2010.05249](https://arxiv.org/abs/2010.05249) |
+| [`Literature/Stiff/P2204_10896a`](../LeanDLRA/Literature/Stiff/P2204_10896a.lean) | Results of arXiv 2204.10896: DLRA for Vlasov-Ampere-Fokker-Planck (AP, IMEX) | 1 | [2204.10896](https://arxiv.org/abs/2204.10896) |
+| [`Literature/Stiff/P2206_14404a`](../LeanDLRA/Literature/Stiff/P2206_14404a.lean) | Results of arXiv 2206.14404: Sweep-based low-rank method for S_N transport | 6 | [2206.14404](https://arxiv.org/abs/2206.14404) |
+| [`Literature/Stiff/P2305_11532a`](../LeanDLRA/Literature/Stiff/P2305_11532a.lean) | Results of arXiv 2305.11532: Implicit Riemannian low-rank schemes for stiff PDEs | 4 | [2305.11532](https://arxiv.org/abs/2305.11532) |
+| [`Literature/Stiff/P2308_05914a`](../LeanDLRA/Literature/Stiff/P2308_05914a.lean) | Results of arXiv 2308.05914: Semi-implicit DLR discontinuous Galerkin for emission/absorption | 7 | [2308.05914](https://arxiv.org/abs/2308.05914) |
+| [`Literature/Stiff/P2308_05914b`](../LeanDLRA/Literature/Stiff/P2308_05914b.lean) | Results of arXiv 2308.05914: Semi-implicit DLR discontinuous Galerkin for emission/absorption | 4 | [2308.05914](https://arxiv.org/abs/2308.05914) |
+| [`Literature/Stiff/P2311_15143a`](../LeanDLRA/Literature/Stiff/P2311_15143a.lean) | Results of arXiv 2311.15143: RAIL implicit low-rank integrators | 2 | [2311.15143](https://arxiv.org/abs/2311.15143) |
+| [`Literature/Stiff/P2312_00172a`](../LeanDLRA/Literature/Stiff/P2312_00172a.lean) | Results of arXiv 2312.00172: Projected exponential methods for stiff DLRA (Carrel-Vandereycken) | 5 | [2312.00172](https://arxiv.org/abs/2312.00172) |
+| [`Literature/Stiff/P2402_05347a`](../LeanDLRA/Literature/Stiff/P2402_05347a.lean) | Results of arXiv 2402.05347 (Appelö–Cheng): truncation, one-step stability, DLRA failure | 4 | [2402.05347](https://arxiv.org/abs/2402.05347) |
+| [`Literature/Stiff/P2503_04932a`](../LeanDLRA/Literature/Stiff/P2503_04932a.lean) | Results of arXiv 2503.04932: 3d-RAIL low-rank IMEX for convection-diffusion | 15 | [2503.04932](https://arxiv.org/abs/2503.04932) |
+| [`Literature/Stiff/P2506_15259a`](../LeanDLRA/Literature/Stiff/P2506_15259a.lean) | Stiff matrix ODEs: exact flow, variation of constants, low-rank splittings (arXiv 2506.15259) | 11 | [2506.15259](https://arxiv.org/abs/2506.15259) |
+| [`Literature/Stiff/P2602_07437a`](../LeanDLRA/Literature/Stiff/P2602_07437a.lean) | Results of arXiv 2602.07437: Convergence of a low-rank Strang splitting for stiff matrix ODEs | 1 | [2602.07437](https://arxiv.org/abs/2602.07437) |
+| [`Literature/Stiff/P2605_15382a`](../LeanDLRA/Literature/Stiff/P2605_15382a.lean) | Results of arXiv 2605.15382: Sylvester solver via a Schur reduction (Section 3) | 6 | [2605.15382](https://arxiv.org/abs/2605.15382) |
+| [`Literature/Stiff/P2610_18419a`](../LeanDLRA/Literature/Stiff/P2610_18419a.lean) | Results of arXiv 2610.18419: Sylvester solvers for implicit DLRA of reaction-diffusion | 4 | [2610.18419](https://arxiv.org/abs/2610.18419) |
+| [`Literature/Stiff/P2610_18419b`](../LeanDLRA/Literature/Stiff/P2610_18419b.lean) | Results of arXiv 2610.18419: Non-iterative Sylvester solvers for implicit DLRA | 5 | [2610.18419](https://arxiv.org/abs/2610.18419) |
+| [`Literature/Stiff/P2610_41606a`](../LeanDLRA/Literature/Stiff/P2610_41606a.lean) | Results of arXiv 2610.41606 (Hu-Yu): energy-constrained implicit step-and-truncate | 14 | [2610.41606](https://arxiv.org/abs/2610.41606) |
+| [`Literature/Stochastic/P1604_05706a`](../LeanDLRA/Literature/Stochastic/P1604_05706a.lean) | Results of arXiv 1604.05706 (Billaud-Friess, Nouy): Galerkin reduced model on a moving subspace | 10 | [1604.05706](https://arxiv.org/abs/1604.05706) |
+| [`Literature/Stochastic/P1604_05706b`](../LeanDLRA/Literature/Stochastic/P1604_05706b.lean) | Results of arXiv 1604.05706: Dynamical model reduction for parameter-dependent systems | 4 | [1604.05706](https://arxiv.org/abs/1604.05706) |
+| [`Literature/Stochastic/P1803_00499a`](../LeanDLRA/Literature/Stochastic/P1803_00499a.lean) | Results of arXiv 1803.00499: error propagation of stochastic DLRA | 2 | [1803.00499](https://arxiv.org/abs/1803.00499) |
+| [`Literature/Stochastic/P2002_02356a`](../LeanDLRA/Literature/Stochastic/P2002_02356a.lean) | Results of arXiv 2002.02356: Existence of DLR approximations for random semilinear PDEs | 1 | [2002.02356](https://arxiv.org/abs/2002.02356) |
+| [`Literature/Stochastic/P2006_05211a`](../LeanDLRA/Literature/Stochastic/P2006_05211a.lean) | Results of arXiv 2006.05211: Stability of projector-splitting DLR for random parabolic PDEs | 1 | [2006.05211](https://arxiv.org/abs/2006.05211) |
+| [`Literature/Stochastic/P2006_05211b`](../LeanDLRA/Literature/Stochastic/P2006_05211b.lean) | Results of arXiv 2006.05211: Stability of projector-splitting DLR for random parabolic PDEs | 5 | [2006.05211](https://arxiv.org/abs/2006.05211) |
+| [`Literature/Stochastic/P2105_04358a`](../LeanDLRA/Literature/Stochastic/P2105_04358a.lean) | Results of arXiv 2105.04358: DLRA for Burgers' equation with uncertainty | 8 | [2105.04358](https://arxiv.org/abs/2105.04358) |
+| [`Literature/Stochastic/P2306_07774a`](../LeanDLRA/Literature/Stochastic/P2306_07774a.lean) | Results of arXiv 2306.07774: Rank-reduced Kalman filter | 12 | [2306.07774](https://arxiv.org/abs/2306.07774) |
+| [`Literature/Stochastic/P2308_11581a`](../LeanDLRA/Literature/Stochastic/P2308_11581a.lean) | Results of arXiv 2308.11581: DLRA for SDEs: DO/DLR well-posedness | 7 | [2308.11581](https://arxiv.org/abs/2308.11581) |
+| [`Literature/Stochastic/P2402_03586a`](../LeanDLRA/Literature/Stochastic/P2402_03586a.lean) | Results of arXiv 2402.03586: Error estimates for SUPG-stabilised DLRA | 2 | [2402.03586](https://arxiv.org/abs/2402.03586) |
+| [`Literature/Stochastic/P2501_06125a`](../LeanDLRA/Literature/Stochastic/P2501_06125a.lean) | Results of arXiv 2501.06125: Low-rank control variates for uncertain radiative transfer | 7 | [2501.06125](https://arxiv.org/abs/2501.06125) |
+| [`Literature/Stochastic/P2502_08464a`](../LeanDLRA/Literature/Stochastic/P2502_08464a.lean) | Results of arXiv 2502.08464: Dynamical variable separation for parametric dynamics | 4 | [2502.08464](https://arxiv.org/abs/2502.08464) |
+| [`Literature/Stochastic/P2509_11210a`](../LeanDLRA/Literature/Stochastic/P2509_11210a.lean) | Results of arXiv 2509.11210: DLR Kalman filtering | 8 | [2509.11210](https://arxiv.org/abs/2509.11210) |
+| [`Literature/Stochastic/P2601_21428a`](../LeanDLRA/Literature/Stochastic/P2601_21428a.lean) | Results of arXiv 2601.21428: Gramian bound for one projector-splitting step | 6 | [2601.21428](https://arxiv.org/abs/2601.21428) |
+| [`Literature/Stochastic/P2602_06614a`](../LeanDLRA/Literature/Stochastic/P2602_06614a.lean) | Results of arXiv 2602.06614: Dynamical low-rank ensemble Kalman filter | 3 | [2602.06614](https://arxiv.org/abs/2602.06614) |
+| [`Literature/Stochastic/P2602_06808a`](../LeanDLRA/Literature/Stochastic/P2602_06808a.lean) | Results of arXiv 2602.06808: DLRA for semiclassical Schrödinger with uncertainty | 1 | [2602.06808](https://arxiv.org/abs/2602.06808) |
+| [`Literature/Stochastic/P2606_15843a`](../LeanDLRA/Literature/Stochastic/P2606_15843a.lean) | Results of arXiv 2606.15843: Long-time behaviour of DLRA for SDEs | 4 | [2606.15843](https://arxiv.org/abs/2606.15843) |
+| [`Literature/Stochastic/P2606_27888a`](../LeanDLRA/Literature/Stochastic/P2606_27888a.lean) | Results of arXiv 2606.27888: Dynamical low-rank multilevel Monte Carlo for kinetic equations | 4 | [2606.27888](https://arxiv.org/abs/2606.27888) |
+| [`Literature/Stochastic/P2607_27432a`](../LeanDLRA/Literature/Stochastic/P2607_27432a.lean) | Results of arXiv 2607.27432: Dynamical low-rank filters for data assimilation | 8 | [2607.27432](https://arxiv.org/abs/2607.27432) |
+| [`Literature/Stochastic/P2607_27438a`](../LeanDLRA/Literature/Stochastic/P2607_27438a.lean) | Results of arXiv 2607.27438: Dynamical low-rank smoothing | 5 | [2607.27438](https://arxiv.org/abs/2607.27438) |
+| [`Literature/Stochastic/P2609_20292a`](../LeanDLRA/Literature/Stochastic/P2609_20292a.lean) | Results of arXiv 2609.20292: Further DLRA approaches for SDEs | 7 | [2609.20292](https://arxiv.org/abs/2609.20292) |
+| [`Literature/Stochastic/P2609_20307a`](../LeanDLRA/Literature/Stochastic/P2609_20307a.lean) | Results of arXiv 2609.20307: Existence of DLRA for SDEs with locally Lipschitz coefficients | 6 | [2609.20307](https://arxiv.org/abs/2609.20307) |
+| [`Literature/Stochastic/P2609_20317a`](../LeanDLRA/Literature/Stochastic/P2609_20317a.lean) | Results of arXiv 2609.20317: DLRA of SDEs II: stochastic discretisation | 4 | [2609.20317](https://arxiv.org/abs/2609.20317) |
+| [`Literature/TensorNetworks/P1709_02594a`](../LeanDLRA/Literature/TensorNetworks/P1709_02594a.lean) | Results of arXiv 1709.02594: projector splitting for rank-constrained Tucker tensors | 6 | [1709.02594](https://arxiv.org/abs/1709.02594) |
+| [`Literature/TensorNetworks/P2002_11392a`](../LeanDLRA/Literature/TensorNetworks/P2002_11392a.lean) | Results of arXiv 2002.11392: Time integration of tree tensor networks | 3 | [2002.11392](https://arxiv.org/abs/2002.11392) |
+| [`Literature/TensorNetworks/P2407_11792a`](../LeanDLRA/Literature/TensorNetworks/P2407_11792a.lean) | Results of arXiv 2407.11792: Hierarchical DLRA for chemical master equation | 2 | [2407.11792](https://arxiv.org/abs/2407.11792) |
+| [`Literature/TensorNetworks/P2501_04157a`](../LeanDLRA/Literature/TensorNetworks/P2501_04157a.lean) | Results of arXiv 2501.04157: Automatic partitioning for low-rank stochastic Boolean networks | 13 | [2501.04157](https://arxiv.org/abs/2501.04157) |
+| [`Literature/TensorNetworks/P2512_14950a`](../LeanDLRA/Literature/TensorNetworks/P2512_14950a.lean) | Results of arXiv 2512.14950: Dynamical tensor trains for kinetics | 12 | [2512.14950](https://arxiv.org/abs/2512.14950) |
+| [`Literature/TensorNetworks/P2603_13990a`](../LeanDLRA/Literature/TensorNetworks/P2603_13990a.lean) | Results of arXiv 2603.13990: Rank-adaptive tensor BUG for Schrödinger | 4 | [2603.13990](https://arxiv.org/abs/2603.13990) |
+| [`Literature/TensorNetworks/P2608_16994a`](../LeanDLRA/Literature/TensorNetworks/P2608_16994a.lean) | Results of arXiv 2608.16994: BUG time integration in canonical MPS form | 3 | [2608.16994](https://arxiv.org/abs/2608.16994) |
+| [`Literature/TensorNetworks/P2609_11811a`](../LeanDLRA/Literature/TensorNetworks/P2609_11811a.lean) | Results of arXiv 2609.11811: Fermionic mode optimization via block-entropy gradients | 3 | [2609.11811](https://arxiv.org/abs/2609.11811) |
+| [`Literature/TensorNetworks/P2609_12848a`](../LeanDLRA/Literature/TensorNetworks/P2609_12848a.lean) | Results of arXiv 2609.12848: Diversifying MPS time evolution using BUGs | 5 | [2609.12848](https://arxiv.org/abs/2609.12848) |
+| [`Literature/TensorNetworks/P2610_36257a`](../LeanDLRA/Literature/TensorNetworks/P2610_36257a.lean) | Results of arXiv 2610.36257: Dynamical tensor-train approximation for Wigner–Fokker–Planck | 1 | [2610.36257](https://arxiv.org/abs/2610.36257) |
 | [`Literature/Training/P2009_03887a`](../LeanDLRA/Literature/Training/P2009_03887a.lean) | Results of arXiv 2009.03887: Low-rank training for emerging memory technology | 69 | [2009.03887](https://arxiv.org/abs/2009.03887) |
 | [`Literature/Training/P2205_13571a`](../LeanDLRA/Literature/Training/P2205_13571a.lean) | Results of arXiv 2205.13571: Low-rank lottery tickets (DLRT) | 78 | [2104.05247](https://arxiv.org/abs/2104.05247), [2205.13571](https://arxiv.org/abs/2205.13571) |
 | [`Literature/Training/P2209_13569a`](../LeanDLRA/Literature/Training/P2209_13569a.lean) | Results of arXiv 2209.13569: Exploring low-rank training of deep neural networks | 43 | [2209.13569](https://arxiv.org/abs/2209.13569) |
@@ -563,6 +647,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 * [2111.07160](https://arxiv.org/abs/2111.07160): A robust collision source method for rank adaptive dynamical low-rank approximation in radiation therapy
 * [2111.14540](https://arxiv.org/abs/2111.14540): Dynamical low-rank approximations of solutions to the Hamilton-Jacobi-Bellman equation
 * [2112.02695](https://arxiv.org/abs/2112.02695): An adaptive dynamical low rank method for the nonlinear Boltzmann equation
+* [2201.12340](https://arxiv.org/abs/2201.12340): A low-rank power iteration scheme for neutron transport criticality problems
 * [2203.08455](https://arxiv.org/abs/2203.08455): Low-rank Parareal: a low-rank parallel-in-time integrator
 * [2204.10896](https://arxiv.org/abs/2204.10896): Efficient dynamical low-rank approximation for the Vlasov-Ampère-Fokker-Planck system
 * [2205.13571](https://arxiv.org/abs/2205.13571): Low-rank lottery tickets: finding efficient low-rank neural networks via matrix differential equations
@@ -626,6 +711,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 * [2502.03006](https://arxiv.org/abs/2502.03006): An Augmented Backward-Corrected Projector Splitting Integrator for Dynamical Low-Rank Training
 * [2502.03008](https://arxiv.org/abs/2502.03008): An energy stable and conservative multiplicative dynamical low-rank discretization for the Su-Olson problem
 * [2502.07040](https://arxiv.org/abs/2502.07040): Robust high-order low-rank BUG integrators based on explicit Runge--Kutta methods (Nobile, Riffaud; text version v7)
+* [2502.08464](https://arxiv.org/abs/2502.08464): A Dynamical Variable-separation Method for Parameter-dependent Dynamical Systems
 * [2502.08951](https://arxiv.org/abs/2502.08951): Asymptotic-Preserving Dynamical Low-Rank Method for the Stiff Nonlinear Boltzmann Equation
 * [2502.20883](https://arxiv.org/abs/2502.20883): A Parallel, Energy-Stable Low-Rank Integrator for Nonlinear Multi-Scale Thermal Radiative Transfer
 * [2503.04932](https://arxiv.org/abs/2503.04932): A low-rank, high-order implicit-explicit integrator for three-dimensional convection-diffusion equations
@@ -651,9 +737,11 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 * [2512.15703](https://arxiv.org/abs/2512.15703): Time integration of quantized tensor trains using the interpolative dynamical low-rank approximation
 * [2601.08882](https://arxiv.org/abs/2601.08882): Compressing Vision Transformers in Geospatial Transfer Learning with Manifold-Constrained Optimization (Snyder, Yang, Schnake, Schotthöfer; NeurIPS 2025 workshop, arXiv 2026)
 * [2601.11900](https://arxiv.org/abs/2601.11900): A separable and asymptotic-preserving dynamical low-rank method for the Vlasov–Poisson–Fokker–Planck system (Zhang, Hu; arXiv 2026)
+* [2601.18705](https://arxiv.org/abs/2601.18705): Efficient SN-like and PN-like Dynamic Low Rank methods for Thermal Radiative Transfer
 * [2601.21428](https://arxiv.org/abs/2601.21428): Numerical Methods for Dynamical Low-Rank Approximations of Stochastic Differential Equations, Part I: Time discretization (Kazashi, Nobile, Zoccolan; arXiv 2026)
 * [2602.06208](https://arxiv.org/abs/2602.06208): Emergent Low-Rank Training Dynamics in MLPs with Smooth Activations (Xu, Yaras, Asato, Qu, Balzano; arXiv 2026)
 * [2602.06614](https://arxiv.org/abs/2602.06614): Dynamical Low-Rank Ensemble Kalman Filter for State/Parameter estimation (Trigo Trindade, Riffaud, Nobile; arXiv 2026, submitted to JCP)
+* [2602.06808](https://arxiv.org/abs/2602.06808): Dynamical low-rank approximation for the semiclassical Schrödinger equation with uncertainties (Liu, Xu, Zhu; arXiv 2026)
 * [2602.07437](https://arxiv.org/abs/2602.07437): Convergence of a Low-Rank Strang Splitting for Stiff Matrix Differential Equations (Scalone, Guglielmi)
 * [2602.12337](https://arxiv.org/abs/2602.12337): Temporal-Stability-Enhanced and Energy-Stable Dynamical Low-Rank Approximation for Multiscale Linear Kinetic Transport Equations (Li, Jiang, Zhang, Xiong; arXiv 2026)
 * [2602.14854](https://arxiv.org/abs/2602.14854): Domain decomposition dynamical low-rank for multi-dimensional radiative transfer equations (Brunner, Einkemmer, Haut; arXiv 2026)
@@ -668,6 +756,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 * [2607.03402](https://arxiv.org/abs/2607.03402): Sketch low-rank dynamics: orthogonal vs. oblique projections
 * [2607.05872](https://arxiv.org/abs/2607.05872): No Subspace to Track: Non-Identifiability and Optimizer State in Low-Rank Training
 * [2607.27432](https://arxiv.org/abs/2607.27432): Dynamical Low-Rank Filters for Data Assimilation
+* [2607.27438](https://arxiv.org/abs/2607.27438): Dynamical Low-Rank Smoothing
 * [2607.27736](https://arxiv.org/abs/2607.27736): An Asymptotic-Preserving Dynamical Low-Rank Semi-Lagrangian Method for Multiscale Linear Kinetic Transport Equations
 * [2608.00397](https://arxiv.org/abs/2608.00397): Structure-Preserving Dynamical Low-Rank Approximations for Stochastic Vlasov--Poisson Equations
 * [2608.12893](https://arxiv.org/abs/2608.12893): A Counterexample to Robust Second-Order Convergence of the Strang Projector-Splitting Integrator (Zhang, 2026)
@@ -680,8 +769,11 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 * [2609.12848](https://arxiv.org/abs/2609.12848): Diversifying time evolution of matrix product states using BUGs
 * [2609.20292](https://arxiv.org/abs/2609.20292): Further Approaches of Dynamical Low-Rank Approximation for SDEs
 * [2609.20307](https://arxiv.org/abs/2609.20307): Existence of Dynamical Low-Rank Approximation for SDEs with Locally Lipschitz Coefficients
+* [2609.20317](https://arxiv.org/abs/2609.20317): Numerical Methods for Dynamical Low-Rank Approximations of Stochastic Differential Equations -- Part II: Stochastic discretization
 * [2609.21039](https://arxiv.org/abs/2609.21039): Stiefel-AdamW: Geometry-Aware AdamW for Linear Factorization Blocks
 * [2609.32615](https://arxiv.org/abs/2609.32615): Stabilizing the Dynamic Low-Rank Training
+* [2610.06885](https://arxiv.org/abs/2610.06885): Dynamical low-rank equilibrium computation for stochastic games between advanced persistent threats and moving target defense
+* [2610.07653](https://arxiv.org/abs/2610.07653): Low-rank SI-DSA and GMRES-DSA for Radiative Transfer Equation with Adaptive Accuracy Control
 * [2610.08956](https://arxiv.org/abs/2610.08956): Numerical Bogoliubov approximation of bosonic many-body quantum dynamics
 * [2610.11747](https://arxiv.org/abs/2610.11747): Robust second-order time integration of tree tensor networks (Kusch, Sulz 2026)
 * [2610.18419](https://arxiv.org/abs/2610.18419): Low-cost non-iterative Sylvester solvers for dynamical low-rank approximation of reaction-diffusion equations
