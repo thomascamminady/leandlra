@@ -35,6 +35,7 @@ import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Integrators.TuckerBUG
 import LeanDLRA.Literature.Applications.P2110_13481a
+import LeanDLRA.Literature.Applications.P2201_12340a
 import LeanDLRA.Literature.Applications.P2306_17526a
 import LeanDLRA.Literature.Applications.P2308_08888a
 import LeanDLRA.Literature.Applications.P2405_18094a
@@ -157,6 +158,7 @@ import LeanDLRA.Literature.Stochastic.P2006_05211b
 import LeanDLRA.Literature.Stochastic.P2105_04358a
 import LeanDLRA.Literature.Stochastic.P2306_07774a
 import LeanDLRA.Literature.Stochastic.P2308_11581a
+import LeanDLRA.Literature.Stochastic.P2402_03586a
 import LeanDLRA.Literature.Stochastic.P2501_06125a
 import LeanDLRA.Literature.Stochastic.P2502_08464a
 import LeanDLRA.Literature.Stochastic.P2509_11210a
