@@ -120,10 +120,16 @@ import LeanDLRA.Literature.RankAdaptive.P2203_08455a
 import LeanDLRA.Literature.RankAdaptive.P2209_00550a
 import LeanDLRA.Literature.RankAdaptive.P2304_05660a
 import LeanDLRA.Literature.RankAdaptive.P2602_14854a
+import LeanDLRA.Literature.TensorNetworks.P1709_02594a
+import LeanDLRA.Literature.TensorNetworks.P2002_11392a
+import LeanDLRA.Literature.TensorNetworks.P2407_11792a
 import LeanDLRA.Literature.TensorNetworks.P2501_04157a
 import LeanDLRA.Literature.TensorNetworks.P2512_14950a
 import LeanDLRA.Literature.TensorNetworks.P2603_13990a
+import LeanDLRA.Literature.TensorNetworks.P2608_16994a
 import LeanDLRA.Literature.TensorNetworks.P2609_11811a
+import LeanDLRA.Literature.TensorNetworks.P2609_12848a
+import LeanDLRA.Literature.TensorNetworks.P2610_36257a
 import LeanDLRA.Literature.Training.P2009_03887a
 import LeanDLRA.Literature.Training.P2205_13571a
 import LeanDLRA.Literature.Training.P2209_13569a
