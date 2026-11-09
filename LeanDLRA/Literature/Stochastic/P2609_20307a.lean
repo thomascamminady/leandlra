@@ -18,10 +18,12 @@ Not formalized: the moment bound
 `E sup_t |Y_t|^{2+ε} ≤ C_{T,ε}(1 + E|Y₀|^{2+ε})` of Lemma 2.1,
 since it concerns stochastic integrals and the stochastic basis `Y`.
 
-Proposition 2.2 (Gram-inverse ball) is not reproved here: the library already proves it as
-`LeanDLRA.gramMatrix_inv_ball` (`LeanDLRA/Foundations/Localization.lean`).  The paper's
-hypothesis "linearly independent components" is there replaced by invertibility of the Gram
-matrix, which is equivalent for `Z₀` in `[H]^k`.
+Proposition 2.2 (Gram-inverse ball) is not reproved here: the library proves its main claim
+(`‖C_Z⁻¹‖_F ≤ 2γ` on `B_η(Z₀)`) as `LeanDLRA.gramMatrix_inv_ball`
+(`LeanDLRA/Foundations/Localization.lean`).  The paper's hypothesis "linearly independent
+components" is there replaced by invertibility of the Gram matrix, which is equivalent for `Z₀`
+in `[H]^k`.  The last claim of Proposition 2.2, that `η(ρ, γ)` is decreasing in `ρ` and `γ`, is
+not formalized.
 
 Core definitions used: the Frobenius norm and scoped instances of `LeanDLRA.Frobenius`
 (`norm_def`, `hasDerivAt_mul`, `hasDerivAt_transpose`).  No local definitions are added.
@@ -78,7 +80,9 @@ lemma ac_gram_entry {U : ℝ → Matrix (Fin k) (Fin d) ℝ} {a b : ℝ}
 Let `U : [0, T] → ℝ^{k×d}` be absolutely continuous with `U_0 U_0ᵀ = I_k`, differentiable
 a.e. with derivative `U'`, and `U_t U'_tᵀ = 0` for a.e. `t`.  Then `U_t Uᵀ_t = I_k` on
 `[0, T]`.  The paper's equation (2) enters only through the orthogonality `U_t U̇_tᵀ = 0`
-of Definition 1.1, item 2. -/
+of Definition 1.1, item 2 (the paper's proof derives the equivalent `U̇_t U_tᵀ = 0` from (2)).
+The a.e. differentiability is assumed explicitly (`hder`); the paper infers it from absolute
+continuity.  Assumptions 1 and 3 of Lemma 2.1 and the stochastic basis `Y` are not needed. -/
 theorem rows_orthonormal_const {U U' : ℝ → Matrix (Fin k) (Fin d) ℝ} {T : ℝ}
     (hU : AbsolutelyContinuousOnInterval U 0 T)
     (hder : ∀ᵐ t ∂volume, t ∈ uIcc 0 T → HasDerivAt U (U' t) t)

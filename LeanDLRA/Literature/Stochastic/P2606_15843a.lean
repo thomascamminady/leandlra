@@ -5,7 +5,8 @@ import LeanDLRA.Foundations.Projector
 # Results of arXiv 2606.15843: Long-time behaviour of DLRA for SDEs
 
 This module formalizes the abstract linear-algebra core of the DLRA projector `P_Y` of the paper
-(Lemma 3.4 and the algebraic part of Proposition 3.5), on a real inner product space `E`.
+(Lemma 3.4, on a real inner product space `E`) and the algebraic step of Proposition 3.5 (the
+row-space projector `P_U = Uᵀ U` of `ℝ^d` is the identity at full rank `r = d`).
 
 * `gramY`, `projY`: the Gram matrix `C_Y = (⟪Y_i, Y_j⟫)` and the explicit operator
   `P_Y u = E[u Yᵀ] C_Y⁻¹ Y` of the paper, where `E[u Yᵀ]_j = ⟪u, Y_j⟫`.
@@ -16,13 +17,21 @@ This module formalizes the abstract linear-algebra core of the DLRA projector `P
   `ℝ^d`-valued `L²(Ω; ℝ^d)` of the paper. The `ℝ^d`-valued operator acts componentwise, and that
   componentwise statement is not proved in this file. The paper's standing hypothesis that
   `Y_1, …, Y_r` are linearly independent is kept.
-* `prop_3_5_projY_eq_id` (algebraic part of **Proposition 3.5**, arXiv 2606.15843): when `r` equals
-  the dimension of `E`, `P_Y = id`. This is the identity the paper uses to show that the DLR
-  equation reduces to the original SDE at full rank.
-  Not formalized: the SDE consequence (that the DLRA SDE coincides with the original SDE and the
-  `L²(Ω)` consistency via uniqueness). That needs stochastic calculus that the library lacks.
-* the unnamed `example` at the end of the file: the basis of `EuclideanSpace ℝ (Fin 2)` satisfies
-  the hypotheses of Proposition 3.5 with `r = 2`, so the theorem is not vacuous.
+* `prop_3_5_drift_diffusion` (algebraic step of **Proposition 3.5**, arXiv 2606.15843): if
+  `r = d` and `U ∈ ℝ^{r×d}` has orthonormal rows (`U Uᵀ = I_r`, (1.3)), then `P_U = Uᵀ U = I_d`,
+  so the drift `(Id − P_U) v + P_U b` of the DLR SDE (1.5) equals `b` for every `v` (in particular
+  `v = P_Y b`) and the diffusion `P_U σ` equals `σ`. This is the step of the paper's proof that
+  reduces (1.5) to the original SDE (1.1). Not formalized: the conclusion
+  `E[sup_t |X_t^{(r)} − X_t|²] = 0`, which follows by pathwise uniqueness for (1.1) and needs
+  stochastic calculus that the library lacks.
+* `prop_3_5_projY_eq_id`: when `r` equals the dimension of a finite-dimensional `E`, `P_Y = id`.
+  This is NOT the paper's step: in the paper `P_Y` acts on the infinite-dimensional `L²(Ω)` and
+  `r = d` refers to the state dimension, so `P_Y ≠ id` in general. At `r = d` the paper's drift
+  is independent of `P_Y` because `Id − P_U = 0` (see `prop_3_5_drift_diffusion`). The lemma is
+  kept as a statement about the abstract operator only.
+* the unnamed `example`s at the end of the file: `U = I_2` satisfies the hypotheses of
+  `prop_3_5_drift_diffusion`, and the basis of `EuclideanSpace ℝ (Fin 2)` those of
+  `prop_3_5_projY_eq_id`, so neither theorem is vacuous.
 
 Not formalized, and why:
 * **Theorem 4.4** (uniform-in-time second moments): its proof applies Itô's formula to the
@@ -127,8 +136,10 @@ theorem lemma_3_4_projY {r : ℕ} {Y : Fin r → E} (hY : LinearIndependent ℝ 
       ((Submodule.span ℝ (Set.range Y)).starProjection_apply_mem x), fun x y => ?_⟩
     exact (Submodule.span ℝ (Set.range Y)).starProjection_isSymmetric x y
 
-/-- **Algebraic part of Proposition 3.5** of arXiv 2606.15843: when `r` equals the dimension of
-`E` and `Y` is linearly independent, `P_Y u = u` for all `u`. -/
+/-- Full-rank property of the abstract operator `P_Y`: when `r` equals the dimension of a
+finite-dimensional `E` and `Y` is linearly independent, `P_Y u = u` for all `u`. This is not the
+step of Proposition 3.5 of arXiv 2606.15843 (there `P_Y` acts on `L²(Ω)` and `r = d` is the state
+dimension); that step is `prop_3_5_drift_diffusion`. -/
 theorem prop_3_5_projY_eq_id [FiniteDimensional ℝ E] {r : ℕ} {Y : Fin r → E}
     (hY : LinearIndependent ℝ Y) (hr : r = Module.finrank ℝ E) (u : E) :
     projY Y u = u := by
@@ -139,9 +150,30 @@ theorem prop_3_5_projY_eq_id [FiniteDimensional ℝ E] {r : ℕ} {Y : Fin r → 
   rw [hspan]
   exact Submodule.mem_top
 
+/-- **Algebraic step of Proposition 3.5** of arXiv 2606.15843. Let `r = d` and let
+`U ∈ ℝ^{r×d}` have orthonormal rows, `U Uᵀ = I_r` (condition (1.3)). Then the row-space projector
+is `P_U = Uᵀ U = I_d`, the drift `(Id − P_U) v + P_U b` of the DLR SDE (1.5) equals `b` for every
+`v` (the paper has `v = P_Y b(t, X_t^{(r)})`), and the diffusion `P_U σ` equals `σ`. So at full
+rank (1.5) is the original SDE (1.1), as in the paper's proof. The step from here to
+`E[sup_t |X_t^{(r)} − X_t|²] = 0` (pathwise uniqueness for (1.1)) is not formalized. -/
+theorem prop_3_5_drift_diffusion {r d m : ℕ} (hr : r = d) (U : Matrix (Fin r) (Fin d) ℝ)
+    (hU : U * Uᵀ = 1) (v b : Fin d → ℝ) (σ : Matrix (Fin d) (Fin m) ℝ) :
+    Uᵀ * U = 1 ∧ (1 - Uᵀ * U) *ᵥ v + (Uᵀ * U) *ᵥ b = b ∧ (Uᵀ * U) * σ = σ := by
+  subst hr
+  have h : Uᵀ * U = 1 := mul_eq_one_comm.mp hU
+  refine ⟨h, ?_, ?_⟩
+  · rw [h, sub_self, Matrix.zero_mulVec, zero_add, Matrix.one_mulVec]
+  · rw [h, Matrix.one_mul]
+
+/-- Non-vacuity: `U = I_2` has orthonormal rows with `r = d = 2`. -/
+example (v b : Fin 2 → ℝ) (σ : Matrix (Fin 2) (Fin 3) ℝ) :
+    (1 - (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * 1) *ᵥ v + ((1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * 1) *ᵥ b
+      = b :=
+  (prop_3_5_drift_diffusion rfl (1 : Matrix (Fin 2) (Fin 2) ℝ) (by simp) v b σ).2.1
+
 /-- Non-vacuity: the standard orthonormal basis of `EuclideanSpace ℝ (Fin 2)` is linearly
-independent with `r = 2 = dim`, so Proposition 3.5's hypotheses are satisfiable and the
-conclusion `P_Y = id` is attained. -/
+independent with `r = 2 = dim`, so the hypotheses of `prop_3_5_projY_eq_id` are satisfiable and
+the conclusion `P_Y = id` is attained. -/
 example (u : EuclideanSpace ℝ (Fin 2)) :
     projY (⇑(EuclideanSpace.basisFun (Fin 2) ℝ)) u = u :=
   prop_3_5_projY_eq_id (EuclideanSpace.basisFun (Fin 2) ℝ).orthonormal.linearIndependent

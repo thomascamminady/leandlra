@@ -9,6 +9,7 @@ import LeanDLRA.Classical.WeylSingular
 import LeanDLRA.Control.AdjointDLRA
 import LeanDLRA.Corrections.CatalogueStatements
 import LeanDLRA.Corrections.NormalLowerRank
+import LeanDLRA.Corrections.PPCAResidual
 import LeanDLRA.Corrections.StrangNotRobust
 import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.Foundations.Existence

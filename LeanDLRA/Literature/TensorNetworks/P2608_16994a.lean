@@ -11,7 +11,17 @@ centre enlargement `S B0` keeps the row space of `B0` iff `rank S = r`) and
 `prop2_overlap_transport` (Prop. 2, contractive overlap transport: `‖X B0 B̂ᵀ‖² = ‖X‖² −
 ‖X B0 (I − B̂ᵀB̂)‖²`, with isometry iff `range(B0ᵀ) ⊆ range(B̂ᵀ)`). Both are proved for real
 matrices with the Frobenius norm, using the orthonormal-row hypotheses `B0 B0ᵀ = I` and
-`B̂ B̂ᵀ = I` of the paper's setting. Not formalized: Thm. 4 (the alternating-endpoint robust
+`B̂ B̂ᵀ = I` of the paper's setting. `prop2_le_and_eq_iff` adds the inequality of (24) and the
+equality case for one `X`.
+
+Deviations from the printed statements (PDF p. 6): the paper works over `ℂ` with conjugate
+transposes `†`; here everything is real and `†` is the transpose. In Prop. 1 the paper's
+consequence for the stacked spaces `V_c`, `V_e` of (20) and the rank condition (22) are not
+formalized, only the range equivalence (21). In Prop. 2 the reformulation (26) `O O† = I` and the
+consequence `B0 = O B̂` are not formalized, and the norm-preservation equivalence assumes at
+least one row (`0 < m`; for `m = 0` the left side holds vacuously).
+
+Not formalized: Thm. 4 (the alternating-endpoint robust
 bound, which needs the TTN-BUG local error and the half-sweep composition, neither in the
 library), Cor. 5 (norm and energy conservation of the MPS half-sweep; only the augmented
 Galerkin step is in `LeanDLRA`), and Prop. 3 (identification with the endpoint-rooted
@@ -26,12 +36,13 @@ namespace LeanDLRA.Literature.P2608_16994
 /-- **Prop. 1 (retention of the old block space)** of arXiv 2608.16994.
 
 Let `B0 : ℝ^{r×n}` have orthonormal rows (`B0 B0ᵀ = I`, the row-isometric convention of the
-paper), and let the enlarged centre be `C0 = S B0` with `S ∈ ℝ^{r×r}`. Then the row spaces
-`range(C0ᵀ)` and `range(B0ᵀ)` (subspaces of `ℝ^n`) coincide iff `rank S = r`.
-Ranges are taken as `LinearMap.range` of `Matrix.toLin'`. The predictor part of the paper's
-statement is not formalized; this is the matrix range fact it rests on. -/
-theorem prop1_range_eq_iff {r n : ℕ} (B0 : Matrix (Fin r) (Fin n) ℝ) (hB0 : B0 * B0ᵀ = 1)
-    (S : Matrix (Fin r) (Fin r) ℝ) :
+paper), and let the old centre be `C0 = S B0` with `S ∈ ℝ^{m×r}`. Then the row spaces
+`range(C0ᵀ)` and `range(B0ᵀ)` (subspaces of `ℝ^n`) coincide iff `rank S = r`; this is (21).
+Ranges are taken as `LinearMap.range` of `Matrix.toLin'`. The paper works over `ℂ`; this is the
+real case. The predictor part of the paper's statement (`V_c = V_e` for every predictor, and
+(22)) is not formalized; this is the matrix range fact it rests on. -/
+theorem prop1_range_eq_iff {r n m : ℕ} (B0 : Matrix (Fin r) (Fin n) ℝ) (hB0 : B0 * B0ᵀ = 1)
+    (S : Matrix (Fin m) (Fin r) ℝ) :
     LinearMap.range (Matrix.toLin' (S * B0)ᵀ) = LinearMap.range (Matrix.toLin' B0ᵀ) ↔
       S.rank = r := by
   have hf : Function.Injective (Matrix.toLin' B0ᵀ) := by
@@ -53,19 +64,20 @@ theorem prop1_range_eq_iff {r n : ℕ} (B0 : Matrix (Fin r) (Fin n) ℝ) (hB0 : 
 /-- **Prop. 2 (contractive overlap transport)** of arXiv 2608.16994.
 
 Let `B0 ∈ ℝ^{r×n}` and `B̂ ∈ ℝ^{r'×n}` have orthonormal rows, `B0 B0ᵀ = I` and `B̂ B̂ᵀ = I`, and
-set `O = B0 B̂ᵀ` and the orthogonal projector `P = B̂ᵀ B̂` on `ℝ^n`. Then for every matrix
-`X ∈ ℝ^{m×r}` (Frobenius norm)
+set `O = B0 B̂ᵀ` and the orthogonal projector `P = B̂ᵀ B̂` on `ℝ^n`. Then (Frobenius norm)
 
-* `‖X O‖² = ‖X‖² − ‖X B0 (I − P)‖²`, and
-* `‖X O‖ = ‖X‖` for all `X` iff `range(B0ᵀ) ⊆ range(B̂ᵀ)` (as subspaces of `ℝ^n`).
+* `‖X O‖² = ‖X‖² − ‖X B0 (I − P)‖²` for every `X ∈ ℝ^{m×r}` (the identity in (24)), and
+* for every fixed row count `m ≥ 1`: `‖X O‖ = ‖X‖` for all `X ∈ ℝ^{m×r}` iff
+  `range(B0ᵀ) ⊆ range(B̂ᵀ)` (as subspaces of `ℝ^n`), which is (25).
 
-The "for all `X`" quantifier ranges over all row counts `m`, so the equivalence does not depend
-on `m`. -/
+The paper works over `ℂ`; this is the real case. The paper's `k` is `m` here; `m ≥ 1` is needed
+because for `m = 0` the norm preservation holds vacuously. The equivalent form (26) and
+`B0 = O B̂` are not formalized. -/
 theorem prop2_overlap_transport {r r' n : ℕ} (B0 : Matrix (Fin r) (Fin n) ℝ)
     (hB0 : B0 * B0ᵀ = 1) (Bh : Matrix (Fin r') (Fin n) ℝ) (hBh : Bh * Bhᵀ = 1) :
     (∀ (m : ℕ) (X : Matrix (Fin m) (Fin r) ℝ),
         ‖X * (B0 * Bhᵀ)‖ ^ 2 = ‖X‖ ^ 2 - ‖X * B0 * (1 - Bhᵀ * Bh)‖ ^ 2) ∧
-      ((∀ (m : ℕ) (X : Matrix (Fin m) (Fin r) ℝ), ‖X * (B0 * Bhᵀ)‖ = ‖X‖) ↔
+      ∀ m : ℕ, 0 < m → ((∀ X : Matrix (Fin m) (Fin r) ℝ, ‖X * (B0 * Bhᵀ)‖ = ‖X‖) ↔
         LinearMap.range (Matrix.toLin' B0ᵀ) ≤ LinearMap.range (Matrix.toLin' Bhᵀ)) := by
   have hV : (Bhᵀ)ᵀ * Bhᵀ = 1 := by rw [Matrix.transpose_transpose]; exact hBh
   have hW : (B0ᵀ)ᵀ * B0ᵀ = 1 := by rw [Matrix.transpose_transpose]; exact hB0
@@ -88,15 +100,20 @@ theorem prop2_overlap_transport {r r' n : ℕ} (B0 : Matrix (Fin r) (Fin n) ℝ)
     rw [hZ, hY] at hpy
     rw [hO]
     linarith
-  refine ⟨hid, ⟨fun h => ?_, fun hle m X => ?_⟩⟩
-  · -- equality for all X forces `B0 (I - P) = 0`
-    have h1 := hid r (1 : Matrix (Fin r) (Fin r) ℝ)
-    have h2 := h r 1
-    rw [h2] at h1
-    have h3 : ‖(1 : Matrix (Fin r) (Fin r) ℝ) * B0 * (1 - Bhᵀ * Bh)‖ = 0 := by
-      have : ‖(1 : Matrix (Fin r) (Fin r) ℝ) * B0 * (1 - Bhᵀ * Bh)‖ ^ 2 = 0 := by linarith
-      exact (pow_eq_zero_iff two_ne_zero).1 this
-    rw [Matrix.one_mul, norm_eq_zero] at h3
+  refine ⟨hid, fun m hm => ⟨fun h => ?_, fun hle X => ?_⟩⟩
+  · -- equality for all X forces `B0 (I - P) = 0`: test with `X` whose rows are all `e_jᵀ`
+    have h3 : B0 * (1 - Bhᵀ * Bh) = 0 := by
+      ext j l
+      have h1 := hid m (Matrix.of fun (_ : Fin m) (l' : Fin r) => if l' = j then (1 : ℝ) else 0)
+      rw [h _] at h1
+      have h0 : (Matrix.of fun (_ : Fin m) (l' : Fin r) => if l' = j then (1 : ℝ) else 0) * B0
+          * (1 - Bhᵀ * Bh) = 0 := by
+        have : ‖(Matrix.of fun (_ : Fin m) (l' : Fin r) => if l' = j then (1 : ℝ) else 0) * B0
+            * (1 - Bhᵀ * Bh)‖ ^ 2 = 0 := by linarith
+        exact norm_eq_zero.1 ((pow_eq_zero_iff two_ne_zero).1 this)
+      have hent := congrFun (congrFun h0 ⟨0, hm⟩) l
+      rw [Matrix.mul_assoc, Matrix.mul_apply] at hent
+      simpa using hent
     have hPB : B0 * (Bhᵀ * Bh) = B0 := by
       have e : B0 * (1 - Bhᵀ * Bh) = B0 - B0 * (Bhᵀ * Bh) := by
         rw [Matrix.mul_sub, Matrix.mul_one]
@@ -138,6 +155,25 @@ theorem prop2_overlap_transport {r r' n : ℕ} (B0 : Matrix (Fin r) (Fin n) ℝ)
     have h2 : ‖X * (B0 * Bhᵀ)‖ ^ 2 = ‖X‖ ^ 2 := by simpa using h1
     exact (pow_left_inj₀ (norm_nonneg _) (norm_nonneg _) two_ne_zero).1 h2
 
+/-- The rest of (24) of arXiv 2608.16994: `‖X O‖ ≤ ‖X‖`, with equality for this particular `X`
+iff `X B0 (I − P) = 0` (real case, Frobenius norm). -/
+theorem prop2_le_and_eq_iff {r r' n m : ℕ} (B0 : Matrix (Fin r) (Fin n) ℝ)
+    (hB0 : B0 * B0ᵀ = 1) (Bh : Matrix (Fin r') (Fin n) ℝ) (hBh : Bh * Bhᵀ = 1)
+    (X : Matrix (Fin m) (Fin r) ℝ) :
+    ‖X * (B0 * Bhᵀ)‖ ≤ ‖X‖ ∧ (‖X * (B0 * Bhᵀ)‖ = ‖X‖ ↔ X * B0 * (1 - Bhᵀ * Bh) = 0) := by
+  have h := (prop2_overlap_transport B0 hB0 Bh hBh).1 m X
+  have hsq : ‖X * (B0 * Bhᵀ)‖ ^ 2 ≤ ‖X‖ ^ 2 := by
+    nlinarith [sq_nonneg ‖X * B0 * (1 - Bhᵀ * Bh)‖]
+  refine ⟨(pow_le_pow_iff_left₀ (norm_nonneg _) (norm_nonneg _) two_ne_zero).1 hsq, ?_⟩
+  constructor
+  · intro he
+    rw [he] at h
+    have : ‖X * B0 * (1 - Bhᵀ * Bh)‖ ^ 2 = 0 := by linarith
+    exact norm_eq_zero.1 ((pow_eq_zero_iff two_ne_zero).1 this)
+  · intro hz
+    rw [hz, norm_zero] at h
+    have h2 : ‖X * (B0 * Bhᵀ)‖ ^ 2 = ‖X‖ ^ 2 := by simpa using h
+    exact (pow_left_inj₀ (norm_nonneg _) (norm_nonneg _) two_ne_zero).1 h2
 
 /-! Non-vacuity: a concrete row-orthonormal `B0 ∈ ℝ^{2×3}` satisfies the hypotheses. -/
 
@@ -149,10 +185,12 @@ private theorem B0ex_orthonormal : B0ex * B0exᵀ = 1 := by
 /-- Prop. 1 applies to `B0ex` with `S = I` (full rank), so the row spaces agree. -/
 example : LinearMap.range (Matrix.toLin' ((1 : Matrix (Fin 2) (Fin 2) ℝ) * B0ex)ᵀ) =
     LinearMap.range (Matrix.toLin' B0exᵀ) :=
-  (prop1_range_eq_iff B0ex B0ex_orthonormal 1).2 (by simp [Matrix.rank_one])
+  (prop1_range_eq_iff B0ex B0ex_orthonormal (1 : Matrix (Fin 2) (Fin 2) ℝ)).2
+    (by simp [Matrix.rank_one])
 
 /-- Prop. 2 applies to `B0ex` and `B̂ = B0ex`: the overlap is an isometry. -/
-example : ∀ (m : ℕ) (X : Matrix (Fin m) (Fin 2) ℝ), ‖X * (B0ex * B0exᵀ)‖ = ‖X‖ :=
-  (prop2_overlap_transport B0ex B0ex_orthonormal B0ex B0ex_orthonormal).2.2 (le_refl _)
+example : ∀ X : Matrix (Fin 1) (Fin 2) ℝ, ‖X * (B0ex * B0exᵀ)‖ = ‖X‖ :=
+  ((prop2_overlap_transport B0ex B0ex_orthonormal B0ex B0ex_orthonormal).2 1 one_pos).2
+    (le_refl _)
 
 end LeanDLRA.Literature.P2608_16994

@@ -18,15 +18,19 @@ level; they are proved for the semi-discrete RTE (5.1) with exact substeps, the 
 5, to which the paper says its asymptotic analysis extends: `rte` is (5.1) with an arbitrary
 matrix `D` and any angular grid with the moments of `IsAngularQuad`, and `IsRTEGAPStep` is
 Algorithm 2.3 for it (well defined by `exists_gapStep`). `rte_diffusion_limit` and `rte_tendsto`
-are Theorem 4.1. **Theorem 4.2 is false as stated** (`theorem_4_2_false`): for the central
+are Theorem 4.1. **Theorem 4.2 is false as stated** in the semi-discrete setting of Section 5, to
+which the paper says its asymptotic analysis applies (p. 14) (`theorem_4_2_false`): for the central
 difference, three-point Gauss–Legendre, `r = 2` and a rank-two input, GAP converges to a
-stationary state for `ε → 0`, not to the solution of the limit equation. What is true, and what
+stationary state for `ε → 0`, not to the solution of the limit equation. (The printed Theorem 4.2
+is for the PDE (4.1); the same construction with `X = span {cos x, 1}` applies there, but that
+version is not formalized.) What is true, and what
 the proof in the paper needs but does not state, is that the density of the L-step output and its
 projected gradient are linearly independent; under this hypothesis `gap_ap_step`, `gap_ap_tendsto`
 (one step, hypothesis on the limit of the L-step, `gap_indep_eventually`), `gap_step_estimate`
 (one step, data depending on `ε`) and `gap_ap_run`, `gap_ap_run_tendsto` (a run) prove Theorem 4.2
-with rate `ε`, and `gap_ap_nonvacuous` exhibits an instance. The published proof has a second gap,
-which is closed here: for `ε > 0` the basis `V₁` contains `1, μ` only approximately, while the
+with rate `ε`, and `gap_ap_nonvacuous` exhibits an instance. The published proof also uses
+`V₁ ∝ 1`, `V₂ ∝ μ` exactly after deriving them up to `O(ε²)`; this is handled here: for `ε > 0`
+the basis `V₁` contains `1, μ` only approximately, while the
 K-step has the stiff term `ε⁻²`, so an error `δ` in `1 ∈ V₁` damps the density at rate `δ² / ε²`.
 The fix is `lstep_capture`: `V₁` contains `1` up to `O(ε²)` and `μ` up to `O(ε)`, which needs the
 slow-manifold estimate `IsRelaxSystem.flux_le` to second order in `ε`, and `kstep_estimate` shows
@@ -733,8 +737,9 @@ theorem IsGAPStep.isBUGStep {F : ℝ → E → E} {P₀ Q₁ Q₀ : E →L[ℝ] 
   sStart := hs.kStart
 
 /-- **Theorem 3.3 of arXiv 2505.19929 for `IsGAPStep`**: the library's `gap_local_error`, with the
-explicit constants of that theorem and the assumption (c) in the form
-`‖(1 - Q₁)(1 - P₀) F(t, YL t₁)‖ ≤ ε`. -/
+explicit constants of that library theorem (the paper states only the order
+`Δt² + η Δt + δ₀ Δt`). Differences: exact input (`Y₀ = A t₀`, so `δ₀ = 0`), and the model-order
+assumption (c) is replaced by `‖(1 - Q₁)(1 - P₀) F(t, YL t₁)‖ ≤ ε`. -/
 theorem IsGAPStep.local_error {F : ℝ → E → E} {P₀ Q₁ : E →L[ℝ] E} {t₀ t₁ h L B ε : ℝ} {Y₀ : E}
     {YL YK A : ℝ → E} (hs : IsGAPStep F P₀ Q₁ t₀ t₁ Y₀ YL YK) (hF : IsLipschitzField F L)
     (hL : 0 ≤ L) (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
@@ -1987,18 +1992,20 @@ theorem cex_not_tendsto {t : ℝ} (ht : 0 < t) :
   have h3 := ge_of_tendsto' h1 fun ε => cex_lower_bound ε t
   linarith
 
-/-- **Theorem 4.2 of arXiv 2505.19929 is false as stated.**  Take the setting of Section 5 of the
-paper: the periodic central difference on four points (`cexD`, see `cexD_mulVec`), the three-point
-Gauss–Legendre rule, `r = 2`, and the input `F₀ = z 𝟙ᵀ + 𝟙 P₂ᵀ` of rank two (`cex_rank`), with
-`z = (1, 1, -1, -1)`, `X = span {z, 𝟙}`, `V = span {1, P₂}`.  Then `cexF ε t` is the exact L-step
-and the exact K-step from each of its points, with the same `X` and `V`, so that the GAP scheme
-gives `κ^ε(t) = cexF ε t = z 𝟙ᵀ + e^{-t/ε²} 𝟙 P₂ᵀ` for any number of steps.  The density of `F₀` is
-`ρ(0)` for the solution `ρ(t) = e^{-t/3} z` of the limit equation `ρ' = ⅓ D² ρ`.  But `κ^ε(t)` does
-not converge to `ρ(t) 𝟙ᵀ` for any `t > 0`, it converges to the stationary `z 𝟙ᵀ`
-(`cex_lower_bound`).  The cause is that `P_X ∂ₓ ρ = 0` here, so the L-step produces no `μ`-mode:
-the proof reads off the range of `L` from the two vectors `⟨L⟩_μ` and `⟨L⟩_μ ⟨∂ₓXᵀX⟩`, which it
-tacitly takes to be linearly independent (`cex_not_indep`).  The same formula is a counterexample
-for the PDE, with `X = span {cos x, 1}` and `V = span {1, P₂(μ)}`. -/
+/-- **Theorem 4.2 of arXiv 2505.19929 is false as stated, in the semi-discrete setting of Section
+5** (to which the paper says its asymptotic analysis applies, p. 14). Take the setting of Section 5
+of the paper: the periodic central difference on four points (`cexD`, see `cexD_mulVec`), the
+three-point Gauss–Legendre rule, `r = 2`, and the input `F₀ = z 𝟙ᵀ + 𝟙 P₂ᵀ` of rank two
+(`cex_rank`), with `z = (1, 1, -1, -1)`, `X = span {z, 𝟙}`, `V = span {1, P₂}`. Then `cexF ε t` is
+the exact L-step and the exact K-step from each of its points, with the same `X` and `V`, so that
+the GAP scheme gives `κ^ε(t) = cexF ε t = z 𝟙ᵀ + e^{-t/ε²} 𝟙 P₂ᵀ` for any number of steps. The
+density of `F₀` is `ρ(0)` for the solution `ρ(t) = e^{-t/3} z` of the limit equation `ρ' = ⅓ D² ρ`.
+But `κ^ε(t)` does not converge to `ρ(t) 𝟙ᵀ` for any `t > 0`, it converges to the stationary `z 𝟙ᵀ`
+(`cex_lower_bound`). The cause is that `P_X ∂ₓ ρ = 0` here, so the L-step produces no `μ`-mode: the
+proof reads off the range of `L` from the two vectors `⟨L⟩_μ` and `⟨L⟩_μ ⟨∂ₓXᵀX⟩`, which it tacitly
+takes to be linearly independent (`cex_not_indep`). The same formula gives a counterexample for the
+PDE (4.1) of the printed theorem, with `X = span {cos x, 1}` and `V = span {1, P₂(μ)}`; that version
+is not formalized. -/
 theorem theorem_4_2_false {h : ℝ} (hh : 0 < h) :
     IsAngularQuad cexμ cexw ∧
     (∀ ε t₀ t₁, IsRTEGAPStep cexD cexμ cexw ε t₀ t₁ cexX cexV (cexF ε t₀) (cexF ε) (cexF ε)) ∧
