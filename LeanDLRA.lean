@@ -67,6 +67,7 @@ import LeanDLRA.Literature.HighOrder.P2403_02834a
 import LeanDLRA.Literature.HighOrder.P2403_02834b
 import LeanDLRA.Literature.HighOrder.P2412_09400a
 import LeanDLRA.Literature.HighOrder.P2501_06145a
+import LeanDLRA.Literature.HighOrder.P2501_06145b
 import LeanDLRA.Literature.HighOrder.P2502_07040a
 import LeanDLRA.Literature.HighOrder.P2502_07040b
 import LeanDLRA.Literature.HighOrder.P2608_12893a
@@ -117,6 +118,7 @@ import LeanDLRA.Literature.Kinetic.P2502_20883a
 import LeanDLRA.Literature.Kinetic.P2503_10562a
 import LeanDLRA.Literature.Kinetic.P2505_19929a
 import LeanDLRA.Literature.Kinetic.P2507_15192a
+import LeanDLRA.Literature.Kinetic.P2510_05452a
 import LeanDLRA.Literature.Kinetic.P2601_11900a
 import LeanDLRA.Literature.Kinetic.P2602_12337a
 import LeanDLRA.Literature.Kinetic.P2602_12337b
@@ -146,6 +148,7 @@ import LeanDLRA.Literature.RankAdaptive.P2304_05660a
 import LeanDLRA.Literature.RankAdaptive.P2602_14854a
 import LeanDLRA.Literature.Stiff.P1705_10175a
 import LeanDLRA.Literature.Stiff.P1803_10473a
+import LeanDLRA.Literature.Stiff.P1803_10473b
 import LeanDLRA.Literature.Stiff.P2002_12197a
 import LeanDLRA.Literature.Stiff.P2010_05249a
 import LeanDLRA.Literature.Stiff.P2204_10896a
