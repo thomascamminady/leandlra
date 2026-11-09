@@ -19,15 +19,18 @@ velocity set `κ` (`Disc`, `Disc.Admissible`): the backtracked flux derivative a
 energy stability `Disc.lemma8`, `Disc.lemma9`, `Disc.lemma10`, `Disc.prop1` and `Disc.prop2`; and
 the asymptotic-preserving property `Disc.prop7_full`, `Disc.prop7_sampled`, also for data
 independent of `ε` (`Disc.prop7_full_fixed`, `Disc.prop7_sampled_fixed`), with
-`Disc.prop7_nonvacuous` as an instance. No claim of the paper was found to be false.
+`Disc.prop7_nonvacuous` as an instance. No claim of the paper was found to be false, except that
+(25) of Lemma 10 needs a moment condition on the quadrature that the paper does not state
+(`Disc.lemma10_third_needs_moment`).
 
 Differences from the paper, which the docstrings repeat where they matter:
 
-* (25) needs `∑ⱼ wⱼ vⱼ² = 1/3`, which the paper does not state: a rule with normalized weights
-  need not satisfy it. `Disc.lemma10` has `∑ⱼ wⱼ vⱼ²` in place of `1/3`, and `Disc.prop1`,
-  `Disc.prop2` do not need the exactness: the final estimate closes for `∑ⱼ wⱼ vⱼ² ≤ 4/3`
-  (`Disc.closing_ineq`), so `|vⱼ| ≤ 1` is enough. The operator `T^{-1/2}` of the paper is avoided
-  by a direct Young inequality.
+* (25) holds for rules with `∑ⱼ wⱼ vⱼ² ≤ 1/3` (equality for a rule exact on `v²`), which the
+  paper does not state: for the normalized rule `v = ±1`, `w = 1/2` it fails
+  (`Disc.lemma10_third_needs_moment`). `Disc.lemma10` has `∑ⱼ wⱼ vⱼ²` in place of `1/3`, and
+  `Disc.prop1`, `Disc.prop2` do not need the exactness: the final estimate closes for
+  `∑ⱼ wⱼ vⱼ² ≤ 4/3` (`Disc.closing_ineq`), so `|vⱼ| ≤ 1` is enough. The operator `T^{-1/2}` of
+  the paper is avoided by a direct Young inequality.
 * (11) and the estimate after it are formal expansions in the paper, with unspecified `C`. Here
   they are theorems for a state that samples a smooth periodic low-rank function
   (`Disc.IsSmoothState`), with explicit constants. The first-order accuracy of the reconstruction
@@ -1117,7 +1120,8 @@ theorem Admissible.sum_flux_mul_sq_le (hP : P.Admissible) (ε : ℝ) (F : Matrix
 
 /-- **Lemma 10 of arXiv 2607.27736**, inequality (25). Here `C_v = ∑ⱼ wⱼ vⱼ²` replaces the paper's
 constant `1/3`; the two agree exactly when the quadrature integrates `v²`, which the paper uses
-without stating it (see `lemma10_third`). -/
+without stating it (see `lemma10_third`, and `lemma10_third_needs_moment` for a rule where the
+printed constant fails). -/
 theorem lemma10 (hP : P.Admissible) (ε : ℝ) (F : Matrix (ZMod N) κ ℝ) (φ : ZMod N → ℝ) :
     gridInner P.Δx (P.flux ε F) φ ^ 2 ≤
       (∑ j, P.w j * P.v j ^ 2) * gridFrobSq P.Δx (P.nonEq F) *
@@ -1148,6 +1152,80 @@ theorem lemma10_mean (hP : P.Admissible) (ε : ℝ) (F : Matrix (ZMod N) κ ℝ)
   rw [h0] at h
   have h1 : gridInner P.Δx (P.flux ε F) (fun _ => 1) ^ 2 ≤ 0 := by simpa using h
   exact pow_eq_zero_iff (two_ne_zero) |>.1 (le_antisymm h1 (sq_nonneg _))
+
+/-! #### (25) needs a moment condition
+
+The printed (25) has the constant `1/3`, which is `∑ⱼ wⱼ vⱼ²` for a rule exact on `v²`. The paper
+asks only for normalized weights. Here is an admissible rule with `∑ⱼ wⱼ vⱼ² = 1` for which (25)
+with `1/3` fails: `N = 4`, `Δx = 1`, `Δt = 4`, `ε = 1`, `v = (1, -1)`, `w = (1/2, 1/2)`. The shifts
+`vⱼ Δt / (ε Δx) = ±4` are whole periods, so `𝓑ⱼ` is the identity. -/
+
+/-- The data of `lemma10_third_needs_moment`. -/
+def ceP : Disc 4 (Fin 2) where
+  Δx := 1
+  Δt := 4
+  σs := fun _ => 1
+  σa := fun _ => 0
+  v := ![1, -1]
+  w := fun _ => 1 / 2
+
+theorem ceP_admissible : ceP.Admissible where
+  Δx_pos := by norm_num [ceP]
+  Δt_pos := by norm_num [ceP]
+  σs_pos := fun _ => by norm_num [ceP]
+  σa_nonneg := fun _ => by norm_num [ceP]
+  w_pos := fun _ => by norm_num [ceP]
+  w_sum := by norm_num [ceP]
+  v_le := fun j => by fin_cases j <;> norm_num [ceP]
+
+/-- The profile `g = (1, 0, -1, 0)` on `ZMod 4`. -/
+def ceG (i : ZMod 4) : ℝ := if i = 0 then 1 else if i = 2 then -1 else 0
+
+/-- The state `f₁ = g`, `f₂ = -g`, with density `0`. -/
+def ceF : Matrix (ZMod 4) (Fin 2) ℝ := Matrix.of fun i j => if j = 0 then ceG i else -ceG i
+
+/-- The test function `φ = (0, -1, 0, 1)`. -/
+def cePhi (i : ZMod 4) : ℝ := (![0, -1, 0, 1] : Fin 4 → ℝ) i
+
+/-- In the example the flux derivative is the central difference of `g`, which is `φ`. -/
+theorem ceP_flux : ceP.flux 1 ceF = cePhi := by
+  funext i
+  simp only [flux, hvec, bvec, density, backtrack, dUp, shift, ceP, ceF]
+  fin_cases i <;> norm_num [Fin.sum_univ_two, ceG, cePhi, dMinus, dPlus, Matrix.of_apply] <;>
+    simp +decide <;> norm_num
+
+/-- Sums over `ZMod 4`. -/
+theorem sum_zmod4 (f : ZMod 4 → ℝ) : ∑ i, f i = f 0 + f 1 + f 2 + f 3 := by
+  have hu : (Finset.univ : Finset (ZMod 4)) = {0, 1, 2, 3} := by decide
+  rw [hu, Finset.sum_insert (by decide), Finset.sum_insert (by decide),
+    Finset.sum_insert (by decide), Finset.sum_singleton]
+  ring
+
+theorem ceP_density (i : ZMod 4) : ceP.density ceF i = 0 := by
+  simp [density, ceP, ceF, Fin.sum_univ_two]
+
+/-- **(25) as printed fails without a moment condition** (arXiv 2607.27736, Lemma 10). For the
+admissible rule `v = (1, -1)`, `w = (1/2, 1/2)` (so `∑ⱼ wⱼ vⱼ² = 1`), with `N = 4`, `Δx = 1`,
+`Δt = 4`, `ε = 1`, the state `f₁ = -f₂ = (1, 0, -1, 0)` and `φ = (0, -1, 0, 1)` give
+`|⟨𝓙, φ⟩_Δx|² = 4`, while the right side of (25) is `(1/3) · 2 · 4 = 8/3`. `lemma10`, with
+`∑ⱼ wⱼ vⱼ²` in place of `1/3`, gives the bound `8`. -/
+theorem lemma10_third_needs_moment :
+    ∃ (P : Disc 4 (Fin 2)) (F : Matrix (ZMod 4) (Fin 2) ℝ) (φ : ZMod 4 → ℝ), P.Admissible ∧
+      ∑ j, P.w j * P.v j ^ 2 = 1 ∧
+      ¬ gridInner P.Δx (P.flux 1 F) φ ^ 2 ≤
+        1 / 3 * gridFrobSq P.Δx (P.nonEq F) * gridNorm P.Δx (dMinus P.Δx φ) ^ 2 := by
+  refine ⟨ceP, ceF, cePhi, ceP_admissible, by norm_num [ceP, Fin.sum_univ_two], ?_⟩
+  have hm : ∀ j, ceP.m j ^ 2 = 1 / 2 := fun j => ceP_admissible.m_sq j
+  rw [ceP_flux, gridNorm, Real.sq_sqrt (by
+    simp only [gridInner]; exact mul_nonneg (by norm_num [ceP])
+      (Finset.sum_nonneg fun i _ => mul_self_nonneg _))]
+  simp only [gridFrobSq, nonEq_apply, ceP_density, sub_zero, mul_pow, hm, gridInner,
+    Fin.sum_univ_two, sum_zmod4]
+  have h10 : (1 : ZMod 4) ≠ 0 := by decide
+  have h12 : (1 : ZMod 4) ≠ 2 := by decide
+  have h30 : (3 : ZMod 4) ≠ 0 := by decide
+  have h32 : (3 : ZMod 4) ≠ 2 := by decide
+  norm_num [ceP, ceF, ceG, cePhi, dMinus, h10, h12, h30, h32]
 
 /-- **Lemma 8 of arXiv 2607.27736**, inequality (20), for a constant absorption `a` and diffusion
 coefficient `b`. Here `‖√β D⁻ρs‖² = b ‖D⁻ρs‖²` and `‖√σᵃ ρs‖² = a ‖ρs‖²`. -/

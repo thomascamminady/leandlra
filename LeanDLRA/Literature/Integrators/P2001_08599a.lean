@@ -19,15 +19,20 @@ the fibre bundle structure of matrix manifolds":
   for orthonormal `U`, `V` this is the library's `tangentProj`.  The orthonormal-gauge
   factor ODEs (13) are already in `LeanDLRA.hasDerivAt_factorProduct_tangentProj_iff_factorODE`
   (`Matrix/GaugeODE.lean`) and are not repeated.
-* **Eqs. (17)-(18), Prop. A.1** (`splitting_direct_sum`): `P₁ + P₂ + P₃ = P_T` with pairwise
-  orthogonal orthogonal-projector summands (a direct-sum decomposition); the splitting
-  integrator and its error analysis are not formalized.
+* **Eqs. (17)-(18)** (`splitting_direct_sum`): `P₁ + P₂ + P₃ = P_T` with pairwise
+  orthogonal orthogonal-projector summands (the "direct sum decomposition of the tangent space"
+  stated after (18)); the splitting integrator, Prop. A.1 (the sub-flows (27)-(29)) and the error
+  analysis are not formalized.
 * **Lemma 3.11** (`lemma_3_11`, `ksl_iterate_eq`, `chart_iterate_eq`): one KSL step and one
-  chart-based step (explicit flux, QR encoded by its defining equations) coincide, and both
-  equal `Y₀ + h F Q₀ + h P₁ F (1 - Q₀)`.
+  chart-based step (explicit flux, QR encoded by its defining equations, orthonormal `U₀`, `V₀`)
+  coincide, and both equal `Y₀ + h F Q₀ + h P₁ F (1 - Q₀)` (the formula from the proof of the
+  cited KSL exactness theorem, arXiv 1301.1058, Theorem 4.1).  The paper's claim is for whole
+  sequences; only one step is formalized.
 * **Prop. 3.12** (`prop_3_12`, `prop_3_12_literal_false`): as stated in the paper (bounded
-  rank `r`) the exactness claim is false; with rank exactly `r` and `V(t_k)ᵀ V(t_{k-1})`
-  invertible it is proved via Lemma 3.11 and the library's KSL exactness.
+  rank `r`, no further condition) the exactness claim is false when the QR factor of a
+  rank-deficient `K₁` is arbitrary, even for `A(t)` of rank exactly `r`; with rank exactly `r` at
+  `t_{k-1}` and `V(t_k)ᵀ V(t_{k-1})` invertible it is proved via Lemma 3.11 and the library's KSL
+  exactness.
 -/
 
 open Set Filter Topology Finset
@@ -257,9 +262,10 @@ noncomputable def tangentEquiv (hc : IsChartData U V Up Vp G) :
 `Z = U G Vᵀ`, `U, V` of full column rank, `G` invertible and `U⊥`, `V⊥` as in Section 2.1,
 the inverse of the isomorphism `T_Z i : (δX, δY, δH) ↦ U⊥ δX G Vᵀ + U G (V⊥ δY)ᵀ + U δH Vᵀ` onto
 `T_Z M_r` is `δW ↦ (U⊥⁺ δW (V⁺)ᵀ G⁻¹, V⊥⁺ δWᵀ (U⁺)ᵀ G⁻ᵀ, U⁺ δW (V⁺)ᵀ)`.  Precisely: this map
-is a two-sided inverse of `T_Z i` (`tangentInv_tangentMap`) and a right inverse on the whole
-tangent space; the paper writes the formula for all `δW ∈ ℝ^{n×m}`, where it is a right inverse
-only on `T_Z M_r`.  `T_Z M_r` is `range (T_Z i) = {U B + C Vᵀ}`.  The complement condition
+is a left inverse of `T_Z i` on the whole parameter space (`tangentInv_tangentMap`) and a right
+inverse on the tangent space, hence the inverse of `T_Z i` onto `T_Z M_r`; the paper writes the
+formula for all `δW ∈ ℝ^{n×m}`, where it is a right inverse only on `T_Z M_r`.  `T_Z M_r` is
+`range (T_Z i) = {U B + C Vᵀ}`.  The complement condition
 `U U⁺ + U⊥ U⊥⁺ = 1` is the content of "`U⊥` is a basis of `range(U)⊥`". -/
 theorem prop_2_2 (hc : IsChartData U V Up Vp G) :
     (∀ x, tangentInv U V Up Vp G (tangentMap U V Up Vp G x) = x) ∧
@@ -403,15 +409,15 @@ lemma splitP₂_apply (A : Matrix m n ℝ) : splitP₂ P Q A = A * Q - P * (A * 
 lemma splitP₃_apply (A : Matrix m n ℝ) : splitP₃ P Q A = P * (A - A * Q) := by
   simp [splitP₃, Matrix.mul_sub]
 
-/-- **Eqs. (17)–(18) and Proposition A.1 (decomposition part)** (arXiv 2001.08599).  For
+/-- **Eqs. (17)–(18)** (arXiv 2001.08599; the direct-sum remark after (18)).  For
 symmetric idempotent `P = P_U`, `Q = P_V` (orthogonal projectors; for `U`, `V` of full column
 rank `P_U = U U⁺`, see `isOrthProj_leftMul` and `pinvL`), the maps `P₁ = P_U · P_V`,
 `P₂ = P_U⊥ · P_V`, `P₃ = P_U · P_V⊥` satisfy `P₁ + P₂ + P₃ = P_T`, where
 `P_T A = P_U A + A P_V - P_U A P_V` is the tangent-space projection, each `Pᵢ` is an orthogonal
 projector, and the `Pᵢ` are pairwise orthogonal (`Pᵢ Pⱼ = 0` for `i ≠ j`).  Hence the sum is a
 direct sum of the ranges, which is the "direct sum decomposition of the tangent space".  The
-Lie splitting integrator itself (the H-, X-, Y-sub-flows) and its error analysis are not
-formalized. -/
+Lie splitting integrator itself (the H-, X-, Y-sub-flows of Prop. A.1) and its error analysis are
+not formalized. -/
 theorem splitting_direct_sum (hP : P * P = P) (hPs : Pᵀ = P) (hQ : Q * Q = Q) (hQs : Qᵀ = Q) :
     (∀ A : Matrix m n ℝ,
       splitP₁ P Q A + splitP₂ P Q A + splitP₃ P Q A = P * A + A * Q - P * A * Q) ∧
@@ -509,14 +515,16 @@ lemma chart_L_eq (V₀ : Matrix n r ℝ) (U₁ : Matrix m r ℝ) (Gh : Matrix r 
     Matrix.mul_assoc, smul_sub]
   abel
 
-/-- **Lemma 3.11** (arXiv 2001.08599), for `Z`-independent flux `F`: with orthonormal `U₀`, `V₀`,
+/-- **Lemma 3.11** (arXiv 2001.08599), for `Z`-independent flux `F`: with orthonormal `U₀`, `V₀`
+(the paper's proof uses `P_{U₀} = U₀U₀ᵀ`; for `k ≥ 2` they come from QR factorizations),
 one step of the KSL algorithm and one step of the chart-based algorithm, run with the same step
 size and flux, produce the same data.  Precisely, `(U₁, Ĝ₁, V₁, G₁)` is a valid QR-based KSL step
 iff the same four matrices form a valid chart-based step (`H̃₁ = Ĝ₁`), so with a deterministic
 QR routine, which is applied to the same matrix `K₁ = K̄₁` and then to the same `L₁ = L̄₁`
 (these are the identities `K̄₁ = K₁`, `L̄₁ = L₁` of the paper's proof), the two iterates
-`Z¹ = U₁ G₁ V₁ᵀ` coincide.  Here `F` is the single value `F(t_{k-1})`; the claim for a whole
-sequence `{Zᵏ}` follows by induction since the step depends only on `(Zᵏ⁻¹ factors, F(t_{k-1}))`. -/
+`Z¹ = U₁ G₁ V₁ᵀ` coincide.  Here `F` is the single value `F(t_{k-1})`.  The paper's claim is for
+the whole sequence `{Zᵏ}`; it follows from the one-step statement by induction, which is not
+formalized. -/
 theorem lemma_3_11 (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1) :
     IsKSLAlg h F U₀ G₀ V₀ U₁ Gh V₁ G₁ ↔ IsChartAlg h F U₀ G₀ V₀ U₁ Gh V₁ G₁ := by
   constructor
@@ -530,11 +538,12 @@ theorem lemma_3_11 (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1) :
     · rw [← chart_L_eq]; exact c.qr_Y
 
 omit [DecidableEq m] in
-/-- **Explicit form of one step** (the first line of the proof of Prop. 3.12 in the paper, the
-"two-line projector computation"): for a KSL (equivalently, chart) step from `Z₀ = U₀ G₀ V₀ᵀ`
+/-- **Explicit form of one step**: for a KSL (equivalently, chart) step from `Z₀ = U₀ G₀ V₀ᵀ`
 the new iterate is
-`Z¹ = Z₀ + h F Q₀ + h P₁ F (1 - Q₀)` with `Q₀ = V₀ V₀ᵀ` and `P₁ = U₁ U₁ᵀ`, the formula
-`Y₁ = Y₀ + h F Q₀ + h P₁ F (I - Q₀)` of the paper; no orthonormality is needed. -/
+`Z¹ = Z₀ + h F Q₀ + h P₁ F (1 - Q₀)` with `Q₀ = V₀ V₀ᵀ` and `P₁ = U₁ U₁ᵀ`; no orthonormality is
+needed.  This formula is not displayed in arXiv 2001.08599: it is the computation in the proof of
+the KSL exactness theorem that the proof of Prop. 3.12 cites ([15, Theorem 4.1], i.e.
+arXiv 1301.1058, Theorem 4.1, with `ΔA = h F`). -/
 theorem ksl_iterate_eq (k : IsKSLAlg h F U₀ G₀ V₀ U₁ Gh V₁ G₁) :
     U₁ * G₁ * V₁ᵀ = U₀ * G₀ * V₀ᵀ + h • (F * (V₀ * V₀ᵀ))
       + h • (U₁ * U₁ᵀ * F * (1 - V₀ * V₀ᵀ)) := by
@@ -565,9 +574,13 @@ exact, `A₀ = U₀ G₀ V₀ᵀ` with `V₀ᵀ V₀ = 1`, let `h F = A₁ - A�
 factors).  If `A₀ = Ue₀ Se₀ Ve₀ᵀ` has rank exactly `r` (`Ue₀ᵀ Ue₀ = 1`, `Se₀` invertible) and
 `A₁ = Ue₁ Se₁ Ve₁ᵀ` has rank at most `r`, with `Ve₁ᵀ Ve₀` invertible, then `Z¹ = A₁`.
 The paper's statement only assumes "bounded rank `r`"; the two extra conditions (rank exactly
-`r` at `t_{k-1}`, invertibility of `V(t_k)ᵀ V(t_{k-1})`) are those of the cited exactness theorem
-of the KSL algorithm, and without them the statement is false, see
-`prop_3_12_literal_false`.  The proof transfers `ksl_exact_of_factors` via `lemma_3_11`. -/
+`r` at `t_{k-1}`, invertibility of `V(t_k)ᵀ V(t_{k-1})`) are the hypotheses of the library's
+`ksl_exact_of_factors`.  The cited [15, Theorem 4.1] (arXiv 1301.1058) states KSL exactness for
+rank at most `r` without them; its proof assumes the invertibility and treats the singular case
+by a perturbation argument.  Without the invertibility the statement is false for an admissible
+QR factor, even when `A(t)` has rank exactly `r` for all `t` (`prop_3_12_literal_false`).  The
+proof transfers `ksl_exact_of_factors` via `lemma_3_11`.  The implicit start `Z⁰ = A(t₀)` (needed
+for `Zᵏ = A(tᵏ)`) is the hypothesis `hY₀`. -/
 theorem prop_3_12 {A₀ A₁ : Matrix m n ℝ} {Ue₀ Ue₁ : Matrix m r ℝ} {Se₀ Se₁ : Matrix r r ℝ}
     {Ve₀ Ve₁ : Matrix n r ℝ} (hA₀ : A₀ = Ue₀ * Se₀ * Ve₀ᵀ) (hA₁ : A₁ = Ue₁ * Se₁ * Ve₁ᵀ)
     (hUe₀ : Ue₀ᵀ * Ue₀ = 1) (hSe₀ : IsUnit Se₀) (hVV : IsUnit (Ve₁ᵀ * Ve₀))
@@ -600,12 +613,16 @@ local macro "e_simp" : tactic =>
     dotProduct] <;> try norm_num)
 
 /-- **Proposition 3.12 is false as literally stated** (arXiv 2001.08599, Prop. 3.12, hypothesis
-"`A(t)` has bounded rank `r` for all `t`").  The curve `A(t) = e₁ ((1-t) e₁ + t e₂)ᵀ` has rank at
-most `r = 1` for all `t`, `Δt = 1`, and the increment is `Δt F(t₀) = A(1) - A(0)`.  Starting from
+"`A(t)` has bounded rank `r` for all `t`").  The curve `A(t) = e₁ ((1-t) e₁ + t e₂)ᵀ` has rank
+`r = 1` for all `t`, `Δt = 1`, and the increment is `Δt F(t₀) = A(1) - A(0)`.  Starting from
 the exact factorization `A(0) = e₁ · 1 · e₁ᵀ`, the chart-based algorithm admits a valid
 QR step (`K₁ = 0`, so `U₁ = e₂` is an admissible orthonormal basis) whose result `Z¹ = 0` differs
-from `A(1) = e₁ e₂ᵀ`.  Here the condition `Ve₁ᵀ Ve₀ = e₂ᵀ e₁ = 0` of the cited exactness theorem
-fails. -/
+from `A(1) = e₁ e₂ᵀ`.  Here `V(1)ᵀ V(0) = e₂ᵀ e₁ = 0`, so the invertibility hypothesis of
+`prop_3_12` fails.  The failure uses the freedom in the QR factorization of the rank-deficient
+`K₁ = 0` (with `U₁ = e₁` this particular step is exact).  For the rank-one path from `e₁e₁ᵀ` to
+`e₂e₂ᵀ` the choice `U₁ = e₁` fails as well, for the KSL step
+(`LeanDLRA.Exactness.RankOneExample.not_exact_of_degenerate`), hence for the chart step by
+`lemma_3_11`. -/
 theorem prop_3_12_literal_false :
     ∃ (A : ℝ → Matrix (Fin 2) (Fin 2) ℝ) (u v : ℝ → Matrix (Fin 2) (Fin 1) ℝ),
       (∀ t, A t = u t * (v t)ᵀ) ∧

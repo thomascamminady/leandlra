@@ -506,8 +506,10 @@ theorem exists_isSVD_of_le (A : Matrix m n ℝ) {p : ℕ} (hp : A.rank ≤ p)
     · simp [σ, hi]
 
 /-- **Spectral initialization exists for every `r ≤ min(m, n)`** (arXiv 2209.13569, Sec. 3.2,
-eq. (3)): there are `U ∈ ℝ^{m×r}`, `V ∈ ℝ^{n×r}` from an SVD of `A` that are balanced and have
-`U Vᵀ` a best approximation of `A` of rank `≤ r` in the Frobenius norm. -/
+eq. (3)): there are balanced `U ∈ ℝ^{m×r}`, `V ∈ ℝ^{n×r}` with `U Vᵀ` a best approximation of `A`
+of rank `≤ r` in the Frobenius norm.  The proof takes the spectral factors of a reduced SVD
+(`exists_isSVD_of_le`, `spectral_initialization`); the statement itself records only balancedness,
+rank and optimality, not that `U`, `V` come from an SVD. -/
 theorem exists_spectral_initialization (A : Matrix m n ℝ) {r : ℕ}
     (hm : r ≤ Fintype.card m) (hn : r ≤ Fintype.card n) :
     ∃ (U : Matrix m (Fin r) ℝ) (V : Matrix n (Fin r) ℝ), Uᵀ * U = Vᵀ * V ∧

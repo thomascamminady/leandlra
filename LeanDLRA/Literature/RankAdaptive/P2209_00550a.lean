@@ -33,15 +33,17 @@ matrix form; the index type `ι` of the sum has `N` elements). -/
 def sepOp (A : ι → Matrix m m ℝ) (B : ι → Matrix n n ℝ) (W : Matrix m n ℝ) : Matrix m n ℝ :=
   ∑ κ, A κ * W * (B κ)ᵀ
 
-/-- The separable bilinear form of arXiv 2209.00550, Def. 3.3 / Prop. 3.2, written in coordinates
-of the tensor-product basis: `a(W, Z) = Σ_κ Σ_{i,j,k,l} (A_κ)_{ki} (B_κ)_{lj} W_{ij} Z_{kl}`. -/
+/-- The separable bilinear form of arXiv 2209.00550, Def. 3.2 / Prop. 3.2, written in coordinates
+of the tensor-product basis: `a(W, Z) = Σ_κ Σ_{i,j,k,l} (A_κ)_{ki} (B_κ)_{lj} W_{ij} Z_{kl}`
+(the middle expression of (3.10)). -/
 def sepForm (A : ι → Matrix m m ℝ) (B : ι → Matrix n n ℝ) (W Z : Matrix m n ℝ) : ℝ :=
   ∑ κ, ∑ i, ∑ j, ∑ k, ∑ l, A κ k i * B κ l j * W i j * Z k l
 
 /-- **Prop. 3.2 (arXiv 2209.00550), matrix form.**  The separable bilinear form `sepForm A B`
 is induced by the operator `L W = Σ_κ A_κ W B_κᵀ`, in the Frobenius inner product:
 `a(W, Z) = ⟪L W, Z⟫_F`.  Difference from the paper: finite-element basis functions are abstracted
-away; `A_κ`, `B_κ` are the (square) matrices of the factors of the form in a basis. -/
+away; `A_κ`, `B_κ` are the (square) matrices of the factors of the form in a basis, with
+`A_κ : m × m` and `B_κ : n × n` as in Def. 3.3. -/
 theorem sepForm_eq_inner (A : ι → Matrix m m ℝ) (B : ι → Matrix n n ℝ) (W Z : Matrix m n ℝ) :
     sepForm A B W Z = ⟪sepOp A B W, Z⟫ := by
   rw [Frobenius.inner_def, sepForm, sepOp]
@@ -99,9 +101,9 @@ theorem tangentEuler_residual (C : Matrix m k ℝ) (D : Matrix n k' ℝ) (Y F : 
 `Y = C S Dᵀ` have rank `≤ r` (`C : m × r`, `S : r × r`, `D : n × r`) and let `F` be
 `N`-separable, `F(Y) = Σ_{κ<N} A_κ Y B_κᵀ`.  Then the normal component
 `(I - C₀ C₀ᵀ) F(Y) (I - D₀ D₀ᵀ)` of `F(Y)` with respect to *any* pair of matrices `C₀`, `D₀`
-(in particular the bases of `Y`) has rank at most `N r`; hence so has the tangent-Euler residual
-`U_FE - U^{n+1}` of `tangentEuler_residual`.  Not covered: the bound `(N + 2) r` for the
-unconventional predictor. -/
+(in particular the bases of `Y`) has rank at most `N r`. The residual itself is
+`rank_tangentEuler_residual_le` (Prop. 5.2 (ii)).  Not covered: the bound `(N + 2) r` of
+Prop. 5.2 (i) for Algorithms 4.1 and 4.3. -/
 theorem rank_normal_sepOp_le {N r : ℕ} (A : Fin N → Matrix m m ℝ) (B : Fin N → Matrix n n ℝ)
     (C : Matrix m (Fin r) ℝ) (S : Matrix (Fin r) (Fin r) ℝ) (D : Matrix n (Fin r) ℝ)
     (C₀ : Matrix m k ℝ) (D₀ : Matrix n k' ℝ) :
@@ -125,6 +127,20 @@ theorem rank_normal_sepOp_le {N r : ℕ} (A : Fin N → Matrix m m ℝ) (B : Fin
   rw [hX]
   exact (Matrix.rank_mul_le_left _ _).trans ((Matrix.rank_mul_le_right _ _).trans h1)
 
+omit [DecidableEq m] [DecidableEq n] in
+/-- **Prop. 5.2 (ii) (arXiv 2209.00550).**  For `N`-separable `F` and `U^n = C S Dᵀ` of rank
+`≤ r`, the residual `R = U_FE - U^{n+1}` (5.3) of the tangent-Euler step (Algorithm 4.2, (4.12))
+has rank at most `N r`.  The tangent projector may be taken with respect to any `C₀`, `D₀` (the
+paper uses the orthonormal bases of `U^n`). -/
+theorem rank_tangentEuler_residual_le {N r : ℕ} (A : Fin N → Matrix m m ℝ)
+    (B : Fin N → Matrix n n ℝ) (C : Matrix m (Fin r) ℝ) (S : Matrix (Fin r) (Fin r) ℝ)
+    (D : Matrix n (Fin r) ℝ) (C₀ : Matrix m k ℝ) (D₀ : Matrix n k' ℝ) (h : ℝ) :
+    ((C * S * Dᵀ + h • sepOp A B (C * S * Dᵀ))
+      - (C * S * Dᵀ + h • tangentProj C₀ D₀ (sepOp A B (C * S * Dᵀ)))).rank ≤ N * r := by
+  classical
+  rw [tangentEuler_residual, Matrix.smul_eq_diagonal_mul]
+  exact (Matrix.rank_mul_le_right _ _).trans (rank_normal_sepOp_le A B C S D C₀ D₀)
+
 end Residual
 
 section Culling
@@ -133,7 +149,9 @@ section Culling
 orthogonal projector on an inner product space, `y = U_FE` the forward Euler step and `z = U^{n+1}`
 any element of the range of `P_H` (e.g. the culled/truncated predictor).  With the residual
 `R = y - P_H y` and the culling error `P_H y - z` (`P_H y = U_P` the predictor), Pythagoras gives
-`‖y - z‖² = ‖R‖² + ‖P_H y - z‖²`. -/
+`‖y - z‖² = ‖R‖² + ‖P_H y - z‖²`.  This is the orthogonality of `R` and `U_P^{n+1} - U^{n+1}` that
+Sec. 5.3.2 (and Sec. 4.4) states in words for the projected unconventional integrator
+(Algorithm 4.3, where `U_P = P_H U_FE` by (4.18)); the paper prints no equation for it. -/
 theorem norm_sq_sub_eq_of_orthProj {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     {P : E →L[ℝ] E} (hP : IsOrthProj P) (y z : E) (hz : P z = z) :
     ‖y - z‖ ^ 2 = ‖y - P y‖ ^ 2 + ‖P y - z‖ ^ 2 := by
@@ -146,7 +164,8 @@ theorem norm_sq_sub_eq_of_orthProj {E : Type*} [NormedAddCommGroup E] [InnerProd
 
 /-- **Sharpness of the estimator (arXiv 2209.00550, Sec. 5.3.2).**  Under the hypotheses of
 `norm_sq_sub_eq_of_orthProj`, the residual norm is a lower bound for the full error:
-`‖y - P_H y‖ ≤ ‖y - z‖` (the estimator never overestimates the error).  The matching
+`‖y - P_H y‖ ≤ ‖y - z‖`.  This is a consequence of the orthogonality, not a printed statement;
+it concerns the exact `‖R‖`, not the randomized estimator `ν` of (5.10).  The matching
 equality statement is `norm_sq_sub_eq_of_orthProj`. -/
 theorem norm_residual_le_of_orthProj {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] {P : E →L[ℝ] E} (hP : IsOrthProj P) (y z : E) (hz : P z = z) :

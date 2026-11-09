@@ -407,6 +407,7 @@ import LeanDLRA.Stiff.ImplicitBUG
 import LeanDLRA.Stiff.ImplicitSolvability
 import LeanDLRA.Stochastic.KalmanBucy
 import LeanDLRA.Stochastic.MeanSquare
+import LeanDLRA.Tensor.Defs
 import LeanDLRA.Training.Descent
 import LeanDLRA.Training.FactorizedDynamics
 import LeanDLRA.Training.GradientFlowConvergence

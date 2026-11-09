@@ -74,9 +74,13 @@ by `B`, and the normal component of `F(t, Y₀)` is `≤ ε` on `[t₀, t₁)`, 
 
 and the same bound holds for each of the four blocks `P₀Q₀`, `(1-P₀)Q₀`, `P₀(1-Q₀)`,
 `(1-P₀)(1-Q₀)` of the difference with respect to the old bases.
-Difference from the paper: the paper argues via local error analysis with implicit constants;
-here the constants are explicit and only the normal-component bound at `Y₀` is used
-(no bound at the augmented bases). -/
+This is the first display of Sec. 4.1, `‖Ŷ₁ - Ŷ₁^BUG‖ ≤ ĉ₁ h² + ĉ₂ h ε`, which the paper derives
+from the heuristic block comparison of Sec. 3.2 with unspecified constants.
+Differences from the paper: the constants are explicit; `F` is only Lipschitz and bounded (the paper
+assumes bounded derivatives, and remarks that the constants depend only on a bound and a Lipschitz
+constant); the normal-component bound is required at `Y₀` for all `t ∈ [t₀, t₁)`, while the
+paper's (3.10) is at `t₀` only (the same for autonomous `F`); no bound at the augmented bases is
+used. -/
 theorem parallelBUG_vs_augmentedBUG {F : ℝ → E → E} {L B ε : ℝ} {P₀ Q₀ Ph Qh : E →L[ℝ] E}
     {t₀ t₁ : ℝ} {Y₀ : E} {YK YL YS Ys A : ℝ → E}
     (hs : IsParallelBUGStep F P₀ Q₀ t₀ t₁ Y₀ YK YL YS)
@@ -166,8 +170,10 @@ Under the hypotheses of `parallelBUG_vs_augmentedBUG`, for step sizes `h = t₁ 
     ‖Ŷ₁ - Ŷ₁^BUG‖ ≤ h (c₁ ε + c₂ h),   c₁ = 2 + L H e^{L H},  c₂ = 14 L B + L B e^{L H}(1 + 7 L H),
 
 and the `(1,1)` block of the augmented BUG update that the parallel integrator drops,
-`(1 - P₀)(1 - Q₀) Ŷ₁^BUG` (the block `Ũ₁ᵀ (∫F) Ṽ₁` of `Ŝ`), satisfies the same bound, since the
-corresponding block of `Ŷ₁` is zero (`IsParallelBUGStep.blocks`). -/
+`(1 - P₀)(1 - Q₀) Ŷ₁^BUG` (the block `Ũ₁ᵀ (∫F) Ṽ₁` of `Ŝ`, (3.7)), satisfies the same bound, since
+the corresponding block of `Ŷ₁` is zero (`IsParallelBUGStep.blocks`).  The paper states `O(h ε)`
+for this block in Sec. 3.2 and `h η + O(h²)` in Sec. 3.3; the bound here is `O(h (h + ε))`, of the
+latter form. -/
 theorem parallelBUG_vs_augmentedBUG_le {F : ℝ → E → E} {L B ε H : ℝ} {P₀ Q₀ Ph Qh : E →L[ℝ] E}
     {t₀ t₁ : ℝ} {Y₀ : E} {YK YL YS Ys A : ℝ → E}
     (hs : IsParallelBUGStep F P₀ Q₀ t₀ t₁ Y₀ YK YL YS)
