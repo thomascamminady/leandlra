@@ -4,11 +4,15 @@
 
 SHELL := /bin/bash
 PY_SCRIPTS := scripts/certificate.py scripts/fidelity.py scripts/gate.py scripts/build_site.py scripts/ledger.py scripts/corpus.py \
-              scripts/fetch_arxiv.py
+              scripts/fetch_arxiv.py scripts/hashdiff.py scripts/connectivity.py
 PYENV := .lake/check/pyenv
+# Statement dumps of `make dump`; `make hashdiff` compares the last two (scripts/hashdiff.py).
+HASHDIFF := .lake/hashdiff
+BEFORE ?= $(HASHDIFF)/before.jsonl.gz
+AFTER ?= $(HASHDIFF)/after.jsonl.gz
 
 .DEFAULT_GOAL := help
-.PHONY: help deps build check audit verify index docs site lint-py ci papers clean
+.PHONY: help deps build check audit verify index docs site dump hashdiff lint-py test-py ci papers clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -39,11 +43,24 @@ docs: ## Regenerate docs/PROVEN.md and the README status block
 site: index docs ## Generate the website pages into website/ (as the Pages workflow does)
 	uv run -q scripts/build_site.py
 
+dump: ## Dump every declaration's type (build first); the previous dump becomes BEFORE
+	@mkdir -p $(HASHDIFF)
+	uv run -q scripts/hashdiff.py dump $(HASHDIFF)/new.jsonl.gz
+	@if [ -f $(AFTER) ]; then mv $(AFTER) $(BEFORE); fi
+	@mv $(HASHDIFF)/new.jsonl.gz $(AFTER)
+
+hashdiff: ## Compare the last two dumps (renames: docs/renames.json); MOVE=1 fails on any change
+	uv run -q scripts/hashdiff.py diff $(BEFORE) $(AFTER) $(if $(MOVE),--move) --report=$(HASHDIFF)/report.md
+	@echo "full report: $(HASHDIFF)/report.md"
+
 lint-py: ## Ruff + ty on the Python scripts
-	uvx ruff check scripts/
-	uvx ruff format --check scripts/
+	uvx ruff check scripts/ tests/
+	uvx ruff format --check scripts/ tests/
 	@test -d $(PYENV) || (uv venv -q $(PYENV) && uv pip install -q --python $(PYENV) fire polars)
 	uvx ty check --python $(PYENV) $(PY_SCRIPTS)
+
+test-py: ## Pytest for the Python scripts (tests/)
+	uv run -q --with pytest pytest -q tests
 
 ci: verify lint-py ## Everything CI checks
 
