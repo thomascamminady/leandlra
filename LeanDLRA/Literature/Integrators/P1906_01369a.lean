@@ -22,16 +22,24 @@ used in `LeanDLRA.Symmetry`).  This module proves:
 * `algorithm1_isTwistSymm` (`algorithm1_symmetric`, `algorithm1_skew`): **Algorithm 1** preserves
   (skew-)symmetry with a single K-step and no L-step, for every new basis `U₁`.
 * `theorem3_exact`: **Theorem 3** exactness of Algorithm 1 for `F = Ȧ`.
-* `two_sided_projection_error`: **Lemma 1**, `‖U₁U₁ᵀA₁U₁U₁ᵀ − A₁‖ ≤ 2θ` from
-  `‖(I − U₁U₁ᵀ)A₁‖ ≤ θ` and (skew-)symmetry of `A₁`.
+* `two_sided_projection_error`: **Lemma 1** (second half of its proof),
+  `‖U₁U₁ᵀA₁U₁U₁ᵀ − A₁‖ ≤ 2θ` from `‖(I − U₁U₁ᵀ)A₁‖ ≤ θ` and (skew-)symmetry of `A₁`; with
+  `IsSymStep.capture_left` (`θ = h(4LBh + ε)`, smaller than the paper's `ϑ(h, ε)`) this gives
+  Lemma 1.
 * `IsSymStep` and `IsSymStep.capture_left`, `.local_error`, `.local_error_le`,
   `global_error`, `global_error_le`: **Lemma 2 and Theorem 4**, the robust local error
   `h(c₁ε + c₂h)` and global error `c₀δ + c₁ε + c₂h` of Algorithm 1, independent of small
   singular values; the (skew-)symmetry of the exact flows and of all iterates is derived, not
-  assumed (`isTwistSymm_iterate`).
-* `tucker_symm_exact_abstract`: abstract core of **Algorithm 2 + Theorem 5**: one K-step in mode
-  one and the mode-permutation symmetry of `A(t₁)` give exactness of the one-basis (anti-)symmetric
-  Tucker integrator, on an abstract normed space (no tensor mode products in Mathlib).
+  assumed (`isTwistSymm_iterate`).  The hypotheses on `F` are global: `F` is Lipschitz and
+  bounded for all `t`, and the normal-component bound (`MatrixBUG.FactoredNormalBound`) holds for
+  all rank-`ρ` factorizations `U S Vᵀ`, not only near `A(t)` as in condition 2 of the paper's
+  Theorem 2; this is stronger than the paper's assumption.
+* `tucker_symm_exact_abstract`: abstract core of **Algorithm 2 + Theorem 5**, **conditional** on
+  the library's recoverability hypothesis (`Exactness.IsRecoverable`), which stands in for the
+  multilinear-rank and overlap assumptions of Theorem 5 (its derivation from them is not
+  formalized): one K-step in mode one and the mode-permutation symmetry of `A(t₁)` give
+  exactness of the one-basis (anti-)symmetric Tucker integrator, on an abstract real normed space
+  (no tensor mode products in Mathlib; the paper's tensors are complex).
 
 Each main statement has a satisfiability `example` built on the rank-one data of
 `LeanDLRA.Exactness.RankOneExample`.
@@ -208,9 +216,10 @@ end AlgorithmExample
 
 /-- **Theorem 3, exactness of the symmetric / skew-symmetric integrator** (arXiv 1906.01369,
 Theorem 3).  Let `F(t, Y) = Ȧ(t)` (`IsDerivRHS F A t₀ t₁`, as in the exactness statements of the
-library), where `A(t₀) = Ue₀ Se₀ Ue₀ᵀ` and `A(t₁) = Ue₁ Se₁ Ue₁ᵀ` are `σ`-symmetric (`σ = 1`:
-symmetric, `σ = -1`: skew-symmetric) of rank at most `r`, with `Ue₀ᵀUe₀ = 1`, `Se₀` invertible and
-`Ue₁ᵀ Ue₀` invertible.  Run Algorithm 1 from `Y₀ = U₀ S₀ U₀ᵀ = A(t₀)` (`U₀ᵀU₀ = 1`): K-step
+library), where `A(t₀) = Ue₀ Se₀ Ue₀ᵀ` and `A(t₁) = Ue₁ Se₁ Ue₁ᵀ` have rank at most `r`, `A(t₁)`
+is `σ`-symmetric (`σ = 1`: symmetric, `σ = -1`: skew-symmetric; the symmetry of `A(t₀)` is not
+used), `Ue₀ᵀUe₀ = 1`, `Se₀` invertible and `Ue₁ᵀ Ue₀` invertible.  Run Algorithm 1 from
+`Y₀ = U₀ S₀ U₀ᵀ = A(t₀)` (`U₀ᵀU₀ = 1`): K-step
 `K' = F(t, K U₀ᵀ) U₀`, `K(t₀) = U₀S₀`, any new basis `U₁` capturing `K(t₁)`
 (`U₁U₁ᵀ K(t₁) = K(t₁)`, e.g. from a QR factorization), and the S-step
 `S' = U₁ᵀ F(t, U₁ S U₁ᵀ) U₁`, `S(t₀) = (U₁ᵀU₀) S₀ (U₀ᵀU₁)`.  Then
@@ -299,11 +308,13 @@ lemma abs_eq_one_of_mul_self_eq_one {σ : ℝ} (hσ : σ * σ = 1) : |σ| = 1 :=
   have : |σ| * |σ| = 1 := by rw [← abs_mul, hσ, abs_one]
   nlinarith [abs_nonneg σ]
 
-/-- **Lemma 1, two-sided projection error** (arXiv 1906.01369, Lemma 1).  Let `U₁` have
-orthonormal columns and let `A₁` be `σ`-symmetric (symmetric for `σ = 1`, skew-symmetric for
-`σ = -1`) with `‖(I - U₁U₁ᵀ) A₁‖ ≤ θ`.  Then `‖U₁U₁ᵀ A₁ U₁U₁ᵀ - A₁‖ ≤ 2θ`.  (The right factor is
-handled by (skew-)symmetry of `A₁`: `A₁ (I - U₁U₁ᵀ) = σ ((I - U₁U₁ᵀ) A₁)ᵀ`.)  The bound
-`‖(I - U₁U₁ᵀ)A₁‖ ≤ θ(h, ε) = h(4LBh + ε)` itself is `capture_left` below. -/
+/-- **Lemma 1, two-sided projection error** (arXiv 1906.01369, Lemma 1, second half of the proof).
+Let `U₁` have orthonormal columns and let `A₁` be `σ`-symmetric (symmetric for `σ = 1`,
+skew-symmetric for `σ = -1`) with `‖(I - U₁U₁ᵀ) A₁‖ ≤ θ`.  Then `‖U₁U₁ᵀ A₁ U₁U₁ᵀ - A₁‖ ≤ 2θ`.
+(The right factor is handled by (skew-)symmetry of `A₁`: `A₁ (I - U₁U₁ᵀ) = σ ((I - U₁U₁ᵀ) A₁)ᵀ`.)
+The paper obtains `‖(I - U₁U₁ᵀ)A₁‖ ≤ ϑ(h, ε) = (4e^{Lh}BL + 9BL)h² + (3e^{Lh} + 4)εh` from the
+local error of the projector-splitting integrator ([10, Theorem 2.1]); here the bound
+`θ = h(4LBh + ε)` (at most `ϑ(h, ε)` for `L, B, ε, h ≥ 0`) is `IsSymStep.capture_left` below. -/
 theorem two_sided_projection_error [DecidableEq n] [DecidableEq k] {σ : ℝ} (hσ : σ * σ = 1)
     {U₁ : Matrix n k ℝ} (hU₁ : U₁ᵀ * U₁ = 1) {A : Matrix n n ℝ} (hA : IsTwistSymm σ A) {θ : ℝ}
     (hθ : ‖(1 - U₁ * U₁ᵀ) * A‖ ≤ θ) : ‖U₁ * U₁ᵀ * A * (U₁ * U₁ᵀ) - A‖ ≤ 2 * θ := by
@@ -353,10 +364,13 @@ variable {F : ℝ → Matrix n n ℝ → Matrix n n ℝ} {t₀ t₁ : ℝ} {U₀
   {S₀ : Matrix (Fin ρ) (Fin ρ) ℝ} {K : ℝ → Matrix n (Fin ρ) ℝ}
   {S : ℝ → Matrix (Fin ρ) (Fin ρ) ℝ} {L B ε h : ℝ} {A : ℝ → Matrix n n ℝ}
 
-/-- **Lemma 2, left capture** (arXiv 1906.01369, Lemma 2 / proof of Lemma 1): the new basis
-captures the exact solution, `‖(I - U₁U₁ᵀ) A(t₁)‖ ≤ ϑ = h (4 L B h + ε)`, under the normal-component
-assumption at rank `ρ` (`FactoredNormalBound`, the library's form of the paper's assumption on
-`‖(I - P(Y)) F(t, Y)‖`).  Only the K-step enters; no symmetry is used. -/
+/-- **Left capture** (arXiv 1906.01369, the first half of the proof of Lemma 1): the new basis
+captures the exact solution, `‖(I - U₁U₁ᵀ) A(t₁)‖ ≤ h (4 L B h + ε)`, under the normal-component
+assumption at rank `ρ` (`FactoredNormalBound`, the library's global form of the paper's
+assumption on `‖(I - P(Y)) F(t, Y)‖`, required for all rank-`ρ` factorizations rather than near
+`A(t)`).  The paper derives the weaker bound `ϑ(h, ε)` from the local error of the
+projector-splitting integrator; here the library's K-step estimate `kstep_capture` is used.
+Only the K-step enters; no symmetry is used. -/
 theorem capture_left (hs : IsSymStep F t₀ t₁ U₀ S₀ U₁ K S)
     (hε : MatrixBUG.FactoredNormalBound F ρ ε) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h) (hA : ODESolution F A t₀ t₁)
@@ -388,7 +402,9 @@ Let `A' = F(t, A)` on `[t₀, t₁]`, `t₁ = t₀ + h`, with `A(t₀) = Y₀ = 
 The bound does not depend on singular values.  Differences from the paper: the paper's final
 form is `h(c₁ε + c₂h)` (see `local_error_le`); the symmetry of the exact solution `A` is not
 assumed but derived (`isTwistSymm_of_odeSolution_of_maps`); the K-step capture and Lemma 1 are
-used for the left and (via symmetry) the right basis, so no L-step is needed. -/
+used for the left and (via symmetry) the right basis, so no L-step is needed; the
+normal-component hypothesis is the global `FactoredNormalBound` (see `capture_left`), stronger
+than the paper's condition 2, and `F` is Lipschitz and bounded for all `t`. -/
 theorem local_error {σ : ℝ} (hσ : σ * σ = 1) (hs : IsSymStep F t₀ t₁ U₀ S₀ U₁ K S)
     (hFs : MapsTwistSymm σ F) (hS₀ : IsTwistSymm σ S₀)
     (hε : MatrixBUG.FactoredNormalBound F ρ ε) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
@@ -463,8 +479,11 @@ for `j < N` let step `j` (`IsSymStep`) lead to `Y (j+1) = U (j+1) * Sm (j+1) * (
 `Sm (j+1) = S j (t_{j+1})`; `Φ j` is the exact flow on `[tⱼ, tⱼ₊₁]` started at `Yⱼ`.  Then for
 `j ≤ N`, `c₁ = bugC₁ L H`, `c₂ = bugC₂ L B H`, `0 ≤ h ≤ H`.
 
-Difference from the paper: the paper's `A(t)` is assumed (skew-)symmetric implicitly; here only
-`Y₀` is, and the symmetry of the exact flows `Φ j` is derived. -/
+Differences from the paper: the paper assumes `A(t)` (skew-)symmetric; here only `Y₀` is, and the
+symmetry of the exact flows `Φ j` is derived (`A` itself need not be symmetric).  The
+normal-component hypothesis is the global `FactoredNormalBound` (see `IsSymStep.capture_left`),
+stronger than condition 2 of the paper's Theorem 2, and `F` is Lipschitz and bounded for all
+`t`. -/
 theorem global_error {σ L B ε : ℝ} (hσ : σ * σ = 1) {F : ℝ → Matrix n n ℝ → Matrix n n ℝ}
     (hFs : MapsTwistSymm σ F) (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
     (hε : MatrixBUG.FactoredNormalBound F ρ ε) {t₀ h H : ℝ} (hh : 0 ≤ h) (hhH : h ≤ H) {N : ℕ}
@@ -497,7 +516,8 @@ Theorem 4): under the hypotheses of `global_error`, with `0 ≤ ε`, `‖Y₀ - 
     ‖Yⱼ - A(tⱼ)‖ ≤ c₀ δ + c₁' ε + c₂' h,
 
 with `c₀ = e^{L T}`, `c₁' = T e^{L T} bugC₁ L H`, `c₂' = T e^{L T} bugC₂ L B H` depending only on
-`L`, `B`, `T` and the step-size bound `H`, not on singular values of `A` or of the `Sm j`. -/
+`L`, `B`, `T` and the step-size bound `H`, not on singular values of `A` or of the `Sm j`.  The
+hypotheses differ from the paper's as in `global_error`. -/
 theorem global_error_le {σ L B ε : ℝ} (hσ : σ * σ = 1) {F : ℝ → Matrix n n ℝ → Matrix n n ℝ}
     (hFs : MapsTwistSymm σ F) (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
     (hε : MatrixBUG.FactoredNormalBound F ρ ε) (hε₀ : 0 ≤ ε) {t₀ h H : ℝ} (hh : 0 ≤ h)
@@ -580,11 +600,12 @@ section Tucker
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- **Algorithm 2 + Theorem 5, abstract core: exactness of the one-basis (anti-)symmetric Tucker
-integrator** (arXiv 1906.01369, Algorithm 2 and Theorem 5).
+integrator** (arXiv 1906.01369, Algorithm 2 and Theorem 5), **conditional on the recoverability
+hypothesis `hrec`** (see below).
 
 Mathlib has no mode products of tensors, so this is stated on an abstract real normed space `E`
-(the tensors), exactly as the library does for the general Tucker BUG integrator
-(`LeanDLRA.Exactness.tucker_exact_abstract`).  The data are:
+(the tensors; the paper's tensors are complex), exactly as the library does for the general Tucker
+BUG integrator (`LeanDLRA.Exactness.tucker_exact_abstract`).  The data are:
 
 * `Q₀`, `P₀`: the co-range projector `X ↦ Mat₁⁻¹(Mat₁(X) V⁰ V⁰ᵀ)` and the new-basis projector
   `X ↦ X ×₁ U¹U¹ᵀ` of **mode 1 only** (index `0`): Algorithm 2 runs a single K-step, in mode 1,
@@ -606,7 +627,11 @@ Then `y(t₁) = A(t₁)` for `F(t, Y) = Ȧ(t)`.  The mode symmetry transfers the
 which is the step of the paper that replaces the `d` K-steps of the non-symmetric Tucker
 integrator.  Differences from the paper: the matricizations, the identification of `Q₀`, `P₀`, `τ i`
 with tensor operators and the derivation of the recoverability hypothesis from the
-multilinear-rank and overlap assumptions of Theorem 5 are not formalized. -/
+multilinear-rank and overlap assumptions of Theorem 5 are not formalized.  The result is therefore
+conditional: the paper obtains the capture `P₀ A(t₁) = A(t₁)` from those assumptions via the
+exactness of the Tucker projector-splitting integrator ([18, Theorem 4.1]); here it follows from
+`hrec`, and for a class `𝓛` tailored to `P₀` (such as `{P₀}`) `hrec` is essentially that capture
+itself. -/
 theorem tucker_symm_exact_abstract {F : ℝ → E → E} {A : ℝ → E} {t₀ t₁ : ℝ} (ht : t₀ ≤ t₁)
     (hA : IsDerivRHS F A t₀ t₁) {d : ℕ} {Q₀ P₀ : E →L[ℝ] E} {τ P : Fin (d + 1) → E →L[ℝ] E}
     (hP : ∀ i x, P i x = τ i (P₀ (τ i x)))

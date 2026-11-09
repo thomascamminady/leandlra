@@ -48,8 +48,8 @@ is within `ϑ`, and one iteration exists (`exists_isRobustDLRTStep`).
   instances.  The field is discontinuous on `{R = 0}`, where trajectories can slide, so
   `robustR_stability_filippov` proves (5) for the differential inclusion with the
   convexified gradient `filippovGradR` (right differentiable solutions), by re-running the Grönwall
-  argument with a time dependent selection.  The final display (42) of the paper has `=`, it must be
-  `≤`.
+  argument with a time dependent selection.  The final display (42) of the proof is printed with
+  `=`; what the Grönwall argument gives, and what (5) and the theorems here state, is `≤`.
 * The identity `R(U S Vᵀ) = R(S)` holds for orthogonal `V` (and `U` with orthonormal columns).  For
   rectangular `V`, as in Sec. 5, the identity with `R` of (2) for the large matrix is false
   (`robustR_mul_mul_ne`, exact defect in `robustR_mul_mul_sq`), but `R(U S Vᵀ)` is independent of

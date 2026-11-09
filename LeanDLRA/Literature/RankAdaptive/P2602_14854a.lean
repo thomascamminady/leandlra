@@ -8,8 +8,9 @@ import LeanDLRA.Matrix.Curvature
 /-!
 # Results of arXiv 2602.14854: Domain-decomposition DLRA for radiative transfer
 
-The two linear-algebra ingredients of the rank-adaptive domain-decomposition DLRA scheme, stated on
-real matrices with the Frobenius norm.
+The paper states no theorem.  This module proves properties of the two linear-algebra ingredients
+of its rank-adaptive domain-decomposition DLRA scheme (Algorithms 4 and 5), stated on real matrices
+with the Frobenius norm.
 
 * `tolRank` and `alg5_tolerance_truncation`: **Algorithm 5**.  `tolRank A tol` is the smallest `r'`
   with `(∑_{j ≥ r'} σ_j(A)²)^{1/2} ≤ tol`; truncating the (augmented) factorisation `U₀ S₀ V₀ᵀ` to
@@ -18,6 +19,9 @@ real matrices with the Frobenius norm.
 * `alg4_augmentation`: **Algorithm 4**.  The leading `r_t` left singular vectors `V̂` of
   `L₀ = [V₀S₀ᵀ, V_L S_Lᵀ, V_R S_Rᵀ]` are orthonormal and `‖(I − V̂V̂ᵀ)L₀‖_F² = ∑_{j ≥ r_t} σ_j²`;
   with `r_t = tolRank` this is `≤ tol²` and each neighbour block is captured to within `tol`.
+  Differences from Algorithm 4: the extra requirement `r_t ≥ r` of step 3 is not imposed in
+  `alg4_augmentation_tol` (`alg4_augmentation` holds for every `r_t`), and steps 5–6 (extension of
+  `U⁰` by a random basis, QR, new core) are not formalised.
 
 Section 3 / Algorithm 6 (the domain-decomposition scheme itself) is a description of an algorithm,
 not a statement with a conclusion, and is not formalised.
@@ -167,7 +171,9 @@ theorem alg4_augmentation [DecidableEq a] [DecidableEq b] [DecidableEq c]
 in `alg4_augmentation` and `r_t = tolRank L₀ᵀ tol` (the smallest `r_t` with
 `(∑_{j ≥ r_t} σ_j(L₀)²)^{1/2} ≤ tol`, `tol ≥ 0`), the truncated basis `V̂` satisfies
 `‖(I − V̂V̂ᵀ)L₀‖_F² ≤ tol²`, and each of the three blocks (in particular the neighbour blocks
-`V_L S_Lᵀ` and `V_R S_Rᵀ`) is captured to within `tol`: `‖(I − V̂V̂ᵀ)K‖_F ≤ tol`. -/
+`V_L S_Lᵀ` and `V_R S_Rᵀ`) is captured to within `tol`: `‖(I − V̂V̂ᵀ)K‖_F ≤ tol`.
+Difference from the paper: step 3 of Algorithm 4 also imposes `r_t ≥ r`; here `r_t` is the
+tolerance rank itself. -/
 theorem alg4_augmentation_tol (K₀ : Matrix n a ℝ) (K_L : Matrix n b ℝ) (K_R : Matrix n c ℝ)
     {tol : ℝ} (htol : 0 ≤ tol) :
     let L₀ : Matrix n (a ⊕ b ⊕ c) ℝ := Matrix.fromCols K₀ (Matrix.fromCols K_L K_R)

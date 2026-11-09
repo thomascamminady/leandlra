@@ -12,17 +12,23 @@ import LeanDLRA.Integrators.TuckerBUG
 Ceruti–Lubich, *Time integration of symmetric and anti-symmetric low-rank matrices and Tucker
 tensors*.  This module formalizes Lemmas 3–4 and Theorem 6 (robust error bound of the
 one-basis integrator for (anti-)symmetric Tucker tensors) on **concrete order-`d` tensors**
-`Ten d n = EuclideanSpace ℝ (Fin d → Fin n)` with the Frobenius inner product.
+`Ten d n = EuclideanSpace ℝ (Fin d → Fin n)` with the Frobenius inner product (real entries; the
+paper's tensors are complex).
 
 * `modeMul i M` is the mode product `A ×ᵢ M`; `sigma i` is the mode transposition `(0 i)`;
   `symSpace κ` is the space of tensors with `σᵢ A = κ A` (`κ = 1`: symmetric, `κ = -1`:
   anti-symmetric).  That `modeMul i P = σᵢ (modeMul 0 P) σᵢ`, that the mode projectors are
   commuting orthogonal projectors, and that `tuckerProj P = ∏ᵢ modeMul i P` commutes with `σᵢ`
   are all proved, not assumed.
-* `norm_sub_modeMul_symm` (Lemma 3): the projection error of an (anti-)symmetric tensor is the
-  same in every mode.
-* `symmetric_capture`, `symmetric_tucker_local_error` (Lemma 4 and the local error): only the
-  mode-`0` K-step is performed; the capture property transfers to all modes by Lemma 3.
+* `norm_sub_modeMul_symm` (the symmetry step in the proof of Lemma 3): the projection error of an
+  (anti-)symmetric tensor is the same in every mode.
+* `symmetric_capture` (the per-mode bound in the proof of Lemma 3,
+  `‖A₁ ×ᵢ U₁U₁ᵀ − A₁‖ ≤ ϑ` for every `i`) and `symmetric_tucker_local_error` (Lemma 4, the local
+  error; Lemma 3 itself, `‖A₁ − Π A₁‖ ≤ d ϑ`, is a step of its proof): only the mode-`0` K-step is
+  performed; the capture property transfers to all modes by symmetry.  The normal-component
+  hypothesis is a pointwise doubly-normal bound at the K-step endpoint, not the paper's
+  condition 2 (a bound on `(I − P(Y)) F(t, Y)` near `A(t)`); the implication between them is not
+  formalized.
 * `symmetric_tucker_global_error` (Theorem 6): `‖Yₙ - A(tₙ)‖ ≤ c₀δ + c₁ε + c₂h`.  Symmetry of the
   iterates and of the exact local flows is *derived* (`ode_mem_of_invariant`: an ODE whose field
   maps a subspace into itself preserves it), not assumed.
@@ -282,11 +288,13 @@ section Main
 
 variable [NeZero d]
 
-/-- **Lemma 3 of arXiv 1906.01369** (label `Lemma 3`): for a (anti-)symmetric tensor `A`
-(`σᵢ A = κ A`, `κ = ±1`, for all `i ≠ 0`) and any matrix `M`, the mode-`i` projection error equals
-the mode-`0` one: `‖A - A ×ᵢ M‖ = ‖A - A ×₀ M‖`.  This is the paper's transfer
-`P₁^(i) = σᵢ P₁^(1) σᵢ`, proved from the explicit identity `modeMul i M = σᵢ (modeMul 0 M) σᵢ`
-(`sigma_modeMul_zero`).  Modes are indexed `0, …, d-1` (paper: `1, …, d`). No assumption on `M`. -/
+/-- **The symmetry step in the proof of Lemma 3 of arXiv 1906.01369**: for a (anti-)symmetric
+tensor `A` (`σᵢ A = κ A`, `κ = ±1`, for all `i ≠ 0`) and any matrix `M`, the mode-`i` projection
+error equals the mode-`0` one: `‖A - A ×ᵢ M‖ = ‖A - A ×₀ M‖` (the paper's
+`‖U₁U₁* Mat₁(A₁) − Mat₁(A₁)‖ = ‖U₁U₁* Matᵢ(A₁) − Matᵢ(A₁)‖`).  Proved from the explicit identity
+`modeMul i M = σᵢ (modeMul 0 M) σᵢ` (`sigma_modeMul_zero`).  Modes are indexed `0, …, d-1`
+(paper: `1, …, d`).  No assumption on `M`.  The bound of Lemma 3 itself is assembled in the proof
+of `symmetric_tucker_local_error`. -/
 theorem norm_sub_modeMul_symm {κ : ℝ} (hκ : κ = 1 ∨ κ = -1) {A : Ten d n}
     (hA : A ∈ symSpace (d := d) (n := n) κ) (M : Matrix (Fin n) (Fin n) ℝ) (i : Fin d) :
     ‖A - modeMul i M A‖ = ‖A - modeMul 0 M A‖ := by
@@ -312,16 +320,18 @@ section Results
 
 variable [NeZero d] {F : ℝ → Ten d n → Ten d n} {L B ε : ℝ}
 
-/-- **Lemma 4 of arXiv 1906.01369** (label `Lemma 4`), for every mode `i`.  Let `F` be
+/-- **Per-mode capture, the step `‖A₁ ×ᵢ U₁U₁* − A₁‖ ≤ ϑ` (`i = 1, …, d`) in the proof of
+Lemma 3 of arXiv 1906.01369.**  Let `F` be
 `L`-Lipschitz and bounded by `B`, `A` solve `A' = F(t, A)` on `[t₀, t₁]`, `t₁ = t₀ + h`, with
 `A t₁` (anti-)symmetric.  Let `YK` be the mode-`0` K-step `YK' = Q F(t, YK)`, `YK t₀ = A t₀`
 (`Q` an orthogonal projector: the co-range projector, kept abstract), `P` an orthogonal projector
 matrix (the new basis `U₁U₁ᵀ`) capturing `YK t₁` in mode `0`, and the normal-component bound
 `‖(1 - P₁)(1 - Q) F(t, YK t₁)‖ ≤ ε`. Then for all modes `i`:
 `‖A t₁ - A t₁ ×ᵢ P‖ ≤ h (4 L B h + ε)`.
-Differences: the paper states `≤ c h (B L h + ε)` with an unspecified constant; here `c` is
-explicit, and the normal-component hypothesis is the library's doubly-normal form (as in
-`kstep_capture`) rather than a bound on the tangent-space normal component. -/
+Differences: the paper obtains `ϑ = c* h (B L h + ε)` from [18, Theorem 5.1] with an unspecified
+constant; here the constant is explicit, and the normal-component hypothesis is the library's
+pointwise doubly-normal form at the K-step endpoint (as in `kstep_capture`) rather than the
+paper's condition 2 on the tangent-space normal component near `A(t)`. -/
 theorem symmetric_capture {κ : ℝ} (hκ : κ = 1 ∨ κ = -1) {P : Matrix (Fin n) (Fin n) ℝ}
     (hs : P.transpose = P) (hi : P * P = P) {Q : Ten d n →L[ℝ] Ten d n} (hQ : IsOrthProj Q)
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B) {t₀ t₁ h : ℝ}
@@ -335,11 +345,13 @@ theorem symmetric_capture {κ : ℝ} (hκ : κ = 1 ∨ κ = -1) {P : Matrix (Fin
   have := kstep_capture hF hL hB (isOrthProj_modeMul 0 hs hi) hQ ht₁ hh hA hK hK₀ hKcap hε
   simpa using this
 
-/-- **Local error of the one-basis (anti-)symmetric Tucker integrator** (arXiv 1906.01369,
-Lemmas 3–4 combined with the Galerkin step of Theorem 6).  Under the hypotheses of
+/-- **Lemma 4 of arXiv 1906.01369: local error of the one-basis (anti-)symmetric Tucker
+integrator**, explicit form.  Under the hypotheses of
 `symmetric_capture`, if `YS' = Π_P F(t, YS)` with `Π_P = ∏ᵢ (· ×ᵢ P)` and `YS t₀ = Π_P (A t₀)`
 is the core step, then with `ϑ = h (4 L B h + ε)`:
-`‖YS t₁ - A t₁‖ ≤ (e^{L h} - 1)(B h + d ϑ) + d ϑ`.  Only the mode-`0` K-step is used. -/
+`‖YS t₁ - A t₁‖ ≤ (e^{L h} - 1)(B h + d ϑ) + d ϑ`, which is of the paper's form
+`ĉ h (B L h + ε)` with `ĉ` depending on `d` and a bound for `L h` (`tucker_bound_le`).  Lemma 3,
+`‖A t₁ - Π_P (A t₁)‖ ≤ d ϑ`, is the first step of the proof.  Only the mode-`0` K-step is used. -/
 theorem symmetric_tucker_local_error {κ : ℝ} (hκ : κ = 1 ∨ κ = -1)
     {P : Matrix (Fin n) (Fin n) ℝ}
     (hs : P.transpose = P) (hi : P * P = P) {Q : Ten d n →L[ℝ] Ten d n} (hQ : IsOrthProj Q)
@@ -378,8 +390,12 @@ matrix) capturing it, with normal-component bound `ε`, then the Galerkin core s
 exact flow from `Y k`.  Then for `n' h ≤ T`, `h ≤ H`, `‖Y 0 - A t₀‖ ≤ δ`:
 `‖Y n' - A tₙ'‖ ≤ e^{L T} δ + T e^{L T} c₁ ε + T e^{L T} c₂ h` with the explicit constants
 `c₁ = tuckerC₁ d L H`, `c₂ = tuckerC₂ d L B H`, independent of small singular values.
-Differences from the paper: constants are explicit; `ε` is the doubly-normal bound
-`‖(1-P)(1-Q)F‖ ≤ ε` at the K-step endpoint; the co-range projector `Q k` is an arbitrary
+Differences from the paper: real instead of complex tensors; constants are explicit (they also
+depend on the step-size bound `H`); `ε` is the doubly-normal bound
+`‖(1-P)(1-Q)F‖ ≤ ε` at the K-step endpoint, in place of the paper's condition 2 (a bound on
+`(I - P(Y)) F(t, Y)` near `A(t)`; the implication is not formalized); `F` is Lipschitz and
+bounded for all `t`; the paper assumes the solution `A` (anti-)symmetric, which is not needed
+here; the co-range projector `Q k` is an arbitrary
 orthogonal projector (not tied to the matricization); the bases are given as projectors and the
 QR factorizations are not modelled; anti-symmetry is encoded as `σᵢ A = -A` for the transpositions
 `(0 i)`, which generate all permutations. Symmetry of `Y k`, `YS k` and of the exact flows `Φ k`

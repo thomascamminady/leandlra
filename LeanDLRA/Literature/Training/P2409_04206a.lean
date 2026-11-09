@@ -49,8 +49,9 @@ accuracies are data, not statements. Adam's momentum is not covered: its update 
 descent direction, so the theorems on a general direction `d` assume `s < 0`, and the derived ones
 use project–precondition–project steps or exact gradient steps. DoRA (no equation in the paper), the
 flatness of the point reached (Fig. 5), the permanent switch to Adam of Sec. 5.1 and the failure at
-full rank (Fig. 8, for which the paper has no explanation and `quad_ffStop_zero_iff` only gives a
-condition on quadratics) are not treated.
+full rank (Fig. 8; Sec. 6 rejects two hypotheses and concludes that the difference is due to the
+projection matrices added by LoRA; `quad_ffStop_zero_iff` only gives a condition on quadratics) are
+not treated.
 -/
 
 open Set Filter Topology Finset
@@ -1218,8 +1219,9 @@ theorem rayleigh_smul (c : ℝ) (hc : c ≠ 0) (v : E) : rayleigh A (c • v) = 
 
 /-- **When the first simulated step already fails** (compare Fig. 8 of arXiv 2409.04206): on a
 quadratic, right after a gradient step, the stage ends at once if and only if
-`h R(v) ≥ 2/3`.  This is a statement about learning rate and curvature; the paper gives no
-explanation of Fig. 8, and none is claimed here.
+`h R(v) ≥ 2/3`.  This is a statement about learning rate and curvature.  The paper (Sec. 6)
+concludes that the failure at full rank is due to the absence of the projection matrices added by
+LoRA; no explanation of Fig. 8 is claimed here.
 (arXiv 2409.04206, Fast Forward procedure, Sec. 3.) -/
 theorem quad_ffStop_zero_iff (hA : ∀ x y, ⟪A x, y⟫ = ⟪x, A y⟫) {h : ℝ} (hh : 0 < h) {Wprev W : E}
     (hW : W = Wprev - h • (A Wprev - b)) (hv : 0 < ⟪A (A Wprev - b), A Wprev - b⟫) :
