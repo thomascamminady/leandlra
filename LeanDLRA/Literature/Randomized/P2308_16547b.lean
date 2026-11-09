@@ -21,12 +21,10 @@ arXiv 2008.07427, so it is a Frobenius-orthogonal projector for ortho-symplectic
   defect (Grönwall with integral forcing, `P2007_13153.error_bound_integral`); continuity of the
   defect is derived from continuity of the factors `A`, `Z`.
 
-Caveat: the paper states the bound for the "(hyper-)reduced" solution, but its proof (and this
-formalization) needs `Ẇ = Π X_H(W)`, i.e. the reduced flow (4); for the hyper-reduced flow the
-velocity differs from `Π X_H(W)` and `r̃` does not control the error (for `n = N` the
-projector (5) is the identity, so `r̃ ≡ 0` and the bound would force `W = 𝒲` whenever
-`E(t̄) = 0`, which fails for an inexact hyper-reduced Hamiltonian).  This caveat is not
-formalized.
+Scope: the paper states the bound for the "(hyper-)reduced" solution; its proof uses
+`Ẇ = Π X_H(W)`, i.e. the reduced flow (4), and this formalization covers exactly that case.  The
+hyper-reduced flow (24), whose velocity is built from the hyper-reduced Hamiltonian instead of
+`Π X_H(W)`, is not formalized, and nothing is claimed about it here.
 -/
 
 open Set Filter Topology Finset
@@ -197,9 +195,9 @@ invertible).  Then for every `t ∈ [t̄, T]`, with `E = 𝒲 - W`,
 `‖E(t)‖_F ≤ ‖E(t̄)‖_F e^{L(t-t̄)} + ∫_{t̄}^t r̃(W(τ)) e^{L(t-τ)} dτ`, and the integral equals
 `∫_{t̄}^t ‖∇H(W(τ))‖_F sin(θ(W(τ))) e^{L(t-τ)} dτ`.
 
-Differences from the paper: the paper says "(hyper-)reduced"; the bound (and the paper's proof,
-which uses `Ẇ = Π X_H(W)`) is for the reduced flow (4)/(6) only, since for the hyper-reduced flow
-the defect also contains the hyper-reduction error, which `r̃` does not see.  The factorization
+Differences from the paper: the paper says "(hyper-)reduced"; this theorem (like the paper's
+proof, which uses `Ẇ = Π X_H(W)`) is for the reduced flow (4)/(6) only; the hyper-reduced
+flow (24) is not covered.  The factorization
 `W = A Z` is not needed: any continuous `A`, `Z` defining the projector along `W` will do, in
 particular those of (6).  Solutions are only required to be continuous with right derivatives;
 the gradients `∇H_{η_k}` are arbitrary maps (their only use is through the Lipschitz bound and

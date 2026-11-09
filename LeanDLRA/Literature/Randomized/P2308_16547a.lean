@@ -16,8 +16,10 @@ library's Eckart–Young theorem, the compact SVD `C* = U* Σ* V*ᵀ` given as d
 `proposition_1_full` is eq. (14) (`α βᵀ = -Sᵀ R* (C*)†`).  `proposition_2` (Proposition 2):
 `‖U^upd C - D‖² = ‖U C - D‖² - δ` with `δ` of (18), so the EIM residual decreases iff `δ > 0`
 (for any matrix in place of `(C*)†`).  `eq_17`/`eq_17_lt_iff` (eq. (17)): with all parameters
-sampled the residual drops by exactly `‖Sᵀ R V‖²`; the strict decrease claimed in (17) is false
-in general (`eq_17_strict_fails`, a counterexample with nonzero residual).  `rank_condition`
+sampled the residual drops by exactly `‖Sᵀ R V‖²`, strictly iff `Sᵀ R V ≠ 0`; `eq_17_strict` is
+the strict decrease of (17) under Proposition 1's hypothesis `1 ≤ rank(Sᵀ R V)`, and
+`eq_17_strict_fails` (`rank(Sᵀ R V) = 0`, nonzero residual) shows that this hypothesis is
+needed.  `rank_condition`
 (Sec. 5): `rank M(Z*) = 2n` forces `p*_A ≥ n`, sharp by `rank_condition_sharp`.
 `symplectic_dlra` (Sec. 2, eqs. (4)–(6)): a solution `(A, Z)` of (6) on `[t₀, T]` with `A(t₀)`
 ortho-symplectic keeps `A(t)` ortho-symplectic (`isOrthosymplectic_of_eq_6a`, by Grönwall on the
@@ -417,8 +419,10 @@ theorem proposition_2 [DecidableEq μ] (p : ι → Prop) [DecidablePred p] (U P 
 /-- **Eq. (17)** (arXiv 2308.16547).  With all parameters sampled (`R* = R`, `C* = C`) and a
 compact SVD `C = U Σ Vᵀ` (`(C)† = V Σ⁻¹ Uᵀ`, `svdPinv`), the update of Proposition 1 gives
 `‖U^upd C - D‖_F² = ‖U C - D‖_F² - ‖Sᵀ R V‖_F²`; equivalently `δ = ‖Sᵀ R V‖_F²` in (18) (the
-paper writes `‖Sᵀ R V‖_F`, missing the square).  The final strict inequality of (17)
-`… < ‖U C - D‖_F²` is false in general, see `eq_17_strict_fails`; it holds iff `Sᵀ R V ≠ 0`. -/
+text after Proposition 2 prints `δ = ‖Sᵀ R V‖_F`; by (17) the square is meant).  The final
+strict inequality of (17) `… < ‖U C - D‖_F²` holds iff `Sᵀ R V ≠ 0` (`eq_17_lt_iff`), in
+particular under Proposition 1's hypothesis `1 ≤ r ≤ rank(Sᵀ R V)` (`eq_17_strict`).
+Difference: no rank condition on `Sᵀ R V` is needed for the identity. -/
 theorem eq_17 [DecidableEq μ] (p : ι → Prop) [DecidablePred p] (U P : Matrix ι μ ℝ)
     (D : Matrix ι κ ℝ) (Us : Matrix μ ρ ℝ) (sv : ρ → ℝ) (Vs : Matrix κ ρ ℝ)
     (hU : Usᵀ * Us = 1) (hV : Vsᵀ * Vs = 1) (hsv : ∀ i, 0 < sv i)
@@ -447,8 +451,9 @@ theorem eq_17 [DecidableEq μ] (p : ι → Prop) [DecidablePred p] (U P : Matrix
   rw [hKC, e] at h
   linarith
 
-/-- **Eq. (17)** (arXiv 2308.16547), corrected strict form: the residual decreases strictly iff
-`Sᵀ R V ≠ 0`. -/
+/-- **Eq. (17)** (arXiv 2308.16547), strict form: the residual decreases strictly iff
+`Sᵀ R V ≠ 0`.  Proposition 1, which provides the update used in (17), assumes
+`1 ≤ r ≤ rank(Sᵀ R* V*)`, so `Sᵀ R V ≠ 0` there (`eq_17_strict`). -/
 theorem eq_17_lt_iff [DecidableEq μ] (p : ι → Prop) [DecidablePred p] (U P : Matrix ι μ ℝ)
     (D : Matrix ι κ ℝ) (Us : Matrix μ ρ ℝ) (sv : ρ → ℝ) (Vs : Matrix κ ρ ℝ)
     (hU : Usᵀ * Us = 1) (hV : Vsᵀ * Vs = 1) (hsv : ∀ i, 0 < sv i)
@@ -465,9 +470,30 @@ theorem eq_17_lt_iff [DecidableEq μ] (p : ι → Prop) [DecidablePred p] (U P :
     exact lt_of_le_of_ne (norm_nonneg _) fun h0 => by rw [← h0] at h; simp at h
   · intro h; positivity
 
-/-- **Eq. (17), strict inequality: false as stated** (arXiv 2308.16547).  With `d = 2`, `m = 1`,
-`U = P = e₁`, `D = e₂` one has `C = 0` (compact SVD with `r_C = 0`), `R = -e₂ ≠ 0`, all rows and
-parameters sampled, and the update leaves `U` unchanged, so the EIM residual does not decrease. -/
+/-- **Eq. (17), strict inequality** (arXiv 2308.16547).  Under Proposition 1's hypothesis
+`1 ≤ rank(Sᵀ R V)` (with all parameters sampled, `R* = R`, `V* = V`), the update
+`Sᵀ U^upd = Sᵀ U - Sᵀ R C†` strictly decreases the EIM residual: `‖U^upd C - D‖_F < ‖U C - D‖_F`.
+-/
+theorem eq_17_strict [DecidableEq μ] (p : ι → Prop) [DecidablePred p] (U P : Matrix ι μ ℝ)
+    (D : Matrix ι κ ℝ) (Us : Matrix μ ρ ℝ) (sv : ρ → ℝ) (Vs : Matrix κ ρ ℝ)
+    (hU : Usᵀ * Us = 1) (hV : Vsᵀ * Vs = 1) (hsv : ∀ i, 0 < sv i)
+    (hC : eimCoeff P U D = Us * diagonal sv * Vsᵀ) (Uupd : Matrix ι μ ℝ)
+    (h₁ : (selMat p)ᵀ * Uupd = (selMat p)ᵀ * U -
+      (selMat p)ᵀ * ((U * eimCoeff P U D - D) * svdPinv Us sv Vs))
+    (h₂ : (selMat (fun i => ¬ p i))ᵀ * Uupd = (selMat (fun i => ¬ p i))ᵀ * U)
+    (hr : 1 ≤ ((selMat p)ᵀ * (U * eimCoeff P U D - D) * Vs).rank) :
+    ‖Uupd * eimCoeff P U D - D‖ < ‖U * eimCoeff P U D - D‖ := by
+  refine (eq_17_lt_iff p U P D Us sv Vs hU hV hsv hC Uupd h₁ h₂).2 fun h0 => ?_
+  rw [h0, Matrix.rank_zero] at hr
+  omega
+
+/-- **Eq. (17): the hypothesis `rank(Sᵀ R V) ≥ 1` is needed for the strict decrease**
+(arXiv 2308.16547).  With `d = 2`, `m = 1`, `U = P = e₁`, `D = e₂` one has `C = 0` (compact SVD
+with `r_C = 0`), `R = -e₂ ≠ 0`, all rows and parameters sampled, and the update leaves `U`
+unchanged, so the EIM residual does not decrease.  Here `rank(Sᵀ R V) = 0`, so this case lies
+outside Proposition 1 (`1 ≤ r ≤ rank(Sᵀ R* V*)`), on which (17) relies; it is not a
+counterexample to (17) as printed, only to the identity-level statement without that
+hypothesis. -/
 theorem eq_17_strict_fails :
     ∃ (U Uupd D : Matrix (Fin 2) (Fin 1) ℝ) (Us : Matrix (Fin 1) (Fin 0) ℝ) (sv : Fin 0 → ℝ)
       (Vs : Matrix (Fin 1) (Fin 0) ℝ),
@@ -731,8 +757,9 @@ theorem hasFDerivAt_reduced_hamiltonian {H : Matrix (ι ⊕ ι) p ℝ → ℝ}
 Frobenius gradient `∇H = g`, and let `(A, Z)` solve (6a)–(6b) on `[t₀, T]` (derivatives within
 the interval) with `M(Z(t))` invertible and `A(t₀) ∈ U_n`.  Then for every `t ∈ [t₀, T]`:
 `A(t)` is orthosymplectic; `W = A Z` satisfies `Ẇ = Π_{T_W M_n} X_H(W)` (4) with `Π` the
-projection (5) (`projT`, an orthogonal projector for the symplectic form by arXiv 2008.07427,
-`isOrthProj_tangentPi`); and `H(W(t)) = H(W(t₀))`.  Differences: the paper's vector-valued
+projection (5) (`projT`, equal to `tangentPi` of arXiv 2008.07427, a Frobenius-orthogonal
+projector by `isOrthProj_tangentPi` and symplectic by `inner_sub_tangentPi_symplJ_mul`); and
+`H(W(t)) = H(W(t₀))`.  Differences: the paper's vector-valued
 Hamiltonian `(H_{η_k}(W_k))_k` enters through the total `∑_k H_{η_k}(W_k)`, whose gradient is
 `∇H(W)`; conservation of each `H_{η_k}` separately is not claimed.  The invertibility of
 `M(Z(t))` (the rank condition defining `M_n`) is assumed along the solution. -/
