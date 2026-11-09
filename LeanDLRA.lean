@@ -97,6 +97,7 @@ import LeanDLRA.Literature.Kinetic.P2011_06072a
 import LeanDLRA.Literature.Kinetic.P2101_07104a
 import LeanDLRA.Literature.Kinetic.P2101_12571a
 import LeanDLRA.Literature.Kinetic.P2101_12571b
+import LeanDLRA.Literature.Kinetic.P2106_09445a
 import LeanDLRA.Literature.Kinetic.P2107_07282a
 import LeanDLRA.Literature.Kinetic.P2111_07160a
 import LeanDLRA.Literature.Kinetic.P2112_02695a
