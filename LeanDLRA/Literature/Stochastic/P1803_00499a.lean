@@ -24,9 +24,10 @@ Differences from the paper:
   the adjoint generator used in the paper's proof, not a step of the argument.  Integrability
   (`hGm`, `hGLR`) and continuity on `[0, T]` are regularity hypotheses implicit in "differentiable
   trajectory".
-* Theorem 3 assumes `γ` is a function.  Here it is required to be continuous and nonnegative on
-  `[0, T]` (`hγ`, `hγ0`).  Nonnegativity is used by the Grönwall step and holds in the paper's
-  application because assumption 2 bounds a norm by `γ(t) E(t)`.
+* Theorem 3 assumes only that `γ` is a function.  Here it is required to be continuous and
+  nonnegative on `[0, T]` (`hγ`, `hγ0`).  Nonnegativity is used by the Grönwall step, the
+  integral form of which needs `γ ≥ 0`; assumption 2 forces `γ(t) ≥ 0` wherever `E(t) > 0`, and
+  the `γ` of the paper's Example 1 is nonnegative.
 * `ε²` enters as `ε ^ 2` in assumption 1 (`d_F ≤ ε²`), with `ε` any real number.  The horizon
   satisfies `0 ≤ T`.  The test function is fixed to `f(x) = xx†` (the paper's singleton `F`), so
   the supremum in `d_F` reduces to a norm.
@@ -37,8 +38,8 @@ SDE level), Lemma 3 and Theorem 5 (unravelling commutes with DLRA), Theorem 4 (D
 equation), and Example 1 (explicit `γ` for linear coefficients).  Those need a measure-theoretic
 expectation layer or matrix calculus beyond this slice.
 
-The module uses `Integrators/BUG`, `Matrix/Projectors` and `Stochastic/MeanSquare` from the core.
-The Grönwall lemma `integral_gronwall_le` is the core definition reused here; the rest is local.
+The module imports `Integrators/BUG`, `Matrix/Projectors` and `Stochastic/MeanSquare` from the
+core and uses only the Grönwall lemma `MeanSquare.integral_gronwall_le`; the rest is local.
 -/
 
 open Set Filter Topology Finset MeasureTheory

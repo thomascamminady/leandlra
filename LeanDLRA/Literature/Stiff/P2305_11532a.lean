@@ -13,7 +13,10 @@ first-order optimality condition of the variational problem (6.7). This module p
   The Dirichlet term `εh/2 ‖∇w‖²` equals `-(εh/2) ⟨w, Δw⟩`, so `D` plays the role of the
   paper's operator `W ↦ AW + WA` after vectorization. The theorems hold for every symmetric `D`.
   That the vectorized `W ↦ AW + WA` equals `I ⊗ A + A ⊗ I` and is symmetric is not formalized.
-  The discrete functional of Appendix A was not read, so this is a generic discretization of (6.7).
+  For that `D` this is the discrete functional (A.1) of Appendix A.1 divided by `h_x²`, a positive
+  factor that does not change stationary points, and `implicitStepGrad` is the discretized
+  Euclidean gradient of Appendix A.2 divided by `h_x²`.  The identification of the Dirichlet term
+  `(εh/2)(‖L W‖² + ‖W Lᵀ‖²)` of (A.1) with `-(εh/2) w·(D w)` is not formalized.
 * `implicitStep_stationary_iff`: `w` is stationary for `F` (every coordinate derivative vanishes)
   iff `w_i = wOld_i + h (ε (D w)_i + w_i - w_i³)` for every `i`. This is (6.6) coordinatewise,
   with `W_{k+1} = w` and `W_k = wOld`.

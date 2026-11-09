@@ -29,7 +29,8 @@ Gauss-Legendre data (`IsGaussLegendre`, `gaussT`, `gaussT_flux`, `Params.Apl`, `
 * Lemma 1: `Params.lemma_1`.
 * Theorem 6: `Params.theorem_6` at `ε = 0`, and `Params.theorem_6_tendsto` as a genuine limit, from
   `Params.IsAdaptiveStep.norm_sub_le`, an `O(ε)` bound uniform in the bases and the ranks.
-* Lemmas 2 and 3: `lemma_2_minus`, `lemma_2_plus`, `lemma_3`.
+* Lemmas 2 and 3: `lemma_2_minus`, `lemma_2_plus`, `lemma_3`, for scalar sequences on the
+  periodic grid (the paper's vector-valued forms follow componentwise).
 
 ## False as printed, with a formal counterexample
 
@@ -37,8 +38,10 @@ Gauss-Legendre data (`IsGaussLegendre`, `gaussT`, `gaussT_flux`, `Params.Apl`, `
 * Lemma 6, `∑ |(A⁺D⁺ + A⁻D⁻) g|² ≤ 2 β_N ∑ (D⁺g)ᵀ A² D⁺g`: false (`lemma_6_false`), for the same
   data on three cells.
 
-Both are used in the paper's proof of Theorem 2, and the same errors sit in Lemmas 3.4 and 3.6 of
-arXiv 2212.12012, from which they are quoted. Theorems 2, 4 survive: what is true is the mode-wise
+Both are used in the paper's proof of Theorem 2. They are quoted from Lemmas 3.4 and 3.6 of
+arXiv 2212.12012, whose printed forms (Lemma 3.6 there is stated for `ℒ = A⁺D⁻ + A⁻D⁺` with the
+constant `2`) are refuted in `P2212_12012a` (`lemma_3_4_printed_false`,
+`lemma_3_6_printed_false`). Theorems 2, 4 survive: what is true is the mode-wise
 estimate `mode_bound` together with `first_moment_le`, and it gives more than (3.4) asks for.
 
 ## Gaps in the paper's proofs, with what is proved instead
@@ -147,7 +150,9 @@ lemma sum_add_one (f : ZMod Nx → ℝ) : ∑ j, f (j + 1) = ∑ j, f j :=
 lemma sum_sub_one (f : ZMod Nx → ℝ) : ∑ j, f (j - 1) = ∑ j, f j :=
   Equiv.sum_comp (Equiv.subRight 1) f
 
-/-- arXiv 2402.16746, Lemma 2 (summation by parts), the periodic case with `D⁻` on the right. -/
+/-- arXiv 2402.16746, Lemma 2 (summation by parts), the periodic case with `D⁻` on the right, for
+scalar sequences (the paper's `ℝ^N`-valued form follows componentwise; zero boundary values, which
+the paper also allows, are not treated). -/
 theorem lemma_2_minus (Δx : ℝ) (ζ φ : ZMod Nx → ℝ) :
     ∑ j, ζ j * Dm Δx φ j = - ∑ j, Dp Δx ζ j * φ j := by
   have h : ∑ j, ζ j * φ (j - 1) = ∑ j, ζ (j + 1) * φ j := by
@@ -162,7 +167,8 @@ theorem lemma_2_minus (Δx : ℝ) (ζ φ : ZMod Nx → ℝ) :
   rw [e1, e2, h]
   ring
 
-/-- arXiv 2402.16746, Lemma 2 (summation by parts), the periodic case with `D⁺` on the right. -/
+/-- arXiv 2402.16746, Lemma 2 (summation by parts), the periodic case with `D⁺` on the right, for
+scalar sequences (the paper's `ℝ^N`-valued form follows componentwise). -/
 theorem lemma_2_plus (Δx : ℝ) (ζ φ : ZMod Nx → ℝ) :
     ∑ j, ζ j * Dp Δx φ j = - ∑ j, Dm Δx ζ j * φ j := by
   have h := lemma_2_minus Δx φ ζ
@@ -203,7 +209,8 @@ lemma sum_mul_Dp_self {Δx : ℝ} (hΔx : Δx ≠ 0) (φ : ZMod Nx → ℝ) :
   congr 1
   exact Finset.sum_congr rfl fun j _ => mul_comm _ _
 
-/-- arXiv 2402.16746, Lemma 3: `∑ (D⁺φ)² ≤ 4/Δx² ∑ φ²`. -/
+/-- arXiv 2402.16746, Lemma 3: `∑ (D⁺φ)² ≤ 4/Δx² ∑ φ²`, for scalar sequences on the periodic grid
+(the paper's `ℝ^{N+1}`-valued form follows by summing over the components). -/
 theorem lemma_3 {Δx : ℝ} (hΔx : Δx ≠ 0) (φ : ZMod Nx → ℝ) :
     ∑ j, Dp Δx φ j ^ 2 ≤ 4 / Δx ^ 2 * ∑ j, φ j ^ 2 := by
   have hb (j : ZMod Nx) : Dp Δx φ j ^ 2 ≤ (2 * φ (j + 1) ^ 2 + 2 * φ j ^ 2) / Δx ^ 2 := by

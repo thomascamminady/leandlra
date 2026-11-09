@@ -47,11 +47,14 @@ Differences from the paper.
   bounds `Σ_t` and `1` (equal to it when `Σ_11 = Σ_t`), which give the same recursion
   (`level_telescope`).
 * Sec. 3.2 is stated for exactly solved substeps with `G` constant over the step (for
-  time-dependent `G` the K- and S-flows do not cancel in general).
+  time-dependent `G` the K- and S-flows need not cancel; this remark is not proved here).
 * False claim.  Theorem 1 with variable density: on the periodic `2 × 1` grid with `ρ = (2, 4)`,
   `A_x = A_y = [[0, 1], [1, 0]]` and `Δt = Δx = Δy = 1` (CFL number exactly `1/2`) the full-rank
-  BUG step maps `u⁰ = [[1, 0], [1, 0]]` to a matrix of norm `√(17/8) > √2`.  The proof bounds
-  `‖½ I + Δt M ρ̃⁻¹‖` by `|½ + Δt λ_max(M) λ_max(ρ̃⁻¹)|` with the non-diagonal
+  BUG step maps `u⁰ = [[1, 0], [1, 0]]` to a matrix of norm `√(17/8) > √2`.  (On this grid both
+  `x`-neighbours of a cell are the other cell and the `y`-neighbour is the cell itself; the
+  stencils are applied in operator form, contributions added, as in `T1`, `T2`, so the
+  `y`-stencils vanish.  The scheme is the one with the sign of the paper's proof, see above.)
+  The proof bounds `‖½ I + Δt M ρ̃⁻¹‖` by `|½ + Δt λ_max(M) λ_max(ρ̃⁻¹)|` with the non-diagonal
   `ρ̃⁻¹ = Eᴴ ρ⁻¹ E`, which is not valid unless `ρ̃⁻¹` is a multiple of the identity, i.e. the
   density is constant.  The same data refute Theorem 2.  Theorems 3 and 4 rest on the same
   estimate; only their constant-density versions are proved here.
@@ -1086,7 +1089,10 @@ lemma cex_norm_lt : ‖cexU‖ < ‖cexScheme.euler 1 cexU‖ := by
 matrices `A_x = A_y = [[0, 1], [1, 0]]` (eigenvalues `±1`) and `Δt = 1`, the CFL condition
 `λ_max Δt / (ρ_min Δx) = 1/2 ≤ 1/2` holds, all bases are orthonormal, and yet the BUG streaming
 step (here with full rank `2`, so `X^{1/2} = W^{1/2} = I` and it equals the full Euler step)
-increases the norm: `‖u⁰‖² = 2 < 17/8 = ‖u^{1/2}‖²` for `u⁰ = [[1, 0], [1, 0]]`.  The paper's
+increases the norm: `‖u⁰‖² = 2 < 17/8 = ‖u^{1/2}‖²` for `u⁰ = [[1, 0], [1, 0]]`.  On this
+grid the two `x`-neighbours of a cell coincide and the `y`-neighbour is the cell itself; the
+stencils `T1`, `T2` are applied in operator form (contributions added), so the `y`-stencils
+vanish.  The flux has the sign of the paper's proof (`PNScheme.euler`).  The paper's
 proof replaces `‖(½ I + Δt M ρ̃⁻¹)‖` by `|½ + Δt λ_max(M) ρ_min⁻¹|`, which needs `ρ̃⁻¹ = Eᴴ ρ⁻¹ E`
 to commute with the Fourier symbols, i.e. constant density. -/
 theorem theorem1_false_of_variable_density :

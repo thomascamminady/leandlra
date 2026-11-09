@@ -44,8 +44,9 @@ only observes numerically.
   All theorems on (23), (24) take these removal terms as a parameter `R`, so they cover the printed
   form (`LOData.printedRemoval`) and the correct one (`LOData.currentRemoval`). The last row of
   `A_x` in (28) prints `-√(1/3)` where (22) has `-√(1/6)`; (21) confirms `√(1/6)`, which we use.
-  The line before (32) has `- L_x u`, while with the printed `L_x` the weak form needs `+ L_x u`,
-  as used in (32). Conservation depends on neither.
+  The line before (32) prints `- L_x u` with `L_x = -∫∫ (∂_x B) Bᵀ`; this module formalizes the
+  lumped operator of (32) as printed and does not check that sign. Conservation depends on
+  none of these points.
 * "Conservative" in the paper means the balance law: `∫ φ` changes only through boundary fluxes,
   absorption and sources. Exact constancy needs these to vanish (`IsLOSolution.total_eq`,
   `LOData.map_conserved`).

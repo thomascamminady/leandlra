@@ -24,7 +24,8 @@ Approximations*. This module formalizes the abstract linear-algebra core of Sect
 
 * The paper's `H* = I - δb·∇` is abstracted to `1 + K` with `K` skew. Only skewness and the bound
   `‖H*‖ ≤ 2` enter the proof. The paper gets `‖H*‖ ≤ 2` from its step-size condition (5) and the
-  inverse inequality; that is a PDE fact, so it is kept as the hypothesis `hG`.
+  inverse inequality; that is a PDE fact, so it is kept as the hypothesis `hG`, and the lemma is
+  conditional on it.
 * The paper's `P_{H*}` is characterised by (12); here it is any `P` with the same two properties.
   Uniqueness is not needed.
 
@@ -52,7 +53,9 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDim
 /-- **Lemma 3.1 of arXiv 2402.03586** (oblique projector bound). Let `T` be a subspace, `H* = 1 + K`
 with `K` skew and `‖H*‖ ≤ 2`, and `P` an oblique projection onto `T` in the sense of eq. (12):
 `P x ∈ T` and `⟪P x, H* w⟫ = ⟪x, H* w⟫` for every `w ∈ T`. Then `‖P‖ ≤ 3`, and `‖I - P‖ = ‖P‖`
-when `0 ≠ T ≠ ⊤` (Szyld's identity). See the module docstring for the differences from the paper. -/
+when `0 ≠ T ≠ ⊤` (Szyld's identity; the paper states the equality without these two conditions).
+The result is conditional on `‖H*‖ ≤ 2` (hypothesis `hG`), which the paper derives from its
+condition (5) on `δ`. See the module docstring for the differences from the paper. -/
 theorem supg_oblique_opNorm_le (T : Submodule ℝ E) (K : E →L[ℝ] E)
     (hK : ∀ x : E, ⟪x, K x⟫ = 0) (hG : ‖(1 : E →L[ℝ] E) + K‖ ≤ 2)
     (P : E →L[ℝ] E) (hPT : ∀ x, P x ∈ T)
