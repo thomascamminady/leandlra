@@ -5,15 +5,25 @@ import LeanDLRA.HighOrder.RungeKuttaBUG
 /-!
 # Results of arXiv 2608.27749: High-order robust BUG integrators (basis consistency, Lemma 2)
 
-Property P2 of the BUG-p bases (Sec. 3.1) and its derivation for Runge–Kutta bases (Lemma 2):
+Property P2 of the BUG-p bases (Sec. 3.1) and the argument of Lemma 2 in an abstract form:
 if the product projector `P Q` (`P = U Uᵀ ·`, `Q = · V Vᵀ`) fixes the starting value and the
 stage derivatives of a full Runge–Kutta step, then it fixes the Runge–Kutta result, and therefore
 captures the exact solution at least as well as that result does
-(`‖A − P Q A‖ ≤ ‖A − Y_RK‖`, the paper has the constant `2`).  Combined with any local error bound
-for the Runge–Kutta step this is P2.  Sec. 3.1 (P1–P2 ⇒ order-p BUG), Lemma 1 (stage span),
-Remark 2 and Thm 1 are already in the library
-(`RungeKuttaBUG.bugP_local_error`, `bugP_global_error`, `rk_stage_mem`, `rk_result_mem`,
-`galerkinRK_stage_mem_of_nested`, `norm_bestTrunc_sub_le`).
+(`‖A − P Q A‖ ≤ ‖A − Y_RK‖`, the paper's argument gives the constant `2`).  The results are
+**conditional on** a local error bound for the Runge–Kutta step (hypothesis `hK`; the paper cites
+[24, Theorem 6]).
+
+**Difference from Lemma 2 of the paper.**  The paper compares with the *projected* Runge–Kutta
+result `Y_PRK = Yₙ + h ∑ bᵢ Z̄ᵢ`, `Z̄ᵢ = P(Y₍ᵢ₎) F₍ᵢ₎` at the truncated stages `Y₍ᵢ₎`, and its bases
+(10a)–(10b) fix the `Z̄ᵢ` (by Lemma 1).  Here the comparison is with the *full* Runge–Kutta step,
+and the projector must fix the full stage derivatives `F(t + cᵢ h, Zᵢ)`, which the bases
+(10a)–(10b) need not do.  So the theorems below have the structure of Lemma 2 but do not apply
+verbatim to the paper's bases.
+
+Abstract counterparts of Sec. 3.1 (P1–P2 ⇒ local and global error), of Lemma 1 (stage span) and
+of Remark 2 are in the library (`RungeKuttaBUG.bugP_local_error`, `bugP_global_error`,
+`rk_stage_mem`, `rk_result_mem`, `galerkinRK_stage_mem_of_nested`, `norm_bestTrunc_sub_le`); they
+take capture estimates as hypotheses and are not Theorem 1 as printed.
 -/
 
 open Set Filter Topology Finset
@@ -23,14 +33,15 @@ namespace LeanDLRA.Literature.P2608_27749
 
 open LeanDLRA RungeKuttaBUG
 
-/-- **Lemma 2 (consistency P2 for RK bases), abstract core** (arXiv 2608.27749, Lemma 2).
+/-- **Lemma 2 (consistency P2 for RK bases), abstract core** (after arXiv 2608.27749, Lemma 2).
 Let `R` be an orthogonal projector (`R = P Q`) fixing the starting value `y` and every stage
-derivative `F(t + cᵢ h, Zᵢ)` of the full explicit Runge–Kutta step with nonzero weight `bᵢ`
-(the construction of the augmented bases).  If the full Runge–Kutta result `z₁` approximates
-the exact value `a₁` to `K` (e.g. `K = c₁ h^{p+1} + c₂ h ε_r`), then
-`‖R a₁ − a₁‖ ≤ K`.  Difference from the paper: constant `1` instead of `2` in front of the
-Runge–Kutta error (the paper bounds `‖A − PQA‖ ≤ 2‖A − Y_PRK‖` via a triangle inequality; the
-orthogonal-projection best-approximation property gives `1`). -/
+derivative `F(t + cᵢ h, Zᵢ)` of the full explicit Runge–Kutta step with nonzero weight `bᵢ`.
+**Conditional on** the local error bound `‖a₁ − z₁‖ ≤ K` of the full Runge–Kutta result `z₁`
+(e.g. `K = c₁ h^{p+1} + c₂ h ε_r`): `‖R a₁ − a₁‖ ≤ K`.  Differences from the paper: the paper
+compares with the projected Runge–Kutta result `Y_PRK` and its bases fix the projected stage
+directions `Z̄ᵢ`, not the full `F(t + cᵢ h, Zᵢ)` (see the module docstring); and the constant is
+`1` instead of the `2` of the paper's argument (which bounds `‖A − PQA‖ ≤ 2‖A − Y_PRK‖` via a
+triangle inequality; the orthogonal-projection best-approximation property gives `1`). -/
 theorem consistency_P2 {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] {s : ℕ}
     {F : ℝ → E → E} {a : Fin s → Fin s → ℝ} {b c : Fin s → ℝ} {t h : ℝ} {y z₁ a₁ : E}
     {Z : Fin s → E} {R : E →L[ℝ] E} {K : ℝ} (hR : IsOrthProj R)
@@ -41,14 +52,17 @@ theorem consistency_P2 {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ
   rw [norm_sub_rev]
   exact (hR.norm_sub_le_of_mem_range a₁ z₁ hz).trans hK
 
-/-- **Lemma 2 (consistency P2 for RK bases), matrix form** (arXiv 2608.27749, Lemma 2).
+/-- **Lemma 2 (consistency P2 for RK bases), matrix form** (after arXiv 2608.27749, Lemma 2).
 For `U`, `V` with orthonormal columns, a full Runge–Kutta step from `y` with
 `U Uᵀ y V Vᵀ = y` whose stage derivatives with nonzero weight satisfy
-`U Uᵀ F V Vᵀ = F`, and exact value `a₁` with `‖a₁ − z₁‖ ≤ c₁ h^{p+1} + c₂ h ε`:
+`U Uᵀ F V Vᵀ = F`, and, **conditional on** the local error bound
+`‖a₁ − z₁‖ ≤ c₁ h^{p+1} + c₂ h ε` for the exact value `a₁`:
 
     ‖U Uᵀ a₁ V Vᵀ − a₁‖ ≤ c₁ h^{p+1} + c₂ h ε.
 
-Difference from the paper: constant `1` in place of `2` (see `consistency_P2`). -/
+Differences from the paper as for `consistency_P2`: full instead of projected Runge–Kutta step
+(the bases (10a)–(10b) need not fix the full stage derivatives), and constant `1` in place
+of `2`. -/
 theorem consistency_P2_matrix {m n k k' : Type*} [Fintype m] [Fintype n] [Fintype k]
     [Fintype k'] [DecidableEq k] [DecidableEq k'] {s : ℕ}
     {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {a : Fin s → Fin s → ℝ} {b c : Fin s → ℝ}

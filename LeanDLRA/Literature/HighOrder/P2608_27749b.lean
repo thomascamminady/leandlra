@@ -17,7 +17,8 @@ S-steps agree with the full-rank and the projected Runge-Kutta stages up to `O(�
 Frobenius norm (the paper's setting), with explicit constants; `capture_bound` and `stage_bound`
 are the underlying statements on an abstract inner product space.  The Runge-Kutta order
 conditions used by the paper ("the method is of order `p`") enter as local-error hypotheses, and
-the basis-containment facts of Lemma 1 enter as range-inclusion hypotheses.
+the basis-containment facts of Lemma 1 enter as range-inclusion hypotheses: Lemmas 3-5 here are
+**conditional on** these consequences of Lemma 1 (proved in the paper for its bases).
 -/
 
 open Set Filter Topology Finset
@@ -461,11 +462,12 @@ end StageData
 auxiliary K-step Runge-Kutta stages `Z̃ⱼ = F(t₀ + cⱼ h, Y₀ + h ∑ₗ aⱼₗ Z̃ₗ) V̂₀ V̂₀ᵀ` (eq. (15a))
 with `V̂₀` of orthonormal columns.  For the stages `j ≤ s - 1` (`j.val + 1 < s`):
 `Z̃ⱼ = Zⱼ + O(ε) = Z̄ⱼ + O(ε)` with the explicit constants of `stage_bound`
-(`δ = ε + L η`, `x = L h α`).  The basis information of Lemma 1 enters as hypotheses:
-`hV` (the column space of `V_(j)` lies in `range V̂₀`) and `hFU` (`range F_(j)ᵀ U_(j) ⊆ range V̂₀`,
-for `j ≤ s - 1`); these give `Z̄ⱼ V̂₀ V̂₀ᵀ = Z̄ⱼ`.  Differences from the paper: explicit constants;
-the truncation defect `η` of the stage points (`η = 0` in the paper); orthonormality of the stage
-bases `U_(j)`, `V_(j)` is not needed; A2 (boundedness of `F`) is not needed. -/
+(`δ = ε + L η`, `x = L h α`).  **Conditional on** the basis information of Lemma 1, which enters
+as hypotheses: `hV` (the column space of `V_(j)` lies in `range V̂₀`) and `hFU`
+(`range F_(j)ᵀ U_(j) ⊆ range V̂₀`, for `j ≤ s - 1`); these give `Z̄ⱼ V̂₀ V̂₀ᵀ = Z̄ⱼ`.
+Differences from the paper: explicit constants; the truncation defect `η` of the stage points
+(`η = 0` in the paper); orthonormality of the stage bases `U_(j)`, `V_(j)` is not needed; A2
+(boundedness of `F`) is not needed. -/
 theorem lemma3_Kstep {r kv : Type*} [Fintype r] [Fintype kv] [DecidableEq kv]
     {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {L ε η h t₀ α : ℝ} {a : Fin s → Fin s → ℝ}
     {c : Fin s → ℝ} (ha : ∀ j l, j ≤ l → a j l = 0) (hα : ∀ j, ∑ l, |a j l| ≤ α)
@@ -492,7 +494,8 @@ theorem lemma3_Kstep {r kv : Type*} [Fintype r] [Fintype kv] [DecidableEq kv]
 The same statement as `lemma3_Kstep` for the auxiliary stages
 `Z̃ⱼ = Û₀ Û₀ᵀ F(t₀ + cⱼ h, Y₀ + h ∑ₗ aⱼₗ Z̃ₗ)` of the Runge-Kutta method on the L-step
 `L̇ = F(t, Û₀ Lᵀ)ᵀ Û₀` (left projector instead of right projector; `hU`, `hFV` instead of
-`hV`, `hFU`).  Differences from the paper as for `lemma3_Kstep`. -/
+`hV`, `hFU`).  **Conditional on** Lemma 1 and with the differences from the paper as for
+`lemma3_Kstep`. -/
 theorem lemma3_Lstep {r ku : Type*} [Fintype r] [Fintype ku] [DecidableEq ku]
     {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {L ε η h t₀ α : ℝ} {a : Fin s → Fin s → ℝ}
     {c : Fin s → ℝ} (ha : ∀ j l, j ≤ l → a j l = 0) (hα : ∀ j, ∑ l, |a j l| ≤ α)
@@ -519,9 +522,9 @@ theorem lemma3_Lstep {r ku : Type*} [Fintype r] [Fintype ku] [DecidableEq ku]
 the S-step, `Z̃ⱼ⁽ˢ⁾ = Û₀ Û₀ᵀ F(t₀ + cⱼ h, Y₀ + h ∑ₗ aⱼₗ Z̃ₗ⁽ˢ⁾) V̂₀ V̂₀ᵀ` (eq. (16a), written in the
 full space), and `j ≤ s - 1` (`j.val + 1 < s`):
 `Z̃ⱼ⁽ˢ⁾ = Zⱼ + O(ε) = Z̄ⱼ + O(ε)` with the explicit constants of `stage_bound`.  Both bases
-`Û₀`, `V̂₀` have orthonormal columns and contain the stage information of Lemma 1 (hypotheses
-`hU`, `hV`, `hFV`, `hFU`).  The proof is the same as for Lemma 3 with the Galerkin projector
-`Û₀Û₀ᵀ (·) V̂₀V̂₀ᵀ` as mask.  Differences as for `lemma3_Kstep`. -/
+`Û₀`, `V̂₀` have orthonormal columns and, **conditional on** Lemma 1, contain its stage information
+(hypotheses `hU`, `hV`, `hFV`, `hFU`).  The proof is the same as for Lemma 3 with the Galerkin
+projector `Û₀Û₀ᵀ (·) V̂₀V̂₀ᵀ` as mask.  Differences as for `lemma3_Kstep`. -/
 theorem lemma4_Sstep {r ku kv : Type*} [Fintype r] [Fintype ku] [DecidableEq ku] [Fintype kv]
     [DecidableEq kv] {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {L ε η h t₀ α : ℝ}
     {a : Fin s → Fin s → ℝ} {c : Fin s → ℝ} (ha : ∀ j l, j ≤ l → a j l = 0)
@@ -555,7 +558,8 @@ Let `Û = [Û₀, Ũ₂]`, `V̂ = [V̂₀, Ṽ₂]` be the augmented bases of th
 (orthonormal columns; `hUaug`, `hVaug`: they contain `Û₀`, `V̂₀`), where `Ũ₂`, `Ṽ₂` come from the
 exact end values of the K- and L-step flows, `Kend = K(t₁)V̂₀ᵀ` and `Lend = Û₀ L(t₁)ᵀ`:
 `hKend` says `Û Ûᵀ` fixes `(I - Û₀Û₀ᵀ) Kend`, `hLend` says `V̂ V̂ᵀ` fixes the rows of
-`Lend (I - V̂₀V̂₀ᵀ)`.  The stages satisfy the hypotheses of Lemmas 3-4 (A1, A3, Lemma 1).  The order
+`Lend (I - V̂₀V̂₀ᵀ)`.  The stages satisfy the hypotheses of Lemmas 3-4 (A1, A3, and, **conditional
+on** Lemma 1, the basis containments `hU`, `hV`, `hFV`, `hFU`).  The order
 `p` of the Runge-Kutta method is used exactly as in the paper: `hRK` is the local error
 `‖A(t₁) - A₁‖ ≤ CA h^{p+1}` of the full method `A₁ = Y₀ + h ∑ bᵢ Zᵢ`, `hK`/`hL'` those of the
 Runge-Kutta method applied to the K- and L-step (`Y₁⁽ᴷ⁾ - K(t₁)V̂₀ᵀ = O(h^{p+1})`).  Then

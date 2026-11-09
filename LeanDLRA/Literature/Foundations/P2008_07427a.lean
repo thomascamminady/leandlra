@@ -9,8 +9,9 @@ import LeanDLRA.Matrix.Projectors
 Orthosymplectic matrices `U ∈ ℝ^{2N × 2n}` (`Uᵀ U = I`, `Uᵀ J_{2N} U = J_{2n}`) are matrices over
 the index types `ι ⊕ ι` and `κ ⊕ κ`, with `J = symplJ ι = [[0, I], [-I, 0]]`.  Proved:
 
-* **Lemma 3.3** `isOrthosymplectic_iff`: `U` is orthosymplectic iff `U = [A | Jᵀ A]` with
-  `Aᵀ A = I`, `Aᵀ J A = 0`;
+* **Lemma 3.3** `lemma_3_3` (as printed: for symplectic `M₊` with symplectic inverse `M`,
+  `M₊ M₊ᵀ = I` iff `M = M₊ᵀ`) and `isOrthosymplectic_iff` (the characterization derived in its
+  proof: `U` is orthosymplectic iff `U = [A | Jᵀ A]` with `Aᵀ A = I`, `Aᵀ J A = 0`);
 * **Prop. 5.7 / Cor. 5.8** `cayleyRetraction_lipschitz` (constant `3`; in fact `2`,
   `cayleyRetraction_lipschitz_two`) and `cayleyRetraction_error_isBigO` for the Cayley retraction
   `R_Q(V) = cay(Υ_Q(V)) Q` on horizontal vectors, via `‖(I - Ω)⁻¹ X‖_F ≤ ‖X‖_F` for skew `Ω` and
@@ -18,10 +19,12 @@ the index types `ι ⊕ ι` and `κ ⊕ κ`, with `J = symplJ ι = [[0, I], [-I,
 * **Prop. 4.3 / Remark 4.4** `tangentPi`: `Π(w) = (I - U Uᵀ)(wZ + J w Z Jᵀ) S⁻¹ Zᵀ + U Uᵀ w` is
   an `IsOrthProj` (`isOrthProj_tangentPi`) onto `tangentSpace U Z`, commutes with `J`
   (`tangentPi_symplJ_mul`), and `⟨w - Π w, J y⟩ = 0` on the tangent space;
-* **Prop. 4.5** `isOrthosymplectic_of_horizontal`: orthosymplecticity is preserved when
-  `U̇ ∈ H_U`; `isHorizontal_rhs` shows the right-hand side of (4.10) lies in `H_U` for
-  orthosymplectic `U`.  Not proved: that a solution of (4.10) started on the manifold stays on it
-  without assuming `U̇ ∈ H_U` along the solution (the paper's proof also takes this step);
+* **Prop. 4.5, conditional** `isOrthosymplectic_of_horizontal`: orthosymplecticity is preserved
+  when `U̇ ∈ H_U` along the curve (the first step of the paper's proof); `isHorizontal_rhs` shows
+  that the right-hand side of (4.10) lies in `H_U` at orthosymplectic `U` (the second step).  Not
+  proved: Prop. 4.5 itself, that a solution of (4.10) started on the manifold stays on it (this
+  needs an invariance argument, since `isHorizontal_rhs` applies only at points already known to
+  be orthosymplectic);
 * **Sec. 4.2** `hamiltonian_conserved` (abstract, state-dependent orthogonal projector commuting
   with a skew `J`) and `hamiltonian_conserved_matrix` (with the projector of Prop. 4.3).
 
@@ -88,12 +91,13 @@ lemma IsOrthosymplectic.comm {U : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ} (h : IsOrt
     (by rwa [Matrix.conjTranspose_eq_transpose_of_trivial])
   exact sub_eq_zero.1 this
 
-/-- **Lemma 3.3** (arXiv 2008.07427; the form listed for this slice).  A matrix
-`U ∈ ℝ^{2N × 2n}` is orthosymplectic (`Uᵀ U = I`, `Uᵀ J_{2N} U = J_{2n}`, canonical `J`) iff
-`U = [A | J_{2N}ᵀ A]` with `Aᵀ A = I_n` and `Aᵀ J_{2N} A = 0`.  Here `2N = ι ⊕ ι` and
-`2n = κ ⊕ κ` are index types, `[· | ·]` is `Matrix.fromCols`.  No condition `n ≤ N` is needed.
-The paper's own proof is the statement "`M₊ M₊ᵀ = I` iff `M = M₊ᵀ`"; this is the
-characterization of the orthosymplectic matrices it derives and uses (e.g. Lemma 4.8). -/
+/-- **Characterization of orthosymplectic matrices, from the proof of Lemma 3.3**
+(arXiv 2008.07427).  A matrix `U ∈ ℝ^{2N × 2n}` is orthosymplectic (`Uᵀ U = I`,
+`Uᵀ J_{2N} U = J_{2n}`, canonical `J`) iff `U = [A | J_{2N}ᵀ A]` with `Aᵀ A = I_n` and
+`Aᵀ J_{2N} A = 0`.  Here `2N = ι ⊕ ι` and `2n = κ ⊕ κ` are index types, `[· | ·]` is
+`Matrix.fromCols`.  No condition `n ≤ N` is needed.  The printed statement of Lemma 3.3 is
+`lemma_3_3`; the "only if" direction here is derived in its proof, and the paper uses the form
+`U = [A | J_{2N}ᵀ A]` later (Lemma 4.8). -/
 theorem isOrthosymplectic_iff (U : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ) :
     IsOrthosymplectic U ↔ ∃ A : Matrix (ι ⊕ ι) κ ℝ, Aᵀ * A = 1 ∧ Aᵀ * symplJ ι * A = 0 ∧
       U = Matrix.fromCols A ((symplJ ι)ᵀ * A) := by
@@ -148,6 +152,28 @@ theorem isOrthosymplectic_iff (U : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ) :
       · have e4 : ∀ X : Matrix (ι ⊕ ι) κ ℝ, symplJ ι * ((symplJ ι)ᵀ * X) = X := by
           intro X; rw [← Matrix.mul_assoc, symplJ_mul_transpose, Matrix.one_mul]
         simpa [Matrix.transpose_mul, Matrix.mul_assoc, e4] using hA2'
+
+/-- **Lemma 3.3** (arXiv 2008.07427), as printed.  Let `M₊ ∈ ℝ^{2n × 2N}` be symplectic,
+`M₊ J_{2N} M₊ᵀ = J_{2n}`, and let `M = J_{2N}ᵀ M₊ᵀ J_{2n}` be its symplectic (right) inverse.
+Then `M₊ M₊ᵀ = I_{2n}` iff `M = M₊ᵀ`.  No condition `n ≤ N` is needed. -/
+theorem lemma_3_3 (Mp : Matrix (κ ⊕ κ) (ι ⊕ ι) ℝ) (hMp : Mp * symplJ ι * Mpᵀ = symplJ κ) :
+    Mp * Mpᵀ = 1 ↔ (symplJ ι)ᵀ * Mpᵀ * symplJ κ = Mpᵀ := by
+  constructor
+  · intro h
+    have hU : IsOrthosymplectic Mpᵀ :=
+      ⟨by rwa [Matrix.transpose_transpose], by rwa [Matrix.transpose_transpose]⟩
+    rw [Matrix.mul_assoc, ← hU.comm, ← Matrix.mul_assoc, symplJ_transpose_mul, Matrix.one_mul]
+  · intro h
+    have ht : Mp * (symplJ ι)ᵀ * Mpᵀ = (symplJ κ)ᵀ := by
+      have := congrArg Matrix.transpose hMp
+      simpa [Matrix.transpose_mul, Matrix.mul_assoc] using this
+    calc Mp * Mpᵀ = Mp * ((symplJ ι)ᵀ * Mpᵀ * symplJ κ) := by rw [h]
+      _ = Mp * (symplJ ι)ᵀ * Mpᵀ * symplJ κ := by simp only [Matrix.mul_assoc]
+      _ = 1 := by rw [ht, symplJ_transpose_mul]
+
+/-- Non-vacuity of `lemma_3_3`: the identity on `ℝ^{2N}` is symplectic. -/
+example : (1 : Matrix (ι ⊕ ι) (ι ⊕ ι) ℝ) * symplJ ι * (1 : Matrix (ι ⊕ ι) (ι ⊕ ι) ℝ)ᵀ =
+    symplJ ι := by simp
 
 /-! ### The Cayley retraction (Section 5) -/
 
@@ -313,8 +339,8 @@ is Lipschitz in the Frobenius norm on the horizontal space `H_Q` of an orthosymp
 `‖R_Q(V) - R_Q(W)‖_F ≤ 3 ‖V - W‖_F` for `V, W ∈ H_Q = {Qᵀ V = 0, V J_{2n} = J_{2N} V}`.  `S` is an
 arbitrary `2n × 2n` matrix here (the paper takes `S` symmetric with `S J + J Sᵀ = 0`, a special
 case).  The statement is proved with the sharper constant `2` in
-`cayleyRetraction_lipschitz_two`; the paper's `3` also holds for general tangent vectors, which are
-not treated here (the listed result concerns horizontal vectors). -/
+`cayleyRetraction_lipschitz_two`.  The paper's `3` comes from a three-term bound of
+`‖Υ_Q(V) - Υ_Q(W)‖` whose third term, `Q (V - W)ᵀ Q Qᵀ`, vanishes on `H_Q`. -/
 theorem cayleyRetraction_lipschitz {Q : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ} (hQ : IsOrthosymplectic Q)
     (S : Matrix (κ ⊕ κ) (κ ⊕ κ) ℝ) {V W : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ}
     (hV : IsHorizontal Q V) (hW : IsHorizontal Q W) :
@@ -328,8 +354,8 @@ on the step sizes (e.g. `𝓝[>] 0`): `V`, `Vh : ι' → H_Q` stand for the exac
 numerical solution of the tangent-space equation (both horizontal, as in the paper where all
 Runge-Kutta stages are horizontal), indexed by the step size; the hypothesis is the paper's
 "the numerical method on the tangent space is of order `k`" in the form
-`Vh dt - V dt = O(dt^k)`.  The constant of the conclusion is `3` times the constant of the
-hypothesis (Prop. 5.7); the Runge-Kutta error analysis itself is not part of this statement. -/
+`Vh dt - V dt = O(dt^k)`.  (The proof, via Prop. 5.7, gives `3` times the constant of the
+hypothesis.)  The Runge-Kutta error analysis itself is not part of this statement. -/
 theorem cayleyRetraction_error_isBigO {Q : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ} (hQ : IsOrthosymplectic Q)
     (S : Matrix (κ ⊕ κ) (κ ⊕ κ) ℝ) {l : Filter ℝ} {K : ℕ}
     {V Vh : ℝ → Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ} (hV : ∀ dt, IsHorizontal Q (V dt))
@@ -345,11 +371,12 @@ end Cayley
 
 /-! ### Orthosymplecticity is preserved (Prop. 4.5) -/
 
-/-- **Prop. 4.5** (arXiv 2008.07427).  If `U(t₀)` is orthosymplectic and `U̇(t) ∈ H_{U(t)}`, i.e.
-`U̇ᵀ U = 0` and `U̇ J_{2n} = J_{2N} U̇` (this is what the paper shows for solutions of (4.10), and
-what its proof uses), then `U(t)` is orthosymplectic for all `t`.  Stated for a differentiable
-curve on a convex set `s` of times (an interval).  The part that `U̇ ∈ H_U` for the right-hand
-side of (4.10) is `horizontal_rhs` below. -/
+/-- **Prop. 4.5, conditional on `U̇(t) ∈ H_{U(t)}`** (arXiv 2008.07427; the first step of the
+paper's proof, its claim about `W`).  If `U(t₀)` is orthosymplectic and `U̇(t) ∈ H_{U(t)}`, i.e.
+`U̇ᵀ U = 0` and `U̇ J_{2n} = J_{2N} U̇`, for all `t`, then `U(t)` is orthosymplectic for all `t`.
+Stated for a differentiable curve on a convex set `s` of times (an interval).  For solutions of
+(4.10) the paper verifies `U̇ ∈ H_U` using that `U` is orthosymplectic (`isHorizontal_rhs` below);
+Prop. 4.5 itself, without the hypothesis `U̇ ∈ H_U` along the solution, is not proved here. -/
 theorem isOrthosymplectic_of_horizontal {U U' : ℝ → Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ} {s : Set ℝ}
     (hs : Convex ℝ s) (hU : ∀ t ∈ s, HasDerivWithinAt U (U' t) s t)
     (hH : ∀ t ∈ s, IsHorizontal (U t) (U' t)) {t₀ : ℝ} (ht₀ : t₀ ∈ s)
@@ -401,8 +428,9 @@ noncomputable def tangentPi (U : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ) (Z : Matrix
     (w : Matrix (ι ⊕ ι) p ℝ) : Matrix (ι ⊕ ι) p ℝ :=
   (1 - U * Uᵀ) * Fmat Z w * (Smat Z)⁻¹ * Zᵀ + U * Uᵀ * w
 
-/-- The tangent space `T_R M^spl = {X_U Zᵀ + U X_Zᵀ : X_U ∈ H_U, X_Z ∈ ℝ^{p × 2n}}` of
-arXiv 2008.07427, Prop. 4.1, at `R = U Zᵀ`. -/
+/-- The tangent space `T_R M^spl = {X_U Zᵀ + U X_Zᵀ : X_U ∈ H_U, X_Z ∈ ℝ^{p × 2n}}` at
+`R = U Zᵀ`, in the form the paper derives from Prop. 4.1 (display after Remark 4.2); it is taken
+here as the definition (Prop. 4.1 itself, the equality with (4.6), is not formalized). -/
 def tangentSpace (U : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ) (Z : Matrix p (κ ⊕ κ) ℝ) :
     Set (Matrix (ι ⊕ ι) p ℝ) :=
   {X | ∃ (XU : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ) (XZ : Matrix p (κ ⊕ κ) ℝ),
@@ -581,8 +609,8 @@ theorem isOrthProj_tangentPi {U : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ} (hU : IsOr
   idem w := tangentPi_of_mem hU hS (tangentPi_mem hU hS w)
   symm w v := inner_tangentPi_symm hU hS w v
 
-/-- **Prop. 4.3 / Remark 4.4**, second part: `Π` commutes with the symplectic unit,
-`Π (J_{2N} w) = J_{2N} Π(w)`. -/
+/-- `Π` of Prop. 4.3 commutes with the symplectic unit, `Π (J_{2N} w) = J_{2N} Π(w)`.  Auxiliary:
+not stated in the paper; used for the conservation argument of Section 4.2. -/
 theorem tangentPi_symplJ_mul {U : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ} (hU : IsOrthosymplectic U)
     (Z : Matrix p (κ ⊕ κ) ℝ) (w : Matrix (ι ⊕ ι) p ℝ) :
     tangentPi U Z (symplJ ι * w) = symplJ ι * tangentPi U Z w := by

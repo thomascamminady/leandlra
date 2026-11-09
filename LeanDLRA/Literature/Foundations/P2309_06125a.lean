@@ -1948,10 +1948,11 @@ theorem pairing_weingarten (h : IsFactorization (Y 0) U S V)
   rw [← dTanProj_normal h hN T]
   exact (hP.pairing hζ (hmem.mono fun t ht => tanProj_eq_self_iff.2 ht) hN).1
 
-/-- **The bound following (34) of arXiv 2309.06125**: `‖W_X(T, N)‖ ≤ 2 ‖T‖ ‖N‖ / σ_r`, in the
-Frobenius norm, where `ρ` is a lower bound for the singular values of `S`; for diagonal `S` this
-hypothesis is `LeanDLRA.Curvature.diagonal_bounded_below`, see `norm_weingarten_le_diagonal`.  It
-holds for all `T`, `N`, not only tangent and normal ones. -/
+/-- **A quantitative form of the remark after (34) of arXiv 2309.06125**:
+`‖W_X(T, N)‖ ≤ 2 ‖T‖ ‖N‖ / σ_r`, in the Frobenius norm, where `ρ` is a lower bound for the singular
+values of `S`; for diagonal `S` this hypothesis is `LeanDLRA.Curvature.diagonal_bounded_below`, see
+`norm_weingarten_le_diagonal`.  It holds for all `T`, `N`, not only tangent and normal ones.  The
+paper states no bound; it only remarks that the curvature grows unbounded as `σ_r(Y) → 0`. -/
 theorem norm_weingarten_le (h : IsFactorization X U S V) {ρ : ℝ} (hρ : 0 < ρ)
     (hS : ∀ v : EuclideanSpace ℝ (Fin r), ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖)
     (T N : Matrix m n ℝ) : ‖weingarten U S V T N‖ ≤ 2 * ‖T‖ * ‖N‖ / ρ := by
@@ -2011,8 +2012,8 @@ theorem norm_weingarten_le (h : IsFactorization X U S V) {ρ : ℝ} (hρ : 0 < �
         rw [div_eq_mul_inv]
         ring
 
-/-- The bound following (34) of arXiv 2309.06125 for an SVD `X = U diag(σ) Vᵀ` with
-`σ_r = ρ ≤ σᵢ`.  Such a decomposition exists for every `X` of rank `r` by
+/-- The bound of `norm_weingarten_le` (not stated in arXiv 2309.06125, see there) for an SVD
+`X = U diag(σ) Vᵀ` with `σ_r = ρ ≤ σᵢ`.  Such a decomposition exists for every `X` of rank `r` by
 `LeanDLRA.SVD.exists_svd_bounded_below`. -/
 theorem norm_weingarten_le_diagonal {σ : Fin r → ℝ}
     (h : IsFactorization X U (Matrix.diagonal σ) V) {ρ : ℝ} (hρ : 0 < ρ) (hσ : ∀ i, ρ ≤ σ i)
@@ -2060,7 +2061,7 @@ theorem dlra_acceleration [DecidableEq m] [DecidableEq n] (h : IsFactorization (
 
 /-- **The curvature term of Prop. 6 of arXiv 2309.06125** is bounded by `2 B ε / σ_r`, where `B`
 bounds `‖F‖`, `ε` is the modeling error (5) and `ρ = σ_r` bounds the singular values of `S` from
-below. -/
+below.  This bound is not stated in the paper; it follows from `norm_weingarten_le`. -/
 theorem norm_curvature_term_le [DecidableEq m] [DecidableEq n] (h : IsFactorization X U S V)
     {ρ B ε : ℝ} (hρ : 0 < ρ)
     (hS : ∀ v : EuclideanSpace ℝ (Fin r), ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖)

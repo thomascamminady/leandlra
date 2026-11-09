@@ -6,8 +6,9 @@ import LeanDLRA.Dynamics.ContinuousDLRA
 The time-integral a posteriori error bound of Sec. 6.4, eq. (6.7): for a reduced flow
 `Ṙ = P(t) X_H(R)` with an arbitrary (not necessarily orthogonal) linear map `P(t)` and an
 `L`-Lipschitz Hamiltonian vector field `X_H`, the error to the exact solution is bounded by
-`e^{L(t-t₀)} ‖e(t₀)‖ + ∫ e^{L(t-s)} ‖(I - P(s)) X_H(R(s))‖ ds`, with a variable defect (the
-library's `ContinuousDLRA` only has the uniform-defect version).
+`e^{L(t-t₀)} ‖e(t₀)‖ + ∫_{t₀}^t e^{L(t-s)} ‖(I - P(s)) X_H(R(s))‖ ds`, with a variable defect
+(the library's `ContinuousDLRA` only has the uniform-defect version).  This is the Grönwall bound of
+the paper's derivation; the printed (6.7) has `e^{L t}` and the integral over all of `𝒯_τ`.
 -/
 
 open Set Filter Topology Finset
@@ -23,10 +24,14 @@ the reduced equation `Ṙ = P(t) X(R)` where `P(t)` is an *arbitrary* continuous
 orthogonality, no symplecticity needed).  If the defect `s ↦ ‖(1 - P(s)) X(R(s))‖` is continuous on
 `[t₀, b]`, then for all `t ∈ [t₀, b]`
 `‖R t - x t‖ ≤ e^{L(t-t₀)} ‖R t₀ - x t₀‖ + ∫_{t₀}^t e^{L(t-s)} ‖(1 - P(s)) X(R(s))‖ ds`.
-Differences from the paper: the abstract inner product space `E` replaces `ℝ^{2n}`, the
-symplectic structure is not used (only the Lipschitz property of `X_H`), solutions are required
-only to have right derivatives, and the defect is assumed continuous (so that the integral is a
-Riemann integral). -/
+Differences from the paper: the abstract inner product space `E` replaces `ℝ^{2N × p}` with the
+Frobenius norm; `P(t)` stands for the paper's state-dependent map `P^ε_{R(t)}` along the reduced
+trajectory; the symplectic structure is not used (only the Lipschitz property of `X_H`); solutions
+are required only to have right derivatives; and the defect is assumed continuous (so that the
+integral is a Riemann integral).  The printed (6.7) reads
+`‖e(t)‖ ≤ ‖e(t₀)‖ e^{L t} + ∫_{t^{τ-1}}^{t^τ} e^{L(t-s)} ‖(I - P) X_H(R)‖ ds`; the bound here has
+the exponent `L (t - t₀)` and the integral up to `t`, which is the Grönwall bound of the paper's
+derivation and implies the printed form when `L ≥ 0`, `t₀ = t^{τ-1} ≥ 0` and `t ≤ t^τ`. -/
 theorem error_bound_integral {X : E → E} {L : ℝ} (hX : IsLipschitzField (fun _ => X) L)
     {P : ℝ → E →L[ℝ] E} {x R : ℝ → E} {t₀ b : ℝ}
     (hx : ODESolution (fun _ y => X y) x t₀ b)

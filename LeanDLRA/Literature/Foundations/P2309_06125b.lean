@@ -9,7 +9,8 @@ second-order retraction has local error `O(Δt³)`.  The manifold `M_r` of rank-
 abstracted to an arbitrary subset `M` of a normed space with a tangent projector `Π` at the base
 point `Y₀`; the only manifold fact used is `NormalAccelDeterminedByVelocity` (the normal
 acceleration of a `C²` curve in `M` depends only on its velocity, i.e. the second fundamental form
-exists), which holds for every embedded `C²` submanifold.
+exists), a standard fact for embedded `C²` submanifolds that is a hypothesis here.  For `M_r` it is
+not proved in the library, so the `M_r` case of the result is conditional on it.
 -/
 
 open Set Filter Topology Finset
@@ -130,8 +131,9 @@ theorem deriv_deriv_comp_quadCurve {R : E → E} (hR : ContDiff ℝ 2 R) (v a : 
 
 /-- The manifold fact behind second-order retractions: two `C²` curves in `M` through `Y₀` with
 the same velocity have the same normal acceleration `(1 - Π) c''(0)` (the second fundamental
-form of `M` at `Y₀` evaluated on the velocity).  `Π` is the tangent projector at `Y₀`.  This holds
-for every embedded `C²` submanifold, in particular for the manifold `M_r` of rank-`r` matrices. -/
+form of `M` at `Y₀` evaluated on the velocity).  `Π` is the tangent projector at `Y₀`.  This is a
+standard property of embedded `C²` submanifolds, such as the manifold `M_r` of rank-`r` matrices;
+it is not proved in the library for `M_r` (only for the parabola below). -/
 def NormalAccelDeterminedByVelocity (M : Set E) (Pi : E →L[ℝ] E) (Y₀ : E) : Prop :=
   ∀ c d : ℝ → E, ContDiffAt ℝ 2 c 0 → ContDiffAt ℝ 2 d 0 → c 0 = Y₀ → d 0 = Y₀ →
     (∀ᶠ t in 𝓝 0, c t ∈ M) → (∀ᶠ t in 𝓝 0, d t ∈ M) → deriv c 0 = deriv d 0 →
@@ -151,7 +153,11 @@ curve `s ↦ R(s z)` has tangentially vanishing acceleration, `Π (d²/ds² R(s 
 velocity `Π Ẏ(t₀) = Ẏ(t₀)`.  The accelerated Euler step is
 `Y₁ = R(Δt Ẏ(t₀) + ½ Δt² Π Ÿ(t₀))`, where `Π Ÿ(t₀) = Π DF[Π F] + W(Π F, Π⊥ F)` is the tangential
 acceleration of the DLRA solution (Prop. 6 of the paper).  Conclusion: `Y(t₀ + Δt) - Y₁ = O(Δt³)`
-as `Δt → 0`.  Difference from the paper: manifold `M_r` abstracted as above. -/
+as `Δt → 0`.  Differences from the paper: manifold `M_r` abstracted as above, and the paper's
+appeal to (28) (from [Sé23]) replaced by a direct jet argument; `R` is required to be `C³` on all
+of `E` and `M`-valued on all of `range Π`, while a retraction is only defined near `0` (stronger
+hypothesis).  Conditional for `M_r`: `NormalAccelDeterminedByVelocity` is assumed, not proved,
+there. -/
 theorem accelerated_euler_local_error (M : Set E) (Pi : E →L[ℝ] E) (hPi : ∀ x, Pi (Pi x) = Pi x)
     (Y₀ : E) (hII : NormalAccelDeterminedByVelocity M Pi Y₀)
     (R : E → E) (hR : ContDiff ℝ 3 R) (hRM : ∀ z ∈ range Pi, R z ∈ M) (hR0 : R 0 = Y₀)
