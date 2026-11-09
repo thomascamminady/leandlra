@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Curvature
@@ -57,6 +58,13 @@ moves `P₁` only through the residual `(1 - P₁) A`, which has the size of the
 (`residual_facts`).  Second, `K⁺ A = Vᵀ + h K⁺ F (1 - Q)` removes the factor `1 / σ_r` from the
 change of `P₁` caused by `δY` (`dProj_mul_A_sub_le`).  Third, the frozen-basis part is the
 projection of `Z` onto the new tangent space up to a product of two sines (`norm_frozen_le`).
+
+## Pseudoinverse
+
+`K⁺ = (Kᵀ K)⁻¹ Kᵀ` is the core Gram pseudoinverse `Matrix.gramPinv`
+(`LinearAlgebra/Factorization/Defs.lean`), the Moore–Penrose inverse of `K` wherever `K` has full
+column rank (`Matrix.gramPinv_eq_pinv`), which is where the results here use it.  The local `pinv`
+of an earlier version of this file was the same definition (unification batch C1).
 
 ## Not covered
 
@@ -169,35 +177,33 @@ section Projector
 
 variable [DecidableEq r]
 
-/-- The left inverse `K⁺ = (Kᵀ K)⁻¹ Kᵀ` of a matrix with full column rank. -/
-noncomputable def pinv (K : Matrix m r ℝ) : Matrix r m ℝ := (Kᵀ * K)⁻¹ * Kᵀ
-
 /-- The orthogonal projector `K K⁺` onto the column space of `K`.  QR factorisation enters a BUG
 step only through this matrix, see `colProj_eq_of_qr`. -/
-noncomputable def colProj (K : Matrix m r ℝ) : Matrix m m ℝ := K * pinv K
+noncomputable def colProj (K : Matrix m r ℝ) : Matrix m m ℝ := K * K.gramPinv
 
-lemma pinv_mul_self {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) : pinv K * K = 1 := by
-  rw [pinv, Matrix.mul_assoc, Matrix.nonsing_inv_mul _ ((Matrix.isUnit_iff_isUnit_det _).1 hK)]
+/-- `K⁺ K = 1` for `K` of full column rank (the core `Matrix.gramPinv_mul_self`). -/
+lemma pinv_mul_self {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) : K.gramPinv * K = 1 :=
+  Matrix.gramPinv_mul_self ((Matrix.isUnit_iff_isUnit_det _).1 hK)
 
-lemma pinv_transpose (K : Matrix m r ℝ) : (pinv K)ᵀ = K * (Kᵀ * K)⁻¹ := by
-  rw [pinv, Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.transpose_nonsing_inv,
-    Matrix.transpose_mul, Matrix.transpose_transpose]
+/-- `(K⁺)ᵀ = K (Kᵀ K)⁻¹` (the core `Matrix.transpose_gramPinv`). -/
+lemma pinv_transpose (K : Matrix m r ℝ) : (K.gramPinv)ᵀ = K * (Kᵀ * K)⁻¹ :=
+  Matrix.transpose_gramPinv K
 
 lemma colProj_transpose (K : Matrix m r ℝ) : (colProj K)ᵀ = colProj K := by
-  rw [colProj, Matrix.transpose_mul, pinv_transpose, pinv, Matrix.mul_assoc]
+  rw [colProj, Matrix.transpose_mul, pinv_transpose, Matrix.gramPinv, Matrix.mul_assoc]
 
 lemma colProj_mul_self {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) : colProj K * K = K := by
   rw [colProj, Matrix.mul_assoc, pinv_mul_self hK, Matrix.mul_one]
 
 lemma pinv_mul_colProj {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) :
-    pinv K * colProj K = pinv K := by
+    K.gramPinv * colProj K = K.gramPinv := by
   rw [colProj, ← Matrix.mul_assoc, pinv_mul_self hK, Matrix.one_mul]
 
 lemma isOrthProjMat_colProjK {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) :
     IsOrthProjMat (colProj K) :=
   ⟨colProj_transpose K, by
     simp only [colProj]
-    rw [Matrix.mul_assoc, ← Matrix.mul_assoc (pinv K), pinv_mul_self hK, Matrix.one_mul]⟩
+    rw [Matrix.mul_assoc, ← Matrix.mul_assoc (K.gramPinv), pinv_mul_self hK, Matrix.one_mul]⟩
 
 /-- Replacing a basis by another basis of the same column space does not change the projector. -/
 lemma colProj_mul_unit {K : Matrix m r ℝ} {C : Matrix r r ℝ} (hC : IsUnit C) :
@@ -208,7 +214,7 @@ lemma colProj_mul_unit {K : Matrix m r ℝ} {C : Matrix r r ℝ} (hC : IsUnit C)
     have : (K * C)ᵀ * (K * C) = Cᵀ * ((Kᵀ * K) * C) := by
       rw [Matrix.transpose_mul]; simp only [Matrix.mul_assoc]
     rw [this, Matrix.mul_inv_rev, Matrix.mul_inv_rev, Matrix.mul_assoc]
-  rw [colProj, pinv, hinv, colProj, pinv, Matrix.transpose_mul]
+  rw [colProj, Matrix.gramPinv, hinv, colProj, Matrix.gramPinv, Matrix.transpose_mul]
   calc K * C * (C⁻¹ * (Kᵀ * K)⁻¹ * Cᵀ⁻¹ * (Cᵀ * Kᵀ))
       = K * (C * C⁻¹) * (Kᵀ * K)⁻¹ * (Cᵀ⁻¹ * Cᵀ) * Kᵀ := by simp only [Matrix.mul_assoc]
     _ = K * ((Kᵀ * K)⁻¹ * Kᵀ) := by
@@ -220,25 +226,26 @@ lemma colProj_mul_unit {K : Matrix m r ℝ} {C : Matrix r r ℝ} (hC : IsUnit C)
 theorem colProj_eq_of_qr {K U₁ : Matrix m r ℝ} {R : Matrix r r ℝ} (hK : K = U₁ * R)
     (hU : U₁ᵀ * U₁ = 1) (hR : IsUnit R) : colProj K = U₁ * U₁ᵀ := by
   subst hK
-  rw [colProj_mul_unit hR, colProj, pinv, hU, inv_one, Matrix.one_mul]
+  rw [colProj_mul_unit hR, colProj, Matrix.gramPinv, hU, inv_one, Matrix.one_mul]
 
 variable [DecidableEq m]
 
 /-- The derivative `δP = (1 - P) δK K⁺ + K⁺ᵀ δKᵀ (1 - P)` of `P = K K⁺` along `δK`. -/
 noncomputable def dProj (K δ : Matrix m r ℝ) : Matrix m m ℝ :=
-  (1 - colProj K) * δ * pinv K + (pinv K)ᵀ * δᵀ * (1 - colProj K)
+  (1 - colProj K) * δ * K.gramPinv + (K.gramPinv)ᵀ * δᵀ * (1 - colProj K)
 
 /-- The adjoint of `dProj`: `⟪dProj K δ, X⟫ = ⟪δ, dProjAdj K X⟫`. -/
 noncomputable def dProjAdj (K : Matrix m r ℝ) (X : Matrix m m ℝ) : Matrix m r ℝ :=
-  (1 - colProj K) * (X + Xᵀ) * (pinv K)ᵀ
+  (1 - colProj K) * (X + Xᵀ) * (K.gramPinv)ᵀ
 
 theorem inner_dProj (K δ : Matrix m r ℝ) (X : Matrix m m ℝ) :
     ⟪dProj K δ, X⟫ = ⟪δ, dProjAdj K X⟫ := by
   have hc : (1 - colProj K)ᵀ = 1 - colProj K := by
     rw [Matrix.transpose_sub, Matrix.transpose_one, colProj_transpose]
-  have h1 : ⟪(1 - colProj K) * δ * pinv K, X⟫ = ⟪δ, (1 - colProj K) * X * (pinv K)ᵀ⟫ := by
+  have h1 : ⟪(1 - colProj K) * δ * K.gramPinv, X⟫ = ⟪δ, (1 - colProj K) * X * (K.gramPinv)ᵀ⟫ := by
     rw [inner_mul_right, inner_mul_left, hc, Matrix.mul_assoc]
-  have h2 : ⟪(pinv K)ᵀ * δᵀ * (1 - colProj K), X⟫ = ⟪δ, (1 - colProj K) * Xᵀ * (pinv K)ᵀ⟫ := by
+  have h2 : ⟪(K.gramPinv)ᵀ * δᵀ * (1 - colProj K), X⟫ =
+      ⟪δ, (1 - colProj K) * Xᵀ * (K.gramPinv)ᵀ⟫ := by
     rw [inner_mul_right, inner_mul_left, Matrix.transpose_transpose, hc, ← inner_transpose,
       Matrix.transpose_transpose]
     congr 1
@@ -256,7 +263,7 @@ theorem hasD_colProj {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {K :
   have hC := (hK.transpose.mul hK).inv hu
   refine (hK.mul (hC.mul hK.transpose)).congr fun v => ?_
   set C := ((K x)ᵀ * K x)⁻¹ with hCdef
-  rw [dProj, colProj, pinv_transpose, pinv, ← hCdef]
+  rw [dProj, colProj, pinv_transpose, Matrix.gramPinv, ← hCdef]
   simp only [Matrix.mul_sub, Matrix.sub_mul, Matrix.mul_add, Matrix.add_mul, Matrix.mul_neg,
     Matrix.neg_mul, Matrix.mul_one, Matrix.one_mul, Matrix.mul_assoc]
   abel
@@ -524,13 +531,9 @@ lemma tmul_mul {k : Type*} [Fintype k] (hU : Uᵀ * U = 1) (X : Matrix r k ℝ) 
     Uᵀ * (U * X) = X := by
   rw [← Matrix.mul_assoc, hU, Matrix.one_mul]
 
-lemma pinv_mul_unit (hU : Uᵀ * U = 1) (hS : IsUnit S) : pinv (U * S) = S⁻¹ * Uᵀ := by
-  have hd := (Matrix.isUnit_iff_isUnit_det S).1 hS
-  have hdt : IsUnit Sᵀ.det := by rwa [Matrix.det_transpose]
-  have e : (U * S)ᵀ * (U * S) = Sᵀ * S := by
-    rw [Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc Uᵀ, hU, Matrix.one_mul]
-  rw [pinv, e, Matrix.mul_inv_rev, Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc Sᵀ⁻¹,
-    Matrix.nonsing_inv_mul _ hdt, Matrix.one_mul]
+/-- `(U S)⁺ = S⁻¹ Uᵀ` for orthonormal `U` and invertible `S` (the core `Matrix.gramPinv_mul`). -/
+lemma pinv_mul_unit (hU : Uᵀ * U = 1) (hS : IsUnit S) : (U * S).gramPinv = S⁻¹ * Uᵀ :=
+  Matrix.gramPinv_mul hU ((Matrix.isUnit_iff_isUnit_det S).1 hS)
 
 /-- `dProj` for a frame `U S`. -/
 lemma dProj_frame {k : Type*} [Fintype k] [DecidableEq k] {U : Matrix k r ℝ} (hU : Uᵀ * U = 1)
@@ -1065,7 +1068,7 @@ lemma specNorm_mul_le_of {k₁ k₂ k₃ : Type*} [Fintype k₁] [Fintype k₂] 
 /-- If `C K = 1 + E` with `‖E‖₂ ≤ 1/2`, then `K` has full column rank and `‖K⁺‖₂ ≤ 2 ‖C‖₂`. -/
 lemma left_inverse_bound {K : Matrix m r ℝ} {C : Matrix r m ℝ} {E : Matrix r r ℝ}
     (hCK : C * K = 1 + E) (hE : specNorm E ≤ 1 / 2) :
-    IsUnit (Kᵀ * K) ∧ specNorm (pinv K) ≤ 2 * specNorm C := by
+    IsUnit (Kᵀ * K) ∧ specNorm (K.gramPinv) ≤ 2 * specNorm C := by
   have hlow : ∀ x : EuclideanSpace ℝ r, (1 / 2 : ℝ) * ‖x‖ ≤ ‖Matrix.toEuclideanLin (1 + E) x‖ := by
     intro x
     have e : Matrix.toEuclideanLin (1 + E) x = x + Matrix.toEuclideanLin E x := by
@@ -1084,7 +1087,7 @@ lemma left_inverse_bound {K : Matrix m r ℝ} {C : Matrix r m ℝ} {E : Matrix r
     rw [Matrix.mul_assoc, hCK, Matrix.nonsing_inv_mul _ hE1d]
   have hKu : IsUnit (Kᵀ * K) := isUnit_transpose_mul_self hKtK
   have hOP := isOrthProjMat_colProjK hKu
-  have hpinv : pinv K = ((1 + E)⁻¹ * C) * colProj K := by
+  have hpinv : K.gramPinv = ((1 + E)⁻¹ * C) * colProj K := by
     rw [colProj, ← Matrix.mul_assoc, hKtK, Matrix.one_mul]
   refine ⟨hKu, ?_⟩
   rw [hpinv]
@@ -1096,7 +1099,7 @@ lemma left_inverse_bound {K : Matrix m r ℝ} {C : Matrix r m ℝ} {E : Matrix r
 theorem side_facts {U : Matrix m r ℝ} {V : Matrix n r ℝ} {S : Matrix r r ℝ} {G A : Matrix m n ℝ}
     {h : ℝ} (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (hS : IsUnit S) (hA : A = U * S * Vᵀ + h • G)
     (hh : 0 ≤ h) (hb : h * ‖G‖ * specNorm S⁻¹ ≤ 1 / 2) :
-    IsUnit ((A * V)ᵀ * (A * V)) ∧ specNorm (pinv (A * V)) ≤ 2 * specNorm S⁻¹ ∧
+    IsUnit ((A * V)ᵀ * (A * V)) ∧ specNorm ((A * V).gramPinv) ≤ 2 * specNorm S⁻¹ ∧
       specNorm ((1 - colProj (A * V)) * U) ≤ h * ‖G‖ * specNorm S⁻¹ ∧
       specNorm ((1 - U * Uᵀ) * colProj (A * V)) ≤ 2 * (h * ‖G‖ * specNorm S⁻¹) := by
   have hSd := (Matrix.isUnit_iff_isUnit_det S).1 hS
@@ -1121,7 +1124,7 @@ theorem side_facts {U : Matrix m r ℝ} {V : Matrix n r ℝ} {S : Matrix r r ℝ
     have : h * (specNorm S⁻¹ * 1 * (‖G‖ * 1)) = h * ‖G‖ * specNorm S⁻¹ := by ring
     rw [this]; exact hb
   obtain ⟨hKu, hpn⟩ := left_inverse_bound hCK hEn
-  have hpn' : specNorm (pinv (A * V)) ≤ 2 * specNorm S⁻¹ := by
+  have hpn' : specNorm ((A * V).gramPinv) ≤ 2 * specNorm S⁻¹ := by
     refine hpn.trans ?_
     have := mul_le_mul_of_nonneg_left hCn (zero_le_two (α := ℝ))
     simpa using this
@@ -1154,7 +1157,7 @@ theorem side_facts {U : Matrix m r ℝ} {V : Matrix n r ℝ} {S : Matrix r r ℝ
       rw [Matrix.sub_mul, Matrix.one_mul, Matrix.mul_assoc, hU, Matrix.mul_one, sub_self]
     have h1 : (1 - U * Uᵀ) * (A * V) = h • ((1 - U * Uᵀ) * (G * V)) := by
       rw [hK, Matrix.mul_add, ← Matrix.mul_assoc, hcU, Matrix.zero_mul, zero_add, Matrix.mul_smul]
-    have e : (1 - U * Uᵀ) * colProj (A * V) = h • ((1 - U * Uᵀ) * (G * V) * pinv (A * V)) := by
+    have e : (1 - U * Uᵀ) * colProj (A * V) = h • ((1 - U * Uᵀ) * (G * V) * (A * V).gramPinv) := by
       rw [colProj, ← Matrix.mul_assoc, h1, Matrix.smul_mul]
     have hPU := isOrthProjMat_mul_transpose hU
     rw [e]
@@ -1289,8 +1292,8 @@ lemma dProj_transpose (K δ : Matrix m r ℝ) : (dProj K δ)ᵀ = dProj K δ := 
 lemma dProj_mul_add {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) (δ : Matrix m r ℝ) :
     dProj K δ * colProj K + colProj K * dProj K δ = dProj K δ := by
   have hP := isOrthProjMat_colProjK hK
-  have h1 : pinv K * colProj K = pinv K := pinv_mul_colProj hK
-  have h2 : colProj K * (pinv K)ᵀ = (pinv K)ᵀ := by
+  have h1 : K.gramPinv * colProj K = K.gramPinv := pinv_mul_colProj hK
+  have h2 : colProj K * (K.gramPinv)ᵀ = (K.gramPinv)ᵀ := by
     have := congrArg Matrix.transpose h1
     rwa [Matrix.transpose_mul, hP.symm] at this
   have h3 : (1 - colProj K) * colProj K = 0 := by
@@ -1298,25 +1301,26 @@ lemma dProj_mul_add {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) (δ : Matrix m
   have h4 : colProj K * (1 - colProj K) = 0 := by
     rw [Matrix.mul_sub, Matrix.mul_one, hP.idem, sub_self]
   simp only [dProj, Matrix.add_mul, Matrix.mul_add]
-  have e1 : (1 - colProj K) * δ * pinv K * colProj K = (1 - colProj K) * δ * pinv K := by
-    rw [Matrix.mul_assoc _ (pinv K), h1]
-  have e2 : (pinv K)ᵀ * δᵀ * (1 - colProj K) * colProj K = 0 := by
+  have e1 : (1 - colProj K) * δ * K.gramPinv * colProj K = (1 - colProj K) * δ * K.gramPinv := by
+    rw [Matrix.mul_assoc _ (K.gramPinv), h1]
+  have e2 : (K.gramPinv)ᵀ * δᵀ * (1 - colProj K) * colProj K = 0 := by
     rw [Matrix.mul_assoc _ (1 - colProj K), h3, Matrix.mul_zero]
-  have e3 : colProj K * ((1 - colProj K) * δ * pinv K) = 0 := by
+  have e3 : colProj K * ((1 - colProj K) * δ * K.gramPinv) = 0 := by
     simp only [← Matrix.mul_assoc, h4, Matrix.zero_mul]
-  have e4 : colProj K * ((pinv K)ᵀ * δᵀ * (1 - colProj K)) = (pinv K)ᵀ * δᵀ * (1 - colProj K) := by
+  have e4 : colProj K * ((K.gramPinv)ᵀ * δᵀ * (1 - colProj K)) =
+      (K.gramPinv)ᵀ * δᵀ * (1 - colProj K) := by
     simp only [← Matrix.mul_assoc, h2]
   rw [e1, e2, e3, e4]
   abel
 
 /-- `‖δP‖_F ≤ 2 ‖(1 - P) δK‖_F ‖K⁺‖₂`. -/
-lemma norm_dProj_le {K δ : Matrix m r ℝ} {κ : ℝ} (hκ : specNorm (pinv K) ≤ κ) :
+lemma norm_dProj_le {K δ : Matrix m r ℝ} {κ : ℝ} (hκ : specNorm (K.gramPinv) ≤ κ) :
     ‖dProj K δ‖ ≤ 2 * ‖(1 - colProj K) * δ‖ * κ := by
   have hc : (1 - colProj K)ᵀ = 1 - colProj K := by
     rw [Matrix.transpose_sub, Matrix.transpose_one, colProj_transpose]
-  have e : (pinv K)ᵀ * δᵀ * (1 - colProj K) = ((1 - colProj K) * δ * pinv K)ᵀ := by
+  have e : (K.gramPinv)ᵀ * δᵀ * (1 - colProj K) = ((1 - colProj K) * δ * K.gramPinv)ᵀ := by
     simp only [Matrix.transpose_mul, hc, Matrix.mul_assoc]
-  have h1 : ‖(1 - colProj K) * δ * pinv K‖ ≤ ‖(1 - colProj K) * δ‖ * κ :=
+  have h1 : ‖(1 - colProj K) * δ * K.gramPinv‖ ≤ ‖(1 - colProj K) * δ‖ * κ :=
     (frob_mul_le' _ _).trans (mul_le_mul_of_nonneg_left hκ (norm_nonneg _))
   rw [dProj, e]
   refine (norm_add_le _ _).trans ?_
@@ -1328,7 +1332,7 @@ quadratic in the sine between the old and the new row spaces. -/
 lemma dProj_mul_A_sub_le {K : Matrix m r ℝ} {A G : Matrix m n ℝ} {V : Matrix n r ℝ}
     {Q₁ : Matrix n n ℝ} {h c κ g : ℝ} (hKdef : K = A * V) (hKu : IsUnit (Kᵀ * K))
     (hc : specNorm ((1 - V * Vᵀ) * Q₁) ≤ c)
-    (hAQ : A * (1 - V * Vᵀ) = h • (G * (1 - V * Vᵀ))) (hκ : specNorm (pinv K) ≤ κ)
+    (hAQ : A * (1 - V * Vᵀ) = h • (G * (1 - V * Vᵀ))) (hκ : specNorm (K.gramPinv) ≤ κ)
     (hg : specNorm G ≤ g) (hh : 0 ≤ h) (hc' : h * g * κ ≤ c) (δ : Matrix m r ℝ) :
     ‖dProj K δ * A * Q₁ - (1 - colProj K) * δ * (Vᵀ * Q₁)‖ ≤
       2 * c ^ 2 * ‖(1 - colProj K) * δ‖ := by
@@ -1337,7 +1341,7 @@ lemma dProj_mul_A_sub_le {K : Matrix m r ℝ} {A G : Matrix m n ℝ} {V : Matrix
   have hκ0 : 0 ≤ κ := (specNorm_nonneg _).trans hκ
   have hg0 : 0 ≤ g := (specNorm_nonneg _).trans hg
   set P₁ := colProj K with hP₁
-  set Kp := pinv K with hKp
+  set Kp := K.gramPinv with hKp
   set α := (1 - P₁) * δ with hα
   set Q := V * Vᵀ with hQ
   have hct : (1 - P₁)ᵀ = 1 - P₁ := hP.compl.symm
@@ -1476,7 +1480,7 @@ lemma residual_facts {U : Matrix m r ℝ} {V : Matrix n r ℝ} {S : Matrix r r �
 lemma side_tangent {A G Y : Matrix m n ℝ} {V : Matrix n r ℝ} {Q₁ : Matrix n n ℝ} {h c ρ g : ℝ}
     (hKu : IsUnit ((A * V)ᵀ * (A * V))) (hV : Vᵀ * V = 1) (hQ₁ : IsOrthProjMat Q₁)
     (hc : specNorm ((1 - V * Vᵀ) * Q₁) ≤ c) (hAY : A = Y + h • G)
-    (hYQ : Y * (1 - V * Vᵀ) = 0) (hκ : specNorm (pinv (A * V)) ≤ 2 * ρ) (hg : ‖G‖ ≤ g)
+    (hYQ : Y * (1 - V * Vᵀ) = 0) (hκ : specNorm ((A * V).gramPinv) ≤ 2 * ρ) (hg : ‖G‖ ≤ g)
     (hh : 0 ≤ h) (hρ : 0 ≤ ρ) (hc' : 2 * (h * g * ρ) ≤ c) (hc1 : c ≤ 1)
     (dA : Matrix m n ℝ) (dV : Matrix n r ℝ) :
     ‖dProj (A * V) (dA * V + A * dV) * A * Q₁ -
@@ -2107,9 +2111,9 @@ theorem bugAdjoint_basis_residual (F : Matrix m n ℝ → Matrix m n ℝ) (h : �
     (Y Ψ : Matrix m n ℝ) :
     ∃ (X₁ : Matrix m m ℝ) (X₂ : Matrix n n ℝ),
       (bugAdjoint F h Js Js' U V Y Ψ).1 = (eulerMat F h Y * (1 - newQ F h U Y)) * (X₂ + X₂ᵀ) *
-          (pinv ((eulerMat F h Y)ᵀ * U))ᵀ ∧
+          (((eulerMat F h Y)ᵀ * U).gramPinv)ᵀ ∧
         (bugAdjoint F h Js Js' U V Y Ψ).2.1 = ((1 - newP F h V Y) * eulerMat F h Y)ᵀ * (X₁ + X₁ᵀ) *
-          (pinv (eulerMat F h Y * V))ᵀ := by
+          ((eulerMat F h Y * V).gramPinv)ᵀ := by
   have hc : (1 - newP F h V Y)ᵀ = 1 - newP F h V Y := by
     rw [Matrix.transpose_sub, Matrix.transpose_one]; rw [newP, colProj_transpose]
   obtain ⟨Y', hY'⟩ : ∃ Y', Y' = galStart F h U V Y := ⟨_, rfl⟩
@@ -2118,10 +2122,12 @@ theorem bugAdjoint_basis_residual (F : Matrix m n ℝ → Matrix m n ℝ) (h : �
   refine ⟨Ψ * newQ F h U Y * (Y' + h • F Y')ᵀ + bY * newQ F h U Y * Yᵀ,
     (Y' + h • F Y')ᵀ * newP F h V Y * Ψ + Yᵀ * newP F h V Y * bY, ?_, ?_⟩
   · subst hY' hbY
-    change eulerMat F h Y * ((1 - newQ F h U Y) * (_ + _ᵀ) * (pinv ((eulerMat F h Y)ᵀ * U))ᵀ) = _
+    change eulerMat F h Y *
+      ((1 - newQ F h U Y) * (_ + _ᵀ) * (((eulerMat F h Y)ᵀ * U).gramPinv)ᵀ) = _
     simp only [Matrix.mul_assoc]
   · subst hY' hbY
-    change (eulerMat F h Y)ᵀ * ((1 - newP F h V Y) * (_ + _ᵀ) * (pinv (eulerMat F h Y * V))ᵀ) = _
+    change (eulerMat F h Y)ᵀ *
+      ((1 - newP F h V Y) * (_ + _ᵀ) * ((eulerMat F h Y * V).gramPinv)ᵀ) = _
     rw [Matrix.transpose_mul, hc]
     simp only [Matrix.mul_assoc]
 
@@ -2537,4 +2543,8 @@ theorem truncOne_deriv {a b : ℝ} (hab : b < a) :
 end Examples
 
 end Step
+/-- The local left inverse of this file, replaced by the core `Matrix.gramPinv` (same definition,
+`(KᵀK)⁻¹Kᵀ`). -/
+@[deprecated (since := "2026-11-09")] alias pinv := Matrix.gramPinv
+
 end LeanDLRA.Novel.OpTR37
