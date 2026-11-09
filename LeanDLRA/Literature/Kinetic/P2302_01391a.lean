@@ -9,9 +9,13 @@ import LeanDLRA.Matrix.Projectors
 Koellermeier, Krah and Kusch reduce the hyperbolic shallow water moment equations (HSWME) by
 splitting the state into a macro part `U = (h, h u_m)` and a micro part `V = (h α₁, …, h α_N)`,
 and applying POD-Galerkin or BUG to `V` only.  The paper is numerical and states no theorems.  This
-module proves its structural claims for the discrete scheme itself: the transport matrix (8), (13),
-the path-conservative Lax–Friedrichs scheme (41), (59), (62) on a periodic grid `Fin Nx`, and the
-friction (9), (14)–(18), (50)–(57), all as concrete definitions, not as an abstract core.
+module proves its structural claims for the discrete scheme itself: the transport matrix (11),
+(14), the path-conservative Lax–Friedrichs scheme (22)–(25) of Appendix A on a periodic grid
+`Fin Nx`, and the friction (12), (15)–(17), (21) with the implicit K-, L- and S-steps of
+Sec. 6.2.2, all as concrete definitions, not as an abstract core.
+
+Equation numbers are those of the arXiv v2 PDF (16 July 2024).  Many displays there carry no number;
+they are cited by section and content.
 
 ## Main results
 
@@ -23,49 +27,60 @@ friction (9), (14)–(18), (50)–(57), all as concrete definitions, not as an a
   the projector `Π = id ⊕ Π_micro` of the macro-micro reduction.
 * **Consistency with the SWE (Secs. 2, 7.1, 8).**  `Aswe_fluxJacobian`, `swe_of_rank_eq_zero` (rank
   zero gives the SWE scheme and SWE friction), `tendsto_macroF_swe` (limit as `V → 0`).
-* **Friction (Sec. 4.2).**  `frictionSource_eq`: Eq. (14) from Eq. (9).  `viscC_quad_nonneg`,
+* **Friction (Sec. 4.2).**  `frictionSource_eq`: Eq. (15) from Eq. (12).  `viscC_quad_nonneg`,
   `wDot_G₁`, `wDot_G₂`: dissipativity in the energy `M = diag(1 / (2 k + 1))`.  `Dmat_isUnit`:
   `D_j` is invertible for all `Δt ≥ 0`, which the paper uses without proof.  `backwardEuler_iff`:
-  Eqs. (16) and (18) are equivalent.  `wDot_backwardEuler_le`: unconditional `M`-stability.
+  Eqs. (16) and (17) are equivalent.  `wDot_backwardEuler_le`: unconditional `M`-stability.
 * **Friction in BUG form (Sec. 6.2.2).**  `fricField_row`, `friction_kStep_iff`,
   `friction_lStep_iff`, `friction_sStep_iff`: implicit Euler for the K-, L- and S-steps is
-  Eqs. (53), (55), (57).  `friction_lStep_existsUnique`: the L-step is always uniquely solvable.
+  the three implicit systems of Sec. 6.2.2.  `friction_lStep_existsUnique`: the L-step is always
+  uniquely solvable.
 * **Caveat for the Euclidean Galerkin steps.**  `reducedFriction_antidissipative`, `Khat_singular`,
   `friction_kStep_no_solution`: for an orthonormal `W`, every `N ≥ 2` and the paper's `ν = 10`,
-  `λ = 1/1000` the reduced friction operator is positive and the K-step system (53) can be
-  singular, because the friction is dissipative in `M`, not in the Euclidean norm.  The paper does
-  not claim solvability, so this is a gap, not an error.  `KhatM_isUnit` is the repair:
-  `M`-Galerkin matrices.
-* **POD (Sec. 5.1).**  Eq. (24) and the Eckart–Young–Mirsky optimality are already
-  `LeanDLRA.EckartYoung.sq_norm_sub_truncation`, `norm_sub_truncation_le`, so they are not repeated.
-  New here: `pod_error`, `pod_optimal` for the snapshot matrix (22); `sq_norm_truncation`,
-  `Ecum_eq` for the energy criterion (25).
+  `λ = 1/1000` the reduced friction operator is positive and the implicit K-step system of
+  Sec. 6.2.2 can be singular, because the friction is dissipative in `M`, not in the Euclidean
+  norm.  The paper does not claim solvability, so this is a gap, not an error.  `KhatM_isUnit` is
+  the repair: `M`-Galerkin matrices.
+* **POD (Sec. 5.1).**  The error identity after Eq. (18) and the Eckart–Young–Mirsky optimality are
+  already `LeanDLRA.EckartYoung.sq_norm_sub_truncation`, `norm_sub_truncation_le`, so they are not
+  repeated.  New here: `pod_error`, `pod_optimal` for the snapshot matrix `V^POD`;
+  `sq_norm_truncation`, `Ecum_eq` for the energy criterion `E_cum`.
 * **BUG for the micro transport (Sec. 6.2.1).**  `microF_kStep`, `microF_lStep`, `microF_sStep`:
-  the K-, L- and S-right-hand sides in terms of the reduced data, Eqs. (42), (43), (48), (49).
+  the K-, L- and S-right-hand sides in terms of the reduced data, the displays of Sec. 6.2.1.
   `microF_isLipschitz`, `microBUG_global_error`: robust error bound with frozen macro state.
 
 ## False or inconsistent as printed
 
-All from the arXiv HTML rendering of v2, each with its proved replacement.
+Checked in the arXiv v2 PDF, each with its proved replacement.
 
-* Eq. (25) has unsquared norms: `Ecum_printed_false`, corrected in `Ecum_eq`.
-* Eq. (15) has shifted indices: `G₁printed_singular` shows the printed matrix is antidissipative.
-  `G₁` is the repair, derived from Eq. (9) in `frictionSource_eq`.  Eq. (10) with `i = 0, …, N` as
-  in Eq. (9) has the same shift.
-* Eqs. (78)–(81) show `+ Δt / (2 Δx)`.  Eq. (62) expands to the minus sign, see `fullStep_eq`.
-* Eq. (49) mixes `Ṡ`, `S` and `Sᵀ`, and Eq. (48) shows no sum over `j` in its last term: the
-  correct forms are `microF_sStep`, `microF_lStep`.
+* The energy criterion `E_cum` of Sec. 5.1 has unsquared norms: `Ecum_printed_false`, corrected
+  in `Ecum_eq`.
+* The matrix `G₁` displayed after Eq. (15) has shifted indices: `G₁printed_singular` shows that
+  the printed matrix is antidissipative.  `G₁` is the repair, derived from Eq. (12) in
+  `frictionSource_eq`.  The display of `a_{i,j}` after Eq. (12), with `i = 0, …, N` as in
+  Eq. (12), has the same shift.  That `G₁` is the true friction rests on the identification of
+  `viscC` with `½ ∫₀¹ φ_k' φ_l'`, which is checked outside Lean (see below).
+* The macro and micro transport updates at the end of Appendix A show `+ Δt / (2 Δx)`, and the
+  second line of Eq. (25) shows `+ 1 / (2 Δx)`.  Eq. (24) expands to the minus sign, see
+  `fullStep_eq`; the display of `[F_v]_j` in Sec. 6.2.1 has the minus sign too.
+* The `Ṡ` display of the S-step in Sec. 6.2.1 mixes `Ṡ`, `S` and `Sᵀ`: the correct form is
+  `microF_sStep`.  The last terms of the `L̇` and `Ṡ` displays show no `∑_j`; that is not an
+  error, since the paper declares Einstein's summation convention there.  `microF_lStep` writes
+  the sum.
 
 ## Differences from the paper and what is not covered
 
 * The grid is periodic, as in the paper's smooth tests.  The macro friction is left arbitrary in
   `totalMass_conserved`, because the paper gives no formula for it and the result needs only that
   `h` stays fixed.
-* Interface values are the averages `faceAvg` of `h`, `u_m`, `α₁`.  The paper's Eq. (73) leaves
-  the interface value of `h` implicit; mass conservation does not depend on it.
+* Interface values are the averages `faceAvg` of `h`, `u_m`, `α₁`, as in the displays of
+  `A_{j+1,uu}`, …, `A_{j+1,vv}` after Eq. (25).  Eq. (23) instead evaluates `A` at the average
+  `(Q_j + Q_{j+1}) / 2` of the conservative variables, which gives other values of `u_m` and `α₁`.
+  The display of `A_{j+1,uu}` leaves the interface value of `h` implicit; mass conservation
+  depends on none of these choices.
 * In `microF`, the coefficients `B`, `ub`, `ab` are parameters, since the paper does not fix the
   time level of `α₁` in `A_{j,vv}`; the K-, L- and S-identities hold for any such choice.
-* `viscC` is a definition.  Its identification with `½ ∫₀¹ φ_k' φ_l'` for the polynomials (5) is
+* `viscC` is a definition.  Its identification with `½ ∫₀¹ φ_k' φ_l'` for the polynomials (10) is
   not proved here (it was checked by exact integration outside Lean up to degree 6).  The Lean
   results use only its algebraic form.
 * The cost claim `O(r² (N_x + N))` is an operation count, not a theorem; `microF_kStep` and its
@@ -81,48 +96,48 @@ namespace LeanDLRA.Literature.P2302_01391
 
 noncomputable section
 
-/-! ### The transport matrix (Eqs. 8, 13) -/
+/-! ### The transport matrix (Eqs. 11, 14) -/
 
 section Model
 
 variable {Nx N : ℕ}
 
-/-- The block `A_uu` of Eq. (13). -/
+/-- The block `A_uu` of Eq. (14). -/
 def Auu (g h u a : ℝ) : Matrix (Fin 2) (Fin 2) ℝ :=
   !![0, 1; g * h - u ^ 2 - a ^ 2 / 3, 2 * u]
 
-/-- The block `A_uv` of Eq. (13): only the entry `2 α₁ / 3` is non-zero. -/
+/-- The block `A_uv` of Eq. (14): only the entry `2 α₁ / 3` is non-zero. -/
 def Auv [NeZero N] (a : ℝ) : Matrix (Fin 2) (Fin N) ℝ :=
   fun i k => if i = 1 ∧ k = 0 then 2 / 3 * a else 0
 
-/-- The block `A_vu` of Eq. (13): rows `(-2 u α₁, 2 α₁)` and `(-2 α₁² / 3, 0)`, then zero. -/
+/-- The block `A_vu` of Eq. (14): rows `(-2 u α₁, 2 α₁)` and `(-2 α₁² / 3, 0)`, then zero. -/
 def Avu (u a : ℝ) : Matrix (Fin N) (Fin 2) ℝ :=
   fun k l =>
     if k.val = 0 then (if l = 0 then -2 * u * a else 2 * a)
     else if k.val = 1 then (if l = 0 then -(2 / 3) * a ^ 2 else 0) else 0
 
-/-- The constant tridiagonal matrix `𝐀` of Eq. (8): for the moment `k = i + 1` the superdiagonal
-entry is `(k + 2) / (2 k + 3)` and the subdiagonal entry is `(k - 1) / (2 k - 1)`. -/
+/-- The constant tridiagonal matrix `𝐀` of Eq. (11) and Appendix A: for the moment `k = i + 1` the
+superdiagonal entry is `(k + 2) / (2 k + 3)` and the subdiagonal entry is `(k - 1) / (2 k - 1)`. -/
 def Acoup (N : ℕ) : Matrix (Fin N) (Fin N) ℝ :=
   fun i l =>
     if l.val = i.val + 1 then ((i.val : ℝ) + 3) / (2 * i.val + 5)
     else if i.val = l.val + 1 then (i.val : ℝ) / (2 * i.val + 1) else 0
 
-/-- The block `A_vv = α₁ 𝐀 + u_m I` of Eqs. (13), (76). -/
+/-- The block `A_vv = α₁ 𝐀 + u_m I` of Eq. (14) and of `A_{j+1,vv}` in Appendix A. -/
 def Avv (N : ℕ) (u a : ℝ) : Matrix (Fin N) (Fin N) ℝ := a • Acoup N + u • 1
 
-/-- The full HSWME transport matrix `A(q)` of Eqs. (8), (13). -/
+/-- The full HSWME transport matrix `A(q)` of Eqs. (11), (14). -/
 def Afull [NeZero N] (g h u a : ℝ) : Matrix (Fin 2 ⊕ Fin N) (Fin 2 ⊕ Fin N) ℝ :=
   Matrix.fromBlocks (Auu g h u a) (Auv a) (Avu u a) (Avv N u a)
 
-/-- **Eq. (8), first row** (arXiv 2302.01391): the row of `A(q)` for the water height is
+/-- **Eq. (11), first row** (arXiv 2302.01391): the row of `A(q)` for the water height is
 `(0, 1, 0, …, 0)`, whatever the state: the height equation `∂ₜ h + ∂ₓ (h u_m) = 0` does not see the
 micro variables.  This is the reason for the mass conservation of the macro-micro scheme. -/
 theorem Afull_height_row [NeZero N] (g h u a : ℝ) (y : Fin 2 ⊕ Fin N → ℝ) :
     (Afull g h u a *ᵥ y) (Sum.inl 0) = y (Sum.inl 1) := by
   simp [Afull, Matrix.mulVec, dotProduct, Auu, Auv, Fin.sum_univ_two]
 
-/-! ### The path-conservative Lax–Friedrichs scheme on a periodic grid (Eqs. 41, 59, 62, 73–81) -/
+/-! ### The path-conservative Lax–Friedrichs scheme on a periodic grid (App. A, Eqs. 22–25) -/
 
 variable [NeZero Nx]
 
@@ -137,11 +152,11 @@ def firstMoment [NeZero N] (U : Matrix (Fin Nx) (Fin 2) ℝ) (V : Matrix (Fin Nx
     (j : Fin Nx) : ℝ := V j 0 / U j 0
 
 /-- Interface average `½ (f_{j-1} + f_j)`: the paper's matrix `A_j` lives on the interface
-between the cells `j - 1` and `j`, see Eqs. (43), (76). -/
+between the cells `j - 1` and `j`, see `Ã_{j,vv}` in Sec. 6.2.1 and `A_{j+1,vv}` in Appendix A. -/
 def faceAvg (f : Fin Nx → ℝ) (j : Fin Nx) : ℝ := (f (j - 1) + f j) / 2
 
-/-- The macro right-hand side (the analogue for `U` of Eq. 41, i.e. Eqs. 78–79), with all
-interface values obtained by `faceAvg`. -/
+/-- The macro right-hand side `F_u(U, V)`, the first block row of Eq. (25) (whose Euler step is the
+macro update at the end of Appendix A), with all interface values obtained by `faceAvg`. -/
 def macroF [NeZero N] (g Δx Δt : ℝ) (U : Matrix (Fin Nx) (Fin 2) ℝ)
     (V : Matrix (Fin Nx) (Fin N) ℝ) : Matrix (Fin Nx) (Fin 2) ℝ :=
   let hb := faceAvg (height U)
@@ -154,9 +169,9 @@ def macroF [NeZero N] (g Δx Δt : ℝ) (U : Matrix (Fin Nx) (Fin 2) ℝ)
       - (1 / (2 * Δx)) • (Auu g (hb j) (ub j) (ab j) *ᵥ (U j - U (j - 1))
           + Auv (ab j) *ᵥ (V j - V (j - 1)))
 
-/-- The micro right-hand side `F_v(U, V)` of Eq. (41), for given interface blocks `B j = A_{j,vu}`
-and interface values `ub j`, `ab j` of `u_m`, `α₁` in `A_{j,vv} = ab_j 𝐀 + ub_j I`.  The paper
-does not fix the time level of `α₁` here, so these are parameters. -/
+/-- The micro right-hand side `F_v(U, V)` of Eq. (25) and Sec. 6.2.1, for given interface blocks
+`B j = A_{j,vu}` and interface values `ub j`, `ab j` of `u_m`, `α₁` in `A_{j,vv} = ab_j 𝐀 + ub_j I`.
+The paper does not fix the time level of `α₁` here, so these are parameters. -/
 def microF (Δx Δt : ℝ) (B : Fin Nx → Matrix (Fin N) (Fin 2) ℝ) (ub ab : Fin Nx → ℝ)
     (U : Matrix (Fin Nx) (Fin 2) ℝ) (V : Matrix (Fin Nx) (Fin N) ℝ) :
     Matrix (Fin Nx) (Fin N) ℝ :=
@@ -166,7 +181,7 @@ def microF (Δx Δt : ℝ) (B : Fin Nx → Matrix (Fin N) (Fin 2) ℝ) (ub ab : 
           + Avv N (ub (j + 1)) (ab (j + 1)) *ᵥ (V (j + 1) - V j))
       - (1 / (2 * Δx)) • (B j *ᵥ (U j - U (j - 1)) + Avv N (ub j) (ab j) *ᵥ (V j - V (j - 1)))
 
-/-- One explicit Euler step of the undecomposed scheme, Eqs. (59), (62), for `Q = [U V]`:
+/-- One explicit Euler step of the undecomposed scheme, Eqs. (22)–(24), for `Q = [U V]`:
 `Q_j⁺ = Q_j - (Δt/Δx) (A⁻_{j+1} (Q_{j+1} - Q_j) + A⁺_j (Q_j - Q_{j-1}))` with
 `A^± = ½ (A ± (Δx/Δt) I)`. -/
 def fullStep [NeZero N] (g Δx Δt : ℝ) (U : Matrix (Fin Nx) (Fin 2) ℝ)
@@ -196,14 +211,16 @@ private lemma step_scalar {Δx Δt : ℝ} (hΔx : Δx ≠ 0) (hΔt : Δt ≠ 0) 
   field_simp
   ring
 
-/-- **The macro-micro decomposition introduces no error** (arXiv 2302.01391, Sec. 2, Eqs. 62 and
-78–81): one step of the undecomposed scheme for `Q = [U V]` is exactly the macro update in the
-first two columns and the micro update in the others, both from time level `n`.  Solving them in
-sequence, with `Ũ` in the micro step (step 1b), is a splitting that the paper itself says does
-introduce an error; no bound for that error is given here or there.
+/-- **The macro-micro decomposition introduces no error** (arXiv 2302.01391, Sec. 2, Eq. 24 and
+the updates at the end of Appendix A): one step of the undecomposed scheme for `Q = [U V]` is
+exactly the macro update in the first two columns and the micro update in the others, both from
+time level `n`.  Solving them in sequence, with `Ũ` in the micro step (step 1b), is a splitting
+that the paper itself says does introduce an error; no bound for that error is given here or
+there.
 
-Eqs. (78)–(81) as rendered have a plus sign in front of `Δt / (2 Δx)`; expanding Eq. (62) gives the
-minus sign used here, which is also the sign of Eq. (41). -/
+The macro and micro updates at the end of Appendix A have a plus sign in front of `Δt / (2 Δx)`, and
+Eq. (25) one in front of `1 / (2 Δx)`; expanding Eq. (24) gives the minus sign used here, which is
+also the sign of `[F_v]_j` in Sec. 6.2.1. -/
 theorem fullStep_eq [NeZero N] (g : ℝ) {Δx Δt : ℝ} (hΔx : Δx ≠ 0) (hΔt : Δt ≠ 0)
     (U : Matrix (Fin Nx) (Fin 2) ℝ) (V : Matrix (Fin Nx) (Fin N) ℝ) :
     fullStep g Δx Δt U V = Matrix.fromCols (U + Δt • macroF g Δx Δt U V)
@@ -290,7 +307,7 @@ theorem totalMass_conserved [NeZero N] (g : ℝ) {Δx Δt : ℝ} (hΔx : Δx ≠
     rw [Finset.sum_add_distrib, ← Finset.mul_sum, sum_macroF_height g hΔx hΔt, mul_zero, add_zero]
 
 /-- **The micro state enters the macro dynamics only through `α₁`** (arXiv 2302.01391, remark after
-Eq. 8): two micro states with the same first moment give the same macro right-hand side. -/
+Eq. 11): two micro states with the same first moment give the same macro right-hand side. -/
 theorem macroF_congr [NeZero N] (g Δx Δt : ℝ) (U : Matrix (Fin Nx) (Fin 2) ℝ)
     {V V' : Matrix (Fin Nx) (Fin N) ℝ} (h : ∀ j, V j 0 = V' j 0) :
     macroF g Δx Δt U V = macroF g Δx Δt U V' := by
@@ -332,12 +349,13 @@ theorem fromCols_mul_blockBasis {r : ℕ} (U : Matrix (Fin Nx) (Fin 2) ℝ)
 
 /-! ### Consistency with the shallow water equations (Secs. 2, 7.1, 8) -/
 
-/-- The transport matrix of the shallow water equations (3) in the variables `(h, h u_m)`. -/
+/-- The transport matrix of the shallow water equations (8) in the variables `(h, h u_m)`. -/
 def Aswe (g h u : ℝ) : Matrix (Fin 2) (Fin 2) ℝ := !![0, 1; g * h - u ^ 2, 2 * u]
 
-/-- **`Aswe` is the flux Jacobian of Eq. (3)** (arXiv 2302.01391, Eq. 3): along any differentiable
+/-- **`Aswe` is the flux Jacobian of Eq. (8)** (arXiv 2302.01391, Eq. 8): along any differentiable
 `x ↦ (h, m)` with `h ≠ 0`, `Aswe (h, m / h) (h', m')` is the derivative of the flux
-`(m, m² / h + g h² / 2)`.  So `∂ₜ q + Aswe ∂ₓ q = 0` is the conservative system (3). -/
+`(m, m² / h + g h² / 2)`.  So `∂ₜ q + Aswe ∂ₓ q = 0` is the transport part of the conservative
+system (8). -/
 theorem Aswe_fluxJacobian (g : ℝ) {h m : ℝ → ℝ} {h' m' x : ℝ} (hh : HasDerivAt h h' x)
     (hm : HasDerivAt m m' x) (h0 : h x ≠ 0) :
     HasDerivAt m ((Aswe g (h x) (m x / h x) *ᵥ ![h', m']) 0) x ∧
@@ -355,7 +373,7 @@ theorem Aswe_fluxJacobian (g : ℝ) {h m : ℝ → ℝ} {h' m' x : ℝ} (hh : Ha
   field_simp
   ring
 
-/-- The Lax–Friedrichs scheme (same stencil as `macroF`) for the shallow water equations (3). -/
+/-- The Lax–Friedrichs scheme (same stencil as `macroF`) for the shallow water equations (8). -/
 def sweF (g Δx Δt : ℝ) (U : Matrix (Fin Nx) (Fin 2) ℝ) : Matrix (Fin Nx) (Fin 2) ℝ :=
   let hb := faceAvg (height U)
   let ub := faceAvg (velocity U)
@@ -386,8 +404,8 @@ theorem macroF_zero [NeZero N] (g Δx Δt : ℝ) (U : Matrix (Fin Nx) (Fin 2) �
 /-- **Consistency with the SWE at rank zero** (arXiv 2302.01391, Secs. 7.1, 8: "the decomposition
 allows to recover the naive SWE for vanishing truncation rank").  If the micro state has rank `0`,
 as every `V = X S Wᵀ` with `r = 0` does, the macro transport is the SWE scheme and the friction
-acting on the momentum (Eq. 9 with `i = 0`, where `a_{0,j} = 0`) is the SWE friction `-(ν / λ) u_m`
-of Eq. (3). -/
+acting on the momentum (Eq. 12 with `i = 0`, where `a_{0,j} = 0`) is the SWE friction `-(ν / λ) u_m`
+of Eq. (8). -/
 theorem swe_of_rank_eq_zero [NeZero N] (g Δx Δt ν lam : ℝ) (U : Matrix (Fin Nx) (Fin 2) ℝ)
     {V : Matrix (Fin Nx) (Fin N) ℝ} (hV : V.rank = 0) :
     macroF g Δx Δt U V = sweF g Δx Δt U ∧
@@ -435,7 +453,7 @@ theorem tendsto_macroF_swe [NeZero N] (g Δx Δt : ℝ) (U : Matrix (Fin Nx) (Fi
 
 end Model
 
-/-! ### The friction step (Eqs. 9, 10, 14–18) -/
+/-! ### The friction step (Eqs. 12, 15–17) -/
 
 section Friction
 
@@ -449,13 +467,14 @@ private lemma oddW_pos (i : Fin N) : 0 < oddW i := by
   positivity
 
 /-- The matrix `c_{kl} = min(k, l) (min(k, l) + 1)` for `k + l` even, `0` otherwise, for the moments
-`k = i + 1`, `l = j + 1`: `½ ∫₀¹ φ_k' φ_l'` for the Legendre polynomials of Eq. (5). -/
+`k = i + 1`, `l = j + 1`: `½ ∫₀¹ φ_k' φ_l'` for the Legendre polynomials of Eq. (10). -/
 def viscC (i j : Fin N) : ℝ :=
   if Even (i.val + j.val) then
     (((min i.val j.val : ℕ) : ℝ) + 1) * (((min i.val j.val : ℕ) : ℝ) + 2) else 0
 
-/-- The viscous friction matrix `G₁`, with entries `-2 ν (2 k + 1) c_{kl}`.  This is Eq. (15) with
-the indices of Eqs. (9)–(10) repaired, see `frictionSource_eq` and `G₁printed`. -/
+/-- The viscous friction matrix `G₁`, with entries `-2 ν (2 k + 1) c_{kl}`.  This is the `G₁`
+displayed after Eq. (15), with the indices of Eq. (12) and its `a_{i,j}` repaired, see
+`frictionSource_eq` and `G₁printed`. -/
 def G₁ (N : ℕ) (ν : ℝ) : Matrix (Fin N) (Fin N) ℝ := fun i j => -2 * ν * oddW i * viscC i j
 
 /-- The vector `g_ν` with entries `-(ν / λ) (2 k + 1)` of Sec. 4.2. -/
@@ -464,11 +483,11 @@ def gv (N : ℕ) (ν lam : ℝ) : Fin N → ℝ := fun i => -(ν / lam) * oddW i
 /-- The bottom friction matrix `G₂ = g_ν 𝟙ᵀ`. -/
 def G₂ (N : ℕ) (ν lam : ℝ) : Matrix (Fin N) (Fin N) ℝ := Matrix.vecMulVec (gv N ν lam) fun _ => 1
 
-/-- The friction source of Eq. (9) for the moments `k = i + 1 ≥ 1`, with `a_{kl} = c_{kl} / 2`.
+/-- The friction source of Eq. (12) for the moments `k = i + 1 ≥ 1`, with `a_{kl} = c_{kl} / 2`.
 
-Eq. (10) as printed has `min(i - 1, j)` and "`i + j` odd", which is right only if its `i` is the
-moment index plus one, while Eq. (9) runs over `i = 0, …, N`.  With that shift Eq. (10) is the
-`a_{kl}` used here, and `c_{kl} = ½ ∫₀¹ φ_k' φ_l'`. -/
+The display of `a_{i,j}` after Eq. (12) has `min(i - 1, j)` and "`i + j` odd", which is right only
+if its `i` is the moment index plus one, while Eq. (12) runs over `i = 0, …, N`.  With that shift
+it is the `a_{kl}` used here, and `c_{kl} = ½ ∫₀¹ φ_k' φ_l'`. -/
 def frictionSource (ν lam h u : ℝ) (α : Fin N → ℝ) : Fin N → ℝ := fun i =>
   -(ν / lam) * oddW i * (u + ∑ j, α j) - ν / h * 4 * oddW i * ∑ j, viscC i j / 2 * α j
 
@@ -481,10 +500,11 @@ private lemma G₂_mulVec (ν lam : ℝ) (x : Fin N → ℝ) (i : Fin N) :
     (G₂ N ν lam *ᵥ x) i = gv N ν lam i * ∑ j, x j := by
   simp [Matrix.mulVec, dotProduct, G₂, Matrix.vecMulVec_apply, Finset.mul_sum]
 
-/-- **Eq. (14) from Eq. (9)** (arXiv 2302.01391, Sec. 4.2): for `V = h α`, the friction source is
+/-- **Eq. (15) from Eq. (12)** (arXiv 2302.01391, Sec. 4.2): for `V = h α`, the friction source is
 `h⁻² G₁ V + h⁻¹ G₂ V + u_m g_ν`.
 
-This pins down `G₁`.  Eq. (15) as printed is not the matrix of Eq. (9): see `G₁printed`. -/
+This pins down `G₁`.  The `G₁` printed after Eq. (15) is not the matrix of Eq. (12): see
+`G₁printed`. -/
 theorem frictionSource_eq (ν lam u : ℝ) {h : ℝ} (hh : h ≠ 0) (α : Fin N → ℝ) :
     frictionSource ν lam h u α =
       (1 / h ^ 2) • (G₁ N ν *ᵥ (h • α)) + (1 / h) • (G₂ N ν lam *ᵥ (h • α)) + u • gv N ν lam := by
@@ -640,8 +660,8 @@ private lemma wDot_smul_right (c : ℝ) (x y : Fin N → ℝ) : wDot x (c • y)
   simp only [wDot, Finset.mul_sum, Pi.smul_apply, smul_eq_mul]
   exact Finset.sum_congr rfl fun i _ => by ring
 
-/-- `xᵀ M G₁ x = -2 ν ∑ c_{kl} x_k x_l` (arXiv 2302.01391, Eq. 15 with repaired indices; the energy
-form is not in the paper). -/
+/-- `xᵀ M G₁ x = -2 ν ∑ c_{kl} x_k x_l` (arXiv 2302.01391, `G₁` after Eq. 15 with repaired indices;
+the energy form is not in the paper). -/
 theorem wDot_G₁ (ν : ℝ) (x : Fin N → ℝ) :
     wDot x (G₁ N ν *ᵥ x) = -2 * ν * ∑ i, ∑ j, viscC i j * x i * x j := by
   simp only [wDot, G₁_mulVec, Finset.mul_sum]
@@ -663,7 +683,7 @@ theorem wDot_G₂ (ν lam : ℝ) (x : Fin N → ℝ) :
   simp only [wDot, this]
   rw [← Finset.mul_sum, ← Finset.sum_mul, sq]
 
-/-- `D_j = I - (Δt / h²) G₁ - (Δt / h) G₂`, Eq. (17). -/
+/-- `D_j = I - (Δt / h²) G₁ - (Δt / h) G₂`, displayed between Eqs. (16) and (17). -/
 def Dmat (ν lam Δt h : ℝ) : Matrix (Fin N) (Fin N) ℝ :=
   1 - (Δt / h ^ 2) • G₁ N ν - (Δt / h) • G₂ N ν lam
 
@@ -672,7 +692,7 @@ private lemma Dmat_mulVec (ν lam Δt h : ℝ) (x : Fin N → ℝ) :
   simp [Dmat, Matrix.sub_mulVec, Matrix.smul_mulVec]
 
 /-- The energy inequality behind `Dmat_isUnit` and `wDot_backwardEuler_le`: `xᵀ M x ≤ xᵀ M D x`
-(arXiv 2302.01391, Eq. 17; not in the paper). -/
+(arXiv 2302.01391, `D_j` before Eq. 17; not in the paper). -/
 theorem wDot_le_wDot_Dmat {ν lam Δt h : ℝ} (hν : 0 ≤ ν) (hlam : 0 < lam) (hΔt : 0 ≤ Δt)
     (hh : 0 < h) (x : Fin N → ℝ) : wDot x x ≤ wDot x (Dmat ν lam Δt h *ᵥ x) := by
   rw [Dmat_mulVec, wDot_sub_right, wDot_sub_right, wDot_smul_right, wDot_smul_right, wDot_G₁,
@@ -682,7 +702,7 @@ theorem wDot_le_wDot_Dmat {ν lam Δt h : ℝ} (hν : 0 ≤ ν) (hlam : 0 < lam)
   have h3 : 0 ≤ Δt / h * (ν / lam * (∑ i, x i) ^ 2) := by positivity
   nlinarith
 
-/-- **`D_j` is invertible for every time step** (arXiv 2302.01391, Eq. 18: the paper inverts `D_j`
+/-- **`D_j` is invertible for every time step** (arXiv 2302.01391, Eq. 17: the paper inverts `D_j`
 and notes that the inverse can be precomputed, without proving that it exists).  For `ν ≥ 0`,
 `λ > 0`, `h > 0`, `Δt ≥ 0`. -/
 theorem Dmat_isUnit {ν lam Δt h : ℝ} (hν : 0 ≤ ν) (hlam : 0 < lam) (hΔt : 0 ≤ Δt) (hh : 0 < h) :
@@ -698,8 +718,8 @@ theorem Dmat_isUnit {ν lam Δt h : ℝ} (hν : 0 ≤ ν) (hlam : 0 < lam) (hΔt
   rw [h2] at h1
   exact sub_eq_zero.1 (eq_zero_of_wDot_self_le h1)
 
-/-- **Backward Euler for the micro friction, Eqs. (16)–(18)** (arXiv 2302.01391, Sec. 4.2):
-the implicit equation (16) has exactly the solution (18),
+/-- **Backward Euler for the micro friction, Eqs. (16)–(17)** (arXiv 2302.01391, Sec. 4.2):
+the implicit equation (16) has exactly the solution (17),
 `V⁺ = D⁻¹ (V + Δt u_m g_ν)`, for every `Δt ≥ 0`, `h > 0`, `ν ≥ 0`, `λ > 0`.
 `D` does not depend on `u_m` or the `α_i`, which is the paper's precomputation remark. -/
 theorem backwardEuler_iff {ν lam Δt h : ℝ} (hν : 0 ≤ ν) (hlam : 0 < lam) (hΔt : 0 ≤ Δt)
@@ -748,18 +768,18 @@ theorem wDot_backwardEuler_le {ν lam Δt h : ℝ} (hν : 0 ≤ ν) (hlam : 0 < 
     exact Finset.sum_congr rfl fun i _ => by ring
   linarith
 
-/-- Eq. (15) **as printed**, with `i, j ∈ {1, …, N}`: the entry is
+/-- The matrix `G₁` displayed after Eq. (15), **as printed**, with `i, j ∈ {1, …, N}`: the entry is
 `-2 ν (2 (i - 1) + 1) min(i, j) (min(i, j) + 1)` if `i + 1 + j` is even, else `0`. -/
 def G₁printed (N : ℕ) (ν : ℝ) : Matrix (Fin N) (Fin N) ℝ := fun i j =>
   if Even ((i.val + 1) + 1 + (j.val + 1)) then
     -2 * ν * (2 * (i.val : ℝ) + 1) * ((min (i.val + 1) (j.val + 1) : ℕ) : ℝ)
       * (((min (i.val + 1) (j.val + 1) : ℕ) : ℝ) + 1) else 0
 
-/-- **Eq. (15) as printed is not the friction matrix** (arXiv 2302.01391, Eq. 15).  For two moments
-and every `ν > 0`, `I - Δt G₁printed` is singular at `Δt = √3 / (12 ν)`, so the printed matrix has
-the positive eigenvalue `4 √3 ν`, while the true matrix `G₁` is dissipative (`Dmat_isUnit`).  The
-printed indices are shifted against Eqs. (9)–(10): `i` is the moment index plus one, and `min(i, j)`
-must be `min(i - 1, j)`.  With this repair it is `G₁`. -/
+/-- **The `G₁` printed after Eq. (15) is not the friction matrix** (arXiv 2302.01391, Sec. 4.2).
+For two moments and every `ν > 0`, `I - Δt G₁printed` is singular at `Δt = √3 / (12 ν)`, so the
+printed matrix has the positive eigenvalue `4 √3 ν`, while the true matrix `G₁` is dissipative
+(`Dmat_isUnit`).  The printed indices are shifted against Eq. (12) and its `a_{i,j}`: `i` is the
+moment index plus one, and `min(i, j)` must be `min(i - 1, j)`.  With this repair it is `G₁`. -/
 theorem G₁printed_singular {ν : ℝ} (hν : 0 < ν) :
     ∃ Δt : ℝ, 0 < Δt ∧ (1 - Δt • G₁printed 2 ν).det = 0 := by
   have h00 : G₁printed 2 ν 0 0 = 0 := by simp [G₁printed, Nat.even_iff]
@@ -784,13 +804,13 @@ theorem G₁printed_singular {ν : ℝ} (hν : 0 < ν) :
 
 end Friction
 
-/-! ### The friction step in BUG form (Sec. 6.2.2, Eqs. 50–57) -/
+/-! ### The friction step in BUG form (Sec. 6.2.2, Eq. 21) -/
 
 section ReducedFriction
 
 variable {Nx N r : ℕ}
 
-/-- The friction field of Eq. (51): `h⁻² V G₁ᵀ + h⁻¹ V G₂ᵀ + u_m g_νᵀ`, with `h⁻²`, `h⁻¹` diagonal
+/-- The friction field of Eq. (21): `h⁻² V G₁ᵀ + h⁻¹ V G₂ᵀ + u_m g_νᵀ`, with `h⁻²`, `h⁻¹` diagonal
 and `u_m` a column vector (the paper calls it diagonal, but only the vector makes `u_m g_νᵀ`
 well-typed). -/
 def fricField (ν lam : ℝ) (h u : Fin Nx → ℝ) (V : Matrix (Fin Nx) (Fin N) ℝ) :
@@ -809,7 +829,8 @@ private lemma row_diagonal_mul {ι : Type*} [Fintype ι] (d : Fin Nx → ℝ)
   refine Finset.sum_congr rfl fun l _ => ?_
   ring
 
-/-- **Eq. (50) is the row form of Eq. (51)** (arXiv 2302.01391, Sec. 6.2.2). -/
+/-- **The first display of Sec. 6.2.2 (Eq. (15)) is the row form of Eq. (21)** (arXiv 2302.01391).
+-/
 theorem fricField_row (ν lam : ℝ) (h u : Fin Nx → ℝ) (V : Matrix (Fin Nx) (Fin N) ℝ) (j : Fin Nx) :
     fricField ν lam h u V j =
       (h j)⁻¹ ^ 2 • (G₁ N ν *ᵥ V j) + (h j)⁻¹ • (G₂ N ν lam *ᵥ V j) + u j • gv N ν lam := by
@@ -831,13 +852,13 @@ private lemma step_iff {E : Type*} [AddCommGroup E] [Module ℝ E] (x y a b c : 
     rw [e, h]
     module
 
-/-- The left-hand side matrix `I_r - Δt h⁻² Ĝ₁ - Δt h⁻¹ Ĝ₂` of the K-step (53), with the Euclidean
-Galerkin matrices `Ĝ = Wᵀ G W`. -/
+/-- The left-hand side matrix `I_r - Δt h⁻² Ĝ₁ - Δt h⁻¹ Ĝ₂` of the implicit K-step of Sec. 6.2.2,
+with the Euclidean Galerkin matrices `Ĝ = Wᵀ G W`. -/
 def Khat (ν lam Δt h : ℝ) (W : Matrix (Fin N) (Fin r) ℝ) : Matrix (Fin r) (Fin r) ℝ :=
   1 - (Δt * h⁻¹ ^ 2) • (Wᵀ * G₁ N ν * W) - (Δt * h⁻¹) • (Wᵀ * G₂ N ν lam * W)
 
-/-- **The implicit K-step of the friction, Eqs. (52)–(53)** (arXiv 2302.01391, Sec. 6.2.2): the
-implicit Euler step `K⁺ = K + Δt F(K⁺ Wᵀ) W` of the BUG K-step for the field (51) is, cell by cell,
+/-- **The implicit K-step of the friction** (arXiv 2302.01391, Sec. 6.2.2): the
+implicit Euler step `K⁺ = K + Δt F(K⁺ Wᵀ) W` of the BUG K-step for the field (21) is, cell by cell,
 `(I_r - Δt h_j⁻² Ĝ₁ - Δt h_j⁻¹ Ĝ₂) K⁺_j = K_j + Δt u_{m,j} Wᵀ g_ν`.  This is the `kstep` field of
 `IsMatrixImplicitBUGStep`.  Solvability is another matter, see `Khat_singular`. -/
 theorem friction_kStep_iff (ν lam Δt : ℝ) (h u : Fin Nx → ℝ) (W : Matrix (Fin N) (Fin r) ℝ)
@@ -872,8 +893,8 @@ theorem friction_kStep_iff (ν lam Δt : ℝ) (h u : Fin Nx → ℝ) (W : Matrix
     simp only [Khat, Matrix.sub_mulVec, Matrix.one_mulVec, Matrix.smul_mulVec, smul_smul]
   rw [e2, smul_smul Δt (u j)]
 
-/-- **The implicit L-step of the friction, Eqs. (54)–(55)** (arXiv 2302.01391, Sec. 6.2.2): the
-implicit Euler step `L⁺ = L + Δt F(X L⁺ᵀ)ᵀ X` of the BUG L-step for the field (51) is the Sylvester
+/-- **The implicit L-step of the friction** (arXiv 2302.01391, Sec. 6.2.2): the
+implicit Euler step `L⁺ = L + Δt F(X L⁺ᵀ)ᵀ X` of the BUG L-step for the field (21) is the Sylvester
 equation `L⁺ - Δt G₁ L⁺ ĥ⁻² - Δt G₂ L⁺ ĥ⁻¹ = L + Δt g_ν u_mᵀ X` with `ĥ⁻² = Xᵀ h⁻² X`,
 `ĥ⁻¹ = Xᵀ h⁻¹ X`, the `lstep` field of `IsMatrixImplicitBUGStep`. -/
 theorem friction_lStep_iff (ν lam Δt : ℝ) (h u : Fin Nx → ℝ) (X : Matrix (Fin Nx) (Fin r) ℝ)
@@ -890,10 +911,10 @@ theorem friction_lStep_iff (ν lam Δt : ℝ) (h u : Fin Nx → ℝ) (X : Matrix
       Matrix.diagonal_transpose, Matrix.transpose_vecMulVec, Matrix.add_mul, Matrix.mul_assoc]
   rw [e, step_iff]
 
-/-- **The implicit S-step of the friction, Eqs. (56)–(57)** (arXiv 2302.01391, Sec. 6.2.2): the
-implicit Euler step `S⁺ = S + Δt Xᵀ F(X S⁺ Wᵀ) W` for the field (51) is the equation
+/-- **The implicit S-step of the friction** (arXiv 2302.01391, Sec. 6.2.2): the
+implicit Euler step `S⁺ = S + Δt Xᵀ F(X S⁺ Wᵀ) W` for the field (21) is the equation
 `S⁺ - Δt ĥ⁻² S⁺ Ĝ₁ᵀ - Δt ĥ⁻¹ S⁺ Ĝ₂ᵀ = S + Δt Xᵀ u_m g_νᵀ W`.  The paper defines `Ĝ` with `W¹`;
-Eq. (57) needs the updated basis `W²`, which is the `W` here. -/
+the implicit S-step needs the updated basis `W²`, which is the `W` here. -/
 theorem friction_sStep_iff (ν lam Δt : ℝ) (h u : Fin Nx → ℝ) (X : Matrix (Fin Nx) (Fin r) ℝ)
     (W : Matrix (Fin N) (Fin r) ℝ) (S₀ S₁ : Matrix (Fin r) (Fin r) ℝ) :
     S₁ = S₀ + Δt • (Xᵀ * fricField ν lam h u (X * S₁ * Wᵀ) * W) ↔
@@ -957,8 +978,9 @@ private lemma tDot_mul_sandwich (A : Matrix (Fin N) (Fin N) ℝ) (L : Matrix (Fi
   rw [Matrix.mul_smul, tDot_smul, Matrix.mul_vecMulVec, tDot_vecMulVec, ← Matrix.mulVec_mulVec]
 
 /-- **The implicit L-step of the friction is always uniquely solvable** (arXiv 2302.01391,
-Eq. 55; not stated there): for all `Δt ≥ 0`, `ν ≥ 0`, `λ > 0`, positive `h_j`, every `X` and
-every right-hand side, the Sylvester equation (55) has exactly one solution.  The reason is that
+Sec. 6.2.2, implicit L-step; not stated there): for all `Δt ≥ 0`, `ν ≥ 0`, `λ > 0`, positive
+`h_j`, every `X` and every right-hand side, the implicit L-step (a Sylvester equation) has exactly
+one solution.  The reason is that
 the left projector `X Xᵀ` commutes with the weight `M`, which acts from the right.  Contrast
 `Khat_singular`. -/
 theorem friction_lStep_existsUnique {ν lam Δt : ℝ} (hν : 0 ≤ ν) (hlam : 0 < lam) (hΔt : 0 ≤ Δt)
@@ -1080,12 +1102,12 @@ theorem reducedFriction_antidissipative {N : ℕ} (hN : 2 ≤ N) :
   rw [Matrix.add_apply, (Ghat_Wex hN).1, (Ghat_Wex hN).2]
   norm_num
 
-/-- **The K-step system (53) can be singular** (arXiv 2302.01391, Eq. 53; the paper solves it
-without discussing solvability).  For every `N ≥ 2`, at the paper's `ν = 10`, `λ = 1/1000` with
-`h = 1`, orthonormal `W = Wex N` and `Δt = 5/4536`, the matrix of Eq. (53) vanishes.  Unlike `D_j`
-(`Dmat_isUnit`) and the L-step (`friction_lStep_existsUnique`), solvability of the K-step for an
-arbitrary Euclidean orthonormal basis fails.  With one cell, `X = 1`, the S-step (57) is the same
-scalar equation. -/
+/-- **The implicit K-step system can be singular** (arXiv 2302.01391, Sec. 6.2.2; the paper solves
+it without discussing solvability).  For every `N ≥ 2`, at the paper's `ν = 10`, `λ = 1/1000` with
+`h = 1`, orthonormal `W = Wex N` and `Δt = 5/4536`, the matrix of that system vanishes.  Unlike
+`D_j` (`Dmat_isUnit`) and the L-step (`friction_lStep_existsUnique`), solvability of the K-step
+for an arbitrary Euclidean orthonormal basis fails.  With one cell, `X = 1`, the implicit S-step
+is the same scalar equation. -/
 theorem Khat_singular {N : ℕ} (hN : 2 ≤ N) : Khat 10 (1 / 1000) (5 / 4536) 1 (Wex N) = 0 := by
   ext i j
   fin_cases i
@@ -1094,7 +1116,7 @@ theorem Khat_singular {N : ℕ} (hN : 2 ≤ N) : Khat 10 (1 / 1000) (5 / 4536) 1
     Matrix.one_apply_eq, (Ghat_Wex hN).1, (Ghat_Wex hN).2, Matrix.zero_apply]
   norm_num
 
-/-- **The implicit K-step can have no solution** (arXiv 2302.01391, Eq. 53): for the data of
+/-- **The implicit K-step can have no solution** (arXiv 2302.01391, Sec. 6.2.2): for the data of
 `Khat_singular` with `u_m = 0` and a non-zero `K`, on any grid, no `K⁺` satisfies the implicit Euler
 K-step of the friction. -/
 theorem friction_kStep_no_solution [NeZero Nx] {N : ℕ} (hN : 2 ≤ N) :
@@ -1111,14 +1133,15 @@ theorem friction_kStep_no_solution [NeZero Nx] {N : ℕ} (hN : 2 ≤ N) :
 /-- The energy matrix `M = diag(1 / (2 k + 1))` of `wDot`. -/
 def Mw (N : ℕ) : Matrix (Fin N) (Fin N) ℝ := Matrix.diagonal fun i => (oddW i)⁻¹
 
-/-- The matrix of the K-step (53) with the `M`-Galerkin matrices `Wᵀ M G W` in place of `Wᵀ G W`. -/
+/-- The matrix of the implicit K-step with the `M`-Galerkin matrices `Wᵀ M G W` in place of
+`Wᵀ G W`. -/
 def KhatM (ν lam Δt h : ℝ) (W : Matrix (Fin N) (Fin r) ℝ) : Matrix (Fin r) (Fin r) ℝ :=
   1 - (Δt * h⁻¹ ^ 2) • (Wᵀ * Mw N * G₁ N ν * W) - (Δt * h⁻¹) • (Wᵀ * Mw N * G₂ N ν lam * W)
 
 /-- **In the energy inner product the K-step is always solvable** (not in arXiv 2302.01391; this is
 the repair of `Khat_singular`).  For the `M`-Galerkin matrices `Wᵀ M G W`, which are the K-step
-matrices for a basis with `Wᵀ M W = I` and the `M`-orthogonal projection, the matrix of Eq. (53) is
-invertible for all `Δt ≥ 0`, `h > 0`.  The proof does not use `Wᵀ M W = I`. -/
+matrices for a basis with `Wᵀ M W = I` and the `M`-orthogonal projection, the matrix of the
+implicit K-step is invertible for all `Δt ≥ 0`, `h > 0`.  The proof does not use `Wᵀ M W = I`. -/
 theorem KhatM_isUnit {ν lam Δt h : ℝ} (hν : 0 ≤ ν) (hlam : 0 < lam) (hΔt : 0 ≤ Δt)
     (hh : 0 < h) (W : Matrix (Fin N) (Fin r) ℝ) : IsUnit (KhatM ν lam Δt h W) := by
   have key : ∀ (G : Matrix (Fin N) (Fin N) ℝ) (z : Fin r → ℝ),
@@ -1152,7 +1175,7 @@ theorem KhatM_isUnit {ν lam Δt h : ℝ} (hν : 0 ≤ ν) (hlam : 0 < lam) (hΔ
 
 end ReducedFriction
 
-/-! ### POD (Sec. 5.1, Eqs. 22–25) -/
+/-! ### POD (Sec. 5.1, Eq. 18) -/
 
 section POD
 
@@ -1161,7 +1184,7 @@ open LeanDLRA.EckartYoung
 
 variable {Nt Nx N : ℕ}
 
-/-- The snapshot matrix `V^POD ∈ ℝ^{(N_x N_t) × N}` of Eq. (22): the matrices `V⁰, …, V^{N_t-1}`
+/-- The snapshot matrix `V^POD ∈ ℝ^{(N_x N_t) × N}` of Sec. 5.1: the matrices `V⁰, …, V^{N_t-1}`
 stacked on top of each other. -/
 def snapshotMatrix (Vs : Fin Nt → Matrix (Fin Nx) (Fin N) ℝ) :
     Matrix (Fin Nt × Fin Nx) (Fin N) ℝ := fun p k => Vs p.1 p.2 k
@@ -1182,10 +1205,10 @@ private lemma sq_norm_snapshot_sub (Vs : Fin Nt → Matrix (Fin Nx) (Fin N) ℝ)
   rw [snapshotMatrix_mul, ← sq_norm_snapshotMatrix]
   rfl
 
-/-- **POD basis, Eqs. (22)–(24)** (arXiv 2302.01391, Sec. 5.1).  For the top `r` right singular
+/-- **POD basis, Eq. (18)** (arXiv 2302.01391, Sec. 5.1).  For the top `r` right singular
 vectors `W` of the snapshot matrix, the projection error over all snapshots is the tail of the
 squared singular values of `V^POD`, in zero-based indexing `∑_{r ≤ i < N} σ_i²`.  The underlying
-statement (24) for one matrix is `LeanDLRA.EckartYoung.sq_norm_sub_truncation`. -/
+error identity after Eq. (18) for one matrix is `LeanDLRA.EckartYoung.sq_norm_sub_truncation`. -/
 theorem pod_error (Vs : Fin Nt → Matrix (Fin Nx) (Fin N) ℝ) (r : ℕ) :
     let W := topRightSingularVectors (snapshotMatrix Vs) r
     ∑ n, ‖Vs n - Vs n * (W * Wᵀ)‖ ^ 2 =
@@ -1222,7 +1245,7 @@ private lemma sq_norm_truncation_add {m n : Type*} [Fintype m] [Fintype n] [Deci
   rwa [e] at h1
 
 /-- `‖V_r‖_F² = ∑_{i < r} σ_i²`: the energy of the truncated SVD (arXiv 2302.01391, numerator of
-Eq. 25). -/
+`E_cum` in Sec. 5.1). -/
 theorem sq_norm_truncation {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
     (A : Matrix m n ℝ) (r : ℕ) :
     ‖truncation A r‖ ^ 2 =
@@ -1238,7 +1261,7 @@ theorem sq_norm_truncation {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
   have h3 := Finset.sum_range_add_sum_Ico f (min_le_right r (Fintype.card n))
   linarith
 
-/-- **The energy criterion, Eq. (25), corrected** (arXiv 2302.01391, Sec. 5.1): the energy captured
+/-- **The energy criterion `E_cum`, corrected** (arXiv 2302.01391, Sec. 5.1): the energy captured
 by the rank-`r` POD is `‖V_r‖_F² / ‖V‖_F² = ∑_{i<r} σ_i² / ∑_i σ_i²`.  The paper prints the left
 side with unsquared norms, see `Ecum_printed_false`. -/
 theorem Ecum_eq {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n] (A : Matrix m n ℝ) (r : ℕ) :
@@ -1247,7 +1270,7 @@ theorem Ecum_eq {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n] (A : Matri
         / ∑ i ∈ range (Fintype.card n), (Matrix.toEuclideanLin A).singularValues i ^ 2 := by
   rw [sq_norm_truncation, sq_norm_eq_sum_sq_singularValues A]
 
-/-- **Eq. (25) as printed is false** (arXiv 2302.01391, Eq. 25): the printed identity
+/-- **`E_cum` as printed is false** (arXiv 2302.01391, Sec. 5.1): the printed identity
 `‖V_r‖_F / ‖V‖_F = ∑_{k ≤ r} σ_k² / ∑_k σ_k²` fails for the `2 × 2` identity with `r = 1`.  The
 norms on the left must be squared, see `Ecum_eq`. -/
 theorem Ecum_printed_false :
@@ -1303,13 +1326,13 @@ theorem Ecum_printed_false :
 
 end POD
 
-/-! ### The BUG substeps of the micro transport (Sec. 6.2.1, Eqs. 41–49) -/
+/-! ### The BUG substeps of the micro transport (Sec. 6.2.1) -/
 
 section Transport
 
 variable {Nx N r : ℕ} [NeZero Nx]
 
-/-- The reduced block `Ã_{j,vv} = ab_j Wᵀ 𝐀 W + ub_j I_r` of Eq. (43). -/
+/-- The reduced block `Ã_{j,vv} = ab_j Wᵀ 𝐀 W + ub_j I_r` of Sec. 6.2.1. -/
 def AvvRed (W : Matrix (Fin N) (Fin r) ℝ) (u a : ℝ) : Matrix (Fin r) (Fin r) ℝ :=
   a • (Wᵀ * Acoup N * W) + u • 1
 
@@ -1318,12 +1341,13 @@ private lemma row_mul {a b c : Type*} [Fintype b] (M : Matrix a b ℝ) (W : Matr
   funext k
   simp [Matrix.mul_apply, Matrix.mulVec, dotProduct, mul_comm]
 
-/-- **The K-step of the micro transport, Eqs. (42)–(43)** (arXiv 2302.01391, Sec. 6.2.1): for
+/-- **The K-step of the micro transport** (arXiv 2302.01391, Sec. 6.2.1): for
 orthonormal `W`, the right-hand side `F_v(U, K Wᵀ) W` of the K-step is the same stencil in the
 `r`-dimensional variables `K_j`, with `A_{j,vu}` replaced by `Wᵀ A_{j,vu}` and `A_{j,vv}` by the
-reduced `r × r` matrix (43).  So the K-step only needs `Wᵀ 𝐀 W`, the structure behind the paper's
-cost claim `O(r² (N_x + N))`; the operation count itself is not a theorem.  The same identity is the
-POD-Galerkin transport (Eqs. 27–30) with a fixed `W`. -/
+reduced `r × r` matrix `Ã_{j,vv}`.  So the K-step only needs `Wᵀ 𝐀 W`, the structure behind the
+paper's cost claim `O(r² (N_x + N))`; the operation count itself is not a theorem.  The same
+identity is the
+POD-Galerkin transport of Sec. 5.2.1 (with Eq. 19) for a fixed `W`. -/
 theorem microF_kStep {W : Matrix (Fin N) (Fin r) ℝ} (hW : Wᵀ * W = 1) (Δx Δt : ℝ)
     (B : Fin Nx → Matrix (Fin N) (Fin 2) ℝ) (ub ab : Fin Nx → ℝ) (U : Matrix (Fin Nx) (Fin 2) ℝ)
     (K : Matrix (Fin Nx) (Fin r) ℝ) (j : Fin Nx) :
@@ -1352,22 +1376,22 @@ theorem microF_kStep {W : Matrix (Fin N) (Fin r) ℝ} (hW : Wᵀ * W = 1) (Δx �
   simp only [microF, hrow, hl, hd]
   simp only [Matrix.mulVec_sub Wᵀ, Matrix.mulVec_add Wᵀ, Matrix.mulVec_smul Wᵀ, h1, h2]
 
-/-- `X̃ = ∑_j (X_{j-1} - 2 X_j + X_{j+1}) X_jᵀ`, Eq. (45). -/
+/-- `X̃ = ∑_j (X_{j-1} - 2 X_j + X_{j+1}) X_jᵀ`, Sec. 6.2.1. -/
 def Xtilde (X : Matrix (Fin Nx) (Fin r) ℝ) : Matrix (Fin r) (Fin r) ℝ :=
   ∑ j, Matrix.vecMulVec (X (j - 1) - (2 : ℝ) • X j + X (j + 1)) (X j)
 
-/-- `f̃₊ = ∑_j (f_{j+1} + f_j) (X_{j+1} - X_j) X_jᵀ`, Eqs. (46)–(47) with `f = α₁` or `f = u_m`. -/
+/-- `f̃₊ = ∑_j (f_{j+1} + f_j) (X_{j+1} - X_j) X_jᵀ`, Sec. 6.2.1, with `f = α₁` or `f = u_m`. -/
 def fPlus (f : Fin Nx → ℝ) (X : Matrix (Fin Nx) (Fin r) ℝ) : Matrix (Fin r) (Fin r) ℝ :=
   ∑ j, (f (j + 1) + f j) • Matrix.vecMulVec (X (j + 1) - X j) (X j)
 
-/-- `f̃₋ = ∑_j (f_j + f_{j-1}) (X_j - X_{j-1}) X_jᵀ`, defined "accordingly" in Eqs. (46)–(47). -/
+/-- `f̃₋ = ∑_j (f_j + f_{j-1}) (X_j - X_{j-1}) X_jᵀ`, defined "accordingly" in Sec. 6.2.1. -/
 def fMinus (f : Fin Nx → ℝ) (X : Matrix (Fin Nx) (Fin r) ℝ) : Matrix (Fin r) (Fin r) ℝ :=
   ∑ j, (f j + f (j - 1)) • Matrix.vecMulVec (X j - X (j - 1)) (X j)
 
-/-- **The L-step of the micro transport, Eq. (48)** (arXiv 2302.01391, Sec. 6.2.1): the right-hand
+/-- **The L-step of the micro transport** (arXiv 2302.01391, Sec. 6.2.1): the right-hand
 side `F_v(U, X Lᵀ)ᵀ X` of the L-step is
 `(1/2Δt) L X̃ - (1/4Δx) (𝐀 L (α̃₊ + α̃₋) + L (ũ₊ + ũ₋)) - (1/2Δx) ∑_j (A_{j+1,vu} (U_{j+1} - U_j) +
-A_{j,vu} (U_j - U_{j-1})) X_jᵀ`.  Eq. (48) as rendered shows no sum over `j` in the last term. -/
+A_{j,vu} (U_j - U_{j-1})) X_jᵀ`.  The paper writes the sum over `j` by Einstein's convention. -/
 theorem microF_lStep (Δx Δt : ℝ) (B : Fin Nx → Matrix (Fin N) (Fin 2) ℝ) (u a : Fin Nx → ℝ)
     (U : Matrix (Fin Nx) (Fin 2) ℝ) (X : Matrix (Fin Nx) (Fin r) ℝ)
     (L : Matrix (Fin N) (Fin r) ℝ) :
@@ -1423,12 +1447,12 @@ theorem microF_lStep (Δx Δt : ℝ) (B : Fin Nx → Matrix (Fin N) (Fin 2) ℝ)
   simp only [Finset.sum_sub_distrib, Finset.sum_add_distrib, ← Finset.smul_sum, Xtilde, fPlus,
     fMinus, Matrix.mul_add, Matrix.mul_sum, Matrix.mul_smul]
 
-/-- **The S-step of the micro transport, Eq. (49), corrected** (arXiv 2302.01391, Sec. 6.2.1).
+/-- **The S-step of the micro transport, corrected** (arXiv 2302.01391, Sec. 6.2.1).
 For orthonormal `W`, the right-hand side `Xᵀ F_v(U, X S Wᵀ) W` of the S-step satisfies
 `Ṡᵀ = (1/2Δt) Sᵀ X̃ - (1/4Δx) (Wᵀ 𝐀 W Sᵀ (α̃₊ + α̃₋) + Sᵀ (ũ₊ + ũ₋)) - (1/2Δx) ∑_j (…) X_jᵀ`.
 
-Eq. (49) as rendered writes `Ṡ` and `S X̃` here; both must carry a transpose, as the remaining
-terms of Eq. (49) do. -/
+The `Ṡ` display of Sec. 6.2.1 writes `Ṡ` and `S X̃` here; both must carry a transpose, as its
+remaining terms do. -/
 theorem microF_sStep {W : Matrix (Fin N) (Fin r) ℝ} (hW : Wᵀ * W = 1) (Δx Δt : ℝ)
     (B : Fin Nx → Matrix (Fin N) (Fin 2) ℝ) (u a : Fin Nx → ℝ) (U : Matrix (Fin Nx) (Fin 2) ℝ)
     (X : Matrix (Fin Nx) (Fin r) ℝ) (S : Matrix (Fin r) (Fin r) ℝ) :
@@ -1464,8 +1488,8 @@ open scoped LeanDLRA.Frobenius
 
 variable {Nx N : ℕ} [NeZero Nx]
 
-/-- The micro transport (arXiv 2302.01391, Eq. 41) with frozen macro state and coefficients is an
-affine field, hence globally Lipschitz.  It is unbounded unless it is constant, so
+/-- The micro transport (arXiv 2302.01391, Sec. 6.2.1) with frozen macro state and coefficients is
+an affine field, hence globally Lipschitz.  It is unbounded unless it is constant, so
 `bug_global_error_le` does not apply directly and the tube version is needed. -/
 theorem microF_isLipschitz (Δx Δt : ℝ) (B : Fin Nx → Matrix (Fin N) (Fin 2) ℝ) (ub ab : Fin Nx → ℝ)
     (U : Matrix (Fin Nx) (Fin 2) ℝ) :

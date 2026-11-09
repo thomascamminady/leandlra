@@ -19,13 +19,12 @@ structures are defined; the module adds only the statements below.
   problems `Delta Phi_l = c B_l` are solved, then `phi(x,z) = sum_l Phi_l(x) C_l(z)` solves
   `Delta phi = c rho` for every `z`. Here `Delta` is any linear map on functions of `x`; the paper's
   Laplacian `d_xx + d_yy` is one instance. Solvability of each Poisson problem is not claimed.
-* `tangent_velocity_of_rank_curve` (Sec. 4, exactness in linear theory): if a rank-`r` curve
-  `Y(t) = U(t) S(t) V(t)^T` with orthonormal factors at `t` solves `Y' = LIN(Y)` at `t`, then
-  `P(Y) LIN(Y) = LIN(Y)` and `Y` solves the DLRA equation at `t`. The paper says this holds because
-  `f` has rank one, and it is in fact because the velocity of any differentiable rank-`r` curve is
-  tangent. The proof derives that tangency from the product rule. The paper's global claim
-  (the dispersion relation is reproduced) needs the explicit solution of its appendix A and is not
-  formalized here.
+* `tangent_velocity_of_rank_curve` (Sec. 4, exactness in linear theory): if a differentiable curve
+  `Y(t) = U(t) S(t) V(t)^T` (rank at most `r`) with orthonormal factors at `t` solves
+  `Y' = LIN(Y)` at `t`, then `P(Y) LIN(Y) = LIN(Y)` and `Y` solves the DLRA equation at `t`. The
+  paper argues from `f` having rank one; the Lean proof gets the tangency of `Y' = LIN(Y)` from the
+  product rule, so it holds for every such curve. The paper's global claim (the dispersion
+  relation is reproduced) needs the explicit solution of its appendix A and is not formalized here.
 
 Left out:
 * Sec. 3.1, eqs. (5)-(7) (the K, S, L equations with frozen coefficients). Not formalized.
@@ -88,7 +87,8 @@ theorem poisson_of_factors {X Z : Type*} {r : ℕ} (Δ : (X → ℝ) →ₗ[ℝ]
 attribute [local instance] Matrix.frobeniusNormedAddCommGroup Matrix.frobeniusNormedSpace
 
 /-- **Sec. 4, exactness of DLRA in linear theory (core).** Let `Y(τ) = U(τ) S(τ) V(τ)ᵀ` be a
-differentiable rank-`r` curve whose factors are orthonormal at `t`, and let `Y` solve `Ẏ = LIN(Y)`
+differentiable curve (rank at most `r`) whose factors `U`, `V` are orthonormal at `t`, and let `Y`
+solve `Ẏ = LIN(Y)`
 at `t`. Then `P(Y(t)) LIN(Y(t)) = LIN(Y(t))`, so `Y` also solves the DLRA velocity equation
 `Ẏ = P(Y) LIN(Y)` at `t`. The projector `P(Y(t))` is `LeanDLRA.tangentProj (U t) (V t)`. `LIN` is an
 arbitrary map on matrices: linearity of `LIN` is not used. -/

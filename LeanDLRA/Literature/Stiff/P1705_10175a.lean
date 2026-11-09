@@ -9,17 +9,18 @@ matrices are real; the rank-`r` factors satisfy `r ≤ d`.
 
 * `eq7_factorization` (eq. (7)): the exact stiff flow of a rank-`r` matrix,
   `e^{τA} U S Vᵀ e^{τAᵀ}`, equals `Ũ (R S Pᵀ) Ṽᵀ`, where `Ũ`, `Ṽ` have orthonormal columns and
-  `e^{τA} U = Ũ R`, `e^{τA} V = Ṽ P`. The QR factors come from `LeanDLRA.MatrixBUG.exists_qr`.
+  `e^{τA} U = Ũ R`, `e^{τA} V = Ṽ P`. The factors come from `LeanDLRA.MatrixBUG.exists_qr`; the
+  statement is existential and does not ask `R`, `P` to be upper triangular.
 * `eq7_rank`: `rank (e^{τA} M e^{τAᵀ}) = rank M` for every square `M`, since `e^{τA}` is
-  invertible. The rank of the stiff flow is therefore preserved.
+  invertible. This is the remark before Eq. (7) that the flow (4) of (3a) preserves the rank.
 * `IsAlg1Step` (Algorithm 1, steps 3–5): one step of the first-order low-rank split-step
   integrator. Step 3 is the QR step for `e^{τA} U`, step 4 sets `S^A = R S Rᵀ`, and step 5 applies
   the three substeps. Each substep is linear with constant coefficients on the step interval, so
   it is written with its exact solution: `K(t₁) = U S^A + τ Q U`, `S̃ = Ŝ - τ U₁ᵀ Q U`,
   `L(t₁) = S̃ Uᵀ + τ U₁ᵀ Q`. The flows are not solved numerically. `isAlg1Step_exists` shows
   that a step always exists.
-* `lemma_1` (Lemma 1): if `S` and `Q` are symmetric positive semidefinite and `τ ≥ 0`, then the
-  new factor `S₁` of one step is symmetric positive semidefinite.
+* `lemma_1` (Lemma 1, one step): if `S` and `Q` are symmetric positive semidefinite and `τ ≥ 0`,
+  then the new factor `S₁` of one step is symmetric positive semidefinite.
 * `algorithm_1_psd` (Algorithm 1): for any sequence of steps starting from a positive
   semidefinite `S₀`, every iterate `U_n S_n U_nᵀ` is symmetric positive semidefinite.
 
@@ -29,9 +30,9 @@ the substeps here have explicit constant-coefficient flows.
 
 Not formalized: Section 2 (eqs. (2)–(6)) only defines the variation-of-constants formula and the
 Lie and Strang splittings and quotes their orders, so there is no claim to prove there. Section 3
-states without proof that the exact solution of the DLE is symmetric positive semidefinite. That
-needs the variation-of-constants integral and is left out. The paper's convergence and numerical
-results are not formalized.
+states, as a consequence of (2) and of its reference [1], that the exact solution of the DLE is
+symmetric positive semidefinite. That needs the variation-of-constants integral and is left out.
+The paper's convergence and numerical results are not formalized.
 -/
 
 open Set Filter Topology Finset
@@ -51,10 +52,12 @@ lemma exp_smul_transpose (A : Matrix (Fin d) (Fin d) ℝ) (τ : ℝ) :
     NormedSpace.exp (τ • Aᵀ) = (NormedSpace.exp (τ • A))ᵀ := by
   rw [← Matrix.transpose_smul, Matrix.exp_transpose]
 
-/-- **Eq. (7), factorization (arXiv 1705.10175, eq. (7)).** For any `U`, `V ∈ ℝ^{d×r}` and
-`S ∈ ℝ^{r×r}` (the paper takes `U`, `V` orthonormal; this is not needed), the stiff flow
-`e^{τA} U S Vᵀ e^{τAᵀ}` equals `Ũ (R S Pᵀ) Ṽᵀ`, where `Ũ`, `Ṽ` have orthonormal columns and
-`e^{τA} U = Ũ R`, `e^{τA} V = Ṽ P`. -/
+/-- **Eq. (7), factorization (arXiv 1705.10175, eq. (7) and the text after it).** For any `U`,
+`V ∈ ℝ^{d×r}` and `S ∈ ℝ^{r×r}` with `r ≤ d` (the paper takes `U`, `V` with orthonormal columns
+and `S` diagonal; this is not needed), there are `Ũ`, `Ṽ` with orthonormal columns and `R`, `P`
+with `e^{τA} U = Ũ R`, `e^{τA} V = Ṽ P`, such that the stiff flow `e^{τA} U S Vᵀ e^{τAᵀ}` equals
+`Ũ (R S Pᵀ) Ṽᵀ`. Deviation: the statement is existential (the factors come from `exists_qr`),
+and `R`, `P` are not required to be upper triangular as in a QR decomposition. -/
 theorem eq7_factorization (A : Matrix (Fin d) (Fin d) ℝ) (τ : ℝ) (hr : r ≤ d)
     (U V : Matrix (Fin d) (Fin r) ℝ) (S : Matrix (Fin r) (Fin r) ℝ) :
     ∃ (Ut Vt : Matrix (Fin d) (Fin r) ℝ) (R P : Matrix (Fin r) (Fin r) ℝ),
@@ -86,8 +89,9 @@ theorem eq7_factorization (A : Matrix (Fin d) (Fin d) ℝ) (τ : ℝ) (hr : r �
         rw [Matrix.transpose_mul Vtᵀ, Matrix.transpose_transpose]
         simp only [Matrix.mul_assoc]
 
-/-- **Eq. (7), rank (arXiv 1705.10175, eq. (7) and the remark that the rank is kept).** The
-stiff flow `M ↦ e^{τA} M e^{τAᵀ}` preserves the rank of every square matrix `M`. -/
+/-- **Rank preservation of the stiff flow (arXiv 1705.10175, Section 2, the remark before
+eq. (7) that (3a) is rank preserving).** The flow (4), `M ↦ e^{τA} M e^{τAᵀ}`, preserves the rank
+of every square matrix `M`. -/
 theorem eq7_rank (A : Matrix (Fin d) (Fin d) ℝ) (τ : ℝ) (M : Matrix (Fin d) (Fin d) ℝ) :
     (NormedSpace.exp (τ • A) * M * NormedSpace.exp (τ • Aᵀ)).rank = M.rank := by
   have hd : IsUnit (NormedSpace.exp (τ • A)).det := isUnit_det_exp A τ
@@ -108,10 +112,13 @@ def IsAlg1Step (A Q : Matrix (Fin d) (Fin d) ℝ) (τ : ℝ) (U U' : Matrix (Fin
     U' * Sh = UA * SA + τ • (Q * UA) ∧ U'ᵀ * U' = 1 ∧
     Sb = Sh - τ • (U'ᵀ * Q * UA) ∧ Lt = Sb * UAᵀ + τ • (U'ᵀ * Q) ∧ S' = Lt * U'
 
-/-- **Lemma 1 (arXiv 1705.10175, Lemma 1).** If `S₀` and `Q` are symmetric positive semidefinite
-and `τ ≥ 0`, then the factor `S₁` of one step of Algorithm 1 is symmetric positive semidefinite.
-Here `S` stands for `S₀` and `S'` for `S₁`; the paper states the lemma without these hypotheses,
-which hold in its setting (Section 3). -/
+/-- **Lemma 1 (arXiv 1705.10175, Lemma 1), one step.** If `S₀` and `Q` are symmetric positive
+semidefinite and `τ ≥ 0`, then the factor `S₁` of one step of Algorithm 1 is symmetric positive
+semidefinite. Here `S` stands for `S₀` and `S'` for `S₁`. The paper states the lemma for every `n`
+(proved for `n = 0`; all `n` is `algorithm_1_psd`) without listing hypotheses. `Q` positive
+semidefinite is the setting of Section 3, and `τ ≥ 0` is the step size. `S₀` positive
+semidefinite is implicit: step 1 of Algorithm 1 asks only for a symmetric rank-`r` approximation
+`U₀ S₀ U₀ᵀ` of the positive semidefinite `X₀`; a truncated eigendecomposition gives it. -/
 theorem lemma_1 {A Q : Matrix (Fin d) (Fin d) ℝ} {τ : ℝ}
     {U U' : Matrix (Fin d) (Fin r) ℝ} {S S' : Matrix (Fin r) (Fin r) ℝ}
     (hS : S.PosSemidef) (hQ : Q.PosSemidef) (hτ : 0 ≤ τ) (h : IsAlg1Step A Q τ U U' S S') :

@@ -15,7 +15,8 @@ the linear regime and the reduction of the projected equations to (15)-(17). **M
 2, 5).** `IsCompatible` says what a discretization has to satisfy, and it is proved for the
 periodic Yee scheme, `isCompatible_periodicYee`, and for spectral differentiation on an odd grid,
 `isCompatible_spectral`, the discretization of the paper's experiments. On such a grid (27) is
-always solvable, `IsCompatible.exists_isPoisson`: the zero-mean hypothesis is derived, and the
+always solvable, `IsCompatible.exists_isPoisson`: the zero mean that solvability needs is derived
+(the paper does not discuss solvability), and the
 singular `Δ̃` is handled, which `divergence_correction` of `OpenProblems/Conservation/Part4a`
 excludes by assuming `D Dᵀ` invertible, an assumption that never holds on these grids. `gauss_law`
 is (26), `gauss_iff_isPoisson` its converse, `algorithm2_main` the statement for all steps of
@@ -391,10 +392,11 @@ theorem sum_poissonRhs (h : IsCompatible dp dm) (τ : ℝ) (En j : VectorField G
     Finset.sum_sub_distrib, sum_gaussRhs, h.sum_divD]
   simp
 
-/-- **The Poisson problem (27) is always solvable** (arXiv 1902.00424, Sec. 5).  The paper's
-hypothesis that the right-hand side has zero mean is a consequence: its three terms are `ρ` minus
-its numerical mean and two discrete divergences.  The solution is unique up to a constant
-(`IsCompatible.gradD_eq_of_isPoisson`). -/
+/-- **The Poisson problem (27) is always solvable** (arXiv 1902.00424, Sec. 5; the paper does not
+state solvability).  The zero mean of the right-hand side, which solvability of the singular `Δ̃`
+needs and which the choice `φ̂₀ = 0` of Sec. 6 takes for granted, is a consequence: its three terms
+are `ρ` minus its numerical mean and two discrete divergences.  The solution is unique up to a
+constant (`IsCompatible.gradD_eq_of_isPoisson`). -/
 theorem exists_isPoisson (h : IsCompatible dp dm) (τ : ℝ) (En j : VectorField G) (ρ : G → ℝ) :
     ∃ φ : G → ℝ, ∑ x, φ x = 0 ∧ IsPoisson dp dm τ En j ρ φ := by
   have hs : ∑ x, -poissonRhs dm τ En j ρ x = 0 := by

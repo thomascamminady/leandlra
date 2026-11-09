@@ -25,8 +25,9 @@ Abstract cores, on a real inner product space `E`, of results of Yin–Endeve–
   core of Lemma 4.3 only; the paper's well-posedness of the matrix substeps is not formalized.
 * **Lemma 4.4, L² stability.**  `dg_step_norm_le` is the one-step bound
   `(1 + h μ) ‖x₁‖ ≤ ‖x₀‖ + h ‖η‖` (eq. (4.19)).  `dg_stability` is the induction with
-  `c = 1/(1 + h μ)`, giving `‖x_n‖ ≤ cⁿ ‖f₀‖ + (1 - cⁿ)/μ ‖η‖` (eq. (4.17)), under the
-  paper's hypothesis `‖x₀‖ ≤ ‖f₀‖`.  The forcing `η` is kept.
+  `c = 1/(1 + h μ)` (eq. (2.19)), giving `‖x_n‖ ≤ cⁿ ‖f₀‖ + (1 - cⁿ)/μ ‖η‖` (eq. (4.17)), under
+  `‖x₀‖ ≤ ‖f₀‖`.  The paper assumes `‖ε f̂⁰_h‖ ≤ ‖ε f⁰_h‖` and uses `‖ε f⁰_h‖ ≤ ‖ε f₀‖` at the
+  end of its proof; `‖x₀‖ ≤ ‖f₀‖` is what the two give together.  The forcing `η` is kept.
   `dg_scheme_exists_stable` combines Lemmas 4.3 and 4.4: a sequence solving the scheme exists
   and satisfies the stability bound, so the hypotheses of `dg_stability` are not vacuous.
 
