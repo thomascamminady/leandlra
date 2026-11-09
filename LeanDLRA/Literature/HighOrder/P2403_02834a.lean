@@ -38,9 +38,10 @@ solution, and the Galerkin defects of the substeps are shown to be `O(h² ε_r +
 continuity alone (`galerkin_defect`). Theorem 4.5 for Variant 2 follows directly from the
 four-block decomposition, without Lemma 4.2 (not formalized here). Lemma 4.4 is proved for any
 enlarged bases (`IsNested`), covering both variants; for Variant 1 its doubly normal block is
-bounded through the rank-`r` point `Y⋆`, so `ε_2r` does not appear (the paper states `ε_2r` for
-both variants), and the `h² ε_r` term of Theorems 4.5 and 4.1 (Variant 1) is absorbed using
-`h ≤ h̄`. The SVD truncation is abstracted to `‖Y₁ - Ŷ₁‖ ≤ ϑ`, plus
+bounded through the rank-`r` point `Y⋆`, so `ε_2r` does not appear and the bound has `h ε_r`
+where the paper states `h ε_2r` for both variants (weaker when `ε_2r < ε_r`), and the `h² ε_r`
+term of Theorems 4.5 and 4.1 (Variant 1) is absorbed using `h ≤ h̄`. The SVD truncation is
+abstracted to `‖Y₁ - Ŷ₁‖ ≤ ϑ`, plus
 `‖Y₁‖² + ‖Ŷ₁ - Y₁‖² = ‖Ŷ₁‖²` for Theorem 5.1 (the identity `‖Ŷ₁‖² - ‖Y₁‖² = Σ σⱼ²` the paper
 uses). Substep and exact solutions are hypotheses (`ODESolution`). Non-vacuity: the counterexample
 satisfies all hypotheses of `theorem_5_1_variant2` and is a Variant 2 step; an `example` gives a
@@ -1654,7 +1655,8 @@ theorem isStarNormal_of_matrix {Y₀ : Matrix m n ℝ}
 by `ε_r` at `Y₀` and at the rank-`r` points `X_K = (Y₀ + h/2 F(t₀, Y₀)) V₀V₀ᵀ` (bases `U⋆`, `V₀`),
 `X_L = U₀U₀ᵀ (Y₀ + h/2 F(t₀, Y₀))` (bases `U₀`, `V⋆`) and `Y⋆` of (4.3c) (bases `U⋆`, `V⋆`),
 `‖A(t₁) - Û₁Û₁ᵀ A(t₁) V̂₁V̂₁ᵀ‖ ≤ 2 h ε_r + 3 L h² ε_r + c h³`,
-`c = (8/3) L² B + (7/12) L M₂ + (7/12) M₃`. -/
+`c = (8/3) L² B + (7/12) L M₂ + (7/12) M₃`.  For `h ≤ h̄` this is the printed form
+`C₁ h³ + C₂ ε_r h` with `C₂ = 2 + 3 L h̄`. -/
 theorem lemma_4_3_matrix (hv : IsVariant1 F t₀ h U₀ S₀ V₀ Uh Vh Us Vs U₂ V₂ K Lf Sb)
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
     (hA : IsRegularSolution F A A₂ t₀ (t₀ + h) M₂ M₃) (hA0 : A t₀ = U₀ * S₀ * V₀ᵀ) (hh : 0 < h)
@@ -1678,7 +1680,9 @@ theorem lemma_4_3_matrix (hv : IsVariant1 F t₀ h U₀ S₀ V₀ Uh Vh Us Vs U�
 /-- **Lemma 4.4 of arXiv 2403.02834 for Variant 1** (matrix form): under the hypotheses of
 `lemma_4_3_matrix`, `‖Û₁Û₁ᵀ A(t₁) V̂₁V̂₁ᵀ - Ŷ₁‖ ≤ h ε_r + 3 L h² ε_r + c h³`,
 `c = 2 L² B + (5/8) L M₂ + (7/24) M₃`.  Here the doubly normal block is estimated with the
-rank-`r` point `Y⋆`, so no rank-`2r` normal component is needed. -/
+rank-`r` point `Y⋆`, so no rank-`2r` normal component is needed.  This is weaker than the printed
+Lemma 4.4, which has `Ĉ₁ h ε_2r` in place of `h ε_r` for both variants (the two agree when
+`ε_2r = ε_r`); it suffices for Theorems 4.5 and 4.1 of Variant 1, which only claim `h ε_r`. -/
 theorem lemma_4_4_variant1 (hv : IsVariant1 F t₀ h U₀ S₀ V₀ Uh Vh Us Vs U₂ V₂ K Lf Sb)
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
     (hA : IsRegularSolution F A A₂ t₀ (t₀ + h) M₂ M₃) (hA0 : A t₀ = U₀ * S₀ * V₀ᵀ) (hh : 0 < h)

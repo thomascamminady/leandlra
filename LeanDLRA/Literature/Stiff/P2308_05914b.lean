@@ -20,8 +20,9 @@ Hypotheses taken from the paper.
 * `Aχ` is SPD.
 * `hRay` is the Rayleigh form of the paper's (C.2) for rows, `χmin ‖W‖²_{A1} ≤ ‖W‖²_{Aχ} ≤
   χmax ‖W‖²_{A1}`. It is the `m₁ = 1` case of (C.2), which follows from Assumption 2.1
-  (`0 < χmin ≤ χ ≤ χmax`) through the definition of `Aχ` as a weighted Gram matrix. That
-  derivation needs the DG basis and is not formalized here, so it is an input.
+  (`0 < χmin ≤ χ ≤ χmax`) through the definition of `Aχ` as a weighted Gram matrix (the paper's
+  Lemma C.1). That derivation needs the DG basis and is not formalized here, so the result is
+  conditional on (C.2) for rows.
 * `X A1 Xᵀ = 1` is the normalization (4.23) of `E^Eq`.
 
 Proof. The paper proves the lemma through its Lemma C.5 and a Young-inequality bound. Here
@@ -98,8 +99,10 @@ lemma cs_trace {M : Matrix (Fin n) (Fin n) ℝ} (hM : M.PosSemidef) (X Y : Matri
 
 /-- Lemma 4.11 of arXiv 2308.05914 (matrix form). For `α ∈ (0,1)` there is `γ* ∈ (α,1)`,
 depending only on `χmax/χmin` and `α`, such that: if `Eᵀ A1 E = I`, `X A1 Xᵀ = 1` and
-`‖X A1 E Eᵀ‖_{A1} ≥ γ*`, then `‖X Aχ P_Eχ‖_{A1} ≥ α`. Here `A1`, `Aχ` are SPD, `hRay` is the
-Rayleigh form (C.2) of Assumption 2.1 (see the module docstring), and `γ*` is explicit. -/
+`‖X A1 E Eᵀ‖_{A1} ≥ γ*`, then `‖X Aχ P_Eχ‖_{A1} ≥ α`. Here `A1`, `Aχ` are SPD and `γ*` is
+explicit. The result is conditional on the row form of (C.2) (`hRay`), which the paper derives
+from Assumption 2.1 in Lemma C.1 and which is taken as a hypothesis here (see the module
+docstring). -/
 theorem lemma_4_11_chi_alignment (χmin χmax α : ℝ) (hmin : 0 < χmin) (hle : χmin ≤ χmax)
     (hα0 : 0 < α) (hα1 : α < 1) :
     ∃ γs : ℝ, α < γs ∧ γs < 1 ∧

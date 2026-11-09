@@ -16,14 +16,16 @@ truncation errors satisfy (25)–(26) with `B` the supremum (20) over the neighb
 `truncation_error_truncation`; vanishing at full rank is `gammaBar_eq_zero`). That the stages lie in
 `𝓥_r` is derived, not assumed (`stage_mem_nbhdV`), from **Lemma 1** (`IsRKBUGStep.stage_bound`),
 **Lemma 2** (`IsRKBUGStep.final_bound`) and **Proposition 2** (`IsRKBUGSolution.norm_sub_le`), with
-the paper's recursive constants. Differences from the paper: (a) the constant of (25) is the
-paper's, but read literally (26) with that same constant is false, see
-`stage_bound_false_with_Cb` (Kutta's third-order method); for the stages `C_b` becomes
-`∑ⱼ |a_{ij}|`; (b) the proof uses Eckart–Young in the form `‖Ŷ - 𝓡(Ŷ)‖ ≤ ‖Ŷ - Y_k‖` instead of
-Weyl's inequalities, and `rank Ŷ ≤ min {n, m, 2 r s}` only for the case of zero error, so the root
-can be dropped when it is nonzero (`truncation_error_sharp`); (c) `𝓡(Ŷ)` is any best rank-`r`
-approximation, which the truncated SVD of `Ŝ` provides, so more trajectories are covered than in
-Algorithm 2; `Û`, `V̂` may have different numbers of columns; (d) `𝓥_r` uses `rank ≤ r`, see
+the paper's recursive constants. Differences from the paper: (a) Proposition 4 leaves `γ̄_r`
+unspecified and computes it only for (25), as `√(min {n, m, 2 r s} - r) C_b B`; the proof of (26) is
+omitted ("the same arguments"), and those arguments give `∑ⱼ |a_{ij}|` in place of `C_b`. The
+constant of (25) cannot be reused for (26) (`stage_bound_false_with_Cb`, Kutta's third-order
+method), so `truncation_error_gamma` takes `γ̄_r` with `max {C_b, maxᵢ ∑ⱼ |a_{ij}|}`, and
+Proposition 4 as printed holds; (b) the proof uses Eckart–Young in the form `‖Ŷ - 𝓡(Ŷ)‖ ≤ ‖Ŷ - Y_k‖`
+instead of Weyl's inequalities, and `rank Ŷ ≤ min {n, m, 2 r s}` only for the case of zero error, so
+the root can be dropped when it is nonzero (`truncation_error_sharp`); (c) `𝓡(Ŷ)` is any best
+rank-`r` approximation, which the truncated SVD of `Ŝ` provides, so more trajectories are covered
+than in Algorithm 2; `Û`, `V̂` may have different numbers of columns; (d) `𝓥_r` uses `rank ≤ r`, see
 `nbhdV`; (e) `0 ≤ c_i ≤ 1` is assumed so that the stage times lie in `[0, T]`, where Assumption 1
 lives; (f) if `K̃₀ = 0`, Lean's `x / 0 = 0` is consistent with Proposition 2, see there. Proposition
 1 on the exact solution is not formalised: it only serves to put the exact solution into `𝓥_r`, and
@@ -1178,12 +1180,14 @@ theorem three_le_stage_error {Y : ℕ → LowRank 2 2 1} {Ys : ℕ → Fin 3 →
   rw [hval]
   exact three_le_norm (Ys 0 2).rank_mat_le
 
-/-- **(26) is false with the constant of (25).** Read literally, Proposition 4 of arXiv 2502.07040
-gives the stages the bound `h √(min {n, m, 2 r s} - r) C_b B`, with the `C_b B` from the proof of
-(25). This fails for Kutta's third-order method with `n = m = 2`, `r = 1`, `h = 1`, `N = 1`,
-`F(t, Z) = cos(2 π t) A`: Assumption 1 holds, there is an RK-BUG solution, and the third stage
-violates the bound for every radius `R` in `B`. So `truncation_error` has the right form: for the
-stages the constant is `∑ⱼ |a_{ij}|`. The bound (25) itself, which the paper proves, is correct. -/
+/-- **(26) does not hold with the constant computed for (25).** Proposition 4 of arXiv 2502.07040
+states (25) and (26) with one unspecified `γ̄_r`; its proof computes
+`γ̄_r = √(min {n, m, 2 r s} - r) C_b B` for (25) and omits the proof of (26). That constant cannot
+be reused for the stages: it fails for Kutta's third-order method with `n = m = 2`, `r = 1`,
+`h = 1`, `N = 1`, `F(t, Z) = cos(2 π t) A`: Assumption 1 holds, there is an RK-BUG solution, and
+the third stage violates the bound for every radius `R` in `B`. So `truncation_error` has the right
+form: for the stages the constant is `∑ⱼ |a_{ij}|`. Proposition 4 as printed, with an unspecified
+`γ̄_r`, holds (`truncation_error_gamma`). -/
 theorem stage_bound_false_with_Cb :
     ∃ (Y : ℕ → LowRank 2 2 1) (Ys : ℕ → Fin 3 → LowRank 2 2 1)
       (Yhs : ℕ → Fin 3 → Matrix (Fin 2) (Fin 2) ℝ) (Yh : ℕ → Matrix (Fin 2) (Fin 2) ℝ),

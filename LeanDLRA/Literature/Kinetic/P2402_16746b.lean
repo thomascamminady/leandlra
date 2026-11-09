@@ -15,7 +15,8 @@ Gauss–Legendre factorisation `A_f = T_f M T_fᵀ` (`pnFlux`, `legendreN`, `IsG
 (`APBUGStep`): K- and L-step (4.2), (4.3), augmentation, S-step (4.23), the truncation (4.17)–(4.19)
 of the remainder only, and the updates (4.20), (4.21). A sharper CFL condition suffices
 (`theorem_7_sharp`). The ingredients are the energy estimate of Appendix A (`energy_le_core`, with
-Lemmas 2, 3, 5, 6 as `sum_mul_dPlus`, `sum_dPlus_sq_le`, `inner_flux_self`, `norm_fluxAdj_sq_le`),
+Lemmas 2, 3, 5 as `sum_mul_dPlus`, `sum_dPlus_sq_le`, `inner_flux_self`, and in place of the false
+Lemma 6 the bound `norm_fluxAdj_sq_le`),
 the Galerkin test of the S-step (`galerkin_test`, `APBUGStep.initial_eq`), and two facts about the
 truncation: it keeps the moment `g b` entering the macro update (`APBUGStep.moment_eq`) and it does
 not increase the norm (`APBUGStep.norm_new_le`). The paper's proof mentions only the second one, but
@@ -33,11 +34,18 @@ S-step is tested with the untruncated one.
   `A_f = T_f M T_fᵀ`, `∑ w_k = 2` and `β_N ≥ 2` are proved, not assumed.
 * `T = (√w_k P_i(μ_k))` is the `N × (N+1)` matrix of the paper; `A^± = ½ T (M ± |M|) Tᵀ` and
   `T Tᵀ = 1`, but `Tᵀ T ≠ 1`.
-* Constants: Lemma 6 holds with the constant `1` instead of `2 β_N` (`norm_fluxAdj_sq_le`), and
-  `1/(4 c)` can replace `1/(5 c β_N)` in (3.4) (`theorem_7_sharp`).
-* Lemma 5, second identity: as rendered in the paper the last term has the sign of
-  `(gⁿ - gⁿ⁺¹)ᵀ(A⁺𝒟⁺ + A⁻𝒟⁻)gⁿ⁺¹`; the correct term is `(gⁿ⁺¹ - gⁿ)ᵀ(A⁺𝒟⁺ + A⁻𝒟⁻)gⁿ⁺¹`
-  (`inner_flux_split`). This is harmless, since the term is estimated in absolute value.
+* Lemmas 2 and 3 are proved for scalar sequences; the paper's vector-valued forms follow
+  componentwise.
+* Lemma 6 as printed, with the right side `2 β_N ∑ (𝒟⁺g)ᵀ A² 𝒟⁺g`, is false
+  (`P2402_16746a.lemma_6_false`), and so is the first identity of Lemma 4
+  (`P2402_16746a.lemma_4_false`). What is proved instead, `norm_fluxAdj_sq_le`, has the right side
+  `∑_k μ_k² ‖𝒟⁺ v̂_k‖² = ∑ (𝒟⁺g)ᵀ T M² Tᵀ 𝒟⁺g` (not `A²`) with the constant `1`, and it suffices.
+  Also `1/(4 c)` can replace `1/(5 c β_N)` in (3.4) (`theorem_7_sharp`).
+* Lemma 5, second identity: the printed last term has the sign of
+  `(gⁿ - gⁿ⁺¹)ᵀ(A⁺𝒟⁺ + A⁻𝒟⁻)gⁿ⁺¹`, opposite to the paper's own (A.13); the identity proved here,
+  `inner_flux_split`, has the sign of (A.13), `(gⁿ⁺¹ - gⁿ)ᵀ(A⁺𝒟⁺ + A⁻𝒟⁻)gⁿ⁺¹`. The proof only uses
+  the term in absolute value.
+* `ε > 0` is a field of `Params` (the paper divides by `ε` in (A.4b)).
 * Reading of the scheme: `K̂ᵃᵖ` is the block of columns of `X̂ Ŝ`, and `S̃ⁿ = M̂ Sⁿ N̂ᵀ`; the
   reasons are given at `APBUGStep`. The protected block may have any width, the bases need only
   contain the required vectors, and any selection of singular triples is allowed.
@@ -45,8 +53,9 @@ S-step is tested with the untruncated one.
   energy bound does not use them, so it holds for all `K(t_{n+1})`, `L(t_{n+1})`.
 
 Non-vacuity: `exists_isGaussLegendre`, `exists_APBUGStep`, `bPN_ne_zero`. Theorems 1–6 of the paper
-are the sibling slice; the case `gh = g1` of `energy_le_core` is the estimate of Theorem 2. No
-theorem of the paper was found to be false.
+are the sibling slice; the case `gh = g1` of `energy_le_core` is the estimate of Theorem 2.
+Theorem 7 holds as stated; Lemmas 4 and 6, which its proof uses, are false as printed (sibling
+slice).
 -/
 
 open Set Filter Topology Finset
@@ -87,8 +96,9 @@ lemma dMinus_eq (Δx : ℝ) (φ : ZMod n → ℝ) (i : ZMod n) :
     dMinus Δx φ i = dPlus Δx φ (i - 1) := by
   simp [dMinus, dPlus]
 
-/-- **Lemma 2** of arXiv 2402.16746 (summation by parts, eq. (A.1)), for periodic boundary values.
-The paper also allows zero boundary values; those are not treated here. -/
+/-- **Lemma 2** of arXiv 2402.16746 (summation by parts, eq. (A.1)), for periodic boundary values
+and scalar sequences (the paper's `ℝ^N`-valued form follows componentwise). The paper also allows
+zero boundary values; those are not treated here. -/
 theorem sum_mul_dPlus (Δx : ℝ) (ζ φ : ZMod n → ℝ) :
     ∑ i, ζ i * dPlus Δx φ i = -∑ i, dMinus Δx ζ i * φ i := by
   have h : ∑ i, ζ (i - 1) * φ i = ∑ i, ζ i * φ (i + 1) := by
@@ -119,7 +129,8 @@ lemma sum_dMinus_sq (Δx : ℝ) (φ : ZMod n → ℝ) :
   simp only [dMinus_eq]
   exact sum_shift_sub (fun i => dPlus Δx φ i ^ 2)
 
-/-- **Lemma 3** of arXiv 2402.16746 (eq. (A.2)): `∑ (𝒟⁺ φ)² ≤ 4/Δx² ∑ φ²`. -/
+/-- **Lemma 3** of arXiv 2402.16746 (eq. (A.2)): `∑ (𝒟⁺ φ)² ≤ 4/Δx² ∑ φ²`, for scalar sequences
+on the periodic grid (the paper's `ℝ^{N+1}`-valued form follows by summing over components). -/
 theorem sum_dPlus_sq_le {Δx : ℝ} (φ : ZMod n → ℝ) :
     ∑ i, dPlus Δx φ i ^ 2 ≤ 4 / Δx ^ 2 * ∑ i, φ i ^ 2 := by
   have h : ∀ i, dPlus Δx φ i ^ 2 ≤ (2 * φ (i + 1) ^ 2 + 2 * φ i ^ 2) / Δx ^ 2 := fun i => by
@@ -230,7 +241,8 @@ lemma inner_flux (Δx : ℝ) {Ap Am : Matrix ν ν ℝ} (hp : Apᵀ = Ap) (hm : 
     inner_DM, inner_DP, DP_mul, DM_mul]
   ring
 
-/-- The first part of Lemma 5 of arXiv 2402.16746: the splitting of the term `⟪ℒ gⁿ, gⁿ⁺¹⟫`. -/
+/-- The second identity of Lemma 5 of arXiv 2402.16746, the splitting of the term `⟪ℒ gⁿ, gⁿ⁺¹⟫`,
+with the sign of (A.13) (the printed Lemma 5 has the opposite sign in the last term). -/
 lemma inner_flux_split (Δx : ℝ) {Ap Am : Matrix ν ν ℝ} (hp : Apᵀ = Ap) (hm : Amᵀ = Am)
     (g g₁ : Matrix (ZMod n) ν ℝ) :
     ⟪flux Δx Ap Am g, g₁⟫ = ⟪flux Δx Ap Am g₁, g₁⟫ + ⟪g₁ - g, fluxAdj Δx Ap Am g₁⟫ := by
@@ -300,9 +312,10 @@ theorem inner_flux_self {Δx : ℝ} (hΔx : Δx ≠ 0) (T : Matrix ν κ ℝ) (�
   rw [flux, inner_add_left, h1, h2, ← Finset.sum_add_distrib, Finset.mul_sum]
   exact Finset.sum_congr rfl fun k _ => by ring
 
-/-- **Lemma 6** of arXiv 2402.16746, in the sharper form with constant `1`:
-`∑ |(A⁺ 𝒟⁺ + A⁻ 𝒟⁻) g|² ≤ ∑_k μ_k² ‖𝒟⁺ v̂_k‖²`.  The paper has the constant `2 β_N` and assumes
-`β_N` bounded; the rows of `T` being orthonormal (`T Tᵀ = 1`) gives the constant `1` directly. -/
+/-- **The bound used in place of Lemma 6** of arXiv 2402.16746:
+`∑ |(A⁺ 𝒟⁺ + A⁻ 𝒟⁻) g|² ≤ ∑_k μ_k² ‖𝒟⁺ v̂_k‖²`, `v̂ = g T`, from `T Tᵀ = 1`.  The right side is
+`∑ (𝒟⁺g)ᵀ T M² Tᵀ 𝒟⁺g`, not the printed `2 β_N ∑ (𝒟⁺g)ᵀ A² 𝒟⁺g`; the printed Lemma 6 is false
+(`P2402_16746a.lemma_6_false`, where `A = 0` but `A^± ≠ 0`). -/
 theorem norm_fluxAdj_sq_le {T : Matrix ν κ ℝ} (hT : T * Tᵀ = 1) (Δx : ℝ) (μ : κ → ℝ)
     (g : Matrix (ZMod n) ν ℝ) :
     ‖fluxAdj Δx (Apos T μ) (Aneg T μ) g‖ ^ 2 ≤ ∑ k, μ k ^ 2 * Zk Δx (g * T) k := by
@@ -1519,9 +1532,9 @@ of Section 4.2 for the linearised problem satisfies `eⁿ⁺¹ ≤ eⁿ`, with t
 
 This is the paper's scheme on the concrete grid and moment system, see `APBUGStep`: the `P_N`
 closure with `N` moments, `μ, w` the Gauss–Legendre data, `T`, `A^±`, `b` as in the paper. The
-differences are that the grid is periodic (the paper also allows zero boundary values), and the
-reading of `K̂ᵃᵖ` explained at `APBUGStep`. A sharper form is `theorem_7_sharp`. Non-vacuity:
-`exists_isGaussLegendre`, `exists_APBUGStep`. -/
+differences are that the grid is periodic (the paper also allows zero boundary values), `ε > 0`
+(a field of `Params`), and the reading of `K̂ᵃᵖ` explained at `APBUGStep`. A sharper form is
+`theorem_7_sharp`. Non-vacuity: `exists_isGaussLegendre`, `exists_APBUGStep`. -/
 theorem theorem_7 (p : Params n) {μ w : Fin (N + 1) → ℝ} (hG : IsGaussLegendre N μ w)
     (hCFL : ∀ k, μ k ≠ 0 →
       p.Δt ≤ 1 / (5 * p.c * betaN w) * (2 * p.ε * p.Δx / |μ k| + p.σ₀ * p.Δx ^ 2 / μ k ^ 2))

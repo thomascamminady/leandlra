@@ -17,8 +17,8 @@ of the right-hand side), and a subspace `T ⊆ E` (the tangent space). Then, for
   sampled tangent space;
 * `empirical_minimizer_image_unique`: any two minimizers have the same samples `s B`;
 * `empirical_minimizer_unique`: if `s` is injective on `T` (definiteness of the sample
-  semi-inner product on `T`, the hypothesis the paper needs for uniqueness), the minimizer is
-  unique;
+  semi-inner product on `T`), the minimizer is unique.  The paper writes `arg min` in (24)
+  without stating a condition for uniqueness; this is a sufficient one;
 * `tangent_empirical_minimizer`: for a rank-`r` matrix `Y = U S Vᵀ` with orthonormal `U`, `V`,
   the minimizer over the matrix tangent space `{U B + C Vᵀ}` exists and is of this form.
 
@@ -38,12 +38,13 @@ Local definitions added: `Samples` (abbreviation for `EuclideanSpace ℝ (Fin M)
   change the minimizers, and `empRisk_eq_norm_sq` relates it to the Euclidean norm.
 * Sampling points `x_k ~ ρ` and the Monte Carlo approximation error (Eq. (24) vs. the `L²`
   projection) are not formalized; the statement is purely algebraic in the samples.
-* The time-dependent ODE (23) `Ȧ = argmin …` is not formalized: only the pointwise-in-time
-  minimization problem is treated.
+* The time-dependent ODEs (22)-(23) and (24)-(25) `Ȧ = argmin …` are not formalized: only the
+  pointwise-in-time minimization problem of (24) is treated.
 * The step-and-truncate explicit Euler scheme (Sec. 6, `A_{ℓ+1} = R(A_ℓ + τ ΔA_ℓ)`) is not
   formalized: the paper gives no error analysis for it, and the truncation `R` needs the TT-SVD.
-* Theorem 5 (quasi-optimality, quoted from Lubich 2013) is not formalized: the paper quotes it
-  without proof and its constant depends on TT curvature bounds that are not available here.
+* Theorem 5 (quasi-optimality, quoted from Lubich et al. 2013) is not formalized: the paper
+  quotes it without proof and its constant depends on TT curvature bounds that are not available
+  here.
   The abstract comparison with curvature as a hypothesis lives in
   `LeanDLRA/Dynamics/ContinuousDLRA.lean` (`ODESolution.dlra_quasiOptimal`).
 -/
@@ -168,8 +169,9 @@ theorem empirical_minimizer_image_unique (hM : 0 < M) (s : E →ₗ[ℝ] Samples
   exact sub_eq_zero.1 (inner_self_eq_zero.1 hd)
 
 /-- **Uniqueness of the empirical Dirac–Frenkel velocity.** If the sampling map `s` is injective on
-`T` (the sample semi-inner product is definite on the tangent space, the hypothesis the paper
-needs for uniqueness of the minimizer in (24)), the empirical minimizer is unique. -/
+`T` (the sample semi-inner product is definite on the tangent space), the empirical minimizer is
+unique.  The paper writes `arg min` in (24) without stating a condition for uniqueness; injectivity
+on `T` is a sufficient one. -/
 theorem empirical_minimizer_unique (hM : 0 < M) (s : E →ₗ[ℝ] Samples M) (f : Samples M)
     {T : Submodule ℝ E} (hinj : ∀ C ∈ T, s C = 0 → C = 0) {B₁ B₂ : E} (h₁ : B₁ ∈ T)
     (h₂ : B₂ ∈ T) (m₁ : ∀ C ∈ T, empRisk s f B₁ ≤ empRisk s f C)
