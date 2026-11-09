@@ -19,9 +19,10 @@ truncation step of the algorithm.
   (orthonormal bases do not change singular-value tails), combined with Eckart–Young.
 * `isTwistSymm_truncation`, `augBug_truncated_isTwistSymm`, `augBug_truncated_symm`,
   `augBug_truncated_skew` (**Theorem 3**, with truncation): the truncated result of the augmented
-  step stays (skew-)symmetric, under a spectral gap at the cut, which is necessary (without it
-  the claim fails, see `Symmetry.augBug_trunc_not_skew`); the untruncated statement is the
-  existing `Symmetry.augBug_isTwistSymm`.
+  step stays (skew-)symmetric under an added spectral gap at the cut.  Some added hypothesis is
+  needed: as printed, the skew-symmetric case of Theorem 3 fails
+  (`Symmetry.augBug_trunc_not_skew`).  The untruncated statement is the existing
+  `Symmetry.augBug_isTwistSymm`.
 
 Non-vacuity examples are included.
 -/
@@ -74,14 +75,14 @@ variable {m n r p q : Type*} [Fintype m] [Fintype n] [Fintype r] [Fintype p] [Fi
   [DecidableEq n] [DecidableEq r] [DecidableEq p] [DecidableEq q]
 
 /-- The rank selected by the truncation rule of the rank-adaptive BUG integrator
-(arXiv 2104.05247, eq. (6)): the smallest `r₁` such that the discarded singular values satisfy
-`(∑_{i > r₁} σ_i²)^{1/2} ≤ ϑ`. -/
+(arXiv 2104.05247, step 3 of the algorithm in §2.1): the smallest `r₁` such that the discarded
+singular values satisfy `(∑_{i > r₁} σ_i²)^{1/2} ≤ ϑ`. -/
 noncomputable def adaptiveRank (S : Matrix p q ℝ) (ϑ : ℝ) : ℕ :=
   sInf {s : ℕ | tailNorm S s ≤ ϑ}
 
 /-- The truncation step of the rank-adaptive BUG integrator: the truncated SVD of the augmented
 coefficient matrix `Ŝ₁` at the rank `adaptiveRank Ŝ₁ ϑ`, mapped back by the augmented bases:
-`Y₁ = Û (Ŝ₁ V_{r₁} V_{r₁}ᵀ) V̂ᵀ`. -/
+`Y₁ = Û (Ŝ₁ V_{r₁} V_{r₁}ᵀ) V̂ᵀ` (the result (6) of the algorithm in §2.1). -/
 noncomputable def adaptiveTruncate (Uh : Matrix m p ℝ) (Vh : Matrix n q ℝ) (S : Matrix p q ℝ)
     (ϑ : ℝ) : Matrix m n ℝ :=
   Uh * truncation S (adaptiveRank S ϑ) * Vhᵀ
@@ -95,9 +96,12 @@ If the truncation tolerance satisfies `0 ≤ ϑ < σ_r(A(t₁))` (the `r`-th lar
 `singularValues` is zero-indexed), then the rank chosen by the truncation rule is exactly `r`
 and the truncated result `Y₁ = Û Ŝ(t₁)_{r} V̂ᵀ` equals `A(t₁)`.
 
-Differences from the paper: the paper assumes `rank A(t) = r`; here only the factorization of
-`A(t₁)` with `r` columns is assumed (rank `≤ r`), and `ϑ < σ_r(A(t₁))` forces rank exactly `r`.
-The tolerance is assumed nonnegative. The truncation is the Eckart--Young truncated SVD
+Differences from the paper: the paper assumes `rank A(t) = r` on `[t₀, t₁]`; here only the
+factorization of `A(t₁)` with `r` columns is assumed (rank `≤ r`), and `ϑ < σ_r(A(t₁))` forces
+rank exactly `r`.  The overlap hypotheses are stated with the integrator's starting bases `U₀`,
+`V₀` in place of `U(t₀)`, `V(t₀)` (equivalent when `rank A(t₀) = r`, as in the paper).  `Û`,
+`V̂` need only capture `[K(t₁), U₀]`, `[L(t₁), V₀]` (their range may be larger).  The tolerance is
+assumed nonnegative.  The truncation is the Eckart--Young truncated SVD
 `EckartYoung.truncation` of `Ŝ(t₁)`; the rank rule is `adaptiveRank`. -/
 theorem exactness {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
     {A : ℝ → Matrix m n ℝ} {t₀ t₁ : ℝ} (ht : t₀ ≤ t₁) (hA : IsDerivRHS F A t₀ t₁)
@@ -395,19 +399,22 @@ variable {n r p : Type*} [Fintype n] [Fintype r] [Fintype p] [DecidableEq p]
 
 /-- **Theorem 3 of arXiv 2104.05247 (`σ`-symmetry preservation), including the truncation.**
 `σ = 1` is the symmetric case and `σ = -1` the skew-symmetric case; the hypothesis is the
-equivariance `F(t, σ Yᵀ) = σ F(t, Y)ᵀ`, which is condition (7) resp. (8) of the paper (see
-`Symmetry.isTwistEquivariant_one_iff`, `Symmetry.isTwistEquivariant_neg_one_iff`).  The K- and
-L-steps use the basis `U₀`, `Û` captures `K(t₁)` (`V̂ = Û`), the augmented S-step starts at
-`M̂ S₀ M̂ᵀ` (`M̂ = Ûᵀ U₀`), and `Y₁` is the truncation of `Ŝ(t₁)` at the rank selected by the
-rule `adaptiveRank` with tolerance `ϑ`.  Then `Y₁ = Û Ŝ(t₁)_{r₁} Ûᵀ` is `σ`-symmetric.
+equivariance `F(t, σ Yᵀ) = σ F(t, Y)ᵀ`, which is equivalent to condition (10) resp. (11) of the
+paper (see `Symmetry.isTwistEquivariant_one_iff`, `Symmetry.isTwistEquivariant_neg_one_iff`).
+The K- and L-steps use the basis `U₀`, `Û` captures `K(t₁)` and `V̂ = Û` (a valid choice, since
+`L(t₁) = σ K(t₁)`), the augmented S-step starts at `M̂ S₀ M̂ᵀ` (`M̂ = Ûᵀ U₀`), and `Y₁` is the
+truncation of `Ŝ(t₁)` at the rank selected by the rule `adaptiveRank` with tolerance `ϑ`.  Then
+`Y₁ = Û Ŝ(t₁)_{r₁} Ûᵀ` is `σ`-symmetric.
 
 The untruncated part (`Ŷ₁ = Û Ŝ(t₁) Ûᵀ` is `σ`-symmetric) is `Symmetry.augBug_isTwistSymm`.
-Difference from the paper: the paper claims the truncated result is (skew-)symmetric without
-qualification.  That is false in general (`Symmetry.augBug_trunc_not_skew`: for `σ = -1` an odd
-selected rank cannot give a skew-symmetric matrix; for `σ = 1` an SVD tie at the cut can break
-symmetry).  We therefore assume a spectral gap at the cut, `σ_{r₁}(Ŝ(t₁)) < σ_{r₁-1}(Ŝ(t₁))`
-whenever `r₁ > 0`, which is exactly what makes the truncation structure preserving
-(`isTwistSymm_truncation`). -/
+Differences from the paper: the paper claims the truncated result is (skew-)symmetric without
+qualification.  For `σ = -1` that is false (`Symmetry.augBug_trunc_not_skew`: the rank rule can
+select an odd rank, and no odd-rank matrix is skew-symmetric); for `σ = 1` a tie of singular
+values at the cut makes the truncated SVD non-unique, and symmetry then depends on the choice of
+singular vectors (not formalized).  We therefore assume a spectral gap at the cut,
+`σ_{r₁}(Ŝ(t₁)) < σ_{r₁-1}(Ŝ(t₁))` whenever `r₁ > 0`, which suffices for the truncation to preserve
+the structure (`isTwistSymm_truncation`).  `F` is also assumed Lipschitz (for uniqueness of the
+substep solutions, which the paper's proof via [1, Theorem 5] uses implicitly). -/
 theorem augBug_truncated_isTwistSymm (hσ : σ * σ = 1) (hF : Symmetry.IsTwistEquivariant σ F)
     (hL : IsLipschitzField F L) {U₀ : Matrix n r ℝ} {S₀ : Matrix r r ℝ}
     (hS₀ : Symmetry.IsTwistSymm σ S₀) {K Lf : ℝ → Matrix n r ℝ}
@@ -423,9 +430,9 @@ theorem augBug_truncated_isTwistSymm (hσ : σ * σ = 1) (hF : Symmetry.IsTwistE
   have h := Symmetry.augBug_isTwistSymm hσ hF hL hS₀ hK hK0 hLs hL0 hcap hS hS0 ht
   exact (isTwistSymm_truncation hσ h.2.2.1 _ hgap).mul_mul_transpose Û
 
-/-- **Theorem 3 of arXiv 2104.05247, symmetric case, with truncation** (condition (7):
-`F(t, Yᵀ)ᵀ = F(t, Y)`, `S₀` symmetric).  See `augBug_truncated_isTwistSymm` for the
-spectral-gap hypothesis added at the truncation. -/
+/-- **Theorem 3 of arXiv 2104.05247, symmetric case, with truncation** (condition (10),
+`F(t, Y)ᵀ = F(t, Yᵀ)`, in the equivalent form `F(t, Yᵀ)ᵀ = F(t, Y)`; `S₀` symmetric).  See
+`augBug_truncated_isTwistSymm` for the spectral-gap and Lipschitz hypotheses. -/
 theorem augBug_truncated_symm (hF : Symmetry.SymmCondition F)
     (hL : IsLipschitzField F L) {U₀ : Matrix n r ℝ} {S₀ : Matrix r r ℝ} (hS₀ : S₀.IsSymm)
     {K Lf : ℝ → Matrix n r ℝ}
@@ -442,10 +449,10 @@ theorem augBug_truncated_symm (hF : Symmetry.SymmCondition F)
     augBug_truncated_isTwistSymm (by norm_num) ((Symmetry.isTwistEquivariant_one_iff F).2 hF) hL
       ((Symmetry.isTwistSymm_one_iff S₀).2 hS₀) hK hK0 hLs hL0 hcap hS hS0 ht hgap
 
-/-- **Theorem 3 of arXiv 2104.05247, skew-symmetric case, with truncation** (condition (8):
-`F(t, Yᵀ)ᵀ = -F(t, -Y)`, `S₀ᵀ = -S₀`).  See `augBug_truncated_isTwistSymm`; here the added
-spectral-gap hypothesis is essential, since without it the claim is false
-(`Symmetry.augBug_trunc_not_skew`). -/
+/-- **Theorem 3 of arXiv 2104.05247, skew-symmetric case, with truncation** (condition (11),
+`F(t, Y)ᵀ = -F(t, -Yᵀ)`, in the equivalent form `F(t, Yᵀ)ᵀ = -F(t, -Y)`; `S₀ᵀ = -S₀`).  See
+`augBug_truncated_isTwistSymm`; some added hypothesis such as the spectral gap is needed here,
+since without it the claim is false (`Symmetry.augBug_trunc_not_skew`). -/
 theorem augBug_truncated_skew (hF : Symmetry.SkewCondition F)
     (hL : IsLipschitzField F L) {U₀ : Matrix n r ℝ} {S₀ : Matrix r r ℝ} (hS₀ : S₀ᵀ = -S₀)
     {K Lf : ℝ → Matrix n r ℝ}

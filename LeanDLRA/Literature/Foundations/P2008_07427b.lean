@@ -3,20 +3,22 @@ import LeanDLRA.Dynamics.ContinuousDLRA
 /-!
 # arXiv 2008.07427: quasi-optimality of the dynamical reduced basis
 
-Lemma 4.8 / Prop. 4.10 / Thm 4.11 (cited from Feppon-Lermusiaux and Koch-Lubich).
+Theorem 4.11 (cited by the paper as [14, Theorem 32], Feppon-Lermusiaux).
 
-The paper cites the Feppon-Lermusiaux / Koch-Lubich quasi-optimality estimate for the DLRA solution
-`C~` compared with the best rank-`n` approximation `Pi_M C` of the exact solution `C`:
+The paper cites the quasi-optimality estimate for the DLRA solution `C~` compared with the best
+rank-`n` approximation `Pi_M C` of the exact solution `C`, printed as
 
-    ‖C~(t) - Pi_M C(t)‖ ≤ ∫₀ᵗ ν ‖C(s) - Pi_M C(s)‖ e^{μ (t-s)} ds,
-    μ = L + 2 sup‖X_H‖ / σ_n,    ν = L + sup‖X_H‖ / (σ_n - σ_{n+1}).
+    ‖C~(t) - Pi_M C(t)‖ ≤ ∫_𝒯 ν ‖C(s) - Pi_M C(s)‖ e^{μ (t-s)} ds,
+    μ = L + 2 sup_t ‖X_H(C(t))‖ / σ_n(C(t)),    ν = L + ‖X_H(C(s))‖ / (σ_n - σ_{n+1})(C(s)).
 
-This module proves that estimate with exactly these constants on an arbitrary real inner product
-space `E`.  The geometric input from singular value theory (the curvature bound of the tangent
-projectors with constant `1/σ_n` and the bound
-`‖X'(t) - P_X(t) Ċ(t)‖ ≤ ‖Ċ‖/(σ_n - σ_{n+1}) · ‖C - X‖` on the derivative of the
-truncated SVD) is not derived; it enters as hypotheses.  The analytic part, the Grönwall argument
-that turns them into the integral estimate, is proved here.
+This module proves the estimate, **conditional on** the geometric input from singular value theory,
+with uniform constants (`B ≥ ‖X_H‖`, `σ ≤ σ_n`, `σ - σ' ≤ σ_n - σ_{n+1}` in the intended reading)
+on an arbitrary real inner product space `E`.  The geometric input (the curvature bound of the
+tangent projectors with constant `1/σ_n`, the bound
+`‖X'(t) - P_X(t) Ċ(t)‖ ≤ ‖Ċ‖/(σ_n - σ_{n+1}) · ‖C - X‖` on the derivative of the truncated SVD,
+and a bound on `‖X'‖`) is not derived; it enters as hypotheses.  The analytic part, the Grönwall
+argument that turns them into the integral estimate, is proved here.  Lemma 4.8 and Prop. 4.10,
+which transfer the estimate to the symplectic setting of the paper, are not formalized.
 -/
 
 open Set Filter Topology Finset
@@ -64,23 +66,26 @@ private lemma normal_bound {Q QX : E →L[ℝ] E} {x' : E} {r γ μ' : ℝ} (hx'
     _ ≤ γ * r * μ' := mul_le_mul_of_nonneg_left hμ' hγr
     _ = γ * μ' * r := by ring
 
-/-- **Lemma 4.8 / Prop. 4.10 / Thm 4.11 of arXiv 2008.07427** (quasi-optimality of the DLRA, cited
-from Feppon-Lermusiaux and Koch-Lubich), in the abstract setting of a real inner product space `E`.
+/-- **Theorem 4.11 of arXiv 2008.07427, conditional on the geometric bounds below**
+(quasi-optimality of the DLRA, cited from [14, Theorem 32]), in the abstract setting of a real
+inner product space `E` (the paper: `ℂ^{N × p}`).
 
 * `Y` is the DLRA solution `Ẏ = P(t) F(t, Y)` (`C~`), `F` is `L`-Lipschitz (`ODESolution`,
   `IsLipschitzField`), `A` the exact solution (`C`), `X` the best approximation of `A` on the
   manifold (`Pi_M C`), `PX t` the orthogonal projector onto its tangent space.
 * `B` bounds `‖F(t, A t)‖` (`sup ‖X_H‖`) and `‖X'‖`; `σ` stands for `σ_n` and `σ'` for `σ_{n+1}`
   only `σ' < σ` and `0 < σ` are needed.
-* Geometric facts taken as hypotheses (not derived from the SVD): the curvature bound
-  `‖(P(t) - PX(t)) z‖ ≤ (1/σ) ‖Y - X‖ ‖z‖`, `X' ∈ range PX`, and the derivative bound
-  `‖X' - PX F(A)‖ ≤ (B/(σ - σ')) ‖A - X‖`.
+* Geometric facts taken as hypotheses (not derived from the SVD; steps of the cited proof): the
+  curvature bound `‖(P(t) - PX(t)) z‖ ≤ (1/σ) ‖Y - X‖ ‖z‖`, `X' ∈ range PX`, the derivative bound
+  `‖X' - PX F(A)‖ ≤ (B/(σ - σ')) ‖A - X‖`, and `‖X'‖ ≤ B` (not in the printed constants).
 * `Y(a) = X(a)` (the paper starts from the best approximation of the initial value).
 
-Conclusion, with the paper's constants `μ = L + 2B/σ` and `ν = L + B/(σ - σ')`:
+Conclusion, with `μ = L + 2B/σ` and `ν = L + B/(σ - σ')`:
 `‖Y t - X t‖ ≤ ∫ₐᵗ ν ‖A s - X s‖ e^{μ (t-s)} ds`.
-Difference from the paper: `A` and `X` are required continuous on `[a, b]` (so that the integral
-makes sense); the paper's starting time is `0`, here it is a general `a`. -/
+Differences from the paper: uniform constants `B`, `σ`, `σ'` replace the paper's pointwise ratios
+(its `ν` depends on `s`, its `μ` is a supremum of ratios); the printed integral runs over all of
+`𝒯`, here over `[a, t]` (a smaller domain of a nonnegative integrand); `A` and `X` are required
+continuous on `[a, b]` (so that the integral makes sense); the starting time is a general `a`. -/
 theorem quasi_optimality {P PX : ℝ → E →L[ℝ] E} {F : ℝ → E → E} {Y A X X' : ℝ → E}
     {a b L B σ σ' : ℝ} (hF : IsLipschitzField F L) (hσ : 0 < σ) (hσσ : σ' < σ)
     (hY : ODESolution (fun t x => P t (F t x)) Y a b) (hP : ∀ t ∈ Ico a b, IsOrthProj (P t))

@@ -30,6 +30,12 @@ the paper that the symmetric composition is implicit for `Ȧ = F(A)`, and that f
 give higher order, are not formalized.  Non-vacuity: `exists_ksl_run`, `exists_strang_run`,
 `exists_explicit_run` give runs of all three methods for `r ≤ m, n`, and `isFactorSolution_exp`,
 `isC11_exp` a concrete exact solution.
+
+Theorem 4.1 (exactness) is not restated here: the library proves it in
+`Integrators/Exactness.lean` (`ksl_exact_of_factors`) under the invertibility of `V(t₁)ᵀ V(t₀)`
+that the paper's proof assumes; see the docstrings there for the singular case.  Lemma 3.1 (the
+exact solution of the three sub-flows) is not formalized; `ksl_increment_eq` is the closed form
+of one step of §3.2.
 -/
 
 open Set Filter Topology Finset
@@ -824,8 +830,8 @@ noncomputable def projRhs (dA : ℝ → Matrix m n ℝ) (U : ℝ → Matrix m r 
 solution of the system (5), with `‖S(t)⁻¹‖ ≤ κ`.  That `Y` then solves (6) is
 `factorODE_solution_isDLRA`, and `IsFactorSolution.hasDerivWithinAt_Y` below.  The derivatives are
 right derivatives, as in `ODESolution`.  The constant `κ` is the (curvature) constant on which the
-constants of the second-order results depend: the paper's §3.3 is the case of a well-conditioned
-`S`. -/
+constants of the second-order results depend: these results cover the case of a well-conditioned
+`S`, while the paper's §3.3–3.4 state second order without any condition. -/
 structure IsFactorSolution (dA : ℝ → Matrix m n ℝ) (κ a b : ℝ) (U : ℝ → Matrix m r ℝ)
     (S : ℝ → Matrix r r ℝ) (V : ℝ → Matrix n r ℝ) : Prop where
   solU : ODESolution (fun t X => (1 - X * Xᵀ) * dA t * V t * (S t)⁻¹) U a b
@@ -1948,7 +1954,7 @@ private theorem strS_pos {a₁ κ : ℝ} (ha₁ : 0 ≤ a₁) (hκ : 0 ≤ κ) :
   simp only [strS, strKP, strP]; positivity
 
 /-- **The scheme (12) has local error `O(h³)`: "this symmetrized splitting is a second-order
-scheme for (6)"** (arXiv 1301.1058, Sections 3.3–3.4 (higher-order compositions), §3.3).  Let `A`
+scheme for (6)"** (arXiv 1301.1058, §3.3).  Let `A`
 have a derivative bounded by `a₁` and Lipschitz with constant `a₂`, let `Y = U S Vᵀ` be the
 solution (5) of the DLRA equation (6) on `[t₀, t₀ + h]` with `‖S(t)⁻¹‖ ≤ κ`, and let one step of
 (12), with step size `0 ≤ h ≤ strS a₁ κ`, start at any
@@ -2111,8 +2117,8 @@ private theorem IsStrangRun.orthV {A : ℝ → Matrix m n ℝ} {t₀ h : ℝ} {N
   | zero => exact hrun.orthV₀
   | succ k => exact (hrun.step k hk).orthV₁
 
-/-- **The scheme (12) converges with order two** (arXiv 1301.1058, Sections 3.3–3.4 (higher-order
-compositions), §3.3: "a second-order scheme").
+/-- **The scheme (12) converges with order two** (arXiv 1301.1058, §3.3: "a second-order
+scheme").
 On `[t₀, T]`, let `Y = U S Vᵀ` solve (5) with `‖S(t)⁻¹‖ ≤ κ`, for `A` with `‖Ȧ‖ ≤ a₁` and `Ȧ`
 Lipschitz with constant `a₂`.  Then there are `C` and `s > 0`, depending only on `a₁`, `a₂`, `κ` and
 `T - t₀` (not on `A`, `Y`, `h`, `N`), such that every run of (12) with step size `0 ≤ h ≤ s`,
@@ -2776,8 +2782,8 @@ theorem explicit_step_estimate {a₁ a₂ κ L M : ℝ} (ha₁ : 0 ≤ a₁) (ha
   rw [e2, ← hηform]
   linarith
 
-/-- **The explicit method has local error `O(h³)`** (arXiv 1301.1058, Sections 3.3–3.4
-(higher-order compositions), §3.4: "an explicit method of order 2").  Let `F` be Lipschitz with
+/-- **The explicit method has local error `O(h³)`** (arXiv 1301.1058, §3.4: "an explicit method
+of order 2").  Let `F` be Lipschitz with
 constant `L`, and let `Y = U S Vᵀ` solve `Ẏ = P(Y) F(Y)` on `[t₀, t₀ + h]`, i.e. the system (5)
 with `Ȧ(t) = F(Y(t))`, with `‖S(t)⁻¹‖ ≤ κ`, `‖F(Y(t))‖ ≤ a₁`, and such that `g = F ∘ Y` is
 `C^{1,1}`: `‖ġ‖ ≤ a₂`, `ġ` Lipschitz with constant `M`.  Then there are
@@ -2827,8 +2833,8 @@ private theorem IsExplicitRun.orthV {F : Matrix m n ℝ → Matrix m n ℝ} {h :
   | zero => exact hrun.orthV₀
   | succ k => exact (hrun.step k hk).corrector.orthV₁
 
-/-- **The explicit method converges with order two** (arXiv 1301.1058, Sections 3.3–3.4
-(higher-order compositions), §3.4).  Under the assumptions of `explicit_local_error` on `[t₀, T]`,
+/-- **The explicit method converges with order two** (arXiv 1301.1058, §3.4).  Under the
+assumptions of `explicit_local_error` on `[t₀, T]`,
 there are `C` and `s > 0`, depending only on `a₁`, `a₂`, `κ`, `L`, `M` and `T - t₀`, such that
 every run with step size `0 ≤ h ≤ s`, `t₀ + N h ≤ T`, from a starting value within `s` of `Y(t₀)`,
 satisfies

@@ -11,7 +11,8 @@ language of `LeanDLRA.tangentProj`.
 * `IsRGDFixedPoint`, `tangentProj_sub_eq_zero_iff`, `lemma_2_4` (Lemma 2.4 / Def. 2.5): the
   fixed points of Riemannian GD on `cl(M_r)` are `Y = P X = X Q`, and for `X` of rank `r` with
   distinct singular values they are exactly the `2^r` partial sums of its SVD (`X` and `2^r − 1`
-  spurious points).
+  spurious points).  For repeated singular values the partial sums of one fixed SVD do not
+  exhaust the fixed points (`fixedPoint_not_partialSVD`).
 * `IsRGDStep`, `example_1_1` (Example 1.1): for `X = diag(2,1,0)`, `r = 2`, `Z₀ = diag(2,0,1)`,
   the iterates are `diag(2,0,(1−α)^k) → diag(2,0,0)`, a spurious rank-one limit.
 * `lemma_2_6`, `lemma_2_6_gradient` (Lemma 2.6): the factor equations for a flow `Ż = M`,
@@ -212,8 +213,8 @@ theorem partialSVD_injective {U₀ : Matrix m (Fin r) ℝ} {V₀ : Matrix n (Fin
 Let `X = U₀ diag(σ) V₀ᵀ` with orthonormal `U₀`, `V₀` and **pairwise distinct** positive `σ`.
 Every fixed point `Y` of Riemannian GD on `cl(M_r)` is a partial sum
 `∑_{i ∈ J} σ_i u_i v_iᵀ` of the SVD of `X`.  The distinctness of the singular values is needed
-(for `X = 1` every rank-`s` orthogonal projector is a fixed point), and it is implicit in the
-paper's count of `2^r − 1` spurious points. -/
+(`fixedPoint_not_partialSVD`: for `X = I₂` a non-diagonal rank-one projector is a fixed point);
+the paper assumes it for part 2) of Lemma 2.4 (the count), not for part 1). -/
 theorem exists_partialSVD_of_isRGDFixedPoint {U₀ : Matrix m (Fin r) ℝ}
     {V₀ : Matrix n (Fin r) ℝ} {σ : Fin r → ℝ} (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1)
     (hσ : ∀ i, 0 < σ i) (hinj : Function.Injective σ) {Y : Matrix m n ℝ}
@@ -324,10 +325,11 @@ pairwise distinct singular values.  Then
 * hence there are exactly `2^r − 1` fixed points different from `X` (the spurious ones, which
   keep a proper subset of the singular triplets).
 
-Differences from the paper: the distinctness of the singular values is made an explicit
-hypothesis (the count is false without it); "fixed point of Riemannian GD" is formalised as
-vanishing of the Riemannian gradient `P(Y)(Y − X)` at `Y`, the projector being taken on the
-stratum of rank `s = rank Y` (see `IsRGDFixedPoint`).  The projector form
+Differences from the paper: real matrices only; part 1) (the classification) is proved under the
+distinctness of the singular values that the paper assumes only for part 2) (the count), and for
+one fixed SVD it fails without it (`fixedPoint_not_partialSVD`); "fixed point of Riemannian GD" is
+formalised as vanishing of the Riemannian gradient `P(Y)(Y − X)` at `Y`, the projector being
+taken on the stratum of rank `s = rank Y` (see `IsRGDFixedPoint`).  The projector form
 `P(Y)(Y − X) = 0 ⇔ Y = P X = X Q` is `tangentProj_sub_eq_zero_iff`. -/
 theorem lemma_2_4 {U₀ : Matrix m (Fin r) ℝ} {V₀ : Matrix n (Fin r) ℝ} {σ : Fin r → ℝ}
     {X : Matrix m n ℝ} (hX : X = U₀ * Matrix.diagonal σ * V₀ᵀ) (hU₀ : U₀ᵀ * U₀ = 1)
@@ -359,6 +361,31 @@ theorem lemma_2_4 {U₀ : Matrix m (Fin r) ℝ} {V₀ : Matrix n (Fin r) ℝ} {�
     ext J; simp
   rw [this, Set.ncard_sdiff_singleton_of_mem (Set.mem_univ _), Set.ncard_univ,
     Nat.card_eq_fintype_card, Fintype.card_finset, Fintype.card_fin]
+
+/-- The unit vector `u = (3/5, 4/5)` as a `2 × 1` matrix. -/
+noncomputable def u35 : Matrix (Fin 2) (Fin 1) ℝ := !![3 / 5; 4 / 5]
+
+lemma u35_orth : u35ᵀ * u35 = 1 := by
+  ext i j
+  fin_cases i; fin_cases j
+  simp [u35, Matrix.mul_apply]
+  norm_num
+
+/-- **The distinctness hypothesis of Lemma 2.4 cannot be dropped** (arXiv 2107.09207).  For
+`X = I₂ = 1 · diag(1, 1) · 1ᵀ` and `r = 2`, the rank-one projector `Y = u uᵀ`, `u = (3/5, 4/5)`,
+is a fixed point of Riemannian GD on `cl(M₂)`, but it is not a partial sum of this SVD of `X`
+(those are diagonal).  So part 1) of Lemma 2.4, read for one fixed SVD, needs distinct singular
+values. -/
+theorem fixedPoint_not_partialSVD :
+    IsRGDFixedPoint 2 (1 : Matrix (Fin 2) (Fin 2) ℝ) (u35 * u35ᵀ) ∧
+      ∀ J : Finset (Fin 2), u35 * u35ᵀ ≠ partialSVD 1 (fun _ => (1 : ℝ)) 1 J := by
+  refine ⟨⟨Fin 1, inferInstance, inferInstance, u35, 1, u35, by simp, u35_orth, u35_orth,
+    by simp, by rw [Matrix.mul_one], ?_⟩, fun J h => ?_⟩
+  · have h := (tangentProj_sub_eq_zero_iff (S := 1) (X := 1) u35_orth u35_orth).2
+      ⟨by simp, by simp⟩
+    simpa using h
+  · have h01 := congrFun (congrFun h 0) 1
+    simp [partialSVD, u35, Matrix.mul_apply] at h01
 
 end Fixed
 
@@ -482,10 +509,10 @@ step size `α ∈ (0,1)` (so that all iterates keep rank `2`).
 * It converges to `diag(2,0,0)`, which has rank `1`, differs from `X`, and is a fixed point of
   Riemannian GD on `cl(M₂)` (a spurious limit in the sense of Lemma 2.4).
 
-Difference from the paper: the retraction is made explicit (best rank-`2` approximation);
-here the gradient step `Z_k − α P(Z_k)(Z_k − X)` already has rank `2`, so every retraction that
-fixes `M₂` gives the same iterates.  The paper does not specify the range of `α`; `α ∈ (0,1)`
-is the range where `(1−α)^k > 0`. -/
+The retraction is the one of Def. 2.3 (a best approximation in `cl(M₂)`, any minimizer
+allowed); here the gradient step `Z_k − α P(Z_k)(Z_k − X)` already has rank `2`, so every
+retraction that fixes `M₂` gives the same iterates.  The step size range `α ∈ (0,1)` is the
+paper's; it is where `(1−α)^k > 0`. -/
 theorem example_1_1 {α : ℝ} (hα0 : 0 < α) (hα1 : α < 1) :
     (∀ k : ℕ, IsRGDStep 2 X₀ α (Zt ((1 - α) ^ k)) (Zt ((1 - α) ^ (k + 1)))) ∧
     ∀ z : ℕ → Matrix (Fin 3) (Fin 3) ℝ, z 0 = Zt 1 →
@@ -582,8 +609,9 @@ noncomputable def quadForm (v : r → ℝ) : Matrix r r ℝ →L[ℝ] ℝ :=
 lemma quadForm_apply (v : r → ℝ) (M : Matrix r r ℝ) : quadForm v M = v ⬝ᵥ (M *ᵥ v) := rfl
 
 /-- **Lemma 2.7, lower bound on the core (arXiv 2107.09207).**  Let `X` be symmetric positive
-semidefinite and let `U : ℝ → ℝ^{n × r}`, `S : ℝ → ℝ^{r × r}` be such that on `[0, T]` the core
-satisfies `Ṡ = −S + Uᵀ X U` (right derivatives on `[0, T)`, continuity on `[0, T]`).  If
+semidefinite (the SPSD setting of the paper; its proof uses `X ⪰ 0`) and let
+`U : ℝ → ℝ^{n × r}`, `S : ℝ → ℝ^{r × r}` be such that on `[0, T]` the core satisfies
+`Ṡ = −S + Uᵀ X U` (right derivatives on `[0, T)`, continuity on `[0, T]`).  If
 `vᵀ S(0) v ≥ c ‖v‖²` for all `v` (i.e. `c ≤ λ_min(S(0))` for symmetric `S(0)`), then for all
 `t ∈ [0, T]` and all `v`,
 `vᵀ S(t) v ≥ e^{−t} c ‖v‖²`, i.e. `λ_min(S(t)) ≥ e^{−t} λ_min(S(0))` for symmetric `S`.

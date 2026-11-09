@@ -24,11 +24,15 @@ sequences.  `exists_isSVD` shows that the SVDs of `Net.Run` always exist, and
 
 Differences from the paper, explained in the docstrings: `(1 - Θ(η))^{Θ(t)}` is written `q^t`
 (`rpow_decay_eq_pow`, `decay_factor_mem`) and `Θ(1)` is explicit; `0 < φ'(0)` and `0 < ε`, used
-silently in the paper, are hypotheses; the hypothesis `1 - φ'(0)/2 ≤ G₃` is **added**, because the
-paper's claim that the denominator of `δ(t)` is positive does not follow from Assumption 3.4 for
-small `G₃`; `η ≤ 1/γ_L` and the full row rank of `W₂` are not needed and are dropped; the bound at
-`t = 0` is sharper; in Theorem 3.5 the constant `C₂` depends on `η` through `1 / (1 - q)`; and
-`dim 𝒮 = p` in the proof of Lemma D.10 is really `dim 𝒮 ≥ p`, which suffices.
+silently in the paper, are hypotheses; the paper states that the denominator of `δ(t)` is positive
+by Assumption 3.4 and `r(ε) < φ'(0) σ_K / 2`; this step is not derived here from those alone:
+`Net.lemma_D_9` and `Net.lemma_D_10` are **conditional on** the positivity of the denominator
+(hypothesis `hden`), and Theorems D.11 and 3.5 instead **add** the hypothesis `1 - φ'(0)/2 ≤ G₃`,
+from which the positivity is proved (`Net.Run.deltaDen_pos`); no counterexample for smaller `G₃`
+is formalized; `η ≤ 1/γ_L` and the full row rank of `W₂` are not needed and are dropped; the bound
+at `t = 0` is sharper; in Theorem 3.5 the constant `C₂` depends on `η` through `1 / (1 - q)`; and
+the proof of Lemma D.10 uses `dim 𝒮 = p`, where the formal proof only needs and uses
+`dim 𝒮 ≥ p`.
 
 Not formalized: Proposition B.1/E.1 (non-smooth activations; a random matrix argument, outside the
 list of this slice) and the empirical parts of the paper.
@@ -779,8 +783,8 @@ lemma exists_orthonormal_ker {ρ : Type*} [Fintype ρ] {n p : ℕ} (hr : Fintype
   simpa [Matrix.mul_apply] using h4.symm
 
 /-- The bases `V₂`, `U₂ = W₁(0) V₂ / ε` of Lemma D.10: `V₂` has `p` orthonormal columns in
-`ℛ(R₁,₂(0)) ∩ ℛ⊥(W₁(0)ᵀ L₁,₁(0))`.  (The paper's `dim 𝒮 = p` is only `≥ p` in general, which is all
-that the argument needs.) -/
+`ℛ(R₁,₂(0)) ∩ ℛ⊥(W₁(0)ᵀ L₁,₁(0))`.  (The paper's proof uses `dim 𝒮 = p`; only `dim 𝒮 ≥ p`, which
+holds for two subspaces of dimension `d - K`, is used here.) -/
 lemma exists_small_update_basis {K p : ℕ} (hd : 2 * K + p ≤ d) {W₀ : Matrix (Fin m) (Fin d) ℝ}
     {ε : ℝ} (hε : 0 < ε) (hW₀ : W₀ᵀ * W₀ = ε ^ 2 • (1 : Matrix (Fin d) (Fin d) ℝ))
     (L₁ : Matrix (Fin m) (Fin K) ℝ) (R₁ : Matrix (Fin d) (Fin K) ℝ) :
@@ -1731,9 +1735,9 @@ def delta (β μ ε M G₁ q η : ℝ) (W₀ W : Matrix (Fin m) (Fin d) ℝ) (t 
 of `G₁(0)`: `‖sin Θ(L₁,₁(t), L₁,₁(0))‖₂ ≤ δ(t)`, `‖sin Θ(R₁,₁(t), R₁,₁(0))‖₂ ≤ δ(t)`.  By Lemma D.3
 these are the paper's `‖L₁,₁ᵀ(t) L₁,₂(0)‖_F` and `‖R₁,₁ᵀ(t) R₁,₂(0)‖_F`.  Differences from the
 paper: `q^t` stands for `(1 - Θ(η))^{Θ(t)}` and the `Θ(1)` is explicit (`G₁ η / (1 - q)`, see
-`deltaNum`); `η ≤ 1/γ_L` is not needed; the positivity `hden` of the denominators, which the paper
-claims to follow from Assumption 3.4, is a hypothesis: it follows from the assumption only for
-`G₃ ≥ 1 - φ'(0)/2`, see `Run.deltaDen_pos`. -/
+`deltaNum`); `η ≤ 1/γ_L` is not needed.  **Conditional on** `hden`, the positivity of the
+denominators, which the paper derives from Assumption 3.4 and the condition on `r(ε)`; here it is
+proved from Assumption 3.4 under the added hypothesis `G₃ ≥ 1 - φ'(0)/2`, see `Run.deltaDen_pos`. -/
 theorem lemma_D_9 (h : net.Assumptions β μ) (hc : 0 ≤ deriv net.φ 0) (hε : 0 ≤ ε) (hK : 0 < K)
     (hKm : K ≤ m) (hKd : K ≤ d)
     (hW₀ : (W 0)ᵀ * W 0 = ε ^ 2 • (1 : Matrix (Fin d) (Fin d) ℝ))
@@ -1767,7 +1771,7 @@ theorem lemma_D_9 (h : net.Assumptions β μ) (hc : 0 ≤ deriv net.φ 0) (hε :
   exact ⟨(le_max_left _ _).trans (hW.trans hb), (le_max_right _ _).trans (hW.trans hb)⟩
 
 /-- The positivity of the denominators of `δ(t)`, with a uniform lower bound.  The paper asserts
-positivity from Assumption 3.4 and `r(ε) < φ'(0) σ_K / 2`; the bookkeeping shows that this needs
+positivity from Assumption 3.4 and `r(ε) < φ'(0) σ_K / 2`; this proof uses, in addition,
 `G₃ ≥ 1 - φ'(0) / 2`. -/
 lemma Run.deltaDen_pos (h : net.Assumptions β μ) (hc : 0 ≤ deriv net.φ 0) (hε : 0 ≤ ε)
     (hrun : net.Run η M G₁ G₂ G₃ q W L R)
@@ -1874,7 +1878,8 @@ lemma rho_le (h : net.Assumptions β μ) (hc : 0 ≤ deriv net.φ 0) (hε : 0 �
 `max {‖W₁(t+1) V - W₁(t) V‖_F, ‖W₁ᵀ(t+1) U - W₁ᵀ(t) U‖_F} / √p ≤ η ρ(t)`, with the bounds on `ρ(t)`.
 Differences from the paper: the bound at `t = 0` is the sharper `ρ(0) ≤ r(ε)`; `0 < φ'(0)` and
 `0 < ε` are explicit (the paper divides by `ε` and uses the sign of `φ'(0)` without comment);
-`η ≤ 1/γ_L` is not needed; `hden` as in `lemma_D_9`. -/
+`η ≤ 1/γ_L` is not needed.  **Conditional on** `hden` (positivity of the denominators of `δ(t)`),
+as `lemma_D_9`. -/
 theorem lemma_D_10 (h : net.Assumptions β μ) (hc : 0 < deriv net.φ 0) (hε : 0 < ε) (hK : 0 < K)
     (hKm : K ≤ m) (hKd : K ≤ d) {p : ℕ} (hd : 2 * K + p = d) (hp : 0 < p)
     {W₀ : Matrix (Fin m) (Fin d) ℝ}
@@ -1932,8 +1937,9 @@ Differences from the paper.  `q^t` stands for `(1 - Θ(η))^{Θ(t)}` (`Net.Run`,
 and the exponent `Θ(t)` in the bound on `ρ` is written `2 t`.  `Θ(1)` in `δ(t)` is explicit.
 `0 < φ'(0)` and `0 < ε` are explicit hypotheses, used silently in the paper.
 `1 - φ'(0)/2 ≤ G₃` is **added**: the paper says that the denominator of `δ(t)` is positive by
-Assumption 3.4 and `r(ε) < φ'(0) σ_K / 2`, but this does not follow for small `G₃` (it would need
-`σ_{K+1}(G₁(t)) ≤ (1 - G₃) σ_K < φ'(0) σ_K / 2`).
+Assumption 3.4 and `r(ε) < φ'(0) σ_K / 2`; the proof here derives the positivity from Assumption 3.4
+with this added hypothesis, which bounds `σ_{K+1}(G₁(t)) ≤ (1 - G₃) σ_K ≤ φ'(0) σ_K / 2`.  No
+counterexample for smaller `G₃` is formalized.
 The sharper `ρ(0) ≤ r(ε)` replaces the paper's `ρ(0) ≤ r(ε) √p`.  `η ≤ 1/γ_L` and the full row rank
 of `W₂` are not needed. -/
 theorem theorem_D_11 (h : net.Assumptions β μ) (hc : 0 < deriv net.φ 0) (hε : 0 < ε) (hK : 0 < K)

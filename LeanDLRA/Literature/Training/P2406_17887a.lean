@@ -61,9 +61,10 @@ section Abstract
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
   {ι : Type*} {ℒ : E → ℝ} {g : E → E} {gc : ι → E → E} {β lr : ℝ} {P T : E →L[ℝ] E}
 
-/-- Client iterates of FeDLRT with simplified variance correction (arXiv 2406.17887, eq. (40)) in
-full weights: `z⁰ = x`, `z^{s+1} = z^s - λ (Π ∇ℒ_c(z^s) + Π₀ (∇ℒ(x) - ∇ℒ_c(x)))`, where `Π` is the
-Galerkin projector of the augmented bases and `T = Π₀` the one of the original bases. -/
+/-- Client iterates of FeDLRT with simplified variance correction (arXiv 2406.17887, eq. (40), with
+the sign and the factor `λ` of the correction as in eq. (45), see `simpClientIter`) in full weights:
+`z⁰ = x`, `z^{s+1} = z^s - λ (Π ∇ℒ_c(z^s) + Π₀ (∇ℒ(x) - ∇ℒ_c(x)))`, where `Π` is the Galerkin
+projector of the augmented bases and `T = Π₀` the one of the original bases. -/
 def simpClientIterE (P T : E →L[ℝ] E) (gc : ι → E → E) (g : E → E) (lr : ℝ) (x : E) (c : ι) :
     ℕ → E
   | 0 => x
@@ -1132,8 +1133,8 @@ theorem theorem4_corrected [Fintype ι] [Nonempty ι] {ℒc : ι → Matrix m n 
 repaired Assumption 1 with `δ ≤ 1/6` and `s⋆ λ L ∈ [1/80, 1/16]`, some `t < T` satisfies
 `‖∇_S̃ ℒ(U^t S^t V^{t,ᵀ})‖² ≤ 96 L/T (ℒ(W⁰) - ℒ(W^T)) + 96 L G ϑ`, the paper's bound with `96 L² ϑ`
 for `G = L`.  The paper claims this under Assumption 1 for all `λ ≤ 1/(s⋆ (12 L + δ²))`; this is
-false (`corollary1_false`, and for small `λ` already `theorem3_false_of_small_lr`).  The iterations
-are numbered from `0`. -/
+false (`theorem4_false`, which violates eq. (47) for `T = 1`).  The iterations are numbered from
+`0`. -/
 theorem corollary1_corrected [Fintype ι] [Nonempty ι] {ℒc : ι → Matrix m n ℝ → ℝ}
     {L lr ϑ G δ : ℝ} (hL : ∀ c, IsLSmooth (ℒc c) L) (hL0 : 0 < L) (hlr : 0 ≤ lr) (hδ : 0 ≤ δ)
     (hδ1 : δ ≤ 1 / 6) {sstar : ℕ} (hlr1 : 1 / 80 ≤ sstar * lr * L) (hlr2 : sstar * lr * L ≤ 1 / 16)
