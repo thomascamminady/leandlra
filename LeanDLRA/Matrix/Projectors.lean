@@ -1,5 +1,6 @@
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Foundations.Projector
+import LeanDLRA.LinearAlgebra.Projection.Defs
 
 /-!
 # Left, right and tangent-space projectors on matrices
@@ -46,30 +47,17 @@ namespace LeanDLRA
 
 variable {k k' m n : Type*} [Fintype k] [Fintype k'] [Fintype m] [Fintype n]
 
-/-! ### Left and right projectors -/
+/-! ### Left and right projectors
 
-/-- The left projector `X ↦ U Uᵀ X`.  It is an orthogonal projector when `Uᵀ U = 1`. -/
-noncomputable def leftProj (U : Matrix m k ℝ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  Frobenius.leftMulCLM (U * Uᵀ)
+`leftProj`, `rightProj` and their `_apply` lemmas are defined in
+`LeanDLRA/LinearAlgebra/Projection/Defs.lean`. -/
 
-/-- The right projector `X ↦ X V Vᵀ`.  It is an orthogonal projector when `Vᵀ V = 1`. -/
-noncomputable def rightProj (V : Matrix n k ℝ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  Frobenius.rightMulCLM (V * Vᵀ)
-
-@[simp] lemma leftProj_apply (U : Matrix m k ℝ) (X : Matrix m n ℝ) :
-    leftProj U X = U * Uᵀ * X := rfl
-
-@[simp] lemma rightProj_apply (V : Matrix n k ℝ) (X : Matrix m n ℝ) :
-    rightProj V X = X * V * Vᵀ := by
-  simp [rightProj, Matrix.mul_assoc]
-
-lemma rightProj_apply' (V : Matrix n k ℝ) (X : Matrix m n ℝ) :
-    rightProj V X = X * (V * Vᵀ) := rfl
-
+/-- The complementary left projector: `(1 - leftProj U) X = (1 - U Uᵀ) X`. -/
 lemma one_sub_leftProj_apply [DecidableEq m] (U : Matrix m k ℝ) (X : Matrix m n ℝ) :
     (1 - leftProj U) X = (1 - U * Uᵀ) * X := by
   simp [Matrix.sub_mul]
 
+/-- The complementary right projector: `(1 - rightProj V) X = X (1 - V Vᵀ)`. -/
 lemma one_sub_rightProj_apply [DecidableEq n] (V : Matrix n k ℝ) (X : Matrix m n ℝ) :
     (1 - rightProj V) X = X * (1 - V * Vᵀ) := by
   simp [Matrix.mul_sub, Matrix.mul_assoc]

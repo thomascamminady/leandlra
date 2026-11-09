@@ -1,4 +1,5 @@
 import LeanDLRA.Stability.Energy
+import LeanDLRA.LinearAlgebra.Projection.Defs
 
 /-!
 # Conservation properties of dynamical low-rank integrators
@@ -117,11 +118,8 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 section RankOne
 
-/-- The projector `x ↦ ⟪e, x⟫ e` onto the line spanned by `e` (orthogonal if `‖e‖ = 1`). -/
-noncomputable def rankOneProj (e : E) : E →L[ℝ] E := (innerSL ℝ e).smulRight e
-
-@[simp] lemma rankOneProj_apply (e x : E) : rankOneProj e x = ⟪e, x⟫ • e := by
-  simp [rankOneProj]
+/- `rankOneProj` and `rankOneProj_apply` are defined in
+`LeanDLRA/LinearAlgebra/Projection/Defs.lean`. -/
 
 /-- For a unit vector `e`, `x ↦ ⟪e, x⟫ e` is an orthogonal projector. -/
 lemma isOrthProj_rankOneProj {e : E} (he : ‖e‖ = 1) : IsOrthProj (rankOneProj e) where

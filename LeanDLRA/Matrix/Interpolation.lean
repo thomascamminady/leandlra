@@ -2,6 +2,7 @@ import LeanDLRA.Foundations.OneSided
 import LeanDLRA.Foundations.Gronwall
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Curvature
+import LeanDLRA.LinearAlgebra.Projection.Defs
 
 /-!
 # Oblique (interpolatory / sketched) projectors in dynamical low-rank approximation
@@ -18,6 +19,9 @@ where `S ∈ ℝ^{m × r}` is a selection matrix (DEIM: `𝒫 x` interpolates `x
 rows) or a sketch (`S = Θᵀ Θ U` for a sketching matrix `Θ ∈ ℝ^{ℓ × m}`), and the orthogonal
 tangent-space projector `P(Y) Z = U Uᵀ Z + Z V Vᵀ - U Uᵀ Z V Vᵀ` by the oblique tangent-space
 projector `P^∠(Y) Z = 𝒫_U Z + Z 𝒫_Vᵀ - 𝒫_U Z 𝒫_Vᵀ` (arXiv 2510.19518, eqs. (12)–(13)).
+
+`IsObliqueProj`, `obliqueProj`, `leftOblique` and `rightOblique` are defined in
+`LeanDLRA/LinearAlgebra/Projection/Defs.lean`.
 
 ## Abstract theory (any real inner product space)
 
@@ -154,14 +158,6 @@ namespace LeanDLRA
 section Abstract
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-
-/-- `P` is an *oblique projector onto the range of the orthogonal projector `Q`*: `P` fixes the
-range of `Q` (`P Q = Q`) and maps into it (`Q P = P`).  For `Q = U Uᵀ` this is the DEIM / sketched
-projector `U (Sᵀ U)⁻¹ Sᵀ` (arXiv 2510.19518, eq. (12)). -/
-structure IsObliqueProj (P Q : E →L[ℝ] E) : Prop where
-  orth : IsOrthProj Q
-  fix : ∀ x, P (Q x) = Q x
-  range : ∀ x, Q (P x) = P x
 
 /-- An orthogonal projector is an oblique projector onto itself. -/
 lemma IsOrthProj.isObliqueProj {Q : E →L[ℝ] E} (hQ : IsOrthProj Q) : IsObliqueProj Q Q where
@@ -940,13 +936,6 @@ open scoped LeanDLRA.Frobenius
 
 variable {k l m n : Type*}
 
-/-- The interpolatory (DEIM) / sketched **oblique projector** `𝒫 = U (Sᵀ U)⁻¹ Sᵀ`
-(arXiv 2510.19518, eq. (12); with `S = Θᵀ Θ U` the sketched projector `U (ΘU)⁺ Θ` of
-arXiv 2607.03402, Lemma 4.2). -/
-noncomputable def obliqueProj [Fintype m] [Fintype k] [DecidableEq k] (U S : Matrix m k ℝ) :
-    Matrix m m ℝ :=
-  U * (Sᵀ * U)⁻¹ * Sᵀ
-
 /-! ### Algebraic properties -/
 
 section Algebra
@@ -1160,20 +1149,6 @@ theorem specNorm_obliqueProj_le_of_orthonormal [DecidableEq m] (hU : Uᵀ * U = 
   have hS1 := specNorm_le_one_of_orthonormal hS
   have := specNorm_nonneg (Sᵀ * U)⁻¹
   nlinarith
-
-/-- The left oblique projector `X ↦ 𝒫 X` on `m × n` matrices (Frobenius norm). -/
-noncomputable def leftOblique (U S : Matrix m k ℝ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  Frobenius.leftMulCLM (obliqueProj U S)
-
-/-- The right oblique projector `X ↦ X 𝒫_Vᵀ = X S (VᵀS)⁻¹ Vᵀ` on `m × n` matrices. -/
-noncomputable def rightOblique (V S : Matrix n l ℝ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  Frobenius.rightMulCLM (obliqueProj V S)ᵀ
-
-@[simp] lemma leftOblique_apply (U S : Matrix m k ℝ) (X : Matrix m n ℝ) :
-    leftOblique U S X = obliqueProj U S * X := rfl
-
-@[simp] lemma rightOblique_apply (V S : Matrix n l ℝ) (X : Matrix m n ℝ) :
-    rightOblique V S X = X * (obliqueProj V S)ᵀ := rfl
 
 /-- The operator norm (induced by the Frobenius norm) of the left oblique projector is at most
 the spectral norm of `𝒫`. -/

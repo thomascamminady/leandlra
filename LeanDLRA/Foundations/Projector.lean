@@ -1,4 +1,5 @@
 import Mathlib
+import LeanDLRA.LinearAlgebra.Projection.Defs
 
 /-!
 # Orthogonal projectors and the tangent-space operator calculus
@@ -13,6 +14,8 @@ The central objects are
 
 * `tangent L R = L + R - L * R`, abstracting `P(Y) G = U Uᵀ G - U Uᵀ G V Vᵀ + G V Vᵀ`;
 * `normal L R = (1 - L) * (1 - R)`, abstracting `(I - U Uᵀ) G (I - V Vᵀ)`.
+
+The predicate `IsOrthProj` is defined in `LeanDLRA/LinearAlgebra/Projection/Defs.lean`.
 -/
 
 open scoped RealInnerProductSpace
@@ -21,21 +24,18 @@ namespace LeanDLRA
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
-/-- `P` is an orthogonal projector: idempotent and symmetric. -/
-structure IsOrthProj (P : E →L[ℝ] E) : Prop where
-  idem : ∀ x, P (P x) = P x
-  symm : ∀ x y, ⟪P x, y⟫ = ⟪x, P y⟫
-
 /-- The tangent-space projector built from a left and a right projector. -/
 def tangent (L R : E →L[ℝ] E) : E →L[ℝ] E := L + R - L * R
 
 /-- The normal-space projector built from a left and a right projector. -/
 def normal (L R : E →L[ℝ] E) : E →L[ℝ] E := (1 - L) * (1 - R)
 
+/-- `tangent L R x = L x + R x - L (R x)`. -/
 @[simp] lemma tangent_apply (L R : E →L[ℝ] E) (x : E) :
     tangent L R x = L x + R x - L (R x) := by
   simp [tangent]
 
+/-- `normal L R x = (x - R x) - L (x - R x)`. -/
 @[simp] lemma normal_apply (L R : E →L[ℝ] E) (x : E) :
     normal L R x = (x - R x) - L (x - R x) := by
   simp [normal]
@@ -47,9 +47,11 @@ lemma tangent_add_normal (L R : E →L[ℝ] E) : tangent L R + normal L R = 1 :=
   simp only [tangent_apply, normal_apply, map_sub]
   abel
 
+/-- The normal projector is the complement of the tangent projector. -/
 lemma normal_eq_one_sub_tangent (L R : E →L[ℝ] E) : normal L R = 1 - tangent L R := by
   rw [← tangent_add_normal L R]; abel
 
+/-- Pointwise form of `tangent_add_normal`: `tangent L R x + normal L R x = x`. -/
 lemma tangent_apply_add_normal_apply (L R : E →L[ℝ] E) (x : E) :
     tangent L R x + normal L R x = x := by
   simp only [tangent_apply, normal_apply, map_sub]
@@ -59,15 +61,19 @@ namespace IsOrthProj
 
 variable {P Q L R : E →L[ℝ] E}
 
+/-- Idempotence as an equation of operators: `P * P = P`. -/
 lemma idem' (hP : IsOrthProj P) : P * P = P := by
   ext x; simpa using hP.idem x
 
+/-- `⟪P x, P y⟫ = ⟪P x, y⟫` for an orthogonal projector. -/
 lemma inner_comp (hP : IsOrthProj P) (x y : E) : ⟪P x, P y⟫ = ⟪P x, y⟫ := by
   rw [← hP.symm, hP.idem]
 
+/-- `⟪P x, x⟫ = ‖P x‖²` for an orthogonal projector. -/
 lemma inner_self_apply (hP : IsOrthProj P) (x : E) : ⟪P x, x⟫ = ‖P x‖ ^ 2 := by
   rw [← hP.inner_comp, real_inner_self_eq_norm_sq]
 
+/-- The range of `P` is orthogonal to the residual: `⟪P x, y - P y⟫ = 0`. -/
 lemma inner_sub_self (hP : IsOrthProj P) (x y : E) : ⟪P x, y - P y⟫ = 0 := by
   rw [inner_sub_right, hP.inner_comp, sub_self]
 
@@ -77,11 +83,13 @@ lemma norm_sq_add (hP : IsOrthProj P) (x : E) : ‖P x‖ ^ 2 + ‖x - P x‖ ^ 
   rw [hP.inner_sub_self, add_sub_cancel] at h
   linarith
 
+/-- An orthogonal projector does not increase the norm: `‖P x‖ ≤ ‖x‖`. -/
 lemma norm_le (hP : IsOrthProj P) (x : E) : ‖P x‖ ≤ ‖x‖ := by
   have h := hP.norm_sq_add x
   have h2 : 0 ≤ ‖x - P x‖ ^ 2 := by positivity
   exact abs_le_of_sq_le_sq' (by nlinarith) (norm_nonneg x) |>.2
 
+/-- The residual is no longer than the vector: `‖x - P x‖ ≤ ‖x‖`. -/
 lemma norm_sub_le (hP : IsOrthProj P) (x : E) : ‖x - P x‖ ≤ ‖x‖ := by
   have h := hP.norm_sq_add x
   have h2 : 0 ≤ ‖P x‖ ^ 2 := by positivity

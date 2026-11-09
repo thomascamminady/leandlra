@@ -2,6 +2,7 @@ import Mathlib
 import LeanDLRA.Foundations.Projector
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.LinearAlgebra.Frobenius.Defs
+import LeanDLRA.LinearAlgebra.Projection.Defs
 
 /-!
 # Curvature bounds for the manifold of fixed-rank matrices
@@ -330,10 +331,7 @@ end Spectral
 
 /-! ### Orthogonal projectors (matrices) -/
 
-/-- A real square matrix is an orthogonal projector: symmetric and idempotent. -/
-structure IsOrthProjMat (P : Matrix n n ℝ) : Prop where
-  symm : Pᵀ = P
-  idem : P * P = P
+/- `IsOrthProjMat` is defined in `LeanDLRA/LinearAlgebra/Projection/Defs.lean`. -/
 
 namespace IsOrthProjMat
 
