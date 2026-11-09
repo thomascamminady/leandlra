@@ -20,4 +20,6 @@ while true; do
   done
   sleep 5
 done
-cd "$ROOT" && nice -n 15 lake env lean "$f"
+# Same options as the package (lakefile.toml [leanOptions]), so results match the gate.
+cd "$ROOT" && nice -n 15 lake env lean -DmaxSynthPendingDepth=3 -DrelaxedAutoImplicit=false \
+  -Dweak.linter.mathlibStandardSet=true -Dweak.linter.style.header=false "$f"
