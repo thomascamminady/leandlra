@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Real-import check of a Lean file: `lake env lean FILE` with the file's own imports, so missing imports
+# and deprecated modules show up (unlike scripts/fc, which checks against a superset snapshot).
+# At most two of these run at once; each needs one to two gigabytes, and with more of them the
+# machine swaps and every check takes many times longer.
+#
+#   scripts/lc FILE.lean     prints nothing and exits 0 when the file is clean
+set -uo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+f="${1:?usage: scripts/lc FILE.lean}"
+[ -f "$f" ] || { echo "no such file: $f"; exit 2; }
+SLOTS="$ROOT/.lake/warm/lcslots"
+mkdir -p "$SLOTS"
+slot=""
+trap '[ -n "$slot" ] && rmdir "$slot" 2>/dev/null' EXIT
+while true; do
+  find "$SLOTS" -maxdepth 1 -name 'lc?' -mmin +30 -exec rmdir {} + 2>/dev/null
+  for i in 1 2; do
+    if mkdir "$SLOTS/lc$i" 2>/dev/null; then slot="$SLOTS/lc$i"; break 2; fi
+  done
+  sleep 5
+done
+cd "$ROOT" && nice -n 15 lake env lean "$f"
