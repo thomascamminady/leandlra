@@ -15,8 +15,11 @@ Everything is stated over `ℝ` with transposition `ᵀ` in place of the paper's
   (`IsSVDOfW.det_add_one`, Eq. (A.8)), the inverse `(VD²Vᵀ + I)⁻¹ = I − V D (D²+I)⁻¹ D Vᵀ`
   (`IsSVDOfW.inv_add_one`, Eq. (A.14)), and the marginal log-likelihood formula (12)
   (`prop1_logLikelihood`), where `log N(y; c, S)` is the standard closed form `gaussLogDensity`.
+  The matrix identities behind (11b) are `inv_one_add_wtw` and `gain` (Eqs. (A.3), (A.4)); behind
+  (11a) it is `IsSVDOfW.wwt`, `W Wᵀ = V D² Vᵀ`, which is Eq. (A.5) once `W = R^{-1/2} C Π^{1/2}`.
+  The covariance identity `R^{1/2}(VD²Vᵀ + I)R^{1/2 ᵀ} = C Π Cᵀ + R` itself is not stated.
   Not formalized: the distributional Eqs. (11a), (11b) and the Gaussian conditioning (A.1a)–(A.1b),
-  which need a probability layer that the library does not have; only their algebra is proved.
+  which need a probability layer that the library does not have.
   The paper's `r ≤ m` and `Dₖₖ ≥ 0` are not needed by the algebra and are not assumed.
 * **Cor. 1** (low-rank correction, Eqs. (13)–(15)). The matrix parts are proved: the gain
   `Π^{1/2} (I + WᵀW)⁻¹ Wᵀ = Π^{1/2} U (I+D²)⁻¹ D Vᵀ` (`cor1_gain`), the covariance
@@ -29,9 +32,7 @@ Everything is stated over `ℝ` with transposition `ᵀ` in place of the paper's
   S-step is again a Lyapunov equation with reduced coefficients.  Not restated here: the
   truncated SVD (Eq. (17)), whose optimality is Eckart–Young, and the symmetric BUG, which is
   `LeanDLRA.Integrators.Matrix.Symmetry`.
-* **Prop. B.1** (correction for `m < r`, App. B) is **not** formalized.  Its SVD of the
-  `m × (r+m)` matrix `(CΠ^{1/2}  R^{1/2})` is written with inconsistent sizes for `D^s` in
-  (B.2a)–(B.3), so the Moore–Penrose formula (B.3) cannot be used as stated.
+* **Prop. B.1** (correction for `m < r`, App. B) is **not** formalized.
 
 Core definitions reused: the matrix conventions of `LeanDLRA.Matrix` (real `Matrix`, `ᵀ`,
 orthonormal columns as `Uᵀ * U = 1`).  Definitions added locally: the SVD predicate `IsSVDOfW`
@@ -65,6 +66,7 @@ section Prop1
 
 variable {m r n : ℕ}
 
+/-- `WᵀW = U D² Uᵀ`, the identity substituted into (A.2a) to get (A.3). -/
 theorem IsSVDOfW.wtw {W : Matrix (Fin m) (Fin r) ℝ} {U : Matrix (Fin r) (Fin r) ℝ}
     {d : Fin r → ℝ} {V : Matrix (Fin m) (Fin r) ℝ} (h : IsSVDOfW W U d V) :
     Wᵀ * W = U * Matrix.diagonal (fun k => d k ^ 2) * Uᵀ := by
@@ -80,6 +82,8 @@ theorem IsSVDOfW.wtw {W : Matrix (Fin m) (Fin r) ℝ} {U : Matrix (Fin r) (Fin r
   rw [← Matrix.mul_assoc Vᵀ V, h.orthV, Matrix.one_mul, ← e2]
   simp only [Matrix.mul_assoc]
 
+/-- `W Wᵀ = V D² Vᵀ`: with `W = R^{-1/2} C Π^{1/2}` this is Eq. (A.5),
+`R^{-1/2} S R^{-ᵀ/2} = V D² Vᵀ + I`, the algebra behind (11a). -/
 theorem IsSVDOfW.wwt {W : Matrix (Fin m) (Fin r) ℝ} {U : Matrix (Fin r) (Fin r) ℝ}
     {d : Fin r → ℝ} {V : Matrix (Fin m) (Fin r) ℝ} (h : IsSVDOfW W U d V) :
     W * Wᵀ = V * Matrix.diagonal (fun k => d k ^ 2) * Vᵀ := by

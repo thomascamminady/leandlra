@@ -6,7 +6,8 @@ import LeanDLRA.Foundations.Projector
 
 This module formalizes the algebraic core of the time-dependent Galerkin reduction of the paper
 (Section 2.1), for an arbitrary real Hilbert space `E` (the paper takes `E = ℝ^d`) and the reduced
-space `ℝ^r`.
+space `ℝ^r`. The parameter `ξ` of the paper is fixed and suppressed, and the flux is written
+`f t u` for the paper's `f(u, t, ξ)`.
 
 * `IsIsometricBasis V` says that `V : ℝ^r → E` is an orthonormal basis of its range, `Vᵀ V = I_r`,
   with `Vᵀ` the Hilbert adjoint. `basisProj V = V Vᵀ` is the orthogonal projector `Π_{X_r}`
@@ -20,12 +21,13 @@ space `ℝ^r`.
   `α(0) = V(0)ᵀ u⁰`, as stated after Eq. (9).
 * `reducedFlux_isLipschitzField` is the Lipschitz part of Remark 1: if `f(·, t)` is `L`-Lipschitz
   uniformly in `t` and `‖V'(t)‖ ≤ M`, then `f_r` is `(L + M)`-Lipschitz in `α`, uniformly in `t`.
+  The remark gives no constant; `L + M` is the one of the proof.
 
-Not formalized: the existence and uniqueness of a global solution of the reduced ODE in Remark 1
-(it needs a bound on the field, which the remark does not assume), the continuity part of Remark 1,
-the comparison Lemma 1 (its proof needs an integrable, not continuous, rate), the interpolation
-property of Section 3.1, and Proposition 1 (the a posteriori bound with the logarithmic Lipschitz
-constant).
+Not formalized: the continuity part of Remark 1 and the existence and uniqueness of a global,
+continuously differentiable solution of the reduced ODE (a global Picard-Lindelöf argument for a
+field that is continuous and Lipschitz uniformly in `t`, not derived here), the comparison Lemma 1
+(stated for integrable coefficients), the interpolation property of Section 3.1, and Proposition 1
+(the a posteriori bound with the logarithmic Lipschitz constant).
 -/
 
 open Set Filter Topology Finset
@@ -155,8 +157,9 @@ variable {r : ℕ}
 
 /-- **Remark 1 (Lipschitz part), arXiv 1604.05706.** If `f(·, t)` is `L`-Lipschitz uniformly in
 `t`, `V(t)` is an orthonormal basis for every `t`, and `‖V'(t)‖ ≤ M` for all `t`, then the reduced
-flux (9) is `(L + M)`-Lipschitz in `α`, uniformly in `t`. The paper's constant `L + sup ‖V'‖` is
-`L + M`. -/
+flux (9) is `(L + M)`-Lipschitz in `α`, uniformly in `t`. The remark states no constant; `L + M`
+is the one its argument gives. The statement needs neither that `dV` is the derivative of `V` nor
+the continuity hypotheses of the remark, so it is slightly more general. -/
 theorem reducedFlux_isLipschitzField {f : ℝ → E → E}
     {V dV : ℝ → EuclideanSpace ℝ (Fin r) →L[ℝ] E}
     {L M : ℝ} (hV : ∀ t, IsIsometricBasis (V t)) (hf : IsLipschitzField f L)

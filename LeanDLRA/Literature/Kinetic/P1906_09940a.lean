@@ -54,6 +54,8 @@ condition, this transfers to BUG, and it does not transfer to the paper's explic
   `galerkin_collisionOp`).  (2.4)-(2.10) are therefore statements on coefficient matrices.
 * We take `c = 1`, as (2.4)-(2.6) do.  (1.1) has the source `S`, while (2.4)-(2.6) and (2.8) have
   `S / 2`; we follow the latter.
+* After (2.12) the paper prints `P_j(μ) = √((2n - 1) / 2) P̄_{n-1}(μ)`, with the number of modes `n`
+  where the index `j` is meant; `nLeg l = √((2 l + 1) / 2) P̄_l` is the intended `P_{l+1}`.
 * (2.8) has the misprint `g^r` in its sum over `j'`.  (2.9) prints `σt S_ij` and
   `⟨X_i⟩_z ⟨W_j⟩_μ / 2`, which is the case of constant `σt` and `S = 1`, and (2.10) drops the index
   `k` in its `σ` terms; `sField_eq`, `lField_eq` give the general forms.

@@ -516,8 +516,8 @@ noncomputable def innerF (μ ν : Measure (PS d)) (X : Fin r → PS d → ℝ) (
     (f : PS d → PS d → ℝ) (m : Option (Fin d)) (i : Fin r) : ℝ :=
   ∫ v, wt m v * ∫ x, X i x * vlasovF E₀ f x v ∂μ ∂ν
 
-/-- The local constraints of Step 3, (21) and (22) in the numbering of the arXiv listing, that is
-(3.8) with Step 3's right-hand sides: `∑_l λ_il α_l = b_i` for `m = none` and
+/-- The local constraints of Step 3, (3.13) and (3.14), in the form (3.8) with Step 3's
+right-hand sides: `∑_l λ_il α_l = b_i` for `m = none` and
 `∑_l λ_il β_{a,l} = (d_i)_a` for `m = some a`.  The right-hand side is `rhsL`, which has the correct
 sign of `Eρ`; for mass it is the printed `b_i`. -/
 def LocalConstraint (μ ν : Measure (PS d)) (X V : Fin r → PS d → ℝ) (E₀ : PS d → PS d)

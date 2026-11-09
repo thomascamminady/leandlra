@@ -31,7 +31,7 @@ formula (`Grid.kNext`, `Grid.lNext`, `Grid.sNext`).  Nothing is assumed about `S
   for a discrete Vlasov-Poisson operator that conserves mass and momentum exactly and a nonnegative
   `fⁿ`, the exact change of both per step, for all `τ`.  This proves the claim that conservation is
   lost, and it shows that `O(τ²)` is sharp.  `rob_mass_change`: the same with a dynamic `W`.
-* `rob_local_error`, `rob_competitor`, `rob_no_uniform_bound`: see "False claim" below.
+* `rob_local_error`, `rob_competitor`, `rob_no_uniform_bound`: see "The robustness claim" below.
 
 The remedy of later work (augmented bases) is `consBug_euler_inner_eq` in
 `Stability/Conservation.lean`; `bug_moment_defect` in `OpenProblems/Conservation/Part3a.lean` is the
@@ -58,12 +58,15 @@ integrator.
   `τ² = 513/126250`, and is lost for every other `τ ≠ 0`.
 * The energy is not treated: it needs the electric energy of Sec. 6.1.
 
-## False claim
+## The robustness claim of Sec. 6.2 (an interpretation)
 
-Sec. 6.2 says: "This gives us a robust dynamical low-rank integrator as the matrix `S` need not be
-inverted".  The second half is true (`Grid.exists_step`).  The first half is false in the sense of
-the references the paper builds on (Kieri-Lubich-Walach, Ceruti-Lubich), where robust means error
-bounds independent of small singular values.  `rob_local_error`: for free streaming and
+Sec. 6.2 says: "This gives us a robust dynamical low-rank integrator as the matrix `S` needs not
+be inverted".  The paper does not define "robust"; it motivates the word by the ill-conditioned
+inversion of `S` and refers to [17] (Kieri-Lubich-Walach).  The second half is true
+(`Grid.exists_step`), and in the sense "no inverse of `S`" the claim holds.  In the sense of [17]
+and of Ceruti-Lubich [3], where robust means error bounds independent of small singular values,
+the claim fails; this reading is ours, not a statement printed in the paper.  `rob_local_error`:
+for free streaming and
 `S = diag(3, ε)` with `0 < ε ≤ (12/25) τ`, every step misses the Euler step by at least
 `(9/25) τ / √2`.  `rob_no_uniform_bound`: no bound `C τ²` holds uniformly in `ε`.
 `rob_competitor`: the format is not to blame, since an admissible state with the same `X` and `U`
@@ -1065,7 +1068,7 @@ lemma exists_wBasis (q : Grid Mx Mv) {U : Matrix Mv a ℝ} (hU : Uᵀ * q.Hv * U
       _ = _ := by simp only [Matrix.mul_assoc]
 
 /-- **The integrator of Sec. 6.2 is well defined without any inverse of `S`** (arXiv 2101.12571,
-Sec. 6.2: "the matrix `S` need not be inverted").  For every admissible state, every `S`
+Sec. 6.2: "the matrix `S` needs not be inverted").  For every admissible state, every `S`
 (in particular a singular one, even `S = 0`), every `τ` and every right-hand side there is a step.
 The two grids must carry at least `r` points.  This also shows that the hypotheses of `IsStep` can
 be met: the rank-deficient QR can be completed so that `Wⁿ⁺¹ ⊥ Uₐ` still holds. -/
@@ -1107,8 +1110,8 @@ noncomputable def ceW (q : Grid Mx Mv) (τ : ℝ) (X : Matrix Mx (a ⊕ p) ℝ)
   W + τ • ((q.Fi * q.pairX X A * colsP S - V * (q.pairXV X V A)ᵀ * colsP S) *
     ((colsP S)ᵀ * colsP S)⁻¹)
 
-/-- **`Kⁿ⁺¹` determines `X̄ⁿ⁺¹`** (arXiv 2101.12571, Sec. 6.2: "the approximation spaces are
-uniquely defined by `Lⁿ⁺¹` and `Kⁿ⁺¹`"), in the full-rank case. -/
+/-- **`Kⁿ⁺¹` determines `X̄ⁿ⁺¹`** (arXiv 2101.12571, Sec. 6.2, which says that the approximation
+spaces are uniquely defined by `Lⁿ⁺¹` and `Kⁿ⁺¹`), in the full-rank case. -/
 theorem IsStep.range_kNext (h : q.IsStep D τ U X S W X' S' W')
     (hK : Function.Injective
       (q.kNext τ X S (vb U W) (D (q.dist X S (vb U W)))).mulVec) :
@@ -1628,9 +1631,10 @@ noncomputable def robY (τ ε : ℝ) : Fin 3 → ℝ :=
     12 / 25 * τ * (31 / 15) + ε * (-8 / 15)]
 
 /-- **Small singular values spoil the local error of the integrator of Sec. 6.2** (arXiv
-2101.12571, Sec. 6.2: "This gives us a robust dynamical low-rank integrator as the matrix `S` need
+2101.12571, Sec. 6.2: "This gives us a robust dynamical low-rank integrator as the matrix `S` needs
 not be inverted").  `S` need indeed not be inverted (`exists_step`), but the *errors* are not robust
-in the sense of Kieri-Lubich-Walach and Ceruti-Lubich, the references the paper relies on.  For
+in the sense of Kieri-Lubich-Walach and Ceruti-Lubich, the references the paper relies on (the
+paper does not define "robust"; this reading is ours).  For
 free streaming on a fixed grid, `U₁ = 1`, `r = 2`, `S = diag(3, ε)` with `0 < ε ≤ (12/25) τ`, every
 step of the integrator, for every QR factorization, misses the explicit Euler step by at least
 `(9/25) τ / √2`: the local error is `O(τ)`, not `O(τ²)`.  The cause is the L-update: the part of

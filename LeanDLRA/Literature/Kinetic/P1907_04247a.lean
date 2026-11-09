@@ -21,8 +21,9 @@ error `O((Δt)² / (Δx)⁴)`, and `theorem_3_2_skew`; `theorem_3_3`, its streng
 `lemma_B1_IE`; and `Assumption1.capture`, `Capture.assumption1`: Assumption 1 is equivalent to
 `e_n ∈ range V + O(ε²)`, `Π_k e_n ∈ range V + O(ε)`, which is all the proofs use of it.
 Differences from the paper, also in the docstrings: the inverses of the limit operators are
-hypotheses (`Stable`), and `theorem_3_2_counterexample` shows that they cannot be dropped from
-Theorem 3.2, which is false as stated for `Δt = d / λ`, `-λ` an eigenvalue of `𝓛`; well-prepared
+hypotheses (`Stable`), and `theorem_3_2_counterexample` shows that they cannot be dropped:
+Theorem 3.2, which puts no condition on `Δt`, is false as stated in one instance (`d = 1`, two
+grid points, a skew `D` with `D² = -1`, `Δt = 1`, where `I + (Δt / d) 𝓛 = 0`); well-prepared
 data are not needed in Theorem 3.3; the proof of Lemma B.1 replaces the one of the paper, which
 treats only the first column of `A*_{∂_m}` after (B.15).  `exists_IEStep`, `exists_CNIEStep`,
 `exists_IELimit` and `lemma_B1_hypotheses` show that the hypotheses can be met.
@@ -4117,8 +4118,10 @@ Assumption 1 holds exactly.  Then `I + (Δt / d) 𝓛 = 0`, the implicit Euler s
 `ε > 0` from a fixed rank-one `u^n`, and `u^{n+1}` blows up like `ε⁻²`: for every `ρ` and `C`, the
 estimate `‖u^{n+1} - ρ eᵀ‖ ≤ C ε` fails for arbitrarily small `ε`.
 
-So the paper's statement holds only under a restriction on `Δt`, excluding at least
-`Δt = d / λ` for the eigenvalues `-λ` of `𝓛`; its (3.26) takes the inverse for granted. -/
+So the paper's statement needs a restriction on `Δt`; here `Δt = d / λ` for the eigenvalue
+`-λ = -1` of `𝓛`, and its (3.26) takes the inverse for granted.  `cxD` is skew like a central
+difference but is not a difference stencil of a two-point grid; the paper leaves `D_k` open ("the
+discrete approximation of `∂ₓ`").  That every mesh fails at every `Δt = d / λ` is not claimed. -/
 theorem theorem_3_2_counterexample :
     (∀ B, ¬ Stable (1 + ((1 : ℝ) / ((1 : ℕ) : ℝ)) •
       limL (1 : Matrix (Fin 2) (Fin 2) ℝ) cxD (fun _ => 1)) B) ∧
