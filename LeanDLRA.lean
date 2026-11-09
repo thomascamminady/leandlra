@@ -38,6 +38,7 @@ import LeanDLRA.Literature.Applications.P2110_13481a
 import LeanDLRA.Literature.Applications.P2201_12340a
 import LeanDLRA.Literature.Applications.P2306_17526a
 import LeanDLRA.Literature.Applications.P2308_08888a
+import LeanDLRA.Literature.Applications.P2309_08252a
 import LeanDLRA.Literature.Applications.P2405_18094a
 import LeanDLRA.Literature.Applications.P2407_03373a
 import LeanDLRA.Literature.Applications.P2503_18271a

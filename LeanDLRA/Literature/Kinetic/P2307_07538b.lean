@@ -35,8 +35,8 @@ proof here is carried out on the factors of the scheme itself.
 * `qr` is taken with nonnegative diagonal of `R` (`IsGSQR`), and this convention is needed: step 5
   of Section 6 writes `e₁` instead of the first column of `Ṽ¹`, and that column is `+e₁` only with
   this convention (`IsGSQR.first_column`).  With `R₀₀ = -1` the truncated zeroth moment would be
-  `-û¹₀`, and (24) would fail whenever `û¹₀ ≠ 0`.  QR factors may come from rank-deficient
-  matrices.
+  `-û¹₀`, and (24) would fail whenever `û¹₀ ≠ 0` (a hand computation, not formalized here).  QR
+  factors may come from rank-deficient matrices.
 * The left side of (16a) is printed `K⋆_{pk}` with `p` summed on the right; we read `K⋆_{qk}`.
 * (16f) is printed `L^{⋆,scat}_{mk} = L_{mk} / (1 + Δt σ)` for `k ≠ 0` with `L = V⋆ S⋆`, while `m`
   is the moment index in (16b) and the factorization after (16f) reads

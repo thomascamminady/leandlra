@@ -3,8 +3,8 @@ import LeanDLRA.Matrix.Projectors
 /-!
 # Results of arXiv 2308.08888: Low-rank Strang splitting for strongly damped wave equations
 
-This module formalizes the one statement of arXiv 2308.08888 that is a checkable claim about
-its algorithms: the implicit property of the first QR step of Algorithm 3.1 `DLR_L`.
+The paper states no theorem.  This module formalizes a property implicit in its algorithms, that
+of the first QR step of Algorithm 3.1 `DLR_L`.
 
 Algorithm 3.1 computes `Ũ₁ Ŝ = Δ₁ Ṽ₀` (step 1) and returns a new basis `Ũ₁`. The module proves,
 for any `Δ₁`, any `V₀` and any `Ũ₁` with orthonormal columns and `Ũ₁ Ŝ = Δ₁ V₀` for some `Ŝ`:
@@ -12,8 +12,8 @@ for any `Δ₁`, any `V₀` and any `Ũ₁` with orthonormal columns and `Ũ₁ 
 * `dlrL_implicit`: `(I - Ũ₁Ũ₁ᵀ) Δ₁ = (I - Ũ₁Ũ₁ᵀ) Δ₁ (I - V₀V₀ᵀ)` and
   `‖Δ₁ - Ũ₁Ũ₁ᵀ Δ₁‖ ≤ ‖Δ₁ (I - V₀V₀ᵀ)‖` (Frobenius norm).
 
-The paper does not state this property as a numbered result; it is the consequence of step 1 of
-Algorithm 3.1 that the K-step capture argument uses. The hypotheses are the QR relation of step 1
+The paper does not state this property; it is a direct consequence of step 1 of Algorithm 3.1
+(the capture property of a K-step). The hypotheses are the QR relation of step 1
 and orthonormality of `Ũ₁`, nothing else. Orthonormality of `V₀` is not needed, and the rank `r`
 and the Stiefel conditions of the paper are not used.
 
@@ -35,10 +35,11 @@ namespace LeanDLRA.Literature.P2308_08888
 variable {m n k : Type*} [Fintype m] [Fintype n] [Fintype k]
 
 /-- **Algorithm 3.1 `DLR_L`, implicit property** (arXiv 2308.08888, Algorithm 3.1, step 1
-`Ũ₁ Ŝ = Δ₁ Ṽ₀`, with `Ũ₁` having orthonormal columns).  The orthogonal complement of `range Ũ₁`
-annihilates `Δ₁`'s column space `Δ₁ V₀`, so `(I - Ũ₁Ũ₁ᵀ) Δ₁ = (I - Ũ₁Ũ₁ᵀ) Δ₁ (I - V₀V₀ᵀ)`, and the
-remainder is bounded by the normal part `‖Δ₁ (I - V₀V₀ᵀ)‖` in the Frobenius norm.  Only the QR
-relation and `Ũ₁ᵀ Ũ₁ = 1` are assumed; `V₀` is arbitrary. -/
+`Ũ₁ Ŝ = Δ₁ Ṽ₀`, with `Ũ₁` having orthonormal columns).  The projector `I - Ũ₁Ũ₁ᵀ` onto the
+orthogonal complement of `range Ũ₁` annihilates the columns of `Δ₁ V₀`, so
+`(I - Ũ₁Ũ₁ᵀ) Δ₁ = (I - Ũ₁Ũ₁ᵀ) Δ₁ (I - V₀V₀ᵀ)`, and the remainder is bounded by the normal part
+`‖Δ₁ (I - V₀V₀ᵀ)‖` in the Frobenius norm.  Only the QR relation and `Ũ₁ᵀ Ũ₁ = 1` are assumed;
+`V₀` is arbitrary. -/
 theorem dlrL_implicit [DecidableEq m] [DecidableEq n] [DecidableEq k]
     (Δ₁ : Matrix m n ℝ) (V₀ : Matrix n k ℝ) {U₁ : Matrix m k ℝ} {S : Matrix k k ℝ}
     (hU₁ : U₁ᵀ * U₁ = 1) (hQR : U₁ * S = Δ₁ * V₀) :

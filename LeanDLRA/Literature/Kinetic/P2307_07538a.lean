@@ -19,21 +19,18 @@ one full step of the coupled implicit scheme (16) with conservative truncation (
 
 ## Differences from the paper
 
-* **Theorem 3 needs a hypothesis the paper does not state: `e₀ ∈ range V⁰`.**  The paper's proof
-  tests with `u¹` and removes the Galerkin projection, which requires `u★ (1 - e₀ e₀ᵀ)` to stay in
-  the Galerkin space, i.e. `e₀ ∈ range V★`.  The paper says nothing on this, and nothing on how
-  `V⁰` is built.  From the second step on the hypothesis holds by construction
-  (`V₁_e₀`, the first column
-  of `V̂ = [e₁, V^rem]`), so `theorem3` can be iterated, and it covers the first step if `V⁰`
-  contains `e₀`.  It cannot simply be dropped: `not_energy_stable_without_e₀` is a proved example
-  (`n = 3`, `N = 2`, spectrum `±κ`, `Δt κ = Δx`) in which all other hypotheses of `theorem3_sharp`
-  hold and the energy increases, and `legendreTwo_not_energy_stable` instantiates it with the true
-  `N = 2` Legendre matrix at `Δt = √3 Δx`, where `Δt |σ_k| = Δx`.
-  Neither of these is a counterexample to the printed statement, whose condition is `Δt ≤ Δx` for
-  the Legendre matrix.  That case is **only numerical evidence, not proved here**: for rank one,
-  `σ = 0`, `Δt = Δx`, a single Fourier mode and an optimized `v`, a floating-point computation of
-  the step gives an energy increase of about `2.3e-6` at `N = 8`, `n = 64`, and `2.9e-7` at
-  `N = 32`, `n = 1024`.  A limited search found no increase for `N ≤ 6`.
+* **`theorem3` assumes `e₀ ∈ range V⁰`, which the paper does not state.**  The paper's proof
+  tests with `u¹` and removes the Galerkin projection (`P^V P^X u¹ = u¹` for `k ≠ 0`), which
+  requires `u★ (1 - e₀ e₀ᵀ)` to stay in the Galerkin space; this holds if `e₀ ∈ range V★`.  The
+  paper says nothing on this, and nothing on how `V⁰` is built.  From the second step on the
+  hypothesis holds by construction (`V₁_e₀`, the first column of `V̂ = [e₁, V^rem]`), so
+  `theorem3` can be iterated, and it covers the first step if `V⁰` contains `e₀`.  It cannot be
+  dropped from the sharp form: `not_energy_stable_without_e₀` is a proved example (`n = 3`,
+  `N = 2`, spectrum `±κ`, `Δt κ = Δx`) in which all other hypotheses of `theorem3_sharp` hold and
+  the energy increases, and `legendreTwo_not_energy_stable` instantiates it with the true `N = 2`
+  Legendre matrix at `Δt = √3 Δx`, where `Δt |σ_k| = Δx`.  Neither of these is a counterexample to
+  the printed statement, whose condition is `Δt ≤ Δx` for the Legendre matrix.  Whether the printed
+  statement holds without `e₀ ∈ range V⁰` is not decided here.
 * **`σ ≥ 0` is a hypothesis** of Theorems 1 and 3.  The paper does not state it; its proofs need it.
 * **"Strictly negative" in the proof of Theorem 1 is false.**  The theorem says `≤ 0`, which is what
   holds; the right-hand side vanishes at the equilibrium (`energy_rate_eq_zero_at_equilibrium`).
@@ -42,8 +39,10 @@ one full step of the coupled implicit scheme (16) with conservative truncation (
   (`momentMatrix_quadratic_le`).  `momentMatrix` is defined by the paper's integrals, for continuous
   orthonormal `P`.  `IsOrthonormalFamily` is instantiated for `N = 2` (`legendreTwo`); the
   orthonormality of the Legendre polynomials of every degree is not formalized.
-* **Truncation.** The paper notes only that the zeroth moment is unchanged; that the norm does not
-  increase is what its Theorem 3 needs, and we prove it (`IsConservativeTruncation.norm_le`).
+* **Truncation.** Theorem 3 is formalized with the conservative truncation of Section 6; the
+  paper's (16) also allows the truncation of its reference [6].  The paper notes only that the
+  zeroth moment is unchanged; that the norm does not increase is what its Theorem 3 needs, and we
+  prove it (`IsConservativeTruncation.norm_le`).
   `IsConservativeTruncation` allows any orthonormal `U`, and `svd_truncation_eq_left_proj` shows the
   SVD truncation of Section 6 has this form.
 * **Lemma 2** is proved without a Fourier transform: `Dˣ ± Dˣˣ` is a single upwind difference, which
@@ -58,14 +57,16 @@ one full step of the coupled implicit scheme (16) with conservative truncation (
 * **(16f)** is printed with the condition `k ≠ 0` on `L_{mk}`.  We read it as `m ≠ 0`, the moment
   index, as the paper's relation between `u¹` and `u★` at the start of the proof of Theorem 3
   requires (`IsCoupledStep.augmented_eq`, which we derive).  A column reading would contradict it.
-* **Indices.**  The printed indices of (9c), (16a) and Lemma 2 are not consistent.  `kStar`,
-  `lStar`, `sStar` and `sStepField` use the only consistent reading.
-  In (16d), `A_{0ℓ}` is written `A_{ℓ0}`,
-  which is the same as `A` is symmetric.
+* **Indices.**  (9a) and (16a) print `D^x_{qp} K_{pj}` with `p` also the free index of the left
+  side; `kStar` reads `Dˣ K`, as in (9c) and (16c), which `sStepField` and `sStar` follow.  Lemma 2
+  prints the transposed stencils `D_{ji} u_{jk}`; this is the adjoint that arises in the proof of
+  Theorem 3 (`inner_transport_adjoint`), and `flux` keeps it.  (16d) prints `A_{0ℓ}`; `rhsR` uses
+  `A_{ℓ0}`, the same since `A` is symmetric.
 * **QR factorizations** are recorded by what they give: orthonormal columns, and a range containing
   the factored columns.  The result depends on the bases only through these ranges.
-* `⟨·⟩_μ` is not written out in the text we read, so the weight `w` is a parameter.  The paper was
-  read through a text extraction of the arXiv v2 HTML, not the typeset PDF.
+* The paper describes `⟨·⟩_μ` only in words, as integration over `μ ∈ [-1, 1]` (Section 2.1), and
+  calls the `P_n` normalized Legendre polynomials, so the weight `w` is a parameter.  Checked
+  against the arXiv v2 PDF.
 -/
 
 open Set Filter Topology Finset

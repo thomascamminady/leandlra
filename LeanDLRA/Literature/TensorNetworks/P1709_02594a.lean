@@ -3,26 +3,28 @@ import LeanDLRA.Integrators.Exactness
 /-!
 # Results of arXiv 1709.02594: projector splitting for rank-constrained Tucker tensors
 
-This module formalizes the mode-invariance part of the Tucker tangent-space lemma of arXiv
-1709.02594 for order-three tensors. Tucker tensors are written as `C ×₁ U₁ ×₂ U₂ ×₃ U₃` on
-`n₁ → n₂ → n₃ → ℝ`. The rank-`(s₁, s₂, s₃)` Tucker set consists of all such tensors with
-`C : Fin s₁ → Fin s₂ → Fin s₃ → ℝ` and factor matrices `Uᵢ` with `sᵢ` columns. The theorems
-`tuckerSet3_invariant_mode1`, `..._mode2` and `..._mode3` say that multiplying any single mode
-by an arbitrary matrix keeps a Tucker tensor in the Tucker set. Orthogonal projectors are a special
-case, so this gives the paper's invariance under mode projections, with `P` general.
+This module proves an elementary fact about the Tucker format that arXiv 1709.02594 (Lubich,
+Vandereycken, Walach) uses without stating it: multiplying a Tucker tensor in a single mode keeps
+its multilinear rank bounded. The paper has no numbered lemma for this; it uses mode products of
+Tucker tensors throughout Section 3.1 and in the proof of Theorem 3, there with rectangular
+factors such as `U_k^{1,T}`. Here the facts are stated for order-three tensors and square mode
+matrices. Tucker tensors are written as `C ×₁ U₁ ×₂ U₂ ×₃ U₃` on `n₁ → n₂ → n₃ → ℝ`. The
+rank-`(s₁, s₂, s₃)` Tucker set consists of all such tensors with `C : Fin s₁ → Fin s₂ → Fin s₃ → ℝ`
+and factor matrices `Uᵢ` with `sᵢ` columns. The theorems `tuckerSet3_invariant_mode1`,
+`..._mode2` and `..._mode3` say that multiplying any single mode by an arbitrary square matrix
+keeps a Tucker tensor in the Tucker set; mode projections are a special case.
 
 Results of the paper that are **not** in this module:
 
-* **Algorithm 1 (nested Tucker PSI)**: not formalized. It needs an iterated abstract KSL step over
-  unfoldings, and the unfolding bookkeeping is absent.
-* **Thm 3 (exactness)**: the `d = 2` case is already in the library as
-  `LeanDLRA.Exactness.ksl_exact` (Lubich–Oseledets matrix KSL), so it is not
-  duplicated here. The general-`d` statement is not formalized.
+* **Algorithm 1 (nested Tucker integrator)**: not formalized. It needs an iterated abstract KSL
+  step over unfoldings, and the unfolding bookkeeping is absent.
+* **Thm 3 (exactness)**: not formalized. The matrix exactness result it builds on (Theorem 1 of
+  the paper, from Lubich–Oseledets) is in the library as `LeanDLRA.Exactness.ksl_exact`.
 * **Thm 4 (robust error bound)**: not formalized. The abstract route would need the inexact-KSL
   local bound (`ksl_local_error_inexact`) iterated over modes. The Tucker BUG analogue is
   `tucker_global_error_le`.
-* **Lemma, tangent inclusion `T_Y M ⊂ ∩ᵢ T_Y Mᵢ`**: not formalized, because the Tucker tangent space
-  is not defined in this module. Only the invariance part is proved, and only for order three.
+* **The tangent inclusion `T_Y M ⊆ ∩ᵢ T_Y Mᵢ`** (stated in the text before Theorem 4): not
+  formalized, because the Tucker tangent space is not defined in this module.
 * **Thm 5 (equivalence with Lubich 2015)**: not formalized. The Kronecker identity
   `Mat₁(C ×₁ U₁ ×₂ U₂ ×₃ U₃) = U₁ Mat₁(C) (U₂ ⊗ U₃)ᵀ` is in `wip/done/TensorNetworksPart3a.lean`
   but not in the library.
@@ -111,27 +113,26 @@ private theorem modeProd3_tuckerTensor3 (C : r₁ → r₂ → r₃ → ℝ) (U�
   refine Finset.sum_congr rfl fun x _ => ?_
   ring
 
-/-- **Invariance of the Tucker set under mode-one multiplication** (Lubich–Vandereycken–Walach,
-arXiv 1709.02594, invariance part of the Tucker tangent-space lemma, order three). For every
-rank-`(s₁, s₂, s₃)` Tucker tensor `T` and every matrix `P`, the tensor `P ×₁ T` again has
-multilinear rank at most `(s₁, s₂, s₃)`. The paper's mode projections are the case of orthogonal
-projectors `P`. -/
+/-- **Invariance of the Tucker set under mode-one multiplication** (an elementary fact used,
+not stated, in Lubich–Vandereycken–Walach, arXiv 1709.02594, Section 3.1 and the proof of
+Theorem 3; order three, square `P`). For every rank-`(s₁, s₂, s₃)` Tucker tensor `T` and every
+square matrix `P`, the tensor `P ×₁ T` again has multilinear rank at most `(s₁, s₂, s₃)`. -/
 theorem tuckerSet3_invariant_mode1 {s₁ s₂ s₃ : ℕ} {T : n₁ → n₂ → n₃ → ℝ}
     (hT : T ∈ tuckerSet3 s₁ s₂ s₃ n₁ n₂ n₃) (P : Matrix n₁ n₁ ℝ) :
     modeProd1 P T ∈ tuckerSet3 s₁ s₂ s₃ n₁ n₂ n₃ := by
   obtain ⟨C, U₁, U₂, U₃, rfl⟩ := hT
   exact ⟨C, P * U₁, U₂, U₃, modeProd1_tuckerTensor3 C U₁ U₂ U₃ P⟩
 
-/-- **Invariance of the Tucker set under mode-two multiplication** (arXiv 1709.02594, invariance
-part, order three). -/
+/-- **Invariance of the Tucker set under mode-two multiplication** (an elementary fact used, not
+stated, in arXiv 1709.02594; order three, square `P`). -/
 theorem tuckerSet3_invariant_mode2 {s₁ s₂ s₃ : ℕ} {T : n₁ → n₂ → n₃ → ℝ}
     (hT : T ∈ tuckerSet3 s₁ s₂ s₃ n₁ n₂ n₃) (P : Matrix n₂ n₂ ℝ) :
     modeProd2 P T ∈ tuckerSet3 s₁ s₂ s₃ n₁ n₂ n₃ := by
   obtain ⟨C, U₁, U₂, U₃, rfl⟩ := hT
   exact ⟨C, U₁, P * U₂, U₃, modeProd2_tuckerTensor3 C U₁ U₂ U₃ P⟩
 
-/-- **Invariance of the Tucker set under mode-three multiplication** (arXiv 1709.02594, invariance
-part, order three). -/
+/-- **Invariance of the Tucker set under mode-three multiplication** (an elementary fact used, not
+stated, in arXiv 1709.02594; order three, square `P`). -/
 theorem tuckerSet3_invariant_mode3 {s₁ s₂ s₃ : ℕ} {T : n₁ → n₂ → n₃ → ℝ}
     (hT : T ∈ tuckerSet3 s₁ s₂ s₃ n₁ n₂ n₃) (P : Matrix n₃ n₃ ℝ) :
     modeProd3 P T ∈ tuckerSet3 s₁ s₂ s₃ n₁ n₂ n₃ := by

@@ -12,9 +12,10 @@ truncation `T_r`, the best rank-`r` approximation), `EckartYoung.norm_sub_trunca
 `ODESolution.norm_sub_le_exp_of_oneSided` and `norm_sub_le_gronwallBound_of_oneSided`.
 The local definition added is `phi1`, the scalar `φ₁` of the paper's eq. (4).
 
-* **Lemma 8 (truncation inequality)**, `truncation_add_sub_le` and
-  `truncation_add_sub_le_of_rank_le`: `‖T_r(A + E) - A‖ ≤ ‖T_r(A) - A‖ + 2‖E‖`, and
-  `‖T_r(A + E) - A‖ ≤ 2‖E‖` when `rank A ≤ r`. Stated exactly as in the paper.
+* **Lemma 8 (truncation inequality)**, `truncation_add_sub_le`:
+  `‖T_r(A + E) - A‖ ≤ ‖T_r(A) - A‖ + 2‖E‖`, stated exactly as in the paper. Its immediate
+  corollary `truncation_add_sub_le_of_rank_le`, `‖T_r(A + E) - A‖ ≤ 2‖E‖` when `rank A ≤ r`, is
+  not printed in the paper.
 * **Lemma 3 (bounds of the φ-functions), for k = 0 and k = 1**, `norm_exp_le` and `norm_phi1_le`:
   `‖φ₀(hL) X‖ ≤ φ₀(hℓ) ‖X‖` and `‖φ₁(hL) X‖ ≤ φ₁(hℓ) ‖X‖`, with `ℓ` the one-sided Lipschitz
   constant of `L` (Definition 1), any real `ℓ` satisfying `⟪L X, X⟫ ≤ ℓ ‖X‖²` for all `X`.
@@ -27,6 +28,8 @@ Differences from the paper and what is left out:
 
 * Lemma 3 is proved only for `k = 0, 1` and only for the Frobenius norm (the paper also allows the
   spectral norm). The general `k ≥ 2` needs a calculus of `φ_k` that the library does not have.
+  For `k = 1` the step size is `h > 0` instead of `h ≥ 0`, since `φ₁(hL) X = h⁻¹ z(h)` needs
+  `h ≠ 0`; at `h = 0` the claim `‖X‖ ≤ φ₁(0) ‖X‖` is trivial.
 * `ℓ` is any constant satisfying the one-sided inequality, not necessarily the smallest one. The
   statement is therefore at least as strong as the paper's.
 * The matrix `L` is a continuous linear map on `Matrix m n ℝ`, which is the paper's situation since
@@ -69,7 +72,8 @@ theorem truncation_add_sub_le [DecidableEq n] (A E : Matrix m n ℝ) (r : ℕ) :
   have h4 : ‖EckartYoung.truncation A r - A‖ = ‖A - EckartYoung.truncation A r‖ := norm_sub_rev _ _
   linarith
 
-/-- **arXiv 2312.00172, Lemma 8, rank form.** If `rank A ≤ r` then `‖T_r(A + E) - A‖ ≤ 2‖E‖`. -/
+/-- **Corollary of arXiv 2312.00172, Lemma 8** (not printed in the paper): if `rank A ≤ r` then
+`‖T_r(A + E) - A‖ ≤ 2‖E‖`, since then `T_r(A) = A`. -/
 theorem truncation_add_sub_le_of_rank_le [DecidableEq n] {A : Matrix m n ℝ} {r : ℕ}
     (hA : A.rank ≤ r) (E : Matrix m n ℝ) :
     ‖EckartYoung.truncation (A + E) r - A‖ ≤ 2 * ‖E‖ := by
