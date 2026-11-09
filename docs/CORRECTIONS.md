@@ -31,7 +31,7 @@ true statements with a wrong intermediate step. Corrected forms are in the same 
 | Schotthöfer et al., [2205.13571](https://arxiv.org/abs/2205.13571) | Thm 2 | Decrease with α independent of t and η | `dlrt_no_uniform_descent`, `dlrt_descent` |
 | Savostianova et al., [2306.01485](https://arxiv.org/abs/2306.01485) | Thm 1 | Bound 3λη after k steps | `theorem1_false_gradient_flow`, `theorem1_false_many_steps`, `theorem1_steps` |
 | Savostianova et al., [2306.01485](https://arxiv.org/abs/2306.01485) | Prop 1 | With cond(W) = ‖W‖‖W⁺‖, and entrywise activation bounds | `proposition1_false_with_pinv`, `entrywise_activations_eq_top`, `condOn_layerNet_lowRank_le` |
-| Baumann et al., [2411.06844](https://arxiv.org/abs/2411.06844) | Thm 3 | Energy stability of scheme (15) | `theorem3_false`, `dlra_stable_of_invariant` |
+| Baumann et al., [2411.06844](https://arxiv.org/abs/2411.06844) | Thm 3 | Energy stability of scheme (15), also with the printed Gauss-Hermite weights of e^{−v²} | `theorem3_false_gaussHermite`, `theorem3_false`, `dlra_stable_of_invariant` |
 | Einkemmer, Hu, Kusch, [2212.12012](https://arxiv.org/abs/2212.12012) | Thm 4.1 | AP with no hypothesis; fails on special data, and the invertibility used in the proof fails for r ≥ 2. AP holds generically, under aᵀVⁿ ≠ 0 and ⟨∂ₓρⁿ, Xⁿ⟩ ≠ 0 | `theorem_4_1_printed_false`, `theorem_4_1`, `printed_hypothesis_not_uniform` |
 | Einkemmer, Hu, Kusch, [2212.12012](https://arxiv.org/abs/2212.12012) | Lemma 3.4, (3.11), Lemma 3.6, Thm 5.1 | Slips in the identities and in the rate | `lemma_3_4_printed_false`, `lemma_3_5_printed_false`, `lemma_3_6_printed_false`, `theorem_5_1_printed_false` |
 | Einkemmer, Hu, Wang, [2005.06571](https://arxiv.org/abs/2005.06571) | Prop 3.1 | Fails for special QR completions, when the components are dependent | `prop_3_1_false_without_independence`, `prop_3_1` |
@@ -53,6 +53,8 @@ true statements with a wrong intermediate step. Corrected forms are in the same 
 | Bonnabel, Lambert, Bach, [2407.03373](https://arxiv.org/abs/2407.03373) | Prop 8 | Residual formula drops a projector; it overestimates by ‖UUᵀH(I − UUᵀ)‖² | `prop8_printed_false`, `prop8_corrected` |
 | Naderi, Akhavan, Babaee, [2408.16591](https://arxiv.org/abs/2408.16591) | §3.3.1 | CUR step equivalent to residual collocation; the residual vanishes on the columns, not on the rows | `cur_residual_row_ne_zero`, `cur_residual_cols_eq_zero`, `cur_residual_eq_zero` |
 | Meng, Appelö, Cheng, [2410.07465](https://arxiv.org/abs/2410.07465) | Thm 4.1 | Stability ‖Xⁿ‖ ≤ C‖X⁰‖ with a source term G; holds for G = 0 and with a source term added | `midpoint_forcing_counterexample`, `midpoint_forcing_global` |
+| Carrel, [2410.17091](https://arxiv.org/abs/2410.17091) | Lemmas 3.2, 3.3; remark after 3.2 | Exactness with rank A(h) ≤ r + p; holds with rank ≤ r. The limit case r + p = min{m, n} fails for r + p = n < m | `Counterexample.drsvd_not_exact`, `Counterexample.dgn_not_exact`, `drsvd_exact_iff`, `dgn_exact`, `LimitCase.counterexample`, `range_inclusion_of_square` |
+| Scalone, Guglielmi, [2602.07437](https://arxiv.org/abs/2602.07437) | Prop 2, Thm 1 | Error term in ετ; the proof gives ε | `lowRank_error_le_eps_mul_tau_fails`, `global_error_le_tau_mul_eps_fails`, `strang_lowRank_error_le`, `strang_global_error_le` |
 
 ## Loose
 
@@ -96,6 +98,15 @@ true statements with a wrong intermediate step. Corrected forms are in the same 
 | Li, Jiang, Zhang, Xiong, [2607.27736](https://arxiv.org/abs/2607.27736) | Lemma 10, (25) | Constant 1/3 needs ∑ wⱼvⱼ² ≤ 1/3, not only normalized weights; Prop 1 holds | `lemma10_third_needs_moment`, `prop1` |
 | Sui et al., [2401.10341](https://arxiv.org/abs/2401.10341) | §4, SO vs DSO | DSO = 2·SO + const, so the stated advantage of DSO is one of weight | `doubleSoftOrth_eq` |
 | Kazashi, Marzouk, Nobile, Zoccolan, [2607.27432](https://arxiv.org/abs/2607.27432) | (38), (40) | AᵀC for CAᵀ | `printed40_not_hasDerivAt` |
+| Hou, Li, Zhang, [2107.09207](https://arxiv.org/abs/2107.09207) | Lemma 2.4, part 1 | For one fixed SVD, fails with repeated singular values; holds for "some SVD" | `fixedPoint_not_partialSVD`, `lemma_2_4` |
+| Carrel, [2410.17091](https://arxiv.org/abs/2410.17091) | Lemma 2.1 | "Fix a sketch matrix": holds with probability one for Gaussian Ω, not for every Ω | `sketch_range_ne` |
+| Dektor, Einkemmer, [2411.15990](https://arxiv.org/abs/2411.15990) | §3.2 | The S-step interpolates h on Î × Ĵ ("and"), not on the rows or columns ("or") | `bucSStep_not_interp_row`, `collocField_sel_cross` |
+| Meng, Appelö, Cheng, [2410.07465](https://arxiv.org/abs/2410.07465) | Lemma A.2 | Hypothesis needs the absolute value of Lemma A.1 | `spectral_comparison_printed_upper_counterexample` |
+| Hesthaven, Pagliantini, Ripamonti, [2007.13153](https://arxiv.org/abs/2007.13153) | §5, ‖S − S_ε‖ | √m_ε ε needs √2, since D has two blocks | `regularization_bound_block_count_fails`, `regularization_bound` |
+| Han, Einkemmer, Guo, Peng, [2610.07653](https://arxiv.org/abs/2610.07653) | Thm 4.1, last sentence | Not contractive at η = η̄; App. C has the strict bound | `inexact_preconditioned_richardson_boundary`, `inexact_preconditioned_richardson_contractive` |
+| Scalone, Guglielmi, [2602.07437](https://arxiv.org/abs/2602.07437) | Prop 2, proof | Stability exponent (L + ω)τ/2; the next line uses (L + ω)τ | `strang_stability_half_exponent_fails`, `strang_stability_localLipschitz` |
+| Haut et al., [2601.18705](https://arxiv.org/abs/2601.18705) | (7), (8), (16) | Extra ρc_vT₀ in (7)-(8), which solve (4) with T₀ dropped; (16) needs the gauge XᵀẊ = 0, WᵀẆ = 0 | `printed_eq8_not_solution`, `printed_eq7_not_source`, `printed_eq78_of_dropped_T0`, `kls_derivs_need_gauge`, `kls_derivs_of_gauge` |
+| Tian et al., [2610.06885](https://arxiv.org/abs/2610.06885) | Prop 3, proof | ℓ¹ bounded by ℓ² in the Cauchy-Schwarz step; the statement holds | `prop3_printed_step_fails`, `condition_number_le_exp` |
 
 ## Unresolved
 
