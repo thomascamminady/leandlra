@@ -39,9 +39,12 @@ splitting, explained in the paper only by the Lie–Trotter splitting) and all o
 claims; the tensor-train/QTT structure (sweeps over cores, the CUR decimation and rank
 truncation), so the exactness results concern one Galerkin step with a fixed projector; the
 Feiguin–White target `[M(t) M(t+Δt/3) M(t+2Δt/3) M(t+Δt)]`; Crank–Nicolson with fields at
-`t_{n+1/2}` (we use the trapezoidal rule); the specific Burgers interface value of eq. (45), whose
-printed case list is inconsistent, so the flux is kept arbitrary.  In `dlrx_upwind_error` the
-norm is the max-norm of `Fin n → ℝ` (any norm would do).
+`t_{n+1/2}` (we use the trapezoidal rule); the specific Burgers interface value of eq. (45),
+whose first two printed cases carry the same condition (`u_{j+1} > u_j`, `(u_{j+1} + u_j) / 2 > 0`)
+with different values (PDF p. 22), so the flux is kept arbitrary and every reading of (45) is
+covered.  The Burgers grid of Sec. 4.1 is taken periodic (`Fin n` with cyclic shifts `S^±`); the
+paper does not state the boundary condition of this example.  In `dlrx_upwind_error` the norm is
+the max-norm of `Fin n → ℝ` (any norm would do).
 -/
 
 open Set Filter Topology Finset
@@ -535,9 +538,10 @@ noncomputable def rk4C : Fin 4 → ℝ := ![0, 1 / 2, 1 / 2, 1]
 /-- **AP-RK4 with the target `[M(t) k₁ k₂ k₃ M(t+Δt)]` reproduces RK4** (arXiv 2512.15703,
 Sec. 3.3).  If the range of the projector `P` (`P² = P`, orthogonal or interpolative) contains
 `y_n`, the first three stage derivatives `k₁, k₂, k₃` and the result `y_{n+1}` of the full
-classical RK4 step, then the Galerkin RK4 step with `P` coincides with the full RK4 step; if the
-target is captured at every step, the projected trajectory is the RK4 trajectory, of order
-four.  The paper's per-core sweep and the subsequent rank truncation are not modelled; its
+classical RK4 step, then the Galerkin RK4 step with `P` coincides with the full RK4 step.  By
+induction over the steps (not formalized here), if the target is captured at every step, the
+projected trajectory is the RK4 trajectory; the fourth order of RK4 itself is not proved here.
+The paper's per-core sweep and the subsequent rank truncation are not modelled; its
 observed orders (4 for AP-RK4, 2 for AP-CN, 2 for projector splitting) are numerical and are not
 formalized. -/
 theorem apRK4_eq_rk4 {F : ℝ → E → E} {P : E →L[ℝ] E} (hP : IsIdempotentElem P) {t h : ℝ}
@@ -568,8 +572,10 @@ Sec. 3.3).  Let `(Z, z₁)` be a full Crank–Nicolson step `z₁ = y + h/2 (F(t
 (written as the 2-stage Lobatto IIIA method, so `Z 0 = y`, `Z 1 = z₁`).  If the range of the
 projector `P` contains `y_n = y` and `y_{n+1} = z₁`, then the full step solves the Galerkin CN
 equations with `P`; if moreover `F` is `L`-Lipschitz with `‖P‖ |h| L < 1`, every Galerkin CN step
-equals it.  Hence AP-CN inherits the second order of CN.  Here Crank–Nicolson is the trapezoidal
-rule; the paper's linear examples use it with the field at `t_{n+1/2}`, which is not modelled. -/
+equals it.  Hence, if the target is captured at every step, AP-CN reproduces the CN trajectory
+(the induction over the steps and the second order of CN are not formalized here).  Here
+Crank–Nicolson is the trapezoidal rule; the paper's linear examples use it with the field at
+`t_{n+1/2}`, which is not modelled. -/
 theorem apCN_eq_cn {F : ℝ → E → E} {P : E →L[ℝ] E} (hP : IsIdempotentElem P) {t h : ℝ} {y : E}
     {Z : Fin 2 → E} {z₁ : E} (hZ : IsGalerkinRKStep F cnA cnB cnC (fun _ => 1) 1 t h y Z z₁)
     (hy : y ∈ Set.range P) (hz : z₁ ∈ Set.range P) :

@@ -9,15 +9,21 @@ approximation of the paper. Lemma 5.1 says that `Uᴴ Ω U` is constant along th
 flow `U̇ = -i (I - U Uᴴ) Ω U` when `Ω` is Hermitian. Sec. 7.2 says that the error
 `D = Z - U Zᵣ` between the full flow and the lifted reduced flow satisfies `Ḋ = -i Ω D`, so
 `Dᴴ D` and the Frobenius norm of `D` are constant; the right-hand side is
-`‖Z(TL) - Ur Urᴴ Al Zl(TL)‖`, using the initial condition (6.5). The exactness part of Thm. 5.2
-says that `Z(t) = U(t) Zᵣ(t)` when `Z(TL) = Ur Zᵣ(TL)`. Prop. 3.1 says that
-`z = S u + i Ω⁻¹ S u̇` with `S² = M` and `Ω² = S⁻¹ K S⁻¹` solves `ż = -i Ω z + i Ω⁻¹ S⁻¹ f`,
-and that `zᴴ z` and `‖z‖` are constant when `f = 0`.
+`‖Z(TL) - Ur Urᴴ Al Zl(TL)‖`, using the initial condition (6.5). The recombination check of
+Sec. 5.3 (after (5.13), pp. 12-13) says that `Z(t) = U(t) Zᵣ(t)` when `Z(TL) = Ur Zᵣ(TL)`; it is
+proved here from the ODEs, without the exponential formulas (5.11) and (5.13). Prop. 3.1 says
+that `z = S u + i Ω⁻¹ S u̇` with `S² = M` and `Ω² = S⁻¹ K S⁻¹` solves
+`ż = -i Ω z + i Ω⁻¹ S⁻¹ f`, and that `zᴴ z` and `‖z‖` are constant when `f = 0`.
+
+Deviations (all make the statements more general): `S` is any invertible matrix with `S² = M`
+(not necessarily `M^{1/2}`), any Hermitian invertible `Ω` with `Ω² = S⁻¹ K S⁻¹` is allowed (so
+positive definiteness of `Ω`, `M` and `K` is not used), `U(t)` need not have orthonormal columns,
+and the data are complex, which includes the paper's real case.
 
 Not formalized: the explicit exponential form (5.11) of Thm. 5.2 (it needs the matrix exponential),
-the construction of `Ω` as a square root (any Hermitian invertible `Ω` with `Ω² = S⁻¹ K S⁻¹`
-is allowed, so positive definiteness of `Ω`, `M` and `K` is not used), and the bounds of Sec. 7.1
-and 7.3. The complex data include the paper's real case. The paper does not fix a norm in Sec. 7.2,
+the construction of `Ω` as a square root, the bound of Sec. 7.1, the triangle-inequality and
+principal-angle bound in the second half of Sec. 7.2, and (7.1) of Sec. 7.3. The paper does not
+fix a norm in Sec. 7.2,
 so the Frobenius norm and the Gram identity `Dᴴ D = const` are both stated. Calculus is entrywise:
 `MatHasDerivWithinAt` says that each entry has the stated derivative on the set, and solutions live
 on `Icc a b` as in `LeanDLRA.Foundations`.
@@ -235,10 +241,12 @@ theorem propagation_error_const {TL T : ℝ} {m l : Type*} [Fintype m] [Fintype 
     rwa [h0] at this
   exact ⟨hG', fun t ht => frobNorm_eq_of_gram (hG' t ht)⟩
 
-/-- **Exactness in Thm. 5.2** of arXiv 2606.30469. If `Z(TL) = Ur Zᵣ(TL)` (the rank-`r`
-  factorization (5.6)), then the product `U(t) Zᵣ(t)` reproduces the full solution `Z(t)`
-  exactly on `[TL, T]`, for any solutions `U`, `Zᵣ` of the left-basis and reduced ODEs. The
-  explicit exponential form (5.11) is not formalized here. -/
+/-- **Recombination at rank `r`, Sec. 5.3** of arXiv 2606.30469 (the computation after (5.13),
+  pp. 12-13). If `Z(TL) = Ur Zᵣ(TL)` (the rank-`r` factorization (5.6), with
+  `Zᵣ(TL) = Sr Vrᴴ`), then the product `U(t) Zᵣ(t)` reproduces the full solution `Z(t)` exactly
+  on `[TL, T]`, for any solutions `U`, `Zᵣ` of the left-basis ODE (5.8) and the reduced ODE
+  (5.12). The paper checks this with the exponential formulas (5.11) and (5.13); here it follows
+  from Lemma 5.1 and the ODEs, and (5.11) is not formalized. -/
 theorem left_basis_exact {TL T : ℝ} {m : Type*} [Fintype m] [Fintype r] {Ω : Matrix n n ℂ}
     (hΩ : Ωᴴ = Ω)
     {Z : ℝ → Matrix n m ℂ} {U : ℝ → Matrix n r ℂ} {Zr : ℝ → Matrix r m ℂ}
@@ -332,6 +340,36 @@ example {a b : ℝ} :
     (u := fun _ => 0) (v := fun _ => 0) (acc := fun _ => 0) (by simp) (by simp) (by simp)
     (by simp) (by simp) (fun t _ => MatHasDerivWithinAt.const 0)
     (fun t _ => MatHasDerivWithinAt.const 0) (fun t _ => by simp) (fun t _ => rfl)).1
+
+/-- Non-vacuity of `reduced_matrix_const`: `Ω = 1` is Hermitian and the constant `U = 1`
+(`1 × 1`) solves the left-basis ODE, since `1 - U Uᴴ = 0`. -/
+example {a b : ℝ} :
+    ∀ t ∈ Icc a b, ((fun _ : ℝ => (1 : Matrix (Fin 1) (Fin 1) ℂ)) t)ᴴ * 1
+        * (fun _ : ℝ => (1 : Matrix (Fin 1) (Fin 1) ℂ)) t
+      = ((fun _ : ℝ => (1 : Matrix (Fin 1) (Fin 1) ℂ)) a)ᴴ * 1
+        * (fun _ : ℝ => (1 : Matrix (Fin 1) (Fin 1) ℂ)) a :=
+  reduced_matrix_const (Ω := 1) (by simp) fun t _ =>
+    (MatHasDerivWithinAt.const 1).congr_deriv (by simp)
+
+/-- Non-vacuity of `propagation_error_const` and `left_basis_exact`: with `Ω = 1`, the zero
+solutions `Z = 0`, `U = 0`, `Zᵣ = 0`, `Ur = 0` (all `1 × 1`) satisfy all hypotheses (for any `Al`,
+`Zl`, and `Z(TL) = Ur Zᵣ(TL)` for the exactness statement). -/
+example {TL T : ℝ} (Al Zl : Matrix (Fin 1) (Fin 1) ℂ) :
+    (∀ t ∈ Icc TL T, frobNorm ((fun _ : ℝ => (0 : Matrix (Fin 1) (Fin 1) ℂ)) t
+        - (fun _ : ℝ => (0 : Matrix (Fin 1) (Fin 1) ℂ)) t
+          * (fun _ : ℝ => (0 : Matrix (Fin 1) (Fin 1) ℂ)) t)
+      = frobNorm ((fun _ : ℝ => (0 : Matrix (Fin 1) (Fin 1) ℂ)) TL
+        - (0 : Matrix (Fin 1) (Fin 1) ℂ) * ((0 : Matrix (Fin 1) (Fin 1) ℂ)ᴴ * Al * Zl))) ∧
+    ∀ t ∈ Icc TL T, (fun _ : ℝ => (0 : Matrix (Fin 1) (Fin 1) ℂ)) t
+      = (fun _ : ℝ => (0 : Matrix (Fin 1) (Fin 1) ℂ)) t
+        * (fun _ : ℝ => (0 : Matrix (Fin 1) (Fin 1) ℂ)) t := by
+  have h0 : ∀ (X' : Matrix (Fin 1) (Fin 1) ℂ), X' = 0 → ∀ t ∈ Icc TL T,
+      MatHasDerivWithinAt (fun _ : ℝ => (0 : Matrix (Fin 1) (Fin 1) ℂ)) X' (Icc TL T) t :=
+    fun X' hX' t _ => (MatHasDerivWithinAt.const 0).congr_deriv hX'.symm
+  exact ⟨(propagation_error_const (Ω := 1) (Ur := 0) (by simp) (h0 _ (by simp)) (h0 _ (by simp))
+      rfl (h0 _ (by simp)) (by simp)).2,
+    left_basis_exact (Ω := 1) (Ur := 0) (by simp) (h0 _ (by simp)) (h0 _ (by simp)) rfl
+      (h0 _ (by simp)) (by simp)⟩
 
 /-- Relation to the core (not a paper result): for real `U` and real `X`, the complex normal
   projector `(I - Ū Ūᴴ) X̄` is the entrywise complex image of the core projector `(I - leftProj

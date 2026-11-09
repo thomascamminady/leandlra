@@ -5,12 +5,14 @@ import LeanDLRA.Stiff.ImplicitSolvability
 /-!
 # Lemma 4.4 of arXiv 2002.12197: energy estimates for the Rothe scheme
 
-Finite-dimensional form of the discrete energy estimate (4.1) of Bachmayr, Eisenmann, Kieri and
+Bounded-operator form of the discrete energy estimate (4.1) of Bachmayr, Eisenmann, Kieri and
 Uschmajew for the backward-Euler (Rothe) scheme on a cone `M`. The time-discrete functional is the
 paper's (3.3), `F(v) = ‖v - u_i‖² / (2h) + ½ a(v, v) - ⟪f, v⟫`, with the symmetric form written as
-`a(u, v) = ⟪A u, v⟫` for a bounded self-adjoint operator `A`. The paper's `V` is taken to be the
-ambient space `E` with its inner product as `H`, and the `V`-norm is an abstract function `ν`
-satisfying the paper's coercivity `a(u, u) ≥ μ ν(u)²` and dual bound `⟪f, u⟫ ≤ φ ν(u)`.
+`a(u, v) = ⟪A u, v⟫` for a bounded self-adjoint operator `A` on `H` (the paper's `A(t)` maps
+`V → V*` and need not be bounded on `H`). The paper's `V` is taken to be the ambient real inner
+product space `E` (any dimension) with its inner product as `H`, and the `V`-norm is an abstract
+function `ν` satisfying the paper's coercivity `a(u, u) ≥ μ ν(u)²` and dual bound
+`⟪f, u⟫ ≤ φ ν(u)`.
 Minimality of `u_{i+1}` over the cone `S` (assumption A1) gives the optimality identity (3.1) with
 `v = u_{i+1}`. This identity is derived here from minimality (through the library's
 `rothe_cone_optimality`), not assumed; it is then fed into `rothe_energy_step`, and the one-step
@@ -18,7 +20,7 @@ estimates are summed by `rothe_energy_sum`.
 
 Proved: the optimality identity of the Rothe step (`rothe_optimality_of_minimizer`), its one-step
 energy estimate (`rothe_energy_step_of_minimizer`), the telescoped estimate (4.1) for a whole
-sequence (`rothe_energy_estimate`), and a non-vacuity example.
+sequence (`rothe_energy_estimate`), and non-vacuity examples for the first and the last.
 
 Core definitions used: `rothe_cone_optimality`, `rothe_energy_step`, `rothe_energy_sum`
 (`LeanDLRA/Stiff/ImplicitSolvability.lean`). Local definition: `rotheFunctional`, the functional
@@ -77,8 +79,9 @@ theorem rothe_optimality_of_minimizer {S : Set E} (hS : ∀ u ∈ S, ∀ s : ℝ
   rw [innerSL_apply_apply, h2] at hopt
   linear_combination hopt
 
-/-- **One-step energy estimate of the Rothe scheme** (arXiv 2002.12197, Lemma 4.4, first display),
-with the optimality identity derived from minimality rather than assumed. Here `ν` is the
+/-- **One-step energy estimate of the Rothe scheme** (arXiv 2002.12197, proof of Lemma 4.4, the
+estimate before the summation over `i`), with the optimality identity derived from minimality
+rather than assumed. Here `ν` is the
 `V`-norm, `μ > 0` the coercivity constant (`a(u, u) ≥ μ ν(u)²`), and `φ` bounds the dual
 norm of `f` (`⟪f, u⟫ ≤ φ ν(u)`). Conclusion:
 `‖u₁‖² - ‖u₀‖² + ‖u₁ - u₀‖² + h μ ν(u₁)² ≤ h φ² / μ`. -/
@@ -121,5 +124,24 @@ example : ⟪(1 / 2 : ℝ) - 1, (1 / 2 : ℝ)⟫ + 1 * ⟪ContinuousLinearMap.id
     (u₁ := 1 / 2) one_pos (Set.mem_univ _) fun v _ => by
       simp [rotheFunctional, RCLike.inner_apply, Real.norm_eq_abs, sq_abs]
       nlinarith [sq_nonneg (v - 1 / 2)]
+
+/-- Non-vacuity of `rothe_energy_estimate`: on `E = ℝ` with `S = ℝ`, `A = id`, `f = 0`, `h = 1`,
+`μ = 1`, `ν = id` and `φ = 0`, the halving sequence `u i = (1/2)^i` consists of minimisers of the
+functional (3.3), so all hypotheses hold. -/
+example (N : ℕ) :
+    ‖((1 / 2 : ℝ) ^ N)‖ ^ 2 + ∑ i ∈ Finset.range N, ‖(1 / 2 : ℝ) ^ (i + 1) - (1 / 2) ^ i‖ ^ 2 +
+        1 * 1 * ∑ i ∈ Finset.range N, id ((1 / 2 : ℝ) ^ (i + 1)) ^ 2 ≤
+      ‖((1 / 2 : ℝ) ^ 0)‖ ^ 2 + 1 / 1 * ∑ i ∈ Finset.range N, (fun _ : ℕ => (0 : ℝ)) (i + 1) ^ 2 :=
+  rothe_energy_estimate (S := Set.univ) (fun _ _ _ _ => Set.mem_univ _)
+    (A := fun _ => ContinuousLinearMap.id ℝ ℝ) (fun _ _ _ => rfl) (f := fun _ => 0)
+    (u := fun i => (1 / 2 : ℝ) ^ i) (ν := id) (φ := fun _ => 0) one_pos one_pos
+    (fun _ => Set.mem_univ _)
+    (fun i v _ => by
+      have e : (1 / 2 : ℝ) ^ (i + 1) = (1 / 2) ^ i / 2 := by rw [pow_succ]; ring
+      simp only [rotheFunctional, ContinuousLinearMap.id_apply, RCLike.inner_apply, conj_trivial,
+        Real.norm_eq_abs, sq_abs, e]
+      nlinarith [sq_nonneg (v - (1 / 2 : ℝ) ^ i / 2)])
+    (fun _ w => by simp [sq])
+    (fun _ w => by simp) N
 
 end LeanDLRA.Literature.P2002_12197

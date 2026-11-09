@@ -20,20 +20,27 @@ says that the central-flux derivative is skew-adjoint. `PhaseSpace.Fhat` is `F̂
 `lemma_3_2_K_proj` and `lemma_3_2_S_proj` are Lemma 3.2, `IsConsStep` is one step of the algorithm
 of Section 3.2 with the truncation (29), and `lemma_3_3` is Lemma 3.3, by the library's
 `consBug_euler_local_law`. `theorem_3_4` and `mass_conservation` are Theorem 3.4, `theorem_3_5` and
-`momentum_conservation` are Theorem 3.5 with one more hypothesis, and `theorem_3_4_periodic` and
-`theorem_3_5_periodic` write them out with literal integrals for `d = 1`. `tangentSet_eq`,
+`momentum_conservation` are Theorem 3.5 with the paper's support assumption of Section 3.1 made an
+explicit hypothesis, and `theorem_3_4_periodic` and `theorem_3_5_periodic` write them out with
+literal integrals for `d = 1`. `tangentSet_eq`,
 `tangentV_inter_tangentZ`, `isOrthProj_tangentProj`, `tangentProj_eq_iff`, `velocityProj_split`,
 `tangentProj_orthogonal` and `modified_steps` are Section 2.3 on two arbitrary inner product spaces.
-**Theorem 3.5 is false as stated on a periodic velocity mesh.** Its proof uses
-`(d̂_{v_s} f, v_t)_v = -δ_{st} ρ`, which needs `[v_t]_e = 0` on all faces, but the paper's velocity
-mesh is periodic and `v_t` jumps across the wrap-around faces; by `vol_one_eq_skel_jump` it has to.
-The exact law is `theorem_3_5_defect`, whose right side is `∑_s (E_s β_{st}, ψ)_x` with
-`β_{st} = ∑_e ∫_e n_s {f}_e [v_t]_e dS`, and `theorem_3_5_false_on_periodic_velocity_mesh` shows
-that it does not vanish for a concrete state with its exact Poisson field, on every periodic
-velocity mesh and for every positive weight, the Gaussian `gaussW` included. The paper assumes that
-the computational domain contains the support of the solution: that is the hypothesis `β = 0` of
+**Theorem 3.5 and the support assumption.** The paper's velocity domain is `ℝᵈ`; Section 3.1
+assumes that the computational domain contains the support of the solution in its interior (up to
+machine precision) and treats it as periodic. The proof of Theorem 3.5 uses
+`(d̂_{v_s} f, v_t)_v = -δ_{st} ρ`, which needs `{f}_e [v_t]_e = 0` on all faces; on a periodic
+velocity mesh `v_t` jumps across the wrap-around faces (by `vol_one_eq_skel_jump` it has to), so
+this is exactly where the support assumption enters. The law without that assumption is
+`theorem_3_5_defect`, whose right side is `∑_s (E_s β_{st}, ψ)_x` with
+`β_{st} = ∑_e ∫_e n_s {f}_e [v_t]_e dS`. The support assumption is the hypothesis `β = 0` of
 `theorem_3_5`, which `bdryMoment_eq_zero` derives from the velocity factors, and
-`exists_momentum_instance` shows that it holds together with all other hypotheses. Further
+`exists_momentum_instance` shows that it holds together with all other hypotheses.
+`theorem_3_5_false_on_periodic_velocity_mesh` shows that the assumption cannot be dropped: for a
+concrete state that does not vanish at the velocity boundary, with its exact Poisson field, on
+every periodic velocity mesh and for every positive weight (the Gaussian `gaussW` included), the
+defect is nonzero. That state violates the paper's assumption, so it is not a counterexample to the
+printed Theorem 3.5. (The proof prints this identity as `+δ_{s's} ρⁿ`; the sign that gives (45)
+and (38) is `-`, as in `dvMomF_vel`.) Further
 differences from the paper: the flux is central (`α = 1`), as in the paper's theorems, and the
 upwind flux is not defined; every face is flat, with one normal; the infinite mesh of
 `Ω⁽ᵛ⁾ = ℝᵈ` is not modelled, since the paper's DG section treats the computational domain as
@@ -228,7 +235,8 @@ lemma vol_pd_eq_zero (s : ι) {u : B} (hu : ∀ e, C.jump e u = 0) : C.vol (C.pd
 
 /-- A periodic mesh has no global coordinate: if `∂_t c = 1` then
 `∑_T ∫_T 1 = ∑_e ∫_e n_t [c]_e dS`, so `c` jumps somewhere as soon as the domain has positive
-measure. This is the term that the proof of Theorem 3.5 of arXiv 2503.10562 drops for `c = v_t`. -/
+measure. For `c = v_t` this is the term that the support assumption of Section 3.1 of
+arXiv 2503.10562 removes from the proof of Theorem 3.5. -/
 lemma vol_one_eq_skel_jump {t : ι} {c : B} (hc : C.pd t c = 1) :
     C.vol 1 = C.skel t (fun e => C.jump e c) := by
   rw [← hc, vol_pd]
@@ -1194,8 +1202,9 @@ noncomputable def cur (t : ι) : (𝒳 ⊗[ℝ] 𝒴) →ₗ[ℝ] 𝒳 := D.mome
 /-- The stress `σ_{t s} = (f, v_t v_s)_v`. -/
 noncomputable def stress (t s : ι) : (𝒳 ⊗[ℝ] 𝒴) →ₗ[ℝ] 𝒳 := D.moment (D.vel t * D.vel s)
 
-/-- The boundary moment `β_{st} = ∑_e ∫_e n_s {f}_e [v_t]_e dS`, an element of `𝒱⁽ˣ⁾`. It is the
-term that the proof of arXiv 2503.10562, Theorem 3.5 omits. -/
+/-- The boundary moment `β_{st} = ∑_e ∫_e n_s {f}_e [v_t]_e dS`, an element of `𝒱⁽ˣ⁾`. It vanishes
+under the support assumption of arXiv 2503.10562, Section 3.1, which the proof of Theorem 3.5 uses
+without naming this term. -/
 noncomputable def bdryMoment (s t : ι) : (𝒳 ⊗[ℝ] 𝒴) →ₗ[ℝ] 𝒳 := contr (D.bdryF s t)
 
 lemma momF_apply (W : Bv) (V : 𝒴) : D.momF W V = D.Cv.vol (D.ω * D.Vs.emb V * W) := rfl
@@ -1312,12 +1321,14 @@ theorem mass_conservation (hτ : τ ≠ 0) (h : D.IsConsStep Ef τ X S V U Kn Xa
   rw [D.Xs.inner_eq, honeX, map_sub] at h2
   simpa [sub_eq_zero] using h2
 
-/-- arXiv 2503.10562, Theorem 3.5, corrected (`v_t ∈ span U`): the exact discrete momentum equation
-on a periodic velocity mesh, tested with `ψ ∈ 𝒱⁽ˣ⁾`, where `σ_{ts} = (f, v_t v_s)_v`:
+/-- arXiv 2503.10562, Theorem 3.5 without the support assumption (`v_t ∈ span U`): the exact
+discrete momentum equation on a periodic velocity mesh, tested with `ψ ∈ 𝒱⁽ˣ⁾`, where
+`σ_{ts} = (f, v_t v_s)_v`:
 `(1/τ)(j_t¹ - j_t⁰, ψ)_x + ∑_T ∫_T (-σ_t · ∇ψ + E_t ρ ψ) + ∑_e ∫_e (n · {σ_t}_e) [ψ]_e dS
   = ∑_s (E_s β_{st}, ψ)_x`.
-The paper has `0` on the right. Its proof omits `β_{st}`, the term with `[v_t]_e`. By
-`theorem_3_5_false_on_periodic_velocity_mesh` the right side does not vanish in general. -/
+The paper has `0` on the right: `β_{st}`, the term with `[v_t]_e`, vanishes under its support
+assumption of Section 3.1 (`theorem_3_5`). Without that assumption the right side does not vanish in
+general (`theorem_3_5_false_on_periodic_velocity_mesh`). -/
 theorem theorem_3_5_defect [DecidableEq ι] (hτ : τ ≠ 0)
     (h : D.IsConsStep Ef τ X S V U Kn Xa Va Sa ZK ZW Y₁)
     (hvel : ∀ s t, D.Cv.pd s (D.vel t) = if s = t then 1 else 0) {t : ι} {velh : 𝒴}
@@ -1367,10 +1378,11 @@ theorem theorem_3_5_defect [DecidableEq ι] (hτ : τ ≠ 0)
   field_simp
   ring
 
-/-- arXiv 2503.10562, Theorem 3.5 (`v_t ∈ span U`) with the additional hypothesis `hsupp` that the
-boundary moments of `f` vanish, which is what the paper's assumption that the computational domain
-contains the support of the solution provides (see `bdryMoment_eq_zero`). It is necessary, by
-`theorem_3_5_false_on_periodic_velocity_mesh`, and it can hold, by `exists_momentum_instance`. -/
+/-- arXiv 2503.10562, Theorem 3.5, Eq. (45) (`v_t ∈ span U`, i.e. `m ≥ 1 + d`). The hypothesis
+`hsupp` that the boundary moments of `f` vanish is the paper's standing assumption of Section 3.1
+that the computational domain contains the support of the solution (see `bdryMoment_eq_zero`). It
+cannot be dropped, by `theorem_3_5_false_on_periodic_velocity_mesh`, and it can hold, by
+`exists_momentum_instance`. -/
 theorem theorem_3_5 [DecidableEq ι] (hτ : τ ≠ 0)
     (h : D.IsConsStep Ef τ X S V U Kn Xa Va Sa ZK ZW Y₁)
     (hvel : ∀ s t, D.Cv.pd s (D.vel t) = if s = t then 1 else 0) {t : ι} {velh : 𝒴}
@@ -1870,9 +1882,9 @@ theorem theorem_3_4_periodic {Ef : Unit → Broken Mx} {τ : ℝ} (hτ : τ ≠ 
   rw [← e3]
   exact key
 
-/-- arXiv 2503.10562, Theorem 3.5 written out for `d = 1`, under the support hypothesis `hsupp`
-that `theorem_3_5_false_on_periodic_velocity_mesh` shows to be necessary: the current and the
-stress `σ = (f, v²)_v` satisfy
+/-- arXiv 2503.10562, Theorem 3.5 written out for `d = 1`, under the paper's support assumption
+`hsupp`, which `theorem_3_5_false_on_periodic_velocity_mesh` shows cannot be dropped: the current
+and the stress `σ = (f, v²)_v` satisfy
 `(1/τ) ∑_T ∫_T (j¹ - j⁰) ψ + ∑_T ∫_T (-σ ψ' + E ρ ψ) + ∑_e {σ}_e [ψ]_e = 0`. -/
 theorem theorem_3_5_periodic {Ef : Unit → Broken Mx} {τ : ℝ} (hτ : τ ≠ 0)
     {X : I → DGPoly mx (oneW Mx) p}
@@ -2093,12 +2105,17 @@ noncomputable def PhaseSpace.momentumResidual {ι 𝓣x 𝓕x Bx Ax 𝓣v 𝓕v 
       ((∑ s, D.Cx.normal e s • D.Cx.avg e (D.Xs.emb (D.stress t s Y₀))) *
         D.Cx.jump e (D.Xs.emb ψ))
 
-/-- **arXiv 2503.10562, Theorem 3.5 is false on a periodic velocity mesh.** For every periodic mesh
+/-- **arXiv 2503.10562, Theorem 3.5 needs its support assumption.** Without the standing
+assumption of Section 3.1 that the computational domain contains the support of the solution,
+Eq. (45) fails on a periodic velocity mesh. For every periodic mesh
 of a velocity interval, every positive weight `ω` (the Gaussian included) and `q ≥ 1`, take
 `x ∈ [0, 1]` with one element and `p = 1`, and the positive state `f = ρ(x) ω(v) / ∫ ω` with
 `ρ = x + 1/2`. Its velocity basis contains `1` and `v`, `E = x (1 - x)/2 - 1/12` is its exact
 Poisson field, a conservative step exists, and the left side of Theorem 3.5 is nonzero for `ψ = x`,
-whatever `τ ≠ 0`. By `theorem_3_5_defect` it equals `(E β, ψ)_x`, and `∫₀¹ E ρ x dx = -1/360`. -/
+whatever `τ ≠ 0`. By `theorem_3_5_defect` it equals `(E β, ψ)_x`, and `∫₀¹ E ρ x dx = -1/360`.
+This state does not vanish at the ends of the velocity interval, so it violates the paper's support
+assumption: it is not a counterexample to the printed theorem, and the name records only that the
+identity fails on a periodic velocity mesh without that assumption. -/
 theorem theorem_3_5_false_on_periodic_velocity_mesh {Mv q : ℕ} (mv : Mesh1D Mv) (ω : PosWeight Mv)
     (hq : 1 ≤ q) {τ : ℝ} (hτ : τ ≠ 0) :
     ∃ (n k : ℕ) (Xs : Fin n → DGPoly unitMesh (oneW 0) 1) (S : Matrix (Fin n) (Fin n) ℝ)

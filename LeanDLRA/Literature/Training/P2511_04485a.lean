@@ -28,12 +28,16 @@ proof is beyond the scope of the paper.  `inner_genHessian_le` is the Loewner bo
 (`genHessian`; `id_mem_genHessian` shows that the set is not empty), and `inner_hessian_le` is its
 form at points of twice differentiability.  The paper has no proof of either.
 
-**A false claim.**  Section 4.1 says that `R_{W',ε}(W)` tends to `0` as `ε → 0` for `W` whose column
-and row spaces are orthogonal to the columns of `U` and `V`.  This is the wrong way round: eq. (4)
-gives such `W` the weight one.  `not_tendsto_reweight_zero` proves that the limit is not `0` unless
-`W = 0`, `exists_orthogonal_ne_zero` gives such `W ≠ 0` for every `W'` without full rank, and the
-correct statement is `tendsto_reweight`, `tendsto_reweight_zero_iff`:
-`R_{W',ε}(W) → (I - U Uᵀ) W (I - V Vᵀ)`.
+**A false claim.**  Section 4.1 (p. 6, after eq. (7)) says that `R_{W',ε}(W)` tends to `0` if `ε`
+follows the dynamics of (7) and `ε → 0`, for `W` whose column and row spaces are orthogonal to the
+columns of `U` and `V`.  This is the wrong way round: eq. (4) gives such `W` the weight one, so that
+`R_{W',ε}(W) = W` for every `W'` and every `ε > 0`, with `U`, `V` the leading `r(W', ε)` singular
+vectors of Definition 4.1 (`reweight_eq_self_of_orthogonal`).  Hence the claim fails along every
+sequence `(W'_k, ε_k)`, in particular along the dynamics (7), where the expansion point changes
+with `ε` (`not_tendsto_reweight_zero_seq`), and for a fixed `W'` and `ε → 0`
+(`not_tendsto_reweight_zero`).  `exists_orthogonal_ne_zero` gives such `W ≠ 0` for every `W'`
+without full rank, and the correct statement for a fixed `W'` is `tendsto_reweight`,
+`tendsto_reweight_zero_iff`: `R_{W',ε}(W) → (I - U Uᵀ) W (I - V Vᵀ)`.
 
 **The proofs differ from the paper's.**  The paper quotes the Lewis-Sendov theorem for Lemma A.2.
 Here everything rests on the identity `sq_norm_conj_sub`,
@@ -1654,12 +1658,13 @@ theorem tendsto_reweight_zero_iff (h : IsSVD W' U V) (W : Matrix (Fin d₁) (Fin
     have h2 := tendsto_reweight h W
     rwa [h1] at h2
 
-/-- **Counterexample to a claim in Section 4.1** of arXiv 2511.04485: the paper says that
-`R_{W',ε}(W)` tends to `0` as `ε → 0` for matrices `W` whose column and row spaces are orthogonal
-to the columns of `U` and `V`.  The opposite holds: by eq. (4) such a `W` has weight one, and the
-limit is `W` itself, so that it is not `0` unless `W = 0`.  (The vanishing limit concerns the
-complementary matrices, see `tendsto_reweight_zero_iff`.)  Such `W ≠ 0` exist whenever `W'` does not
-have full rank, see `exists_orthogonal_ne_zero`. -/
+/-- **Counterexample to a claim in Section 4.1** of arXiv 2511.04485, for a fixed expansion point
+`W'`: the paper says that `R_{W',ε}(W)` tends to `0` as `ε → 0` for matrices `W` whose column and
+row spaces are orthogonal to the columns of `U` and `V`.  The opposite holds: by eq. (4) such a `W`
+has weight one, and the limit is `W` itself, so that it is not `0` unless `W = 0`.  (The vanishing
+limit concerns the complementary matrices, see `tendsto_reweight_zero_iff`.)  Such `W ≠ 0` exist
+whenever `W'` does not have full rank, see `exists_orthogonal_ne_zero`.  For the paper's reading
+with `ε` following (7), where `W'` changes too, see `not_tendsto_reweight_zero_seq`. -/
 theorem not_tendsto_reweight_zero (h : IsSVD W' U V) {W : Matrix (Fin d₁) (Fin d₂) ℝ}
     (hU : (topCols (rank_le_left W') U)ᵀ * W = 0) (hV : W * topCols (rank_le_right W') V = 0)
     (hW : W ≠ 0) : ¬ Tendsto (fun ε => reweight ε W' W) (𝓝[>] 0) (𝓝 0) := by
@@ -1670,6 +1675,44 @@ theorem not_tendsto_reweight_zero (h : IsSVD W' U V) {W : Matrix (Fin d₁) (Fin
       rw [Matrix.sub_mul, Matrix.one_mul, Matrix.mul_assoc, hU, Matrix.mul_zero, sub_zero]
     rw [h2, Matrix.mul_sub, Matrix.mul_one, ← Matrix.mul_assoc, hV, Matrix.zero_mul, sub_zero]
   rwa [h1]
+
+/-- By eq. (4), `R_{W',ε}` is the identity on the matrices `W` whose column and row spaces are
+orthogonal to the leading `r(W', ε)` left and right singular vectors `U`, `V` of `W'` (the `U`, `V`
+of Definition 4.1), for every `W'` and every `ε > 0`.
+Supporting result for arXiv 2511.04485, Section 4.1, not stated in the paper. -/
+theorem reweight_eq_self_of_orthogonal (hε : 0 < ε) (h : IsSVD W' U V)
+    {W : Matrix (Fin d₁) (Fin d₂) ℝ} (hU : (topCols (rankEnv_le_left ε W') U)ᵀ * W = 0)
+    (hV : W * topCols (rankEnv_le_right ε W') V = 0) : reweight ε W' W = W := by
+  rw [reweight_eq_four_blocks hε h W]
+  set Ur := topCols (rankEnv_le_left ε W') U
+  set Vr := topCols (rankEnv_le_right ε W') V
+  set Si := sigmaInv W' (rankEnv ε W')
+  have h1 : Ur * Si * Urᵀ * W = 0 := by rw [Matrix.mul_assoc, hU, Matrix.mul_zero]
+  have h2 : (1 - Ur * Urᵀ) * W * Vr = 0 := by rw [Matrix.mul_assoc, hV, Matrix.mul_zero]
+  have h3 : (1 - Ur * Urᵀ) * W * (1 - Vr * Vrᵀ) = W := by
+    have h4 : (1 - Ur * Urᵀ) * W = W := by
+      rw [Matrix.sub_mul, Matrix.one_mul, Matrix.mul_assoc, hU, Matrix.mul_zero, sub_zero]
+    rw [h4, Matrix.mul_sub, Matrix.mul_one, ← Matrix.mul_assoc, hV, Matrix.zero_mul, sub_zero]
+  rw [h1, h2, h3]
+  simp
+
+/-- **Counterexample to the claim of Section 4.1** of arXiv 2511.04485 **along the dynamics (7)**:
+there the expansion point `W'_k` and the smoothing parameter `ε_k` change together.  Whatever the
+sequence `(W'_k, ε_k)`, `ε_k > 0`, if `W ≠ 0` is orthogonal in the sense of the paper to the leading
+`r(W'_k, ε_k)` singular vectors of `W'_k` for every `k`, then `R_{W'_k,ε_k}(W) = W` for every `k`
+(`reweight_eq_self_of_orthogonal`), so that it does not tend to `0`. -/
+theorem not_tendsto_reweight_zero_seq {e : ℕ → ℝ} (he : ∀ k, 0 < e k)
+    {Wk : ℕ → Matrix (Fin d₁) (Fin d₂) ℝ} {Uk : ℕ → Matrix (Fin d₁) (Fin d₁) ℝ}
+    {Vk : ℕ → Matrix (Fin d₂) (Fin d₂) ℝ} (h : ∀ k, IsSVD (Wk k) (Uk k) (Vk k))
+    {W : Matrix (Fin d₁) (Fin d₂) ℝ}
+    (hU : ∀ k, (topCols (rankEnv_le_left (e k) (Wk k)) (Uk k))ᵀ * W = 0)
+    (hV : ∀ k, W * topCols (rankEnv_le_right (e k) (Wk k)) (Vk k) = 0) (hW : W ≠ 0) :
+    ¬ Tendsto (fun k => reweight (e k) (Wk k) W) atTop (𝓝 0) := by
+  have e1 : (fun k => reweight (e k) (Wk k) W) = fun _ => W :=
+    funext fun k => reweight_eq_self_of_orthogonal (he k) (h k) (hU k) (hV k)
+  rw [e1]
+  intro h0
+  exact hW (tendsto_nhds_unique tendsto_const_nhds h0)
 
 /-- The hypotheses of `not_tendsto_reweight_zero` hold for some `W ≠ 0` whenever `W'` does not have
 full rank.

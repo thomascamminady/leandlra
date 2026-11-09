@@ -16,15 +16,21 @@ symmetric matrix, `C(t) = Uᵀ C_Y U ∈ ℝ^{d×d}`, `P_U = Uᵀ U`, `P_U^⊥ =
   time derivative of this identity; the `dt` form is the derivative at `t`.
 * `reducedCov_instance`: a non-vacuous instance (`k = 1`, `d = 2`) where the hypotheses hold and
   the derivative of `C` is zero.
+* `printed40_not_hasDerivAt`: the printed form `A C + Aᵀ C + ...` of (40) fails in an instance of
+  (39) (`ce_hasDerivAt` is the derivative given by `reducedCov_hasDerivAt` there).
 * Helper lemmas: `range_UtU_eq` (range of `Uᵀ U` equals range of `C` when `C_Y` is invertible),
   `proj_eq_of_range` (orthogonal projectors are determined by their range), and `alg_identity`
   (the matrix algebra that turns the product rule into (40)).
 
 Differences from the paper, all deliberate:
 
-* The printed (40) reads `A(t) C + A(t)ᵀ C`. The paper's own derivation (38) and the symmetry of
-  `C` give `A C + C Aᵀ`, which is what is proved here. The literal `A C + Aᵀ C` is not symmetric in
-  general, so it cannot be the derivative of the symmetric `C`; this is recorded as a likely typo.
+* The printed (40) (and the last line of (38)) reads `A(t) C + A(t)ᵀ C`. The first line of (38)
+  and the symmetry of `C` give `A C + C Aᵀ`, which is what is proved here. The printed form is not
+  the derivative in general: `printed40_not_hasDerivAt` gives an instance of (39) (`U = 1`,
+  `A = [[0,1],[0,0]]`, `C_Y(0) = diag(1,2)`, `Q = H = 0`) where `C` does not have the printed
+  derivative.
+* The printed (40) writes the observation term as `C H(t) R⁻¹ H(t) C`, which only type-checks when
+  `H` is square. The file uses `C Hᵀ R⁻¹ H C`, as in (38) and (39).
 * The reduced system (39) is taken as hypotheses at time `t`. Its derivation from the Itô
   calculus of (28)-(29) is not formalized. Coefficients `A`, `Q`, `H`, `R⁻¹` are fixed matrices
   (their values at `t`).
@@ -139,7 +145,8 @@ Let `P_C` be the orthogonal projector onto the range of `C = Uᵀ C_Y U` (symmet
 range equal to that of `C`). Then `C(s) = U(s)ᵀ C_Y(s) U(s)` has derivative at `t`
 `A C + C Aᵀ + Q - P_C^⊥ Q P_C^⊥ - C Hᵀ R⁻¹ H C`, with `P_C^⊥ = 1 - P_C`.
 
-The paper prints `A C + Aᵀ C`; see the module docstring for why `C Aᵀ` is proved instead. -/
+The paper prints `A C + Aᵀ C` and `C H R⁻¹ H C`; see the module docstring and
+`printed40_not_hasDerivAt` for why `C Aᵀ` and `C Hᵀ R⁻¹ H C` are proved instead. -/
 theorem reducedCov_hasDerivAt (A : Matrix d d ℝ) (Q : Matrix d d ℝ)
     (H : Matrix m d ℝ) (Rinv : Matrix m m ℝ) (U : ℝ → Matrix k d ℝ) (CY : ℝ → Matrix k k ℝ)
     (U' : Matrix k d ℝ) (CY' : Matrix k k ℝ) (PC : Matrix d d ℝ) {t : ℝ}
@@ -226,5 +233,68 @@ theorem reducedCov_instance :
   convert h using 1
   ext i j
   fin_cases i <;> fin_cases j <;> simp [instU, instQ, Matrix.mul_apply, Fin.sum_univ_two]
+
+/-! ### The printed form of (40) is not the derivative
+
+`k = d = 2`, `m = 1`, `U = 1` (constant), `A = [[0,1],[0,0]]`, `Q = 0`, `H = 0`, `R⁻¹ = 0`,
+`C_Y(s) = C₀ + s (A C₀ + C₀ Aᵀ)` with `C₀ = diag(1, 2)`. Then (39) holds at `t = 0`, `P_C = 1`, and
+`C = C_Y` has derivative `A C₀ + C₀ Aᵀ = [[0,2],[2,0]]` at `0`, while the printed right-hand side
+`A C₀ + Aᵀ C₀ = [[0,2],[1,0]]` differs in the entry `(1, 0)`. -/
+
+/-- The drift `A = [[0,1],[0,0]]` of the counterexample. -/
+def ceA : Matrix (Fin 2) (Fin 2) ℝ := !![0, 1; 0, 0]
+
+/-- The reduced covariance `C₀ = diag(1, 2)` at time `0` in the counterexample. -/
+def ceC0 : Matrix (Fin 2) (Fin 2) ℝ := !![1, 0; 0, 2]
+
+/-- The curve `C_Y(s) = C₀ + s (A C₀ + C₀ Aᵀ)` of the counterexample. -/
+def ceCY (s : ℝ) : Matrix (Fin 2) (Fin 2) ℝ := ceC0 + s • (ceA * ceC0 + ceC0 * ceAᵀ)
+
+theorem ceCY_zero : ceCY 0 = ceC0 := by simp [ceCY]
+
+theorem ceC0_det : IsUnit ceC0.det := by
+  simp [ceC0, Matrix.det_fin_two]
+
+/-- `reducedCov_hasDerivAt` in the counterexample: the hypotheses (39) hold at `t = 0`, and the
+derivative of `C = Uᵀ C_Y U` is `A C₀ + C₀ Aᵀ`. -/
+theorem ce_hasDerivAt :
+    HasDerivAt (fun s => (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * ceCY s * 1)
+      (ceA * ((1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * ceCY 0 * 1)
+        + ((1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * ceCY 0 * 1) * ceAᵀ + 0
+        - (1 - (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * 1) * 0 * (1 - (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * 1)
+        - ((1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * ceCY 0 * 1)
+          * ((0 : Matrix (Fin 1) (Fin 2) ℝ)ᵀ * (0 : Matrix (Fin 1) (Fin 1) ℝ)
+            * (0 : Matrix (Fin 1) (Fin 2) ℝ))
+          * ((1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * ceCY 0 * 1)) 0 := by
+  have hdet : IsUnit (ceCY 0).det := by rw [ceCY_zero]; exact ceC0_det
+  have hCY : HasDerivAt ceCY (ceA * ceC0 + ceC0 * ceAᵀ) 0 := by
+    have h := ((hasDerivAt_id (0 : ℝ)).smul_const (ceA * ceC0 + ceC0 * ceAᵀ)).const_add ceC0
+    rw [one_smul] at h
+    exact h
+  refine reducedCov_hasDerivAt (k := Fin 2) (d := Fin 2) (m := Fin 1) ceA 0 0 0
+    (fun _ => 1) ceCY 0 (ceA * ceC0 + ceC0 * ceAᵀ) ((1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * 1)
+    (hasDerivAt_const _ _) hCY (by simp) ?_ hdet (by simp) (by simp) ?_ (by simp) (by simp)
+    (range_UtU_eq 1 (ceCY 0) (ceCY 0)⁻¹ (by simp) (Matrix.mul_nonsing_inv _ hdet))
+  · rw [ceCY_zero]
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [ceC0]
+  · rw [ceCY_zero]
+    simp
+
+/-- The printed right-hand side of (40), `A C + Aᵀ C + Q - P_C^⊥ Q P_C^⊥ - C Hᵀ R⁻¹ H C`, is not
+the derivative of `C = Uᵀ C_Y U` in the instance `ce_hasDerivAt` of the reduced system (39). -/
+theorem printed40_not_hasDerivAt :
+    ¬ HasDerivAt (fun s => (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * ceCY s * 1)
+      (ceA * ((1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * ceCY 0 * 1)
+        + ceAᵀ * ((1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * ceCY 0 * 1) + 0
+        - (1 - (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * 1) * 0 * (1 - (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * 1)
+        - ((1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * ceCY 0 * 1)
+          * ((0 : Matrix (Fin 1) (Fin 2) ℝ)ᵀ * (0 : Matrix (Fin 1) (Fin 1) ℝ)
+            * (0 : Matrix (Fin 1) (Fin 2) ℝ))
+          * ((1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * ceCY 0 * 1)) 0 := by
+  intro h
+  have h10 := congrFun (congrFun (h.unique ce_hasDerivAt) 1) 0
+  rw [ceCY_zero] at h10
+  norm_num [ceA, ceC0, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct] at h10
 
 end LeanDLRA.Literature.P2607_27432
