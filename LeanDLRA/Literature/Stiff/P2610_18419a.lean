@@ -8,10 +8,12 @@ This module formalizes the mass-lumped matrix ODE of Section 2 (eqs. (2.16), (2.
 (2.22)) of Saha, Yang and Yin, arXiv 2610.18419, in the abstract matrix setting: diagonal positive
 mass matrices `M_x = diagonal dx`, `M_y = diagonal dy`, and stiffness matrices `A_x`, `A_y`
 (`A_y` symmetric, both positive semidefinite as quadratic forms, the property the paper proves in
-Lemma 4.2(i)). It proves
+Lemma 4.2(i), stated there for periodic boundary conditions). It proves
 that the operator `𝓛(W) = L_x W + W L_yᵀ + α W` with `L_x = -M_x⁻¹ A_x`, `L_y = -M_y⁻¹ A_y` is
 dissipative for `α ≤ 0` in the weighted inner product `(Z, W)_M = (M_x Z M_y, W)_F`, that is,
-`(𝓛(W), W)_M ≤ 0` (`massLumped_dissipative`). The proof is direct from the matrix form; the
+`(𝓛(W), W)_M ≤ 0` (`massLumped_dissipative`). This is not a numbered statement of the paper: by
+Lemma 2.1 it is the matrix form of `-(∇w_h, ∇w_h)_h + α (w_h, w_h)_h ≤ 0`, the inequality behind
+the stability estimates (2.25) and Theorem 3.6 (ii). The proof is direct from the matrix form; the
 identity (2.18) of Lemma 2.1 from [26] is not used.
 
 Core definitions used: none (the file works on `Matrix` from Mathlib). Local definitions added:
@@ -26,9 +28,11 @@ Not formalized, and left out on purpose:
 * Algorithm 4.1 (sparse-by-small Sylvester solver) is already in the library as
   `sylvester_iff_shifted_columns` and `shifted_existsUnique` in `Stiff/ImplicitSolvability.lean`,
   and is not duplicated here. The banded cost analysis is not formalized.
-* The nonsingularity of the shifted systems `A + λ_j I` from `λ_j > 0` (paper, Section 4) is
-  the content of `shifted_existsUnique` there, which takes the positive semidefiniteness of `A`
-  as hypothesis.
+* The nonsingularity of the shifted systems `A + λ_j I` from `λ_j > 0` (paper, Section 4, proof
+  of Lemma 4.3 (i)) is not formalized here. `shifted_existsUnique` there assumes `xᵀ A x ≥ 0`
+  for all `x`, which the paper's `A = Δt M_x⁻¹ A_x` need not satisfy (it is only similar to the
+  positive semidefinite `Δt M_x^{-1/2} A_x M_x^{-1/2}`); the companion module `P2610_18419b`
+  proves invertibility of `Δt M⁻¹ S + λ I` directly (`shift_mul_inv_isUnit`).
 * Lemma 2.1 (identity (2.18)) and the FEM assembly of `M_x`, `A_x` from Gauss–Lobatto quadrature
   are cited in the paper and not re-derived here.
 -/

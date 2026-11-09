@@ -11,25 +11,31 @@ Formalized results.
 * **Lemma 4.1 (SVD contraction)**: `svdTrunc_contract`, `svdTrunc_energy_le`. Real Frobenius
   matrices, not the paper's complex ones. `svdTrunc U d V S = U diag(d·1_S) Vᵀ` is the partial
   SVD truncation of `Z = U diag(d) Vᵀ` (orthonormal columns in `U`, `V`) keeping the singular
-  indices in `S`; the paper keeps the leading `r`. The operators `C_j`, `D_k` are arbitrary
-  matrices. No singular-value gap is used.
+  indices in `S`, any subset as in the lemma (the truncation `T_θ` of (2.5) keeps the leading
+  `r`). The operators `C_j`, `D_k` are arbitrary matrices. No singular-value gap is used.
 * **Section 5.4 (residual control cannot select the root)**: `cubic_stage_roots` and
   `cubic_stage_root_eq_zero`, the scalar algebra for `z - τ z³ = 0`. Not formalized: the claim that
   the errors of the nonzero roots grow as `τ → 0`, since the paper gives no precise error there.
 * **Theorem 5.1 (energy bound and uniqueness of the implicit stage)**, partial:
   `implicit_stage_energy_and_unique`. Proved: every solution in the energy ball satisfies the
   energy bound `E(Z) ≤ q_{n+1}`, and two solutions in the ball coincide. NOT formalized: the
-  existence part, which the paper proves by Brouwer degree (Mathlib lacks it). Setting: abstract
-  real inner product space `E`, `A` continuous, symmetric and positive semidefinite,
-  `E(Z) = ⟪A Z, Z⟫`, `energyBall A Q` the closure of `{E < Q²}` as in the paper, `G` the field
-  `F(t_{n+1}, ·)` at one step.
+  existence part, which the paper proves by Brouwer degree (Mathlib lacks it). Not restated: that
+  the solution lies in the open ball (immediate from `q_{n+1} < Q²`, which is not assumed here)
+  and that its SVD truncation satisfies the same bound (Lemma 4.1, `svdTrunc_energy_le`, for
+  matrices). Setting: abstract real inner product space `E` (the paper's complex `H_h` with
+  `Re ⟨·, ·⟩` is one), `A` continuous, symmetric and positive semidefinite (the paper's `A_h` is
+  positive definite), `E(Z) = ⟪A Z, Z⟫`, `energyBall A Q` the closure of `{E < Q²}` (for `Q > 0`
+  this is the paper's `Ω̄_Q = {E ≤ Q²}`, since `E(s Z) = s² E(Z)`), `G` the field `F(t_{n+1}, ·)`
+  at one step.
 * **Theorem 5.2 (robust error bound for implicit SAT)**: `sat_robust_error_bound`. Full statement,
-  on an abstract real inner product space `E`, with the library's one-sided condition
-  `IsOneSidedLipschitzOn` on the set `K` in place of `Ω̄_Q`. The summed bound (5.8) with
-  `exp(μ T/(1 - ζ))` is proved by induction, not with the library's Grönwall lemmas.
+  on an abstract real inner product space `E` (as for Theorem 5.1, this covers the paper's
+  complex `H_h`), with the library's one-sided condition `IsOneSidedLipschitzOn` on an arbitrary
+  set `K` in place of `Ω̄_Q`, and `T = t_N`. The summed bound (5.8) with `exp(μ T/(1 - ζ))` is
+  proved by induction, not with the library's Grönwall lemmas.
 
 Not formalized: Lemma 6.1 and Theorem 6.2 (mesh-robust first-order bound for reaction-diffusion,
-which needs discrete Fourier analysis).
+which needs discrete Fourier analysis), and Section 7 (Vlasov–Poisson: Lemmas 7.1, 7.4,
+Theorems 7.2, 7.3, 7.5).
 
 Core definitions used: `IsOneSidedLipschitzOn` (`Foundations/OneSided.lean`) and the Frobenius
 lemmas `LeanDLRA.Frobenius.norm_mul_of_orthonormal`, `norm_mul_transpose_of_orthonormal`,

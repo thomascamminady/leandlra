@@ -82,7 +82,10 @@ if `α+β<1`, `E_0^k = 0` and `E^{k+1}_{n+1} ≤ α E^k_n + β E^{k+1}_n + κ` (
 of Lemma 3.2 with the constants (16)), then
 `max_n E_n^k ≤ (α/(1-β))^k max_n E_n^0 + κ/(1-α-β)`.
 Difference: the abstract sequence `e k n` replaces the norms `‖E_n^k‖`; the maxima are `iSup`s over
-all `n : ℕ`, and boundedness of `n ↦ E_n^0` is assumed (it is a maximum in the paper). -/
+all `n : ℕ`, and boundedness of `n ↦ E_n^0` is assumed (it is a maximum in the paper).
+The hypothesis `E_0^k = 0` is not in the printed theorem; the paper uses it implicitly: it is the
+condition `e_0^k = 0` of (18) in Lemma 3.4, and the proof of (17) takes the maximum of (15) over
+`n`, which bounds only `E_{n+1}^{k+1}`. -/
 theorem thm_3_3 (hα : 0 ≤ α) (hβ : 0 ≤ β) (hκ : 0 ≤ κ) (hαβ : α + β < 1)
     (h0 : ∀ k, e k 0 = 0)
     (hrec : ∀ k n, e (k + 1) (n + 1) ≤ α * e k n + β * e (k + 1) n + κ)
@@ -94,7 +97,9 @@ theorem thm_3_3 (hα : 0 ≤ α) (hβ : 0 ≤ β) (hκ : 0 ≤ κ) (hαβ : α +
   exact ⟨⟨_, by rintro _ ⟨n, rfl⟩; exact hb n⟩, ciSup_le hb⟩
 
 /-- **Thm 3.6 (second linear bound)** (arXiv 2203.08455, Thm 3.6): with `e^0_n ≤ γ`,
-`e^k_n ≤ α^k (1+β)^{n-1} γ + κ/(1-α-β)` for all `k` and `n ≥ 1`.  The paper takes `γ = max E_n^0`.
+`e^k_n ≤ α^k (1+β)^{n-1} γ + κ/(1-α-β)` for all `k` and `n ≥ 1`.  The paper takes `γ = max E_n^0`
+and states all `n ∈ ℕ`; `n = 0` (where `(1+β)^{-1}` appears) is excluded here and is trivial since
+`E_0^k = 0`. As in `thm_3_3`, `E_0^k = 0` is the paper's implicit condition from (18).
 -/
 theorem thm_3_6 (hα : 0 ≤ α) (hβ : 0 ≤ β) (hκ : 0 ≤ κ) (hαβ : α + β < 1)
     (h0 : ∀ k, e k 0 = 0)
@@ -164,9 +169,11 @@ private lemma prodTr_nonneg (k n : ℕ) : 0 ≤ prodTr k n :=
 `e^k_n ≤ α^k / (k-1)! · ∏_{j=2}^k (n-j) / (1-β) · γ + κ/(1-α-β)` where `e^0_n ≤ γ`
 (the paper takes `γ = max E_n^0`).
 Difference from the paper: the factors `n - j` are truncated subtractions in `ℕ` (so the product is
-`0` for `n ≤ k`, i.e. finite termination).  With signed factors the displayed formula is not
-correct for `n = 1`, `k = 2` (the product is `-1`), so the truncated reading is the true statement.
-The case `k = 0` is excluded (`(k-1)!` is undefined). -/
+`0` for `n ≤ k`).  The printed (21) says "for all `n, k ∈ ℕ`" with signed factors, but its proof
+treats only `n ≥ k + 1` (for `n ≤ k` the `γ`-term of (19) vanishes).  For `n ≤ 1 < k` with `k` even
+the signed product is negative, and the signed reading does not follow from (15) alone: the
+`example` after this theorem gives a sequence satisfying (15) for which it fails at `n = 1, k = 2`.
+The case `k = 0` is excluded (`(k-1)!` is undefined). `E_0^k = 0` is as in `thm_3_3`. -/
 theorem thm_3_5 (hα : 0 ≤ α) (hβ : 0 ≤ β) (hκ : 0 ≤ κ) (hαβ : α + β < 1)
     (h0 : ∀ k, e k 0 = 0)
     (hrec : ∀ k n, e (k + 1) (n + 1) ≤ α * e k n + β * e (k + 1) n + κ)
@@ -265,6 +272,20 @@ theorem thm_3_5 (hα : 0 ≤ α) (hβ : 0 ≤ β) (hκ : 0 ≤ κ) (hαβ : α +
           nlinarith [hsup]
   have := hmain k hk n
   simpa [U, prodTr] using this
+
+/-- The signed reading of (21) does not follow from (15) alone. With `α = 1/2`, `β = 0`, `κ = 1`,
+`γ = 100`, the sequence `e k 0 = 0`, `e 0 n = 100`, `e k n = 1` (`k, n ≥ 1`) satisfies (15) and
+`E_n^0 ≤ γ`, but at `n = 1`, `k = 2` the signed right side of (21) is
+`(1/2)^2 · (1 - 2) / 1! · 100 + 2 = -23 < 1 = e 2 1`. -/
+example : ∃ e : ℕ → ℕ → ℝ, (∀ k, e k 0 = 0) ∧
+    (∀ k n, e (k + 1) (n + 1) ≤ (1 / 2) * e k n + 0 * e (k + 1) n + 1) ∧ (∀ n, e 0 n ≤ 100) ∧
+    (1 / 2 : ℝ) ^ 2 * (∏ j ∈ Icc (2 : ℕ) 2, ((1 : ℝ) - j)) / ((2 - 1).factorial : ℝ)
+      * (100 / (1 - 0)) + 1 / (1 - 1 / 2 - 0) < e 2 1 := by
+  refine ⟨fun k n => if n = 0 then 0 else if k = 0 then 100 else 1, fun k => by simp,
+    fun k n => ?_, fun n => ?_, ?_⟩
+  · by_cases hn : n = 0 <;> by_cases hk : k = 0 <;> simp [hn, hk]
+  · by_cases hn : n = 0 <;> simp [hn]
+  · norm_num
 
 end Recursion
 

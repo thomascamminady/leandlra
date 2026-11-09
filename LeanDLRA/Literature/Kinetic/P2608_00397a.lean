@@ -6,21 +6,21 @@ import LeanDLRA.OpenProblems.Conservation.Part3c
 # Structure-preserving DLRA for stochastic Vlasov–Poisson (arXiv 2608.00397)
 
 Cui, Scalone, *Structure-Preserving Dynamical Low-Rank Approximations for Stochastic Vlasov--Poisson
-Equations*, version 2.  Version 2 numbers the results of Section 4 Theorem 2, Lemma 3, Theorem 4,
-Remark 5, Lemma 6, Theorem 7; the slice header called them Theorem 4.1, Lemma 4.2, Theorem 4.3,
-Remark 4.4, Lemma 4.5, Theorem 4.6.  This module writes out the fully discrete scheme on finite
-grids, with the quadrature weights, the weight `f₀ᵥ`, the velocity nodes and the discrete
-derivatives (`Grid`), the transport operator, the stochastic operators `S_EM` and `S_Heun` with the
-predictor of Eq. (25), the K-step, the S-step started from the augmented state and the conservative
-truncation of Section 3.3 (`AugBUGStep`, `IsStep`), for both integrators (`Integrator`), and it
-proves for them Eq. (31) and (32), the local laws of mass, momentum and energy (`local_mass`,
-`local_momentum`, `local_energy`), that the increments lie in the augmented spatial basis
-(`momentum_increment_mem`, `energy_increment_mem`), the conservation of the total mass
-(`total_mass`) and of the expected total momentum (`expected_momentum`,
-`expected_momentum_poisson`), the conditional expectation of the stochastic corrections and of the
-total energy (`condExp_thetaHeun`, `condExp_totalEnergy_em`, `condExp_totalEnergy_heun`), and the
-generality of Remark 5 (`IsStep.pair_eq`, `polynomial_balance`).  `sample_nonvacuous` and
-`exists_augBUGStep` show that the hypotheses can hold.
+Equations*, arXiv version 2 (7 Oct 2026).  Results and equations are cited with the numbering of
+that PDF: Theorem 4.1, Lemma 4.2, Theorem 4.3, Remark 4.4, Lemma 4.5, Theorem 4.6, and equations
+numbered by section.  This module writes out the fully discrete scheme on finite grids, with the
+quadrature weights, the weight `f₀ᵥ`, the velocity nodes and the discrete derivatives (`Grid`), the
+transport operator, the stochastic operators `S_EM` and `S_Heun` with the predictor of Eq. (3.11),
+the K-step, the S-step started from the augmented state and the conservative truncation of
+Section 3.3 (`AugBUGStep`, `IsStep`), for both integrators (`Integrator`), and it proves for them
+Eqs. (4.4) and (4.5), the local laws of mass, momentum and energy (`local_mass`, `local_momentum`,
+`local_energy`), that the increments lie in the augmented spatial basis (`momentum_increment_mem`,
+`energy_increment_mem`), the conservation of the total mass (`total_mass`) and of the expected total
+momentum (`expected_momentum`, `expected_momentum_poisson`), the conditional expectation of the
+stochastic corrections and of the total energy (`condExp_thetaHeun`, `condExp_totalEnergy_em`,
+`condExp_totalEnergy_heun`), and the generality of Remark 4.4 (`IsStep.pair_eq`,
+`polynomial_balance`).  `sample_nonvacuous` and `exists_augBUGStep` show that the hypotheses can
+hold.
 
 ## Differences from the paper
 
@@ -40,14 +40,14 @@ generality of Remark 5 (`IsStep.pair_eq`, `polynomial_balance`).  `sample_nonvac
   discrete orthogonality (a symmetric velocity grid) is part of the hypothesis `V_orth`.
 * `AugBUGStep` only asks what is used, so it is more general than the scheme of the paper: `X̃` must
   contain `Xⁿ` and `Kⁿ⁺¹` and `Ṽ = [U, W̃]` must contain `Wⁿ`, while the paper takes the spans to be
-  equal to those of `[Xⁿ, Kⁿ⁺¹]` and `[U, Wⁿ, Lⁿ⁺¹]`.  So the L-step, Eq. (18), is covered and its
+  equal to those of `[Xⁿ, Kⁿ⁺¹]` and `[U, Wⁿ, Lⁿ⁺¹]`.  So the L-step, Eq. (3.4), is covered and its
   formula plays no role, as in the paper's proofs.  In the truncation, `X^rem`, `Ŝ`, `Ŵ` are
   arbitrary and the factors need not be orthonormal, so no property of the QR factorizations and of
   the truncated SVD is used beyond the factorization of the first `m` columns.  The rank may change.
 * The Heun predictor is represented through a map `Pr`, possibly different in the K- and in the
-  S-step.  `Pr = id` is Eq. (25), and `Pr = Grid.vproj Vⁿ` is the implementation with Eq. (29); see
-  `ContainsMoments.vproj_preservesMoments`.  The paper leaves the argument of `S_Heun` in the S-step
-  implicit.
+  S-step.  `Pr = id` is Eq. (3.11), and `Pr = Grid.vproj Vⁿ` is the implementation with Eq. (4.2);
+  see `ContainsMoments.vproj_preservesMoments`.  The paper leaves the argument of `S_Heun` in the
+  S-step implicit.
 * The paper assumes `∫ Eⁿ ρⁿ dx = 0`.  Here `total_force_eq_zero` derives it from the discrete
   Poisson equation (with `periodic_force_eq_zero` for the second-order periodic stencils), and
   `expected_momentum_poisson` has no such assumption.
@@ -57,7 +57,7 @@ generality of Remark 5 (`IsStep.pair_eq`, `polynomial_balance`).  `sample_nonvac
   measurability of the discrete states and the integrability of the stochastic terms are assumed.
 * `R_E` is not estimated, as in the paper.
 * `consBug_rk_local_law` of `Stability/Conservation.lean` is an abstract form of the mechanism
-  behind Eq. (32).  It is not used here: on the factors, with the weighted inner products, the
+  behind Eq. (4.5).  It is not used here: on the factors, with the weighted inner products, the
   direct computation `AugBUGStep.moment_law` is shorter than the construction of the projectors.
 -/
 
@@ -136,14 +136,14 @@ noncomputable def stoEM {K : ℕ} (σ : Fin K → Fin d → X → ℝ) (τ : ℝ
   -∑ s, Δβ s * G.sigmaGrad σ s f x v +
     τ / 2 * ∑ l, ∑ n, diffusion σ l n x * G.Dvv l n (f x) v
 
-/-- The Heun predictor (arXiv 2608.00397, Eq. (25)), `f̃ = f - Pr (∑ₛ (σₛ·∇ᵥ f) Δβˢ)`.  Here `Pr` is
-how the paper's implementation represents the noise term: `Pr = id` is the exact predictor of
-Eq. (25) and `Pr = vproj` of a velocity basis is the predictor represented in that basis. -/
+/-- The Heun predictor (arXiv 2608.00397, Eq. (3.11)), `f̃ = f - Pr (∑ₛ (σₛ·∇ᵥ f) Δβˢ)`.  Here
+`Pr` is how the paper's implementation represents the noise term: `Pr = id` is the exact predictor
+of Eq. (3.11) and `Pr = vproj` of a velocity basis is the predictor represented in that basis. -/
 def predictor {K : ℕ} (σ : Fin K → Fin d → X → ℝ) (Δβ : Fin K → ℝ)
     (Pr : (V → ℝ) →ₗ[ℝ] V → ℝ) (f : Matrix X V ℝ) : Matrix X V ℝ := fun x =>
   f x - Pr fun v => ∑ s, Δβ s * G.sigmaGrad σ s f x v
 
-/-- The Heun stochastic operator (arXiv 2608.00397, Eq. (24)):
+/-- The Heun stochastic operator (arXiv 2608.00397, Eq. (3.10)):
 `S_Heun(f) = -½ ∑ₛ (σₛ·∇ᵥ f + σₛ·∇ᵥ f̃) Δβˢ`. -/
 noncomputable def stoHeun {K : ℕ} (σ : Fin K → Fin d → X → ℝ) (Δβ : Fin K → ℝ)
     (Pr : (V → ℝ) →ₗ[ℝ] V → ℝ) (f : Matrix X V ℝ) : Matrix X V ℝ := fun x v =>
@@ -209,12 +209,13 @@ def overlapV (G : Grid X V d) (U : Matrix V (Fin m) ℝ) (s : State X V m p)
     (Wa : Matrix V (Fin q) ℝ) : Matrix (Fin m ⊕ Fin p) (Fin m ⊕ Fin q) ℝ :=
   (s.Vb U)ᵀ * G.massV * fromCols U Wa
 
-/-- The augmented state `f_aug = f₀ᵥ ∑ X̃ₖ Mₖᵢ Sᵢⱼ Nⱼₗ Ṽₗ` (arXiv 2608.00397, Eq. (19)). -/
+/-- The augmented state `f_aug = f₀ᵥ ∑ X̃ₖ Mₖᵢ Sᵢⱼ Nⱼₗ Ṽₗ` (arXiv 2608.00397, Section 3.1,
+with `M`, `N` of Eq. (3.5)). -/
 def fAug (G : Grid X V d) (U : Matrix V (Fin m) ℝ) (s : State X V m p)
     (Xa : Matrix X (Fin k) ℝ) (Wa : Matrix V (Fin q) ℝ) : Matrix X V ℝ :=
   Xa * overlapX G s Xa * s.S * overlapV G U s Wa * (fromCols U Wa)ᵀ * diagonal G.f0
 
-/-- The S-step (arXiv 2608.00397, Eq. (20)):
+/-- The S-step (arXiv 2608.00397, Eq. (3.6)):
 `S̃ₖₗ = ∑ᵢⱼ Mₖᵢ Sᵢⱼ Nⱼₗ + (X̃ₖ Ṽₗ, I)ₓᵥ`. -/
 def sStep (G : Grid X V d) (U : Matrix V (Fin m) ℝ) (s : State X V m p)
     (Xa : Matrix X (Fin k) ℝ) (Wa : Matrix V (Fin q) ℝ) (I : Matrix X V ℝ) :
@@ -256,7 +257,7 @@ structure AugBUGStep (G : Grid X V d) (U : Matrix V (Fin m) ℝ)
   new_qr : fromCols Xcons Xrem = s'.Xb * R
   new_S : s'.S = R * fromBlocks Scons 0 0 Shat
 
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 `A = B C` for some `C` as soon as the columns of `A` lie in the column space of `B`. -/
 theorem exists_mul_eq_of_range_le {a b c : Type*} [Fintype b] [Fintype c]
     {A : Matrix a b ℝ} {B : Matrix a c ℝ}
@@ -279,7 +280,7 @@ theorem exists_mul_eq_of_range_le {a b c : Type*} [Fintype b] [Fintype c]
 def inlBlock (m p : ℕ) : Matrix (Fin m ⊕ Fin p) (Fin m) ℝ := fromRows 1 0
 
 omit [DecidableEq X] [Fintype X] in
-/-- arXiv 2608.00397, proof of Eq. (32): `[A, B] [I; 0] = A`. -/
+/-- arXiv 2608.00397, proof of Eq. (4.5): `[A, B] [I; 0] = A`. -/
 theorem fromCols_mul_inlBlock {Y : Type*} (A : Matrix Y (Fin m) ℝ) (B : Matrix Y (Fin p) ℝ) :
     fromCols A B * inlBlock m p = A := by
   rw [inlBlock, fromCols_mul_fromRows, Matrix.mul_one, Matrix.mul_zero, add_zero]
@@ -292,14 +293,14 @@ variable {G : Grid X V d} {U : Matrix V (Fin m) ℝ} {IK IS : Matrix X V ℝ →
 variable (D : AugBUGStep G U IK IS s s' k q)
 
 include D in
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 `Uᵀ⟂W`: the fixed block of `Vᵀ massV U`. -/
 theorem V_mass_U : (s.Vb U)ᵀ * G.massV * U = inlBlock m p := by
   have h := congrArg (· * inlBlock m p) D.V_orth
   simp only [Matrix.one_mul, Matrix.mul_assoc] at h
   rwa [State.Vb, fromCols_mul_inlBlock, ← Matrix.mul_assoc, ← State.Vb] at h
 
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 The augmented basis fixes the columns of every matrix in its range. -/
 theorem Xa_capture {c : Type*} [Fintype c] {A : Matrix X c ℝ}
     (h : LinearMap.range A.mulVecLin ≤ LinearMap.range D.Xa.mulVecLin) :
@@ -307,7 +308,7 @@ theorem Xa_capture {c : Type*} [Fintype c] {A : Matrix X c ℝ}
   obtain ⟨C, rfl⟩ := exists_mul_eq_of_range_le h
   rw [← Matrix.mul_assoc (D.Xaᵀ * G.massX) D.Xa C, D.Xa_orth, Matrix.one_mul]
 
-/-- arXiv 2608.00397, Eq. (31): `f_aug = fⁿ`. -/
+/-- arXiv 2608.00397, Eq. (4.4): `f_aug = fⁿ`. -/
 theorem fAug_eq : fAug G U s D.Xa D.Wa = s.dist G U := by
   have hX : D.Xa * overlapX G s D.Xa = s.Xb := D.Xa_capture D.X_le
   obtain ⟨C, hC⟩ : ∃ C : Matrix (Fin m ⊕ Fin q) (Fin m ⊕ Fin p) ℝ,
@@ -320,7 +321,7 @@ theorem fAug_eq : fAug G U s D.Xa D.Wa = s.dist G U := by
       Matrix.mul_one]
   rw [fAug, Matrix.mul_assoc (D.Xa * _ * _) _ (fromCols U D.Wa)ᵀ, hV, hX, State.dist]
 
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 `Ṽᵀ massV U` is the block `[I; 0]`. -/
 theorem Va_mass_U : (fromCols U D.Wa)ᵀ * G.massV * U = inlBlock m q := by
   have h := congrArg (· * inlBlock m q) D.Va_orth
@@ -328,7 +329,7 @@ theorem Va_mass_U : (fromCols U D.Wa)ᵀ * G.massV * U = inlBlock m q := by
   rwa [fromCols_mul_inlBlock, ← Matrix.mul_assoc] at h
 
 include D in
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 The new moving modes are orthogonal to the fixed ones and the fixed ones are orthonormal:
 `(Vⁿ⁺¹)ᵀ massV U = [I; 0]`. -/
 theorem V'_mass_U : (s'.Vb U)ᵀ * G.massV * U = inlBlock m p' := by
@@ -340,7 +341,7 @@ theorem V'_mass_U : (s'.Vb U)ᵀ * G.massV * U = inlBlock m p' := by
     Matrix.mul_zero]
 
 omit [Fintype X] [DecidableEq X] in
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 `diagonal f₀ᵥ * diagonal wv` is the weighted mass matrix. -/
 theorem f0_mul_wv (G : Grid X V d) : diagonal G.f0 * diagonal G.wv = G.massV := by
   rw [diagonal_mul_diagonal, Grid.massV]
@@ -349,7 +350,7 @@ theorem f0_mul_wv (G : Grid X V d) : diagonal G.f0 * diagonal G.wv = G.massV := 
   ring
 
 omit [Fintype X] [DecidableEq X] in
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 The moments of a low-rank state, `f * diagonal wv * U = X S [I; 0]`, if
 `Vᵀ massV U = [I; 0]`. -/
 theorem dist_moment {r : ℕ} (G : Grid X V d) (U : Matrix V (Fin m) ℝ)
@@ -358,7 +359,7 @@ theorem dist_moment {r : ℕ} (G : Grid X V d) (U : Matrix V (Fin m) ℝ)
   rw [State.dist, Matrix.mul_assoc (_ * _ * _) _ (diagonal G.wv), f0_mul_wv, ← h]
   simp only [Matrix.mul_assoc]
 
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 The moments of the new state are the first columns of `X̃ S̃`: the conservative truncation does
 not touch them. -/
 theorem new_moment :
@@ -375,7 +376,7 @@ theorem new_moment :
     Matrix.mul_assoc D.R, h2, ← Matrix.mul_assoc D.R, ← Matrix.mul_assoc s'.Xb,
     ← Matrix.mul_assoc s'.Xb D.R, ← D.new_qr, fromCols_mul_inlBlock]
 
-/-- arXiv 2608.00397, Eq. (32), matrix form: the moments of `X̃ S̃`. -/
+/-- arXiv 2608.00397, Eq. (4.5), matrix form: the moments of `X̃ S̃`. -/
 theorem sStep_moment :
     (D.Xa * sStep G U s D.Xa D.Wa (IS (fAug G U s D.Xa D.Wa))) * inlBlock m q =
       s.Xb * s.S * inlBlock m p +
@@ -393,14 +394,14 @@ theorem sStep_moment :
     rw [fromCols_mul_inlBlock]
 
 omit [Fintype X] [DecidableEq X] in
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 The K-step moments: `Kⁿ⁺¹ [I; 0] = Kⁿ [I; 0] + (U, I)ᵥ`. -/
 theorem kStep_moment (I : Matrix X V ℝ) :
     kStep G U s I * inlBlock m p = s.Xb * s.S * inlBlock m p + I * diagonal G.wv * U := by
   rw [kStep, Matrix.add_mul, Matrix.mul_assoc (I * _), State.Vb, fromCols_mul_inlBlock]
 
 /-- The fluxes of the K-step on the fixed modes lie in the augmented spatial basis (the mechanism
-of Lemmas 3 and 6 of arXiv 2608.00397): `(U c, I)ᵥ ∈ span X̃`. -/
+of Lemmas 4.2 and 4.5 of arXiv 2608.00397): `(U c, I)ᵥ ∈ span X̃`. -/
 theorem flux_mem (c : Fin m → ℝ) :
     (IK (s.dist G U) * diagonal G.wv * U) *ᵥ c ∈ LinearMap.range D.Xa.mulVecLin := by
   obtain ⟨C₁, hC₁⟩ := exists_mul_eq_of_range_le D.K_le
@@ -414,7 +415,7 @@ theorem flux_mem (c : Fin m → ℝ) :
   refine ⟨(C₁ * inlBlock m p - C₂ * s.S * inlBlock m p) *ᵥ c, ?_⟩
   rw [h', mulVecLin_apply, mulVec_mulVec]
 
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 The orthogonal projection onto `X̃` fixes the fluxes. -/
 theorem proj_flux (c : Fin m → ℝ) :
     (D.Xa * (D.Xaᵀ * G.massX)) *ᵥ ((IK (s.dist G U) * diagonal G.wv * U) *ᵥ c) =
@@ -423,8 +424,8 @@ theorem proj_flux (c : Fin m → ℝ) :
   rw [← hw, mulVecLin_apply, mulVec_mulVec, Matrix.mul_assoc D.Xa, D.Xa_orth, Matrix.mul_one]
 
 include D in
-/-- arXiv 2608.00397, Eq. (32), and the generality of Remark 5: on a fixed mode `U c` on which the
-increments of the K- and the S-step agree, the step reproduces the increment exactly,
+/-- arXiv 2608.00397, Eq. (4.5), and the generality of Remark 4.4: on a fixed mode `U c` on which
+the increments of the K- and the S-step agree, the step reproduces the increment exactly,
 `(U c, fⁿ⁺¹)ᵥ = (U c, fⁿ)ᵥ + (U c, I)ᵥ`. -/
 theorem moment_law (c : Fin m → ℝ)
     (hIS : (IS (s.dist G U) * diagonal G.wv * U) *ᵥ c =
@@ -446,22 +447,22 @@ namespace Grid
 
 variable {X V : Type*} {d K : ℕ} [Fintype V] (G : Grid X V d)
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7: `(p, ·)ᵥ` is additive. -/
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6: `(p, ·)ᵥ` is additive. -/
 theorem pair_fun_add (p g h : V → ℝ) : G.pair p (fun v => g v + h v) = G.pair p g + G.pair p h := by
   simp only [pair, mul_add, Finset.sum_add_distrib]
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7: `(p, ·)ᵥ` is homogeneous. -/
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6: `(p, ·)ᵥ` is homogeneous. -/
 theorem pair_mul_left (p g : V → ℝ) (c : ℝ) : G.pair p (fun v => c * g v) = c * G.pair p g := by
   simp only [pair, Finset.mul_sum]
   exact Finset.sum_congr rfl fun v _ => by ring
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7: `(p, ·)ᵥ` commutes with finite sums. -/
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6: `(p, ·)ᵥ` commutes with finite sums. -/
 theorem pair_sum {ι : Type*} (t : Finset ι) (p : V → ℝ) (g : ι → V → ℝ) :
     G.pair p (fun v => ∑ i ∈ t, g i v) = ∑ i ∈ t, G.pair p (g i) := by
   simp only [pair, Finset.mul_sum]
   exact Finset.sum_comm
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7: `(p, ·)ᵥ` commutes with differences. -/
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6: `(p, ·)ᵥ` commutes with differences. -/
 theorem pair_sub (p g h : V → ℝ) : G.pair p (g - h) = G.pair p g - G.pair p h := by
   simp only [pair, Pi.sub_apply, mul_sub, Finset.sum_sub_distrib]
 
@@ -506,7 +507,7 @@ structure IsBalanced (σ : Fin K → Fin d → X → ℝ) (τ : ℝ) (Δβ : Fin
   energy : ∀ x, 1 / 2 * G.pair G.speed2 (I x) =
     -τ * G.divx (G.heat f) x + ∑ j, force σ τ Δβ E j x * G.cur f j x + Θ x
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 The velocity moments of the transport operator. -/
 theorem pair_transport (p : V → ℝ) (E : Fin d → X → ℝ) (f : Matrix X V ℝ) (x : X) :
     G.pair p (G.transport E f x) =
@@ -534,7 +535,7 @@ theorem pair_transport (p : V → ℝ) (E : Fin d → X → ℝ) (f : Matrix X V
   rw [Finset.sum_comm (f := fun v i => G.wv v * p v * (G.node i v * G.Dx i (fun y => f y v) x)),
     Finset.sum_comm (f := fun v i => G.wv v * p v * (E i x * G.Dv i (f x) v))]
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 The velocity moments of `σₛ·∇ᵥ f`. -/
 theorem pair_sigmaGrad (p : V → ℝ) (σ : Fin K → Fin d → X → ℝ) (s : Fin K) (f : Matrix X V ℝ)
     (x : X) : G.pair p (G.sigmaGrad σ s f x) = ∑ i, σ s i x * G.pair p (G.Dv i (f x)) := by
@@ -544,21 +545,21 @@ theorem pair_sigmaGrad (p : V → ℝ) (σ : Fin K → Fin d → X → ℝ) (s :
 
 variable {G}
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 The moments of `σₛ·∇ᵥ h` under the velocity identities. -/
 theorem pair_one_sigmaGrad {h : Matrix X V ℝ} {x : X} (hh : G.FirstIds (h x))
     (σ : Fin K → Fin d → X → ℝ) (s : Fin K) : G.pair 1 (G.sigmaGrad σ s h x) = 0 := by
   rw [pair_sigmaGrad]
   simp [hh.div]
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7: `(vⱼ, σₛ·∇ᵥ h)ᵥ = -σₛⱼ ∫ h dv`. -/
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6: `(vⱼ, σₛ·∇ᵥ h)ᵥ = -σₛⱼ ∫ h dv`. -/
 theorem pair_node_sigmaGrad {h : Matrix X V ℝ} {x : X} (hh : G.FirstIds (h x))
     (σ : Fin K → Fin d → X → ℝ) (s : Fin K) (j : Fin d) :
     G.pair (G.node j) (G.sigmaGrad σ s h x) = -(σ s j x * G.pair 1 (h x)) := by
   rw [pair_sigmaGrad]
   simp [hh.first]
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7: `(|v|², σₛ·∇ᵥ h)ᵥ = -2 σₛ·∫ v h dv`. -/
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6: `(|v|², σₛ·∇ᵥ h)ᵥ = -2 σₛ·∫ v h dv`. -/
 theorem pair_speed2_sigmaGrad {h : Matrix X V ℝ} {x : X} (hh : G.FirstIds (h x))
     (σ : Fin K → Fin d → X → ℝ) (s : Fin K) :
     G.pair G.speed2 (G.sigmaGrad σ s h x) = -2 * ∑ i, σ s i x * G.pair (G.node i) (h x) := by
@@ -567,7 +568,7 @@ theorem pair_speed2_sigmaGrad {h : Matrix X V ℝ} {x : X} (hh : G.FirstIds (h x
 
 variable (G)
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 The velocity moments of `S_EM`. -/
 theorem pair_stoEM (p : V → ℝ) (σ : Fin K → Fin d → X → ℝ) (τ : ℝ) (Δβ : Fin K → ℝ)
     (f : Matrix X V ℝ) (x : X) :
@@ -583,7 +584,7 @@ theorem pair_stoEM (p : V → ℝ) (σ : Fin K → Fin d → X → ℝ) (τ : �
   simp only [pair_sum, pair_mul_left]
   ring
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 The velocity moments of `S_Heun`. -/
 theorem pair_stoHeun (p : V → ℝ) (σ : Fin K → Fin d → X → ℝ) (Δβ : Fin K → ℝ)
     (Pr : (V → ℝ) →ₗ[ℝ] V → ℝ) (f : Matrix X V ℝ) (x : X) :
@@ -597,7 +598,7 @@ theorem pair_stoHeun (p : V → ℝ) (σ : Fin K → Fin d → X → ℝ) (Δβ 
 
 variable {G}
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 The mass of `τ D(f) + S`, for an `f` that satisfies the velocity identities. -/
 theorem pair_one_add_transport {f : Matrix X V ℝ} {x : X} (hf : G.FirstIds (f x)) (τ : ℝ)
     (E : Fin d → X → ℝ) (S : V → ℝ) :
@@ -608,7 +609,7 @@ theorem pair_one_add_transport {f : Matrix X V ℝ} {x : X} (hf : G.FirstIds (f 
   simp only [hf.div, mul_zero, Finset.sum_const_zero, sub_zero, one_mul, divx, hc]
   ring
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 The momentum of `τ D(f) + S`. -/
 theorem pair_node_add_transport {f : Matrix X V ℝ} {x : X} (hf : G.FirstIds (f x)) (τ : ℝ)
     (E : Fin d → X → ℝ) (j : Fin d) (S : V → ℝ) :
@@ -621,7 +622,7 @@ theorem pair_node_add_transport {f : Matrix X V ℝ} {x : X} (hf : G.FirstIds (f
   simp only [divx, hc]
   ring
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 The kinetic energy of `τ D(f) + S`. -/
 theorem pair_speed2_add_transport {f : Matrix X V ℝ} {x : X} (hf : G.FirstIds (f x)) (τ : ℝ)
     (E : Fin d → X → ℝ) (S : V → ℝ) :
@@ -641,7 +642,7 @@ theorem pair_speed2_add_transport {f : Matrix X V ℝ} {x : X} (hf : G.FirstIds 
   simp only [divx, hc, ← Finset.mul_sum]
   ring
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 Splitting of the force in the energy law. -/
 theorem sum_force_mul (σ : Fin K → Fin d → X → ℝ) (τ : ℝ) (Δβ : Fin K → ℝ) (E : Fin d → X → ℝ)
     (J : Fin d → ℝ) (x : X) :
@@ -653,8 +654,8 @@ theorem sum_force_mul (σ : Fin K → Fin d → X → ℝ) (τ : ℝ) (Δβ : Fi
   · rw [Finset.sum_comm]
     exact Finset.sum_congr rfl fun s _ => Finset.sum_congr rfl fun j _ => by ring
 
-/-- The moments of the Euler–Maruyama increment (arXiv 2608.00397, proofs of Theorems 2, 4 and 7
-for the Euler–Maruyama scheme). -/
+/-- The moments of the Euler–Maruyama increment (arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and
+4.6 for the Euler–Maruyama scheme). -/
 theorem isBalanced_incEM {f : Matrix X V ℝ} (hf : ∀ x, G.FirstIds (f x))
     (hf2 : ∀ x, G.SecondIds (f x)) (σ : Fin K → Fin d → X → ℝ) (τ : ℝ) (Δβ : Fin K → ℝ)
     (E : Fin d → X → ℝ) :
@@ -687,7 +688,7 @@ theorem isBalanced_incEM {f : Matrix X V ℝ} (hf : ∀ x, G.FirstIds (f x))
     rw [h1, h2]
     ring
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 The density of the Heun predictor is that of `f`. -/
 theorem pair_one_predictor {f : Matrix X V ℝ} {x : X} (hf : G.FirstIds (f x))
     {Pr : (V → ℝ) →ₗ[ℝ] V → ℝ} (hPr : G.PreservesMoments Pr) (σ : Fin K → Fin d → X → ℝ)
@@ -695,7 +696,7 @@ theorem pair_one_predictor {f : Matrix X V ℝ} {x : X} (hf : G.FirstIds (f x))
   rw [predictor, pair_sub, (hPr _).1, pair_sum]
   simp [pair_mul_left, pair_one_sigmaGrad hf, dens]
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 The current of the Heun predictor. -/
 theorem pair_node_predictor {f : Matrix X V ℝ} {x : X} (hf : G.FirstIds (f x))
     {Pr : (V → ℝ) →ₗ[ℝ] V → ℝ} (hPr : G.PreservesMoments Pr) (σ : Fin K → Fin d → X → ℝ)
@@ -708,8 +709,9 @@ theorem pair_node_predictor {f : Matrix X V ℝ} {x : X} (hf : G.FirstIds (f x))
   congr 1
   exact Finset.sum_congr rfl fun s _ => by ring
 
-/-- The moments of the Heun increment (arXiv 2608.00397, proofs of Theorems 2, 4 and 7 for the Heun
-scheme).  The quadratic noise term has no mass and no momentum and it gives the energy `Θ_Heun`. -/
+/-- The moments of the Heun increment (arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6 for the
+Heun scheme).  The quadratic noise term has no mass and no momentum and it gives the energy
+`Θ_Heun`. -/
 theorem isBalanced_incHeun {f : Matrix X V ℝ} (hf : ∀ x, G.FirstIds (f x))
     {σ : Fin K → Fin d → X → ℝ} {Δβ : Fin K → ℝ} {Pr : (V → ℝ) →ₗ[ℝ] V → ℝ}
     (hPr : G.PreservesMoments Pr) (hP : ∀ x, G.FirstIds (G.predictor σ Δβ Pr f x)) (τ : ℝ)
@@ -768,7 +770,7 @@ end Grid
 
 /-- The two integrators of arXiv 2608.00397: Euler–Maruyama and Heun.  `heun Pr Pr'` says how the
 predictor is represented in the K-step (`Pr`) and in the S-step (`Pr'`): `heun id id` is the exact
-predictor of Eq. (25), and `Grid.vproj` gives the predictor represented in a velocity basis, as in
+predictor of Eq. (3.11), and `Grid.vproj` gives the predictor represented in a velocity basis, as in
 the paper's implementation. -/
 inductive Integrator (V : Type*) where
   /-- The Euler–Maruyama scheme of Section 3.1. -/
@@ -805,7 +807,8 @@ def Admissible (G : Grid X V d) (σ : Fin K → Fin d → X → ℝ) (Δβ : Fin
   | heun Pr Pr' => (∀ x, G.FirstIds (f x)) ∧ G.PreservesMoments Pr ∧ G.PreservesMoments Pr' ∧
       (∀ x, G.FirstIds (G.predictor σ Δβ Pr f x)) ∧ ∀ x, G.FirstIds (G.predictor σ Δβ Pr' f x)
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7: the K-step increment of both integrators. -/
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6: the K-step increment of both
+integrators. -/
 theorem Admissible.isBalanced_incK {G : Grid X V d} {σ : Fin K → Fin d → X → ℝ} {Δβ : Fin K → ℝ}
     {f : Matrix X V ℝ} {θ : Integrator V} (h : θ.Admissible G σ Δβ f) (τ : ℝ)
     (E : Fin d → X → ℝ) :
@@ -814,7 +817,8 @@ theorem Admissible.isBalanced_incK {G : Grid X V d} {σ : Fin K → Fin d → X 
   | em => exact Grid.isBalanced_incEM h.1 h.2 σ τ Δβ E
   | heun Pr Pr' => exact Grid.isBalanced_incHeun h.1 h.2.1 h.2.2.2.1 τ E
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7: the S-step increment of both integrators. -/
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6: the S-step increment of both
+integrators. -/
 theorem Admissible.isBalanced_incS {G : Grid X V d} {σ : Fin K → Fin d → X → ℝ} {Δβ : Fin K → ℝ}
     {f : Matrix X V ℝ} {θ : Integrator V} (h : θ.Admissible G σ Δβ f) (τ : ℝ)
     (E : Fin d → X → ℝ) :
@@ -830,7 +834,7 @@ section Laws
 variable {X V : Type*} {d K m : ℕ} [Fintype X] [Fintype V] [DecidableEq X] [DecidableEq V]
 
 omit [Fintype X] [DecidableEq X] in
-/-- arXiv 2608.00397, proof of Eq. (32):
+/-- arXiv 2608.00397, proof of Eq. (4.5):
 `(U c, g)ᵥ` as a matrix product. -/
 theorem Grid.pair_mulVec (G : Grid X V d) (U : Matrix V (Fin m) ℝ) (c : Fin m → ℝ)
     (f : Matrix X V ℝ) (x : X) :
@@ -888,8 +892,8 @@ def Integrator.Step (θ : Integrator V) (G : Grid X V d) (U : Matrix V (Fin m) �
 
 variable {G : Grid X V d} {U : Matrix V (Fin m) ℝ}
 
-/-- **Generality of the conservation mechanism** (arXiv 2608.00397, Eq. (32) and Remark 5 of v2,
-Remark 4.4 in the slice header).  If a velocity function `p` lies in the span of the fixed modes
+/-- **Generality of the conservation mechanism** (arXiv 2608.00397, Eq. (4.5) and
+Remark 4.4).  If a velocity function `p` lies in the span of the fixed modes
 and the K- and the S-step have the same moment of the increment against `p`, then
 `(p, fⁿ⁺¹)ᵥ = (p, fⁿ)ᵥ + (p, I)ᵥ` exactly: the spatial projection of the S-step has no effect.  The
 increments are arbitrary. -/
@@ -909,12 +913,12 @@ theorem IsStep.pair_eq {IK IS : Matrix X V ℝ → Matrix X V ℝ} {f f' : Matri
   rw [G.pair_mulVec, G.pair_mulVec, G.pair_mulVec, h1]
 
 /-- The electric-field residual `R_E = ½ (|Eⁿ⁺¹|² - |Eⁿ|²) + τ Eⁿ·Jⁿ` of arXiv 2608.00397,
-Theorem 7. -/
+Theorem 4.6. -/
 noncomputable def fieldResidual (τ : ℝ) (E E' J : Fin d → X → ℝ) (x : X) : ℝ :=
   1 / 2 * (∑ j, E' j x ^ 2 - ∑ j, E j x ^ 2) + τ * ∑ j, E j x * J j x
 
 omit [Fintype X] [Fintype V] [DecidableEq X] [DecidableEq V] in
-/-- The second form of the residual in arXiv 2608.00397, Theorem 7:
+/-- The second form of the residual in arXiv 2608.00397, Theorem 4.6:
 `R_E = τ Eⁿ·((Eⁿ⁺¹ - Eⁿ)/τ + Jⁿ) + ½ |Eⁿ⁺¹ - Eⁿ|²`. -/
 theorem fieldResidual_eq {τ : ℝ} (hτ : τ ≠ 0) (E E' J : Fin d → X → ℝ) (x : X) :
     fieldResidual τ E E' J x =
@@ -935,7 +939,7 @@ noncomputable def Grid.energy (G : Grid X V d) (f : Matrix X V ℝ) (E : Fin d �
 variable {σ : Fin K → Fin d → X → ℝ} {τ : ℝ} {Δβ : Fin K → ℝ} {E E' : Fin d → X → ℝ}
   {θ : Integrator V} {f f' : Matrix X V ℝ}
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 Density update of one step. -/
 theorem Integrator.Step.dens_eq (h : θ.Step G U σ τ Δβ E f f') (hU : ContainsMoments G U)
     (hadm : θ.Admissible G σ Δβ f) (x : X) :
@@ -947,7 +951,7 @@ theorem Integrator.Step.dens_eq (h : θ.Step G U σ τ Δβ E f f') (hU : Contai
   rw [Grid.dens, this, Grid.dens]
   ring
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 Current update of one step. -/
 theorem Integrator.Step.cur_eq (h : θ.Step G U σ τ Δβ E f f') (hU : ContainsMoments G U)
     (hadm : θ.Admissible G σ Δβ f) (j : Fin d) (x : X) :
@@ -960,7 +964,7 @@ theorem Integrator.Step.cur_eq (h : θ.Step G U σ τ Δβ E f f') (hU : Contain
   rw [Grid.cur, this, Grid.cur]
   ring
 
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7:
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6:
 Kinetic energy update of one step. -/
 theorem Integrator.Step.kin_eq (h : θ.Step G U σ τ Δβ E f f') (hU : ContainsMoments G U)
     (hadm : θ.Admissible G σ Δβ f) (x : X) :
@@ -977,7 +981,7 @@ theorem Integrator.Step.kin_eq (h : θ.Step G U σ τ Δβ E f f') (hU : Contain
   rw [Grid.kin, this, Grid.kin]
   linarith
 
-/-- **Theorem 2 of arXiv 2608.00397 (v2; Theorem 4.1 in the slice header): local mass law.**  For
+/-- **Theorem 4.1 of arXiv 2608.00397: local mass law.**  For
 the Euler–Maruyama and the Heun augmented BUG integrator with conservative truncation,
 `(ρⁿ⁺¹ - ρⁿ)/τ + ∇ₓ·Jⁿ = 0` at every grid point.  The law is pathwise: `Δβ` is an arbitrary vector
 of reals, so it holds for every realization of the Brownian increments, and `E` is arbitrary. -/
@@ -988,7 +992,7 @@ theorem local_mass (hU : ContainsMoments G U) (hadm : θ.Admissible G σ Δβ f)
   field_simp
   ring
 
-/-- **Theorem 4 of arXiv 2608.00397 (v2; Theorem 4.3 in the slice header): local momentum law.**
+/-- **Theorem 4.3 of arXiv 2608.00397: local momentum law.**
 Pathwise, `Jⁿ⁺¹ - Jⁿ + τ (∇ₓ·Πⁿ - Eⁿ ρⁿ) - ∑ₛ σₛ Δβˢ ρⁿ = 0` at every grid point. -/
 theorem local_momentum (hU : ContainsMoments G U) (hadm : θ.Admissible G σ Δβ f)
     (hstep : θ.Step G U σ τ Δβ E f f') (j : Fin d) (x : X) :
@@ -1000,7 +1004,7 @@ theorem local_momentum (hU : ContainsMoments G U) (hadm : θ.Admissible G σ Δ�
   rw [this]
   ring
 
-/-- **Theorem 7 of arXiv 2608.00397 (v2; Theorem 4.6 in the slice header): energy identity.**
+/-- **Theorem 4.6 of arXiv 2608.00397: energy identity.**
 Pathwise, `eⁿ⁺¹ - eⁿ + τ ∇ₓ·Qⁿ - ∑ₛ Δβˢ σₛ·Jⁿ - Θ_θⁿ - R_Eⁿ = 0` at every grid point, with
 `Θ_EM = (τ/2) Tr(A) ρⁿ` and `Θ_Heun = ½ ∑ₛᵣ Δβˢ Δβʳ (σₛ·σᵣ) ρⁿ`, for arbitrary fields `E = Eⁿ`,
 `E' = Eⁿ⁺¹`. -/
@@ -1012,7 +1016,7 @@ theorem local_energy (hU : ContainsMoments G U) (hadm : θ.Admissible G σ Δβ 
   rw [Grid.energy, Grid.energy, hstep.kin_eq hU hadm x, Grid.sum_force_mul, fieldResidual]
   ring
 
-/-- **Lemma 3 of arXiv 2608.00397 (v2; Lemma 4.2 in the slice header).**  For both integrators
+/-- **Lemma 4.2 of arXiv 2608.00397.**  For both integrators
 `-τ (∇ₓ·Πⁿ)ⱼ + (τ Eⁿ + ∑ₛ Δβˢ σₛ)ⱼ ρⁿ` lies in the span of the augmented spatial basis `X̃ⁿ⁺¹`. -/
 theorem momentum_increment_mem {p p' k q : ℕ} {s : State X V m p} {s' : State X V m p'}
     (hU : ContainsMoments G U) (hadm : θ.Admissible G σ Δβ (s.dist G U))
@@ -1024,7 +1028,7 @@ theorem momentum_increment_mem {p p' k q : ℕ} {s : State X V m p} {s' : State 
   ext x
   rw [← G.pair_mulVec, hc, (hadm.isBalanced_incK τ E).momentum j x]
 
-/-- **Lemma 6 of arXiv 2608.00397 (v2; Lemma 4.5 in the slice header).**  For both integrators
+/-- **Lemma 4.5 of arXiv 2608.00397.**  For both integrators
 `-τ ∇ₓ·Qⁿ + (τ Eⁿ + ∑ₛ Δβˢ σₛ)·Jⁿ + Θ_θⁿ` lies in the span of the augmented spatial basis
 `X̃ⁿ⁺¹`. -/
 theorem energy_increment_mem {p p' k q : ℕ} {s : State X V m p} {s' : State X V m p'}
@@ -1054,14 +1058,14 @@ noncomputable def Grid.totalEnergy (G : Grid X V d) (f : Matrix X V ℝ) (E : Fi
   ∑ x, G.wx x * G.energy f E x
 
 omit [Fintype V] [DecidableEq X] [DecidableEq V] in
-/-- arXiv 2608.00397, proofs of Theorems 2, 4 and 7: `∫ ∇ₓ·u dx = 0`. -/
+/-- arXiv 2608.00397, proofs of Theorems 4.1, 4.3 and 4.6: `∫ ∇ₓ·u dx = 0`. -/
 theorem Grid.PeriodicX.sum_divx (hP : G.PeriodicX) (u : Fin d → X → ℝ) :
     ∑ x, G.wx x * G.divx u x = 0 := by
   simp only [Grid.divx, Finset.mul_sum]
   rw [Finset.sum_comm]
   exact Finset.sum_eq_zero fun i _ => hP i (u i)
 
-/-- **Theorem 2 of arXiv 2608.00397, second assertion: total mass is conserved pathwise.** -/
+/-- **Theorem 4.1 of arXiv 2608.00397, second assertion: total mass is conserved pathwise.** -/
 theorem total_mass (hU : ContainsMoments G U) (hP : G.PeriodicX) (hadm : θ.Admissible G σ Δβ f)
     (hstep : θ.Step G U σ τ Δβ E f f') : G.totalMass f' = G.totalMass f := by
   have h : ∀ x, G.wx x * G.dens f' x =
@@ -1071,7 +1075,7 @@ theorem total_mass (hU : ContainsMoments G U) (hP : G.PeriodicX) (hadm : θ.Admi
   simp only [Grid.totalMass, h, Finset.sum_sub_distrib, ← Finset.mul_sum, hP.sum_divx, mul_zero,
     sub_zero]
 
-/-- The pathwise evolution of the total momentum (arXiv 2608.00397, proof of Theorem 4):
+/-- The pathwise evolution of the total momentum (arXiv 2608.00397, proof of Theorem 4.3):
 `∫ Jⱼⁿ⁺¹ = ∫ Jⱼⁿ + τ ∫ Eⱼⁿ ρⁿ + ∑ₛ (∫ σₛⱼ ρⁿ) Δβˢ`. -/
 theorem total_momentum (hU : ContainsMoments G U) (hP : G.PeriodicX)
     (hadm : θ.Admissible G σ Δβ f) (hstep : θ.Step G U σ τ Δβ E f f') (j : Fin d) :
@@ -1093,7 +1097,7 @@ theorem total_momentum (hU : ContainsMoments G U) (hP : G.PeriodicX)
   rw [Finset.sum_comm]
   exact Finset.sum_congr rfl fun s _ => by rw [Finset.sum_mul]
 
-/-- The pathwise evolution of the total energy (arXiv 2608.00397, after Theorem 7):
+/-- The pathwise evolution of the total energy (arXiv 2608.00397, after Theorem 4.6):
 `∫ eⁿ⁺¹ = ∫ eⁿ + ∑ₛ Δβˢ ∫ σₛ·Jⁿ + ∫ Θ_θⁿ + ∫ R_Eⁿ`. -/
 theorem total_energy (hU : ContainsMoments G U) (hP : G.PeriodicX)
     (hadm : θ.Admissible G σ Δβ f) (hstep : θ.Step G U σ τ Δβ E f f') (E' : Fin d → X → ℝ) :
@@ -1231,7 +1235,7 @@ theorem IsNoise.integral_mul_eq_zero (hn : IsNoise μ ℱ τ Δβ) {n : ℕ} {s 
 
 variable {G : Grid X V d} {U : Matrix V (Fin m) ℝ} {σ : Fin K → Fin d → X → ℝ}
 
-/-- **Theorem 4 of arXiv 2608.00397 (v2; Theorem 4.3 in the slice header): total momentum is
+/-- **Theorem 4.3 of arXiv 2608.00397: total momentum is
 conserved in expectation**, `E 𝒫[fⁿ] = E 𝒫[f⁰]`.  The bases depend on the current increments, but
 this does not matter, since the increment enters the law linearly with the `𝓕ₙ`-measurable
 coefficient `∫ σₛ ρⁿ dx`.  `θ` may even vary with `n` and `ω`.  The assumptions are those of the
@@ -1395,7 +1399,7 @@ theorem noiseWork_integrable {f : Ω → Matrix X V ℝ} {b : Ω → ℝ}
     (hJi j x).const_mul _).const_mul _
 
 /-- **The energy balance of the Euler–Maruyama scheme in conditional expectation** (arXiv
-2608.00397, after Theorem 7):
+2608.00397, after Theorem 4.6):
 `E[ℋⁿ⁺¹ - ℋⁿ | 𝓕ₙ] = (τ/2) ∫ Tr(A) ρⁿ dx + E[∫ R_Eⁿ dx | 𝓕ₙ]`.  The field residual stays in the
 statement: as in the paper, it is not estimated. -/
 theorem condExp_totalEnergy_em (hU : ContainsMoments G U) (hP : G.PeriodicX)
@@ -1433,7 +1437,7 @@ theorem condExp_totalEnergy_em (hU : ContainsMoments G U) (hP : G.PeriodicX)
 
 omit [IsProbabilityMeasure μ] in
 /-- **The energy balance of the Heun scheme in conditional expectation** (arXiv 2608.00397, after
-Theorem 7).  The right-hand side is the same as in `condExp_totalEnergy_em`: the two schemes have
+Theorem 4.6).  The right-hand side is the same as in `condExp_totalEnergy_em`: the two schemes have
 distinct stochastic corrections with identical conditional expectations. -/
 theorem condExp_totalEnergy_heun (hU : ContainsMoments G U) (hP : G.PeriodicX)
     (hn : IsNoise μ ℱ τ Δβ) {f : ℕ → Ω → Matrix X V ℝ} {E : ℕ → Ω → Fin d → X → ℝ} {n : ℕ}
@@ -1489,7 +1493,7 @@ section Poisson
 
 variable {X : Type*} [Fintype X]
 
-/-- **The assumption `∫ Eⁿ ρⁿ dx = 0` of arXiv 2608.00397, Theorem 4, follows from the Poisson
+/-- **The assumption `∫ Eⁿ ρⁿ dx = 0` of arXiv 2608.00397, Theorem 4.3, follows from the Poisson
 equation.**  If `E = -grad u` and `-lap u = ρ - c`, where `grad` is skew and has mean zero, `lap` is
 symmetric and they commute (all Fourier multipliers do, so this covers the FFT-based solver of the
 paper), then `∫ E ρ dx = 0`.  The paper assumes the conclusion. -/
@@ -1513,7 +1517,7 @@ theorem total_force_eq_zero {w : X → ℝ} {grad lap : (X → ℝ) →ₗ[ℝ] 
     ring
   simp only [h, Finset.sum_sub_distrib, ← Finset.mul_sum, hT, hmean, mul_zero, sub_zero]
 
-/-- arXiv 2608.00397, Theorem 4:
+/-- arXiv 2608.00397, Theorem 4.3:
 The instance of `total_force_eq_zero` for the second-order stencils on a periodic grid:
 `E = -D_c φ` with the centred difference and `-D₊D₋ φ = ρ - ρ₀` give `∑ᵢ Eᵢ ρᵢ = 0`.  This uses
 `periodic_sbp_identities` of the library. -/
@@ -1539,7 +1543,7 @@ variable {X V : Type*} {d K m : ℕ} [Fintype X] [Fintype V] [DecidableEq X] [De
   {Ω : Type*} {mΩ : MeasurableSpace Ω} {μ : Measure Ω} [IsProbabilityMeasure μ]
   {ℱ : Filtration ℕ mΩ}
 
-/-- **Theorem 4 of arXiv 2608.00397 (v2; Theorem 4.3 in the slice header) with the electric field of
+/-- **Theorem 4.3 of arXiv 2608.00397 with the electric field of
 the discrete Poisson equation.**  As `expected_momentum`, but the assumption `∫ Eⁿ ρⁿ dx = 0` of the
 paper is replaced by what implies it: `Eⁿ = -grad uⁿ` and `-lap uⁿ = ρⁿ - c` with a skew `grad` of
 mean zero, a symmetric `lap`, and `grad lap = lap grad`. -/
@@ -1574,7 +1578,7 @@ namespace Grid
 
 variable {X V : Type*} {d K : ℕ} [Fintype V] {G : Grid X V d}
 
-/-- The exact predictor of arXiv 2608.00397, Eq. (25), is admissible. -/
+/-- The exact predictor of arXiv 2608.00397, Eq. (3.11), is admissible. -/
 theorem preservesMoments_id : G.PreservesMoments LinearMap.id :=
   fun _ => ⟨rfl, fun _ => rfl⟩
 
@@ -1597,7 +1601,7 @@ theorem secondIds_of_comp {g : V → ℝ} (h : G.FirstIds g) (h' : ∀ n, G.Firs
 
 /-- The representation `Π_B g = f₀ᵥ ∑ⱼ Bⱼ (Bⱼ, g)ᵥ` of a density in a velocity basis `B`.  With
 `Pr = vproj Vⁿ` the K-step of the Heun scheme has the quadratic term
-`½ ∑ₛₕ Δβˢ Δβʰ ∑ⱼₗ (c²ₖⱼ·σₛ) (c²ⱼₗ·σₕ) Kₗ` of arXiv 2608.00397, Eq. (29). -/
+`½ ∑ₛₕ Δβˢ Δβʰ ∑ⱼₗ (c²ₖⱼ·σₛ) (c²ⱼₗ·σₕ) Kₗ` of arXiv 2608.00397, Eq. (4.2). -/
 def vproj (G : Grid X V d) {n : Type*} [Fintype n] (B : Matrix V n ℝ) : (V → ℝ) →ₗ[ℝ] V → ℝ where
   toFun g v := G.f0 v * ∑ j, B v j * G.pair (fun w => B w j) g
   map_add' g h := by
@@ -1668,7 +1672,7 @@ def wordOp (G : Grid X V d) (σ : Fin K → Fin d → X → ℝ) : List (Fin K) 
   | [], f => f
   | s :: w, f => G.sigmaGrad σ s (G.wordOp σ w f)
 
-/-- A stochastic increment polynomial in the noise operators (arXiv 2608.00397, Remark 5):
+/-- A stochastic increment polynomial in the noise operators (arXiv 2608.00397, Remark 4.4):
 `τ D(f) + ∑_w a_w (σ_{s₁}·∇ᵥ ⋯ σ_{sₖ}·∇ᵥ) f`, with coefficients independent of `(x, v)`. -/
 noncomputable def incPoly (G : Grid X V d) (σ : Fin K → Fin d → X → ℝ) (τ : ℝ) (E : Fin d → X → ℝ)
     (W : Finset (List (Fin K))) (a : List (Fin K) → ℝ) (f : Matrix X V ℝ) : Matrix X V ℝ :=
@@ -1688,7 +1692,7 @@ noncomputable def polyEnergy (σ : Fin K → Fin d → X → ℝ) (ρ : ℝ) (J 
   | [s, r] => (∑ i, σ s i x * σ r i x) * ρ
   | _ => 0
 
-/-- arXiv 2608.00397, Remark 5: a word has no mass. -/
+/-- arXiv 2608.00397, Remark 4.4: a word has no mass. -/
 theorem pair_one_wordOp {σ : Fin K → Fin d → X → ℝ} {f : Matrix X V ℝ}
     (hW : ∀ w x, G.FirstIds (G.wordOp σ w f x)) {w : List (Fin K)} (hw : w ≠ []) (x : X) :
     G.pair 1 (G.wordOp σ w f x) = 0 := by
@@ -1696,7 +1700,7 @@ theorem pair_one_wordOp {σ : Fin K → Fin d → X → ℝ} {f : Matrix X V ℝ
   | nil => exact absurd rfl hw
   | cons s w => exact pair_one_sigmaGrad (hW w x) σ s
 
-/-- arXiv 2608.00397, Remark 5: the momentum of a word. -/
+/-- arXiv 2608.00397, Remark 4.4: the momentum of a word. -/
 theorem pair_node_wordOp {σ : Fin K → Fin d → X → ℝ} {f : Matrix X V ℝ}
     (hW : ∀ w x, G.FirstIds (G.wordOp σ w f x)) {w : List (Fin K)} (hw : w ≠ []) (j : Fin d)
     (x : X) : G.pair (G.node j) (G.wordOp σ w f x) = polyMomentum σ (G.dens f x) j x w := by
@@ -1707,7 +1711,7 @@ theorem pair_node_wordOp {σ : Fin K → Fin d → X → ℝ} {f : Matrix X V �
     rw [pair_one_wordOp hW (by simp) x, mul_zero, neg_zero] at h
     exact h
 
-/-- arXiv 2608.00397, Remark 5: the kinetic energy of a word. -/
+/-- arXiv 2608.00397, Remark 4.4: the kinetic energy of a word. -/
 theorem pair_speed2_wordOp {σ : Fin K → Fin d → X → ℝ} {f : Matrix X V ℝ}
     (hW : ∀ w x, G.FirstIds (G.wordOp σ w f x)) {w : List (Fin K)} (hw : w ≠ []) (x : X) :
     1 / 2 * G.pair G.speed2 (G.wordOp σ w f x) =
@@ -1757,7 +1761,7 @@ theorem ContainsMoments.vproj_preservesMoments {q : ℕ} (hU : ContainsMoments G
     rw [fromCols_mulVec_sumElim, mulVec_zero, add_zero]
   exact Grid.vproj_preservesMoments h (hc hU.one) fun i => hc (hU.node i)
 
-/-- **Remark 5 of arXiv 2608.00397 (v2; Remark 4.4 in the slice header).**  Let the stochastic
+/-- **Remark 4.4 of arXiv 2608.00397.**  Let the stochastic
 increment be polynomial in the noise operators `σₛ·∇ᵥ`, without constant term and with coefficients
 independent of `(x, v)`, the same in the K- and in the S-step.  Then the balance laws hold exactly:
 words of length one drive the momentum and the energy, words of length two only the energy, and

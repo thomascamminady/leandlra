@@ -3,16 +3,24 @@ import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Foundations.Galerkin
 
 /-!
-# Results of arXiv 1710.03946: Dynamics, numerical analysis and geometry (Lubich survey)
+# Results of arXiv 1710.03946: Dynamics, numerical analysis, and some geometry
 
+Gauckler–Hairer–Lubich, *Dynamics, numerical analysis, and some geometry* (survey).
 Sec. 6.1 (TDVP for the Schroedinger equation), abstract form: on a complex inner product space `E`
-(not necessarily finite dimensional, no manifold structure is modelled) let `H` be a self-adjoint
-complex-linear operator and let `P u` be, for every state `u`, a real-orthogonal projector onto
-a complex-linear subspace (the tangent space `T_u M`, encoded by commutation with multiplication
-by `I`).  For trajectories of the state-dependent Galerkin equation `u' = P_u (-I H u)` we prove
-conservation of the energy `⟨u, H u⟩` and of the norm `‖u‖` whenever `u ∈ T_u M`, as well as the
-symplectic properties of `P_u` with respect to `ω(x, y) = Im ⟨x, y⟩`.  This extends the fixed
-projector energy conservation `ODESolution.galerkin_energy_eq_of_skew`.
+(not necessarily finite dimensional, no manifold structure is modelled) let `H` be a bounded
+self-adjoint complex-linear operator and let `P u` be, for every state `u`, a real-orthogonal
+projector onto a complex-linear subspace (the tangent space `T_u M`, encoded by commutation with
+multiplication by `I`).  For trajectories of the state-dependent Galerkin equation
+`u' = P_u (-I H u)` we prove conservation of the energy `⟨u, H u⟩` and of the norm `‖u‖` whenever
+`u ∈ T_u M`, as well as the symplectic properties of `P_u` with respect to `ω(x, y) = Im ⟨x, y⟩`.
+This extends the fixed projector energy conservation `ODESolution.galerkin_energy_eq_of_skew`.
+
+Differences from the paper: the paper's Hamiltonian on `L²` is in general unbounded, here `H` is a
+continuous linear map; the paper's symplectic form is `2 Im ⟨ξ, η⟩`, here the factor `2` is
+dropped (it does not affect the stated properties); the paper's condition for norm conservation
+("`M` contains rays") is replaced by its consequence `u ∈ T_u M`.  The Hamiltonian
+reformulation `ω(u̇, v) = dH(u)[v]`, the symplectic manifold structure of `M` and the
+symplecticity of the flow are not formalized.
 -/
 
 open Set Filter Topology Finset Complex
@@ -24,7 +32,8 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
 
 attribute [local instance] InnerProductSpace.complexToReal
 
-/-- The standard symplectic form `ω(x, y) = Im ⟨x, y⟩` of a complex inner product space. -/
+/-- The standard symplectic form `ω(x, y) = Im ⟨x, y⟩` of a complex inner product space (the
+paper, Sec. 6.1, uses `2 Im ⟨ξ, η⟩`; the factor does not matter for the results below). -/
 noncomputable def omega (x y : E) : ℝ := (inner ℂ x y).im
 
 lemma omega_eq_neg_real_inner (x y : E) : omega x y = -⟪x, (I : ℂ) • y⟫ := by
@@ -62,7 +71,8 @@ abstract form with a state-dependent projector.  If `H` is self-adjoint, every `
 orthogonal projector onto a complex-linear subspace (commuting with `I`) and `u` solves
 `u' = P_u (-I H u)` (right derivatives on `[a, b)`, continuity on `[a, b]`), then
 `⟨u(t), H u(t)⟩` is constant.  The tangent-space property of the paper is the only structure used;
-manifold smoothness of `u ↦ P_u` is not needed, and neither is any condition on `u a`. -/
+manifold smoothness of `u ↦ P_u` is not needed, and neither is any condition on `u a`.  `H` is
+bounded here (a continuous linear map), unlike the general Hamiltonian of the paper. -/
 theorem energy_conservation (hP : ∀ x, IsOrthProj (P x))
     (hPI : ∀ x z, P x ((I : ℂ) • z) = (I : ℂ) • P x z)
     (hH : ∀ x y, inner ℂ (H x) y = inner ℂ x (H y))
@@ -102,7 +112,9 @@ theorem energy_conservation (hP : ∀ x, IsOrthProj (P x))
 /-- **Sec. 6.1, norm conservation of TDVP for the Schroedinger equation** (arXiv 1710.03946),
 abstract form with a state-dependent projector: under the hypotheses of `energy_conservation`, if
 moreover `u(t) ∈ T_{u(t)} M`, i.e. `P_{u(t)} u(t) = u(t)` along the solution, then `‖u(t)‖` is
-constant.  The membership is required on `[a, b)` only (where derivatives are used). -/
+constant.  The membership is required on `[a, b)` only (where derivatives are used).  The paper
+assumes instead that `M` contains rays (`αu ∈ M` for `α > 0`), which implies `u ∈ T_u M`; that
+implication is not formalized (there is no manifold here). -/
 theorem norm_conservation (hP : ∀ x, IsOrthProj (P x))
     (hH : ∀ x y, inner ℂ (H x) y = inner ℂ x (H y))
     (hu : LeanDLRA.ODESolution (fun _ x => P x (-((I : ℂ) • H x))) u a b)

@@ -9,16 +9,17 @@ library has no Sylvester or Woodbury object to reuse.
 
 * `shift_mul_inv_isUnit` (abstract core of Lemma 4.3 (i)): for a positive definite `M` and a
   positive semidefinite `S`, and scalars `Δt > 0`, `λ > 0`, the matrix `Δt M⁻¹ S + λ I` is
-  invertible. The paper applies this to `Ã_j = Δt M_x⁻¹ Ã_x + λ_j I` and to
-  `Ã_j + Û V̂ᵀ = Δt M_y⁻¹ A_y + λ_j I` in (4.18).
+  invertible. The paper applies this to `Â_j = Δt M_x⁻¹ Â_x + λ_j I` and to
+  `Â_j + Û V̂ᵀ = A + λ_j I = Δt M_x⁻¹ A_x + λ_j I` in (4.18) (K-equation; `M_y`, `A_y`, `Â_y` for
+  the L-equation).
 * `bDiag_posDef` (part of Lemma 4.3 (i)): for `Δt > 0`, `α ≤ 0` and `A_y ⪰ 0`, the matrix
   `B = (1 - Δt α) I + Δt Vᵀ A_y V` is positive definite. Its eigenvalues are the shifts `λ_j`.
-* `capacitance_isUnit` (Lemma 4.3 (ii)): if `Ã` and `Ã + Û V̂ᵀ` are invertible, then the
-  capacitance matrix `I + V̂ᵀ Ã⁻¹ Û` is invertible (Sylvester's determinant identity).
+* `capacitance_isUnit` (Lemma 4.3 (ii)): if `Â` and `Â + Û V̂ᵀ` are invertible, then the
+  capacitance matrix `I + V̂ᵀ Â⁻¹ Û` is invertible (Sylvester's determinant identity).
 * `woodbury_inv` (Lemma 4.4, Eq. (4.19)): the Sherman-Morrison-Woodbury formula
-  `(Ã + Û V̂ᵀ)⁻¹ = Ã⁻¹ - Ã⁻¹ Û (I + V̂ᵀ Ã⁻¹ Û)⁻¹ V̂ᵀ Ã⁻¹`, from Mathlib's Woodbury identity
+  `(Â + Û V̂ᵀ)⁻¹ = Â⁻¹ - Â⁻¹ Û (I + V̂ᵀ Â⁻¹ Û)⁻¹ V̂ᵀ Â⁻¹`, from Mathlib's Woodbury identity
   with `C = I`.
-* `solution_formula` (Eq. (4.20)): the solution `y = (Ã + Û V̂ᵀ)⁻¹ c` in explicit form.
+* `solution_formula` (Eq. (4.20)): the solution `y = (Â + Û V̂ᵀ)⁻¹ c` in explicit form.
 * `example`: a concrete `2 × 2` instance in which the capacitance hypothesis holds.
 
 The paper's `Û, V̂ ∈ ℝ^{m×2}` are the case `p = Fin 2`. The lemmas here take an arbitrary
@@ -30,7 +31,7 @@ Not formalized (left out):
   library does not have. So the PSD hypotheses of Lemma 4.3 (i) are not derived here:
   `shift_mul_inv_isUnit` takes a general PSD `S`, and Lemma 4.2 must supply it.
 * The periodic wrap-around structure (4.12)-(4.16) of `A`, the identification
-  `A = Ã + Û V̂ᵀ` and the claim that `Ã_j` is banded.
+  `A = Â + Û V̂ᵀ` and the claim that `Â_j` is banded.
 * The complexity and storage counts, and the Algorithms 4.1 and 4.2 as procedures.
 * The Sherman-Morrison-Woodbury solve in (4.21)-(4.23) as a numerical algorithm.
 
@@ -48,9 +49,10 @@ variable {m p : Type*} [Fintype m] [DecidableEq m] [Fintype p] [DecidableEq p]
 /-- **Lemma 4.3 (i), abstract core** (arXiv 2610.18419, Lemma 4.3 (i)).
 For a positive definite `M` (the mass matrix `M_x` or `M_y`), a positive semidefinite `S` (the
 stiffness matrix `A_x` or `A_y`, or its banded part), `Δt > 0` and `λ > 0`, the matrix
-`Δt M⁻¹ S + λ I` is invertible. The paper applies it to `Ã_j = Δt M_x⁻¹ Ã_x + λ_j I` and to
-`Ã_j + Û V̂ᵀ = Δt M_y⁻¹ A_y + λ_j I`. The PSD property of `A_y` and `Ã_x` is Lemma 4.2, which is
-not formalized here, so it enters as the hypothesis `hS`. -/
+`Δt M⁻¹ S + λ I` is invertible. The paper applies it to `Â_j = Δt M_x⁻¹ Â_x + λ_j I` and to
+`Â_j + Û V̂ᵀ = A + λ_j I = Δt M_x⁻¹ A_x + λ_j I` (K-equation; with `M_y`, `A_y`, `Â_y` for the
+L-equation). The PSD property of `A_x`, `Â_x` (and `A_y`, `Â_y`) is Lemma 4.2, which is not
+formalized here, so it enters as the hypothesis `hS`. -/
 theorem shift_mul_inv_isUnit {M S : Matrix m m ℝ} {Δt lam : ℝ} (hM : M.PosDef)
     (hS : S.PosSemidef) (hΔ : 0 < Δt) (hl : 0 < lam) :
     IsUnit (Δt • (M⁻¹ * S) + lam • (1 : Matrix m m ℝ)) := by
@@ -78,7 +80,7 @@ theorem bDiag_posDef {r : ℕ} {A : Matrix m m ℝ} {V : Matrix m (Fin r) ℝ}
   exact (Matrix.PosDef.one.smul hc).add_posSemidef (hV.smul hΔ.le)
 
 /-- **Lemma 4.3 (ii)** (arXiv 2610.18419, Lemma 4.3 (ii)).
-If `Ã` and `Ã + Û V̂ᵀ` are invertible, then `I + V̂ᵀ Ã⁻¹ Û` is invertible. The paper proves this
+If `Â` and `Â + Û V̂ᵀ` are invertible, then `I + V̂ᵀ Â⁻¹ Û` is invertible. The paper proves this
 by the determinant identity. Here `Û, V̂ : Matrix m p ℝ`, and `p = Fin 2` in the paper. -/
 theorem capacitance_isUnit {A : Matrix m m ℝ} {U V : Matrix m p ℝ} (hA : IsUnit A)
     (hAUV : IsUnit (A + U * Vᵀ)) : IsUnit (1 + Vᵀ * A⁻¹ * U) := by
@@ -98,8 +100,8 @@ theorem capacitance_isUnit {A : Matrix m m ℝ} {U V : Matrix m p ℝ} (hA : IsU
   exact (Matrix.isUnit_iff_isUnit_det _).mpr hcap
 
 /-- **Lemma 4.4** (arXiv 2610.18419, Lemma 4.4, Sherman-Morrison-Woodbury, Eq. (4.19)).
-If `Ã` is invertible and `I + V̂ᵀ Ã⁻¹ Û` is invertible, then
-`(Ã + Û V̂ᵀ)⁻¹ = Ã⁻¹ - Ã⁻¹ Û (I + V̂ᵀ Ã⁻¹ Û)⁻¹ V̂ᵀ Ã⁻¹`. -/
+If `Â` is invertible and `I + V̂ᵀ Â⁻¹ Û` is invertible, then
+`(Â + Û V̂ᵀ)⁻¹ = Â⁻¹ - Â⁻¹ Û (I + V̂ᵀ Â⁻¹ Û)⁻¹ V̂ᵀ Â⁻¹`. -/
 theorem woodbury_inv {A : Matrix m m ℝ} {U V : Matrix m p ℝ} (hA : IsUnit A)
     (hcap : IsUnit (1 + Vᵀ * A⁻¹ * U)) :
     (A + U * Vᵀ)⁻¹ = A⁻¹ - A⁻¹ * U * (1 + Vᵀ * A⁻¹ * U)⁻¹ * Vᵀ * A⁻¹ := by
@@ -108,7 +110,7 @@ theorem woodbury_inv {A : Matrix m m ℝ} {U V : Matrix m p ℝ} (hA : IsUnit A)
   simpa [Matrix.mul_one] using h
 
 /-- **Eq. (4.20)** (arXiv 2610.18419): under the hypotheses of `woodbury_inv`, the solution of
-`(Ã + Û V̂ᵀ) y = c` is `y = Ã⁻¹ c - Ã⁻¹ Û (I + V̂ᵀ Ã⁻¹ Û)⁻¹ (V̂ᵀ Ã⁻¹ c)`. -/
+`(Â + Û V̂ᵀ) y = c` is `y = Â⁻¹ c - Â⁻¹ Û (I + V̂ᵀ Â⁻¹ Û)⁻¹ (V̂ᵀ Â⁻¹ c)`. -/
 theorem solution_formula {A : Matrix m m ℝ} {U V : Matrix m p ℝ} {r : Type*}
     (hA : IsUnit A) (hcap : IsUnit (1 + Vᵀ * A⁻¹ * U)) (c : Matrix m r ℝ) :
     (A + U * Vᵀ)⁻¹ * c =
