@@ -7,7 +7,7 @@ import LeanDLRA.Matrix.Projectors
 # Results of arXiv 2508.21106: AdaGram: DLRA of a full-matrix preconditioner
 
 This module formalizes T. Matveeva, A. Katrutsa, E. Frolov, *Dynamic Low-rank Approximation of
-Full-Matrix Preconditioner for Training Generalized Linear Models* (read in the arXiv HTML of v1),
+Full-Matrix Preconditioner for Training Generalized Linear Models* (arXiv v1, checked in the PDF),
 for `G_t = ε I + ∑_{τ ≤ t} g_τ g_τᵀ` (`precond`, eqs. (2), (3)).  **Theorem 1** is `theorem_one`
 with base case eq. (18) `factor_one_inv_apply`, and **Lemma 1** is `lemma_one`, both for the
 recursive factor `L_{t+1} = L_t (I + α ḡ ḡᵀ)` of eq. (8) (`factor`, `factor_mul_transpose`), with
@@ -268,8 +268,8 @@ private theorem inv_factor_zero {ε : ℝ} (hε : 0 < ε) (g : ℕ → n → ℝ
   simp [factor, smul_smul, hs]
 
 /-- arXiv 2508.21106, eq. (18), the base case of Theorem 1:
-`L_1⁻¹ g_1 = (ε + ‖g_1‖²)^{-1/2} g_1`.  (In the HTML rendering of the paper the square root is not
-visible; the root is what is true, and what eq. (7) gives.) -/
+`L_1⁻¹ g_1 = (ε + ‖g_1‖²)^{-1/2} g_1`, as printed in the PDF (the HTML rendering drops the root).
+The paper's base case uses `L_0 = (1/√ε) I`; here `L_0 = √ε I` (see `factor`). -/
 theorem factor_one_inv_apply {ε : ℝ} (hε : 0 < ε) (g : ℕ → n → ℝ) :
     (factor ε g 1)⁻¹ *ᵥ g 1 = (√(ε + g 1 ⬝ᵥ g 1))⁻¹ • g 1 := by
   have h := theorem_one hε g 0

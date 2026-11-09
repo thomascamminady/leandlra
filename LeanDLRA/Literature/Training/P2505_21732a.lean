@@ -172,9 +172,9 @@ theorem exists_laxWeight_iff [DecidableEq r] (W : Matrix d (n ⊕ n') ℝ) :
 
 /-- arXiv 2505.21732, LaX layer structure (Eqs. 2-5), the cap is attained while each pathway alone
 stays below it, not stated in the paper: for every injective `B` and every set `S` of latent
-directions there are down-projections such that the two pathways have ranks `|S|` and `r - |S|` and
-the LaX weight has rank `r`. This is the sense in which LaX raises the rank of the operator up to,
-and not beyond, the physical rank. -/
+directions there are square down-projections `A, A' : ℝ^{r × r}` (both inputs of dimension `r`)
+such that the two pathways have ranks `|S|` and `r - |S|` and the LaX weight has rank `r`. This is
+the sense in which LaX raises the rank of the operator up to, and not beyond, the physical rank. -/
 theorem exists_lax_rank_gain [DecidableEq r] (hB : Function.Injective B.mulVecLin) (S : Finset r) :
     ∃ A A' : Matrix r r ℝ, (B * A).rank = S.card ∧
       (B * ((1 : Matrix r r ℝ) * A')).rank = Fintype.card r - S.card ∧

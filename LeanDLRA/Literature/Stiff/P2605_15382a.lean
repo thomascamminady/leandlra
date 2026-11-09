@@ -8,10 +8,11 @@ This module formalises the direct Sylvester solver of Section 3 of arXiv:2605.15
 *Implicit dynamical tensor train approximation for kinetic equations with stiff Fokker-Planck
 collisions*), in its matrix form, eqs. (3.1)-(3.4).
 
-The paper solves `L₁ᵀ X + X L₂ = R` (eq. (3.2)) with `L₁ ∈ ℂ^{N×N}` large (tridiagonal in the
-application) and `L₂ ∈ ℂ^{r×r}` small. It Schur-decomposes only `L₂ = U W Uᴴ`, solves the triangular
-system `L₁ᵀ Z + Z W = E` column by column (eq. (3.4), Thomas algorithm), and recovers `X = Z Uᴴ`.
-The file proves:
+The paper solves `L₁ᵀ X + X L₂ = R` (eq. (3.2)) with real `L₁ ∈ ℝ^{N_v×N_v}` large (tridiagonal
+in the application) and real `L₂ ∈ ℝ^{r×r}` small. It Schur-decomposes only `L₂ = U W Uᴴ` (complex
+Schur form), solves the triangular system `L₁ᵀ Z + Z W = E` column by column (eq. (3.4), Thomas
+algorithm), and recovers `X = Z Uᴴ`. All statements here are over `ℂ`, which contains the paper's
+real matrices as a special case. The file proves:
 
 * `sylvester_iff_schur_reduced` (eq. (3.2) ⇔ (3.3)): the reduction to `Z = X U`, `E = R U` is an
   equivalence whenever `U` is unitary and `L₂ = U W Uᴴ`.
@@ -21,6 +22,8 @@ The file proves:
   triangular equation `A Z + Z W = E` has exactly one solution.
 * `schur_sylvester_existsUnique`: under the same hypotheses, `L₁ᵀ X + X L₂ = R` has exactly
   one solution `X` for every `R`, so the Schur-based solver is well posed.
+  The paper does not state these two well-posedness results; it takes for granted that the
+  column recursion (3.4) determines `Z`, and hence `X`. They are added here to make that precise.
 * an `example` after `schur_sylvester_existsUnique`: a non-diagonal
   instance (a permutation `U`, an upper triangular
   `W`, and a tridiagonal `L₁`) where all hypotheses hold, so the theorems are not vacuous.
@@ -35,6 +38,7 @@ Left out. (a) The TT reductions of substeps 1, 3 and 5 to the matrix or tensor S
 (eqs. (2.34), (2.36), (2.38)) need tensor-train contraction bookkeeping and are not formalised.
 (b) The three-mode tensor Sylvester equation (eqs. (3.5)-(3.7)) needs n-mode products and is not
 formalised. (c) The `O(N_v r²)` operation count and the real quasi-triangular variant are not
+formalised. (d) The paper's remark that for real data the computed `X` is real (p. 12) is not
 formalised.
 
 Core definitions. This file uses no `LeanDLRA` definitions and adds none; it works with
@@ -140,8 +144,8 @@ private lemma eq_zero_of_triangular (A : Matrix (Fin n) (Fin n) ℂ) (W : Matrix
   ext i j
   exact congrFun (key (j.val + 1) j (Nat.lt_succ_self _)) i
 
-/-- **Well-posedness of the triangular Sylvester equation** (arXiv 2605.15382, Section 3,
-eq. (3.4)).
+/-- **Well-posedness of the triangular Sylvester equation** (implicit in arXiv 2605.15382,
+Section 3, eq. (3.4); the paper does not state it).
 If `W` is upper triangular and every shifted block `A + W_jj I` is invertible, then `A Z + Z W = E`
 has exactly one solution for every `E`. -/
 theorem triangular_sylvester_existsUnique (A : Matrix (Fin n) (Fin n) ℂ)
@@ -160,7 +164,8 @@ theorem triangular_sylvester_existsUnique (A : Matrix (Fin n) (Fin n) ℂ)
   obtain ⟨Z, hZ⟩ := LinearMap.injective_iff_surjective.mp hinj E
   exact ⟨Z, hZ, fun Y hY => hinj (show f Y = f Z from hY.trans hZ.symm)⟩
 
-/-- **Well-posedness of the Schur-based solver** (arXiv 2605.15382, Section 3, eqs. (3.1)-(3.4)).
+/-- **Well-posedness of the Schur-based solver** (implicit in arXiv 2605.15382, Section 3,
+eqs. (3.1)-(3.4); the paper does not state it).
 Let `L₂ = U W Uᴴ` with `U` unitary and `W` upper triangular, and assume every shifted block
 `L₁ᵀ + W_jj I` is invertible.  Then `L₁ᵀ X + X L₂ = R` has exactly one solution for every `R`. -/
 theorem schur_sylvester_existsUnique (L1 : Matrix (Fin n) (Fin n) ℂ) (L2 : Matrix (Fin r) (Fin r) ℂ)

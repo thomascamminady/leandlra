@@ -25,7 +25,8 @@ Proved here:
 * `lStep_exact`: `L = V Sᵀ` solves the L-step equation.
 * `orth_eq_mul_of_qr`: if `U S = Uh R` with `Uhᵀ Uh = 1` (a QR factorization, `R` square), then
   `Uh = U Q` for an orthogonal `Q`. This is the content of "orth returns an orthonormal basis of
-  the range of `K`", derived from `S` nonsingular.
+  the range of `K`", derived from `S` nonsingular. The paper writes "`Û = U` and `V̂ = V`"
+  (after (3)); what holds, and is proved, is equality up to the orthogonal factor `Q`.
 * `galerkin_exact_bases`: for `Uh = orth(K)` and `Vh = orth(L)` there is an `r × r` matrix `S'`
   with `Uh S' Vhᵀ = X` that solves the S-step equation. The S-step solution is a representation
   of `X` in the new bases, not a claim that `S'` is unique.
@@ -38,6 +39,10 @@ Formalization choices:
   exactly what a QR decomposition provides.
 * The paper's Stiefel and nonsingularity conditions are the hypotheses `Uᵀ * U = 1`,
   `Vᵀ * V = 1` and `IsUnit S.det`.
+* `kStep_exact` and `lStep_exact` show that `K = U S` and `L = V Sᵀ` are solutions of the reduced
+  equations, not the only ones. The paper's "solving for `K` and `L` would just yield `Û = U`"
+  also needs unique solvability of the reduced Sylvester equations (disjoint spectra of `A` and
+  `−Vᵀ B V`, and of `B` and `−Uᵀ A U`), which is not formalized.
 
 Not formalized, and left out on purpose:
 

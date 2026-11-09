@@ -1665,7 +1665,7 @@ theorem field_increment_le (hs : s.Admissible U) (hp : s.Periodic L) (hL : 0 ≤
 noncomputable def totalEnergy (L : ℝ) (f : Pt d → Pt d → ℝ) (E : Fin d → Pt d → ℝ) : ℝ :=
   ∫ x in box L, energyDensity f E x
 
-/-- **Global energy balance** (arXiv 2206.09374, the remark after Theorem 3): on the torus, with
+/-- **Global energy balance** (arXiv 2206.09374, the remark before Theorem 3): on the torus, with
 Poisson fields, `ℰⁿ⁺¹ - ℰⁿ = ½ ∫ |Eⁿ⁺¹ - Eⁿ|² dx`.  So Algorithm 1 does not conserve the energy,
 and the error is due only to the explicit time stepping. -/
 theorem total_energy_change (hs : s.Admissible U) (hp : s.Periodic L) (hL : 0 ≤ L)
@@ -1765,7 +1765,7 @@ theorem energy_defect_le (hs : s.Admissible U) (hp : s.Periodic L) (hL : 0 ≤ L
   calc _ ≤ τ ^ 2 * ∫ x in box L, ∑ r, current (s.f U) r x ^ 2 := key
     _ = _ := by ring
 
-/-- **The energy error per step is `O(τ²)`** (arXiv 2206.09374, the remark after Theorem 3):
+/-- **The energy error per step is `O(τ²)`** (arXiv 2206.09374, the remark before Theorem 3):
 `|ℰⁿ⁺¹ - ℰⁿ| ≤ (τ²/2) ∫ |jⁿ|² dx`. -/
 theorem total_energy_error_le (hs : s.Admissible U) (hp : s.Periodic L) (hL : 0 ≤ L)
     (h1 : (fun _ => (1 : ℝ)) ∈ Submodule.span ℝ (range U))

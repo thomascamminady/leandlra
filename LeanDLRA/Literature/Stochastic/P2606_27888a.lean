@@ -20,7 +20,10 @@ Hilbert space `H`, with expectations as Bochner integrals:
 * `bias_le_lipschitz` (Sec. 2.2.1): if the QoI is `Q = F ∘ u` with `F : E → H` `L`-Lipschitz on a
   normed state space `E`, then `B_r ≤ L E‖u_r - u_full‖ + L E‖u_full - u‖`. The expectations of
   the two state distances are assumed integrable, which the paper needs for its right-hand side to
-  be finite.
+  be finite. The paper's intermediate split `B_r ≤ ‖E[Q_r - Q_full]‖ + ‖E[Q_full - Q]‖` is used
+  pointwise inside the proof and is not stated separately.
+
+The two `example`s at the end show that the hypotheses of both theorems are satisfiable.
 
 Not formalized, and why:
 * The empirical error model `‖u_r - u_full‖ ≤ K₃Δt + K₄sϑ + K₅ε` behind the bias estimate of the
@@ -192,5 +195,24 @@ theorem bias_le_lipschitz {E : Type*} [NormedAddCommGroup E] {μ : Measure Ω}
   rw [integral_add (h1.const_mul L) (h2.const_mul L), integral_const_mul,
     integral_const_mul] at hmain
   exact hmain
+
+/-- Non-vacuity of `mse_decomposition`: with `M = 1` and the single copy `S 0 = Q_r`, the
+hypotheses hold for constant (hence square-integrable) `Q_r` and `Q`. -/
+example {μ : Measure Ω} [IsProbabilityMeasure μ] :
+    ∫ ω, ‖((1 : ℕ) : ℝ)⁻¹ • (∑ _i : Fin 1, (fun _ : Ω => (1 : ℝ)) ω)
+        - ∫ _ω', (0 : ℝ) ∂μ‖ ^ 2 ∂μ
+      = ((1 : ℕ) : ℝ)⁻¹ * (∫ _ω, ‖(1 : ℝ) - ∫ _ω', (1 : ℝ) ∂μ‖ ^ 2 ∂μ)
+        + ‖∫ _ω, ((1 : ℝ) - 0) ∂μ‖ ^ 2 :=
+  mse_decomposition (Qr := fun _ => (1 : ℝ)) (Q := fun _ => (0 : ℝ)) (memLp_const _)
+    (memLp_const _) one_pos (fun _ => fun _ => (1 : ℝ))
+    (fun _ => IdentDistrib.refl aemeasurable_const)
+    (fun i j h => (h (Subsingleton.elim i j)).elim)
+
+/-- Non-vacuity of `bias_le_lipschitz`: `F = id` on `ℝ` is `1`-Lipschitz, and constant states
+have integrable distances. -/
+example {μ : Measure Ω} [IsProbabilityMeasure μ] (a b c : ℝ) :
+    ‖∫ _ω, (id a - id c) ∂μ‖ ≤ 1 * ∫ _ω, ‖a - b‖ ∂μ + 1 * ∫ _ω, ‖b - c‖ ∂μ :=
+  bias_le_lipschitz (H := ℝ) id 1 (fun x y => by simp) (fun _ => a) (fun _ => b) (fun _ => c)
+    (integrable_const _) (integrable_const _)
 
 end LeanDLRA.Literature.P2606_27888
