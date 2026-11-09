@@ -1,1 +1,19 @@
-{}
+{
+  "LeanDLRA.Exactness.sandwichCLM": "LeanDLRA.Frobenius.sandwichCLM",
+  "LeanDLRA.Exactness.sandwichTransposeCLM": "LeanDLRA.Frobenius.sandwichTransposeCLM",
+  "LeanDLRA.GaugeODE.mulBilin": "LeanDLRA.Frobenius.mulCLM",
+  "LeanDLRA.GaugeODE.mulBilin_apply": "LeanDLRA.Frobenius.mulCLM_apply",
+  "LeanDLRA.GaugeODE.transposeCLM": "LeanDLRA.Frobenius.transposeCLM",
+  "LeanDLRA.GaugeODE.transposeCLM_apply": "LeanDLRA.Frobenius.transposeCLM_apply",
+  "LeanDLRA.Literature.P2001_08599.pinvL": "Matrix.gramPinv",
+  "LeanDLRA.Literature.P2001_08599.pinv": "Matrix.gramPinv",
+  "LeanDLRA.Literature.P2410_17091.gramPinv": "Matrix.gramPinv",
+  "LeanDLRA.Novel.OpRS34.pinvT": "Matrix.gramPinv",
+  "LeanDLRA.Novel.OpTR37.pinv": "Matrix.gramPinv",
+  "LeanDLRA.Literature.P2607_27438.IsMoorePenrose": "Matrix.IsMoorePenrose",
+  "LeanDLRA.Literature.P2607_27438.IsMoorePenrose.mk": "Matrix.IsMoorePenrose.mk",
+  "LeanDLRA.Literature.P2607_27438.IsMoorePenrose.xgx": "Matrix.IsMoorePenrose.mul_pinv_mul",
+  "LeanDLRA.Literature.P2607_27438.IsMoorePenrose.gxg": "Matrix.IsMoorePenrose.pinv_mul_pinv",
+  "LeanDLRA.Literature.P2607_27438.IsMoorePenrose.xg_symm": "Matrix.IsMoorePenrose.transpose_mul_pinv",
+  "LeanDLRA.Literature.P2607_27438.IsMoorePenrose.gx_symm": "Matrix.IsMoorePenrose.transpose_pinv_mul"
+}
