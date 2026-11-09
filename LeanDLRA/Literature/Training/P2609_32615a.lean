@@ -10,6 +10,7 @@ import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Results of arXiv 2609.32615: Stabilizing the Dynamic Low-Rank Training (SDLRT)
@@ -88,17 +89,17 @@ structure State (m n : Type*) where
 /-- The low-rank weight `W = U S Vᵀ` represented by a state. -/
 def State.Y (x : State m n) : Matrix m n ℝ := x.U * x.S * x.Vᵀ
 
-/-- The squared Frobenius mass `∑_{i ≥ r} sᵢ²` of the singular values beyond rank `r`. -/
-def tailSq {q : ℕ} (s : Fin q → ℝ) (r : ℕ) : ℝ :=
-  ∑ i : Fin q, if r ≤ (i : ℕ) then s i ^ 2 else 0
+/-! The squared Frobenius mass `∑_{i ≥ r} sᵢ²` of the singular values beyond rank `r` is the core
+`tailSqSum s r` (the local `tailSq` of an earlier version of this file was the same definition,
+unification batch C3). -/
 
 /-- Step 5 of SDLRT, rank selection: `r₁` is the smallest rank whose discarded tail is at most
 the tolerance `ϑ` in Frobenius norm (the rule of Ceruti–Kusch–Lubich, arXiv 2104.05247, eq. (6),
 which arXiv 2609.32615, proof of Thm C.1, step 5, uses). -/
 structure IsTruncRank {q : ℕ} (s : Fin q → ℝ) (ϑ : ℝ) (r₁ : ℕ) : Prop where
   le : r₁ ≤ q
-  tail : √(tailSq s r₁) ≤ ϑ
-  min : ∀ r' < r₁, ϑ < √(tailSq s r')
+  tail : √(tailSqSum s r₁) ≤ ϑ
+  min : ∀ r' < r₁, ϑ < √(tailSqSum s r')
 
 /-- The number `min(2 r₁, r_max) - r₁` of buffer columns kept by step 5. -/
 def bufSize (r₁ q : ℕ) : ℕ := min (2 * r₁) q - r₁
@@ -219,7 +220,7 @@ lemma svd_sub_truncated (P : Matrix k (Fin q) ℝ) (s : Fin q → ℝ) (Q : Matr
 lemma norm_truncated_sub_svd {P : Matrix k (Fin q) ℝ} {Q : Matrix k' (Fin q) ℝ} (hP : Pᵀ * P = 1)
     (hQ : Qᵀ * Q = 1) (s : Fin q → ℝ) {r₁ : ℕ} (h : r₁ ≤ q) :
     ‖P.submatrix id (Fin.castLE h) * diagonal (fun i => s (Fin.castLE h i)) *
-        (Q.submatrix id (Fin.castLE h))ᵀ - P * diagonal s * Qᵀ‖ = √(tailSq s r₁) := by
+        (Q.submatrix id (Fin.castLE h))ᵀ - P * diagonal s * Qᵀ‖ = √(tailSqSum s r₁) := by
   rw [norm_sub_rev, svd_sub_truncated, Frobenius.norm_mul_transpose_of_orthonormal hQ,
     Frobenius.norm_mul_of_orthonormal hP, ← Real.sqrt_sq (norm_nonneg _), sq_norm_diagonal]
   congr 1
@@ -227,8 +228,8 @@ lemma norm_truncated_sub_svd {P : Matrix k (Fin q) ℝ} {Q : Matrix k' (Fin q) �
   split_ifs <;> simp
 
 /-- The tail beyond the full length vanishes. -/
-lemma tailSq_self (s : Fin q → ℝ) : tailSq s q = 0 :=
-  Finset.sum_eq_zero fun i _ => by simp
+lemma tailSq_self (s : Fin q → ℝ) : tailSqSum s q = 0 :=
+  tailSqSum_of_le s le_rfl
 
 /-- The kept singular values carry no more energy than all of them. -/
 lemma sum_castLE_sq_le (s : Fin q → ℝ) {r₁ : ℕ} (h : r₁ ≤ q) :
@@ -545,7 +546,7 @@ theorem IsSDLRTData.exact (hs : IsSDLRTData F t₀ t₁ x Ua Va K Lf Sa P s Q r�
   have hr₁q : r₁ = q := le_antisymm h (hqr ▸ hle)
   refine ⟨hr₁q.trans hqr, ?_⟩
   have h0 := norm_truncated_sub_svd hs.orthP hs.orthQ s h
-  have ht0 : tailSq s r₁ = 0 := by rw [hr₁q]; exact tailSq_self s
+  have ht0 : tailSqSum s r₁ = 0 := by rw [hr₁q]; exact tailSq_self s
   rw [ht0, Real.sqrt_zero, norm_eq_zero, sub_eq_zero] at h0
   rw [next_Y, h0, ← hs.svd, hYh]
 
@@ -773,7 +774,7 @@ variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
 theorem exists_isTruncRank {q : ℕ} (s : Fin q → ℝ) {ϑ : ℝ} (hϑ : 0 ≤ ϑ) :
     ∃ r₁, IsTruncRank s ϑ r₁ := by
   classical
-  have hex : ∃ r, r ≤ q ∧ √(tailSq s r) ≤ ϑ :=
+  have hex : ∃ r, r ≤ q ∧ √(tailSqSum s r) ≤ ϑ :=
     ⟨q, le_rfl, by rw [tailSq_self, Real.sqrt_zero]; exact hϑ⟩
   refine ⟨Nat.find hex, (Nat.find_spec hex).1, (Nat.find_spec hex).2, fun r' hr' => ?_⟩
   have h1 := Nat.find_min hex hr'
@@ -1012,7 +1013,7 @@ lemma isTruncRank_one (q : ℕ) {ϑ : ℝ} (h0 : 0 ≤ ϑ) (h1 : ϑ < 1) :
     refine lt_of_lt_of_le h1 (Real.one_le_sqrt.mpr ?_)
     have h := Finset.single_le_sum (f := fun i : Fin q => if r' ≤ (i : ℕ) then (1 : ℝ) ^ 2 else 0)
       (fun i _ => by split_ifs <;> positivity) (Finset.mem_univ ⟨r', hr'⟩)
-    simpa [tailSq] using h
+    simpa [tailSqSum] using h
 
 /-- `‖I_q‖_F = √q`. -/
 lemma norm_one_fin (q : ℕ) : ‖(1 : Matrix (Fin q) (Fin q) ℝ)‖ = √q := by
@@ -2471,5 +2472,9 @@ theorem exists_partitionedSVD (A : Matrix m n ℝ) {r : ℕ} (hr : 0 < r)
     rw [Fin.sum_univ_add]
 
 end BestFlow
+
+/-- The local singular-value tail of this file, replaced by the core `LeanDLRA.tailSqSum` (same
+definition). -/
+@[deprecated (since := "2026-11-09")] alias tailSq := LeanDLRA.tailSqSum
 
 end LeanDLRA.Literature.P2609_32615

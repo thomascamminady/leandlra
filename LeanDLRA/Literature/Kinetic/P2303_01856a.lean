@@ -7,6 +7,7 @@ import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Results of arXiv 2303.01856: DLRA for Vlasov–Poisson with boundary
@@ -1110,9 +1111,9 @@ theorem local_error (hs : IsAlg1Step D 0 t₀ t₁ X₀ S₀ V₀ K X₁ Ŝ S Lf
 
 end IsAlg1Step
 
-/-- The discarded weight `∑_{i ≥ r₁} σ_i²` (0-indexed) of arXiv 2303.01856, Alg. 2, line 12. -/
-noncomputable def tailSum {N : ℕ} (σ : Fin N → ℝ) (r₁ : ℕ) : ℝ :=
-  ∑ i : Fin N, if r₁ ≤ i.val then σ i ^ 2 else 0
+/-! The discarded weight `∑_{i ≥ r₁} σ_i²` (0-indexed) of arXiv 2303.01856, Alg. 2, line 12, is
+the core `tailSqSum σ r₁` (the local `tailSum` of an earlier version of this file was the same
+definition, unification batch C3). -/
 
 /-- The first `r₁` columns of `Q`, written `Q(:, 1:r₁)` in arXiv 2303.01856, Alg. 2. -/
 def head {N r₁ : ℕ} (hr : r₁ ≤ N) (Q : Matrix (Fin N) (Fin N) ℝ) : Matrix (Fin N) (Fin r₁) ℝ :=
@@ -1191,7 +1192,7 @@ theorem norm_sq_truncation {Mx : Matrix m m ℝ} {Mv : Matrix n n ℝ} [Fact Mx.
     (hX : Xaᵀ * Mx * Xa = 1) (hV : Vaᵀ * Mv * Va = 1) {Qx Qv : Matrix (Fin N) (Fin N) ℝ}
     (hQx : Qxᵀ * Qx = 1) (hQv : Qvᵀ * Qv = 1) (σ : Fin N → ℝ) :
     ‖ofMat Mx Mv ((Xa * head hr Qx) * headDiag hr σ * (Va * head hr Qv)ᵀ) -
-        liftS Mx Mv Xa Va (Qx * Matrix.diagonal σ * Qvᵀ)‖ ^ 2 = tailSum σ r₁ := by
+        liftS Mx Mv Xa Va (Qx * Matrix.diagonal σ * Qvᵀ)‖ ^ 2 = tailSqSum σ r₁ := by
   have h1 : ofMat Mx Mv ((Xa * head hr Qx) * headDiag hr σ * (Va * head hr Qv)ᵀ) =
       liftS Mx Mv Xa Va (head hr Qx * headDiag hr σ * (head hr Qv)ᵀ) := by
     change _ = ofMat Mx Mv (Xa * (head hr Qx * headDiag hr σ * (head hr Qv)ᵀ) * Vaᵀ)
@@ -1209,7 +1210,7 @@ theorem norm_sq_truncation {Mx : Matrix m m ℝ} {Mv : Matrix n n ℝ} [Fact Mx.
       -(Qx * Matrix.diagonal dt * Qvᵀ) := by
     rw [head_mul_headDiag_mul, hd, Matrix.mul_add, Matrix.add_mul]
     abel
-  rw [h1, ← map_sub, h2, map_neg, norm_neg, norm_sq_liftS hX hV, trace_tail hQx hQv, tailSum]
+  rw [h1, ← map_sub, h2, map_neg, norm_neg, norm_sq_liftS hX hV, trace_tail hQx hQv, tailSqSum]
   refine Finset.sum_congr rfl fun i _ => ?_
   by_cases hi : r₁ ≤ i.val <;> simp [hdt, hi]
 
@@ -1217,11 +1218,11 @@ theorem norm_sq_truncation {Mx : Matrix m m ℝ} {Mv : Matrix n n ℝ} [Fact Mx.
 ϑ²` exists. (For `ϑ = 0` there is none, as the inequality is strict; hence `tol_pos` in
 `IsAlg2Step`.) -/
 theorem exists_minRank {N : ℕ} (σ : Fin N → ℝ) {ϑ : ℝ} (hϑ : 0 < ϑ) :
-    ∃ r₁ ≤ N, tailSum σ r₁ < ϑ ^ 2 ∧ ∀ r' < r₁, ϑ ^ 2 ≤ tailSum σ r' := by
+    ∃ r₁ ≤ N, tailSqSum σ r₁ < ϑ ^ 2 ∧ ∀ r' < r₁, ϑ ^ 2 ≤ tailSqSum σ r' := by
   classical
-  have hex : ∃ r₁, r₁ ≤ N ∧ tailSum σ r₁ < ϑ ^ 2 := by
+  have hex : ∃ r₁, r₁ ≤ N ∧ tailSqSum σ r₁ < ϑ ^ 2 := by
     refine ⟨N, le_rfl, ?_⟩
-    have : tailSum σ N = 0 := by
+    have : tailSqSum σ N = 0 := by
       refine Finset.sum_eq_zero fun i _ => ?_
       simp [i.isLt]
     rw [this]
@@ -1262,8 +1263,8 @@ structure IsAlg2Step [DecidableEq r] (D : FEData ι κ m n) (δ ϑ t₀ t₁ : �
   σ_anti : Antitone σ
   σ_nonneg : ∀ i, 0 ≤ σ i
   rank_le : r₁ ≤ N
-  tail_lt : tailSum σ r₁ < ϑ ^ 2
-  tail_min : ∀ r' < r₁, ϑ ^ 2 ≤ tailSum σ r'
+  tail_lt : tailSqSum σ r₁ < ϑ ^ 2
+  tail_min : ∀ r' < r₁, ϑ ^ 2 ≤ tailSqSum σ r'
 
 namespace IsAlg2Step
 
@@ -2980,13 +2981,17 @@ theorem exists_isAlg2Step : ∃ K Lf Rx Rx' Rv Rv' Ŝ σ,
         fin_cases i <;> simp
       rank_le := by norm_num
       tail_lt := by
-        simp [tailSum, Fin.sum_univ_two]
+        simp [tailSqSum, Fin.sum_univ_two]
       tail_min := by
         intro r' hr'
         obtain rfl : r' = 0 := by omega
-        simp [tailSum, Fin.sum_univ_two] }
+        simp [tailSqSum, Fin.sum_univ_two] }
 
 end Examples
 
+
+/-- The local discarded weight of this file, replaced by the core `LeanDLRA.tailSqSum` (same
+definition). -/
+@[deprecated (since := "2026-11-09")] alias tailSum := LeanDLRA.tailSqSum
 
 end LeanDLRA.Literature.P2303_01856

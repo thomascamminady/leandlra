@@ -4,6 +4,7 @@ import LeanDLRA.Classical.WeylSingular
 import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Curvature
+import LeanDLRA.Matrix.LowRankDistance
 
 /-!
 # Results of arXiv 2602.14854: Domain-decomposition DLRA for radiative transfer
@@ -12,13 +13,15 @@ The paper states no theorem.  This module proves properties of the two linear-al
 of its rank-adaptive domain-decomposition DLRA scheme (Algorithms 4 and 5), stated on real matrices
 with the Frobenius norm.
 
-* `tolRank` and `alg5_tolerance_truncation`: **Algorithm 5**.  `tolRank A tol` is the smallest `r'`
-  with `(∑_{j ≥ r'} σ_j(A)²)^{1/2} ≤ tol`; truncating the (augmented) factorisation `U₀ S₀ V₀ᵀ` to
+* `epsRank` and `alg5_tolerance_truncation`: **Algorithm 5**.  The core `ε`-rank `epsRank tol A`
+  is the smallest `r'` with `(∑_{j ≥ r'} σ_j(A)²)^{1/2} ≤ tol` (`epsRank_eq_sInf_tailNorm`);
+  truncating the (augmented) factorisation `U₀ S₀ V₀ᵀ` to
   this rank gives a factorisation `U₁ S₁ V₁ᵀ` of rank `≤ r'` with Frobenius error `≤ tol`, and no
   smaller rank meets the tolerance.
 * `alg4_augmentation`: **Algorithm 4**.  The leading `r_t` left singular vectors `V̂` of
   `L₀ = [V₀S₀ᵀ, V_L S_Lᵀ, V_R S_Rᵀ]` are orthonormal and `‖(I − V̂V̂ᵀ)L₀‖_F² = ∑_{j ≥ r_t} σ_j²`;
-  with `r_t = tolRank` this is `≤ tol²` and each neighbour block is captured to within `tol`.
+  with `r_t = epsRank tol L₀ᵀ` this is `≤ tol²` and each neighbour block is captured to within
+  `tol`.
   Differences from Algorithm 4: the extra requirement `r_t ≥ r` of step 3 is not imposed in
   `alg4_augmentation_tol` (`alg4_augmentation` holds for every `r_t`), and steps 5–6 (extension of
   `U⁰` by a random basis, QR, new core) are not formalised.
@@ -39,36 +42,50 @@ section Alg5
 variable {m n p q : Type*} [Fintype m] [Fintype n] [Fintype p] [Fintype q]
   [DecidableEq n] [DecidableEq p] [DecidableEq q]
 
-/-- The rank selected by the tolerance criterion: the smallest `r'` with
-`(∑_{j ≥ r'} σ_j(A)²)^{1/2} ≤ tol`. -/
-noncomputable def tolRank (A : Matrix m n ℝ) (tol : ℝ) : ℕ :=
-  sInf {r : ℕ | tailNorm A r ≤ tol}
+/-! The rank selected by the tolerance criterion of Algorithm 5, the smallest `r'` with
+`(∑_{j ≥ r'} σ_j(A)²)^{1/2} ≤ tol`, is the core `ε`-rank `epsRank tol A` (the smallest `r'` with
+`distLR r' A ≤ tol`), since the singular-value tail is the distance to the matrices of rank `≤ r'`
+(`tailNorm_eq_infDist`). The local `tolRank A tol` of an earlier version of this file was this
+number (unification batch C3; `epsRank_eq_sInf_tailNorm`). -/
+
+/-- **Bridge.** The `ε`-rank is the smallest rank whose singular-value tail is at most the
+tolerance: `epsRank tol A = min {r' : τ_{r'}(A) ≤ tol}`. -/
+theorem epsRank_eq_sInf_tailNorm (A : Matrix m n ℝ) (tol : ℝ) :
+    epsRank tol A = sInf {r : ℕ | tailNorm A r ≤ tol} := by
+  simp only [epsRank, distLR, lowRankSet, tailNorm_eq_infDist]
 
 theorem tailNorm_card (A : Matrix m n ℝ) : tailNorm A (Fintype.card n) = 0 := by
   simp [tailNorm]
 
+/-- The tolerance rank meets the tolerance: `τ_{epsRank tol A}(A) ≤ tol`. -/
 theorem tolRank_spec (A : Matrix m n ℝ) {tol : ℝ} (htol : 0 ≤ tol) :
-    tailNorm A (tolRank A tol) ≤ tol :=
-  Nat.sInf_mem (s := {r : ℕ | tailNorm A r ≤ tol})
+    tailNorm A (epsRank tol A) ≤ tol := by
+  rw [epsRank_eq_sInf_tailNorm]
+  exact Nat.sInf_mem (s := {r : ℕ | tailNorm A r ≤ tol})
     ⟨Fintype.card n, by simpa [tailNorm_card] using htol⟩
 
+omit [DecidableEq n] in
+/-- The tolerance rank is at most the number of columns. -/
 theorem tolRank_le_card (A : Matrix m n ℝ) {tol : ℝ} (htol : 0 ≤ tol) :
-    tolRank A tol ≤ Fintype.card n :=
-  Nat.sInf_le (by simpa [tailNorm_card] using htol)
+    epsRank tol A ≤ Fintype.card n := by
+  classical
+  rw [epsRank_eq_sInf_tailNorm]
+  exact Nat.sInf_le (by simpa [tailNorm_card] using htol)
 
-theorem lt_tailNorm_of_lt_tolRank (A : Matrix m n ℝ) {tol : ℝ} {s : ℕ} (hs : s < tolRank A tol) :
+theorem lt_tailNorm_of_lt_tolRank (A : Matrix m n ℝ) {tol : ℝ} {s : ℕ} (hs : s < epsRank tol A) :
     tol < tailNorm A s := by
+  rw [epsRank_eq_sInf_tailNorm] at hs
   by_contra h
   exact absurd (Nat.sInf_le (not_lt.mp h)) (not_le.mpr hs)
 
 /-- **Algorithm 5 (tolerance truncation), plain form.**  arXiv 2602.14854, Algorithm 5.
-Keeping the smallest `r'` with `(∑_{j ≥ r'} σ_j²)^{1/2} ≤ tol` (`r' = tolRank A tol`, `tol ≥ 0`),
+Keeping the smallest `r'` with `(∑_{j ≥ r'} σ_j²)^{1/2} ≤ tol` (`r' = epsRank tol A`, `tol ≥ 0`),
 the truncated SVD `A V_{r'} V_{r'}ᵀ` has rank `≤ r'`, satisfies `‖A − A V_{r'} V_{r'}ᵀ‖_F ≤ tol`,
 and `r'` is minimal: every `B` with `‖A − B‖_F ≤ tol` has rank `≥ r'`. -/
 theorem alg5_tolerance_truncation_plain (A : Matrix m n ℝ) {tol : ℝ} (htol : 0 ≤ tol) :
-    (truncation A (tolRank A tol)).rank ≤ tolRank A tol ∧
-      ‖A - truncation A (tolRank A tol)‖ ≤ tol ∧
-      (∀ B : Matrix m n ℝ, ‖A - B‖ ≤ tol → tolRank A tol ≤ B.rank) := by
+    (truncation A (epsRank tol A)).rank ≤ epsRank tol A ∧
+      ‖A - truncation A (epsRank tol A)‖ ≤ tol ∧
+      (∀ B : Matrix m n ℝ, ‖A - B‖ ≤ tol → epsRank tol A ≤ B.rank) := by
   refine ⟨rank_truncation_le _ _, ?_, fun B hB => ?_⟩
   · rw [← tailNorm_eq_norm_sub_truncation]; exact tolRank_spec A htol
   · by_contra h
@@ -88,12 +105,12 @@ factors `U₁, S₁, V₁` of its SVD; `S₁ = P Σ Qᵀ` is just that SVD. -/
 theorem alg5_tolerance_truncation
     {U₀ : Matrix m p ℝ} {V₀ : Matrix n q ℝ} (hU : U₀ᵀ * U₀ = 1) (hV : V₀ᵀ * V₀ = 1)
     (S₀ : Matrix p q ℝ) {tol : ℝ} (htol : 0 ≤ tol) :
-    ‖U₀ * S₀ * V₀ᵀ - U₀ * truncation S₀ (tolRank S₀ tol) * V₀ᵀ‖ ≤ tol ∧
-      (U₀ * truncation S₀ (tolRank S₀ tol) * V₀ᵀ).rank ≤ tolRank S₀ tol ∧
-      (∀ s < tolRank S₀ tol, tol < tailNorm S₀ s) := by
+    ‖U₀ * S₀ * V₀ᵀ - U₀ * truncation S₀ (epsRank tol S₀) * V₀ᵀ‖ ≤ tol ∧
+      (U₀ * truncation S₀ (epsRank tol S₀) * V₀ᵀ).rank ≤ epsRank tol S₀ ∧
+      (∀ s < epsRank tol S₀, tol < tailNorm S₀ s) := by
   refine ⟨?_, ?_, fun s hs => lt_tailNorm_of_lt_tolRank S₀ hs⟩
-  · have : U₀ * S₀ * V₀ᵀ - U₀ * truncation S₀ (tolRank S₀ tol) * V₀ᵀ
-        = U₀ * (S₀ - truncation S₀ (tolRank S₀ tol)) * V₀ᵀ := by
+  · have : U₀ * S₀ * V₀ᵀ - U₀ * truncation S₀ (epsRank tol S₀) * V₀ᵀ
+        = U₀ * (S₀ - truncation S₀ (epsRank tol S₀)) * V₀ᵀ := by
       rw [Matrix.mul_sub, Matrix.sub_mul]
     rw [this, norm_mul_transpose_of_orthonormal hV, norm_mul_of_orthonormal hU,
       ← tailNorm_eq_norm_sub_truncation]
@@ -168,7 +185,7 @@ theorem alg4_augmentation [DecidableEq a] [DecidableEq b] [DecidableEq c]
   rw [sv_transpose]
 
 /-- **Algorithm 4, tolerance form.**  arXiv 2602.14854, Algorithm 4.  With `L₀ = [K₀, K_L, K_R]` as
-in `alg4_augmentation` and `r_t = tolRank L₀ᵀ tol` (the smallest `r_t` with
+in `alg4_augmentation` and `r_t = epsRank tol L₀ᵀ` (the smallest `r_t` with
 `(∑_{j ≥ r_t} σ_j(L₀)²)^{1/2} ≤ tol`, `tol ≥ 0`), the truncated basis `V̂` satisfies
 `‖(I − V̂V̂ᵀ)L₀‖_F² ≤ tol²`, and each of the three blocks (in particular the neighbour blocks
 `V_L S_Lᵀ` and `V_R S_Rᵀ`) is captured to within `tol`: `‖(I − V̂V̂ᵀ)K‖_F ≤ tol`.
@@ -177,13 +194,13 @@ tolerance rank itself. -/
 theorem alg4_augmentation_tol (K₀ : Matrix n a ℝ) (K_L : Matrix n b ℝ) (K_R : Matrix n c ℝ)
     {tol : ℝ} (htol : 0 ≤ tol) :
     let L₀ : Matrix n (a ⊕ b ⊕ c) ℝ := Matrix.fromCols K₀ (Matrix.fromCols K_L K_R)
-    let Vh := topRightSingularVectors L₀ᵀ (tolRank L₀ᵀ tol)
+    let Vh := topRightSingularVectors L₀ᵀ (epsRank tol L₀ᵀ)
     ‖(1 - Vh * Vhᵀ) * L₀‖ ^ 2 ≤ tol ^ 2 ∧
       ‖(1 - Vh * Vhᵀ) * K₀‖ ≤ tol ∧ ‖(1 - Vh * Vhᵀ) * K_L‖ ≤ tol ∧
         ‖(1 - Vh * Vhᵀ) * K_R‖ ≤ tol := by
   intro L₀ Vh
   have hmain : ‖(1 - Vh * Vhᵀ) * L₀‖ ≤ tol := by
-    have h1 : (1 - Vh * Vhᵀ) * L₀ = (L₀ᵀ - truncation L₀ᵀ (tolRank L₀ᵀ tol))ᵀ := by
+    have h1 : (1 - Vh * Vhᵀ) * L₀ = (L₀ᵀ - truncation L₀ᵀ (epsRank tol L₀ᵀ))ᵀ := by
       simp only [truncation, Vh, Matrix.transpose_sub, Matrix.transpose_mul,
         Matrix.transpose_transpose, Matrix.sub_mul, Matrix.one_mul,
         Matrix.mul_assoc]

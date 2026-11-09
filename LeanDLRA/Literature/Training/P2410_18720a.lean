@@ -7,6 +7,7 @@ import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Research.SameMinibatchAugmentation
 import LeanDLRA.Training.Descent
 import LeanDLRA.Training.GradientFlowConvergence
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Results of arXiv 2410.18720: GeoLoRA, low-rank neural network training
@@ -43,6 +44,7 @@ open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius
 namespace LeanDLRA.Literature.P2410_18720
 
 open LeanDLRA.MatrixParallelBUG
+open Matrix (rangeProj)
 
 /-! ### Factor gradients and the update (6) -/
 
@@ -492,8 +494,11 @@ noncomputable def gsStep (Q : Matrix m m ℝ) (a : m → ℝ) : Matrix m m ℝ :
   Q + ((a - Q *ᵥ a) ⬝ᵥ (a - Q *ᵥ a))⁻¹ • Matrix.vecMulVec (a - Q *ᵥ a) (a - Q *ᵥ a)
 
 /-- The orthogonal projector onto the column space of `A`, computed by Gram–Schmidt over the
-columns (`colProj_spec`). -/
-noncomputable def colProj (A : Matrix m n ℝ) : Matrix m m ℝ :=
+columns, as in arXiv 2410.18720 (`gramSchmidtProj_spec`). It is the core column-space projector
+`Matrix.rangeProj A = A A⁺` (`gramSchmidtProj_eq_rangeProj`); the statements of this file use the
+core projector (the local `colProj` of an earlier version of this file was this fold, unification
+batch C2). -/
+noncomputable def gramSchmidtProj (A : Matrix m n ℝ) : Matrix m m ℝ :=
   ((Finset.univ : Finset n).toList).foldl (fun Q j => gsStep Q (Aᵀ j)) 0
 
 /-- The properties of a partial Gram–Schmidt projector for the columns `J` of `A`. -/
@@ -557,8 +562,8 @@ lemma IsColProj.step {A : Matrix m n ℝ} {J : Set n} {Q : Matrix m m ℝ}
     refine ⟨C + (c ⬝ᵥ c)⁻¹ • Matrix.vecMulVec (Pi.single j 1 - C *ᵥ a) c, ?_⟩
     rw [hgs, Matrix.mul_add, ← hC, Matrix.mul_smul, Matrix.mul_vecMulVec, ← hw]
 
-/-- `colProj A` is the orthogonal projector onto the column space of `A`. -/
-theorem colProj_spec (A : Matrix m n ℝ) : IsColProj A Set.univ (colProj A) := by
+/-- The Gram–Schmidt fold produces an orthogonal projector onto the column space of `A`. -/
+theorem gramSchmidtProj_spec (A : Matrix m n ℝ) : IsColProj A Set.univ (gramSchmidtProj A) := by
   classical
   have key : ∀ (l : List n) (J : Set n) (Q : Matrix m m ℝ), IsColProj A J Q →
       IsColProj A (J ∪ {j | j ∈ l}) (l.foldl (fun Q j => gsStep Q (Aᵀ j)) Q) := by
@@ -581,16 +586,42 @@ theorem colProj_spec (A : Matrix m n ℝ) : IsColProj A Set.univ (colProj A) := 
   rw [e] at this
   exact this
 
-lemma colProj_mul (A : Matrix m n ℝ) : colProj A * A = A := by
-  ext i j
-  exact congrFun ((colProj_spec A).fix j (Set.mem_univ j)) i
+/-- **Bridge.** The properties `IsColProj A univ Q` (symmetric, idempotent, fixing every column
+of `A`, of the form `A C`) characterize the core column-space projector `Matrix.rangeProj A`. -/
+theorem isColProj_univ_iff {A : Matrix m n ℝ} {Q : Matrix m m ℝ} :
+    IsColProj A Set.univ Q ↔ Q = A.rangeProj := by
+  rw [Matrix.eq_rangeProj_iff]
+  constructor
+  · intro h
+    refine ⟨h.symm, ?_, h.fac⟩
+    ext i j
+    exact congrFun (h.fix j (Set.mem_univ j)) i
+  · rintro ⟨hs, hf, hfac⟩
+    have hQ : Q = A.rangeProj := Matrix.eq_rangeProj_iff.2 ⟨hs, hf, hfac⟩
+    refine ⟨hs, by rw [hQ, Matrix.rangeProj_mul_rangeProj], fun j _ => ?_, hfac⟩
+    funext i
+    exact congrFun (congrFun hf i) j
+
+/-- **Bridge.** Gram–Schmidt computes the core column-space projector:
+`gramSchmidtProj A = Matrix.rangeProj A`. -/
+theorem gramSchmidtProj_eq_rangeProj (A : Matrix m n ℝ) : gramSchmidtProj A = A.rangeProj :=
+  isColProj_univ_iff.1 (gramSchmidtProj_spec A)
+
+/-- `rangeProj A` is the orthogonal projector onto the column space of `A`, in the form
+`IsColProj` of the Gram–Schmidt construction. -/
+theorem colProj_spec (A : Matrix m n ℝ) : IsColProj A Set.univ (rangeProj A) :=
+  isColProj_univ_iff.2 rfl
+
+/-- `rangeProj A` fixes the columns of `A` (the core `Matrix.rangeProj_mul_self`). -/
+lemma colProj_mul (A : Matrix m n ℝ) : rangeProj A * A = A :=
+  Matrix.rangeProj_mul_self A
 
 /-- **Identification of `colProj`**: if `A = U B` with `U` orthonormal and `B` right invertible
 (`range A = range U`), then `colProj A = U Uᵀ`. -/
 theorem colProj_eq {r : Type*} [Fintype r] [DecidableEq r] {A : Matrix m n ℝ} {U : Matrix m r ℝ}
     {B : Matrix r n ℝ} {B' : Matrix n r ℝ} (hU : Uᵀ * U = 1) (hA : A = U * B) (hB : B * B' = 1) :
-    colProj A = U * Uᵀ := by
-  set Q := colProj A with hQ
+    rangeProj A = U * Uᵀ := by
+  set Q := rangeProj A with hQ
   have hspec := colProj_spec A
   have h1 : Q * U = U := by
     have e : U = A * B' := by rw [hA, Matrix.mul_assoc, hB, Matrix.mul_one]
@@ -609,18 +640,18 @@ theorem colProj_eq {r : Type*} [Fintype r] [DecidableEq r] {A : Matrix m n ℝ} 
 eq. (18), defined from `W` alone, with `P_col`, `P_row` the orthogonal projectors onto the column
 and row space of `W` (for every `W`, whatever its rank). -/
 noncomputable def tangentAt (W : Matrix m n ℝ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  tangent (Frobenius.leftMulCLM (colProj W)) (Frobenius.rightMulCLM (colProj Wᵀ))
+  tangent (Frobenius.leftMulCLM (rangeProj W)) (Frobenius.rightMulCLM (rangeProj Wᵀ))
 
 /-- **`P(W)` is the tangent projector of eq. (18)**: for `W = U S Vᵀ` with orthonormal `U`, `V`
 and invertible `S`, `P(W) = U Uᵀ (·) + (·) V Vᵀ - U Uᵀ (·) V Vᵀ`. -/
 theorem tangentAt_eq {r : Type*} [Fintype r] [DecidableEq r] {U : Matrix m r ℝ}
     {S : Matrix r r ℝ} {V : Matrix n r ℝ} (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
     (hS : IsUnit S.det) : tangentAt (U * S * Vᵀ) = tangentProj U V := by
-  have h1 : colProj (U * S * Vᵀ) = U * Uᵀ :=
+  have h1 : rangeProj (U * S * Vᵀ) = U * Uᵀ :=
     colProj_eq (B := S * Vᵀ) (B' := V * S⁻¹) hU (Matrix.mul_assoc _ _ _) (by
       rw [Matrix.mul_assoc, ← Matrix.mul_assoc Vᵀ, hV, Matrix.one_mul,
         Matrix.mul_nonsing_inv _ hS])
-  have h2 : colProj (U * S * Vᵀ)ᵀ = V * Vᵀ :=
+  have h2 : rangeProj (U * S * Vᵀ)ᵀ = V * Vᵀ :=
     colProj_eq (B := Sᵀ * Uᵀ) (B' := U * (S⁻¹)ᵀ) hV (by
       simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]) (by
       rw [Matrix.mul_assoc, ← Matrix.mul_assoc Uᵀ, hU, Matrix.one_mul, ← Matrix.transpose_mul,
@@ -632,11 +663,11 @@ theorem tangentAt_eq {r : Type*} [Fintype r] [DecidableEq r] {U : Matrix m r ℝ
 theorem isOrthProj_tangentAt (W : Matrix m n ℝ) : IsOrthProj (tangentAt W) := by
   have hP := colProj_spec W
   have hQ := colProj_spec Wᵀ
-  have hL : IsOrthProj (Frobenius.leftMulCLM (colProj W) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
+  have hL : IsOrthProj (Frobenius.leftMulCLM (rangeProj W) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
     ⟨fun X => by simp [← Matrix.mul_assoc, hP.idem], fun X Y => by
       simp only [Frobenius.leftMulCLM_apply]
       rw [Frobenius.inner_mul_left, hP.symm]⟩
-  have hR : IsOrthProj (Frobenius.rightMulCLM (colProj Wᵀ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
+  have hR : IsOrthProj (Frobenius.rightMulCLM (rangeProj Wᵀ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
     ⟨fun X => by simp [Matrix.mul_assoc, hQ.idem], fun X Y => by
       simp only [Frobenius.rightMulCLM_apply]
       rw [Frobenius.inner_mul_right, hQ.symm]⟩
@@ -685,7 +716,7 @@ lemma EntryMeasurable.gsStep {Q : Ω → Matrix m m ℝ} {a : Ω → m → ℝ} 
   exact Finset.measurable_fun_sum _ fun k _ => (hc k).mul (hc k)
 
 lemma EntryMeasurable.colProj {A : Ω → Matrix m n ℝ} (hA : EntryMeasurable A) :
-    EntryMeasurable fun ω => colProj (A ω) := by
+    EntryMeasurable fun ω => rangeProj (A ω) := by
   have key : ∀ (l : List n) (Q : Ω → Matrix m m ℝ), EntryMeasurable Q →
       EntryMeasurable fun ω => l.foldl (fun Q j => P2410_18720.gsStep Q ((A ω)ᵀ j))
         (Q ω) := by
@@ -695,7 +726,8 @@ lemma EntryMeasurable.colProj {A : Ω → Matrix m n ℝ} (hA : EntryMeasurable 
     | cons j l ih =>
       intro Q hQ
       exact ih _ (hQ.gsStep fun i => hA i j)
-  exact key _ _ fun _ _ => measurable_const
+  have h : EntryMeasurable fun ω => gramSchmidtProj (A ω) := key _ _ fun _ _ => measurable_const
+  simpa only [gramSchmidtProj_eq_rangeProj] using h
 
 omit [Fintype m] [Fintype n] in
 lemma continuous_entry (i : m) (j : n) [Fintype m] [Fintype n] :
@@ -727,7 +759,8 @@ theorem stronglyMeasurable_tangentAt_apply {W Y : Ω → Matrix m n ℝ} (hW : S
   have hP := hW'.colProj
   have hQ := hW'.transpose.colProj
   have e : (fun ω => tangentAt (W ω) (Y ω)) = fun ω =>
-      colProj (W ω) * Y ω + Y ω * colProj (W ω)ᵀ - colProj (W ω) * (Y ω * colProj (W ω)ᵀ) := by
+      rangeProj (W ω) * Y ω + Y ω * rangeProj (W ω)ᵀ -
+        rangeProj (W ω) * (Y ω * rangeProj (W ω)ᵀ) := by
     funext ω
     simp [tangentAt, tangent_apply]
   rw [e]
@@ -2792,5 +2825,10 @@ theorem stochastic_conclusion_false (lr : ℕ → ℝ) :
     exact liminf_const 1
 
 end NoiseFloor
+
+/-- The local column-space projector of this file (a Gram–Schmidt fold, now `gramSchmidtProj`),
+replaced in all statements by the core `Matrix.rangeProj` (equal:
+`gramSchmidtProj_eq_rangeProj`). -/
+@[deprecated (since := "2026-11-09")] alias colProj := Matrix.rangeProj
 
 end LeanDLRA.Literature.P2410_18720

@@ -1,4 +1,5 @@
 import LeanDLRA.HighOrder.MidpointBUG
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Integrators.Matrix.BUG
 import LeanDLRA.Matrix.LowRankDistance
 import LeanDLRA.Matrix.Projectors
@@ -415,20 +416,19 @@ section Galerkin
 
 variable {m n : Type*} [Fintype m] [Fintype n]
 
-/-- The Galerkin projector `X ↦ Ū Ūᵀ X V̄ V̄ᵀ` onto the matrices `Ū S̄ V̄ᵀ`. -/
-noncomputable abbrev galProj {b b' : Type*} [Fintype b] [Fintype b'] (Ub : Matrix m b ℝ)
-    (Vb : Matrix n b' ℝ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  leftProj Ub * rightProj Vb
+/-! The Galerkin projector `X ↦ Ū Ūᵀ X V̄ V̄ᵀ` onto the matrices `Ū S̄ V̄ᵀ` is the core
+`LeanDLRA.galerkinProj`; the local `galProj` of an earlier version of this file was the same
+definition (unification batch C2). -/
 
 lemma galProj_apply {b b' : Type*} [Fintype b] [Fintype b'] (Ub : Matrix m b ℝ)
     (Vb : Matrix n b' ℝ) (X : Matrix m n ℝ) :
-    galProj Ub Vb X = leftProj Ub (rightProj Vb X) := rfl
+    galerkinProj Ub Vb X = leftProj Ub (rightProj Vb X) := rfl
 
 /-- The trajectory `Ū S̄ V̄ᵀ` of the S-step solves the full-space Galerkin equation. -/
 lemma odeSolution_galProj {b b' : Type*} [Fintype b] [Fintype b'] {Ub : Matrix m b ℝ}
     {Vb : Matrix n b' ℝ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {Sb : ℝ → Matrix b b' ℝ} {a c : ℝ}
     (h : ODESolution (MatrixBUG.sField Ub Vb F) Sb a c) :
-    ODESolution (fun t x => galProj Ub Vb (F t x)) (fun t => Ub * Sb t * Vbᵀ) a c := by
+    ODESolution (fun t x => galerkinProj Ub Vb (F t x)) (fun t => Ub * Sb t * Vbᵀ) a c := by
   have h1 := MatrixBUG.odeSolution_sField h
   simp only [galProj_apply]
   exact h1
@@ -436,7 +436,7 @@ lemma odeSolution_galProj {b b' : Type*} [Fintype b] [Fintype b'] {Ub : Matrix m
 /-- The Galerkin projector of orthonormal bases is an orthogonal projector. -/
 lemma isOrthProj_galProj {b b' : Type*} [Fintype b] [Fintype b'] [DecidableEq b] [DecidableEq b']
     {Ub : Matrix m b ℝ} {Vb : Matrix n b' ℝ} (hUb : Ubᵀ * Ub = 1) (hVb : Vbᵀ * Vb = 1) :
-    IsOrthProj (galProj Ub Vb : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
+    IsOrthProj (galerkinProj Ub Vb : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
   (isOrthProj_leftProj hUb).mul (isOrthProj_rightProj hVb) (leftProj_rightProj_comm Ub Vb)
 
 omit [Fintype n] in
@@ -452,7 +452,7 @@ the same-starting-value property stated after (8) in the paper. -/
 lemma galProj_fix {b b' k k' : Type*} [Fintype b] [Fintype b'] [Fintype k] [Fintype k']
     {Ub : Matrix m b ℝ} {Vb : Matrix n b' ℝ} {U₀ : Matrix m k ℝ} {V₀ : Matrix n k' ℝ}
     (S₀ : Matrix k k' ℝ) (capU₀ : Ub * Ubᵀ * U₀ = U₀) (capV₀ : Vb * Vbᵀ * V₀ = V₀) :
-    galProj Ub Vb (U₀ * S₀ * V₀ᵀ) = U₀ * S₀ * V₀ᵀ := by
+    galerkinProj Ub Vb (U₀ * S₀ * V₀ᵀ) = U₀ * S₀ * V₀ᵀ := by
   have e1 : rightProj Vb (U₀ * S₀ * V₀ᵀ) = U₀ * S₀ * V₀ᵀ := by
     rw [rightProj_apply, Matrix.mul_assoc (U₀ * S₀), Matrix.mul_assoc (U₀ * S₀),
       transpose_mul_cap capV₀]
@@ -467,7 +467,7 @@ theorem galProj_tangent {k k' b b' : Type*} [Fintype k] [Fintype k'] [Fintype b]
     {U : Matrix m k ℝ} {V : Matrix n k' ℝ} {Ub : Matrix m b ℝ} {Vb : Matrix n b' ℝ}
     (capU : Ub * Ubᵀ * U = U) (capV : Vb * Vbᵀ * V = V) {G : Matrix m n ℝ}
     (capF : Ub * Ubᵀ * (G * V) = G * V) (capFt : Vb * Vbᵀ * (Gᵀ * U) = Gᵀ * U) :
-    galProj Ub Vb (tangentProj U V G) = tangentProj U V G := by
+    galerkinProj Ub Vb (tangentProj U V G) = tangentProj U V G := by
   have f1 : Uᵀ * G * (Vb * Vbᵀ) = Uᵀ * G := by
     have := transpose_mul_cap capFt
     rwa [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc] at this
@@ -500,7 +500,7 @@ theorem norm_one_sub_galerkin_le {k k' b b' : Type*} [Fintype k] [Fintype k'] [F
     {Ub : Matrix m b ℝ} {Vb : Matrix n b' ℝ} (hUb : Ubᵀ * Ub = 1) (hVb : Vbᵀ * Vb = 1)
     (capU : Ub * Ubᵀ * U = U) (capV : Vb * Vbᵀ * V = V) {G : Matrix m n ℝ}
     (capF : Ub * Ubᵀ * (G * V) = G * V) (capFt : Vb * Vbᵀ * (Gᵀ * U) = Gᵀ * U) :
-    ‖(1 - galProj Ub Vb) G‖ ≤ ‖(1 - tangentProj U V) G‖ := by
+    ‖(1 - galerkinProj Ub Vb) G‖ ≤ ‖(1 - tangentProj U V) G‖ := by
   have h := (isOrthProj_galProj hUb hVb).norm_sub_le_of_mem_range G _
     (galProj_tangent capU capV capF capFt)
   simpa using h
@@ -534,7 +534,7 @@ variable {r k rb : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {t₀ h 
 
 /-- The full-space projector `P̄ Q̄` of the Galerkin step is orthogonal. -/
 lemma proj (hg : IsGalerkinPart F t₀ h U₀ S₀ V₀ Uh Vh Yh Ub Vb Sb) :
-    IsOrthProj (galProj Ub Vb : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
+    IsOrthProj (galerkinProj Ub Vb : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
   isOrthProj_galProj hg.orthUb hg.orthVb
 
 lemma capF' (hg : IsGalerkinPart F t₀ h U₀ S₀ V₀ Uh Vh Yh Ub Vb Sb) (hh : 0 < h) :
@@ -551,7 +551,7 @@ lemma capFt' (hg : IsGalerkinPart F t₀ h U₀ S₀ V₀ Uh Vh Yh Ub Vb Sb) (hh
 
 /-- The Galerkin projector captures `F(t_{1/2}, Yh)` up to its normal component at `(Uh, Vh)`. -/
 theorem norm_normal_le (hg : IsGalerkinPart F t₀ h U₀ S₀ V₀ Uh Vh Yh Ub Vb Sb) (hh : 0 < h) :
-    ‖(1 - galProj Ub Vb) (F (t₀ + h / 2) Yh)‖
+    ‖(1 - galerkinProj Ub Vb) (F (t₀ + h / 2) Yh)‖
       ≤ ‖(1 - tangentProj Uh Vh) (F (t₀ + h / 2) Yh)‖ :=
   norm_one_sub_galerkin_le hg.orthUb hg.orthVb hg.capU hg.capV (hg.capF' hh) (hg.capFt' hh)
 
@@ -560,7 +560,7 @@ of `U₀`, `V₀`. -/
 theorem start_eq (hg : IsGalerkinPart F t₀ h U₀ S₀ V₀ Uh Vh Yh Ub Vb Sb)
     (capU₀ : Ub * Ubᵀ * U₀ = U₀) (capV₀ : Vb * Vbᵀ * V₀ = V₀) :
     Ub * Sb t₀ * Vbᵀ = U₀ * S₀ * V₀ᵀ := by
-  calc Ub * Sb t₀ * Vbᵀ = galProj Ub Vb (U₀ * S₀ * V₀ᵀ) := by
+  calc Ub * Sb t₀ * Vbᵀ = galerkinProj Ub Vb (U₀ * S₀ * V₀ᵀ) := by
         rw [galProj_apply, leftProj_apply, rightProj_apply', hg.sStart]
         simp only [Matrix.mul_assoc]
     _ = U₀ * S₀ * V₀ᵀ := galProj_fix S₀ capU₀ capV₀
@@ -578,8 +578,8 @@ theorem error (hg : IsGalerkinPart F t₀ h U₀ S₀ V₀ Uh Vh Yh Ub Vb Sb)
       (Real.exp (L * h) - 1) * (M₃ * h ^ 3 / 24 + h * (L * η + ε') + M₂ * h ^ 2)
         + (M₃ * h ^ 3 / 24 + h * (L * η + ε')) := by
   have hstart := hg.start_eq capU₀ capV₀
-  have hfix : galProj Ub Vb (A t₀) = A t₀ := by rw [hA₀]; exact galProj_fix S₀ capU₀ capV₀
-  have hn' : ‖(1 - galProj Ub Vb) (F (t₀ + h / 2) Yh)‖ ≤ ε' := (hg.norm_normal_le hh).trans hn
+  have hfix : galerkinProj Ub Vb (A t₀) = A t₀ := by rw [hA₀]; exact galProj_fix S₀ capU₀ capV₀
+  have hn' : ‖(1 - galerkinProj Ub Vb) (F (t₀ + h / 2) Yh)‖ ≤ ε' := (hg.norm_normal_le hh).trans hn
   have hS₀ : (fun t => Ub * Sb t * Vbᵀ) t₀ = A t₀ := hstart.trans hA₀.symm
   exact midpoint_galerkin_error (YS := fun t => Ub * Sb t * Vbᵀ) hg.proj hF hL hh hA hD hfix hη hn'
     (odeSolution_galProj hg.sSol) hS₀
@@ -692,10 +692,10 @@ lemma capV₀ (hs : IsMidpoint4rStep F t₀ h U₀ S₀ V₀ Uh Vh K Lf Sh Ub Vb
 `Y' = P̄ Q̄ F(t, Y)` from `Y₀`. -/
 theorem algorithm (hs : IsMidpoint4rStep F t₀ h U₀ S₀ V₀ Uh Vh K Lf Sh Ub Vb Sb) (hh : 0 < h) :
     (∀ X : Matrix m n ℝ, leftProj Ub (rightProj Vb X) = rightProj Vb (leftProj Ub X)) ∧
-      galProj Ub Vb (U₀ * S₀ * V₀ᵀ) = U₀ * S₀ * V₀ᵀ ∧
-      galProj Ub Vb (tangentProj Uh Vh (F (t₀ + h / 2) (Uh * Sh (t₀ + h / 2) * Vhᵀ)))
+      galerkinProj Ub Vb (U₀ * S₀ * V₀ᵀ) = U₀ * S₀ * V₀ᵀ ∧
+      galerkinProj Ub Vb (tangentProj Uh Vh (F (t₀ + h / 2) (Uh * Sh (t₀ + h / 2) * Vhᵀ)))
         = tangentProj Uh Vh (F (t₀ + h / 2) (Uh * Sh (t₀ + h / 2) * Vhᵀ)) ∧
-      ODESolution (fun t x => galProj Ub Vb (F t x)) (fun t => Ub * Sb t * Vbᵀ) t₀ (t₀ + h) ∧
+      ODESolution (fun t x => galerkinProj Ub Vb (F t x)) (fun t => Ub * Sb t * Vbᵀ) t₀ (t₀ + h) ∧
       Ub * Sb t₀ * Vbᵀ = U₀ * S₀ * V₀ᵀ :=
   ⟨leftProj_rightProj_comm Ub Vb, galProj_fix S₀ hs.capU₀ hs.capV₀,
     galProj_tangent hs.galerkin.capU hs.galerkin.capV (hs.galerkin.capF' hh)
@@ -1724,5 +1724,9 @@ example : ‖1 * cxA (0 + 1) * (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ - cxA (0 + 1)
     (by norm_num) h1 h2
 
 end Counterexample
+
+/-- The local Galerkin projector of this file, replaced by the core `LeanDLRA.galerkinProj` (same
+definition `leftProj Ub * rightProj Vb`). -/
+@[deprecated (since := "2026-11-09")] alias galProj := LeanDLRA.galerkinProj
 
 end LeanDLRA.Literature.P2402_08607

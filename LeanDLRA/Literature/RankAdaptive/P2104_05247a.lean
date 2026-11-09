@@ -4,6 +4,7 @@ import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Classical.WeylSingular
 import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Integrators.Matrix.Symmetry
+import LeanDLRA.Matrix.LowRankDistance
 
 /-!
 # Results of arXiv 2104.05247: Rank-adaptive (augmented) BUG
@@ -12,7 +13,7 @@ Ceruti–Kusch–Lubich, *A rank-adaptive robust integrator for dynamical low-ra
 This module completes two results of the paper that the library had proved only before the final
 truncation step of the algorithm.
 
-* `exactness` (**Theorem 1**, with truncation): the truncation rule `adaptiveRank` (smallest `r₁`
+* `exactness` (**Theorem 1**, with truncation): the truncation rule `epsRank ϑ` (smallest `r₁`
   with singular-value tail `≤ ϑ`) and the truncated SVD step `adaptiveTruncate` of the augmented
   coefficient matrix return exactly `A(t₁)` when `ϑ < σ_r(A(t₁))`, using the existing
   untruncated exactness `Exactness.augBug_exact_ode`.  The key new fact is `tailNorm_conj`
@@ -74,18 +75,19 @@ section Exactness
 variable {m n r p q : Type*} [Fintype m] [Fintype n] [Fintype r] [Fintype p] [Fintype q]
   [DecidableEq n] [DecidableEq r] [DecidableEq p] [DecidableEq q]
 
-/-- The rank selected by the truncation rule of the rank-adaptive BUG integrator
-(arXiv 2104.05247, step 3 of the algorithm in §2.1): the smallest `r₁` such that the discarded
-singular values satisfy `(∑_{i > r₁} σ_i²)^{1/2} ≤ ϑ`. -/
-noncomputable def adaptiveRank (S : Matrix p q ℝ) (ϑ : ℝ) : ℕ :=
-  sInf {s : ℕ | tailNorm S s ≤ ϑ}
+/-! The rank selected by the truncation rule of the rank-adaptive BUG integrator
+(arXiv 2104.05247, step 3 of the algorithm in §2.1), the smallest `r₁` such that the discarded
+singular values satisfy `(∑_{i > r₁} σ_i²)^{1/2} ≤ ϑ`, is the core `ε`-rank `epsRank ϑ S` (the
+smallest `r₁` with `distLR r₁ S ≤ ϑ`; the tail is that distance by `tailNorm_eq_infDist`). The
+local `adaptiveRank S ϑ` of an earlier version of this file was this number (unification
+batch C3). -/
 
 /-- The truncation step of the rank-adaptive BUG integrator: the truncated SVD of the augmented
-coefficient matrix `Ŝ₁` at the rank `adaptiveRank Ŝ₁ ϑ`, mapped back by the augmented bases:
+coefficient matrix `Ŝ₁` at the rank `epsRank ϑ Ŝ₁`, mapped back by the augmented bases:
 `Y₁ = Û (Ŝ₁ V_{r₁} V_{r₁}ᵀ) V̂ᵀ` (the result (6) of the algorithm in §2.1). -/
 noncomputable def adaptiveTruncate (Uh : Matrix m p ℝ) (Vh : Matrix n q ℝ) (S : Matrix p q ℝ)
     (ϑ : ℝ) : Matrix m n ℝ :=
-  Uh * truncation S (adaptiveRank S ϑ) * Vhᵀ
+  Uh * truncation S (epsRank ϑ S) * Vhᵀ
 
 /-- **Theorem 1 (exactness) of arXiv 2104.05247, including the truncation.**
 Let `F(t, Y) = Ȧ(t)` (`IsDerivRHS`), `Y₀ = U₀ S₀ V₀ᵀ = A(t₀)` with `U₀ᵀU₀ = V₀ᵀV₀ = I`, and
@@ -102,7 +104,7 @@ rank exactly `r`.  The overlap hypotheses are stated with the integrator's start
 `V₀` in place of `U(t₀)`, `V(t₀)` (equivalent when `rank A(t₀) = r`, as in the paper).  `Û`,
 `V̂` need only capture `[K(t₁), U₀]`, `[L(t₁), V₀]` (their range may be larger).  The tolerance is
 assumed nonnegative.  The truncation is the Eckart--Young truncated SVD
-`EckartYoung.truncation` of `Ŝ(t₁)`; the rank rule is `adaptiveRank`. -/
+`EckartYoung.truncation` of `Ŝ(t₁)`; the rank rule is the `ε`-rank `epsRank ϑ`. -/
 theorem exactness {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
     {A : ℝ → Matrix m n ℝ} {t₀ t₁ : ℝ} (ht : t₀ ≤ t₁) (hA : IsDerivRHS F A t₀ t₁)
     {U₀ : Matrix m r ℝ} {S₀ : Matrix r r ℝ} {V₀ : Matrix n r ℝ}
@@ -121,7 +123,7 @@ theorem exactness {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
     (hSf₀ : Sf t₀ = Uhᵀ * U₀ * S₀ * (Vhᵀ * V₀)ᵀ)
     {ϑ : ℝ} (hϑ0 : 0 ≤ ϑ)
     (hϑ : ϑ < (Matrix.toEuclideanLin (A t₁)).singularValues (Fintype.card r - 1)) :
-    adaptiveRank (Sf t₁) ϑ = Fintype.card r ∧ adaptiveTruncate Uh Vh (Sf t₁) ϑ = A t₁ := by
+    epsRank ϑ (Sf t₁) = Fintype.card r ∧ adaptiveTruncate Uh Vh (Sf t₁) ϑ = A t₁ := by
   have hX : Uh * Sf t₁ * Vhᵀ = A t₁ :=
     Exactness.augBug_exact_ode ht hA hU₀ hV₀ hY₀ hA₁ hU hV hK hK₀ hL hL₀ hUh hVh hSf hSf₀
   have htail : ∀ s, tailNorm (Sf t₁) s = tailNorm (A t₁) s := fun s => by
@@ -158,8 +160,11 @@ theorem exactness {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
       unfold tailNorm
       exact Real.le_sqrt_of_sq_le hterm
     linarith
-  have hr1 : adaptiveRank (Sf t₁) ϑ = Fintype.card r :=
-    le_antisymm (Nat.sInf_le hmem) (le_csInf ⟨_, hmem⟩ hlow)
+  have hset : {s : ℕ | distLR s (Sf t₁) ≤ ϑ} = {s : ℕ | tailNorm (Sf t₁) s ≤ ϑ} := by
+    simp only [distLR, lowRankSet, ← tailNorm_eq_infDist]
+  have hr1 : epsRank ϑ (Sf t₁) = Fintype.card r := by
+    rw [epsRank, hset]
+    exact le_antisymm (Nat.sInf_le hmem) (le_csInf ⟨_, hmem⟩ hlow)
   refine ⟨hr1, ?_⟩
   have h0 : tailNorm (Sf t₁) (Fintype.card r) = 0 :=
     le_antisymm (by rw [htail]; exact (tailNorm_le_norm_sub (A t₁) (A t₁) hrank).trans (by simp))
@@ -174,7 +179,7 @@ theorem exactness {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
 `t₁ = 1`, all bases `= 1`, tolerance `ϑ = 0`.  All hypotheses of `exactness` are satisfied (the
 ODE solutions are affine), so the rank selected is `1`. -/
 example : ∃ (A : ℝ → Matrix (Fin 1) (Fin 1) ℝ) (Sf : ℝ → Matrix (Fin 1) (Fin 1) ℝ),
-    A 1 ≠ 0 ∧ adaptiveRank (Sf 1) 0 = 1 ∧ adaptiveTruncate 1 1 (Sf 1) 0 = A 1 := by
+    A 1 ≠ 0 ∧ epsRank 0 (Sf 1) = 1 ∧ adaptiveTruncate 1 1 (Sf 1) 0 = A 1 := by
   classical
   obtain ⟨M, hM⟩ : ∃ M : Matrix (Fin 1) (Fin 1) ℝ, M = 1 := ⟨_, rfl⟩
   obtain ⟨A, hAdef⟩ : ∃ A : ℝ → Matrix (Fin 1) (Fin 1) ℝ, A = fun t => M + (t - 0) • M :=
@@ -403,7 +408,7 @@ equivariance `F(t, σ Yᵀ) = σ F(t, Y)ᵀ`, which is equivalent to condition (
 paper (see `Symmetry.isTwistEquivariant_one_iff`, `Symmetry.isTwistEquivariant_neg_one_iff`).
 The K- and L-steps use the basis `U₀`, `Û` captures `K(t₁)` and `V̂ = Û` (a valid choice, since
 `L(t₁) = σ K(t₁)`), the augmented S-step starts at `M̂ S₀ M̂ᵀ` (`M̂ = Ûᵀ U₀`), and `Y₁` is the
-truncation of `Ŝ(t₁)` at the rank selected by the rule `adaptiveRank` with tolerance `ϑ`.  Then
+truncation of `Ŝ(t₁)` at the rank selected by the rule `epsRank ϑ` with tolerance `ϑ`.  Then
 `Y₁ = Û Ŝ(t₁)_{r₁} Ûᵀ` is `σ`-symmetric.
 
 The untruncated part (`Ŷ₁ = Û Ŝ(t₁) Ûᵀ` is `σ`-symmetric) is `Symmetry.augBug_isTwistSymm`.
@@ -423,9 +428,9 @@ theorem augBug_truncated_isTwistSymm (hσ : σ * σ = 1) (hF : Symmetry.IsTwistE
     {Û : Matrix n p ℝ} (hcap : Û * Ûᵀ * K t₁ = K t₁)
     {Ŝ : ℝ → Matrix p p ℝ} (hS : ODESolution (Symmetry.sField Û Û F) Ŝ t₀ t₁)
     (hS0 : Ŝ t₀ = Ûᵀ * U₀ * S₀ * (Ûᵀ * U₀)ᵀ) (ht : t₀ ≤ t₁) {ϑ : ℝ}
-    (hgap : 0 < adaptiveRank (Ŝ t₁) ϑ →
-      (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (adaptiveRank (Ŝ t₁) ϑ) <
-        (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (adaptiveRank (Ŝ t₁) ϑ - 1)) :
+    (hgap : 0 < epsRank ϑ (Ŝ t₁) →
+      (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (epsRank ϑ (Ŝ t₁)) <
+        (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (epsRank ϑ (Ŝ t₁) - 1)) :
     Symmetry.IsTwistSymm σ (adaptiveTruncate Û Û (Ŝ t₁) ϑ) := by
   have h := Symmetry.augBug_isTwistSymm hσ hF hL hS₀ hK hK0 hLs hL0 hcap hS hS0 ht
   exact (isTwistSymm_truncation hσ h.2.2.1 _ hgap).mul_mul_transpose Û
@@ -441,9 +446,9 @@ theorem augBug_truncated_symm (hF : Symmetry.SymmCondition F)
     {Û : Matrix n p ℝ} (hcap : Û * Ûᵀ * K t₁ = K t₁)
     {Ŝ : ℝ → Matrix p p ℝ} (hS : ODESolution (Symmetry.sField Û Û F) Ŝ t₀ t₁)
     (hS0 : Ŝ t₀ = Ûᵀ * U₀ * S₀ * (Ûᵀ * U₀)ᵀ) (ht : t₀ ≤ t₁) {ϑ : ℝ}
-    (hgap : 0 < adaptiveRank (Ŝ t₁) ϑ →
-      (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (adaptiveRank (Ŝ t₁) ϑ) <
-        (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (adaptiveRank (Ŝ t₁) ϑ - 1)) :
+    (hgap : 0 < epsRank ϑ (Ŝ t₁) →
+      (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (epsRank ϑ (Ŝ t₁)) <
+        (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (epsRank ϑ (Ŝ t₁) - 1)) :
     (adaptiveTruncate Û Û (Ŝ t₁) ϑ).IsSymm :=
   (Symmetry.isTwistSymm_one_iff _).1 <|
     augBug_truncated_isTwistSymm (by norm_num) ((Symmetry.isTwistEquivariant_one_iff F).2 hF) hL
@@ -461,9 +466,9 @@ theorem augBug_truncated_skew (hF : Symmetry.SkewCondition F)
     {Û : Matrix n p ℝ} (hcap : Û * Ûᵀ * K t₁ = K t₁)
     {Ŝ : ℝ → Matrix p p ℝ} (hS : ODESolution (Symmetry.sField Û Û F) Ŝ t₀ t₁)
     (hS0 : Ŝ t₀ = Ûᵀ * U₀ * S₀ * (Ûᵀ * U₀)ᵀ) (ht : t₀ ≤ t₁) {ϑ : ℝ}
-    (hgap : 0 < adaptiveRank (Ŝ t₁) ϑ →
-      (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (adaptiveRank (Ŝ t₁) ϑ) <
-        (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (adaptiveRank (Ŝ t₁) ϑ - 1)) :
+    (hgap : 0 < epsRank ϑ (Ŝ t₁) →
+      (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (epsRank ϑ (Ŝ t₁)) <
+        (Matrix.toEuclideanLin (Ŝ t₁)).singularValues (epsRank ϑ (Ŝ t₁) - 1)) :
     (adaptiveTruncate Û Û (Ŝ t₁) ϑ)ᵀ = -adaptiveTruncate Û Û (Ŝ t₁) ϑ :=
   (Symmetry.isTwistSymm_neg_one_iff _).1 <|
     augBug_truncated_isTwistSymm (by norm_num) ((Symmetry.isTwistEquivariant_neg_one_iff F).2 hF)
