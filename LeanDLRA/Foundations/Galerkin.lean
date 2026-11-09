@@ -1,4 +1,5 @@
 import LeanDLRA.Foundations.ODE
+import LeanDLRA.Analysis.Defs
 
 /-!
 # Galerkin ODEs `y' = P F(t, y)`
@@ -580,9 +581,6 @@ theorem galerkin_euler_norm_le (hP : IsOrthProj P) {F : ℝ → E → E} {t h : 
     ‖P (P x + h • F t (P x))‖ ≤ ‖x‖ :=
   (hP.norm_le _).trans ((hF _ (hP.idem x)).trans (hP.norm_le x))
 
-/-- The projected forward Euler step `x ↦ x + h P F(t, x)`. -/
-def projEuler (P : E →L[ℝ] E) (F : ℝ → E → E) (h t : ℝ) (x : E) : E := x + h • P (F t x)
-
 /-- On `range P`, the projected Euler step is the projection of the full Euler step. -/
 lemma projEuler_eq {F : ℝ → E → E} {h t : ℝ} {x : E} (hx : P x = x) :
     projEuler P F h t x = P (x + h • F t x) := by
@@ -602,11 +600,6 @@ theorem projEuler_norm_le (hP : IsOrthProj P) {F : ℝ → E → E} {t h : ℝ}
     ‖projEuler P F h t x‖ ≤ ‖x‖ := by
   rw [projEuler_eq hx]
   exact (hP.norm_le _).trans (hF x hx)
-
-/-- Iterates of the projected forward Euler method on the grid `t₀ + n h`. -/
-def projEulerIter (P : E →L[ℝ] E) (F : ℝ → E → E) (h t₀ : ℝ) (x₀ : E) : ℕ → E
-  | 0 => x₀
-  | n + 1 => projEuler P F h (t₀ + n * h) (projEulerIter P F h t₀ x₀ n)
 
 /-- **Discrete norm stability**: if every full forward Euler step is norm-nonincreasing on
 `range P` and `x₀ ∈ range P`, all iterates of the projected forward Euler method stay in

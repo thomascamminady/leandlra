@@ -1,5 +1,7 @@
 import LeanDLRA.Foundations.OneSided
 import LeanDLRA.Foundations.Galerkin
+import LeanDLRA.Analysis.Defs
+import LeanDLRA.LinearAlgebra.Projection.Defs
 
 /-!
 # Time-continuous dynamical low-rank approximation
@@ -534,11 +536,6 @@ section QuasiOptimal
 
 /-! #### Grönwall's inequality with a time-dependent source term -/
 
-/-- The solution `e^{K(x-a)} (δ + ∫ₐˣ e^{-K(s-a)} η(s) ds)` of the scalar comparison equation
-`u' = K u + η(t)`, `u(a) = δ`; for constant `η` it equals `gronwallBound δ K η (x - a)`. -/
-noncomputable def gronwallIntegralBound (δ K : ℝ) (η : ℝ → ℝ) (a x : ℝ) : ℝ :=
-  Real.exp (K * (x - a)) * (δ + ∫ s in a..x, Real.exp (-(K * (s - a))) * η s)
-
 /-- `gronwallIntegralBound` solves `u' = K u + η`. -/
 lemma hasDerivAt_gronwallIntegralBound (δ K : ℝ) {η : ℝ → ℝ} (hη : Continuous η) (a x : ℝ) :
     HasDerivAt (gronwallIntegralBound δ K η a) (K * gronwallIntegralBound δ K η a x + η x) x := by
@@ -1029,13 +1026,6 @@ end Stability
 /-! ### Consistency examples -/
 
 section Examples
-
-/-- The orthogonal projection onto a complete subspace is an orthogonal projector in the sense
-of `IsOrthProj` (used to build non-trivial instances of the hypotheses). -/
-private lemma isOrthProj_starProjection (K : Submodule ℝ E) [K.HasOrthogonalProjection] :
-    IsOrthProj K.starProjection where
-  idem x := Submodule.starProjection_eq_self_iff.2 (K.starProjection_apply_mem x)
-  symm x y := K.inner_starProjection_left_eq_right x y
 
 /-- Changing the vector field away from the trajectory does not affect `ODESolution`. -/
 private lemma ODESolution.congr_field_dlra {f g : ℝ → E → E} {y : ℝ → E} {a b : ℝ}

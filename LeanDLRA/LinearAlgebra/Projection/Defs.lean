@@ -30,6 +30,8 @@ orthogonal projectors), `LeanDLRA/Matrix/Projectors.lean` (`leftProj`, `rightPro
 
 * `LeanDLRA.isOrthProj_iff_isSymmetricProjection`: `IsOrthProj` is Mathlib's
   `LinearMap.IsSymmetricProjection`.
+* `LeanDLRA.isOrthProj_starProjection`: Mathlib's orthogonal projection onto a subspace is an
+  `IsOrthProj`.
 * `LeanDLRA.IsOrthProj.restrictScalars`: a symmetric projection of a complex (or `RCLike`) inner
   product space is a real orthogonal projector of its realification.
 
@@ -70,6 +72,13 @@ theorem isOrthProj_iff_isSymmetricProjection {P : E →L[ℝ] E} :
     exact ⟨LinearMap.ext fun x => hP.idem x, fun x y => hP.symm x y⟩
   · intro hP
     exact ⟨fun x => LinearMap.congr_fun hP.isIdempotentElem.eq x, fun x y => hP.isSymmetric x y⟩
+
+/-- The orthogonal projection onto a subspace that has one (for example a complete or a
+finite-dimensional subspace) is an orthogonal projector in the sense of `IsOrthProj`. -/
+theorem isOrthProj_starProjection (K : Submodule ℝ E) [K.HasOrthogonalProjection] :
+    IsOrthProj K.starProjection where
+  idem x := Submodule.starProjection_eq_self_iff.2 (K.starProjection_apply_mem x)
+  symm x y := K.inner_starProjection_left_eq_right x y
 
 /-- **Realification.** Let `G` be an inner product space over `𝕜 = ℝ` or `ℂ` that also carries a
 real inner product space structure whose inner product is the real part of the `𝕜` one. Then

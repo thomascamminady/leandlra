@@ -1,4 +1,5 @@
 import LeanDLRA.Foundations.Galerkin
+import LeanDLRA.Analysis.Defs
 
 /-!
 # `L²`-stability and energy stability of robust dynamical low-rank integrators
@@ -119,9 +120,6 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 /-! ### Explicit Euler steps and the BUG integrator -/
 
 section ExplicitEuler
-
-/-- The full explicit Euler step `x ↦ x + h F(x)` of the (frozen-time) field `F`. -/
-def eulerStep (F : E → E) (h : ℝ) (x : E) : E := x + h • F x
 
 /-- The explicit-Euler Galerkin step `x ↦ P (P x + h F(P x))`.  For `P = P₁ Q₁` this is the
 explicit Euler BUG step: the S-step starts from `ū = P₁ Q₁ u₀ = U₁ (U₁ᵀ U₀ S₀ V₀ᵀ V₁) V₁ᵀ` and

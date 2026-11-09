@@ -1,6 +1,7 @@
 import LeanDLRA.Foundations.Existence
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Analysis.Defs
 
 /-!
 # Localisation: tube hypotheses, global extension, bootstrap and continuation
@@ -87,21 +88,6 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 section Tube
 
-/-- `F` is `L`-Lipschitz in the state on the tube of radius `ρ` around the curve `A` over the
-time interval `[a, b]`: `‖F t x - F t y‖ ≤ L ‖x - y‖` whenever `t ∈ [a, b]`,
-`‖x - A t‖ ≤ ρ` and `‖y - A t‖ ≤ ρ` (arXiv 2010.05249, Property 1(b), eq. (3.3)). -/
-def IsLipschitzOnTube (F : ℝ → E → E) (A : ℝ → E) (a b ρ L : ℝ) : Prop :=
-  ∀ t ∈ Icc a b, ∀ x y, ‖x - A t‖ ≤ ρ → ‖y - A t‖ ≤ ρ → ‖F t x - F t y‖ ≤ L * ‖x - y‖
-
-/-- `F` is bounded by `B` on the tube of radius `ρ` around `A` over `[a, b]`
-(arXiv 2010.05249, Property 1(b), eq. (3.3)). -/
-def IsBoundedOnTube (F : ℝ → E → E) (A : ℝ → E) (a b ρ B : ℝ) : Prop :=
-  ∀ t ∈ Icc a b, ∀ x, ‖x - A t‖ ≤ ρ → ‖F t x‖ ≤ B
-
-/-- The tube `{(t, x) | t ∈ [a, b], ‖x - A t‖ ≤ ρ}` as a subset of `ℝ × E`. -/
-def tubeSet (A : ℝ → E) (a b ρ : ℝ) : Set (ℝ × E) :=
-  {p | p.1 ∈ Icc a b ∧ ‖p.2 - A p.1‖ ≤ ρ}
-
 omit [InnerProductSpace ℝ E] in
 /-- Global hypotheses imply the tube hypotheses. -/
 lemma IsLipschitzField.isLipschitzOnTube {F : ℝ → E → E} {L : ℝ} (hF : IsLipschitzField F L)
@@ -133,17 +119,6 @@ end Tube
 /-! ### The radial retraction onto a closed ball -/
 
 section Retraction
-
-/-- The radial retraction of `E` onto the closed ball of radius `ρ` around `c`:
-`x ↦ c + min 1 (ρ / ‖x - c‖) • (x - c)`.  It is the metric projection onto the ball. -/
-noncomputable def ballRetract (c : E) (ρ : ℝ) (x : E) : E :=
-  c + min 1 (ρ / ‖x - c‖) • (x - c)
-
-/-- The radial retraction onto the ball of radius `ρ` around `0`. -/
-noncomputable def radialRetract (ρ : ℝ) (z : E) : E := min 1 (ρ / ‖z‖) • z
-
-lemma ballRetract_eq (c : E) (ρ : ℝ) (x : E) :
-    ballRetract c ρ x = c + radialRetract ρ (x - c) := rfl
 
 lemma radialRetract_of_norm_le {ρ : ℝ} {z : E} (hz : ‖z‖ ≤ ρ) : radialRetract ρ z = z := by
   unfold radialRetract
@@ -257,15 +232,6 @@ end Retraction
 section Extension
 
 variable {F : ℝ → E → E} {A : ℝ → E} {a b ρ L B : ℝ}
-
-open Classical in
-/-- **Global extension of a field given on a tube.**  For `t ∈ [a, b]`,
-`tubeExt F A a b ρ t x = F t (r_t x)` with `r_t` the radial retraction onto the closed ball of
-radius `ρ` around `A t`; outside `[a, b]` the extension is `0` (solutions on subintervals of
-`[a, b]` never see these values).  It agrees with `F` on the tube and is globally Lipschitz and
-bounded with the *same* constants as `F` on the tube. -/
-noncomputable def tubeExt (F : ℝ → E → E) (A : ℝ → E) (a b ρ : ℝ) (t : ℝ) (x : E) : E :=
-  if t ∈ Icc a b then F t (ballRetract (A t) ρ x) else 0
 
 lemma tubeExt_of_mem {t : ℝ} (ht : t ∈ Icc a b) (x : E) :
     tubeExt F A a b ρ t x = F t (ballRetract (A t) ρ x) := by
@@ -925,9 +891,6 @@ open scoped LeanDLRA.Frobenius
 
 variable {m n : Type*} [Fintype m] [Fintype n]
 
-/-- The entrywise cubic nonlinearity `G(X)ᵢⱼ = |Xᵢⱼ|² Xᵢⱼ = Xᵢⱼ³` on real matrices. -/
-def entrywiseCubic (X : Matrix m n ℝ) : Matrix m n ℝ := fun i j => X i j ^ 3
-
 lemma abs_cube_sub_cube_le {x y R : ℝ} (hx : |x| ≤ R) (hy : |y| ≤ R) :
     |x ^ 3 - y ^ 3| ≤ 3 * R ^ 2 * |x - y| := by
   have h := norm_cubic_sub_le_max (V := ℝ) x y
@@ -1111,12 +1074,6 @@ theorem norm_inv_add_le {C₀ Δ : Matrix ι ι ℝ} (h₀ : IsUnit C₀.det) {�
   nlinarith
 
 variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H]
-
-/-- The Gram matrix `C_Z = (⟪Zʲ, Zˡ⟫)_{j,l}` of a `k`-tuple `Z ∈ [H]^k`. -/
-def gramMatrix (Z : PiLp 2 fun _ : ι => H) : Matrix ι ι ℝ := Matrix.of fun j l => ⟪Z j, Z l⟫
-
-/-- The cross-Gram matrix `(⟪aʲ, bˡ⟫)_{j,l}`. -/
-def crossGram (a b : PiLp 2 fun _ : ι => H) : Matrix ι ι ℝ := Matrix.of fun j l => ⟪a j, b l⟫
 
 omit [DecidableEq ι] in
 /-- Frobenius norm of a cross-Gram matrix: `‖(⟪aʲ, bˡ⟫)‖_F ≤ ‖a‖ ‖b‖` (Cauchy–Schwarz). -/
