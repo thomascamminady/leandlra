@@ -53,6 +53,7 @@ import LeanDLRA.Literature.Applications.P2610_06885b
 import LeanDLRA.Literature.Applications.P2610_08956a
 import LeanDLRA.Literature.Control.P2111_14540a
 import LeanDLRA.Literature.Control.P2501_07439a
+import LeanDLRA.Literature.Control.P2501_07439b
 import LeanDLRA.Literature.Control.P2506_21405a
 import LeanDLRA.Literature.Control.P2608_21545a
 import LeanDLRA.Literature.Foundations.P1710_03946a
@@ -71,6 +72,7 @@ import LeanDLRA.Literature.HighOrder.P2501_06145b
 import LeanDLRA.Literature.HighOrder.P2502_07040a
 import LeanDLRA.Literature.HighOrder.P2502_07040b
 import LeanDLRA.Literature.HighOrder.P2608_12893a
+import LeanDLRA.Literature.HighOrder.P2608_12893b
 import LeanDLRA.Literature.HighOrder.P2608_17157a
 import LeanDLRA.Literature.HighOrder.P2608_27749a
 import LeanDLRA.Literature.HighOrder.P2608_27749b
@@ -415,6 +417,9 @@ import LeanDLRA.Stiff.ImplicitSolvability
 import LeanDLRA.Stochastic.KalmanBucy
 import LeanDLRA.Stochastic.MeanSquare
 import LeanDLRA.Tensor.Defs
+import LeanDLRA.Tensor.TT.Basic
+import LeanDLRA.Tensor.TTN.Basic
+import LeanDLRA.Tensor.Tucker.Basic
 import LeanDLRA.Tensor.Unfolding
 import LeanDLRA.Training.Descent
 import LeanDLRA.Training.FactorizedDynamics
