@@ -1,4 +1,5 @@
 import LeanDLRA.Classical.EckartYoung
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Foundations.Gronwall
 import LeanDLRA.Foundations.Localization
 import LeanDLRA.Foundations.ODE
@@ -63,20 +64,20 @@ section Galerkin
 
 variable {ι κ : Type*} [Fintype ι] [Fintype κ] {p q k l r : ℕ}
 
-/-- The Galerkin projector `Π X = Û Ûᵀ X V̂ V̂ᵀ` onto the matrices `Û S V̂ᵀ`. -/
-noncomputable def galerkinProj (Uh : Matrix ι (Fin p) ℝ) (Vh : Matrix κ (Fin q) ℝ) :
-    Matrix ι κ ℝ →L[ℝ] Matrix ι κ ℝ :=
-  leftProj Uh * rightProj Vh
+/-! The Galerkin projector `Π X = Û Ûᵀ X V̂ V̂ᵀ` onto the matrices `Û S V̂ᵀ` is the core
+`LeanDLRA.galerkinProj`; the local copy of an earlier version of this file (for bases indexed by
+`Fin p`, `Fin q`) was the same definition (unification batch C2). -/
 
 /-- `Π X = Û (Ûᵀ X V̂) V̂ᵀ`: the Galerkin coefficient matrix `Ŝ = Ûᵀ X V̂` of the S-step. -/
 lemma galerkinProj_apply (Uh : Matrix ι (Fin p) ℝ) (Vh : Matrix κ (Fin q) ℝ) (X : Matrix ι κ ℝ) :
     galerkinProj Uh Vh X = Uh * (Uhᵀ * X * Vh) * Vhᵀ :=
   leftProj_rightProj_apply Uh Vh X
 
-/-- `Π` is an orthogonal projector for the Frobenius inner product. -/
+/-- `Π` is an orthogonal projector for the Frobenius inner product (the core
+`LeanDLRA.isOrthProj_galerkinProj`). -/
 lemma isOrthProj_galerkinProj {Uh : Matrix ι (Fin p) ℝ} {Vh : Matrix κ (Fin q) ℝ}
     (hU : Uhᵀ * Uh = 1) (hV : Vhᵀ * Vh = 1) : IsOrthProj (galerkinProj Uh Vh) :=
-  isOrthProj_leftProj_mul_rightProj hU hV
+  LeanDLRA.isOrthProj_galerkinProj hU hV
 
 /-- The augmented bases `Û`, `V̂` **contain the tangent data** of `(U, V, G)`: the columns of `U`
 and `G V` lie in the range of `Û`, the columns of `V` and `Gᵀ U` in the range of `V̂`. These are the
@@ -453,7 +454,7 @@ theorem IsAugmentedUpdate.exists_galerkin {h : ℝ} {Yhat : Matrix (Fin n) (Fin 
         galerkinProj Uh Vh (tangentProj (Ys j).U (Ys j).V (Fs j)) =
           tangentProj (Ys j).U (Ys j).V (Fs j) ∧
         ‖Fs j - galerkinProj Uh Vh (Fs j)‖ ≤ ‖Fs j - tangentProj (Ys j).U (Ys j).V (Fs j)‖) ∧
-      IsBestRankApprox r Yhat Ynew.mat := by
+      IsBestLowRankApprox r Yhat Ynew.mat := by
   obtain ⟨p, q, Uh, Vh, hU, hV, hY, hbest⟩ := hup
   exact ⟨p, q, Uh, Vh, isOrthProj_galerkinProj hU.orthonormal hV.orthonormal,
     hY.trans (galerkinProj_apply Uh Vh _).symm, fix_of_isOrthOf hU hV,
@@ -1028,5 +1029,9 @@ theorem euler_instance {G : Matrix (Fin n) (Fin m) ℝ → Matrix (Fin n) (Fin m
     hR.global_error_paper (isRKLocalError_euler hL.le hG hB hh.le _) hX⟩
 
 end Euler
+
+/-- The local Galerkin projector of this file, replaced by the core `LeanDLRA.galerkinProj` (same
+definition `leftProj Uh * rightProj Vh`). -/
+@[deprecated (since := "2026-11-09")] alias galerkinProj := LeanDLRA.galerkinProj
 
 end LeanDLRA.Literature.P2502_07040

@@ -1,4 +1,5 @@
 import LeanDLRA.Classical.EckartYoung
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Foundations.Projector
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Orthonormal
@@ -81,10 +82,10 @@ def augSpace {d : ℕ} (U₀ : Matrix (Fin d) (Fin r) ℝ) (w : Fin s → ℝ)
     (U G : Fin s → Matrix (Fin d) (Fin r) ℝ) : Submodule ℝ (EuclideanSpace ℝ (Fin d)) :=
   colSpan U₀ ⊔ ⨆ i, (colSpan (w i • U i) ⊔ colSpan (w i • G i))
 
-/-- `B` is a best approximation of `A` among the matrices of rank at most `r`, that is, a value of
-the retraction `𝓡_{𝓜_r}(A)` (the `r`-truncated SVD of `A`). -/
-def IsBestRankApprox (r : ℕ) (A B : Matrix (Fin n) (Fin m) ℝ) : Prop :=
-  B.rank ≤ r ∧ ∀ Z : Matrix (Fin n) (Fin m) ℝ, Z.rank ≤ r → ‖A - B‖ ≤ ‖A - Z‖
+/-! "`B` is a best approximation of `A` among the matrices of rank at most `r`", that is, a value of
+the retraction `𝓡_{𝓜_r}(A)` (the `r`-truncated SVD of `A`), is the core
+`IsBestLowRankApprox r A B`; the local `IsBestRankApprox` of an earlier version of this file was
+the same definition (unification batch C4). -/
 
 /-- One BUG update with weights `w` (lines 6–10 of Algorithm 2 with `w = a_{i+1,·}` and lines 14–18
 with `w = b`): the augmented bases `Û`, `V̂` are orthonormal bases of the ranges of
@@ -99,7 +100,7 @@ def IsAugmentedUpdate (Yk : LowRank n m r) (Ys : Fin s → LowRank n m r)
     IsOrthOf Uh (augSpace Yk.U w (fun i => (Ys i).U) fun i => Fs i * (Ys i).V) ∧
     IsOrthOf Vh (augSpace Yk.V w (fun i => (Ys i).V) fun i => (Fs i)ᵀ * (Ys i).U) ∧
     Yhat = Uh * (Uhᵀ * (Yk.mat + h • ∑ j, w j • Fs j) * Vh) * Vhᵀ ∧
-    IsBestRankApprox r Yhat Ynew.mat
+    IsBestLowRankApprox r Yhat Ynew.mat
 
 /-- One step of the **RK-BUG integrator**, Algorithm 2, from `Yk` at time `t`: the stages `Ys i`
 with `F_i = F (t + c_i h) (Ys i)`, their augmented solutions `Yhs i`, the augmented solution `Yh`
@@ -131,6 +132,14 @@ lemma capture_of_colSpan_le {d p : ℕ} {κ : Type*} {Q : Matrix (Fin d) (Fin p)
   obtain ⟨C, hC⟩ := exists_eq_mul_of_col_mem_span (u := fun j => WithLp.toLp 2 (Q.col j)) (X := X)
     fun j => h (toLp_col_mem_colSpan X j)
   exact mul_transpose_mul_eq_of_eq_mul hQ hC
+
+/-- **Bridge.** An orthonormal basis `Q` of a subspace `W` captures every matrix whose columns lie
+in `W`: `Q` is an orthonormal frame capturing `X` in the sense of the core
+`Matrix.IsOrthCapture`. -/
+theorem IsOrthOf.isOrthCapture {d p : ℕ} {κ : Type*} {Q : Matrix (Fin d) (Fin p) ℝ}
+    {W : Submodule ℝ (EuclideanSpace ℝ (Fin d))} (h : IsOrthOf Q W) {X : Matrix (Fin d) κ ℝ}
+    (hX : colSpan X ≤ W) : Matrix.IsOrthCapture Q X :=
+  ⟨h.orthonormal, capture_of_colSpan_le h.orthonormal (h.colSpan_eq ▸ hX)⟩
 
 lemma colSpan_smul_le {d : ℕ} {κ : Type*} (c : ℝ) (A : Matrix (Fin d) κ ℝ) :
     colSpan (c • A) ≤ colSpan A := by
@@ -263,7 +272,7 @@ theorem rank_hat_le (hup : IsAugmentedUpdate Yk Ys Fs h w Yhat Ynew) (hs : 0 < s
 /-- The truncation error of one update, sharper form: `‖Ŷ - 𝓡(Ŷ)‖ ≤ ‖Ŷ - Y_k‖`. -/
 theorem norm_hat_sub_new_le (hup : IsAugmentedUpdate Yk Ys Fs h w Yhat Ynew) (hh : 0 ≤ h) :
     ‖Yhat - Ynew.mat‖ ≤ h * ∑ j, |w j| * ‖Fs j‖ := by
-  have hbest : IsBestRankApprox r Yhat Ynew.mat := by
+  have hbest : IsBestLowRankApprox r Yhat Ynew.mat := by
     obtain ⟨p, q, Uh, Vh, -, -, -, hb⟩ := hup
     exact hb
   exact (hbest.2 _ Yk.rank_mat_le).trans (hup.norm_hat_sub_le hh)
@@ -297,7 +306,7 @@ theorem norm_hat_sub_new_le_sqrt (hup : IsAugmentedUpdate Yk Ys Fs h w Yhat Ynew
     (hs : 0 < s) (h₁ : Ys ⟨0, hs⟩ = Yk) {B : ℝ} (hB : ∀ j, w j ≠ 0 → ‖Fs j‖ ≤ B) :
     ‖Yhat - Ynew.mat‖ ≤
       h * (√((min n (min m (2 * r * s)) - r : ℕ) : ℝ) * (∑ j, |w j|) * B) := by
-  have hbest : IsBestRankApprox r Yhat Ynew.mat := by
+  have hbest : IsBestLowRankApprox r Yhat Ynew.mat := by
     obtain ⟨p, q, Uh, Vh, -, -, -, hb⟩ := hup
     exact hb
   have hrank := hup.rank_hat_le hs h₁
@@ -1203,5 +1212,9 @@ theorem stage_bound_false_with_Cb :
   exact (boundB_cex_le _ R 1).trans_lt (norm_swapA_lt.trans_le (three_le_stage_error hsol hY))
 
 end Counterexample
+
+/-- The local best-approximation predicate of this file, replaced by the core
+`LeanDLRA.IsBestLowRankApprox` (same definition). -/
+@[deprecated (since := "2026-11-09")] alias IsBestRankApprox := LeanDLRA.IsBestLowRankApprox
 
 end LeanDLRA.Literature.P2502_07040

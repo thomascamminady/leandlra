@@ -1,4 +1,5 @@
 import LeanDLRA.Classical.SVD
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
@@ -34,7 +35,8 @@ of the full scheme (11).
   of (10) itself strictly increases the energy (`advection_energy_eq`). What is not formalized is
   a von Neumann analysis of the variable-coefficient scheme (10) over several steps, which the paper
   does not give either.
-* Theorem 3: `qr` is `IsQR`, which allows rank deficiency. The paper ends its proof by noting that
+* Theorem 3: `qr` is the core capture predicate `Matrix.IsOrthCapture`, which allows rank
+  deficiency. The paper ends its proof by noting that
   the truncation does not alter the zeroth moment, the property the conservative truncation of its
   Section 5.4 is designed to have. The proof here does not use it: what the energy bound uses is
   that both truncations are `v¹ = v̂¹ Π` with an orthogonal projector `Π`
@@ -1520,18 +1522,18 @@ section DLRA
 
 variable {N : ℕ} [NeZero N] {K : ℕ} [NeZero K]
 
-/-- `Q = qr(Y)`: `Q` has orthonormal columns and `Y = Q R`. The triangular shape of `R` plays no
-role, and `Q` may have any number of columns, which covers rank-deficient `Y`. -/
-def IsQR {m ι κ : Type*} [Fintype m] [Fintype ι] [DecidableEq ι] (Q : Matrix m ι ℝ)
-    (Y : Matrix m κ ℝ) : Prop :=
-  Qᵀ * Q = 1 ∧ ∃ R : Matrix ι κ ℝ, Y = Q * R
+/-! `Q = qr(Y)` (`Q` has orthonormal columns and `Y = Q R`; the triangular shape of `R` plays no
+role, and `Q` may have any number of columns, which covers rank-deficient `Y`) is the core capture
+predicate `Matrix.IsOrthCapture Q Y` (`Qᵀ Q = 1`, `Q Qᵀ Y = Y`), equivalently
+`Qᵀ Q = 1 ∧ ∃ R, Y = Q R` (`Matrix.isOrthCapture_iff`). The local `IsQR` of an earlier version
+of this file was that conjunction (unification batch C4); it is not the core `Matrix.IsQR`, which
+also asks for a square upper triangular `R`. -/
 
 section QR
 
 lemma IsQR.capture {m ι κ : Type*} [Fintype m] [Fintype ι] [DecidableEq ι] {Q : Matrix m ι ℝ}
-    {Y : Matrix m κ ℝ} (h : IsQR Q Y) : Q * Qᵀ * Y = Y := by
-  obtain ⟨hQ, R, rfl⟩ := h
-  rw [← Matrix.mul_assoc, Matrix.mul_assoc Q Qᵀ Q, hQ, Matrix.mul_one]
+    {Y : Matrix m κ ℝ} (h : IsOrthCapture Q Y) : Q * Qᵀ * Y = Y :=
+  h.capture
 
 lemma capture_fromCols {m κ κ' : Type*} [Fintype m] {P : Matrix m m ℝ} {Y : Matrix m κ ℝ}
     {Z : Matrix m κ' ℝ} (h : P * Matrix.fromCols Y Z = Matrix.fromCols Y Z) :
@@ -1552,11 +1554,11 @@ lemma capture_trans {m ι ι' κ : Type*} [Fintype m] [Fintype ι] [Fintype ι']
 
 /-- Every matrix has a `qr` in the sense of arXiv 2502.03008, Section 5.1. -/
 theorem exists_isQR {m κ : Type*} [Fintype m] [Finite κ] (Y : Matrix m κ ℝ) :
-    ∃ (n : ℕ) (Q : Matrix m (Fin n) ℝ), IsQR Q Y := by
+    ∃ (n : ℕ) (Q : Matrix m (Fin n) ℝ), IsOrthCapture Q Y := by
   have := Fintype.ofFinite κ
   obtain ⟨U, hU, hc⟩ := LeanDLRA.exists_orthonormal_capture Y le_rfl
     (by simpa using Y.rank_le_card_height)
-  exact ⟨Y.rank, U, hU, Uᵀ * Y, by rw [← Matrix.mul_assoc, hc]⟩
+  exact ⟨Y.rank, U, hU, hc⟩
 
 /-- The augmented bases represent `X⁰ S⁰ V⁰ᵀ` exactly. -/
 lemma reconstruct_of_capture {m n c a b : Type*} [Fintype m] [Fintype n] [Fintype c] [Fintype a]
@@ -1705,19 +1707,19 @@ variable [Fintype r] [Fintype ιXh] [Fintype ιVh] [Fintype ιXs] [Fintype ιVs]
 
 /-- One step of the scheme (19) of arXiv 2502.03008 from `(X⁰, S⁰, V⁰, B⁰)`, from the basis
 augmentations (19b), (19d) up to the coefficient matrix (19j), before truncation, for arbitrary
-`K*`, `L*` (which enter through (19b), (19d) only). `qr` is `IsQR`. -/
+`K*`, `L*` (which enter through (19b), (19d) only). `qr` is `Matrix.IsOrthCapture`. -/
 structure IsAugmentedUpdate (Δx Δt σ : ℝ) (A absA : Matrix (Fin K) (Fin K) ℝ) (B₀ : ZMod N → ℝ)
     (X₀ : Matrix (ZMod N) r ℝ) (S₀ : Matrix r r ℝ) (V₀ : Matrix (Fin K) r ℝ)
     (d : Stage N K r ιXh ιVh ιXs ιVs ιXt ιXo ιVo) : Prop where
   /-- `X̂* = qr([K*, X⁰])`. -/
-  qr_Xh : IsQR d.Xh (Matrix.fromCols d.Kstar X₀)
+  qr_Xh : IsOrthCapture d.Xh (Matrix.fromCols d.Kstar X₀)
   /-- (19b). -/
-  qr_Xs : IsQR d.Xs (Matrix.fromCols (Matrix.fromCols d.Xh (weighted B₀ (Dx Δx) * X₀))
+  qr_Xs : IsOrthCapture d.Xs (Matrix.fromCols (Matrix.fromCols d.Xh (weighted B₀ (Dx Δx) * X₀))
     (weighted B₀ (Dxx Δx) * X₀))
   /-- `V̂* = qr([L*, V⁰])`. -/
-  qr_Vh : IsQR d.Vh (Matrix.fromCols d.Lstar V₀)
+  qr_Vh : IsOrthCapture d.Vh (Matrix.fromCols d.Lstar V₀)
   /-- (19d). -/
-  qr_Vs : IsQR d.Vs (Matrix.fromCols (Matrix.fromCols d.Vh (Aᵀ * V₀)) (absAᵀ * V₀))
+  qr_Vs : IsOrthCapture d.Vs (Matrix.fromCols (Matrix.fromCols d.Vh (Aᵀ * V₀)) (absAᵀ * V₀))
   /-- (19e). -/
   S_eq : d.Ss = (1 / (1 + σ * Δt)) • (d.Stilde X₀ S₀ V₀
     - Δt • (d.Xsᵀ * weighted B₀ (Dx Δx) * d.Xs * d.Stilde X₀ S₀ V₀ * (d.Vsᵀ * Aᵀ * d.Vs))
@@ -1736,9 +1738,9 @@ structure IsAugmentedUpdate (Δx Δt σ : ℝ) (A absA : Matrix (Fin K) (Fin K) 
   /-- ... and factors `K*,trans_{jp} = (B⁰_j/B¹_j) K*_{jp}`, where `K* = X̂̂* Ŝ̂*`. -/
   trans_eq : d.Xt * d.St = diagonal (fun j => B₀ j / d.B₁ j) * (d.Xs * d.Ss)
   /-- (19i), space. -/
-  qr_Xo : IsQR d.Xo (Matrix.fromCols (Matrix.replicateCol Unit d.φ) d.Xt)
+  qr_Xo : IsOrthCapture d.Xo (Matrix.fromCols (Matrix.replicateCol Unit d.φ) d.Xt)
   /-- (19i), direction. -/
-  qr_Vo : IsQR d.Vo (Matrix.fromCols (Matrix.replicateCol Unit (e₁ (K := K))) d.Vs)
+  qr_Vo : IsOrthCapture d.Vo (Matrix.fromCols (Matrix.replicateCol Unit (e₁ (K := K))) d.Vs)
   /-- (19j). -/
   So_eq : d.So = d.Xoᵀ * d.Xt * d.St * d.Vsᵀ *
       (1 - Matrix.vecMulVec (e₁ (K := K)) (e₁ (K := K))) * d.Vo
@@ -1890,7 +1892,7 @@ omit [NeZero N] in
 conservative truncation of its Section 5.4 assumes. -/
 theorem exists_isQR_e₁ {w : Type*} [Fintype w] (Vs : Matrix (Fin K) w ℝ) :
     ∃ (n : ℕ) (Vrem : Matrix (Fin K) (Fin n) ℝ),
-      IsQR (Matrix.fromCols (Matrix.replicateCol Unit (e₁ (K := K))) Vrem)
+      IsOrthCapture (Matrix.fromCols (Matrix.replicateCol Unit (e₁ (K := K))) Vrem)
         (Matrix.fromCols (Matrix.replicateCol Unit (e₁ (K := K))) Vs) := by
   set U₀ := Matrix.replicateCol Unit (e₁ (K := K)) with hU₀
   have hU₀U₀ : U₀ᵀ * U₀ = 1 := by
@@ -1926,7 +1928,7 @@ theorem exists_isQR_e₁ {w : Type*} [Fintype w] (Vs : Matrix (Fin K) w ℝ) :
     omega
   obtain ⟨U, hU, hUU₀, hcap⟩ := LeanDLRA.exists_orthonormal_capture_compl U₀ hU₀U₀ Vs le_rfl
     (by simpa [add_comm] using hrank)
-  refine ⟨_, U, ?_, ?_⟩
+  refine ⟨_, U, Matrix.isOrthCapture_iff.2 ⟨?_, ?_⟩⟩
   · rw [Matrix.transpose_fromCols, Matrix.fromRows_mul_fromCols, hU₀U₀, hU, hUU₀]
     have h0 : U₀ᵀ * U = 0 := by
       have := congrArg Matrix.transpose hUU₀
@@ -1997,7 +1999,8 @@ the paper are of this form, see `theorem_3_svd` and `theorem_3_conservative`.
 
 Here `A` is the moment matrix of an `L²(-1, 1)`-orthonormal family, in particular of the normalized
 Legendre polynomials (`isL2Orthonormal_legendreP`), `|A| = Q |M| Qᵀ` for any diagonalization, and
-`qr` is `IsQR`, so that bases may have any number of columns and rank deficiency is allowed.
+`qr` is `Matrix.IsOrthCapture`, so that bases may have any number of columns and rank deficiency
+is allowed.
 Differences from the paper: `Δx > 0` is arbitrary; `σ ≥ 0`, `Δt > 0`, `B⁰ > 0` are stated; the
 orthonormality of `X⁰` and `V⁰` is not needed. `B¹ ≠ 0`, needed in (19h), is derived from (19g).
 The paper closes the proof by noting that truncation leaves the zeroth moment unchanged, the design
@@ -2270,8 +2273,8 @@ theorem exists_isDLRAStep {Δx Δt σ : ℝ} (hΔt : 0 < Δt) (hσ : 0 ≤ σ)
     - Δt • (Xsᵀ * weighted B₀ (Dx Δx) * Xs * St0 * (Vsᵀ * Aᵀ * Vs))
     + Δt • (Xsᵀ * weighted B₀ (Dxx Δx) * Xs * St0 * (Vsᵀ * absAᵀ * Vs))) with hSs
   set B₁ : ZMod N → ℝ := fun j => B₀ j * ρ j with hB₁
-  obtain ⟨n₅, Xt, hXt, St, hSt⟩ :=
-    exists_isQR (diagonal (fun j => B₀ j / B₁ j) * (Xs * Ss))
+  obtain ⟨n₅, Xt, qXt⟩ := exists_isQR (diagonal (fun j => B₀ j / B₁ j) * (Xs * Ss))
+  obtain ⟨hXt, St, hSt⟩ := Matrix.isOrthCapture_iff.1 qXt
   obtain ⟨n₆, Xo, qXo⟩ := exists_isQR (Matrix.fromCols (Matrix.replicateCol Unit φ) Xt)
   obtain ⟨n₇, Vrem, qVo⟩ := exists_isQR_e₁ Vs
   set Vo := Matrix.fromCols (Matrix.replicateCol Unit (e₁ (K := K))) Vrem with hVo
@@ -2325,19 +2328,26 @@ theorem exists_isConservativeTruncation {ιq : Type*} [Fintype ιq] [DecidableEq
     (Xo : Matrix (ZMod N) ιXo ℝ) (So : Matrix ιXo (Unit ⊕ ιq) ℝ) (Vrem : Matrix (Fin K) ιq ℝ) :
     ∃ (n₁ n₂ : ℕ) (X₁ : Matrix (ZMod N) (Fin n₁) ℝ) (S₁ : Matrix (Fin n₁) (Fin n₂) ℝ)
       (V₁ : Matrix (Fin K) (Fin n₂) ℝ), IsConservativeTruncation Xo So Vrem X₁ S₁ V₁ := by
-  obtain ⟨l, Xrem, hXrem, Srem, hK⟩ := exists_isQR ((Xo * So).submatrix id Sum.inr)
+  obtain ⟨l, Xrem, qXrem⟩ := exists_isQR ((Xo * So).submatrix id Sum.inr)
+  obtain ⟨hXrem, Srem, hK⟩ := Matrix.isOrthCapture_iff.1 qXrem
   obtain ⟨P, Q, s, hP, hQ, -, -, -, hS⟩ := LeanDLRA.SVD.exists_svd Srem rfl
-  obtain ⟨n₁, X₁, hX₁, R₁, hR₁⟩ := exists_isQR (Matrix.fromCols (Matrix.replicateCol Unit fun j =>
+  obtain ⟨n₁, X₁, qX₁⟩ := exists_isQR (Matrix.fromCols (Matrix.replicateCol Unit fun j =>
       (Xo * So) j (Sum.inl ()) / √(∑ i, (Xo * So) i (Sum.inl ()) ^ 2))
     (Xrem * P.submatrix id (Function.Embedding.refl (Fin Srem.rank))))
-  obtain ⟨n₂, V₁, hV₁, R₂, hR₂⟩ := exists_isQR (Matrix.fromCols
+  obtain ⟨n₂, V₁, qV₁⟩ := exists_isQR (Matrix.fromCols
     (Matrix.replicateCol Unit (e₁ (K := K)))
     (Vrem * Q.submatrix id (Function.Embedding.refl (Fin Srem.rank))))
+  obtain ⟨hX₁, R₁, hR₁⟩ := Matrix.isOrthCapture_iff.1 qX₁
+  obtain ⟨hV₁, R₂, hR₂⟩ := Matrix.isOrthCapture_iff.1 qV₁
   exact ⟨n₁, n₂, X₁, _, V₁, l, Srem.rank, Srem.rank, Xrem, Srem, P, Q, s,
     Function.Embedding.refl _, R₁, R₂, hXrem, hK, hP, hQ, hS, hX₁, hV₁, hR₁, hR₂, rfl⟩
 
 end Truncation
 
 end DLRA
+
+/-- The local `qr` predicate of this file (`Qᵀ Q = 1 ∧ ∃ R, Y = Q R`), replaced by the core
+`Matrix.IsOrthCapture` (equivalent: `Matrix.isOrthCapture_iff`). -/
+@[deprecated (since := "2026-11-09")] alias IsQR := Matrix.IsOrthCapture
 
 end LeanDLRA.Literature.P2502_03008

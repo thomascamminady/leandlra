@@ -427,6 +427,7 @@ import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.SameMinibatchAugmentation
 import LeanDLRA.Stability.Conservation
 import LeanDLRA.Stability.Energy
+import LeanDLRA.Stiff.DualWeightedResidual
 import LeanDLRA.Stiff.ImplicitBUG
 import LeanDLRA.Stiff.ImplicitSolvability
 import LeanDLRA.Stochastic.KalmanBucy

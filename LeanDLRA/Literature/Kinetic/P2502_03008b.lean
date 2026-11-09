@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.OpenProblems.Curated.Classicala
 
@@ -57,11 +58,12 @@ variable {κ : Type*} [Fintype κ] {n a b : ℕ}
 
 /-- The operation `qr` of arXiv 2502.03008, (19b), (19d), (19i): a thin QR factorization `M = Q R`
 with `Qᵀ Q = 1` and `R` upper triangular with nonnegative diagonal, as produced by Gram–Schmidt.
-Rank-deficient `M` are allowed, and then `Q` is not determined by `M`. -/
-structure IsGSQR (M Q : Matrix κ (Fin n) ℝ) (R : Matrix (Fin n) (Fin n) ℝ) : Prop where
-  eq : M = Q * R
-  orth : Qᵀ * Q = 1
-  upper : R.BlockTriangular id
+Rank-deficient `M` are allowed, and then `Q` is not determined by `M`. It is the core QR
+factorization `Matrix.IsQR M Q R` (`IsGSQR.toIsQR`) with the Gram–Schmidt sign convention
+`R c c ≥ 0`, which Step 5 of Theorem 4 needs (unification batch C4). -/
+structure IsGSQR (M Q : Matrix κ (Fin n) ℝ) (R : Matrix (Fin n) (Fin n) ℝ) : Prop
+    extends Matrix.IsQR M Q R where
+  /-- The Gram–Schmidt sign convention: the diagonal of `R` is nonnegative. -/
   diag_nonneg : ∀ c, 0 ≤ R c c
 
 /-- The matrix `[P₁, P₂]` whose columns are those of `P₁` followed by those of `P₂`. -/
@@ -163,7 +165,7 @@ theorem exists_isGSQR : ∀ {n : ℕ} (M : Matrix κ (Fin n) ℝ), n ≤ Fintype
   induction n with
   | zero =>
     intro M _
-    refine ⟨M, 1, ⟨by simp, ?_, fun a => a.elim0, fun a => a.elim0⟩⟩
+    refine ⟨M, 1, ⟨⟨by simp, ?_, fun a => a.elim0⟩, fun a => a.elim0⟩⟩
     ext a
     exact a.elim0
   | succ n ih =>
@@ -200,7 +202,7 @@ theorem exists_isGSQR : ∀ {n : ℕ} (M : Matrix κ (Fin n) ℝ), n ≤ Fintype
     have hRcl : ∀ a, R (Fin.castSucc a) (Fin.last n) = α a := fun a => by simp [R]
     have hRlc : ∀ b, R (Fin.last n) (Fin.castSucc b) = 0 := fun b => by simp [R]
     have hRll : R (Fin.last n) (Fin.last n) = ν := by simp [R]
-    refine ⟨Q, R, ⟨?_, ?_, ?_, ?_⟩⟩
+    refine ⟨Q, R, ⟨⟨?_, ?_, ?_⟩, ?_⟩⟩
     · ext j b
       rw [Matrix.mul_apply, Fin.sum_univ_castSucc]
       induction b using Fin.lastCases with

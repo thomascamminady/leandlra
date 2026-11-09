@@ -78,9 +78,19 @@ def kronSum {p q r : ℕ} (Fx : Matrix (Fin p) (Fin p) ℝ) (Fy : Matrix (Fin q)
 def IsNegSemidef {n : ℕ} (F : Matrix (Fin n) (Fin n) ℝ) : Prop :=
   Fᵀ = F ∧ ∀ x : Fin n → ℝ, ∑ i, ∑ j, x i * F i j * x j ≤ 0
 
-/-- The columns of `V` are orthonormal: `Vᵀ V = I`. -/
-def IsOrthonormalCols {N s : ℕ} (V : Matrix (Fin N) (Fin s) ℝ) : Prop :=
-  ∀ a b, ∑ n, V n a * V n b = if a = b then 1 else 0
+/-- **Bridge.** Orthonormal columns `Vᵀ V = 1`, entrywise: `∑ₙ V n a V n b = δ_{ab}`, the form in
+which arXiv 2503.04932 uses it. The local predicate `IsOrthonormalCols V` of an earlier version of
+this file was the right-hand side; the statements now use `Vᵀ * V = 1`, the library's convention
+(`docs/CONVENTIONS.md` §4; unification batch C4). -/
+theorem transpose_mul_self_eq_one_iff {N s : ℕ} {V : Matrix (Fin N) (Fin s) ℝ} :
+    Vᵀ * V = 1 ↔ ∀ a b, ∑ n, V n a * V n b = if a = b then 1 else 0 := by
+  constructor
+  · intro h a b
+    have := congrFun (congrFun h a) b
+    simpa [Matrix.mul_apply, Matrix.one_apply] using this
+  · intro h
+    ext a b
+    simpa [Matrix.mul_apply, Matrix.one_apply] using h a b
 
 /-- The reduced operator `Vᵀ F V` of a basis `V` (the paper's `Ṽᵀ F Ṽ`). -/
 def reduce {N s : ℕ} (V : Matrix (Fin N) (Fin s) ℝ) (F : Matrix (Fin N) (Fin N) ℝ) :
@@ -204,7 +214,7 @@ lemma reduce_nsd {N s : ℕ} {F : Matrix (Fin N) (Fin N) ℝ} (hF : IsNegSemidef
 /-! ### Orthonormal bases are contractions -/
 
 /-- Projection onto orthonormal columns is a contraction: `‖Wᵀ y‖ ≤ ‖y‖`. -/
-lemma proj_contract {N s : ℕ} {W : Matrix (Fin N) (Fin s) ℝ} (hW : IsOrthonormalCols W)
+lemma proj_contract {N s : ℕ} {W : Matrix (Fin N) (Fin s) ℝ} (hW : Wᵀ * W = 1)
     (y : Fin N → ℝ) : ∑ a, (∑ n, W n a * y n) ^ 2 ≤ ∑ n, y n ^ 2 := by
   obtain ⟨z, hz⟩ : ∃ z : Fin s → ℝ, ∀ a, z a = ∑ n, W n a * y n := ⟨_, fun a => rfl⟩
   obtain ⟨w, hw⟩ : ∃ w : Fin N → ℝ, ∀ n, w n = ∑ a, W n a * z a := ⟨_, fun n => rfl⟩
@@ -218,7 +228,7 @@ lemma proj_contract {N s : ℕ} {W : Matrix (Fin N) (Fin s) ℝ} (hW : IsOrthono
           Finset.sum_congr rfl fun a _ => Finset.sum_comm
       _ = ∑ a, ∑ b, z a * z b * (if a = b then 1 else 0) :=
           Finset.sum_congr rfl fun a _ => Finset.sum_congr rfl fun b _ => by
-            rw [← hW a b, Finset.mul_sum]
+            rw [← transpose_mul_self_eq_one_iff.1 hW a b, Finset.mul_sum]
       _ = ∑ a, z a ^ 2 := Finset.sum_congr rfl fun a _ => by simp [sq]
   have hdot : ∑ n, y n * w n = ∑ a, z a ^ 2 := by
     calc ∑ n, y n * w n = ∑ n, ∑ a, y n * (W n a * z a) :=
@@ -242,7 +252,7 @@ lemma proj_contract {N s : ℕ} {W : Matrix (Fin N) (Fin s) ℝ} (hW : IsOrthono
 
 /-- The overlap `Wᵀ V` of two orthonormal bases is a contraction. -/
 lemma crossProd_contraction {N s t : ℕ} {W : Matrix (Fin N) (Fin s) ℝ}
-    {V : Matrix (Fin N) (Fin t) ℝ} (hW : IsOrthonormalCols W) (hV : IsOrthonormalCols V) :
+    {V : Matrix (Fin N) (Fin t) ℝ} (hW : Wᵀ * W = 1) (hV : Vᵀ * V = 1) :
     IsContraction (crossProd W V) := by
   intro x
   have hy : ∀ a, ∑ i, crossProd W V a i * x i = ∑ n, W n a * (∑ i, V n i * x i) := by
@@ -260,7 +270,7 @@ lemma crossProd_contraction {N s t : ℕ} {W : Matrix (Fin N) (Fin s) ℝ}
           Finset.sum_congr rfl fun i _ => Finset.sum_comm
       _ = ∑ i, ∑ j, x i * x j * (if i = j then 1 else 0) :=
           Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by
-            rw [← hV i j, Finset.mul_sum]
+            rw [← transpose_mul_self_eq_one_iff.1 hV i j, Finset.mul_sum]
       _ = ∑ i, x i ^ 2 := Finset.sum_congr rfl fun i _ => by simp [sq]
   have h1 := proj_contract hW (fun n => ∑ i, V n i * x i)
   calc ∑ a, (∑ i, crossProd W V a i * x i) ^ 2
@@ -351,8 +361,8 @@ theorem rail3d_first_order_diffusion_stable {Nx Ny Nz rx ry rz sx sy sz : ℕ}
     (Vz : Matrix (Fin Nz) (Fin rz) ℝ)
     (Wx : Matrix (Fin Nx) (Fin sx) ℝ) (Wy : Matrix (Fin Ny) (Fin sy) ℝ)
     (Wz : Matrix (Fin Nz) (Fin sz) ℝ)
-    (hVx : IsOrthonormalCols Vx) (hVy : IsOrthonormalCols Vy) (hVz : IsOrthonormalCols Vz)
-    (hWx : IsOrthonormalCols Wx) (hWy : IsOrthonormalCols Wy) (hWz : IsOrthonormalCols Wz)
+    (hVx : Vxᵀ * Vx = 1) (hVy : Vyᵀ * Vy = 1) (hVz : Vzᵀ * Vz = 1)
+    (hWx : Wxᵀ * Wx = 1) (hWy : Wyᵀ * Wy = 1) (hWz : Wzᵀ * Wz = 1)
     (G : Tens rx ry rz) (Gn : Tens sx sy sz) {h : ℝ} (hh : 0 ≤ h)
     (hstep : ∀ i j k, Gn i j k - h * kronSum (reduce Wx Fx) (reduce Wy Fy) (reduce Wz Fz) Gn i j k
       = mode3 (crossProd Wz Vz) (mode2 (crossProd Wy Vy) (mode1 (crossProd Wx Vx) G)) i j k) :
@@ -374,8 +384,8 @@ example : IsNegSemidef (fun _ _ : Fin 1 => (-1 : ℝ) : Matrix (Fin 1) (Fin 1) �
   ⟨rfl, fun x => by simp; nlinarith [sq_nonneg (x 0)]⟩
 
 /-- The identity `1 × 1` basis has orthonormal columns. -/
-example : IsOrthonormalCols (fun _ _ : Fin 1 => (1 : ℝ) : Matrix (Fin 1) (Fin 1) ℝ) := by
-  intro a b
+example : (!![1] : Matrix (Fin 1) (Fin 1) ℝ)ᵀ * !![1] = 1 := by
+  refine transpose_mul_self_eq_one_iff.2 fun a b => ?_
   fin_cases a
   fin_cases b
   simp
