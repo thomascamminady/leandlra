@@ -164,6 +164,7 @@ import LeanDLRA.Literature.Stiff.P2206_14404a
 import LeanDLRA.Literature.Stiff.P2305_11532a
 import LeanDLRA.Literature.Stiff.P2308_05914a
 import LeanDLRA.Literature.Stiff.P2308_05914b
+import LeanDLRA.Literature.Stiff.P2308_16720a
 import LeanDLRA.Literature.Stiff.P2311_15143a
 import LeanDLRA.Literature.Stiff.P2312_00172a
 import LeanDLRA.Literature.Stiff.P2402_05347a
@@ -202,6 +203,7 @@ import LeanDLRA.Literature.Stochastic.P2609_20317a
 import LeanDLRA.Literature.TensorNetworks.P1709_02594a
 import LeanDLRA.Literature.TensorNetworks.P2002_11392a
 import LeanDLRA.Literature.TensorNetworks.P2407_11792a
+import LeanDLRA.Literature.TensorNetworks.P2412_00858a
 import LeanDLRA.Literature.TensorNetworks.P2501_04157a
 import LeanDLRA.Literature.TensorNetworks.P2512_14950a
 import LeanDLRA.Literature.TensorNetworks.P2603_13990a
@@ -425,6 +427,7 @@ import LeanDLRA.Stiff.ImplicitSolvability
 import LeanDLRA.Stochastic.KalmanBucy
 import LeanDLRA.Stochastic.MeanSquare
 import LeanDLRA.Tensor.Defs
+import LeanDLRA.Tensor.TT.AugmentedBUG
 import LeanDLRA.Tensor.TT.Basic
 import LeanDLRA.Tensor.TT.Operations
 import LeanDLRA.Tensor.TT.ProjectorSplitting
@@ -433,6 +436,7 @@ import LeanDLRA.Tensor.TTN.Basic
 import LeanDLRA.Tensor.TTN.Integrators
 import LeanDLRA.Tensor.TTN.ParallelBUG
 import LeanDLRA.Tensor.TTN.ProjectorSplitting
+import LeanDLRA.Tensor.TTN.ProjectorSplittingExactness
 import LeanDLRA.Tensor.Tucker.Basic
 import LeanDLRA.Tensor.Unfolding
 import LeanDLRA.Training.Descent
