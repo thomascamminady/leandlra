@@ -165,7 +165,9 @@ variable (M : FVMesh C F B) {c : FaceCoeff F B}
 
 /-- arXiv 2609.02721, Lemma A.1, one step.  One forward Euler step does not increase the `L²` norm
 (Steps 2 to 10 of the proof of the lemma), for an arbitrary finite polyhedral mesh; only `|a| ≤ b`,
-(A.4) and the CFL condition are used. -/
+(A.4) and the CFL condition are used.  Conditional on `|a| ≤ b` and (A.4), which the paper derives
+from the flux choice (2.6)-(2.7) and from `∇ · a = 0` by the divergence theorem; for the Vlasov
+scheme both are proved (`tensorCoeff_admissible`). -/
 theorem energy_euler_le (hc : c.Admissible M) {τ : ℝ} (hτ : 0 ≤ τ)
     (hcfl : ∀ K, τ * M.cflRate c K ≤ 1) (u : C → ℝ) :
     M.energy (M.euler c τ u) ≤ M.energy u := by
@@ -359,10 +361,13 @@ theorem tauCFL_pos {c : ℝ → FaceCoeff F B} {T ᾱ : ℝ} (hα : 0 ≤ ᾱ)
 
 /-- arXiv 2609.02721, Lemma A.1, second claim, for the coefficients of an arbitrary finite
 polyhedral mesh: the forward Euler finite volume scheme (A.1) with homogeneous inflow is `L²`
-stable for `0 < τ ≤ τ_CFL` and all `n` with `tⁿ = n τ ≤ T`.  The hypotheses `|a| ≤ b` and (A.4) are
-collected in `FaceCoeff.Admissible`; for the Vlasov field on a tensor mesh they are derived, see
-`tensorCoeff_admissible`.  The norm is `∑_K |K| u_K²`, which is the `L²` norm of the piecewise
-constant function, see `PolyMesh.integral_sq_pwc`. -/
+stable for `0 < τ ≤ τ_CFL` and all `n` with `tⁿ = n τ ≤ T`.  Conditional on the hypotheses
+`|a| ≤ b` and (A.4), collected in `FaceCoeff.Admissible`: on a general mesh the face coefficients
+are abstract numbers, while the paper derives `|a| ≤ b` from the flux choice (2.6)-(2.7) and (A.4)
+from `∇ · a = 0` by the divergence theorem.  For the Vlasov field on a tensor mesh both are proved,
+see `tensorCoeff_admissible`, so `VlasovFV.lemma41_stable` is unconditional.  The norm is
+`∑_K |K| u_K²`, which is the `L²` norm of the piecewise constant function, see
+`PolyMesh.integral_sq_pwc`. -/
 theorem lemmaA1_stable {c : ℝ → FaceCoeff F B} {T τ : ℝ} (hc : ∀ t ∈ Icc 0 T, (c t).Admissible M)
     (hτ : 0 < τ) (hcfl : ENNReal.ofReal τ ≤ M.tauCFL c T) {u : ℕ → C → ℝ}
     (hu : ∀ n : ℕ, u (n + 1) = M.euler (c (n * τ)) τ (u n)) (n : ℕ) (hn : n * τ ≤ T) :
@@ -456,7 +461,7 @@ theorem integral_sq_pwc (u : C → ℝ) : ∫ y, M.pwc u y ^ 2 ∂M.μ = M.energ
 
 /-- arXiv 2609.02721, Lemma A.1, second claim, literally in `L²(Ω)`: the piecewise constant
 functions of the forward Euler finite volume scheme satisfy `‖û_hⁿ‖_{L²} ≤ ‖û_h⁰‖_{L²}`, here
-squared. -/
+squared.  Conditional on `FaceCoeff.Admissible`, as `FVMesh.lemmaA1_stable`. -/
 theorem lemmaA1_stable_L2 {c : ℝ → FaceCoeff F B} {T τ : ℝ}
     (hc : ∀ t ∈ Icc 0 T, (c t).Admissible M.toFVMesh) (hτ : 0 < τ)
     (hcfl : ENNReal.ofReal τ ≤ M.tauCFL c T) {u : ℕ → C → ℝ}

@@ -33,10 +33,15 @@ of the reference curve of its parent, which solves the reduced problem up to a d
 so the midpoint rule is applied to the exact solution only, never to the `K`-flows, and the blocks
 with two or more new modes are absorbed by a telescoping sum.
 
-Differences from the paper. (1) A1 is used in its global form, and the bound on third derivatives
-of the exact solution comes from `F ∈ C²` with bounded derivatives (`flow_isC3Curve`); the local
-theorems take the bounds `M₂`, `M₃` of the local exact solution directly. A2 at rank `2r` is
-assumed at all points with bases `Û⁰ᵢ`, `V̂⁰ᵢ` (no ball). (2) Augmented integrator: Section 5.2
+Differences from the paper. (0) Real scalars; the paper's tensors are complex. (1) A1 is used in
+its global form, and the bound on third derivatives of the exact solution comes from `F ∈ C²` with
+bounded derivatives (`flow_isC3Curve`); the local theorems take the bounds `M₂`, `M₃` of the local
+exact solution directly. A2 is assumed node by node in matricized form, for the reduced field of
+each node (`IsSONode.normal₀`, `normal₂`: doubly normal parts with respect to `U⁰ᵢ`, `V⁰ᵢ` at `Y⁰`,
+and with respect to `Û⁰ᵢ`, `V̂⁰ᵢ` at every point in their range). Section 5.3 states A2 for the
+tangent space of the whole tree tensor network; that it implies the node-wise bounds is not proved
+here (for Tucker tensors the paper notes it in A2 of Section 3.2). A2 at rank `2r` is assumed at
+all points with bases `Û⁰ᵢ`, `V̂⁰ᵢ` (no ball). (2) Augmented integrator: Section 5.2
 takes the new basis of an inner node as the range of `[Ĉ_τ(t₁), Ĉ_τ(t₀)]`, which contains `U⁰_τ`
 but not `Û⁰_τ`; we require `Û⁰ ⊂ Û¹` at every node, as for the leaves and in Section 4 (the proof
 of Lemma 3.7 uses it). (3) Parallel integrator: the block `C̃¹_τ = Tenᵢ(Ũ_τ* K_τ(t₁) Q̂⁰ᵀ)` of
@@ -48,8 +53,10 @@ holds; its field is linear, i.e. A1 holds in the local form the paper allows (as
 `IsSOParRun` uses the assembled child value `Ĉ̂_τ ×ᵢ Û¹_{τᵢ}` instead (it lies in the range of
 `Û¹_τ` by construction), and for it Theorem 5.3 holds. For Tucker trees the two coincide.
 `rot_frame`, `rot_parRun`, `rot_augRun` show that the hypotheses hold with non-trivial
-projectors. Lemma 3.4 for Tucker tensors is `lemma_3_4` of the companion module; the
-structure-preserving Theorems 4.3–4.5 are in `LeanDLRA.Integrators.TuckerBUG`.
+projectors. Lemma 3.4 for Tucker tensors is `lemma_3_4` of the companion module. The
+structure-preserving Theorems 4.3–4.5 are not restated; abstract analogues (Galerkin step on
+augmented bases, truncation as `‖Y₁ - Ŷ₁‖ ≤ ϑ`) are in `LeanDLRA.Integrators.TuckerBUG`, see the
+companion module.
 -/
 
 open Set Filter Topology
@@ -1165,8 +1172,9 @@ tree `τ = .node d fun _ => .leaf`). For `n h ≤ T`,
 `‖Yₙ - A(tₙ)‖ ≤ c₀ δ + c₁ h² + c₂ h ε_r + c₃ ε_{2r} + c₄ n ϑ` with `c₀ = c₄ = e^{LT}` and
 `c₁ = c₂ = c₃ = T e^{LT} C`, `C = soAugConst` of `L`, `H`, the tree and the derivative bounds of the
 exact flows. Differences: A1 global, plus `F ∈ C²` with bounded derivatives in place of the
-paper's bound on third derivatives of the exact solution; new bases contain the pre-augmented
-ones at every node. -/
+paper's bound on third derivatives of the exact solution; A2 assumed node by node in matricized
+form (`IsSOFrame`, see the module docstring); new bases contain the pre-augmented ones at every
+node; real scalars. -/
 theorem soAugTTN_global_error [CompleteSpace E] {τ : TreeShape} {F : ℝ → E → E}
     {L B M₁ M₂ H T ε ε₂ ϑ t₀ h : ℝ} (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hB : IsBoundedField F B) (hF2 : ContDiff ℝ 2 (Function.uncurry F))

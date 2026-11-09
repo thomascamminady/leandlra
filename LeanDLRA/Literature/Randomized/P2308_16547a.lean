@@ -521,6 +521,50 @@ theorem eq_17_strict_fails :
     have := congrFun (congrFun h 1) 0
     simp [D] at this
 
+/-- A nonzero matrix has rank at least one (auxiliary for the non-vacuity of `eq_17_strict`). -/
+lemma one_le_rank_of_ne_zero {m n : Type*} [Fintype n] {M : Matrix m n ℝ}
+    (h : M ≠ 0) : 1 ≤ M.rank := by
+  classical
+  rw [Nat.one_le_iff_ne_zero]
+  intro h0
+  apply h
+  rw [Matrix.rank, Submodule.finrank_eq_zero, LinearMap.range_eq_bot] at h0
+  ext i j
+  have := congrArg (fun f => f (Pi.single j 1) i) h0
+  simpa [Matrix.mulVec_single] using this
+
+/-- Non-vacuity of `eq_17_strict` (arXiv 2308.16547): `d = 2`, `m = 1`, `U = P = e₁`,
+`D = e₁ + e₂`, so `C = 1`, `R = -e₂`, all rows sampled, `rank(Sᵀ R V) = 1`. -/
+example : ∃ (U Uupd D : Matrix (Fin 2) (Fin 1) ℝ),
+    ‖Uupd * eimCoeff U U D - D‖ < ‖U * eimCoeff U U D - D‖ := by
+  set U : Matrix (Fin 2) (Fin 1) ℝ := Matrix.of ![![1], ![0]] with hUdef
+  set D : Matrix (Fin 2) (Fin 1) ℝ := Matrix.of ![![1], ![1]] with hDdef
+  have hUU : Uᵀ * U = 1 := by
+    ext i j; fin_cases i; fin_cases j; simp [U, Matrix.mul_apply, Fin.sum_univ_two]
+  have hUD : Uᵀ * D = 1 := by
+    ext i j; fin_cases i; fin_cases j; simp [U, D, Matrix.mul_apply, Fin.sum_univ_two]
+  have hC : eimCoeff U U D = (1 : Matrix (Fin 1) (Fin 1) ℝ) * diagonal (fun _ => (1 : ℝ)) *
+      (1 : Matrix (Fin 1) (Fin 1) ℝ)ᵀ := by
+    rw [eimCoeff, hUU, inv_one, Matrix.one_mul, hUD, diagonal_one]; simp
+  have hR : (selMat (fun _ : Fin 2 => True))ᵀ * (U * eimCoeff U U D - D) *
+      (1 : Matrix (Fin 1) (Fin 1) ℝ) ≠ 0 := by
+    intro h0
+    have := congrFun (congrFun h0 ⟨1, trivial⟩) 0
+    rw [Matrix.mul_one, selMat_transpose_mul, hC] at this
+    simp [U, D] at this
+  set Pd : Matrix (Fin 1) (Fin 1) ℝ := svdPinv (1 : Matrix (Fin 1) (Fin 1) ℝ)
+    (fun _ : Fin 1 => (1 : ℝ)) (1 : Matrix (Fin 1) (Fin 1) ℝ) with hPd
+  have h₁ : (selMat (fun _ : Fin 2 => True))ᵀ * (U - (U * eimCoeff U U D - D) * Pd) =
+      (selMat (fun _ : Fin 2 => True))ᵀ * U -
+        (selMat (fun _ : Fin 2 => True))ᵀ * ((U * eimCoeff U U D - D) * Pd) :=
+    Matrix.mul_sub _ _ _
+  have h₂ : (selMat (fun _ : Fin 2 => ¬ True))ᵀ * (U - (U * eimCoeff U U D - D) * Pd) =
+      (selMat (fun _ : Fin 2 => ¬ True))ᵀ * U := by
+    ext i j; exact absurd trivial i.2
+  exact ⟨U, _, D, eq_17_strict (fun _ : Fin 2 => True) U U D (1 : Matrix (Fin 1) (Fin 1) ℝ)
+    (fun _ : Fin 1 => (1 : ℝ)) (1 : Matrix (Fin 1) (Fin 1) ℝ) (by simp) (by simp)
+    (fun _ => one_pos) hC _ h₁ h₂ (one_le_rank_of_ne_zero hR)⟩
+
 end Proposition2
 
 section RankCondition

@@ -29,10 +29,16 @@ extending the algebraic core `LeanDLRA.naiveMomentum_apply_eq_zero_of_left`).
 (1) Theorem 1: `W(t)` need not converge when `ℒ` is only bounded below
 (`heavyBall_not_convergent`, even with a Lipschitz gradient); what survives is
 `𝒱 → 0`, `P ∇ℒ(W) → 0` and stationarity of limits, under a Lipschitz gradient and `σ_min ≥ ρ`.
-(2) Theorem 3 with Algorithm 1 as printed, damping `1 - γ`: `lowRankHeavyBall_printedDamping_false`.
+(2) Theorem 3 with Algorithm 1 as printed, damping `1 - γ` with the `γ` of Eq. (7):
+`lowRankHeavyBall_printedDamping_false`.  (If the `γ` of Algorithm 1 is read as `λ γ`, this is the
+damping `1 - λ γ` of Eqs. (3a)-(3c) and of `lowRankHeavyBall_error`.)
 (3) Theorem 3 with damping `1 - λ γ` but without a bound on `(I - P(W)) 𝒱` along the flow:
 `lowRankHeavyBall_needs_normalMomentum`.  The paper's proof uses `Ẇ = 𝒱` in place of
-`Ẇ = P(W) 𝒱`; the bound does hold against the full-rank flow.
+`Ẇ = P(W) 𝒱`; the bound does hold against the full-rank flow.  Caveat: the gradient of that
+counterexample is Lipschitz and bounded along both trajectories but not on all of `ℝ^{2×2}`,
+whereas Theorem 3 assumes a bounded gradient; so it refutes the damping-corrected statement with
+boundedness required only along the trajectories (the setting of `lowRankHeavyBall_error`).  A
+cutoff of `ℒ` away from the trajectories would remove this gap, but it is not formalized.
 (4) The proof of Theorem 4: the configuration `U_𝒱 = -U`, `S_𝒱 = 0`, `V_𝒱 = V` is not stationary
 for `S ≠ 0` (`naiveFlow_not_stationary`); it stalls for `S = 0` (`naiveFlow_stall_of_singular`).
 The statement of Theorem 4 is true: `naiveFlow_failure`, with `S(t)` invertible for all `t`, a limit
@@ -44,7 +50,7 @@ of lower rank and tuned initial data (a stable manifold of a saddle).
 
 **Not treated.**  Algorithm 2 (low-rank Adam) beyond its shared bases; convergence of bounded
 trajectories to a single point (which needs a Łojasiewicz inequality; the failure of convergence
-here is by escape to infinity); trajectories of `eq:gradflowopt` that leave `ℳ_r`.
+here is by escape to infinity); trajectories of Eq. (7) that leave `ℳ_r`.
 -/
 
 open Set Filter Topology Finset
@@ -61,7 +67,7 @@ open LeanDLRA LeanDLRA.GaugeODE
 
 variable {m n r : Type*} [Fintype m] [Fintype n] [Fintype r]
 
-/-- Pointwise algebra behind Theorem 2 of arXiv 2506.17475 (eq. `eq:dotWv`). -/
+/-- Pointwise algebra behind Theorem 2 of arXiv 2506.17475 (Eq. (12)). -/
 theorem factorFlow_sum_eq [DecidableEq m] [DecidableEq n] [DecidableEq r] (U : Matrix m r ℝ)
     (S : Matrix r r ℝ) (V : Matrix n r ℝ) (G : Matrix m n ℝ) (γ : ℝ) (hS : IsUnit S.det) :
     (-((1 - U * Uᵀ) * G * V * S⁻¹)) * S * Vᵀ + U * (-(γ • S) - Uᵀ * G * V) * Vᵀ
@@ -117,7 +123,7 @@ theorem orthonormal_of_factorFlow [DecidableEq m] [DecidableEq r] {X H : ℝ →
 
 /-- **Theorem 2 of arXiv 2506.17475 (factorised momentum flow).**  Let `G(t)` be a curve of
 matrices, continuous on `[a, b)` (in the paper `G(t) = ∇_W ℒ(W(t))`), and let `U_𝒱`, `S_𝒱`, `V_𝒱`
-solve on `[a, b]` the factor system (eq. `eq:grad_flow_dlr`)
+solve on `[a, b]` the factor system (Eqs. (9), (11))
 `U̇_𝒱 = -(I - U_𝒱 U_𝒱ᵀ) G V_𝒱 S_𝒱⁻¹`, `V̇_𝒱 = -(I - V_𝒱 V_𝒱ᵀ) Gᵀ U_𝒱 S_𝒱⁻ᵀ`,
 `Ṡ_𝒱 = -γ S_𝒱 - U_𝒱ᵀ G V_𝒱`, with `S_𝒱(t)` invertible on `[a, b)`.
 
@@ -319,12 +325,12 @@ open LeanDLRA LeanDLRA.GaugeODE
 
 variable {m n r : Type*} [Fintype m] [Fintype n] [Fintype r]
 
-/-- The operator `P̂(W, 𝒱)` of eq. `eq:naiveUppdateFlowMomentum` of arXiv 2506.17475. -/
+/-- The operator `P̂(W, 𝒱)` of Eq. (5b) of arXiv 2506.17475. -/
 def naiveProj (U : Matrix m r ℝ) (S : Matrix r r ℝ) (V : Matrix n r ℝ) (Uv : Matrix m r ℝ)
     (Sv : Matrix r r ℝ) (Vv : Matrix n r ℝ) (Z : Matrix m n ℝ) : Matrix m n ℝ :=
   Z * V * Sᵀ * Sv * Vvᵀ + Uv * Uᵀ * Z * V * Vvᵀ + Uv * Sv * Sᵀ * Uᵀ * Z
 
-/-- The conventional momentum flow on the factors, eq. `eq:vanilla_grad_flow` of arXiv 2506.17475,
+/-- The conventional momentum flow on the factors, Eqs. (4a)-(4c) of arXiv 2506.17475,
 on a set `I` of times: `U̇ = U_𝒱`, `U̇_𝒱 + γ U_𝒱 + ∇_U ℒ = 0` with `∇_U ℒ = G V Sᵀ`, and similarly
 for `V` and `S`, where `G = g(U S Vᵀ)`.  The factors are free: this flow does not keep `U`, `V`
 orthonormal. -/
@@ -341,7 +347,7 @@ structure IsNaiveFlow (g : Matrix m n ℝ → Matrix m n ℝ) (γ : ℝ) (U : �
 variable {g : Matrix m n ℝ → Matrix m n ℝ} {γ : ℝ} {U Uv : ℝ → Matrix m r ℝ}
   {S Sv : ℝ → Matrix r r ℝ} {V Vv : ℝ → Matrix n r ℝ} {I : Set ℝ}
 
-/-- Eq. `eq:naiveUppdateFlow` of arXiv 2506.17475: along the naive flow
+/-- Eq. (5a) of arXiv 2506.17475: along the naive flow
 `Ẇ = U_𝒱 S Vᵀ + U S_𝒱 Vᵀ + U S V_𝒱ᵀ`. -/
 theorem IsNaiveFlow.hasDerivAt_weight
     (h : IsNaiveFlow g γ U S V Uv Sv Vv I) {t : ℝ} (ht : t ∈ I) :
@@ -349,7 +355,7 @@ theorem IsNaiveFlow.hasDerivAt_weight
       (Uv t * S t * (V t)ᵀ + U t * Sv t * (V t)ᵀ + U t * S t * (Vv t)ᵀ) t :=
   hasDerivAt_factorProduct (h.dU t ht) (h.dS t ht) (h.dV t ht)
 
-/-- Eq. `eq:naiveUppdateFlowMomentum` of arXiv 2506.17475: along the naive flow, the momentum
+/-- Eq. (5b) of arXiv 2506.17475: along the naive flow, the momentum
 `𝒱 = U_𝒱 S_𝒱 V_𝒱ᵀ` satisfies `𝒱̇ + 3 γ 𝒱 = -P̂(W, 𝒱) G`. -/
 theorem IsNaiveFlow.hasDerivAt_momentum
     (h : IsNaiveFlow g γ U S V Uv Sv Vv I) {t : ℝ} (ht : t ∈ I) :
@@ -870,7 +876,7 @@ theorem norm_wmat_le {x : ℝ} (hx : x ^ 2 ≤ 1) : ‖wmat x‖ ≤ 2 * |x| := 
 /-- **Theorem 4 of arXiv 2506.17475 (failure of the conventional momentum flow), proved with a
 genuine trajectory.**  For every `γ ≥ 0` there are a loss `ℒ` on `ℝ^{2×2}`, bounded below with a
 Lipschitz gradient `g`, and an exact solution `(U, S, V, U_𝒱, S_𝒱, V_𝒱)` of the flow
-`eq:vanilla_grad_flow` on `[0, ∞)`, rank `r = 1`, such that `S(t)` is invertible for all `t` and
+Eqs. (4a)-(4c) on `[0, ∞)`, rank `r = 1`, such that `S(t)` is invertible for all `t` and
 `W(t) = U S Vᵀ = Û σ Ûᵀ` has rank one, `Û` orthonormal, `σ > 0`; moreover `W(t) → W⋆ = 0`, where
 `∇ℒ(W⋆) ≠ 0`, and the Riemannian gradient stays away from zero:
 `δ ≤ ‖P(W(t)) ∇ℒ(W(t))‖` for all `t`, `δ > 0`.  So the flow converges to a point that is not
@@ -1316,7 +1322,7 @@ variable {m n r : Type*} [Fintype m] [Fintype n] [Fintype r] [DecidableEq r]
 
 /-- **Theorem 1 of arXiv 2506.17475, corrected, for the tangent projector.**  Let `ℒ ≥ ℒ_inf` on
 `ℝ^{m×n}` have a `β`-Lipschitz gradient and let `γ > 0`.  Let `W = U S Vᵀ` with orthonormal `U(t)`,
-`V(t)` and `σ_min(S(t)) ≥ ρ > 0`, and let `(W, 𝒱)` solve eq. `eq:gradflowopt` of the paper on
+`V(t)` and `σ_min(S(t)) ≥ ρ > 0`, and let `(W, 𝒱)` solve Eq. (7) of the paper on
 `[a, ∞)`: `Ẇ = P(W) 𝒱`, `𝒱̇ + γ 𝒱 = -P(W) ∇ℒ(W)`.  Then `𝒱(t) → 0`, `P(W(t)) ∇ℒ(W(t)) → 0`, and if
 moreover `W(t)` converges to some `W⋆ = U⋆ S⋆ V⋆ᵀ` with orthonormal `U⋆`, `V⋆`, then
 `P(W⋆) ∇ℒ(W⋆) = 0`.
@@ -1924,7 +1930,7 @@ variable {m n : Type*} [Fintype m] [Fintype n]
 `Ŝ_𝒱 = d S̄_𝒱 - λ G_S`, `Ŝ = S̄ + λ Ŝ_𝒱`, and truncate to orthonormal `U₁`, `V₁`, with
 `S_𝒱₁ = U₁ᵀ Û Ŝ_𝒱 V̂ᵀ V₁`.
 
-The paper prints `d = 1 - γ` in Algorithm 1 and `d = 1 - λ γ` in eq. `eq:heavy_ball_updates`.  It
+The paper prints `d = 1 - γ` in Algorithm 1 and `d = 1 - λ γ` in Eqs. (3a)-(3c).  It
 requires `Û ⊇ ∇_U ℒ = ∇ℒ(W) V Sᵀ`, which gives `augGU` for invertible `S`
 (`augGU_of_gradU`).  Any `U₁`, `V₁`, `S₁` meeting the error bounds are allowed: the truncated SVD
 is not needed.  `‖Û Ŝ V̂ᵀ - U₁ S₁ V₁ᵀ‖ ≤ ϑ` is the truncation tolerance, and `truncMerr` is the
@@ -2067,7 +2073,7 @@ noncomputable def hbConst (β γ B BM BX : ℝ) : ℝ :=
 
 /-- **Theorem 3 of arXiv 2506.17475 (robust error of the low-rank heavy-ball method), corrected.**
 Let `(W^k, 𝒱^k)` be `k` steps of Algorithm 1 with step size `λ` and damping `1 - λ γ`, with rank
-changing freely, and `(W, 𝒱)` a solution of eq. `eq:gradflowopt`,
+changing freely, and `(W, 𝒱)` a solution of Eq. (7),
 `Ẇ = P 𝒱`, `𝒱̇ + γ 𝒱 = -P ∇ℒ(W)`, for orthogonal projectors `P(t)` (for instance the tangent
 projector at `W(t)`).  With `‖∇ℒ‖ ≤ B` along both trajectories, `∇ℒ` `β`-Lipschitz and the normal
 components `ε` at `W^k`, `ε'` of the gradient and `εV` of the momentum along the flow,
@@ -2218,7 +2224,7 @@ theorem lowRankHeavyBall_error_le {g : Matrix m n ℝ → Matrix m n ℝ}
 "the low-rank momentum method produces solutions that are close to the solutions of full-rank
 (baseline) trained neural networks".  This version holds without the extra term `εV`:
 `W^k` of Algorithm 1 (with damping `1 - λ γ`) tracks `Ẇ = 𝒱`, `𝒱̇ + γ 𝒱 = -∇ℒ(W)`
-(eq. `eq:grad_flow_full`), with the bound of `lowRankHeavyBall_error` for `ε' = εV = 0`. -/
+(Eq. (6)), with the bound of `lowRankHeavyBall_error` for `ε' = εV = 0`. -/
 theorem lowRankHeavyBall_error_fullFlow {g : Matrix m n ℝ → Matrix m n ℝ}
     {β γ lr ε ϑ ϑh B t₀ : ℝ} {N : ℕ} (hβ : 0 ≤ β) (hγ : 0 ≤ γ) (hlr : 0 ≤ lr)
     (hlrγ : lr * γ ≤ 1) (hε0 : 0 ≤ ε) (hϑ0 : 0 ≤ ϑ) (hϑh0 : 0 ≤ ϑh)
@@ -2252,9 +2258,11 @@ section Theorem3Counterexamples
 open scoped LeanDLRA.Frobenius
 open LeanDLRA
 
-/-- **Theorem 3 of arXiv 2506.17475 is false for Algorithm 1 as printed.**  Algorithm 1 prints the
-damping `1 - γ`, whereas the Euler step of the flow has `1 - λ γ` (`eq:heavy_ball_updates`).  Take
-`m = n = r = 1`, `ℒ = 0`, `γ = 1`.  The solution of `eq:gradflowopt` with `W(0) = 𝒱(0) = 1` is
+/-- **Theorem 3 of arXiv 2506.17475 is false for Algorithm 1 as printed.**  Algorithm 1 (line 7)
+and the derivation before it print the damping `1 - γ`, whereas the Euler step of the flow has
+`1 - λ γ` (Eqs. (3a)-(3c)); here `γ` is read as the `γ` of Eq. (7), as the paper's notation
+does.  Take
+`m = n = r = 1`, `ℒ = 0`, `γ = 1`.  The solution of Eq. (7) with `W(0) = 𝒱(0) = 1` is
 `W(t) = 2 - e^{-t}`, `𝒱(t) = e^{-t}`.  For every `k > 0` Algorithm 1 with `λ = 1 / k` and without
 any truncation (`ϑ = ϑ̂ = 0`, and `ε = 0`) gives `W^k = 1`, so `‖W(1) - W^k‖ ≥ 1/2`, while the
 claimed bound `c₁ ε + c₂ λ + c₃ ϑ / λ + c₄ ϑ̂ / λ = c₂ / k` tends to zero. -/
@@ -2999,7 +3007,10 @@ The run has rank `2` after the first step: without truncation it tracks `Ẇ = �
 which leaves the rank-one matrices because a second-order flow does not follow the curved manifold
 (`exists_phi_ne`), although its force is tangent.  The paper's proof overlooks this by using
 `Ẇ = 𝒱` in place of `Ẇ = P(W) 𝒱`.  The gradient of this `ℒ` is unbounded on `ℝ^{2×2}` but bounded
-by `B` along both trajectories, which is all that `lowRankHeavyBall_error` uses. -/
+by `B` along both trajectories, which is all that `lowRankHeavyBall_error` uses.  Theorem 3 as
+printed assumes a bounded gradient, so this is a counterexample to the damping-corrected
+statement with that hypothesis restricted to the trajectories, not literally to the printed one
+(a cutoff of `ℒ` far from the trajectories would close this gap; not formalized). -/
 theorem lowRankHeavyBall_needs_normalMomentum {γ : ℝ} (hγ : 0 ≤ γ) :
     ∃ (ℒ : Matrix (Fin 2) (Fin 2) ℝ → ℝ) (g : Matrix (Fin 2) (Fin 2) ℝ → Matrix (Fin 2) (Fin 2) ℝ)
       (β T B : ℝ) (X Y : ℝ → Matrix (Fin 2) (Fin 2) ℝ) (u : ℝ → Matrix (Fin 2) (Fin 1) ℝ)

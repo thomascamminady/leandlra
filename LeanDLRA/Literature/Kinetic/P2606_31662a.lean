@@ -40,6 +40,10 @@ of feasibility under the rank increase of Algorithm 4.1 (`sFeasible_mono`), and 
 * "Non-degeneracy" in Proposition 3.2 is not defined in the paper.  It is formalised as LICQ on the
   active set, following the paper's proof.  The bound `|S| ≤ r` is then a dimension count, also for
   "strictly active" constraints (`λⱼ > 0`).
+* Proposition 3.2 is printed for the general QP (3.6).  Its proof uses `x⋆ = -½ Aᵀ λ`, which is
+  stationarity for `Q = 2 I`, `c = 0`, `A_eq = 0`, and `prop_3_2` is stated in that setting, the
+  one of (3.4).  The KKT conditions themselves are proved for general `Q ⪰ 0`, `c` and `A_eq`
+  (`isQPMin_iff_exists_kkt`).
 * Existence and uniqueness of the minimisers, and necessity of the KKT conditions, are not stated in
   the paper.  They are proved here, without constraint qualification.
 * The costs `O(N_x r³)` and `O(r⁶)` are operation counts.  What is proved is their mathematical
@@ -689,6 +693,8 @@ multiplier has at most `r` positive entries (the paper's "strictly active"), `A_
 invertible, the multiplier `μ* = -2 (A_S A_Sᵀ)⁻¹ y_S` of (3.7) is nonnegative, and `x = -½
 A_Sᵀ μ* = A_Sᵀ (A_S A_Sᵀ)⁻¹ y_S`.
 
+The paper states the proposition for (3.6) with general `Q`, `c`, `A_eq`; its proof, and this
+theorem, take `Q = 2 I`, `c = 0`, `A_eq = 0` (the row problem (3.4)).
 The paper prints `δK* = ½ A_Sᵀ μ* = -A_Sᵀ (A_S A_Sᵀ)⁻¹ y_S`, which has the wrong sign: see
 `printed_formula_3_7_false`. The paper's "non-degeneracy" is formalised as LICQ, following its
 proof, and without it the claim fails (`nondegeneracy_needed`), although a variant survives

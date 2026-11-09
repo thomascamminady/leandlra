@@ -24,10 +24,11 @@ one-dimensional grid; the abstract variant with the macro equation for the low-r
 ## Differences from the paper
 
 * **The proof of Thm. 4.1 in the paper has a gap, the theorem is true.**  The density of IMEX-S-BUG
-  comes first, from the Schur complement built with `Gⁿ`, so it satisfies the macro equation with
-  the full-rank update `G* = R ((1/Δt) Gⁿ - (1/ε) 𝒜(Gⁿ) Π - (1/ε²) 𝒥(ρⁿ⁺¹))`, not with the low-rank
-  `Gⁿ⁺¹`.  The paper continues with the argument of Thm. 3.2, where the coupling terms cancel; here
-  they leave `Δt ⟨𝒥(ρⁿ⁺¹), G* - Gⁿ⁺¹⟩_w`, which need not vanish. `Grid.schur_energy_core` is a
+  comes first, from the Schur complement built with `Gⁿ` (p. 16), so it satisfies the macro
+  equation with the full-rank update `G* = R ((1/Δt) Gⁿ - (1/ε) 𝒜(Gⁿ) Π - (1/ε²) 𝒥(ρⁿ⁺¹))`, not
+  with the low-rank `Gⁿ⁺¹`.  The paper's proof says that the remainder parallels Thm. 3.2 (p. 20),
+  where the coupling terms cancel; here they leave `Δt ⟨𝒥(ρⁿ⁺¹), G* - Gⁿ⁺¹⟩_w`, which the paper does
+  not treat. `Grid.schur_energy_core` is a
   different argument that covers this term, and with it the scheme as stated. Write
   `Λ = 1 + Δt σ^s/ε² + Δt σ^a`, `y = (Δt/ε²) 𝒥(ρⁿ⁺¹)`, `L = G̃ⁿ - (Δt/ε) 𝒜(G̃ⁿ) Π`, and `L₂` for the
   same expression in `N = Gⁿ - G̃ⁿ`.  Eliminating `G* = Λ⁻¹ (L + L₂ - y)` from the macro equation
@@ -1425,7 +1426,8 @@ theorem theorem_3_2_trajectory (C : Coeff ι) (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1
 
 /-- **Thm. 3.2, unconditional case, and Cor. 3.3** (arXiv 2602.12337).  If
 `ε C_A d / (2 min_j Δx^{(j)}) ≤ (1 - θ) σ₀ / (4 ‖Ω‖)`, then IMEX-S is `θ`-stable for every `Δt > 0`
-(the Coeff `C` has an arbitrary positive `dt`).  Cor. 3.3 is the case `θ = 0`. -/
+(the Coeff `C` has an arbitrary positive `dt`).  The unconditional clause of Cor. 3.3 is the case
+`θ = 0`; its conditional clause (3.12) is `theorem_3_2` at `θ = 0`. -/
 theorem corollary_3_3 (C : Coeff ι) (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1) (hCA : 1 ≤ CA)
     (hΩ0 : 0 < Ωmax) (hΩ : ∀ j k, |P.Om j k| ≤ Ωmax) (hh0 : 0 < hmin) (hh : ∀ j, hmin ≤ P.dx j)
     (hcond : C.eps * CA * d / (2 * hmin) ≤ (1 - θ) * C.sig0 / (4 * Ωmax))
@@ -1438,8 +1440,10 @@ theorem corollary_3_3 (C : Coeff ι) (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1) (hCA : 
   have h2 : 0 ≤ C.eps ^ 2 / (2 * Ωmax) := by positivity
   linarith
 
-/-- **Cor. 3.3, diffusive regime** (arXiv 2602.12337).  For `ε = O(Δx)`, precisely
-`ε ≤ (1 - θ) σ₀ / (2 C_A d ‖Ω‖) min_j Δx^{(j)}`, IMEX-S is `θ`-stable for every `Δt > 0`. -/
+/-- **The unconditional clause of Thm. 3.2 and Cor. 3.3, solved for `ε`** (arXiv 2602.12337).
+If `ε ≤ (1 - θ) σ₀ / (2 C_A d ‖Ω‖) min_j Δx^{(j)}` (so `ε = O(Δx)`, the diffusive regime), IMEX-S
+is `θ`-stable for every `Δt > 0`.  The condition is that of `corollary_3_3` rearranged; the paper
+does not print it in this form. -/
 theorem corollary_3_3_diffusive (C : Coeff ι) (hd : 0 < d) (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1)
     (hCA : 1 ≤ CA) (hΩ0 : 0 < Ωmax) (hΩ : ∀ j k, |P.Om j k| ≤ Ωmax) (hh0 : 0 < hmin)
     (hh : ∀ j, hmin ≤ P.dx j)
@@ -1946,8 +1950,9 @@ structure IsIMEXSBUGStep (C : Coeff ι) (Φ ρ : ι → ℝ) (X : Matrix ι r �
 
 /-- **Thm. 4.1** (arXiv 2602.12337).  For `Φ = 0`, the scheme IMEX-S-BUG with the energy-consistent
 factorization `G M = X S Vᵀ` is `θ`-stable under the CFL condition (3.11) of IMEX-S.  The scheme is
-the one of the paper, with the Schur-complement density.  The proof of the paper does not apply to
-this density, see the module docstring; this one is `galerkin_energy`. -/
+the one of the paper, with the Schur-complement density and the zero-density constraint
+`1ᵀ M V = 0` of Sec. 4.3 (assumed for `Vⁿ`, part of the step for `Vⁿ⁺¹`).  The proof of the paper
+does not apply to this density, see the module docstring; this one is `galerkin_energy`. -/
 theorem theorem_4_1 (C : Coeff ι) (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1) (hCA : 1 ≤ CA)
     (hΩ0 : 0 < Ωmax) (hΩ : ∀ j k, |P.Om j k| ≤ Ωmax) (hh0 : 0 < hmin) (hh : ∀ j, hmin ≤ P.dx j)
     (hcfl : (C.eps * CA * d / (2 * hmin) - (1 - θ) * C.sig0 / (4 * Ωmax)) * C.dt ≤
