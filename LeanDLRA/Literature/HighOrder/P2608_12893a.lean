@@ -2,6 +2,9 @@ import Mathlib
 import LeanDLRA.Foundations.ODE
 import LeanDLRA.Foundations.Existence
 import LeanDLRA.Matrix.Frobenius
+import LeanDLRA.Foundations.Gronwall
+import LeanDLRA.Integrators.Matrix.ProjectorSplitting
+import LeanDLRA.OpenProblems.Curated.HighOrderDefs
 
 /-!
 # The counterexample family of arXiv 2608.12893 (Strang projector splitting)
@@ -12,35 +15,79 @@ M_η(X) + R_j(t)` with `M_η(X) = q_η(X) (Ω X - X Ω)`, `q_η(X) = (1 + η tan
 `Ω = E₃₁ - E₁₃`, the forcing `R_j(t) = h_j³ ϑ_j'(t) W'(ϑ_j(t))` with `W = ν νᵀ`,
 `ν(θ) = (0, cos(πθ/4), sin(πθ/4))`, `h_j = 2^(-j²)`, the phase `ϑ_j` (`th`) switched off on
 `[4 j h_j, 4 (j+1) h_j]` by `ψ(x) = x + 15x⁴ - 39x⁵ + 34x⁶ - 10x⁷`, and `Y⁰_j = E₁₁ + h_j³ E₂₂`.
-The module proves Eq. (5.16) (`first_order_sum`); Prop. 3.2 in full (`prop_3_2`:
-`B_F = 5`, `L_F = 12`, `‖M_η‖ ≤ 4`, tangency of `M_η` at every factored `Y = U S Vᵀ`,
-`‖R_j‖ ≤ ε_j = β √2 (π/4) h_j²`; `prop_3_2_kappa`: `F_{j,η}(t, ·) ∈ C²`, `‖D²_X F‖ ≤ 123`,
-`∂_t F` independent of `X`, `‖∂_t F‖, ‖∂_t² F‖ ≤ 123`), with `β = ψ'(3/7) = max_{[0,1]} ψ'`
-(`dpsi_le_beta`, `dpsi_three_sevenths`), `ϑ_j' = dth` and `R_j = d/dt (h_j³ W(ϑ_j))`
-(`hasDerivAt_th`, `hasDerivAt_hW`); Lemma 4.3 (`lemma_4_3`: the exact flows of `F_{j,±}` from
-`Y⁰_j` satisfy `‖Φ₊(4h_j) - Φ₋(4h_j) - 8 h_j² H‖ ≤ 10⁵ h_j³` for `j ≥ 3`, they exist by
-`exists_solution`); and the two facts at `E₁₁` used in Lemma 4.2, `M_±(E₁₁) = H/√2` (`Mη_E11`)
-and `D(M₊ - M₋)(E₁₁)[Z] = √2 z₃₁ H` (`fderiv_Mη_sub_E11`, and `Mη_sub_taylor` as a quadratic
-remainder bound).
 
-Not proved here: the lower bound of Thm 3.1 (`max_η ‖Y^{4j} - A(4 j h_j)‖ ≥ (√2/64) j h_j²`),
-Lemma 4.1, Lemma 4.2 and Prop. 4.4 (the second-order expansion of the twenty substeps of four
-Strang steps, `τ_{0,+} - τ_{0,-} = (√2/16) h² E₁₂ + O(h³)`), and Props. 5.1–5.2. They need
-second-order expansions of the nonlinear substep flows, whose projectors are fixed by components
-of size `h_j³` and are controlled in the paper only through the desingularized coordinates of its
-Appendix A; this module has no such expansion, so it states none of these results. The conclusion
-of Thm 3.1, that exact-subflow Strang splitting is not robustly second order, is proved in
+## Main results
+
+* Prop. 3.2 in full: `prop_3_2` (`B_F = 5`, `L_F = 12`, `‖M_η‖ ≤ 4`, tangency of `M_η` at every
+  factored `Y = U S Vᵀ`, `‖R_j‖ ≤ ε_j = β √2 (π/4) h_j²`) and `prop_3_2_kappa`
+  (`F_{j,η}(t, ·) ∈ C²`, `‖D²_X F‖ ≤ 123`, `∂_t F` independent of `X`, `‖∂_t F‖, ‖∂_t² F‖ ≤ 123`),
+  with
+  `β = ψ'(3/7) = max_{[0,1]} ψ'` (`dpsi_le_beta`, `dpsi_three_sevenths`), `ϑ_j' = dth`,
+  `R_j = d/dt (h_j³ W(ϑ_j))` (`hasDerivAt_th`, `hasDerivAt_hW`); the singular values `1`, `h_j³`
+  of `Y⁰_j` (`Y0_svd`), as stated in Thm 3.1.
+* Lemma 4.3 (`lemma_4_3`: `‖Φ₊(4h_j) - Φ₋(4h_j) - 8 h_j² H‖ ≤ 10⁵ h_j³` for `j ≥ 3`; the flows
+  exist by `exists_solution`) and the facts (3.4) = (4.18) at `E₁₁`: `M_±(E₁₁) = H/√2` (`Mη_E11`),
+  `D(M₊ - M₋)(E₁₁)[Z] = √2 z₃₁ H` (`fderiv_Mη_sub_E11`, quantitative: `Mη_sub_taylor`).
+* Eq. (5.16): `first_order_sum`, and `first_order_sum_Mη` for `M_η` at `Ȳ = U Vᵀ`.
+* Lemma A.1 for the core factor fields `MatrixKSL.kField`, `lField`, `sField` with `F = M_η`:
+  `det (Kᵀ K)`, `det (Lᵀ L)` and `det S` are constant, so K, L keep rank two and S stays
+  nonsingular (`lemma_A_1_K`, `lemma_A_1_L`, `lemma_A_1_S`). With `R_j = 0` after the switch-off
+  (`Rj_eq_zero`, `Fj_eq_of_ge`) this is the last step of Prop. 5.2
+  (`prop_5_2_after_switchoff_KL`, `prop_5_2_after_switchoff_S`).
+* Appendix A.2: the identities (A.2) (`nu_dot`, `W_mul_W`), `W(θ + 4) = W(θ)` (`W_add_four`) and
+  the leading factor cycle (A.26) (`leading_cycle`): for the forcing alone, `R_h(t) = h² W'(t/h)`,
+  an exact-subflow Strang step (the core `IsStrangKSLStep`) with the `h⁰` projectors
+  `E₁₁ + W(ℓ)`, `E₁₁ + W(ℓ+½)`, `E₁₁ + W(ℓ+1)` of Lemma 4.1 maps `B(ℓ) Σ_h(1) B(ℓ)ᵀ` through
+  `B(ℓ+½) Σ_h(cos(π/8)) B(ℓ)ᵀ` and `B(ℓ+½) Σ_h(cos(π/8)) B(ℓ+1)ᵀ` to `B(ℓ+1) Σ_h(1) B(ℓ+1)ᵀ`
+  (`exists_leading_step` shows that the step exists).
+* The mechanism of §5, for any Lipschitz field: `norm_flow_sub_sub_le` ((5.27)) and
+  `norm_globalErr_sub_sum_le` (the global error is the sum of the block errors up to a factor
+  `e^{L T} - 1`, (5.26)–(5.27)).
+
+## Conditional results
+
+* `prop_4_4_of_lemma_4_2`: Prop. 4.4, `‖τ_{0,+} - τ_{0,-} - (√2/16) h_j² E₁₂‖ ≤ (C + 10⁵) h_j³`,
+  conditional on Lemma 4.2 (a hypothesis with constant `C`); Lemma 4.3 enters proved.
+* `errSum_ge_of_blockErr`, `lower_bound_of_prop_5_1`, `not_robust_of_prop_5_1`: the lower bound
+  (3.20) `max_η ‖Y^{4j}_{j,η} - A_{j,η}(4 j h_j)‖ ≥ (√2/64) j h_j²` for large `j`, and the failure
+  of (2.11), conditional on (5.3)–(5.4) of Prop. 5.1, which are hypotheses on arbitrary block
+  data `Y`, `Φ`. The hypotheses are consistent (`exists_blockData`, `prop_5_1_hyps_satisfiable`,
+  with data that are not Strang iterates).
+
+## Not proved
+
+Lemma 4.1, Lemma 4.2, Prop. 4.4 and Prop. 5.1 for the Strang iterates of `F_{j,η}`, Prop. 5.2 on
+the first `j + 1` blocks, and Lemmas A.2–A.3; hence the lower bound of Thm 3.1 holds here only
+conditionally. These need second-order expansions of the nonlinear substep flows, whose projectors
+are fixed by components of size `h_j³`; the paper controls them through the desingularized
+coordinates of Appendix A with uniform `C³` bounds, which are not formalized. The conclusion of
+Thm 3.1, that exact-subflow Strang splitting is not robustly second order, is proved in
 `LeanDLRA.Corrections.strangKSL_not_robust_second_order_rankTwo` for a different, explicitly
 solvable family, not for `F_{j,η}`.
 
-Differences from the paper. `η` ranges over `|η| ≤ 1` (the paper: `η = ±1`) wherever the sign
-plays no role; the bounds hold for every `t`, not only `t ∈ [0, 1]`, with `ϑ_j(t) = t / h_j` for
-`t < 0`, where the paper does not define `ϑ_j`; Prop. 3.2 is proved for `j ≥ 1` (the paper:
-`j ≥ 3`). The paper's `‖DM_η‖ ≤ 10` is `Mη_lipschitz`, its `‖D²M_η‖ ≤ 34` is proved with `27`
-(`norm_iteratedFDeriv_Mη_le`, via `DM_lipschitz`); its bounds `|ψ''| ≤ 15`, `|ψ'''| ≤ 1110` are
-used as stated (the true maxima are about `5.03` and `26.6`). The `O(h³)` of Lemma 4.3 is made
-explicit. `δ_j = 0` holds by construction, the exact solution starting at `Y⁰_j`. No claim of
-the paper was found to be false.
+## Core definitions
+
+`ODESolution`, `IsBoundedField`, `IsLipschitzField`, `ODESolution.norm_sub_le_exp`,
+`exists_ODESolution_of_continuousOn` (Foundations), the Frobenius norm and inner product
+(`LeanDLRA.Frobenius`), `MatrixKSL.kField`, `sField`, `lField` (Integrators/Matrix),
+`leftProj`, `rightProj`, `IsOrthProj` (Matrix/Projectors, Foundations/Projector) and
+`IsStrangKSLStep` (OpenProblems/Curated/HighOrderDefs). The local definitions are the paper's
+concrete objects (`Om`, `Hm`, `qη`, `Mη`, `nu`, `W`, `psi`, `th`, `Rj`, `Fj`, `Y0`, `Bm`, `Sig`,
+`Rh`, ...); none duplicates a core concept. `norm_flow_sub_sub_le` and
+`norm_globalErr_sub_sum_le` are general and belong in `Foundations/Gronwall`.
+
+## Differences from the paper
+
+`η` ranges over `|η| ≤ 1` (the paper: `η = ±1`) wherever the sign plays no role; the bounds hold
+for every `t`, not only `t ∈ [0, 1]`, with `ϑ_j(t) = t / h_j` for `t < 0`, where the paper does
+not define `ϑ_j`; Prop. 3.2 is proved for `j ≥ 1` (the paper: `j ≥ 3`). The paper's `‖DM_η‖ ≤ 10`
+is `Mη_lipschitz`, its `‖D²M_η‖ ≤ 34` is proved with `27` (`norm_iteratedFDeriv_Mη_le`, via
+`DM_lipschitz`); its bounds `|ψ''| ≤ 15`, `|ψ'''| ≤ 1110` are used as stated (the true maxima are
+about `5.03` and `26.6`). The `O(h³)` of Lemma 4.3 is made explicit. `δ_j = 0` holds by
+construction, the exact solution starting at `Y⁰_j`. Lemma A.1 is proved for full column rank
+two (the paper: column rank in general, via `K(t) = e^{σΩ} K(t₀) e^{-σ Vᵀ Ω V}`). The cycle (A.26)
+is stated for the matrices `U S Vᵀ`, not the factors. No claim of the paper was found to be
+false.
 -/
 
 open Set Filter Topology Finset
@@ -139,6 +186,28 @@ noncomputable def Y0 (j : ℕ) : M₃ := E11 + hj j ^ 3 • E22
 
 /-- `ε_j = β √2 (π/4) h_j²`. -/
 noncomputable def εj (j : ℕ) : ℝ := beta * √2 * (Real.pi / 4) * hj j ^ 2
+
+/-- **Eq. (5.16) for `M_η`** (arXiv 2608.12893): if `Ȳ = U Vᵀ` (in the paper `u vᵀ`, the rank-one
+limit (5.13)) with `Q U = U`, `P₀ V = V`, `P₁ V = V` and `P₀, P₁` symmetric, then the first-order
+sum of the five Strang substeps at `Ȳ` is `M_η(Ȳ)`: the paper's verification of the hypotheses
+of `first_order_sum` from `(I - Q) Ȳ = 0` and `Ȳ P₀ = Ȳ P₁ = Ȳ`. -/
+theorem first_order_sum_Mη {k : Type*} [Fintype k] (η : ℝ) (U V : Matrix (Fin 3) k ℝ)
+    (Q P₀ P₁ : M₃) (hQ : Q * U = U) (hP₀ : P₀ᵀ = P₀) (hP₀V : P₀ * V = V) (hP₁ : P₁ᵀ = P₁)
+    (hP₁V : P₁ * V = V) :
+    (1 / 2 : ℝ) • (Mη η (U * Vᵀ) * P₀) - (1 / 2 : ℝ) • (Q * Mη η (U * Vᵀ) * P₀) +
+      Q * Mη η (U * Vᵀ) - (1 / 2 : ℝ) • (Q * Mη η (U * Vᵀ) * P₁) +
+      (1 / 2 : ℝ) • (Mη η (U * Vᵀ) * P₁) = Mη η (U * Vᵀ) := by
+  have hU0 : ∀ X : Matrix k (Fin 3) ℝ, (1 - Q) * (U * X) = 0 := fun X => by
+    rw [← Matrix.mul_assoc, Matrix.sub_mul, Matrix.one_mul, hQ, sub_self, Matrix.zero_mul]
+  have hfix : ∀ P : M₃, Pᵀ = P → P * V = V →
+      (1 - Q) * Mη η (U * Vᵀ) * P = (1 - Q) * Mη η (U * Vᵀ) := by
+    intro P hP hPV
+    have hVP : Vᵀ * P = Vᵀ := by
+      conv_lhs => rw [← hP]
+      rw [← Matrix.transpose_mul, hPV]
+    simp only [Mη, comm, Matrix.mul_smul, Matrix.smul_mul, Matrix.mul_sub, Matrix.sub_mul,
+      Matrix.mul_assoc, hU0, hVP, Matrix.zero_mul]
+  exact first_order_sum _ Q P₀ P₁ (hfix P₀ hP₀ hP₀V) (hfix P₁ hP₁ hP₁V)
 
 /-! ### Elementary bounds -/
 
@@ -1558,5 +1627,926 @@ theorem prop_3_2_kappa {j : ℕ} (hj1 : 1 ≤ j) {η : ℝ} (hη : |η| ≤ 1) :
   · rw [iteratedFDeriv_Fj]
     linarith [norm_iteratedFDeriv_Mη_le hη X]
   · exact (hasDerivAt_Rj j t).const_add (Mη η X)
+
+
+/-! ### The initial value: retained singular values `1` and `h_j³` -/
+
+/-- `B(0) = [e₁, e₂]` (arXiv 2608.12893, (A.1), (A.3)). -/
+def B0 : Matrix (Fin 3) (Fin 2) ℝ := !![1, 0; 0, 1; 0, 0]
+
+/-- A `2 × 2` matrix has rank two iff its determinant is nonzero. -/
+private theorem rank_eq_two_iff_det_ne_zero (G : Matrix (Fin 2) (Fin 2) ℝ) :
+    G.rank = 2 ↔ G.det ≠ 0 := by
+  constructor
+  · intro h
+    have hs : Function.Surjective G.mulVec :=
+      Matrix.mulVec_surjective_iff_rank_eq_card.2 (by simpa using h)
+    exact ((Matrix.isUnit_iff_isUnit_det G).1 (Matrix.mulVec_surjective_iff_isUnit.1 hs)).ne_zero
+  · intro h
+    rw [Matrix.rank_of_isUnit G ((Matrix.isUnit_iff_isUnit_det G).2 h.isUnit)]
+    simp
+
+/-- **The retained singular values of `Y⁰_j`** (arXiv 2608.12893, Thm 3.1 and (A.3)):
+`Y⁰_j = B(0) diag(1, h_j³) B(0)ᵀ` with `B(0) = [e₁, e₂]` orthonormal, so the singular values of
+`Y⁰_j` are `1`, `h_j³` and `0`, and `Y⁰_j` has rank two. -/
+theorem Y0_svd (j : ℕ) : B0ᵀ * B0 = 1 ∧ Y0 j = B0 * Matrix.diagonal ![1, hj j ^ 3] * B0ᵀ ∧
+    (Y0 j).rank = 2 := by
+  have hB : B0ᵀ * B0 = 1 := by
+    ext i k
+    fin_cases i <;> fin_cases k <;> simp [B0, Matrix.mul_apply, Fin.sum_univ_three]
+  have hY : Y0 j = B0 * Matrix.diagonal ![1, hj j ^ 3] * B0ᵀ := by
+    ext i k
+    fin_cases i <;> fin_cases k <;>
+      simp [Y0, E11, E22, B0, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul_diagonal]
+  refine ⟨hB, hY, le_antisymm ?_ ?_⟩
+  · rw [hY]
+    calc (B0 * Matrix.diagonal ![1, hj j ^ 3] * B0ᵀ).rank ≤ B0ᵀ.rank :=
+          Matrix.rank_mul_le_right _ _
+      _ ≤ Fintype.card (Fin 2) := Matrix.rank_le_card_height _
+      _ = 2 := by simp
+  · have hD : B0ᵀ * Y0 j * B0 = Matrix.diagonal ![1, hj j ^ 3] := by
+      rw [hY]
+      calc B0ᵀ * (B0 * Matrix.diagonal ![1, hj j ^ 3] * B0ᵀ) * B0
+          = (B0ᵀ * B0) * Matrix.diagonal ![1, hj j ^ 3] * (B0ᵀ * B0) := by
+            simp only [Matrix.mul_assoc]
+        _ = _ := by rw [hB, Matrix.one_mul, Matrix.mul_one]
+    have hr : (Matrix.diagonal ![(1 : ℝ), hj j ^ 3]).rank = 2 := by
+      rw [rank_eq_two_iff_det_ne_zero, Matrix.det_diagonal]
+      simp [Fin.prod_univ_two, (hj_pos j).ne']
+    calc 2 = (B0ᵀ * Y0 j * B0).rank := by rw [hD, hr]
+      _ ≤ (B0ᵀ * Y0 j).rank := Matrix.rank_mul_le_left _ _
+      _ ≤ _ := Matrix.rank_mul_le_right _ _
+
+/-! ### Prop. 4.4 from Lemma 4.2 -/
+
+/-- `E₁₂`. -/
+def E12 : M₃ := !![0, 1, 0; 0, 0, 0; 0, 0, 0]
+
+private theorem inner_E12 (X : M₃) : ⟪X, E12⟫ = X 0 1 := by
+  rw [Frobenius.inner_def]; simp [E12, Fin.sum_univ_three]
+
+private theorem norm_E12 : ‖E12‖ = 1 := by
+  have h : ‖E12‖ ^ 2 = 1 := by
+    rw [Frobenius.norm_sq_eq_sum]; simp [E12, Fin.sum_univ_three]
+  rw [← Real.sqrt_sq (norm_nonneg E12), h, Real.sqrt_one]
+
+/-- **Prop. 4.4, conditional on Lemma 4.2** (arXiv 2608.12893). If two matrices `Ψ_±` (in the
+paper the four-step Strang results `Ψ^{[4]}_{h_j,±}(Y⁰_j)` of (3.12)) satisfy the conclusion of
+Lemma 4.2 with an explicit constant, `‖Ψ₊ - Ψ₋ - h_j² (8 H + (√2/16) E₁₂)‖ ≤ C h_j³`, then the
+four-step local errors `τ_{0,±} = Ψ_± - Φ_±(4 h_j)` of (3.15) satisfy
+`‖τ_{0,+} - τ_{0,-} - (√2/16) h_j² E₁₂‖ ≤ (C + 10⁵) h_j³`, for `j ≥ 3`. This is the paper's
+proof of Prop. 4.4 ((4.5) and (4.23) in (4.1)), with Lemma 4.3 proved (`lemma_4_3`).
+Conditional: Lemma 4.2 is a hypothesis; it is not proved in this module. -/
+theorem prop_4_4_of_lemma_4_2 {j : ℕ} (hj3 : 3 ≤ j) {Ψp Ψm : M₃} {C : ℝ}
+    (h42 : ‖Ψp - Ψm - hj j ^ 2 • ((8 : ℝ) • Hm + (√2 / 16) • E12)‖ ≤ C * hj j ^ 3)
+    {Ap Am : ℝ → M₃}
+    (hp : ODESolution (Fj j 1) Ap 0 (4 * hj j)) (hp0 : Ap 0 = Y0 j)
+    (hm : ODESolution (Fj j (-1)) Am 0 (4 * hj j)) (hm0 : Am 0 = Y0 j) :
+    ‖(Ψp - Ap (4 * hj j)) - (Ψm - Am (4 * hj j)) - ((√2 / 16) * hj j ^ 2) • E12‖ ≤
+      (C + 100000) * hj j ^ 3 := by
+  have h43 := lemma_4_3 hj3 hp hp0 hm hm0
+  have e : (Ψp - Ap (4 * hj j)) - (Ψm - Am (4 * hj j)) - ((√2 / 16) * hj j ^ 2) • E12 =
+      (Ψp - Ψm - hj j ^ 2 • ((8 : ℝ) • Hm + (√2 / 16) • E12)) -
+        (Ap (4 * hj j) - Am (4 * hj j) - (8 * hj j ^ 2) • Hm) := by
+    module
+  rw [e]
+  calc _ ≤ _ := norm_sub_le _ _
+    _ ≤ C * hj j ^ 3 + 100000 * hj j ^ 3 := add_le_add h42 h43
+    _ = (C + 100000) * hj j ^ 3 := by ring
+
+/-! ### Section 5: from the block errors to the global error -/
+
+section Transport
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+
+/-- **The flow derivative is close to the identity** (arXiv 2608.12893, (5.27); a general fact).
+Two solutions `y, z` of an `L`-Lipschitz field on `[a, b]` satisfy
+`‖(y t - z t) - (y a - z a)‖ ≤ (exp (L (t - a)) - 1) ‖y a - z a‖`. -/
+theorem norm_flow_sub_sub_le {F : ℝ → E → E} {L : ℝ} (hF : IsLipschitzField F L) (hL : 0 ≤ L)
+    {y z : ℝ → E} {a b : ℝ} (hy : ODESolution F y a b) (hz : ODESolution F z a b) :
+    ∀ t ∈ Icc a b, ‖(y t - z t) - (y a - z a)‖ ≤ (Real.exp (L * (t - a)) - 1) * ‖y a - z a‖ := by
+  set δ := ‖y a - z a‖
+  have hstab := hy.norm_sub_le_exp hF hL hz
+  have hf : ContinuousOn (fun t => (y t - z t) - (y a - z a)) (Icc a b) :=
+    (hy.cont.sub hz.cont).sub continuousOn_const
+  have hf' : ∀ t ∈ Ico a b, HasDerivWithinAt (fun t => (y t - z t) - (y a - z a))
+      (F t (y t) - F t (z t)) (Ici t) t := fun t ht =>
+    ((hy.deriv t ht).sub (hz.deriv t ht)).sub_const _
+  have hB : ∀ t, HasDerivAt (fun t => (Real.exp (L * (t - a)) - 1) * δ)
+      (Real.exp (L * (t - a)) * L * δ) t := by
+    intro t
+    have h1 : HasDerivAt (fun t => L * (t - a)) L t := by
+      simpa using ((hasDerivAt_id t).sub_const a).const_mul L
+    exact ((h1.exp).sub_const 1).mul_const δ
+  refine image_norm_le_of_norm_deriv_right_le_deriv_boundary hf hf'
+    (B := fun t => (Real.exp (L * (t - a)) - 1) * δ) (by simp) hB (fun t ht => ?_)
+  have hti : t ∈ Icc a b := Ico_subset_Icc_self ht
+  calc ‖F t (y t) - F t (z t)‖ ≤ L * ‖y t - z t‖ := hF t _ _
+    _ ≤ L * (Real.exp (L * (t - a)) * δ) := mul_le_mul_of_nonneg_left (hstab t hti) hL
+    _ = Real.exp (L * (t - a)) * L * δ := by ring
+
+/-- **The global error is the sum of the transported local errors** (arXiv 2608.12893, (5.26)
+and (5.27); a general fact). Let `F` be `L`-Lipschitz, `t₀ ≤ t₁ ≤ ⋯`, and for `k ≤ N` let `Φ k`
+solve `y' = F(t, y)` on `[t_k, t_N]` with `Φ k (t_k) = Y k` (so `Φ 0` is the exact solution
+through `Y 0`). With the local errors `τ_k = Y (k+1) - Φ k (t_{k+1})`,
+`‖(Y N - Φ 0 (t_N)) - ∑_{k<N} τ_k‖ ≤ (exp (L (t_N - t₀)) - 1) ∑_{k<N} ‖τ_k‖`. -/
+theorem norm_globalErr_sub_sum_le {F : ℝ → E → E} {L : ℝ} (hF : IsLipschitzField F L)
+    (hL : 0 ≤ L) {N : ℕ} {t : ℕ → ℝ} (ht : Monotone t) {Y : ℕ → E} {Φ : ℕ → ℝ → E}
+    (hΦ : ∀ k ≤ N, ODESolution F (Φ k) (t k) (t N)) (hΦ₀ : ∀ k ≤ N, Φ k (t k) = Y k) :
+    ‖(Y N - Φ 0 (t N)) - ∑ k ∈ range N, (Y (k + 1) - Φ k (t (k + 1)))‖ ≤
+      (Real.exp (L * (t N - t 0)) - 1) * ∑ k ∈ range N, ‖Y (k + 1) - Φ k (t (k + 1))‖ := by
+  have htel : Y N - Φ 0 (t N) = ∑ k ∈ range N, (Φ (k + 1) (t N) - Φ k (t N)) := by
+    have := Finset.sum_range_sub (fun k => Φ k (t N)) N
+    rw [this, hΦ₀ N le_rfl]
+  rw [htel, ← Finset.sum_sub_distrib, Finset.mul_sum]
+  refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun k hk => ?_)
+  have hk : k < N := Finset.mem_range.1 hk
+  have h1 : t (k + 1) ≤ t N := ht hk
+  have hp := hΦ (k + 1) hk
+  have hq := (hΦ k hk.le).mono (ht (Nat.le_succ k)) le_rfl
+  have key := norm_flow_sub_sub_le hF hL hp hq (t N) ⟨h1, le_rfl⟩
+  rw [hΦ₀ (k + 1) hk] at key
+  have he : Real.exp (L * (t N - t (k + 1))) - 1 ≤ Real.exp (L * (t N - t 0)) - 1 := by
+    have : L * (t N - t (k + 1)) ≤ L * (t N - t 0) :=
+      mul_le_mul_of_nonneg_left (by linarith [ht (Nat.zero_le (k + 1))]) hL
+    linarith [Real.exp_le_exp.2 this]
+  exact key.trans (mul_le_mul_of_nonneg_right he (norm_nonneg _))
+
+end Transport
+
+/-- **Thm 3.1 from Prop. 5.1, one `j`** (arXiv 2608.12893, (5.26)–(5.32)), conditional on the
+block-error bounds of Prop. 5.1, which are hypotheses here. For `η = ±1` let `Y_η k` be any
+matrices (in the paper the block starts `Y^{4k}_{j,η}` of the Strang run) and, for `k ≤ j`,
+let `Φ_η k` solve `A' = F_{j,η}(t, A)` on `[4 k h_j, 4 j h_j]` from `Y_η k`; so `Φ_η 0` is the
+exact solution through `Y_η 0`. With the block errors `τ_{k,η} = Y_η (k+1) - Φ_η k (4(k+1)h_j)`
+of (3.14): if `‖τ_{k,±}‖ ≤ C h_j²` ((5.3)) and `⟪τ_{k,+} - τ_{k,-}, E₁₂⟫ ≥ c h_j²` (a lower
+bound in (5.4)) for all `k < j`, then the two global errors at `t = 4 j h_j` satisfy
+`‖e_{j,+}‖ + ‖e_{j,-}‖ ≥ j h_j² (c - 2 C (e^{48 j h_j} - 1))`. The factor `e^{48 j h_j}` is the
+paper's `e^{4 L_F j h_j}` with `L_F = 12` (`prop_3_2`). -/
+theorem errSum_ge_of_blockErr {j : ℕ} (hj1 : 1 ≤ j) {Yp Ym : ℕ → M₃} {Φp Φm : ℕ → ℝ → M₃}
+    (hΦp : ∀ k ≤ j, ODESolution (Fj j 1) (Φp k) (4 * k * hj j) (4 * j * hj j))
+    (hΦp0 : ∀ k ≤ j, Φp k (4 * k * hj j) = Yp k)
+    (hΦm : ∀ k ≤ j, ODESolution (Fj j (-1)) (Φm k) (4 * k * hj j) (4 * j * hj j))
+    (hΦm0 : ∀ k ≤ j, Φm k (4 * k * hj j) = Ym k) {C c : ℝ}
+    (h53p : ∀ k < j, ‖Yp (k + 1) - Φp k (4 * (k + 1 : ℕ) * hj j)‖ ≤ C * hj j ^ 2)
+    (h53m : ∀ k < j, ‖Ym (k + 1) - Φm k (4 * (k + 1 : ℕ) * hj j)‖ ≤ C * hj j ^ 2)
+    (h54 : ∀ k < j, c * hj j ^ 2 ≤ ⟪(Yp (k + 1) - Φp k (4 * (k + 1 : ℕ) * hj j)) -
+      (Ym (k + 1) - Φm k (4 * (k + 1 : ℕ) * hj j)), E12⟫) :
+    j * hj j ^ 2 * (c - 2 * C * (Real.exp (48 * (j * hj j)) - 1)) ≤
+      ‖Yp j - Φp 0 (4 * j * hj j)‖ + ‖Ym j - Φm 0 (4 * j * hj j)‖ := by
+  set h := hj j with hh
+  have hh0 : 0 < h := hj_pos j
+  set t : ℕ → ℝ := fun k => 4 * (k : ℝ) * h with ht
+  have htm : Monotone t := fun a b hab => by
+    simp only [ht]
+    have : (a : ℝ) ≤ b := by exact_mod_cast hab
+    nlinarith
+  have hLp : IsLipschitzField (Fj j 1) 12 := (prop_3_2 hj1 (by norm_num)).2.1
+  have hLm : IsLipschitzField (Fj j (-1)) 12 := (prop_3_2 hj1 (by norm_num)).2.1
+  have Tp := norm_globalErr_sub_sum_le hLp (by norm_num) (N := j) htm (Y := Yp) (Φ := Φp)
+    hΦp hΦp0
+  have Tm := norm_globalErr_sub_sum_le hLm (by norm_num) (N := j) htm (Y := Ym) (Φ := Φm)
+    hΦm hΦm0
+  have hT : 12 * (t j - t 0) = 48 * (j * h) := by simp only [ht]; push_cast; ring
+  rw [hT] at Tp Tm
+  set ρ := Real.exp (48 * (j * h)) - 1 with hρdef
+  have hρ : 0 ≤ ρ := by
+    have h1 := Real.add_one_le_exp (48 * (j * h))
+    have h2 : 0 ≤ 48 * ((j : ℝ) * h) := by positivity
+    linarith
+  set Sp := ∑ k ∈ range j, (Yp (k + 1) - Φp k (t (k + 1))) with hSp
+  set Sm := ∑ k ∈ range j, (Ym (k + 1) - Φm k (t (k + 1))) with hSm
+  have hsp : ∑ k ∈ range j, ‖Yp (k + 1) - Φp k (t (k + 1))‖ ≤ j * (C * h ^ 2) := by
+    calc _ ≤ ∑ k ∈ range j, C * h ^ 2 := Finset.sum_le_sum fun k hk => h53p k (mem_range.1 hk)
+      _ = j * (C * h ^ 2) := by simp
+  have hsm : ∑ k ∈ range j, ‖Ym (k + 1) - Φm k (t (k + 1))‖ ≤ j * (C * h ^ 2) := by
+    calc _ ≤ ∑ k ∈ range j, C * h ^ 2 := Finset.sum_le_sum fun k hk => h53m k (mem_range.1 hk)
+      _ = j * (C * h ^ 2) := by simp
+  have hsum : (j : ℝ) * (c * h ^ 2) ≤ ⟪Sp - Sm, E12⟫ := by
+    rw [hSp, hSm, ← Finset.sum_sub_distrib, sum_inner]
+    calc (j : ℝ) * (c * h ^ 2) = ∑ k ∈ range j, c * h ^ 2 := by simp
+      _ ≤ _ := Finset.sum_le_sum fun k hk => h54 k (mem_range.1 hk)
+  set ep := Yp j - Φp 0 (t j) with hep
+  set em := Ym j - Φm 0 (t j) with hem
+  have hd : ⟪ep - em, E12⟫ = ⟪Sp - Sm, E12⟫ + ⟪(ep - Sp) - (em - Sm), E12⟫ := by
+    rw [← inner_add_left]
+    congr 1
+    abel
+  have hb : -‖(ep - Sp) - (em - Sm)‖ ≤ ⟪(ep - Sp) - (em - Sm), E12⟫ := by
+    have := abs_real_inner_le_norm ((ep - Sp) - (em - Sm)) E12
+    rw [norm_E12, mul_one] at this
+    exact neg_le_of_abs_le this
+  have hb2 : ‖(ep - Sp) - (em - Sm)‖ ≤ ρ * (j * (C * h ^ 2)) + ρ * (j * (C * h ^ 2)) := by
+    calc ‖(ep - Sp) - (em - Sm)‖ ≤ ‖ep - Sp‖ + ‖em - Sm‖ := norm_sub_le _ _
+      _ ≤ ρ * (j * (C * h ^ 2)) + ρ * (j * (C * h ^ 2)) :=
+        add_le_add (Tp.trans (mul_le_mul_of_nonneg_left hsp hρ))
+          (Tm.trans (mul_le_mul_of_nonneg_left hsm hρ))
+  have hup : ⟪ep - em, E12⟫ ≤ ‖ep‖ + ‖em‖ := by
+    calc ⟪ep - em, E12⟫ ≤ ‖ep - em‖ * ‖E12‖ := real_inner_le_norm _ _
+      _ = ‖ep - em‖ := by rw [norm_E12, mul_one]
+      _ ≤ ‖ep‖ + ‖em‖ := norm_sub_le _ _
+  have hfin : (j : ℝ) * h ^ 2 * (c - 2 * C * ρ) ≤ ‖ep‖ + ‖em‖ := by linarith
+  exact hfin
+
+/-- `j h_j → 0`. -/
+private theorem tendsto_j_mul_hj : Tendsto (fun j : ℕ => (j : ℝ) * hj j) atTop (𝓝 0) := by
+  have h1 := tendsto_self_mul_const_pow_of_lt_one (r := 1 / 2) (by norm_num) (by norm_num)
+  refine squeeze_zero (fun j => by unfold hj; positivity) (fun j => ?_) h1
+  unfold hj
+  have : (1 / 2 : ℝ) ^ (j ^ 2) ≤ (1 / 2) ^ j :=
+    pow_le_pow_of_le_one (by norm_num) (by norm_num) (Nat.le_self_pow two_ne_zero j)
+  exact mul_le_mul_of_nonneg_left this (Nat.cast_nonneg j)
+
+/-- **Thm 3.1, the lower bound (3.20), conditional on Prop. 5.1** (arXiv 2608.12893, the proof of
+Thm 3.1 in §5). For each `j` and `η = ±1` let `Y j η k` be any matrices (in the paper the block
+starts `Y^{4k}_{j,η}` of the exact-subflow Strang run, which exist for large `j` by Prop. 5.2)
+and `Φ j η k` the solution of `A' = F_{j,η}(t, A)` on `[4 k h_j, 4 j h_j]` through `Y j η k`
+at `4 k h_j`; so `Φ j η 0 = A_{j,η}` when `Y j η 0 = Y⁰_j`. Assume Prop. 5.1 for all large `j`:
+(5.3) `‖τ_{k,j,η}‖ ≤ C h_j²` and (5.4) `|⟪τ_{k,j,+} - τ_{k,j,-}, E₁₂⟫ - (√2/16) h_j²| ≤ ρ_j h_j²`
+with `ρ_j → 0`, uniformly in `k < j`. Then (3.20) holds for all large `j`:
+`max_η ‖Y^{4j}_{j,η} - A_{j,η}(4 j h_j)‖ ≥ (√2/64) j h_j²`.
+Conditional: (5.3) and (5.4), which the paper proves from Prop. 4.4 and Appendix A, are
+hypotheses; the deduction ((5.26)–(5.32)) is proved, with `L_F = 12` from `prop_3_2`. -/
+theorem lower_bound_of_prop_5_1 (Y : ℕ → ℝ → ℕ → M₃) (Φ : ℕ → ℝ → ℕ → ℝ → M₃) {C : ℝ}
+    {ρ : ℕ → ℝ} (hρ : Tendsto ρ atTop (𝓝 0))
+    (hΦ : ∀ᶠ j in atTop, ∀ η ∈ ({1, -1} : Set ℝ), ∀ k ≤ j,
+      ODESolution (Fj j η) (Φ j η k) (4 * k * hj j) (4 * j * hj j) ∧
+        Φ j η k (4 * k * hj j) = Y j η k)
+    (h53 : ∀ᶠ j in atTop, ∀ η ∈ ({1, -1} : Set ℝ), ∀ k < j,
+      ‖Y j η (k + 1) - Φ j η k (4 * (k + 1 : ℕ) * hj j)‖ ≤ C * hj j ^ 2)
+    (h54 : ∀ᶠ j in atTop, ∀ k < j,
+      |⟪(Y j 1 (k + 1) - Φ j 1 k (4 * (k + 1 : ℕ) * hj j)) -
+        (Y j (-1) (k + 1) - Φ j (-1) k (4 * (k + 1 : ℕ) * hj j)), E12⟫ - √2 / 16 * hj j ^ 2| ≤
+        ρ j * hj j ^ 2) :
+    ∀ᶠ j in atTop, √2 / 64 * j * hj j ^ 2 ≤
+      max ‖Y j 1 j - Φ j 1 0 (4 * j * hj j)‖ ‖Y j (-1) j - Φ j (-1) 0 (4 * j * hj j)‖ := by
+  have hρev : ∀ᶠ j in atTop, ρ j < √2 / 64 :=
+    hρ.eventually (gt_mem_nhds (by positivity))
+  have hexp : Tendsto (fun j : ℕ => 2 * C * (Real.exp (48 * ((j : ℝ) * hj j)) - 1)) atTop
+      (𝓝 (2 * C * (Real.exp (48 * 0) - 1))) :=
+    ((((tendsto_j_mul_hj.const_mul 48).rexp).sub_const 1).const_mul (2 * C))
+  rw [mul_zero, Real.exp_zero, sub_self, mul_zero] at hexp
+  have hexpev : ∀ᶠ j : ℕ in atTop, 2 * C * (Real.exp (48 * ((j : ℝ) * hj j)) - 1) < √2 / 64 :=
+    hexp.eventually (gt_mem_nhds (by positivity))
+  filter_upwards [hΦ, h53, h54, hρev, hexpev, eventually_ge_atTop 1] with
+    j hΦj h53j h54j hρj hexj hj1
+  have hp1 : (1 : ℝ) ∈ ({1, -1} : Set ℝ) := by simp
+  have hm1 : (-1 : ℝ) ∈ ({1, -1} : Set ℝ) := by simp
+  have key := errSum_ge_of_blockErr (c := √2 / 16 - ρ j) hj1
+    (fun k hk => (hΦj 1 hp1 k hk).1) (fun k hk => (hΦj 1 hp1 k hk).2)
+    (fun k hk => (hΦj (-1) hm1 k hk).1) (fun k hk => (hΦj (-1) hm1 k hk).2)
+    (h53j 1 hp1) (h53j (-1) hm1) (fun k hk => by
+      have := h54j k hk
+      rw [abs_le] at this
+      nlinarith [this.1])
+  have hj0 : (0 : ℝ) ≤ j * hj j ^ 2 := by have := hj_pos j; positivity
+  have hcoef : √2 / 32 ≤ √2 / 16 - ρ j - 2 * C * (Real.exp (48 * (j * hj j)) - 1) := by
+    linarith
+  have h2 : √2 / 32 * (j * hj j ^ 2) ≤ ‖Y j 1 j - Φ j 1 0 (4 * j * hj j)‖ +
+      ‖Y j (-1) j - Φ j (-1) 0 (4 * j * hj j)‖ := by
+    calc √2 / 32 * (j * hj j ^ 2) ≤ j * hj j ^ 2 *
+        (√2 / 16 - ρ j - 2 * C * (Real.exp (48 * (j * hj j)) - 1)) := by
+          have := mul_le_mul_of_nonneg_left hcoef hj0
+          linarith
+      _ ≤ _ := key
+  have hmax := add_le_add (le_max_left ‖Y j 1 j - Φ j 1 0 (4 * j * hj j)‖
+    ‖Y j (-1) j - Φ j (-1) 0 (4 * j * hj j)‖) (le_max_right ‖Y j 1 j - Φ j 1 0 (4 * j * hj j)‖
+    ‖Y j (-1) j - Φ j (-1) 0 (4 * j * hj j)‖)
+  linarith
+
+/-- **Thm 3.1, failure of (2.11), conditional on Prop. 5.1** (arXiv 2608.12893, end of the proof
+of Thm 3.1). Under the hypotheses of `lower_bound_of_prop_5_1`, for every constant `K`, for all
+large `j` the error at `t = 4 j h_j` exceeds `K (δ_j + ε_j + h_j²)`, where
+`δ_j = ‖Y j η 0 - Φ j η 0 0‖ = 0` (the exact solution starts at the initial iterate, as in the
+paper) and `ε_j = β √2 (π/4) h_j²` is the normal-component bound of Prop. 3.2. So no `C`, `h₀`
+independent of the retained singular values make (2.11) hold for the family. Conditional on (5.3)
+and (5.4), as `lower_bound_of_prop_5_1`. -/
+theorem not_robust_of_prop_5_1 (Y : ℕ → ℝ → ℕ → M₃) (Φ : ℕ → ℝ → ℕ → ℝ → M₃) {C : ℝ}
+    {ρ : ℕ → ℝ} (hρ : Tendsto ρ atTop (𝓝 0))
+    (hΦ : ∀ᶠ j in atTop, ∀ η ∈ ({1, -1} : Set ℝ), ∀ k ≤ j,
+      ODESolution (Fj j η) (Φ j η k) (4 * k * hj j) (4 * j * hj j) ∧
+        Φ j η k (4 * k * hj j) = Y j η k)
+    (h53 : ∀ᶠ j in atTop, ∀ η ∈ ({1, -1} : Set ℝ), ∀ k < j,
+      ‖Y j η (k + 1) - Φ j η k (4 * (k + 1 : ℕ) * hj j)‖ ≤ C * hj j ^ 2)
+    (h54 : ∀ᶠ j in atTop, ∀ k < j,
+      |⟪(Y j 1 (k + 1) - Φ j 1 k (4 * (k + 1 : ℕ) * hj j)) -
+        (Y j (-1) (k + 1) - Φ j (-1) k (4 * (k + 1 : ℕ) * hj j)), E12⟫ - √2 / 16 * hj j ^ 2| ≤
+        ρ j * hj j ^ 2) (K : ℝ) :
+    ∀ᶠ j in atTop, ∀ η ∈ ({1, -1} : Set ℝ),
+      ‖Y j η 0 - Φ j η 0 0‖ = 0 ∧
+      K * (‖Y j η 0 - Φ j η 0 0‖ + εj j + hj j ^ 2) <
+        max ‖Y j 1 j - Φ j 1 0 (4 * j * hj j)‖ ‖Y j (-1) j - Φ j (-1) 0 (4 * j * hj j)‖ := by
+  have hs0 : 0 < √2 := by positivity
+  set D := beta * √2 * (Real.pi / 4) + 1 with hD
+  have hb0 : 0 < beta := by norm_num [beta]
+  have hD0 : 0 < D := by positivity
+  obtain ⟨n, hn⟩ := exists_nat_gt (64 * K * D / √2)
+  filter_upwards [lower_bound_of_prop_5_1 Y Φ hρ hΦ h53 h54, hΦ, eventually_gt_atTop n] with
+    j hlow hΦj hjn η hη
+  have h0 : Φ j η 0 0 = Y j η 0 := by simpa using (hΦj η hη 0 (Nat.zero_le j)).2
+  refine ⟨by simp [h0], ?_⟩
+  rw [h0, sub_self, norm_zero, zero_add]
+  have he : εj j + hj j ^ 2 = D * hj j ^ 2 := by simp only [εj, hD]; ring
+  rw [he]
+  have hh := hj_pos j
+  have hjn' : 64 * K * D / √2 < j := by
+    have : (n : ℝ) < j := by exact_mod_cast hjn
+    linarith
+  have hK : K * D < √2 / 64 * j := by
+    rw [div_lt_iff₀ hs0] at hjn'
+    nlinarith
+  have hh2 : 0 < hj j ^ 2 := by positivity
+  calc K * (D * hj j ^ 2) = (K * D) * hj j ^ 2 := by ring
+    _ < √2 / 64 * j * hj j ^ 2 := mul_lt_mul_of_pos_right hK hh2
+    _ ≤ _ := hlow
+
+/-- Block data with prescribed block errors exist: for `j ≥ 1`, `|η| ≤ 1` and any `c` there are
+matrices `Y k` with `Y 0 = Y⁰_j` and solutions `Φ k` of `F_{j,η}` on `[4 k h_j, 4 j h_j]` through
+`Y k` whose block errors `Y (k+1) - Φ k (4 (k+1) h_j)` all equal `c h_j² E₁₂`. (Used to show
+that the hypotheses of `lower_bound_of_prop_5_1` are consistent; these are not Strang
+iterates.) -/
+theorem exists_blockData {j : ℕ} (hj1 : 1 ≤ j) {η : ℝ} (hη : |η| ≤ 1) (c : ℝ) :
+    ∃ (Y : ℕ → M₃) (Φ : ℕ → ℝ → M₃), Y 0 = Y0 j ∧
+      (∀ k ≤ j, ODESolution (Fj j η) (Φ k) (4 * k * hj j) (4 * j * hj j) ∧
+        Φ k (4 * k * hj j) = Y k) ∧
+      ∀ k < j, Y (k + 1) - Φ k (4 * (k + 1 : ℕ) * hj j) = (c * hj j ^ 2) • E12 := by
+  obtain ⟨hB, hL, -⟩ := prop_3_2 hj1 hη
+  have hc : ∀ X, Continuous fun t => Fj j η t X := fun X =>
+    (continuous_const.add
+      (continuous_iff_continuousAt.2 fun t => (hasDerivAt_Rj j t).continuousAt) :
+      Continuous fun t => Mη η X + Rj j t)
+  have hex : ∀ (k : ℕ) (x : M₃), ∃ A : ℝ → M₃,
+      (k ≤ j → ODESolution (Fj j η) A (4 * k * hj j) (4 * j * hj j)) ∧ A (4 * k * hj j) = x := by
+    intro k x
+    by_cases hk : k ≤ j
+    · have hkj : 4 * (k : ℝ) * hj j ≤ 4 * j * hj j := by
+        have : (k : ℝ) ≤ j := by exact_mod_cast hk
+        have := hj_pos j
+        nlinarith
+      obtain ⟨A, hA, hA0⟩ :=
+        exists_ODESolution_of_continuousOn hL hB (fun X => (hc X).continuousOn) hkj x
+      exact ⟨A, fun _ => hA, hA0⟩
+    · exact ⟨fun _ => x, fun h => absurd h hk, rfl⟩
+  choose sol hsol using hex
+  let Y : ℕ → M₃ := fun k => Nat.rec (Y0 j)
+    (fun k y => sol k y (4 * (k + 1 : ℕ) * hj j) + (c * hj j ^ 2) • E12) k
+  refine ⟨Y, fun k => sol k (Y k), rfl,
+    fun k hk => ⟨(hsol k (Y k)).1 hk, (hsol k (Y k)).2⟩, fun k _ => ?_⟩
+  change sol k (Y k) (4 * (k + 1 : ℕ) * hj j) + (c * hj j ^ 2) • E12 -
+    sol k (Y k) (4 * (k + 1 : ℕ) * hj j) = _
+  abel
+
+/-- The hypotheses of `lower_bound_of_prop_5_1` and `not_robust_of_prop_5_1` are consistent: data
+with block errors `±(√2/32) h_j² E₁₂` (from `exists_blockData`, not the Strang iterates) satisfy
+them with `C = √2/32` and `ρ = 0`. -/
+theorem prop_5_1_hyps_satisfiable : ∃ (Y : ℕ → ℝ → ℕ → M₃) (Φ : ℕ → ℝ → ℕ → ℝ → M₃),
+    (∀ᶠ j in atTop, ∀ η ∈ ({1, -1} : Set ℝ), ∀ k ≤ j,
+      ODESolution (Fj j η) (Φ j η k) (4 * k * hj j) (4 * j * hj j) ∧
+        Φ j η k (4 * k * hj j) = Y j η k) ∧
+    (∀ᶠ j in atTop, ∀ η ∈ ({1, -1} : Set ℝ), ∀ k < j,
+      ‖Y j η (k + 1) - Φ j η k (4 * (k + 1 : ℕ) * hj j)‖ ≤ √2 / 32 * hj j ^ 2) ∧
+    (∀ᶠ j in atTop, ∀ k < j,
+      |⟪(Y j 1 (k + 1) - Φ j 1 k (4 * (k + 1 : ℕ) * hj j)) -
+        (Y j (-1) (k + 1) - Φ j (-1) k (4 * (k + 1 : ℕ) * hj j)), E12⟫ - √2 / 16 * hj j ^ 2| ≤
+        (fun _ : ℕ => (0 : ℝ)) j * hj j ^ 2) := by
+  have hex : ∀ (j : ℕ) (η : ℝ), ∃ (Y : ℕ → M₃) (Φ : ℕ → ℝ → M₃), 1 ≤ j → |η| ≤ 1 →
+      Y 0 = Y0 j ∧ (∀ k ≤ j, ODESolution (Fj j η) (Φ k) (4 * k * hj j) (4 * j * hj j) ∧
+        Φ k (4 * k * hj j) = Y k) ∧
+      ∀ k < j, Y (k + 1) - Φ k (4 * (k + 1 : ℕ) * hj j) = (η * (√2 / 32) * hj j ^ 2) • E12 := by
+    intro j η
+    by_cases h : 1 ≤ j ∧ |η| ≤ 1
+    · obtain ⟨Y, Φ, h1⟩ := exists_blockData h.1 h.2 (η * (√2 / 32))
+      exact ⟨Y, Φ, fun _ _ => h1⟩
+    · exact ⟨fun _ => 0, fun _ _ => 0, fun h1 h2 => absurd ⟨h1, h2⟩ h⟩
+  choose Y Φ hYΦ using hex
+  have hmem : ∀ η ∈ ({1, -1} : Set ℝ), |η| ≤ 1 := by
+    intro η hη
+    rcases hη with rfl | rfl <;> norm_num
+  have hs : 0 ≤ √2 := Real.sqrt_nonneg 2
+  refine ⟨Y, Φ, ?_, ?_, ?_⟩
+  · filter_upwards [eventually_ge_atTop 1] with j hj1 η hη
+    exact (hYΦ j η hj1 (hmem η hη)).2.1
+  · filter_upwards [eventually_ge_atTop 1] with j hj1 η hη k hk
+    rw [(hYΦ j η hj1 (hmem η hη)).2.2 k hk, norm_smul, norm_E12, mul_one, Real.norm_eq_abs,
+      abs_mul, abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ √2 / 32),
+      abs_of_nonneg (by positivity : (0 : ℝ) ≤ hj j ^ 2)]
+    have := hmem η hη
+    have h2 : 0 ≤ √2 / 32 * hj j ^ 2 := by positivity
+    nlinarith [abs_nonneg η]
+  · filter_upwards [eventually_ge_atTop 1] with j hj1 k hk
+    have h01 : E12 0 1 = 1 := rfl
+    have key : ⟪(Y j 1 (k + 1) - Φ j 1 k (4 * (k + 1 : ℕ) * hj j)) -
+        (Y j (-1) (k + 1) - Φ j (-1) k (4 * (k + 1 : ℕ) * hj j)), E12⟫ = √2 / 16 * hj j ^ 2 := by
+      rw [(hYΦ j 1 hj1 (by norm_num)).2.2 k hk, (hYΦ j (-1) hj1 (by norm_num)).2.2 k hk,
+        inner_E12]
+      simp only [Matrix.sub_apply, Matrix.smul_apply, smul_eq_mul, h01]
+      ring
+    rw [key, sub_self, abs_zero]
+    simp
+
+/-! ### Lemma A.1: the subflows of `M_η` preserve rank two -/
+
+/-- The entry `X i k`, as a continuous linear functional (the Frobenius inner product with the
+matrix unit `E_{ik}`). -/
+private noncomputable def entry {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m]
+    [DecidableEq n] (i : m) (k : n) : Matrix m n ℝ →L[ℝ] ℝ :=
+  innerSL ℝ (Matrix.single i k 1)
+
+private theorem entry_apply {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m]
+    [DecidableEq n] (i : m) (k : n) (X : Matrix m n ℝ) : entry i k X = X i k := by
+  simp [entry, innerSL_apply_apply, Frobenius.inner_def, Matrix.single_apply, ite_and]
+
+/-- Derivative of the determinant of a `2 × 2` matrix curve. -/
+private theorem hasDerivWithinAt_det_two {G : ℝ → Matrix (Fin 2) (Fin 2) ℝ}
+    {G' : Matrix (Fin 2) (Fin 2) ℝ} {s : Set ℝ} {t : ℝ} (h : HasDerivWithinAt G G' s t) :
+    HasDerivWithinAt (fun t => (G t).det)
+      (G' 0 0 * G t 1 1 + G t 0 0 * G' 1 1 - (G' 0 1 * G t 1 0 + G t 0 1 * G' 1 0)) s t := by
+  have e : ∀ a b, HasDerivWithinAt (fun t => G t a b) (G' a b) s t := fun a b => by
+    simpa [Function.comp_def, entry_apply] using (entry a b).hasFDerivAt.comp_hasDerivWithinAt t h
+  simp only [Matrix.det_fin_two]
+  exact ((e 0 0).mul (e 1 1)).sub ((e 0 1).mul (e 1 0))
+
+/-- A `2 × 2` curve with `G' = A G - G B` and `tr A = tr B` has constant determinant (Jacobi's
+formula gives `(det G)' = (tr A - tr B) det G`). -/
+private theorem det_eq_of_deriv {G A B : ℝ → Matrix (Fin 2) (Fin 2) ℝ} {a b : ℝ}
+    (hc : ContinuousOn G (Icc a b))
+    (hd : ∀ t ∈ Ico a b, HasDerivWithinAt G (A t * G t - G t * B t) (Ici t) t)
+    (htr : ∀ t ∈ Ico a b, (A t).trace = (B t).trace) :
+    ∀ t ∈ Icc a b, (G t).det = (G a).det := by
+  have ec : ∀ i k, ContinuousOn (fun t => G t i k) (Icc a b) := fun i k => by
+    simpa [Function.comp_def, entry_apply] using (entry i k).continuous.comp_continuousOn hc
+  have hfc : ContinuousOn (fun t => (G t).det) (Icc a b) := by
+    simp only [Matrix.det_fin_two]
+    exact ((ec 0 0).mul (ec 1 1)).sub ((ec 0 1).mul (ec 1 0))
+  have hfd : ∀ t ∈ Ico a b, HasDerivWithinAt (fun t => (G t).det) 0 (Ici t) t := by
+    intro t ht
+    have h := hasDerivWithinAt_det_two (hd t ht)
+    have htr' := htr t ht
+    rw [Matrix.trace_fin_two, Matrix.trace_fin_two] at htr'
+    convert h using 1
+    simp only [Matrix.sub_apply, Matrix.mul_apply, Fin.sum_univ_two]
+    linear_combination (-(G t 0 0 * G t 1 1 - G t 0 1 * G t 1 0)) * htr'
+  intro t ht
+  have := norm_image_sub_le_of_norm_deriv_right_le_segment hfc hfd (C := 0)
+    (fun _ _ => by simp) t ht
+  rw [zero_mul, norm_le_zero_iff, sub_eq_zero] at this
+  exact this
+
+private theorem Om_transpose : Omᵀ = -Om := by
+  ext i k
+  fin_cases i <;> fin_cases k <;> simp [Om]
+
+private theorem skew_conj (V : Matrix (Fin 3) (Fin 2) ℝ) : (Vᵀ * Om * V)ᵀ = -(Vᵀ * Om * V) := by
+  rw [Matrix.transpose_mul, Matrix.transpose_mul, Matrix.transpose_transpose, Om_transpose]
+  simp [Matrix.mul_neg, Matrix.neg_mul, Matrix.mul_assoc]
+
+private theorem trace_eq_zero_of_skew {B : Matrix (Fin 2) (Fin 2) ℝ} (hB : Bᵀ = -B) :
+    B.trace = 0 := by
+  have h := congrArg Matrix.trace hB
+  rw [Matrix.trace_transpose, Matrix.trace_neg] at h
+  linarith
+
+/-- If `K' = c (Ω K - K B)` with `Bᵀ = -B`, then the Gram determinant `det (Kᵀ K)` is constant;
+so `K` keeps column rank two, or keeps rank below two. -/
+private theorem gram_det_eq {K : ℝ → Matrix (Fin 3) (Fin 2) ℝ} {c : ℝ → ℝ}
+    {B : Matrix (Fin 2) (Fin 2) ℝ} (hB : Bᵀ = -B) {a b : ℝ} (hc : ContinuousOn K (Icc a b))
+    (hd : ∀ t ∈ Ico a b, HasDerivWithinAt K (c t • (Om * K t - K t * B)) (Ici t) t) :
+    ∀ t ∈ Icc a b, ((K t)ᵀ * K t).det = ((K a)ᵀ * K a).det ∧
+      ((K t).rank = 2 ↔ (K a).rank = 2) := by
+  have hG : ∀ t ∈ Icc a b, ((K t)ᵀ * K t).det = ((K a)ᵀ * K a).det := by
+    refine det_eq_of_deriv (A := fun t => c t • B) (B := fun t => c t • B) ?_ (fun t ht => ?_)
+      (fun _ _ => rfl)
+    · have h1 : ContinuousOn (fun t => (K t)ᵀ) (Icc a b) :=
+        (Frobenius.transposeCLM (m := Fin 3) (n := Fin 2)).continuous.comp_continuousOn hc
+      have h2 : ContinuousOn (fun t => Frobenius.mulCLM (K t)ᵀ) (Icc a b) :=
+        (Frobenius.mulCLM (m := Fin 2) (l := Fin 3) (n := Fin 2)).continuous.comp_continuousOn h1
+      exact h2.clm_apply hc
+    · have h := Frobenius.hasDerivWithinAt_mul (Frobenius.hasDerivWithinAt_transpose (hd t ht))
+        (hd t ht)
+      convert h using 1
+      rw [Matrix.transpose_smul, Matrix.transpose_sub, Matrix.transpose_mul, Matrix.transpose_mul,
+        Om_transpose, hB]
+      simp only [Matrix.smul_mul, Matrix.mul_smul, Matrix.sub_mul, Matrix.mul_sub,
+        Matrix.neg_mul, Matrix.mul_neg, Matrix.mul_assoc]
+      module
+  intro t ht
+  refine ⟨hG t ht, ?_⟩
+  rw [← Matrix.rank_transpose_mul_self (K t), ← Matrix.rank_transpose_mul_self (K a),
+    rank_eq_two_iff_det_ne_zero, rank_eq_two_iff_det_ne_zero, hG t ht]
+
+private theorem kField_Mη (η : ℝ) {V : Matrix (Fin 3) (Fin 2) ℝ} (hV : Vᵀ * V = 1) (t : ℝ)
+    (K : Matrix (Fin 3) (Fin 2) ℝ) : MatrixKSL.kField V (fun _ => Mη η) t K =
+      qη η (K * Vᵀ) • (Om * K - K * (Vᵀ * Om * V)) := by
+  simp only [MatrixKSL.kField, Mη, comm, Matrix.smul_mul, Matrix.sub_mul, Matrix.mul_assoc, hV,
+    Matrix.mul_one]
+
+private theorem lField_Mη (η : ℝ) {U : Matrix (Fin 3) (Fin 2) ℝ} (hU : Uᵀ * U = 1) (t : ℝ)
+    (L : Matrix (Fin 3) (Fin 2) ℝ) : MatrixKSL.lField U (fun _ => Mη η) t L =
+      qη η (U * Lᵀ) • (Om * L - L * (Uᵀ * Om * U)) := by
+  simp only [MatrixKSL.lField, Mη, comm, Matrix.transpose_smul, Matrix.transpose_sub,
+    Matrix.transpose_mul, Matrix.transpose_transpose, Om_transpose, Matrix.smul_mul,
+    Matrix.sub_mul, Matrix.mul_neg, Matrix.neg_mul, Matrix.mul_assoc, hU, Matrix.mul_one]
+  module
+
+private theorem sField_Mη (η : ℝ) {U V : Matrix (Fin 3) (Fin 2) ℝ} (hU : Uᵀ * U = 1)
+    (hV : Vᵀ * V = 1) (t : ℝ) (S : Matrix (Fin 2) (Fin 2) ℝ) :
+    MatrixKSL.sField U V (fun _ => Mη η) t S =
+      ((-qη η (U * S * Vᵀ)) • (Uᵀ * Om * U)) * S - S * ((-qη η (U * S * Vᵀ)) • (Vᵀ * Om * V)) := by
+  simp only [MatrixKSL.sField, Mη, comm, Matrix.mul_smul, Matrix.smul_mul, Matrix.mul_sub,
+    Matrix.sub_mul, Matrix.mul_assoc, hV, Matrix.mul_one]
+  simp only [← Matrix.mul_assoc Uᵀ U, hU, Matrix.one_mul]
+  module
+
+/-- **Lemma A.1, K substep** (arXiv 2608.12893). When the right-hand side is `M_η`, the exact K
+subproblem `K' = M_η(K Vᵀ) V` (`MatrixKSL.kField V`, with `V` column-orthonormal) keeps the Gram
+determinant `det (Kᵀ K)` constant, so `K(t)` has rank two iff `K(t₀)` has. The paper states
+that the column rank is preserved and proves `K(t) = e^{σΩ} K(t₀) e^{-σ Vᵀ Ω V}`; here only
+rank two (full column rank, the case used for rank admissibility) is treated. -/
+theorem lemma_A_1_K (η : ℝ) {V : Matrix (Fin 3) (Fin 2) ℝ} (hV : Vᵀ * V = 1)
+    {K : ℝ → Matrix (Fin 3) (Fin 2) ℝ} {t₀ t₁ : ℝ}
+    (hK : ODESolution (MatrixKSL.kField V (fun _ => Mη η)) K t₀ t₁) :
+    ∀ t ∈ Icc t₀ t₁, ((K t)ᵀ * K t).det = ((K t₀)ᵀ * K t₀).det ∧
+      ((K t).rank = 2 ↔ (K t₀).rank = 2) :=
+  gram_det_eq (c := fun t => qη η (K t * Vᵀ)) (skew_conj V) hK.cont fun t ht => by
+    have := hK.deriv t ht
+    rwa [kField_Mη η hV] at this
+
+/-- **Lemma A.1, L substep** (arXiv 2608.12893). When the right-hand side is `M_η`, the exact L
+subproblem `L' = M_η(U Lᵀ)ᵀ U` (`MatrixKSL.lField U`, with `U` column-orthonormal) keeps
+`det (Lᵀ L)` constant, so `L(t)` has rank two iff `L(t₀)` has (only rank two is treated, as in
+`lemma_A_1_K`). -/
+theorem lemma_A_1_L (η : ℝ) {U : Matrix (Fin 3) (Fin 2) ℝ} (hU : Uᵀ * U = 1)
+    {L : ℝ → Matrix (Fin 3) (Fin 2) ℝ} {t₀ t₁ : ℝ}
+    (hL : ODESolution (MatrixKSL.lField U (fun _ => Mη η)) L t₀ t₁) :
+    ∀ t ∈ Icc t₀ t₁, ((L t)ᵀ * L t).det = ((L t₀)ᵀ * L t₀).det ∧
+      ((L t).rank = 2 ↔ (L t₀).rank = 2) :=
+  gram_det_eq (c := fun t => qη η (U * (L t)ᵀ)) (skew_conj U) hL.cont fun t ht => by
+    have := hL.deriv t ht
+    rwa [lField_Mη η hU] at this
+
+/-- **Lemma A.1, S substep** (arXiv 2608.12893). When the right-hand side is `M_η`, the exact S
+subproblem `S' = -Uᵀ M_η(U S Vᵀ) V` (`MatrixKSL.sField U V`, with `U, V` column-orthonormal)
+keeps `det S` constant, so it preserves nonsingularity. -/
+theorem lemma_A_1_S (η : ℝ) {U V : Matrix (Fin 3) (Fin 2) ℝ} (hU : Uᵀ * U = 1)
+    (hV : Vᵀ * V = 1) {S : ℝ → Matrix (Fin 2) (Fin 2) ℝ} {t₀ t₁ : ℝ}
+    (hS : ODESolution (MatrixKSL.sField U V (fun _ => Mη η)) S t₀ t₁) :
+    ∀ t ∈ Icc t₀ t₁, (S t).det = (S t₀).det := by
+  refine det_eq_of_deriv (A := fun t => (-qη η (U * S t * Vᵀ)) • (Uᵀ * Om * U))
+    (B := fun t => (-qη η (U * S t * Vᵀ)) • (Vᵀ * Om * V)) hS.cont
+    (fun t ht => by have := hS.deriv t ht; rwa [sField_Mη η hU hV] at this) (fun t _ => ?_)
+  simp only [Matrix.trace_smul, trace_eq_zero_of_skew (skew_conj U),
+    trace_eq_zero_of_skew (skew_conj V), smul_zero]
+
+
+/-! ### Prop. 5.2 after the switch-off -/
+
+/-- `R_j(t) = 0` once the phase has stopped, `t ≥ 4 (j+1) h_j` (arXiv 2608.12893,
+(3.8)–(3.10)). -/
+theorem Rj_eq_zero {j : ℕ} {t : ℝ} (ht : 4 * (j + 1) * hj j ≤ t) : Rj j t = 0 := by
+  have hh := hj_pos j
+  have hd : dth j t = 0 := by
+    unfold dth
+    split_ifs with h1 h2
+    · linarith
+    · have he : t = 4 * (j + 1) * hj j := le_antisymm h2 ht
+      have hx : (t - 4 * j * hj j) / (4 * hj j) = 1 := by
+        rw [he, div_eq_one_iff_eq (by positivity)]
+        ring
+      rw [hx]
+      norm_num [dpsi]
+    · rfl
+  simp [Rj, hd]
+
+/-- After the switch-off `F_{j,η}(t, ·) = M_η`. -/
+theorem Fj_eq_of_ge {j : ℕ} {η t : ℝ} (ht : 4 * (j + 1) * hj j ≤ t) : Fj j η t = Mη η := by
+  funext X
+  simp [Fj, Rj_eq_zero ht]
+
+/-- **Prop. 5.2 after the switch-off, K and L substeps** (arXiv 2608.12893, last step of the proof
+of Prop. 5.2): on `[t₀, t₁]` with `t₀ ≥ 4 (j+1) h_j`, an exact K subproblem
+`K' = F_{j,η}(t, K Vᵀ) V` and an exact L subproblem `L' = F_{j,η}(t, U Lᵀ)ᵀ U` (`V`, `U`
+column-orthonormal) have rank two at `t` iff they have it at `t₀`, by Lemma A.1 (`lemma_A_1_K`,
+`lemma_A_1_L`), since `R_j = 0` there. The first `j + 1` blocks of Prop. 5.2 are not treated. -/
+theorem prop_5_2_after_switchoff_KL {j : ℕ} {η : ℝ} {U V : Matrix (Fin 3) (Fin 2) ℝ}
+    (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) {K L : ℝ → Matrix (Fin 3) (Fin 2) ℝ} {t₀ t₁ : ℝ}
+    (ht₀ : 4 * (j + 1) * hj j ≤ t₀)
+    (hK : ODESolution (MatrixKSL.kField V (Fj j η)) K t₀ t₁)
+    (hL : ODESolution (MatrixKSL.lField U (Fj j η)) L t₀ t₁) :
+    ∀ t ∈ Icc t₀ t₁, ((K t).rank = 2 ↔ (K t₀).rank = 2) ∧ ((L t).rank = 2 ↔ (L t₀).rank = 2) := by
+  have hK' : ODESolution (MatrixKSL.kField V (fun _ => Mη η)) K t₀ t₁ :=
+    ⟨hK.cont, fun t ht => by
+      have := hK.deriv t ht
+      rwa [show MatrixKSL.kField V (Fj j η) t (K t) =
+        MatrixKSL.kField V (fun _ => Mη η) t (K t) by
+          simp only [MatrixKSL.kField, Fj_eq_of_ge (ht₀.trans ht.1)]] at this⟩
+  have hL' : ODESolution (MatrixKSL.lField U (fun _ => Mη η)) L t₀ t₁ :=
+    ⟨hL.cont, fun t ht => by
+      have := hL.deriv t ht
+      rwa [show MatrixKSL.lField U (Fj j η) t (L t) =
+        MatrixKSL.lField U (fun _ => Mη η) t (L t) by
+          simp only [MatrixKSL.lField, Fj_eq_of_ge (ht₀.trans ht.1)]] at this⟩
+  exact fun t ht => ⟨(lemma_A_1_K η hV hK' t ht).2, (lemma_A_1_L η hU hL' t ht).2⟩
+
+/-- **Prop. 5.2 after the switch-off, S substeps** (arXiv 2608.12893, last step of the proof of
+Prop. 5.2): on `[t₀, t₁]` with `t₀ ≥ 4 (j+1) h_j`, an exact S subproblem
+`S' = -Uᵀ F_{j,η}(t, U S Vᵀ) V` keeps `det S` constant, by Lemma A.1 (`lemma_A_1_S`). -/
+theorem prop_5_2_after_switchoff_S {j : ℕ} {η : ℝ} {U V : Matrix (Fin 3) (Fin 2) ℝ}
+    (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) {S : ℝ → Matrix (Fin 2) (Fin 2) ℝ} {t₀ t₁ : ℝ}
+    (ht₀ : 4 * (j + 1) * hj j ≤ t₀) (hS : ODESolution (MatrixKSL.sField U V (Fj j η)) S t₀ t₁) :
+    ∀ t ∈ Icc t₀ t₁, (S t).det = (S t₀).det := by
+  have hS' : ODESolution (MatrixKSL.sField U V (fun _ => Mη η)) S t₀ t₁ :=
+    ⟨hS.cont, fun t ht => by
+      have := hS.deriv t ht
+      rwa [show MatrixKSL.sField U V (Fj j η) t (S t) =
+        MatrixKSL.sField U V (fun _ => Mη η) t (S t) by
+          simp only [MatrixKSL.sField, Fj_eq_of_ge (ht₀.trans ht.1)]] at this⟩
+  exact lemma_A_1_S η hU hV hS'
+
+/-! ### Appendix A.2: the leading factor cycle -/
+
+/-- `B(θ) = [e₁, ν(θ)]` (arXiv 2608.12893, (A.1)). -/
+noncomputable def Bm (θ : ℝ) : Matrix (Fin 3) (Fin 2) ℝ :=
+  !![1, 0; 0, Real.cos (Real.pi * θ / 4); 0, Real.sin (Real.pi * θ / 4)]
+
+/-- `Σ_h(ζ) = diag(1, h³ ζ)` (arXiv 2608.12893, (A.1)). -/
+noncomputable def Sig (h ζ : ℝ) : Matrix (Fin 2) (Fin 2) ℝ := Matrix.diagonal ![1, h ^ 3 * ζ]
+
+/-- The forcing of one periodic block, `R_h(t) = h² W'(t/h)` (arXiv 2608.12893, Appendix A; it is
+`R_j` on `[0, 4 j h_j]` for `h = h_j`, (3.10)). -/
+noncomputable def Rh (h t : ℝ) : M₃ := h ^ 2 • Wd (t / h)
+
+/-- `B(θ)` has orthonormal columns (arXiv 2608.12893, after (A.1)). -/
+theorem Bm_orth (θ : ℝ) : (Bm θ)ᵀ * Bm θ = 1 := by
+  ext i k
+  fin_cases i <;> fin_cases k <;>
+    simp [Bm, Matrix.mul_apply, Fin.sum_univ_three, ← sq, Real.cos_sq_add_sin_sq]
+
+/-- `B(θ) B(θ)ᵀ = E₁₁ + W(θ)`. -/
+theorem Bm_mul_transpose (θ : ℝ) : Bm θ * (Bm θ)ᵀ = E11 + W θ := by
+  ext i k
+  fin_cases i <;> fin_cases k <;>
+    simp [Bm, E11, W, nu, Matrix.mul_apply, Fin.sum_univ_two]
+
+/-- `ν(a)ᵀ ν(b) = cos(π (a - b)/4)` (arXiv 2608.12893, (A.2)). -/
+theorem nu_dot (a b : ℝ) : nu a ⬝ᵥ nu b = Real.cos (Real.pi * (a - b) / 4) := by
+  rw [show Real.pi * (a - b) / 4 = Real.pi * a / 4 - Real.pi * b / 4 by ring, Real.cos_sub]
+  simp [nu, dotProduct, Fin.sum_univ_three]
+
+/-- `W(a) W(b) = cos(π (a - b)/4) ν(a) ν(b)ᵀ`, equivalently `W(a) ν(b) = cos(π (a - b)/4) ν(a)`
+(arXiv 2608.12893, (A.2)). -/
+theorem W_mul_W (a b : ℝ) :
+    W a * W b = Real.cos (Real.pi * (a - b) / 4) • Matrix.vecMulVec (nu a) (nu b) := by
+  rw [← nu_dot]
+  ext i k
+  simp only [W, Matrix.mul_apply, Matrix.vecMulVec_apply, Matrix.smul_apply, dotProduct,
+    smul_eq_mul, Fin.sum_univ_three]
+  ring
+
+/-- `W(θ + 4) = W(θ)` (arXiv 2608.12893, after (3.5)). -/
+theorem W_add_four (θ : ℝ) : W (θ + 4) = W θ := by
+  have hc : Real.cos (Real.pi * (θ + 4) / 4) = -Real.cos (Real.pi * θ / 4) := by
+    rw [show Real.pi * (θ + 4) / 4 = Real.pi * θ / 4 + Real.pi by ring, Real.cos_add_pi]
+  have hs : Real.sin (Real.pi * (θ + 4) / 4) = -Real.sin (Real.pi * θ / 4) := by
+    rw [show Real.pi * (θ + 4) / 4 = Real.pi * θ / 4 + Real.pi by ring, Real.sin_add_pi]
+  ext i k
+  fin_cases i <;> fin_cases k <;> simp [W, nu, Matrix.vecMulVec_apply, hc, hs]
+
+private theorem W_mul_self (a : ℝ) : W a * W a = W a := by
+  rw [W_mul_W, sub_self, mul_zero, zero_div, Real.cos_zero, one_smul]
+  rfl
+
+private theorem E11_mul_W (a : ℝ) : E11 * W a = 0 := by
+  ext i k
+  fin_cases i <;> fin_cases k <;> simp [E11, W, nu, Matrix.mul_apply, Fin.sum_univ_three]
+
+private theorem W_mul_E11 (a : ℝ) : W a * E11 = 0 := by
+  ext i k
+  fin_cases i <;> fin_cases k <;> simp [E11, W, nu, Matrix.mul_apply, Fin.sum_univ_three]
+
+private theorem E11_mul_E11 : E11 * E11 = E11 := by
+  ext i k
+  fin_cases i <;> fin_cases k <;> simp [E11, Matrix.mul_apply, Fin.sum_univ_three]
+
+private theorem W_mul_W_mul (a : ℝ) (X : M₃) : W a * (W a * X) = W a * X := by
+  rw [← Matrix.mul_assoc, W_mul_self]
+
+private theorem E11_mul_W_mul (a : ℝ) (X : M₃) : E11 * (W a * X) = 0 := by
+  rw [← Matrix.mul_assoc, E11_mul_W, Matrix.zero_mul]
+
+private theorem W_mul_E11_mul (a : ℝ) (X : M₃) : W a * (E11 * X) = 0 := by
+  rw [← Matrix.mul_assoc, W_mul_E11, Matrix.zero_mul]
+
+private theorem E11_mul_E11_mul (X : M₃) : E11 * (E11 * X) = E11 * X := by
+  rw [← Matrix.mul_assoc, E11_mul_E11]
+
+private theorem rightProj_Bm (θ : ℝ) (X : M₃) : rightProj (Bm θ) X = X * (E11 + W θ) := by
+  rw [rightProj_apply', Bm_mul_transpose]
+
+private theorem leftProj_Bm (θ : ℝ) (X : M₃) : leftProj (Bm θ) X = (E11 + W θ) * X := by
+  rw [leftProj_apply, Bm_mul_transpose]
+
+/-- `B(a) Σ_h(cos(π(a - b)/4)) B(b)ᵀ = E₁₁ + h³ W(a) W(b)`. -/
+theorem Bm_Sig_eq (a b h : ℝ) :
+    Bm a * Sig h (Real.cos (Real.pi * (a - b) / 4)) * (Bm b)ᵀ = E11 + h ^ 3 • (W a * W b) := by
+  rw [W_mul_W, smul_smul]
+  ext i k
+  fin_cases i <;> fin_cases k <;>
+    simp [Bm, Sig, E11, nu, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul_diagonal] <;> ring
+
+/-- `h³ W(t/h)` has derivative `R_h(t)`. -/
+theorem hasDerivAt_hW_div {h : ℝ} (hh : h ≠ 0) (t : ℝ) :
+    HasDerivAt (fun t => h ^ 3 • W (t / h)) (Rh h t) t := by
+  have h1 : HasDerivAt (fun t : ℝ => t / h) (1 / h) t := by
+    simpa using (hasDerivAt_id t).div_const h
+  have e : h ^ 3 • (1 / h) • Wd (t / h) = Rh h t := by
+    simp only [Rh, smul_smul]
+    congr 1
+    field_simp
+  exact (((hasDerivAt_W (t / h)).scomp t h1).const_smul (h ^ 3)).congr_deriv e
+
+/-- A field `g(t)` that does not depend on the state has the solutions `c + G(t)`, `G' = g`. -/
+private theorem odeSolution_add_antideriv {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {g G : ℝ → E} (hG : ∀ t, HasDerivAt G (g t) t) (c : E) (a b : ℝ) :
+    ODESolution (fun t _ => g t) (fun t => c + G t) a b :=
+  ⟨(continuous_const.add (continuous_iff_continuousAt.2 fun t => (hG t).continuousAt)).continuousOn,
+    fun t _ => ((hG t).const_add c).hasDerivWithinAt⟩
+
+/-- Every solution of a state-independent field `g(t)` is `y(a) - G(a) + G(t)`, `G' = g`. -/
+private theorem odeSolution_eq_add_antideriv {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] {g G : ℝ → E} (hG : ∀ t, HasDerivAt G (g t) t) {y : ℝ → E} {a b : ℝ}
+    (hy : ODESolution (fun t _ => g t) y a b) : ∀ t ∈ Icc a b, y t = (y a - G a) + G t := by
+  have := hy.eqOn (odeSolution_add_antideriv hG (y a - G a) a b) (L := 0)
+    (fun _ _ _ => by simp) le_rfl (by simp)
+  exact fun t ht => this ht
+
+section Cycle
+
+variable {ℓ h : ℝ}
+
+private theorem hasDerivAt_R {h : ℝ} (hh : h ≠ 0) (P : M₃ →L[ℝ] M₃) (t : ℝ) :
+    HasDerivAt (fun t => P (h ^ 3 • W (t / h))) (P (Rh h t)) t :=
+  P.hasFDerivAt.comp_hasDerivAt t (hasDerivAt_hW_div hh t)
+
+private theorem hasDerivAt_negR {h : ℝ} (hh : h ≠ 0) (P Q : M₃ →L[ℝ] M₃) (t : ℝ) :
+    HasDerivAt (fun t => -P (Q (h ^ 3 • W (t / h)))) (-P (Q (Rh h t))) t :=
+  ((P.comp Q).hasFDerivAt.comp_hasDerivAt t (hasDerivAt_hW_div hh t)).neg
+
+/-- The substep endpoints of the leading cycle, in terms of `W`. -/
+private theorem cycle_values (hh : 0 < h) {YK₁ YS₁ YL YS₂ YK₂ : ℝ → M₃}
+    (k₁Sol : ODESolution (fun t _ => rightProj (Bm ℓ) (Rh h t)) YK₁ (ℓ * h) (ℓ * h + h / 2))
+    (k₁Start : YK₁ (ℓ * h) = E11 + h ^ 3 • W ℓ)
+    (s₁Sol : ODESolution (fun t _ => -leftProj (Bm (ℓ + 1 / 2)) (rightProj (Bm ℓ) (Rh h t)))
+      YS₁ (ℓ * h) (ℓ * h + h / 2))
+    (s₁Start : YS₁ (ℓ * h) = YK₁ (ℓ * h + h / 2))
+    (lSol : ODESolution (fun t _ => leftProj (Bm (ℓ + 1 / 2)) (Rh h t)) YL (ℓ * h) (ℓ * h + h))
+    (lStart : YL (ℓ * h) = YS₁ (ℓ * h + h / 2))
+    (s₂Sol : ODESolution
+      (fun t _ => -leftProj (Bm (ℓ + 1 / 2)) (rightProj (Bm (ℓ + 1)) (Rh h t)))
+      YS₂ (ℓ * h + h / 2) (ℓ * h + h))
+    (s₂Start : YS₂ (ℓ * h + h / 2) = YL (ℓ * h + h))
+    (k₂Sol : ODESolution (fun t _ => rightProj (Bm (ℓ + 1)) (Rh h t)) YK₂ (ℓ * h + h / 2)
+      (ℓ * h + h))
+    (k₂Start : YK₂ (ℓ * h + h / 2) = YS₂ (ℓ * h + h)) :
+    YK₁ (ℓ * h + h / 2) = E11 + h ^ 3 • (W (ℓ + 1 / 2) * W ℓ) ∧
+    YS₁ (ℓ * h + h / 2) = E11 + h ^ 3 • (W (ℓ + 1 / 2) * W ℓ) ∧
+    YL (ℓ * h + h) = E11 + h ^ 3 • (W (ℓ + 1 / 2) * W (ℓ + 1)) ∧
+    YS₂ (ℓ * h + h) = E11 + h ^ 3 • (W (ℓ + 1 / 2) * W (ℓ + 1)) ∧
+    YK₂ (ℓ * h + h) = E11 + h ^ 3 • W (ℓ + 1) := by
+  have hh0 : h ≠ 0 := hh.ne'
+  have d0 : ℓ * h / h = ℓ := by field_simp
+  have d1 : (ℓ * h + h / 2) / h = ℓ + 1 / 2 := by field_simp
+  have d2 : (ℓ * h + h) / h = ℓ + 1 := by field_simp
+  have k1 := odeSolution_eq_add_antideriv (hasDerivAt_R hh0 (rightProj (Bm ℓ))) k₁Sol
+    (ℓ * h + h / 2) ⟨by linarith, le_rfl⟩
+  have s1 := odeSolution_eq_add_antideriv
+    (hasDerivAt_negR hh0 (leftProj (Bm (ℓ + 1 / 2))) (rightProj (Bm ℓ))) s₁Sol
+    (ℓ * h + h / 2) ⟨by linarith, le_rfl⟩
+  have l1 := odeSolution_eq_add_antideriv (hasDerivAt_R hh0 (leftProj (Bm (ℓ + 1 / 2)))) lSol
+    (ℓ * h + h) ⟨by linarith, le_rfl⟩
+  have s2 := odeSolution_eq_add_antideriv
+    (hasDerivAt_negR hh0 (leftProj (Bm (ℓ + 1 / 2))) (rightProj (Bm (ℓ + 1)))) s₂Sol
+    (ℓ * h + h) ⟨by linarith, le_rfl⟩
+  have k2 := odeSolution_eq_add_antideriv (hasDerivAt_R hh0 (rightProj (Bm (ℓ + 1)))) k₂Sol
+    (ℓ * h + h) ⟨by linarith, le_rfl⟩
+  simp only [d0, d1, d2] at k1 s1 l1 s2 k2
+  rw [k₁Start] at k1
+  rw [s₁Start] at s1
+  rw [lStart] at l1
+  rw [s₂Start] at s2
+  rw [k₂Start] at k2
+  simp only [rightProj_Bm, leftProj_Bm, Matrix.mul_add, Matrix.add_mul, Matrix.smul_mul,
+    Matrix.mul_smul, E11_mul_W, W_mul_E11, W_mul_self, W_mul_W_mul, E11_mul_W_mul, smul_zero,
+    zero_add] at k1 s1 l1 s2 k2
+  have hK1 : YK₁ (ℓ * h + h / 2) = E11 + h ^ 3 • (W (ℓ + 1 / 2) * W ℓ) := by
+    rw [k1]; module
+  have hS1 : YS₁ (ℓ * h + h / 2) = E11 + h ^ 3 • (W (ℓ + 1 / 2) * W ℓ) := by
+    rw [s1, hK1]; module
+  have hL : YL (ℓ * h + h) = E11 + h ^ 3 • (W (ℓ + 1 / 2) * W (ℓ + 1)) := by
+    rw [l1, hS1]; module
+  have hS2 : YS₂ (ℓ * h + h) = E11 + h ^ 3 • (W (ℓ + 1 / 2) * W (ℓ + 1)) := by
+    rw [s2, hL]; module
+  refine ⟨hK1, hS1, hL, hS2, ?_⟩
+  rw [k2, hS2]
+  module
+
+private theorem Bm_Sig_one (a h : ℝ) : Bm a * Sig h 1 * (Bm a)ᵀ = E11 + h ^ 3 • W a := by
+  have := Bm_Sig_eq a a h
+  rwa [sub_self, mul_zero, zero_div, Real.cos_zero, W_mul_self] at this
+
+private theorem Bm_Sig_half (ℓ h : ℝ) :
+    Bm (ℓ + 1 / 2) * Sig h (Real.cos (Real.pi / 8)) * (Bm ℓ)ᵀ =
+      E11 + h ^ 3 • (W (ℓ + 1 / 2) * W ℓ) := by
+  rw [← Bm_Sig_eq]; congr 3; ring_nf
+
+private theorem Bm_Sig_half' (ℓ h : ℝ) :
+    Bm (ℓ + 1 / 2) * Sig h (Real.cos (Real.pi / 8)) * (Bm (ℓ + 1))ᵀ =
+      E11 + h ^ 3 • (W (ℓ + 1 / 2) * W (ℓ + 1)) := by
+  rw [← Bm_Sig_eq, ← Real.cos_neg]; congr 3; ring_nf
+
+/-- **The leading factor cycle (A.26)** (arXiv 2608.12893, Appendix A.2). With `M_η` omitted,
+i.e. for the forcing alone, `F(t, X) = R_h(t) = h² W'(t/h)`, every exact-subflow Strang step on
+`[ℓ h, (ℓ+1) h]` (`IsStrangKSLStep`, table (2.7)) from `Y = B(ℓ) Σ_h(1) B(ℓ)ᵀ = E₁₁ + h³ W(ℓ)`
+with the projectors `P₀ = B(ℓ)B(ℓ)ᵀ`, `Q = B(ℓ+½)B(ℓ+½)ᵀ`, `P₁ = B(ℓ+1)B(ℓ+1)ᵀ` passes through
+`B(ℓ+½) Σ_h(γ) B(ℓ)ᵀ` (after K₁ and S₁) and `B(ℓ+½) Σ_h(γ) B(ℓ+1)ᵀ` (after L and S₂), and ends at
+`B(ℓ+1) Σ_h(1) B(ℓ+1)ᵀ = E₁₁ + h³ W(ℓ+1)`, with `γ = cos(π/8)`. The step is exact for this
+problem, whose solution is `E₁₁ + h³ W(t/h)`. The projectors are taken as given; that they are
+the ones the QR steps of (2.9) produce (the column space of `B(ℓ+½) Σ_h(γ) B(ℓ)ᵀ` is the range of
+`B(ℓ+½)` because `γ h³ ≠ 0`, and similarly for `L`) is the paper's remark and is not formalized.
+The paper writes the cycle in factor form `(U, S, V)`; here the matrices `U S Vᵀ`, for any real
+`ℓ`. The hypotheses can be met: `exists_leading_step`. -/
+theorem leading_cycle (hh : 0 < h) {ε : ℝ} {YK₁ YS₁ YL YS₂ YK₂ : ℝ → M₃}
+    (hs : IsStrangKSLStep (fun t _ => Rh h t) ε (rightProj (Bm ℓ)) (leftProj (Bm (ℓ + 1 / 2)))
+      (rightProj (Bm (ℓ + 1))) (ℓ * h) h (Bm ℓ * Sig h 1 * (Bm ℓ)ᵀ) YK₁ YS₁ YL YS₂ YK₂) :
+    YK₁ (ℓ * h + h / 2) = Bm (ℓ + 1 / 2) * Sig h (Real.cos (Real.pi / 8)) * (Bm ℓ)ᵀ ∧
+    YS₁ (ℓ * h + h / 2) = Bm (ℓ + 1 / 2) * Sig h (Real.cos (Real.pi / 8)) * (Bm ℓ)ᵀ ∧
+    YL (ℓ * h + h) = Bm (ℓ + 1 / 2) * Sig h (Real.cos (Real.pi / 8)) * (Bm (ℓ + 1))ᵀ ∧
+    YS₂ (ℓ * h + h) = Bm (ℓ + 1 / 2) * Sig h (Real.cos (Real.pi / 8)) * (Bm (ℓ + 1))ᵀ ∧
+    YK₂ (ℓ * h + h) = Bm (ℓ + 1) * Sig h 1 * (Bm (ℓ + 1))ᵀ ∧
+    Bm (ℓ + 1) * Sig h 1 * (Bm (ℓ + 1))ᵀ = E11 + h ^ 3 • W (ℓ + 1) := by
+  obtain ⟨h1, h2, h3, h4, h5⟩ := cycle_values hh hs.k₁Sol (hs.k₁Start.trans (Bm_Sig_one ℓ h))
+    hs.s₁Sol hs.s₁Start hs.lSol hs.lStart hs.s₂Sol hs.s₂Start hs.k₂Sol hs.k₂Start
+  exact ⟨h1.trans (Bm_Sig_half ℓ h).symm, h2.trans (Bm_Sig_half ℓ h).symm,
+    h3.trans (Bm_Sig_half' ℓ h).symm, h4.trans (Bm_Sig_half' ℓ h).symm,
+    h5.trans (Bm_Sig_one _ h).symm, Bm_Sig_one _ h⟩
+
+/-- The hypotheses of `leading_cycle` can be met: the five substeps exist in closed form, the
+projectors capture the K₁ and L results, and the normal components are bounded by
+`ε = h² √2 (π/4) = ‖R_h‖`. -/
+theorem exists_leading_step (hh : 0 < h) :
+    ∃ YK₁ YS₁ YL YS₂ YK₂ : ℝ → M₃, IsStrangKSLStep (fun t _ => Rh h t)
+      (h ^ 2 * (√2 * (Real.pi / 4))) (rightProj (Bm ℓ)) (leftProj (Bm (ℓ + 1 / 2)))
+      (rightProj (Bm (ℓ + 1))) (ℓ * h) h (Bm ℓ * Sig h 1 * (Bm ℓ)ᵀ) YK₁ YS₁ YL YS₂ YK₂ := by
+  have hh0 : h ≠ 0 := hh.ne'
+  set P₀ : M₃ →L[ℝ] M₃ := rightProj (Bm ℓ) with hP₀def
+  set Q : M₃ →L[ℝ] M₃ := leftProj (Bm (ℓ + 1 / 2)) with hQdef
+  set P₁ : M₃ →L[ℝ] M₃ := rightProj (Bm (ℓ + 1)) with hP₁def
+  set G₁ : ℝ → M₃ := fun t => P₀ (h ^ 3 • W (t / h))
+  set G₂ : ℝ → M₃ := fun t => -Q (P₀ (h ^ 3 • W (t / h)))
+  set G₃ : ℝ → M₃ := fun t => Q (h ^ 3 • W (t / h))
+  set G₄ : ℝ → M₃ := fun t => -Q (P₁ (h ^ 3 • W (t / h)))
+  set G₅ : ℝ → M₃ := fun t => P₁ (h ^ 3 • W (t / h))
+  set t₀ := ℓ * h with ht₀
+  set YK₁ : ℝ → M₃ := fun t => (E11 + h ^ 3 • W ℓ - G₁ t₀) + G₁ t
+  set YS₁ : ℝ → M₃ := fun t => (YK₁ (t₀ + h / 2) - G₂ t₀) + G₂ t
+  set YL : ℝ → M₃ := fun t => (YS₁ (t₀ + h / 2) - G₃ t₀) + G₃ t
+  set YS₂ : ℝ → M₃ := fun t => (YL (t₀ + h) - G₄ (t₀ + h / 2)) + G₄ t
+  set YK₂ : ℝ → M₃ := fun t => (YS₂ (t₀ + h) - G₅ (t₀ + h / 2)) + G₅ t
+  have sK₁ : ODESolution (fun t _ => P₀ (Rh h t)) YK₁ t₀ (t₀ + h / 2) :=
+    odeSolution_add_antideriv (hasDerivAt_R hh0 P₀) _ _ _
+  have sS₁ : ODESolution (fun t _ => -Q (P₀ (Rh h t))) YS₁ t₀ (t₀ + h / 2) :=
+    odeSolution_add_antideriv (hasDerivAt_negR hh0 Q P₀) _ _ _
+  have sL : ODESolution (fun t _ => Q (Rh h t)) YL t₀ (t₀ + h) :=
+    odeSolution_add_antideriv (hasDerivAt_R hh0 Q) _ _ _
+  have sS₂ : ODESolution (fun t _ => -Q (P₁ (Rh h t))) YS₂ (t₀ + h / 2) (t₀ + h) :=
+    odeSolution_add_antideriv (hasDerivAt_negR hh0 Q P₁) _ _ _
+  have sK₂ : ODESolution (fun t _ => P₁ (Rh h t)) YK₂ (t₀ + h / 2) (t₀ + h) :=
+    odeSolution_add_antideriv (hasDerivAt_R hh0 P₁) _ _ _
+  have e₁ : YK₁ t₀ = E11 + h ^ 3 • W ℓ := by simp only [YK₁]; abel
+  have e₂ : YS₁ t₀ = YK₁ (t₀ + h / 2) := by simp only [YS₁]; abel
+  have e₃ : YL t₀ = YS₁ (t₀ + h / 2) := by simp only [YL]; abel
+  have e₄ : YS₂ (t₀ + h / 2) = YL (t₀ + h) := by simp only [YS₂]; abel
+  have e₅ : YK₂ (t₀ + h / 2) = YS₂ (t₀ + h) := by simp only [YK₂]; abel
+  obtain ⟨v₁, -, v₃, -, -⟩ := cycle_values hh sK₁ e₁ sS₁ e₂ sL e₃ sS₂ e₄ sK₂ e₅
+  have hP₀ : IsOrthProj P₀ := isOrthProj_rightProj (Bm_orth ℓ)
+  have hQ : IsOrthProj Q := isOrthProj_leftProj (Bm_orth (ℓ + 1 / 2))
+  have hP₁ : IsOrthProj P₁ := isOrthProj_rightProj (Bm_orth (ℓ + 1))
+  have hR : ∀ t, ‖Rh h t‖ ≤ h ^ 2 * (√2 * (Real.pi / 4)) := fun t => by
+    rw [Rh, norm_smul, norm_Wd, Real.norm_eq_abs, abs_of_pos (by positivity)]
+  refine ⟨YK₁, YS₁, YL, YS₂, YK₂,
+    { projQ₀ := hP₀, projP₁ := hQ, projQ₁ := hP₁, comm := fun x => leftProj_rightProj_comm _ _ x,
+      k₁Sol := sK₁, k₁Start := (e₁.trans (Bm_Sig_one ℓ h).symm), k₁Cap := ?_,
+      k₁Normal := fun t _ => (hQ.compl.norm_le _).trans ((hP₀.compl.norm_le _).trans (hR t)),
+      s₁Sol := sS₁, s₁Start := e₂, lSol := sL, lStart := e₃, lCap := ?_,
+      lNormal := fun t _ => (hP₁.compl.norm_le _).trans ((hQ.compl.norm_le _).trans (hR t)),
+      s₂Sol := sS₂, s₂Start := e₄, k₂Sol := sK₂, k₂Start := e₅ }⟩
+  · rw [v₁, hQdef, leftProj_Bm]
+    simp only [Matrix.mul_add, Matrix.add_mul, Matrix.mul_smul, E11_mul_E11,
+      W_mul_E11, E11_mul_W_mul, W_mul_W_mul, add_zero, zero_add]
+  · rw [v₃, hP₁def, rightProj_Bm]
+    simp only [Matrix.mul_add, Matrix.add_mul, Matrix.smul_mul, Matrix.mul_assoc, E11_mul_E11,
+      E11_mul_W, W_mul_E11, W_mul_self, Matrix.mul_zero, smul_zero, add_zero, zero_add]
+
+end Cycle
 
 end LeanDLRA.Literature.P2608_12893

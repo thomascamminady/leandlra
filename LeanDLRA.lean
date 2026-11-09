@@ -132,6 +132,7 @@ import LeanDLRA.Literature.Randomized.P2408_16591a
 import LeanDLRA.Literature.Randomized.P2409_06384a
 import LeanDLRA.Literature.Randomized.P2410_17091a
 import LeanDLRA.Literature.Randomized.P2411_15990a
+import LeanDLRA.Literature.Randomized.P2510_19518a
 import LeanDLRA.Literature.Randomized.P2512_15703a
 import LeanDLRA.Literature.Randomized.P2601_18705a
 import LeanDLRA.Literature.Randomized.P2607_03402a
@@ -196,6 +197,8 @@ import LeanDLRA.Literature.TensorNetworks.P2608_16994a
 import LeanDLRA.Literature.TensorNetworks.P2609_11811a
 import LeanDLRA.Literature.TensorNetworks.P2609_12848a
 import LeanDLRA.Literature.TensorNetworks.P2610_36257a
+import LeanDLRA.Literature.TensorNetworks.P2611_04360a
+import LeanDLRA.Literature.TensorNetworks.P2611_04360b
 import LeanDLRA.Literature.Training.P2009_03887a
 import LeanDLRA.Literature.Training.P2205_13571a
 import LeanDLRA.Literature.Training.P2209_13569a
@@ -409,6 +412,7 @@ import LeanDLRA.Stiff.ImplicitSolvability
 import LeanDLRA.Stochastic.KalmanBucy
 import LeanDLRA.Stochastic.MeanSquare
 import LeanDLRA.Tensor.Defs
+import LeanDLRA.Tensor.Unfolding
 import LeanDLRA.Training.Descent
 import LeanDLRA.Training.FactorizedDynamics
 import LeanDLRA.Training.GradientFlowConvergence
