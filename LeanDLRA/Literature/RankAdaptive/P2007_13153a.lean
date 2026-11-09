@@ -15,11 +15,14 @@ eq. (4.1) (`velF`):
 * Sec. 6.3 / Remark 6.1: the rank update leaves the state `U Z = R` unchanged and makes
   `rank S(Z) ≤ 2n - 2`, so `Z ∉ 𝒵_τ`;
 * Sec. 5 regularization (PVL factorization assumed): `S_ε` is SPD, skew-Hamiltonian,
-  `‖S - S_ε‖_F ≤ √m_ε ε`, `F_ε ∈ H_U`, and the symmetrization identity
-  `‖F - F_*‖² = ¼ ‖F J - J F‖²`.
+  `‖S - S_ε‖_F ≤ √m_ε ε` with `m_ε` counting both diagonal blocks of `D` (with the printed count,
+  entries of the `n × n` block only, the bound fails: `regularization_bound_block_count_fails`),
+  `F_ε ∈ H_U`, and the symmetrization identity `‖F - F_*‖² = ¼ ‖F J - J F‖²` for the second
+  definition `F_{ε,*} = [W | J_{2N}ᵀ W]` of the paper.
 
 Not formalized: Lemma 4.1 (order conditions of partitioned Runge-Kutta methods up to order 3,
-which require B-series theory) and the Paige-Van Loan decomposition itself (Lemma 5.3, cited).
+which require B-series theory), the Paige-Van Loan decomposition itself (Lemma 5.3, cited), the
+bound on `‖F_ε S - L‖` of Sec. 5, and the first definition `F_{ε,*} = [F | J_{2N}ᵀ F]`.
 -/
 
 open Set Filter Topology Finset
@@ -301,8 +304,9 @@ theorem lemma_5_2 {U : Matrix (m ⊕ m) (l ⊕ l) ℝ} {Z : Matrix (l ⊕ l) p �
 /-- **arXiv 2007.13153, Lemma 5.2 (the "only if" half is false as stated).**  The paper states
 `F(U, Z) ∈ H_U` as an "if and only if" `U ∈ 𝒰_τ`, `Z ∈ 𝒵_τ`.  For a fixed `Y` the converse
 fails: with `Y = 0` and `U = 0` (which is not orthosymplectic) one has `F = 0 ∈ H_U`, while
-`Z = 1 ∈ 𝒵_τ`.  Only the "if" direction (`lemma_5_2`) is true in general, and it is the one the
-paper uses. -/
+`Z = 1 ∈ 𝒵_τ`.  This is also a counterexample in the paper's setting `Y = ∇H(U Z)`, for any
+Hamiltonian with `∇H(0) = 0` (e.g. `H = 0`).  Only the "if" direction (`lemma_5_2`) is true in
+general, and it is the one the paper uses. -/
 theorem lemma_5_2_converse_fails [Nonempty l] :
     ∃ (U : Matrix (m ⊕ m) (l ⊕ l) ℝ) (Z : Matrix (l ⊕ l) (l ⊕ l) ℝ)
       (Y : Matrix (m ⊕ m) (l ⊕ l) ℝ), Zτ Z ∧ ¬ Uτ m l U ∧ velF U Z Y ∈ Hspace U := by
@@ -440,9 +444,10 @@ proved, in the paper).  For `ε > 0` the matrix `S_ε = Q D_ε Qᵀ`, `(D_ε)_i 
 symmetric positive definite and skew-Hamiltonian, and
 `‖S − S_ε‖_F ≤ √m_ε · ε`, where `m_ε` is the number of diagonal entries of `D` (that is, of
 `Sum.elim d d`, so counted in both blocks) that are smaller than `ε`.
-Difference from the paper: `m_ε` counts entries of the full `2n × 2n` diagonal `D`; the paper
-counts entries of the `n × n` block `D_{n_τ}`, for which the same bound holds only with an extra
-factor `√2`. -/
+Difference from the paper: `m_ε` counts entries of the full `2n × 2n` diagonal `D`, i.e. twice
+the paper's count of entries of the `n × n` block `D_{n_τ}` (p. 8).  With the paper's count the
+bound fails (`regularization_bound_block_count_fails`); since the count here is twice the paper's,
+this theorem gives the paper's bound with an extra factor `√2`. -/
 theorem regularization_bound (Z : Matrix (l ⊕ l) p ℝ) {Q : Matrix (l ⊕ l) (l ⊕ l) ℝ}
     (hQ : Uτ l l Q) {d : l → ℝ} (hfac : Smat Z = Q * dblDiag d * Qᵀ) {ε : ℝ} (hε : 0 < ε) :
     (Sreg Q d ε).PosDef ∧ Sreg Q d ε * sJ l = sJ l * (Sreg Q d ε)ᵀ ∧
@@ -520,6 +525,30 @@ theorem regularization_bound (Z : Matrix (l ⊕ l) p ℝ) {Q : Matrix (l ⊕ l) 
               - max (Sum.elim d d i) ε)‖ ^ 2) := (Real.sqrt_sq (norm_nonneg _)).symm
       _ ≤ Real.sqrt (_ * ε ^ 2) := Real.sqrt_le_sqrt hsq
       _ = _ := by rw [Real.sqrt_mul (Nat.cast_nonneg _), Real.sqrt_sq hε.le]
+
+/-- **arXiv 2007.13153, Sec. 5 (p. 8): `‖S - S_ε‖_F ≤ √m_ε ε` fails with the printed count.**
+If `m_ε` is the number of entries of the `n × n` block `D_{n_τ}` that are smaller than `ε`, as
+printed, the bound can fail: for `n = 1`, `Z = 0`, `Q = I`, `D = 0` and `ε = 1` one has `m_ε = 1`
+but `‖S - S_ε‖_F = ‖I₂‖_F = √2 > 1`.  With both diagonal blocks counted the bound holds
+(`regularization_bound`). -/
+theorem regularization_bound_block_count_fails :
+    ∃ (Z : Matrix (Unit ⊕ Unit) Unit ℝ) (Q : Matrix (Unit ⊕ Unit) (Unit ⊕ Unit) ℝ)
+      (d : Unit → ℝ) (ε : ℝ), Uτ Unit Unit Q ∧ Smat Z = Q * dblDiag d * Qᵀ ∧ 0 < ε ∧
+        Real.sqrt ((Finset.univ.filter (fun i : Unit => d i < ε)).card) * ε <
+          ‖Smat Z - Sreg Q d ε‖ := by
+  refine ⟨0, 1, 0, 1, by simp [Uτ], ?_, one_pos, ?_⟩
+  · ext i j
+    rcases i with i | i <;> rcases j with j | j <;> simp [Smat, dblDiag]
+  · have hS : Smat (0 : Matrix (Unit ⊕ Unit) Unit ℝ) - Sreg 1 0 1 = -1 := by
+      ext i j
+      rcases i with i | i <;> rcases j with j | j <;> simp [Smat, Sreg, dblDiag]
+    have hn : ‖(-1 : Matrix (Unit ⊕ Unit) (Unit ⊕ Unit) ℝ)‖ ^ 2 = 2 := by
+      rw [Frobenius.norm_sq_eq_sum]
+      simp [Fintype.sum_sum_type]
+      norm_num
+    have hc : (Finset.univ.filter (fun i : Unit => (0 : Unit → ℝ) i < 1)).card = 1 := by simp
+    rw [hS, hc, Nat.cast_one, Real.sqrt_one, one_mul]
+    nlinarith [norm_nonneg (-1 : Matrix (Unit ⊕ Unit) (Unit ⊕ Unit) ℝ)]
 
 /-- The averaged field `F_* = ½ (F - J_{2N} F J_{2n})`, the nearest point (in Frobenius norm) to
 `F` in the space `{X : X J_{2n} = J_{2N} X}`.  Writing `F = [F₁ | F₂]` in column blocks of width

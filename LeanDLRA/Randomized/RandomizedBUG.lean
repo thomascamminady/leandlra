@@ -6,8 +6,8 @@ import LeanDLRA.Classical.EckartYoung
 /-!
 # Dynamical randomized SVD and generalized Nyström as BUG-type steps
 
-Lam–Ceruti–Kressner, *Randomized low-rank Runge–Kutta methods / dynamical randomized SVD*
-(arXiv 2410.17091, §§2–3; quoted in arXiv 2506.15259, §2.3.1) propose two randomized DLRA
+B. Carrel, *Randomized methods for dynamical low-rank approximation*
+(arXiv 2410.17091, §§2–3; quoted in arXiv 2506.15259, §2.3.1) proposes two randomized DLRA
 integrators.  One step of the **dynamical randomized SVD (DRSVD)** from `Y₀ = U₀ S₀ V₀ᵀ` is
 
 1. *B-step* (dynamical range finder): `B' = F(B Ω†) Ω`, `B(0) = Y₀ Ω`, `Q_h = orth(B(h))`,
