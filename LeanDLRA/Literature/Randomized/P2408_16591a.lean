@@ -14,8 +14,9 @@ columns `s` (TDB-CUR).  This module formalises the mathematical claims of its Se
 growth of the implicit iterates for quadratic nonlinearities (Sec. 3.2), the spectral-norm CUR
 error bound (19) and the DEIM growth bound (20), the interpolation property of CUR with and
 without row oversampling (Remark 1, eqs. (21)–(22)), and the claim that CUR is a residual
-collocation method (Sec. 3.3.1).  Two of these claims are false as stated; both are refuted by
-explicit counterexamples, and the correct versions are proved.
+collocation method (Sec. 3.3.1).  The collocation claim is false as stated; eq. (19) holds as
+printed but fails under a second reading the text suggests.  Both failures are shown by explicit
+counterexamples, and the correct versions are proved.
 
 ## Main results
 
@@ -41,19 +42,21 @@ explicit counterexamples, and the correct versions are proved.
   (a rank-`r` matrix has zero residual on the selected rows and columns iff it is `CUR(V^k)`,
   when the implicit equation is uniquely solvable on columns and selected rows).
 
-## False as stated
+## False as stated, or under one reading
 
-* Eq. (19) with `U`, `Y` the exact singular vectors of `V` (the text says that `p`, `s` are DEIM
-  indices of the exact or approximate singular vectors and that then `σ̂_{r+1} = σ_{r+1}`; eq. (20)
-  bounds `η_r` through the first singular vector): `eq19_false_for_singular_vectors`, a `2 × 2`
-  example with `‖V - CUR(V)‖₂ ≈ 712 > c σ_2 ≤ 633`.  The bound holds when `U`, `Y` span the
-  selected columns and rows (the paper's other description), `specNorm_sub_cur_le`.
-* Sec. 3.3.1, "the CUR approach is equivalent to a residual collocation method": with spatial
-  coupling in `F` the residual of `CUR(V^k)` does not vanish on the selected rows
-  (`cur_residual_row_ne_zero`, every admissible `1 × 1` cross of a `2 × 2` parametric example).  It
-  vanishes on the selected columns for every column-wise `F`, and on the rows when `F` is
-  row-local on `p`.  (The paper's Algorithm 1 instead enforces the row equations with neighbouring
-  rows estimated from the correction basis, eqs. (33)–(36), which is not `CUR(V^k)`.)
+* Eq. (19) as printed, with `U`, `Y` orthonormal bases spanning `V(:,s)` and `V(p,:)ᵀ`, holds
+  (`specNorm_sub_cur_le`).  The text also suggests a second reading, with `U`, `Y` the exact
+  singular vectors of `V` (it says that `p`, `s` are DEIM indices of the exact or approximate
+  singular vectors and that then `σ̂_{r+1} = σ_{r+1}`; eq. (20) bounds `η_r` through the first
+  singular vector).  Under that reading the bound fails: `eq19_false_for_singular_vectors`, a
+  `2 × 2` example with `‖V - CUR(V)‖₂ ≈ 712 > c σ_2 ≤ 633`, where `u` does not span `V(:,s)`.
+* Sec. 3.3.1 (false as stated), "the CUR approach is equivalent to a residual collocation
+  method": with spatial coupling in `F` the residual of `CUR(V^k)` does not vanish on the
+  selected rows (`cur_residual_row_ne_zero`, every admissible `1 × 1` cross of a `2 × 2`
+  parametric example).  It vanishes on the selected columns for every column-wise `F`, and on the
+  rows when `F` is row-local on `p`.  (The paper's Algorithm 1 instead enforces the row equations
+  with neighbouring rows estimated from the correction basis, eqs. (33)–(36), which is not
+  `CUR(V^k)`.)
 
 ## Differences and omissions
 
@@ -998,7 +1001,10 @@ states that `p`, `s` are DEIM indices of the (exact or approximate) left and rig
 vectors, and that `σ̂_{r+1} = σ_{r+1}` when `U`, `Y` are the exact singular vectors.  For
 `V = [79 228; 228 -54] = 250 u uᵀ - 225 w wᵀ`, `u = (4/5, 3/5)`, `w = (-3/5, 4/5)` (an SVD with
 `σ₁ = 250 > σ₂ = 225`, `U = Y = u`), DEIM selects `p = s = 0` (`|u₀| > |u₁|`), and
-`‖V - CUR(V)‖₂ = 56250/79 ≈ 712 > c σ̂₂ ≤ (45/16)·225 ≈ 633`. (arXiv 2408.16591, eq. (19).) -/
+`‖V - CUR(V)‖₂ = 56250/79 ≈ 712 > c σ̂₂ ≤ (45/16)·225 ≈ 633`. (arXiv 2408.16591, eq. (19).)
+Here `u` does not span the selected column `V(:,0)`, as the printed definition of `U` requires;
+under that definition (19) holds (`specNorm_sub_cur_le`).  This refutes only the reading of (19)
+with `U`, `Y` the singular vectors. -/
 theorem eq19_false_for_singular_vectors :
     let V : Matrix (Fin 2) (Fin 2) ℝ := !![79, 228; 228, -54]
     let u : Matrix (Fin 2) (Fin 1) ℝ := !![4/5; 3/5]

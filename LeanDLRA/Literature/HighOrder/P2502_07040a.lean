@@ -28,7 +28,9 @@ and Remark 2 at full rank (`epsR_eq_zero_of_full`, `IsRKBUGRun.global_error_full
 projection error `ε_r` is the actual supremum over `V_r` (`epsR`, finite by `le_epsR`); that the
 stages lie in `V_r` is the companion's `stage_mem_nbhdV` (Lemmas 1, 2, Proposition 2), the exact
 flows from the iterates are constructed, and the truncation constant is the companion's `γ̄_r`, so
-the only hypothesis beyond the paper's assumptions is Proposition 5. No listed claim is false.
+the only hypothesis beyond the paper's assumptions is Proposition 5. The local and global error
+bounds are therefore conditional on Proposition 5 (hypothesis `IsRKLocalError`, resp. `hRK`). No
+listed claim is false.
 
 Differences from the paper. (1) The local error of the underlying Runge–Kutta method (Proposition
 5, a citation of Hairer–Nørsett–Wanner) is the hypothesis `IsRKLocalError`, required on `V_r`
@@ -542,7 +544,7 @@ theorem IsRKBUGStep.stage_error (step : IsRKBUGStep F tab h t Yk Ys Yhs Yh Ynext
 of the exact flow from `Y_k` and the Runge–Kutta method has local error
 `‖Z_{k+1} - Φ‖ ≤ C_L h^{p+1}` (Proposition 5 there, a hypothesis here), then
 `‖Y_{k+1} - Φ‖ ≤ C h (ε + γ + h^p)` with `C = max {∑ |b_i| (1 + L C_i h₀), 1 + ∑ |b_i| L C_i h₀,
-C_L}`. -/
+C_L}`. Conditional on Proposition 5 (the hypothesis `hRK`). -/
 theorem IsRKBUGStep.local_error (step : IsRKBUGStep F tab h t Yk Ys Yhs Yh Ynext) (hL : 0 ≤ L)
     (hLip : ∀ i Z₁ Z₂, ‖F (t + tab.c i * h) Z₁ - F (t + tab.c i * h) Z₂‖ ≤ L * ‖Z₁ - Z₂‖)
     (hh : 0 ≤ h) (hhh₀ : h ≤ h₀) (hε0 : 0 ≤ ε) (hγ0 : 0 ≤ γ)
@@ -785,8 +787,8 @@ theorem stage_error (h𝒱 : ∀ k < N, ∀ i, (Ys k i).mat ∈ 𝒱) (hsub : �
 
 /-- **Theorem 1** of arXiv 2502.07040 (local error): for `h ≤ h₀`, if `φ` solves `Ẋ = F(t, X)` on
 `[t_k, t_{k+1}]` with `φ(t_k) = Y_k`, then `‖Y_{k+1} - φ(t_{k+1})‖ ≤ C h (ε_r + γ + h^p)` with the
-paper's `C = max {∑ |b_i| (1 + L C_i h₀), 1 + ∑ |b_i| L C_i h₀, C_L}`.  Proposition 5 is the
-hypothesis `IsRKLocalError` on `𝒱`. -/
+paper's `C = max {∑ |b_i| (1 + L C_i h₀), 1 + ∑ |b_i| L C_i h₀, C_L}`.  Conditional on
+Proposition 5, which is the hypothesis `IsRKLocalError` on `𝒱`. -/
 theorem local_error (h𝒱 : ∀ k < N, ∀ i, (Ys k i).mat ∈ 𝒱) (hsub : 𝒱 ⊆ nbhdV (Y 0).mat R r)
     (hγ0 : 0 ≤ γ) (hγ : ∀ k < N, TruncBound (Ys k) (Yhs k) (Yh k) (Y (k + 1)) h γ)
     (hRK : IsRKLocalError F tab p CL h T 𝒱) {k : ℕ} (hk : k < N)
@@ -819,8 +821,9 @@ lemma exists_flow {k : ℕ} (hk : k < N) (Z : Matrix (Fin n) (Fin m) ℝ) :
 /-- **Theorem 2** of arXiv 2502.07040 (global error), with the paper's constant:
 `‖X(t_N) - Y_N‖ ≤ C' (δ_r + ε_r + γ + h^p)`, `δ_r = ‖X₀ - Y₀‖`,
 `C' = max {e^{L T}, C (e^{L T} - 1) / L}`, for `N h ≤ T` and `h ≤ h₀`.  Here `ε_r` is the
-supremum over any `𝒱 ⊆ V_r` containing the stages, `γ` bounds the truncation errors, and
-Proposition 5 is the hypothesis `hRK`.  The exact flows from the iterates are constructed. -/
+supremum over any `𝒱 ⊆ V_r` containing the stages and `γ` bounds the truncation errors.
+Conditional on Proposition 5, which is the hypothesis `hRK`.  The exact flows from the iterates are
+constructed. -/
 theorem global_error (h𝒱 : ∀ k < N, ∀ i, (Ys k i).mat ∈ 𝒱) (hsub : 𝒱 ⊆ nbhdV (Y 0).mat R r)
     (hγ0 : 0 ≤ γ) (hγ : ∀ k < N, TruncBound (Ys k) (Yhs k) (Yh k) (Y (k + 1)) h γ)
     (hRK : IsRKLocalError F tab p CL h T 𝒱) {X : ℝ → Matrix (Fin n) (Fin m) ℝ}
@@ -901,7 +904,8 @@ theorem truncBound_gammaBar {k : ℕ} (hk : k < N) :
 /-- **Theorem 2** of arXiv 2502.07040 with all the paper's quantities: `V_r` of radius
 `max {R₁, R₂}` (rank `≤ r`, see the module docstring), `ε_r` the supremum over `V_r`, and `γ̄_r` of
 Proposition 4 for `γ_r`:
-`‖X(t_N) - Y_N‖ ≤ C' (δ_r + ε_r + γ̄_r + h^p)`, `C' = max {e^{L T}, C (e^{L T} - 1) / L}`. -/
+`‖X(t_N) - Y_N‖ ≤ C' (δ_r + ε_r + γ̄_r + h^p)`, `C' = max {e^{L T}, C (e^{L T} - 1) / L}`.
+Conditional on Proposition 5, which is the hypothesis `hRK`. -/
 theorem global_error_paper
     (hRK : IsRKLocalError F tab p CL h T
       (nbhdV (Y 0).mat (max (R₁ F L T (Y 0).mat) (R₂ tab F L T h₀ (Y 0).mat)) r))
@@ -919,7 +923,7 @@ theorem global_error_paper
 
 /-- **Theorem 2** of arXiv 2502.07040 with the paper's manifold `M_r` of rank exactly `r`: if all
 stages have rank `r` (which the paper tacitly assumes), `ε_r` may be taken over
-`V_r ∩ M_r`, for every radius `R ≥ R₂`. -/
+`V_r ∩ M_r`, for every radius `R ≥ R₂`. Conditional on Proposition 5 (the hypothesis `hRK`). -/
 theorem global_error_rank_eq (hrank : ∀ k < N, ∀ i, (Ys k i).mat.rank = r)
     (hR₂ : R₂ tab F L T h₀ (Y 0).mat ≤ R) (hγ0 : 0 ≤ γ)
     (hγ : ∀ k < N, TruncBound (Ys k) (Yhs k) (Yh k) (Y (k + 1)) h γ)
@@ -935,7 +939,7 @@ theorem global_error_rank_eq (hrank : ∀ k < N, ∀ i, (Ys k i).mat.rank = r)
 
 /-- **Remark 2** of arXiv 2502.07040 at full rank: for `r ≥ min {n, m}` the projection error and
 `γ̄_r` vanish and `‖X(t_N) - Y_N‖ ≤ C' (δ_r + h^p)`: the integrator has the order of the
-Runge–Kutta method. -/
+Runge–Kutta method. Conditional on Proposition 5 (the hypothesis `hRK`). -/
 theorem global_error_full_rank (hr : min n m ≤ r)
     (hRK : IsRKLocalError F tab p CL h T
       (nbhdV (Y 0).mat (max (R₁ F L T (Y 0).mat) (R₂ tab F L T h₀ (Y 0).mat)) r))

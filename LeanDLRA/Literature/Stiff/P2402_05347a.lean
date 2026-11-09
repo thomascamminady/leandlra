@@ -12,11 +12,15 @@ proves three statements of the paper.
 * **Section 1, introductory failure example.** `dlra_stationary_of_orthogonal`: if the columns
   of `F` are orthogonal to `U` and its rows to `V`, the tangent projection `tangentProj U V F`
   vanishes, the constant curve has zero DLRA velocity, and the modeling error
-  `‖F - tangentProj U V F‖` equals `‖F‖ = ε`. The paper's Gaussian instance is not formalized,
+  `‖F - tangentProj U V F‖` equals `‖F‖`. The paper's Gaussian instance is not formalized,
   since it needs integrals over a symmetric domain. `failure_example` is a discrete instance
-  in which the hypotheses hold and `ε = 144 > 0`. "Remains stationary" is formalized as zero
+  in which the hypotheses hold and `‖F‖ = 144 > 0`. "Remains stationary" is formalized as zero
   DLRA velocity along the constant curve; uniqueness of the DLRA solution is not formalized.
-* **Theorem 3.1, Steps 3-4 of Algorithms 4 and 5.** `norm_step_le_of_dissipative`: for a
+  The field `F` is a fixed matrix (the value `F(X(t), t)` at the point), and the Lean statement
+  does not tie `X` to `U`, `V`: it holds for every `X`, in particular for the paper's
+  `X = U Σ Vᵀ`, where `tangentProj U V` is the tangent projector at `X` when `Σ` is invertible.
+* **Theorem 3.1, Galerkin and truncation steps of Algorithms 4 and 5** (Steps 4-5 of
+  Algorithm 4, Steps 3-4 and 7-8 of Algorithm 5). `norm_step_le_of_dissipative`: for a
   dissipative field `F`, a Galerkin step on the column and row spaces spanned by orthonormal
   `U` and `V`, followed by SVD truncation, does not increase the Frobenius norm. The Galerkin
   step is the weak form (4) of the paper, assumed to hold for the given solution; existence of
@@ -29,9 +33,13 @@ proves three statements of the paper.
 Core definitions used: `LeanDLRA.leftProj`, `LeanDLRA.rightProj`, `LeanDLRA.tangentProj`,
 `LeanDLRA.IsOrthProj`, `LeanDLRA.EckartYoung.truncation`. No new structures are defined.
 
-Not repeated here, since the library already has them: Lemma 3.3 (local error with the cheap
-prediction space) is `cheapPrediction_local_error` in `LeanDLRA/Stiff/ImplicitBUG.lean`. The
-implicit Galerkin stages of Theorem 3.2 are in `LeanDLRA/Stiff/ImplicitSolvability.lean`.
+Not repeated here, since the library already has them: a version of Lemma 3.3 (local error with
+the cheap prediction space, `ε₁` measured as `‖(1 - P) F(t₀, x₀)‖`) is
+`cheapPrediction_local_error_le` in `LeanDLRA/Stiff/ImplicitBUG.lean`. Theorem 3.2 (semi-bounded
+`F`) is treated in `LeanDLRA/Stiff/ImplicitSolvability.lean`: `galerkin_implicitEuler_norm_le`
+gives the factor `(1 - α Δt)⁻¹` of the paper's proof, and `implicitGalerkin_linear_counterexample`
+shows that the printed factor `e^{α Δt}` fails for every `α ≠ 0` already for the Galerkin step,
+so whenever the truncation removes nothing.
 Not formalized: the convergence estimate of Section 3.3.2, the residual argument of
 Section 3.2, and Section 4.
 -/
@@ -56,11 +64,11 @@ theorem norm_svdTruncation_le {p q : Type*} [Fintype p] [Fintype q] [DecidableEq
 /-! ### Theorem 3.1: Galerkin step followed by truncation -/
 
 /-- **Stability of the Galerkin step with SVD truncation** (arXiv 2402.05347, Theorem 3.1,
-Steps 3-4 of Algorithms 4 and 5). Let `U` (`m × k₁`) and `V` (`n × k₂`) have orthonormal
-columns, let `X₀ = X̂ⁿ`, and let `X₁ = U C Vᵀ` satisfy the Galerkin equation (4) of the paper:
-for every `S`, `⟪X₁, U S Vᵀ⟫ = ⟪X₀ + h F(t, X₁), U S Vᵀ⟫`. If `⟪F(t, X), X⟫ ≤ 0` for all `t`
-and `X`, and `h ≥ 0`, then `‖X₁‖ ≤ ‖X₀‖`. The truncated solution `U (T C) Vᵀ`, with `T` the
-truncation of rank `r`, also has norm at most `‖X₀‖`. -/
+Galerkin and truncation steps of Algorithms 4 and 5). Let `U` (`m × k₁`) and `V` (`n × k₂`)
+have orthonormal columns, let `X₀ = X̂ⁿ`, and let `X₁ = U C Vᵀ` satisfy the Galerkin equation
+(4) of the paper: for every `S`, `⟪X₁, U S Vᵀ⟫ = ⟪X₀ + h F(t, X₁), U S Vᵀ⟫`. If
+`⟪F(t, X), X⟫ ≤ 0` for all `t` and `X`, and `h ≥ 0`, then `‖X₁‖ ≤ ‖X₀‖`. The truncated
+solution `U (T C) Vᵀ`, with `T` the truncation of rank `r`, also has norm at most `‖X₀‖`. -/
 theorem norm_step_le_of_dissipative {k₁ k₂ : Type*} [Fintype k₁] [Fintype k₂]
     [DecidableEq k₁] [DecidableEq k₂] (F : ℝ → Matrix m n ℝ → Matrix m n ℝ)
     (hF : ∀ t X, ⟪F t X, X⟫ ≤ 0) {h t : ℝ} (hh : 0 ≤ h) {X₀ : Matrix m n ℝ}
@@ -123,7 +131,7 @@ Let `U` and `V` have orthonormal columns, so `tangentProj U V` is the orthogonal
 the tangent space at `X = U Σ Vᵀ`. If the column space of `F` is orthogonal to `U` (`Uᵀ F = 0`)
 and its row space is orthogonal to `V` (`F V = 0`), then the DLRA velocity `Π F` vanishes, the
 constant curve `t ↦ X` has DLRA velocity zero at every time, and the modeling error
-`‖F - Π F‖` equals `‖F‖ = ε`. -/
+`‖F - Π F‖` equals `‖F‖`. The statement holds for every `X`; the paper's case is `X = U Σ Vᵀ`. -/
 theorem dlra_stationary_of_orthogonal {k₁ k₂ : Type*} [Fintype k₁] [Fintype k₂]
     [DecidableEq k₁] [DecidableEq k₂] {U : Matrix m k₁ ℝ} (hU : Uᵀ * U = 1)
     {V : Matrix n k₂ ℝ} (hV : Vᵀ * V = 1) (X F : Matrix m n ℝ)

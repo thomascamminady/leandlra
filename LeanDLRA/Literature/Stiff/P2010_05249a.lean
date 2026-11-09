@@ -4,7 +4,8 @@ import LeanDLRA.Matrix.Projectors
 /-!
 # Results of arXiv 2010.05249: Low-rank Lie-Trotter for fractional Ginzburg-Landau
 
-Formalized here (real matrices and the scalar complex nonlinearity, see below):
+Formalized here (real matrices, while the paper's `A_x`, `A_y`, `X` are complex; and the scalar
+complex nonlinearity, see below):
 
 * **Sec. 2.3, tangent part** (`stiff_derivative_mem_tangent'`): for `X = U S Vᵀ` with orthonormal
   `U`, `V` and two generators `A_x`, `A_y` of possibly different sizes, the stiff vector field
@@ -24,7 +25,8 @@ Formalized here (real matrices and the scalar complex nonlinearity, see below):
 
 Not formalized, and why:
 
-* **Property 1(a) (cited from Li–Huang, the paper's ref. [19]): contraction and smoothing**
+* **Property 1(a) (cited from Zhang, Zhang and Sun, the paper's ref. [19, Theorem 3.1]):
+  contraction and smoothing**
   `‖e^{tA_x} Z e^{tA_y}‖_F ≤ ‖Z‖_F` and the `C₁/t` smoothing bound. The paper cites them and they
   need spectral properties of the complex Toeplitz generators, which the library does not have.
 * **Eq. (3.4) (cited from Ostermann et al., ref. [37], Sec. 5) and Theorem 3.1** (full-rank

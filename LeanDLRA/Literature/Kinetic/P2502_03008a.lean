@@ -34,10 +34,11 @@ of the full scheme (11).
   of (10) itself strictly increases the energy (`advection_energy_eq`). What is not formalized is
   a von Neumann analysis of the variable-coefficient scheme (10) over several steps, which the paper
   does not give either.
-* Theorem 3: `qr` is `IsQR`, which allows rank deficiency. The paper ends its proof by saying that
-  the truncation does not alter the zeroth moment; this holds for the conservative truncation only,
-  and what the energy bound needs is that both truncations are `v¹ = v̂¹ Π` with an orthogonal
-  projector `Π` (`energy_le_of_isRightProjection`, `IsSVDTruncation.isRightProjection`,
+* Theorem 3: `qr` is `IsQR`, which allows rank deficiency. The paper ends its proof by noting that
+  the truncation does not alter the zeroth moment, the property the conservative truncation of its
+  Section 5.4 is designed to have. The proof here does not use it: what the energy bound uses is
+  that both truncations are `v¹ = v̂¹ Π` with an orthogonal projector `Π`
+  (`energy_le_of_isRightProjection`, `IsSVDTruncation.isRightProjection`,
   `IsConservativeTruncation.isRightProjection`). The bound holds for arbitrary `K*`, `L*`
   (`energy_le_of_isAugmentedUpdate`), so the transposition in the printed formula (19c), kept in
   `lStep`, does not matter.
@@ -1999,9 +2000,10 @@ Legendre polynomials (`isL2Orthonormal_legendreP`), `|A| = Q |M| Qᵀ` for any d
 `qr` is `IsQR`, so that bases may have any number of columns and rank deficiency is allowed.
 Differences from the paper: `Δx > 0` is arbitrary; `σ ≥ 0`, `Δt > 0`, `B⁰ > 0` are stated; the
 orthonormality of `X⁰` and `V⁰` is not needed. `B¹ ≠ 0`, needed in (19h), is derived from (19g).
-The paper closes the proof by saying that truncation leaves the zeroth moment unchanged. That is
-true of the conservative truncation only, and it is not what is needed for `E¹ ≤ E⁰`: what is
-needed is `energy_le_of_isRightProjection`. See `exists_isDLRAStep` for non-vacuity. -/
+The paper closes the proof by noting that truncation leaves the zeroth moment unchanged, the design
+property of the conservative truncation of its Section 5.4. This proof does not use it: it uses
+that the truncation is a projection from the right, `energy_le_of_isRightProjection`, which also
+covers the truncated SVD. See `exists_isDLRAStep` for non-vacuity. -/
 theorem theorem_3 {Δx Δt σ : ℝ} (hΔx : 0 < Δx) (hΔt : 0 < Δt) (hCFL : Δt ≤ Δx) (hσ : 0 ≤ σ)
     {P : Fin K → ℝ → ℝ} (hP : IsL2Orthonormal P) {Q : Matrix (Fin K) (Fin K) ℝ} {M : Fin K → ℝ}
     (hd : IsDiagonalization (momentMatrix P) Q M) {B₀ : ZMod N → ℝ} (hB₀ : ∀ j, 0 < B₀ j)
@@ -2071,7 +2073,8 @@ theorem IsSVDTruncation.isRightProjection {ρ : Type*} [Fintype ρ] [DecidableEq
       _ = Xo * So * Voᵀ * (Vo * Qf * Qfᵀ * Voᵀ) := by simp only [Matrix.mul_assoc]
 
 /-- **arXiv 2502.03008, Theorem 3, with the truncation of its Section 5.1**: `E¹ ≤ E⁰` holds for
-the truncated SVD, although this truncation in general changes the zeroth moment. -/
+the truncated SVD. The proof uses no property of the zeroth moment, only that the truncation is a
+projection from the right. -/
 theorem theorem_3_svd {Δx Δt σ : ℝ} (hΔx : 0 < Δx) (hΔt : 0 < Δt) (hCFL : Δt ≤ Δx) (hσ : 0 ≤ σ)
     {P : Fin K → ℝ → ℝ} (hP : IsL2Orthonormal P) {Q : Matrix (Fin K) (Fin K) ℝ} {M : Fin K → ℝ}
     (hd : IsDiagonalization (momentMatrix P) Q M) {B₀ : ZMod N → ℝ} (hB₀ : ∀ j, 0 < B₀ j)

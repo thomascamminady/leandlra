@@ -23,10 +23,10 @@ on `ℝ^d`, where `Q(M, M) = 0` and the moments are derived, not assumed (`colli
 `hasDerivAt_logistic`, `logistic_unique`, `eq4_6`, `isRankineHugoniot_of_mach`, `eq4_23`,
 `massFlux_constraint`, `ansatz_tendsto`, `integrable_collisionIntegrand`, `mottSmith_satisfiable`).
 
-**False claim.**  Eq. (5.7) has no side condition in the paper, but its upper bound needs
-`c √(r - r') < 1`: with the paper's `c = 0.2` it fails for `r - r' > 25`, where the right-hand side
-is negative, and is undefined for `r - r' = 25` (`eq5_7_needs_condition`).  `eq5_7` proves it under
-this condition.
+**False claim.**  Eq. (5.7) (p. 15) has no side condition in the paper, but its upper bound needs
+`c √(r - r') < 1`: with the paper's `c = 0.2` its right-hand side is negative for `r - r' > 25`
+and undefined for `r - r' = 25`.  `eq5_7_needs_condition` gives data (with `r' = 0`) on which the
+bound fails as soon as `c √r > 1`.  `eq5_7` proves it under this condition.
 
 **Differences from the paper.**  Secs. 2, 3 and 5 are stated on the fully discrete grid of its
 Sec. 2.4, with `D ℓ` any matrix for `∂_{x_ℓ}` and `Q` any bilinear map acting cell by cell in `x`
@@ -844,9 +844,10 @@ are tabulated once: `r N_x` for `∑ ⟨ΔK_j, ΔK_j⟩`, `r²` for `∑ ΔS²`,
 def factoredResidualCost (r Nx Nv : ℕ) : ℕ :=
   r * Nx + r ^ 2 + r * Nv + r ^ 2 * Nx + r ^ 2 * Nv + 3 * r ^ 2
 
-/-- **The cost `O(r² (N_x + N_v))` of Sec. 5 of arXiv 2112.02695**, as a count: reconstructing
-`f¹ - f⁰` instead takes of the order of `r² N_x N_v` operations.  Lean has no machine model, so
-this is bookkeeping of the formula in `eq5_4`. -/
+/-- **The cost `O(r² (N_x + N_v))` of evaluating Eqs. (5.4)-(5.5) of arXiv 2112.02695**, as a
+count.  The paper does not print this count: it says only that (5.4)-(5.5) must be used because
+reconstructing `f` costs `O(r² N_x^d N_v^d)` (Sec. 5.1).  Lean has no machine model, so this is
+bookkeeping of the formula in `eq5_4`. -/
 theorem factoredResidualCost_le (r : ℕ) {Nx Nv : ℕ} (hN : 1 ≤ Nx + Nv) :
     factoredResidualCost r Nx Nv ≤ 6 * r ^ 2 * (Nx + Nv) := by
   have h1 : r ≤ r ^ 2 := Nat.le_self_pow two_ne_zero r
