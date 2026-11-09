@@ -38,7 +38,7 @@ mkdir -p "$WARM/slots"
 trap 'rm -f "$tmp"; [ -n "$slot" ] && rmdir "$slot" 2>/dev/null' EXIT
 while true; do
   find "$WARM/slots" -maxdepth 1 -name 'fc?' -mmin +15 -exec rmdir {} + 2>/dev/null
-  for i in 1 2 3; do
+  for i in 1; do
     if mkdir "$WARM/slots/fc$i" 2>/dev/null; then slot="$WARM/slots/fc$i"; break 2; fi
   done
   sleep 3

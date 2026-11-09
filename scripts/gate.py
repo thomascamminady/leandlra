@@ -20,6 +20,7 @@ modules through the kernel independently (``scripts/replay.sh``).
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -58,10 +59,18 @@ def log(message: str) -> None:
         handle.write(f"{time.strftime('%H:%M:%S')} {message}\n")
 
 
-def run(*cmd: str, timeout: int = 3600) -> tuple[int, str]:
+def run(*cmd: str, timeout: int = 14400) -> tuple[int, str]:
     """Run a command in the repository and return exit code and combined output."""
+    # At most five Lean workers: each needs over a gigabyte, and the 16 GB machine must not swap.
+    env = {**os.environ, "LEAN_NUM_THREADS": os.environ.get("GATE_LEAN_THREADS", "5")}
     proc = subprocess.run(
-        cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout, check=False
+        cmd,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=False,
+        env=env,
     )
     return proc.returncode, proc.stdout + proc.stderr
 
