@@ -27,8 +27,9 @@ is an arbitrary vector (it contains the scattering and `K^{0}/h` terms of the pa
 
 Not formalized. Sec. 3 (the octant-wise BUG integrator, Eqs. (21)-(23)) is a derivation of the
 equations, not a stated theorem. Its convergence would need the octant block projectors on the
-product space, which this file does not build. The paper's convergence statements are not
-included here. Eqs. (25)-(26) (implicit Runge-Kutta) are not formalized.
+product space, which this file does not build; the paper states no convergence result (its
+"convergence" refers to the source iteration). Eqs. (25)-(26) (implicit Runge-Kutta) are not
+formalized.
 
 The core library is not used: this file is a finite-dimensional linear-algebra statement, and
 `LeanDLRA` has no marching or upwind-block definitions to reuse.

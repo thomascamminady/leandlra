@@ -41,7 +41,7 @@ Algorithm 2 is a Galerkin step of the unstabilised field in stabilised bases.
 `local_error_stabilised` bounds both against the unstabilised solution, with an extra `O(Dd h)`
 per step.  Differences from the paper: the Poisson solve is not formalized, so `M_{x,E_k}` is
 assembled from a given frozen field; the CIP matrices are arbitrary; `N` is arbitrary instead of
-`2 r₀`; `ϑ > 0` is required, since otherwise step 6 has no solution.  Not formalized: existence of
+`2 r₀`; `ϑ > 0` is required, since otherwise line 12 has no solution.  Not formalized: existence of
 weak solutions, a global error with the self-consistent field, and mass, momentum and energy
 conservation, which the paper leaves open. Non-vacuity: `exists_isAlg1Step`, `exists_isAlg2Step`.
 -/
@@ -1110,7 +1110,7 @@ theorem local_error (hs : IsAlg1Step D 0 t₀ t₁ X₀ S₀ V₀ K X₁ Ŝ S Lf
 
 end IsAlg1Step
 
-/-- The discarded weight `∑_{i ≥ r₁} σ_i²` (0-indexed) of arXiv 2303.01856, Alg. 2, step 6. -/
+/-- The discarded weight `∑_{i ≥ r₁} σ_i²` (0-indexed) of arXiv 2303.01856, Alg. 2, line 12. -/
 noncomputable def tailSum {N : ℕ} (σ : Fin N → ℝ) (r₁ : ℕ) : ℝ :=
   ∑ i : Fin N, if r₁ ≤ i.val then σ i ^ 2 else 0
 
@@ -1184,7 +1184,7 @@ lemma trace_tail {N : ℕ} {P Q : Matrix (Fin N) (Fin N) ℝ} (hP : Pᵀ * P = 1
     Matrix.trace_diagonal]
   exact Finset.sum_congr rfl fun i _ => by ring
 
-/-- arXiv 2303.01856, Alg. 2, steps 6–7: the truncation of `X̂ S V̂ᵀ`, `S = Q_x diag(σ) Q_vᵀ`,
+/-- arXiv 2303.01856, Alg. 2, lines 11–13: the truncation of `X̂ S V̂ᵀ`, `S = Q_x diag(σ) Q_vᵀ`,
 to the first `r₁` singular triples has squared `L²(Ω_x × Ω_v)` error exactly `∑_{i ≥ r₁} σ_i²`. -/
 theorem norm_sq_truncation {Mx : Matrix m m ℝ} {Mv : Matrix n n ℝ} [Fact Mx.PosDef]
     [Fact Mv.PosDef] {N r₁ : ℕ} (hr : r₁ ≤ N) {Xa : Matrix m (Fin N) ℝ} {Va : Matrix n (Fin N) ℝ}
@@ -1213,7 +1213,7 @@ theorem norm_sq_truncation {Mx : Matrix m m ℝ} {Mv : Matrix n n ℝ} [Fact Mx.
   refine Finset.sum_congr rfl fun i _ => ?_
   by_cases hi : r₁ ≤ i.val <;> simp [hdt, hi]
 
-/-- arXiv 2303.01856, Alg. 2, step 6: for `ϑ > 0` the minimal `r₁ ≤ N` with `∑_{i ≥ r₁} σ_i² <
+/-- arXiv 2303.01856, Alg. 2, line 12: for `ϑ > 0` the minimal `r₁ ≤ N` with `∑_{i ≥ r₁} σ_i² <
 ϑ²` exists. (For `ϑ = 0` there is none, as the inequality is strict; hence `tol_pos` in
 `IsAlg2Step`.) -/
 theorem exists_minRank {N : ℕ} (σ : Fin N → ℝ) {ϑ : ℝ} (hϑ : 0 < ϑ) :
@@ -1273,7 +1273,7 @@ variable [DecidableEq r] {D : FEData ι κ m n} [Fact D.Mx.PosDef] [Fact D.Mv.Po
   {Xa : Matrix m (Fin N) ℝ} {Va : Matrix n (Fin N) ℝ} {Rx Rx' Rv Rv' : Matrix (Fin N) r ℝ}
   {Ŝ : ℝ → Matrix (Fin N) (Fin N) ℝ} {Qx Qv : Matrix (Fin N) (Fin N) ℝ} {σ : Fin N → ℝ} {r₁ : ℕ}
 
-/-- arXiv 2303.01856, Alg. 2, step 7: the output `X¹ = Xa Q_x(:, 1:r₁)` is `M_x`-orthonormal. -/
+/-- arXiv 2303.01856, Alg. 2, line 13: the output `X¹ = Xa Q_x(:, 1:r₁)` is `M_x`-orthonormal. -/
 theorem orth_left (hs : IsAlg2Step D δ ϑ t₀ t₁ X₀ S₀ V₀ K Lf Xa Va Rx Rx' Rv Rv' Ŝ Qx Qv σ r₁) :
     (Xa * head hs.rank_le Qx)ᵀ * D.Mx * (Xa * head hs.rank_le Qx) = 1 := by
   rw [show (Xa * head hs.rank_le Qx)ᵀ * D.Mx * (Xa * head hs.rank_le Qx) =
@@ -1281,7 +1281,7 @@ theorem orth_left (hs : IsAlg2Step D δ ϑ t₀ t₁ X₀ S₀ V₀ K Lf Xa Va R
       simp only [Matrix.transpose_mul, Matrix.mul_assoc], hs.orthXa, Matrix.mul_one,
     head_transpose_mul_head _ hs.orthQx]
 
-/-- arXiv 2303.01856, Alg. 2, step 7: the output `V¹ = Va Q_v(:, 1:r₁)` is `M_v`-orthonormal. -/
+/-- arXiv 2303.01856, Alg. 2, line 13: the output `V¹ = Va Q_v(:, 1:r₁)` is `M_v`-orthonormal. -/
 theorem orth_right (hs : IsAlg2Step D δ ϑ t₀ t₁ X₀ S₀ V₀ K Lf Xa Va Rx Rx' Rv Rv' Ŝ Qx Qv σ r₁) :
     (Va * head hs.rank_le Qv)ᵀ * D.Mv * (Va * head hs.rank_le Qv) = 1 := by
   rw [show (Va * head hs.rank_le Qv)ᵀ * D.Mv * (Va * head hs.rank_le Qv) =
@@ -1302,7 +1302,7 @@ theorem norm_trunc_lt
   rw [← h] at ht
   exact lt_of_pow_lt_pow_left₀ 2 hs.tol_pos.le ht
 
-/-- arXiv 2303.01856, Alg. 2, step 5: the initial value `Rx S₀ Rvᵀ` of the forward S-step
+/-- arXiv 2303.01856, Alg. 2, line 9: the initial value `Rx S₀ Rvᵀ` of the forward S-step
 represents the old approximation: `Xa Ŝ(t₀) Vaᵀ = X₀ S₀ V₀ᵀ`. -/
 theorem start_eq (hs : IsAlg2Step D δ ϑ t₀ t₁ X₀ S₀ V₀ K Lf Xa Va Rx Rx' Rv Rv' Ŝ Qx Qv σ r₁) :
     liftS D.Mx D.Mv Xa Va (Ŝ t₀) = ofMat D.Mx D.Mv (X₀ * S₀ * V₀ᵀ) := by
@@ -1310,7 +1310,7 @@ theorem start_eq (hs : IsAlg2Step D δ ϑ t₀ t₁ X₀ S₀ V₀ K Lf Xa Va Rx
   rw [hs.sStart, ← hs.xAug₀, ← hs.vAug₀]
   simp only [Matrix.transpose_mul, Matrix.mul_assoc]
 
-/-- The output `X¹ S¹ (V¹)ᵀ` of Algorithm 2, step 7. -/
+/-- The output `X¹ S¹ (V¹)ᵀ` of Algorithm 2, line 13. -/
 noncomputable def output (D : FEData ι κ m n) [Fact D.Mx.PosDef] [Fact D.Mv.PosDef] {N r₁ : ℕ}
     (hr : r₁ ≤ N) (Xa : Matrix m (Fin N) ℝ) (Va : Matrix n (Fin N) ℝ)
     (Qx Qv : Matrix (Fin N) (Fin N) ℝ) (σ : Fin N → ℝ) : MassSpace D.Mx D.Mv :=

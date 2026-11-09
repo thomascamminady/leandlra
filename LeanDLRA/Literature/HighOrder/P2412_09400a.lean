@@ -50,11 +50,18 @@ Differences from the paper:
 * `δ^{(k)}` is the paper's recursion with all `O`-constants equal to one; the constants `C_k`
   are explicit and also depend on a bound `Λ ≥ ∑_s |w_{m,s}|` of the weights and on the
   quadrature constant `C_A`, which the paper hides in its `O`; `L > 0` as in the paper;
-* Theorem 3.2 takes the quadrature defect `‖X(t_{m+1}) - X(t_m) - I_m^{m+1} F(X)‖ ≤ C_A h^{P+2}`
-  of the exact solution as a hypothesis; `quadDefect_le` proves it with
-  `C_A = (1 + Λ) M / P!` when `t ↦ F(t, X t)` is `C^{P+1}` with `(P+1)`-st derivative `≤ M`;
+* `sdc_mbug_node_error`, `sdc_mbug_local_error` and `sdc_mbug_local_error_order` are
+  **conditional** on the quadrature defect `‖X(t_{m+1}) - X(t_m) - I_m^{m+1} F(X)‖ ≤ C_A h^{P+2}`
+  of the exact solution, the bound on the term (A) that the paper's proof asserts; it does not
+  follow from the assumptions (12) alone.  `quadDefect_le` proves it with
+  `C_A = (1 + Λ) M / P!` when `t ↦ F(t, X t)` is `C^{P+1}` with `(P+1)`-st derivative `≤ M`, and
+  `sdc_mbug_local_error_smooth` is the unconditional form under that smoothness assumption (the
+  paper assumes `F` "sufficiently smooth" in §2.3);
 * the paper's proof of Theorem 3.2 uses `Û Ûᵀ F(X^{(k+1)}_{m+1}) V̂ V̂ᵀ = F(X^{(k+1)}_{m+1})`,
-  which does not follow from its choice (10) of the bases; the proof here does not need it;
+  which does not follow from its choice (10) of the bases (they contain the range of the
+  truncated `F^{(k)}_{m+1}` only); the proof here does not need it;
+* the product in the weight formula (5) is printed with upper limit `m`; the text ("the `P`-th
+  degree interpolating polynomial on the `P + 1` points") fixes it as `P`, which is used here;
 * Theorem 2.1 ("smooth `F` and solution") is stated with the Lipschitz and boundedness
   assumptions of §3.2 and the derivative bound `M`;
 * §2.1: `H_α`, `S_α` are defined from a given factorization `X = U diag(σ) Vᵀ` with orthonormal
@@ -523,7 +530,8 @@ lemma correction_bound_le {L γ Λ CA C δ h εf εr εs Ek : ℝ} {P k : ℕ} (
     positivity
   linarith
 
-/-- **Theorem 3.2 of arXiv 2412.09400 at all nodes and levels** (eq. (14) of its proof).  Let
+/-- **Theorem 3.2 of arXiv 2412.09400 at all nodes and levels** (eq. (14) of its proof),
+conditional on the quadrature-defect bound `hquad` (the bound on the term (A) of the proof).  Let
 `F` be Lipschitz in both variables with `L > 0` and bounded by `B`, `X` the exact solution on
 `[t_n, t_{n+1}] = [t_0, t_P]`, `h = t_P - t_0`, `h L ≤ γ < 1`, let the quadrature weights satisfy
 `∑_s |w_{m,s}| ≤ Λ`, and let the exact solution have quadrature defect
@@ -586,7 +594,9 @@ theorem sdc_mbug_node_error {F : ℝ → E → E} {L B γ Λ CA εs εf : ℝ} {
     refine this.trans (le_of_eq ?_)
     simp only [sdcC, sdcDelta]
 
-/-- **Theorem 3.2 of arXiv 2412.09400 (local error of SDC-mBUG)**: under the hypotheses of
+/-- **Theorem 3.2 of arXiv 2412.09400 (local error of SDC-mBUG)**, conditional on the
+quadrature-defect bound `hquad` (unconditional under smoothness: `sdc_mbug_local_error_smooth`):
+under the hypotheses of
 `sdc_mbug_node_error`, the SDC-mBUG approximation `X_{n+1} = Y (K+1) P` after `K` correction
 sweeps satisfies
 
@@ -667,7 +677,8 @@ lemma sdcDelta_le_of_tol {h εs εf c : ℝ} {εsk εfk εrk : ℕ → ℝ} {K :
       3 * ((j : ℝ) + 2) * (c * h ^ (j + 3)) by push_cast; ring]
     linarith
 
-/-- **Remark 3.1 of arXiv 2412.09400 (order `K + 1`)**: with `P = K` and the tolerances
+/-- **Remark 3.1 of arXiv 2412.09400 (order `K + 1`)**, conditional on the quadrature-defect
+bound `hquad` as `sdc_mbug_local_error`: with `P = K` and the tolerances
 `ε_s ≤ c h²`, `ε_f ≤ c h`, `ε_s^{(k+1)}, ε_r^{(k)} ≤ c h^{k+2}`, `ε_f^{(k)} ≤ c h^{k+1}`, the
 local error of SDC-mBUG is `O(h^{K+2})`:
 `‖X_{n+1} - X(t_{n+1})‖ ≤ C_{K+1} (3 (K + 1) c + 1) h^{K+2}`. -/
@@ -770,7 +781,7 @@ noncomputable def lagBasis (t : ℕ → ℝ) (P s : ℕ) : Polynomial ℝ :=
 
 /-- The SDC quadrature weights of arXiv 2412.09400, §2.3:
 `w_{m,s} = (1/Δt_m) ∫_{t_m}^{t_{m+1}} ℓ_s(τ) dτ`, `ℓ_s` the Lagrange basis on all `P + 1`
-nodes. -/
+nodes (eq. (5) prints the products up to `m`; the text says `P + 1` points). -/
 noncomputable def sdcWeight (t : ℕ → ℝ) (P m s : ℕ) : ℝ :=
   (∫ τ in t m..t (m + 1), (lagBasis t P s).eval τ) / (t (m + 1) - t m)
 

@@ -28,15 +28,16 @@ inclusion `ξ, η, γ ∈ span {Vⱼⁿ}` is lost, so the induction carries the 
 of the paper are not true as printed.  (a) Prop. 3.1, for all steps, needs the three components of
 `∇ₓ ρ / σ^S` to be independent along the limit: footnote 2, which dismisses this as without loss of
 generality, is wrong, since (3.25) then fails and the basis may lose `v` for good
-(`prop_3_1_false_without_independence`: zero data and a source; there `g = 0` for all `n`, `ε`). 
-One
-step is true without it.  (b) The orderings `L-K-S`, `L-S-K`, `S-L-K` need `Xᵀ ∇ₓ ρ` of full column
-rank, uniformly in `ε`, which the paper does not state (`sec_3_3_false_without_rank`).  On the other
-hand they do not need `ξ, η, γ ∈ span {Vⱼⁿ}`.  (c) The limit (3.45) is not an explicit Runge-Kutta
-scheme: `ρ^{n+1}` depends on `ρ^{n-1/2}`.  It is a two-step scheme, and `sec_3_4_sub_midpoint` gives
-its exact difference from the explicit midpoint rule, which is `O(dt³)` along smooth solutions, so
-the second order claimed survives; this module does not prove a convergence theorem for it.  The
-hypotheses can hold: `exists_step`, `exists_run`, `exists_step2` (solvability for small `ε`),
+(`prop_3_1_false_without_independence`: zero data and a source; the QR factorization (3.18) of
+`L¹ = 0` leaves `V¹` free, and then `g = 0` for all `n`, `ε`).  One step is true without it.
+(b) The orderings `L-K-S`, `L-S-K`, `S-L-K` need `Xᵀ ∇ₓ ρ` of full column rank, uniformly in `ε`,
+which the paper does not state (`sec_3_3_false_without_rank`).  On the other hand they do not need
+`ξ, η, γ ∈ span {Vⱼⁿ}`.  (c) The paper calls the limit (3.45) a second-order explicit Runge-Kutta
+scheme, but `ρ^{n+1}` depends on `ρ^{n-1/2}`: it is a two-step scheme, and `sec_3_4_sub_midpoint`
+gives its exact difference from the explicit midpoint rule.  Informally this difference is
+`O(dt³)` along smooth solutions, so the second order claimed should survive; this module proves
+neither that estimate nor a convergence theorem for (3.45).  The hypotheses can hold:
+`exists_step`, `exists_run`, `exists_step2` (solvability for small `ε`),
 `prop_3_1_hypotheses_hold` and `exists_plane_wave`.  Not treated: Remark 3.2 (augmenting the basis
 by `ξ, η, γ`), first and second order accuracy in time and space and stability for `ε > 0`, the
 remark of Sec. 4 that a nonconstant `σ^S` excites new modes, and the numerical results of Sec. 5.
@@ -2119,12 +2120,12 @@ scheme. -/
 noncomputable def Model.midpointRK (M : Model I J W ι) (dt : ℝ) (ρ : J → ℝ) : J → ℝ :=
   ρ + dt • M.diffRHS (ρ + (dt / 2) • M.diffRHS ρ ρ) (ρ + (dt / 2) • M.diffRHS ρ ρ)
 
-/-- **arXiv 2005.06571, the words after (3.45).**  The limit (3.45) is not a Runge-Kutta scheme, as
-the paper says: `ρ^{n+1}` depends on `ρ^{n-1/2}`, not only on `ρⁿ`.  With `y = ρⁿ`,
-`p = ρ^{n-1/2}` and `𝓛 = ∇ₓ · (∇ₓ / (3 σ^S))`, it differs from the explicit midpoint rule by exactly
-`(dt² / 2) (𝓛 - σ^A) 𝓛 (p - y)`.  Since `p - y = O(dt)` along a smooth solution, this is `O(dt³)`:
-the scheme is a two-step scheme, consistent of second order, and the order claimed by the paper
-survives. -/
+/-- **arXiv 2005.06571, the words after (3.45).**  The paper calls the limit (3.45) "a second-order
+explicit RK scheme", but `ρ^{n+1}` depends on `ρ^{n-1/2}`, not only on `ρⁿ`, so it is a two-step
+scheme.  With `y = ρⁿ`, `p = ρ^{n-1/2}` and `𝓛 = ∇ₓ · (∇ₓ / (3 σ^S))`, it differs from the
+explicit midpoint rule by exactly `(dt² / 2) (𝓛 - σ^A) 𝓛 (p - y)`.  (Informally, since
+`p - y = O(dt)` along a smooth solution, this is `O(dt³)`, so second-order consistency should
+survive; that estimate is not proved here.) -/
 theorem sec_3_4_sub_midpoint (M : Model I J W ι) (dt : ℝ) (y p : J → ℝ) :
     (y + dt • M.diffRHS (y + (dt / 2) • M.diffRHS p y) (y + (dt / 2) • M.diffRHS p y)) -
         M.midpointRK dt y =

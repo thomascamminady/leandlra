@@ -23,15 +23,15 @@ that the backward S-step can raise the loss); Lemma 5.4 for bc-PSI (`IsBcPsiStep
 5.3 (`IsBcPsiStep.local_error`, `IsBcPsiStep.local_error_le`, `bcPsi_global_error`); Theorem 5.6
 (`IsAbcPsiStep.local_error`, `IsAbcPsiStep.local_error_truncated`, `abcPsi_global_error`,
 `abcPsi_global_error_le`, and `IsAbcPsiStep.loss_le` for the remark after Lemma 5.4); and the
-deterministic form of Theorem 5.9 (`abcPsi_liminf_tangentGrad_eq_zero`, for Algorithm 1,
+deterministic form of Theorem 5.9 (`abcPsi_liminf_tangentGrad_eq_zero`, for Algorithm 4.1,
 `abcPsiEulerStep`).  `exists_isBcPsiStep`, `exists_isAbcPsiStep`, `exists_isAbcPsiEulerBasis` and
 the `example` at the end, with the loss `cosLoss`, show that the hypotheses hold.  Lemma 5.7 and
 Theorem 5.8 are `descent_lemma` and `loss_projGradStep_le` of `Training/Descent.lean`.
 
 **False claim.**  The bound of Theorem 5.6 as printed, `ε + c₁ h + c₂ δ + ϑ/h`, has coefficient `1`
 on `ε`.  `abcPsi_literal_bound_false` refutes it on `3 × 2` matrices; the correct coefficient
-contains `T`, as in `abcPsi_global_error_le`.  The local bound `h ε + 3 c_l B h² + ϑ` of the paper
-is correct.
+contains `T`, as in `abcPsi_global_error_le`.  The paper's local bound before truncation,
+`h ε + 3 c_l B h²` (5.12), is correct (`IsAbcPsiStep.local_error`).
 
 **Differences from the paper.**  (1) A4 is stated on `M_r` (invertible `S`), and
 `ResidualBound.normal_le` extends it to singular `S` by density, so that `K(t₁)` may be
@@ -42,7 +42,7 @@ formalized.  (3) All constants are explicit; in Theorem 5.3 they are the library
 for step sizes `h ≤ H`.  (4) The paper uses both `ϑ` and `ϑ/h` for the local truncation term; the
 local term is `ϑ`, and `ϑ/h` arises only in the global bound.  (5) In Theorem 5.6, A4 is required
 at every rank of the run, since truncation changes the rank.  (6) Theorem 5.9 is deterministic:
-gradients are exact, so there are no expectations.  It is proved for Algorithm 1, as is the
+gradients are exact, so there are no expectations.  It is proved for Algorithm 4.1, as is the
 paper's Theorem 5.8, and needs `h_t > 0`.  The mini-batch statement is left out because the
 paper's argument does not carry over: a batch K-step does not capture `P(Y) ∇ℓ(Y)`, and the
 telescoping mixes losses of different batches (`InexactGradient.variance_term_necessary`).  (7) The
@@ -67,7 +67,7 @@ section Abstract
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- Upper bound for the loss along an ascent flow `y' = +P ∇ℒ(y)` (the backward S-step of
-arXiv 2502.03006, Eq. (5)): if `‖P ∇ℒ(y t)‖ ≤ α`, then `ℒ(y t) ≤ ℒ(y a) + α² (t - a)`. -/
+arXiv 2502.03006, Eq. (3.3b)): if `‖P ∇ℒ(y t)‖ ≤ α`, then `ℒ(y t) ≤ ℒ(y a) + α² (t - a)`. -/
 theorem loss_le_of_ascent {ℒ : E → ℝ} {g : E → E} (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     {P : E →L[ℝ] E} (hP : IsOrthProj P) {y : ℝ → E} {a b : ℝ}
     (hy : ODESolution (fun _ x => P (g x)) y a b) {α : ℝ}
@@ -405,7 +405,7 @@ lemma odeSolution_sStep (hS : ODESolution (MatrixKSL.sField U₁ V₀ fun _ Y =>
   rwa [e] at hY
 
 /-- **Lemma 5.1 of arXiv 2502.03006 (loss along the PSI substeps).**  Let `∇ℓ = g` be Lipschitz
-(Assumption A2) and let `(K, S, L)` be one step of PSI, Eq. (5) of the paper:
+(Assumption A2) and let `(K, S, L)` be one step of PSI, Eq. (3.3) of the paper:
 `K' = -∇ℓ(K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`, `K(t₁) = U₁ Ŝ₁`; `Ṡ = U₁ᵀ ∇ℓ(U₁ S V₀ᵀ) V₀`,
 `S(t₀) = Ŝ₁`; `L' = -∇ℓ(U₁ Lᵀ)ᵀ U₁`, `L(t₀) = V₀ S(t₁)ᵀ`
 (the library's `MatrixKSL.IsStep` for `F = -∇ℓ`).  Then
@@ -503,7 +503,7 @@ section BcPsi
 
 variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] {r : ℕ}
 
-/-- One step of **backward-corrected PSI**, Eq. (6) of arXiv 2502.03006, for the gradient
+/-- One step of **backward-corrected PSI**, Eq. (3.4) of arXiv 2502.03006, for the gradient
 `g = ∇ℓ`, from `Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to `t₁`:
 
 * K-step `K' = -∇ℓ(K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`, and QR factorization `K(t₁) = U₁ R₁`;
@@ -715,7 +715,7 @@ section AbcPsi
 
 variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] {r k : ℕ}
 
-/-- One step of **augmented backward-corrected PSI**, Eq. (8) of arXiv 2502.03006, before
+/-- One step of **augmented backward-corrected PSI**, Eq. (4.1) of arXiv 2502.03006, before
 truncation, for the gradient `g = ∇ℓ`, from `Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to `t₁`:
 
 * K-step `K' = -∇ℓ(K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`;
@@ -1143,7 +1143,7 @@ section Euler
 
 variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] {r k : ℕ}
 
-/-- The result `Ŷ₁ = Û L₁ᵀ` of one step of Algorithm 1 of arXiv 2502.03006 (abc-PSI with explicit
+/-- The result `Ŷ₁ = Û L₁ᵀ` of one step of Algorithm 4.1 of arXiv 2502.03006 (abc-PSI with explicit
 Euler for the L-step, before truncation): `S̄₁ = Ûᵀ U₀ S₀`, `L₀ = V₀ S̄₁ᵀ`,
 `L₁ = L₀ - h ∇_L ℓ(Û L₀ᵀ) = L₀ - h ∇ℓ(Û L₀ᵀ)ᵀ Û`. -/
 noncomputable def abcPsiEulerStep (g : Matrix m n ℝ → Matrix m n ℝ) (h : ℝ)
@@ -1152,7 +1152,7 @@ noncomputable def abcPsiEulerStep (g : Matrix m n ℝ → Matrix m n ℝ) (h : �
   Uh * (V₀ * (Uhᵀ * U₀ * S₀)ᵀ -
     h • ((g (Uh * (V₀ * (Uhᵀ * U₀ * S₀)ᵀ)ᵀ))ᵀ * Uh))ᵀ
 
-/-- The augmented basis of Algorithm 1 of arXiv 2502.03006: `Û` is orthonormal and contains `U₀`
+/-- The augmented basis of Algorithm 4.1 of arXiv 2502.03006: `Û` is orthonormal and contains `U₀`
 and the K-step result `K₁ = U₀ S₀ - h ∇_K ℓ(U₀ S₀ V₀ᵀ) = U₀ S₀ - h ∇ℓ(Y₀) V₀`. -/
 structure IsAbcPsiEulerBasis (g : Matrix m n ℝ → Matrix m n ℝ) (h : ℝ)
     (U₀ : Matrix m (Fin r) ℝ) (S₀ : Matrix (Fin r) (Fin r) ℝ) (V₀ : Matrix n (Fin r) ℝ)
@@ -1168,7 +1168,7 @@ variable {g : Matrix m n ℝ → Matrix m n ℝ} {h : ℝ} {U₀ : Matrix m (Fin
   {S₀ : Matrix (Fin r) (Fin r) ℝ} {V₀ : Matrix n (Fin r) ℝ} {Uh : Matrix m (Fin k) ℝ}
 
 /-- The identity `Ŷ₁ = Y₀ - h P_Û ∇ℓ(Y₀)` used in the proof of Theorem 5.8 of
-arXiv 2502.03006: one step of Algorithm 1 is a projected gradient step. -/
+arXiv 2502.03006: one step of Algorithm 4.1 is a projected gradient step. -/
 theorem IsAbcPsiEulerBasis.step_eq (hs : IsAbcPsiEulerBasis g h U₀ S₀ V₀ Uh) :
     abcPsiEulerStep g h U₀ S₀ V₀ Uh = projGradStep (leftProj Uh) g h (U₀ * S₀ * V₀ᵀ) := by
   have hY : Uh * (V₀ * (Uhᵀ * U₀ * S₀)ᵀ)ᵀ = U₀ * S₀ * V₀ᵀ := by
@@ -1180,7 +1180,7 @@ theorem IsAbcPsiEulerBasis.step_eq (hs : IsAbcPsiEulerBasis g h U₀ S₀ V₀ U
     Matrix.transpose_mul, Matrix.transpose_transpose, leftProj_apply, Matrix.mul_assoc Uh Uhᵀ]
 
 /-- The K-step augmentation captures the Riemannian gradient: for `h ≠ 0`, the projector
-`P_Û` of Algorithm 1 fixes `P(Y₀) ∇ℓ(Y₀)`.  This replaces the false identity
+`P_Û` of Algorithm 4.1 fixes `P(Y₀) ∇ℓ(Y₀)`.  This replaces the false identity
 `P_Û ∇ℓ = P(Y) ∇ℓ` in the proof of Theorem 5.9 of arXiv 2502.03006, see
 `FactorizedDynamics.exists_leftProj_ne_tangentProj_of_capture`. -/
 theorem IsAbcPsiEulerBasis.absorbs (hs : IsAbcPsiEulerBasis g h U₀ S₀ V₀ Uh) (hh : h ≠ 0) :
@@ -1190,7 +1190,7 @@ theorem IsAbcPsiEulerBasis.absorbs (hs : IsAbcPsiEulerBasis g h U₀ S₀ V₀ U
 
 /-- **Theorem 5.9 of arXiv 2502.03006 (convergence of abc-PSI), deterministic form.**  Assume A2,
 A3, a loss bounded below (the paper has `ℓ ≥ 0`), learning rates `h_t > 0` with `∑ h_t = ∞`,
-`∑ h_t² < ∞`, and let `Y_t = U_t S_t V_tᵀ` be iterates of Algorithm 1 with accumulated truncation
+`∑ h_t² < ∞`, and let `Y_t = U_t S_t V_tᵀ` be iterates of Algorithm 4.1 with accumulated truncation
 errors `∑_{t<T} ‖Y_{t+1} - Ŷ_{t+1}‖ ≤ D`.  Then
 
 `liminf_t ‖P(Y_t) ∇ℓ(Y_t)‖² = 0`.
@@ -1239,7 +1239,7 @@ theorem abcPsi_liminf_tangentGrad_eq_zero {ℓ : Matrix m n ℝ → ℝ} {c B �
     exact ⟨t, ht, hlt.le⟩
   · exact le_liminf_of_le hcob (Eventually.of_forall hnn)
 
-/-- **The augmented basis of Algorithm 1 exists** for `2 r ≤ m`, with `2 r` columns. -/
+/-- **The augmented basis of Algorithm 4.1 exists** for `2 r ≤ m`, with `2 r` columns. -/
 theorem exists_isAbcPsiEulerBasis (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1)
     (hrm : 2 * r ≤ Fintype.card m) :
     ∃ Uh : Matrix m (Fin (2 * r)) ℝ, IsAbcPsiEulerBasis g h U₀ S₀ V₀ Uh := by
@@ -1258,7 +1258,7 @@ theorem isAbcPsiEulerBasis_one (g : Matrix (Fin r) (Fin r) ℝ → Matrix (Fin r
   capU₀ := by simp
   capK := by simp
 
-/-- At full rank, a step of Algorithm 1 without truncation is the gradient descent step, so the
+/-- At full rank, a step of Algorithm 4.1 without truncation is the gradient descent step, so the
 truncation errors in `abcPsi_liminf_tangentGrad_eq_zero` vanish along gradient descent. -/
 theorem abcPsiEulerStep_one (g : Matrix (Fin r) (Fin r) ℝ → Matrix (Fin r) (Fin r) ℝ) (h : ℝ)
     (S₀ : Matrix (Fin r) (Fin r) ℝ) :

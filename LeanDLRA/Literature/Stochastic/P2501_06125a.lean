@@ -15,10 +15,13 @@ Scope of this module (arXiv:2501.06125, Patwardhan, Stammer, Løvbak, Kusch, Kru
 * **Sec. 3.1, Eq. 6** (`mc_mse_decomp`). For i.i.d. realisations `X i` of a random vector in
   `ℝ^d` with finite second moments, the mean squared error of the Monte Carlo estimator
   `(1/N) ∑ X i` against a deterministic target `Q` is `(1/N) Var + ‖E X − Q‖²`, with
-  `Var = E‖X − E X‖²`. The paper's `Q_{r;MC}` is `(1/N) ∑ G(Y_k(v_i))` and `Q_r = E[G(Y_k)]`.
-  The target `Q` here is an arbitrary deterministic vector, so the statement is the same
-  bias-variance identity for any target. The underlying random vector is an arbitrary
-  `EuclideanSpace ℝ (Fin d)`-valued sequence, not the radiative transfer solution.
+  `Var = E‖X − E X‖²`. This is Eq. 6 combined with the unnumbered display after it,
+  `E‖Q̂ − E Q̂‖² = (1/N) Var`. The paper's `Q_{r;MC}` is `(1/N) ∑ G(Y_k(v_i))` and
+  `Q_r = E[G(Y_k)]`. The target `Q` here is an arbitrary deterministic vector, so the statement
+  is the same bias-variance identity for any target. The underlying random vector is an
+  arbitrary `EuclideanSpace ℝ (Fin d)`-valued sequence, not the radiative transfer solution; the
+  paper's matrix-valued QoI in `ℝ^{m̃×ñ}` with the Frobenius norm is the case `d = m̃ ñ` after
+  vectorisation (the paper allows any norm induced by an inner product).
 * **Sec. 3.2, Eq. 8** (`cv_estimator_eq`). The control-variate estimator
   `(1/N) ∑ G_CV(v_i)`, with `G_CV = G(Y^r) − α (G(Y^s) − E G(Y^s))`, equals
   `α E[G(Y^s)] + (1/N) ∑ (G(Y^r(v_i)) − α G(Y^s(v_i)))`. This is pure algebra and holds
@@ -26,10 +29,12 @@ Scope of this module (arXiv:2501.06125, Patwardhan, Stammer, Løvbak, Kusch, Kru
 * **Sec. 3.2, variance formula** (`cv_variance_expand`). The paper states
   `Var(G_CV) = Var_r + α² Var_s − 2α Cov_rs`, with `Cov_rs = E⟨G(Y^r) − Q_r, G(Y^s) − Q_s⟩`.
   Proved here for a real inner product space `E`, with `Var` defined as `E‖· − E ·‖²`.
-* **Sec. 3.2, optimal α** (`cv_optimal_alpha`, `cv_optimal_alpha_min`). For `Var_s > 0`, the
-  quadratic `α ↦ Var_r − 2α Cov + α² Var_s` is minimised at `α* = Cov / Var_s`, with minimum
-  value `Var_r − Cov² / Var_s`. This is the paper's `α* = Cov_rs / Var_s`. The hypothesis
-  `Var_s > 0` is needed for `α*` to be defined; the paper does not state it.
+* **Sec. 3.2, optimal α** (`cv_optimal_alpha`). For `Var_s > 0`, the quadratic
+  `α ↦ Var_r − 2α Cov + α² Var_s` (real numbers `VA`, `VB`, `C`, not tied to random variables)
+  is minimised at `α* = Cov / Var_s`. This is the paper's `α* = Cov_rs / Var_s`. The minimum
+  value `Var_r − Cov² / Var_s` is computed in the proof but is not part of the statement. The
+  hypothesis `Var_s > 0` is needed for `α*` to be defined; the paper does not state it. The
+  paper takes `α > 0`; here every real `α` is allowed.
 
 **Not formalized.**
 * **Thm 1** (local error bound for augmented BUG with truncation under uncertain initial data)
@@ -38,8 +43,8 @@ Scope of this module (arXiv:2501.06125, Patwardhan, Stammer, Løvbak, Kusch, Kru
   the random realisations. The library has the deterministic ingredients
   (`galerkin_step_error`, `kstep_capture_inexact`, `lady_windermere`), but not the random
   ensemble version with the paper's constants `c̃₀`, `c̃₁`, `c₂`. Neither is stated here.
-* The sample-size formula `N = Var_r(1 − Corr²_rs)/ϵ²` (Sec. 3.2 in the header of the slice):
-  I did not read it verbatim in the paper pages I have, so I did not formalize it.
+* The sample-size heuristic `N_CVdiff = Var_r (1 − Corr²_rs)/ϵ²` of Sec. 4.2 (numerical
+  experiments), which the paper states for known `α*` without proof, is not formalized.
 * The i.i.d. assumption in `mc_mse_decomp` is the paper's standing assumption for the Monte
   Carlo estimator, and is what gives the `1/N` factor. It is not an extra assumption.
 
@@ -77,7 +82,8 @@ lemma norm_sq_eq_sum_coord {d : ℕ} (x : EuclideanSpace ℝ (Fin d)) :
   rw [EuclideanSpace.norm_sq_eq]
   simp [Real.norm_eq_abs, sq_abs]
 
-/-- **Eq. 6** (bias-variance decomposition of the Monte Carlo MSE). Let `X i` be i.i.d.
+/-- **Eq. 6** (bias-variance decomposition of the Monte Carlo MSE), together with the display
+after it, `Var(Q̂) = (1/N) Var`. Let `X i` be i.i.d.
 `ℝ^d`-valued random vectors with finite second moments and `N > 0`. Then with
 `μ = E X₀`, `Var = E‖X₀ − μ‖²` and deterministic target `Q`:
 `E‖(1/N) ∑_{i<N} X i − Q‖² = (1/N) Var + ‖μ − Q‖²`. -/
@@ -217,7 +223,8 @@ theorem cv_variance_expand {E : Type*} [NormedAddCommGroup E] [InnerProductSpace
 
 /-- **Sec. 3.2 optimal control-variate coefficient.** If `Var_B > 0`, the quadratic
 `α ↦ Var_A − 2α Cov + α² Var_B` is minimised at `α* = Cov / Var_B` (the paper's
-`α* = Cov_rs / Var_s`), where its value is `Var_A − Cov² / Var_B`. -/
+`α* = Cov_rs / Var_s`). The minimum value `Var_A − Cov² / Var_B` is used in the proof but not
+stated. `VA`, `VB`, `C` are arbitrary reals; combine with `cv_variance_expand` for variances. -/
 theorem cv_optimal_alpha {VA VB C : ℝ} (hVB : 0 < VB) (α : ℝ) :
     VA - 2 * (C / VB) * C + (C / VB) ^ 2 * VB ≤ VA - 2 * α * C + α ^ 2 * VB := by
   have h3 : VA - 2 * (C / VB) * C + (C / VB) ^ 2 * VB = VA - C ^ 2 / VB := by
