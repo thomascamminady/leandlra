@@ -1,5 +1,6 @@
 import LeanDLRA.Training.Descent
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Stochastic descent of DLRT: same-minibatch augmentation (draft)
@@ -241,6 +242,20 @@ def augBasis (U₀ : Matrix m (Fin 1) ℝ) (A : Matrix m n ℝ) (V₀ : Matrix n
 def IsOrthBasisOf (Û K : Matrix m k ℝ) : Prop :=
   Ûᵀ * Û = 1 ∧ ∃ C : Matrix k k ℝ, Û = K * C
 
+/-- **Bridge.** For bases with the same number of columns, `IsOrthBasisOf Û K` is the core
+`Matrix.IsOrthBasisOf Û K`: the capture `Û Ûᵀ K = K` that the core predicate also asks for follows,
+because `Ûᵀ K C = Ûᵀ Û = 1` makes the square matrix `C` invertible. -/
+theorem isOrthBasisOf_iff {Û K : Matrix m k ℝ} : IsOrthBasisOf Û K ↔ Matrix.IsOrthBasisOf Û K := by
+  constructor
+  · rintro ⟨hÛ, C, hC⟩
+    have h1 : Ûᵀ * K * C = 1 := by rw [Matrix.mul_assoc, ← hC, hÛ]
+    have h2 : C * (Ûᵀ * K) = 1 := mul_eq_one_comm.1 h1
+    refine ⟨hÛ, ?_, C, hC⟩
+    calc Û * Ûᵀ * K = K * (C * (Ûᵀ * K)) := by rw [hC]; simp only [Matrix.mul_assoc]
+      _ = K := by rw [h2, Matrix.mul_one]
+  · rintro ⟨hÛ, -, hspan⟩
+    exact ⟨hÛ, hspan⟩
+
 /-- Two orthonormal bases with the same number of columns and `U = U' C` span the same space, so
 they define the same orthogonal projector `U Uᵀ = U' U'ᵀ`. -/
 lemma mul_transpose_eq_of_eq_mul {U U' : Matrix m k ℝ} (hU : Uᵀ * U = 1)
@@ -260,20 +275,9 @@ lemma IsOrthBasisOf.mul_transpose_eq {Û K U' : Matrix m k ℝ} (h : IsOrthBasis
   obtain ⟨hÛ, C, hC⟩ := h
   exact mul_transpose_eq_of_eq_mul hÛ (C := D * C) (by rw [hC, hK, Matrix.mul_assoc]) hU'
 
-/-- The Galerkin projector `Z ↦ U Uᵀ Z V Vᵀ` onto `{U S Vᵀ}`. -/
-noncomputable def galerkinProj (U : Matrix m k ℝ) (V : Matrix n k' ℝ) :
-    Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  leftProj U * rightProj V
-
-omit [DecidableEq k] in
-lemma galerkinProj_apply (U : Matrix m k ℝ) (V : Matrix n k' ℝ) (X : Matrix m n ℝ) :
-    galerkinProj U V X = U * Uᵀ * X * (V * Vᵀ) := by
-  change leftProj U (rightProj V X) = _
-  simp only [leftProj_apply, rightProj_apply', Matrix.mul_assoc]
-
-lemma isOrthProj_galerkinProj [DecidableEq k'] {U : Matrix m k ℝ} {V : Matrix n k' ℝ}
-    (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) : IsOrthProj (galerkinProj U V) :=
-  isOrthProj_leftProj_mul_rightProj hU hV
+/-! The Galerkin projector `Z ↦ U Uᵀ Z V Vᵀ` onto `{U S Vᵀ}` is the core `LeanDLRA.galerkinProj`
+(`galerkinProj_apply`, `isOrthProj_galerkinProj`); the local copy of an earlier version of this
+file was the same definition (unification batch C2). -/
 
 end Bases
 
@@ -738,6 +742,17 @@ example : loss W₀ < loss (W₀ - (1 / 10 : ℝ) • galerkinProj Up Up Gp) ∧
     (by norm_num)
 
 end SameBatchExample
+
+/-- The local Galerkin projector of this file, replaced by the core `LeanDLRA.galerkinProj` (same
+definition `leftProj U * rightProj V`). -/
+@[deprecated (since := "2026-11-09")] alias galerkinProj := LeanDLRA.galerkinProj
+
+/-- Replaced by the core `LeanDLRA.galerkinProj_apply`. -/
+@[deprecated (since := "2026-11-09")] alias galerkinProj_apply := LeanDLRA.galerkinProj_apply
+
+/-- Replaced by the core `LeanDLRA.isOrthProj_galerkinProj`. -/
+@[deprecated (since := "2026-11-09")] alias isOrthProj_galerkinProj :=
+  LeanDLRA.isOrthProj_galerkinProj
 
 end StochasticDescent
 

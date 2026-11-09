@@ -2,6 +2,7 @@ import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.OpenProblems.Curated.StiffAndStochasticDefs
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Asymptotic preservation of low-rank IMEX schemes, characterized
@@ -766,21 +767,9 @@ theorem IsCrossSection.norm_diagonal_mul_le {σ : m → ℝ} {σ₀ σ₁ : ℝ}
     exact mul_le_mul_of_nonneg_right h1 (sq_nonneg _)
   exact abs_le_of_sq_le_sq' hsq (by positivity) |>.2
 
-/-- The Galerkin projector onto `range Y ⊗ range W`. -/
-noncomputable def galerkinProj (Y : Matrix m p ℝ) (W : Matrix n q ℝ) :
-    Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  leftProj Y * rightProj W
-
-omit [DecidableEq m] in
-theorem galerkinProj_apply (Y : Matrix m p ℝ) (W : Matrix n q ℝ) (Z : Matrix m n ℝ) :
-    galerkinProj Y W Z = Y * Yᵀ * Z * (W * Wᵀ) := by
-  simp [galerkinProj, Matrix.mul_assoc]
-
-omit [DecidableEq m] in
-theorem isOrthProj_galerkinProj [DecidableEq p] [DecidableEq q] {Y : Matrix m p ℝ}
-    {W : Matrix n q ℝ} (hY : Yᵀ * Y = 1)
-    (hW : Wᵀ * W = 1) : IsOrthProj (galerkinProj Y W) :=
-  isOrthProj_leftProj_mul_rightProj hY hW
+/-! The Galerkin projector `Z ↦ Y Yᵀ Z W Wᵀ` onto `range Y ⊗ range W` is the core
+`LeanDLRA.galerkinProj` (`galerkinProj_apply`, `isOrthProj_galerkinProj`); the local copy of an
+earlier version of this file was the same definition (unification batch C2). -/
 
 /-- The Galerkin limit `-φ aᵀ W Wᵀ` lies in the Galerkin space and solves the limit problem. -/
 private theorem galerkin_limit_props [DecidableEq q] {σ : m → ℝ} {Y : Matrix m p ℝ}
@@ -3048,5 +3037,16 @@ theorem exists_rate_not_eps_sq (hdt : 0 < dt) (C : ℝ) :
 end Instances
 
 end MicroMacro
+
+/-- The local Galerkin projector of this file, replaced by the core `LeanDLRA.galerkinProj` (same
+definition `leftProj Y * rightProj W`). -/
+@[deprecated (since := "2026-11-09")] alias galerkinProj := LeanDLRA.galerkinProj
+
+/-- Replaced by the core `LeanDLRA.galerkinProj_apply`. -/
+@[deprecated (since := "2026-11-09")] alias galerkinProj_apply := LeanDLRA.galerkinProj_apply
+
+/-- Replaced by the core `LeanDLRA.isOrthProj_galerkinProj`. -/
+@[deprecated (since := "2026-11-09")] alias isOrthProj_galerkinProj :=
+  LeanDLRA.isOrthProj_galerkinProj
 
 end LeanDLRA.Novel.KineticAP

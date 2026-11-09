@@ -4,6 +4,7 @@ import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Matrix.BUG
 import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Results of arXiv 2309.06125: Low-rank retractions and DLRA
@@ -49,6 +50,7 @@ open scoped RealInnerProductSpace Matrix ContDiff LeanDLRA.Frobenius
 namespace LeanDLRA.Literature.P2309_06125
 
 open LeanDLRA.Curvature
+open Matrix (colProj)
 
 /-! ### Retractions on a subset of a normed space -/
 
@@ -224,49 +226,49 @@ section ColP
 
 variable {m k : Type*} [Fintype m] [Fintype k] [DecidableEq k]
 
-/-- The orthogonal projector `A (Aᵀ A)⁻¹ Aᵀ` onto the range of a matrix `A` with independent
-columns.  If `A = U₁ S` is a QR factorization, this is `U₁ U₁ᵀ` (`colP_of_qr`), so it is what the
+/-! The orthogonal projector `A (Aᵀ A)⁻¹ Aᵀ` onto the range of a matrix `A` with independent
+columns is the core Gram column-space projector `Matrix.colProj` (the local `colP` of an earlier
+version of this file was the same matrix, unification batch C2); for full column rank it is the
+orthogonal projector `Matrix.rangeProj A` onto the column space (`Matrix.colProj_eq_rangeProj`).
+If `A = U₁ S` is a QR factorization, it is `U₁ U₁ᵀ` (`colP_of_qr`), so it is what the
 orthonormalization steps of the algorithms of arXiv 2309.06125 compute. -/
-noncomputable def colP (A : Matrix m k ℝ) : Matrix m m ℝ := A * (Aᵀ * A)⁻¹ * Aᵀ
 
-lemma colP_transpose (A : Matrix m k ℝ) : (colP A)ᵀ = colP A := by
-  simp only [colP, Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.transpose_nonsing_inv,
-    Matrix.mul_assoc]
+/-- `A (Aᵀ A)⁻¹ Aᵀ` is symmetric (the core `Matrix.transpose_colProj`). -/
+lemma colP_transpose (A : Matrix m k ℝ) : (colProj A)ᵀ = colProj A :=
+  Matrix.transpose_colProj A
 
-lemma colP_mul_self {A : Matrix m k ℝ} (h : IsUnit (Aᵀ * A).det) : colP A * A = A := by
-  rw [colP, Matrix.mul_assoc, Matrix.mul_assoc, Matrix.nonsing_inv_mul _ h, Matrix.mul_one]
+/-- `A (Aᵀ A)⁻¹ Aᵀ A = A` for full column rank (the core `Matrix.colProj_mul_self`). -/
+lemma colP_mul_self {A : Matrix m k ℝ} (h : IsUnit (Aᵀ * A).det) : colProj A * A = A :=
+  Matrix.colProj_mul_self h
 
-lemma transpose_mul_colP {A : Matrix m k ℝ} (h : IsUnit (Aᵀ * A).det) : Aᵀ * colP A = Aᵀ := by
+/-- `Aᵀ A (Aᵀ A)⁻¹ Aᵀ = Aᵀ` for full column rank. -/
+lemma transpose_mul_colP {A : Matrix m k ℝ} (h : IsUnit (Aᵀ * A).det) : Aᵀ * colProj A = Aᵀ := by
   have := congrArg Matrix.transpose (colP_mul_self h)
   rwa [Matrix.transpose_mul, colP_transpose] at this
 
-lemma colP_idem {A : Matrix m k ℝ} (h : IsUnit (Aᵀ * A).det) : colP A * colP A = colP A := by
-  calc colP A * colP A = colP A * A * (Aᵀ * A)⁻¹ * Aᵀ := by
-        rw [colP.eq_1 A, Matrix.mul_assoc, Matrix.mul_assoc, Matrix.mul_assoc]
-        simp only [Matrix.mul_assoc]
-    _ = colP A := by rw [colP_mul_self h, colP]
+/-- `A (Aᵀ A)⁻¹ Aᵀ` is idempotent (the core `Matrix.colProj_mul_colProj`, which needs no rank
+hypothesis). -/
+lemma colP_idem {A : Matrix m k ℝ} (_h : IsUnit (Aᵀ * A).det) :
+    colProj A * colProj A = colProj A :=
+  Matrix.colProj_mul_colProj A
 
+/-- The projector depends only on the column space (the core `Matrix.colProj_mul_of_isUnit`). -/
 lemma colP_gauge {A : Matrix m k ℝ} {G : Matrix k k ℝ} (hG : IsUnit G.det) :
-    colP (A * G) = colP A := by
-  have h1 : (A * G)ᵀ * (A * G) = Gᵀ * (Aᵀ * A) * G := by
-    simp only [Matrix.transpose_mul, Matrix.mul_assoc]
-  have hGt : IsUnit Gᵀ.det := by rwa [Matrix.det_transpose]
-  rw [colP, h1, Matrix.mul_inv_rev, Matrix.mul_inv_rev, Matrix.transpose_mul]
-  calc A * G * (G⁻¹ * ((Aᵀ * A)⁻¹ * Gᵀ⁻¹)) * (Gᵀ * Aᵀ)
-      = A * (G * G⁻¹) * (Aᵀ * A)⁻¹ * (Gᵀ⁻¹ * Gᵀ) * Aᵀ := by simp only [Matrix.mul_assoc]
-    _ = colP A := by
-      rw [Matrix.mul_nonsing_inv _ hG, Matrix.nonsing_inv_mul _ hGt, Matrix.mul_one,
-        Matrix.mul_one, colP]
+    colProj (A * G) = colProj A :=
+  Matrix.colProj_mul_of_isUnit hG
 
-lemma colP_of_orthonormal {U : Matrix m k ℝ} (hU : Uᵀ * U = 1) : colP U = U * Uᵀ := by
-  simp [colP, hU]
+/-- `U (Uᵀ U)⁻¹ Uᵀ = U Uᵀ` for orthonormal `U` (the core `Matrix.colProj_eq_mul_transpose`). -/
+lemma colP_of_orthonormal {U : Matrix m k ℝ} (hU : Uᵀ * U = 1) : colProj U = U * Uᵀ :=
+  Matrix.colProj_eq_mul_transpose hU
 
-/-- A QR factorization `A = U₁ S` computes the projector: `colP A = U₁ U₁ᵀ`. -/
+/-- A QR factorization `A = U₁ S` computes the projector: `colProj A = U₁ U₁ᵀ`. -/
 lemma colP_of_qr {A U₁ : Matrix m k ℝ} {S : Matrix k k ℝ} (hU : U₁ᵀ * U₁ = 1)
-    (hS : IsUnit S.det) (hA : A = U₁ * S) : colP A = U₁ * U₁ᵀ := by
+    (hS : IsUnit S.det) (hA : A = U₁ * S) : colProj A = U₁ * U₁ᵀ := by
   rw [hA, colP_gauge hS, colP_of_orthonormal hU]
 
-lemma isOrthProjMat_colP {A : Matrix m k ℝ} (h : IsUnit (Aᵀ * A).det) : IsOrthProjMat (colP A) :=
+/-- `A (Aᵀ A)⁻¹ Aᵀ` is an orthogonal projector matrix. -/
+lemma isOrthProjMat_colP {A : Matrix m k ℝ} (h : IsUnit (Aᵀ * A).det) :
+    IsOrthProjMat (colProj A) :=
   ⟨colP_transpose A, colP_idem h⟩
 
 end ColP
@@ -576,14 +578,14 @@ noncomputable def orthRetr (U : Matrix m (Fin r) ℝ) (V : Matrix n (Fin r) ℝ)
 
 /-- **KLS retraction** (arXiv 2309.06125, Algorithm 3): `U₁ U₁ᵀ (X + Z) V₁ V₁ᵀ`, with `U₁`, `V₁`
 orthonormal bases of the ranges of `(X + Z) V` and `(X + Z)ᵀ U`.  The projectors are written with
-`colP`, so the value does not depend on the QR factorizations (see `algorithm3_eq`). -/
+`colProj`, so the value does not depend on the QR factorizations (see `algorithm3_eq`). -/
 noncomputable def klsRetr (U : Matrix m (Fin r) ℝ) (V : Matrix n (Fin r) ℝ) (X Z : Matrix m n ℝ) :
     Matrix m n ℝ :=
-  colP ((X + Z) * V) * (X + Z) * colP ((X + Z)ᵀ * U)
+  colProj ((X + Z) * V) * (X + Z) * colProj ((X + Z)ᵀ * U)
 
 /-- **KSL retraction** (arXiv 2309.06125, Algorithm 2): `U₁ U₁ᵀ (X + Z)`, see `algorithm2_eq`. -/
 noncomputable def kslRetr (V : Matrix n (Fin r) ℝ) (X Z : Matrix m n ℝ) : Matrix m n ℝ :=
-  colP ((X + Z) * V) * (X + Z)
+  colProj ((X + Z) * V) * (X + Z)
 
 namespace IsTangentRep
 
@@ -622,19 +624,19 @@ lemma isUnit_L (rep : IsTangentRep U V A Up Vp T) (hU : Uᵀ * U = 1) (hV : Vᵀ
 
 /-- `U₁ U₁ᵀ U_p = K (Kᵀ K)⁻¹ U_pᵀ U_p`: the factor `U_p` is reduced by one order. -/
 lemma colP_mul_Up (rep : IsTangentRep U V A Up Vp T) (hV : Vᵀ * V = 1) :
-    colP (T * V) * Up = T * V * ((T * V)ᵀ * (T * V))⁻¹ * (Upᵀ * Up) := by
+    colProj (T * V) * Up = T * V * ((T * V)ᵀ * (T * V))⁻¹ * (Upᵀ * Up) := by
   have h : (T * V)ᵀ * Up = Upᵀ * Up := by
     rw [rep.mul_right hV, Matrix.transpose_add, Matrix.transpose_mul, Matrix.add_mul,
       Matrix.mul_assoc, rep.gaugeU, Matrix.mul_zero, zero_add]
-  rw [colP, Matrix.mul_assoc _ _ Up, h]
+  rw [Matrix.colProj_def, Matrix.mul_assoc _ _ Up, h]
 
 /-- `V_pᵀ V₁ V₁ᵀ = V_pᵀ V_p (Lᵀ L)⁻¹ Lᵀ`: the factor `V_p` is reduced by one order. -/
 lemma Vp_mul_colP (rep : IsTangentRep U V A Up Vp T) (hU : Uᵀ * U = 1) :
-    Vpᵀ * colP (Tᵀ * U) = Vpᵀ * Vp * ((Tᵀ * U)ᵀ * (Tᵀ * U))⁻¹ * (Tᵀ * U)ᵀ := by
+    Vpᵀ * colProj (Tᵀ * U) = Vpᵀ * Vp * ((Tᵀ * U)ᵀ * (Tᵀ * U))⁻¹ * (Tᵀ * U)ᵀ := by
   have h : Vpᵀ * (Tᵀ * U) = Vpᵀ * Vp := by
     rw [rep.transpose_mul hU, Matrix.mul_add, ← Matrix.mul_assoc, rep.gaugeV', Matrix.zero_mul,
       zero_add]
-  rw [colP, ← Matrix.mul_assoc, ← Matrix.mul_assoc, h]
+  rw [Matrix.colProj_def, ← Matrix.mul_assoc, ← Matrix.mul_assoc, h]
 
 end IsTangentRep
 
@@ -664,17 +666,18 @@ theorem klsRetr_eq (h : IsFactorization X U S V) (rep : IsTangentRep U V M Up Vp
       Matrix.mul_assoc _ Uᵀ W]
   have hW' : W = orthRetr U V X Z - Up * (S + M)⁻¹ * Vpᵀ := by
     rw [orthRetr_eq h rep hA, ← hW, add_sub_cancel_right]
-  have h1 : colP K * orthRetr U V X Z = orthRetr U V X Z := by
+  have h1 : colProj K * orthRetr U V X Z = orthRetr U V X Z := by
     rw [hR, ← Matrix.mul_assoc, ← Matrix.mul_assoc, colP_mul_self hK]
-  have h2 : orthRetr U V X Z * colP L = orthRetr U V X Z := by
+  have h2 : orthRetr U V X Z * colProj L = orthRetr U V X Z := by
     rw [hR, Matrix.mul_assoc, transpose_mul_colP hL]
-  have hP : colP K * Up = K * (Kᵀ * K)⁻¹ * (Upᵀ * Up) := repW.colP_mul_Up h.orthV
-  have hQ : Vpᵀ * colP L = Vpᵀ * Vp * (Lᵀ * L)⁻¹ * Lᵀ := repW.Vp_mul_colP h.orthU
-  calc klsRetr U V X Z = colP K * W * colP L := rfl
-    _ = colP K * orthRetr U V X Z * colP L - colP K * (Up * (S + M)⁻¹ * Vpᵀ) * colP L := by
+  have hP : colProj K * Up = K * (Kᵀ * K)⁻¹ * (Upᵀ * Up) := repW.colP_mul_Up h.orthV
+  have hQ : Vpᵀ * colProj L = Vpᵀ * Vp * (Lᵀ * L)⁻¹ * Lᵀ := repW.Vp_mul_colP h.orthU
+  calc klsRetr U V X Z = colProj K * W * colProj L := rfl
+    _ = colProj K * orthRetr U V X Z * colProj L -
+        colProj K * (Up * (S + M)⁻¹ * Vpᵀ) * colProj L := by
         conv_lhs => rw [hW']
         rw [Matrix.mul_sub, Matrix.sub_mul]
-    _ = orthRetr U V X Z - (colP K * Up) * (S + M)⁻¹ * (Vpᵀ * colP L) := by
+    _ = orthRetr U V X Z - (colProj K * Up) * (S + M)⁻¹ * (Vpᵀ * colProj L) := by
         rw [h1, h2]
         simp only [Matrix.mul_assoc]
     _ = _ := by rw [hP, hQ]
@@ -694,14 +697,14 @@ theorem kslRetr_eq (h : IsFactorization X U S V) (rep : IsTangentRep U V M Up Vp
     simp only [Matrix.mul_assoc]
   have hW' : W = orthRetr U V X Z - Up * (S + M)⁻¹ * Vpᵀ := by
     rw [orthRetr_eq h rep hA, ← hW, add_sub_cancel_right]
-  have h1 : colP K * orthRetr U V X Z = orthRetr U V X Z := by
+  have h1 : colProj K * orthRetr U V X Z = orthRetr U V X Z := by
     rw [hR, ← Matrix.mul_assoc, colP_mul_self hK]
-  have hP : colP K * Up = K * (Kᵀ * K)⁻¹ * (Upᵀ * Up) := repW.colP_mul_Up h.orthV
-  calc kslRetr V X Z = colP K * W := rfl
-    _ = colP K * orthRetr U V X Z - colP K * (Up * (S + M)⁻¹ * Vpᵀ) := by
+  have hP : colProj K * Up = K * (Kᵀ * K)⁻¹ * (Upᵀ * Up) := repW.colP_mul_Up h.orthV
+  calc kslRetr V X Z = colProj K * W := rfl
+    _ = colProj K * orthRetr U V X Z - colProj K * (Up * (S + M)⁻¹ * Vpᵀ) := by
         conv_lhs => rw [hW']
         rw [Matrix.mul_sub]
-    _ = orthRetr U V X Z - (colP K * Up) * (S + M)⁻¹ * Vpᵀ := by
+    _ = orthRetr U V X Z - (colProj K * Up) * (S + M)⁻¹ * Vpᵀ := by
         rw [h1]
         simp only [Matrix.mul_assoc]
     _ = _ := by rw [hP]
@@ -884,9 +887,9 @@ theorem algorithm3_eq (h : IsFactorization X U S V) (rep : IsTangentRep U V M Up
       klsRetr U V X Z ∧
     klsRetr U V X Z = U₁ * U₁ᵀ * (X + Z) * V₁ * V₁ᵀ := by
   have repW := rep.add_base h.eq
-  have hP : colP ((X + Z) * V) = U₁ * U₁ᵀ :=
+  have hP : colProj ((X + Z) * V) = U₁ * U₁ᵀ :=
     colP_of_qr hU₁ hSU (by rw [repW.mul_right h.orthV, ← hK])
-  have hQ : colP ((X + Z)ᵀ * U) = V₁ * V₁ᵀ :=
+  have hQ : colProj ((X + Z)ᵀ * U) = V₁ * V₁ᵀ :=
     colP_of_qr hV₁ hSV (by rw [repW.transpose_mul h.orthU, ← hL])
   have h2 : klsRetr U V X Z = U₁ * U₁ᵀ * (X + Z) * V₁ * V₁ᵀ := by
     rw [klsRetr, hP, hQ]
@@ -956,7 +959,7 @@ theorem algorithm2_eq (h : IsFactorization X U S V) (rep : IsTangentRep U V M Up
     (hL : V₁ * S₁ᵀ = V * Stᵀ + Zᵀ * U₁) :
     U₁ * S₁ * V₁ᵀ = kslRetr V X Z ∧ kslRetr V X Z = U₁ * U₁ᵀ * (X + Z) := by
   have repW := rep.add_base h.eq
-  have hP : colP ((X + Z) * V) = U₁ * U₁ᵀ :=
+  have hP : colProj ((X + Z) * V) = U₁ * U₁ᵀ :=
     colP_of_qr hU₁ hSh (by rw [repW.mul_right h.orthV, ← hK])
   have h2 : kslRetr V X Z = U₁ * U₁ᵀ * (X + Z) := by rw [kslRetr, hP]
   refine ⟨?_, h2⟩
@@ -1084,9 +1087,10 @@ section Smooth
 variable {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] {N : WithTop ℕ∞}
 
 lemma contDiffAt_colP {A : F → Matrix m (Fin r) ℝ} {x : F} (hA : ContDiffAt ℝ N A x)
-    (hdet : IsUnit ((A x)ᵀ * A x).det) : ContDiffAt ℝ N (fun y => colP (A y)) x :=
-  contDiffAt_mul (contDiffAt_mul hA (contDiffAt_inv (contDiffAt_mul (contDiffAt_transpose hA) hA)
-    hdet)) (contDiffAt_transpose hA)
+    (hdet : IsUnit ((A x)ᵀ * A x).det) : ContDiffAt ℝ N (fun y => colProj (A y)) x := by
+  simp only [Matrix.colProj_def]
+  exact contDiffAt_mul (contDiffAt_mul hA (contDiffAt_inv
+    (contDiffAt_mul (contDiffAt_transpose hA) hA) hdet)) (contDiffAt_transpose hA)
 
 /-- `R^ORTH` is jointly smooth in the factors and the tangent vector, wherever `Uᵀ (X + Z) V` is
 invertible (the smoothness of the map `R` of arXiv 2309.06125, §2.1, in a chart). -/
@@ -1406,8 +1410,8 @@ theorem isSecondOrderRetraction_kls :
   · rw [e]
     exact h.contDiffAt_kls rep
   · refine ⟨(X + τ • Z) * V, ((((X + τ • Z) * V)ᵀ * ((X + τ • Z) * V))⁻¹ * ((X + τ • Z) * V)ᵀ) *
-      (X + τ • Z) * colP ((X + τ • Z)ᵀ * U), ?_⟩
-    rw [retrKLS_eq h, klsRetr, colP]
+      (X + τ • Z) * colProj ((X + τ • Z)ᵀ * U), ?_⟩
+    rw [retrKLS_eq h, klsRetr, Matrix.colProj_def]
     simp only [Matrix.mul_assoc]
   · exact (contDiffAt_mul (contDiffAt_mul contDiffAt_const (contDiffAt_inv_line h.det _))
       contDiffAt_const).sub ((contDiffAt_id.pow 2).smul (h.contDiffAt_klsRem rep))
@@ -1435,7 +1439,7 @@ theorem isSecondOrderRetraction_ksl :
     exact h.contDiffAt_ksl rep
   · refine ⟨(X + τ • Z) * V, ((((X + τ • Z) * V)ᵀ * ((X + τ • Z) * V))⁻¹ * ((X + τ • Z) * V)ᵀ) *
       (X + τ • Z), ?_⟩
-    rw [retrKSL_eq h, kslRetr, colP]
+    rw [retrKSL_eq h, kslRetr, Matrix.colProj_def]
     simp only [Matrix.mul_assoc]
   · exact (contDiffAt_mul (contDiffAt_mul contDiffAt_const (contDiffAt_inv_line h.det _))
       contDiffAt_const).sub (contDiffAt_id.smul (h.contDiffAt_kslRem rep))
@@ -1517,8 +1521,8 @@ theorem eventually_rank_klsRetr (h : IsFactorization X U S V) :
   filter_upwards [eventually_isUnit_det hg.continuousAt hdet] with Z hZ
   refine rank_eq_of_factor (C := Uᵀ) (D := V) (P := (X + Z) * V)
     (Q := ((((X + Z) * V)ᵀ * ((X + Z) * V))⁻¹ * ((X + Z) * V)ᵀ) * (X + Z) *
-      colP ((X + Z)ᵀ * U)) ?_ hZ
-  rw [klsRetr, colP]
+      colProj ((X + Z)ᵀ * U)) ?_ hZ
+  rw [klsRetr, Matrix.colProj_def]
   simp only [Matrix.mul_assoc]
 
 end Curves
@@ -1634,9 +1638,10 @@ variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ}
 
 lemma hasDerivAt_colP {A : ℝ → Matrix m (Fin r) ℝ} {A' : Matrix m (Fin r) ℝ}
     (hA : HasDerivAt A A' 0) (hdet : IsUnit ((A 0)ᵀ * A 0).det) :
-    ∃ P', HasDerivAt (fun t => colP (A t)) P' 0 := by
+    ∃ P', HasDerivAt (fun t => colProj (A t)) P' 0 := by
   have hAt := Frobenius.hasDerivAt_transpose hA
   have hinv := hasDerivAt_matInv (Frobenius.hasDerivAt_mul hAt hA) hdet
+  simp only [Matrix.colProj_def]
   exact ⟨_, Frobenius.hasDerivAt_mul (Frobenius.hasDerivAt_mul hA hinv) hAt⟩
 
 /-- `(1 - U Uᵀ) T V S⁻¹ Uᵀ` plus its transpose: the derivative of the orthogonal projector onto the
@@ -1690,21 +1695,21 @@ lemma deriv_range_proj [DecidableEq m] {P : ℝ → Matrix m m ℝ} {P' : Matrix
     _ = dColP U S V T := by rw [e4, e5, dColP]
 
 lemma colP_mul_of_rank {W : Matrix m n ℝ} (hW : W.rank ≤ r) (hB : IsUnit (Uᵀ * W * V).det) :
-    colP (W * V) * W = W := by
+    colProj (W * V) * W = W := by
   have hsk := skeleton (C := Uᵀ) (D := V) hW hB
   have hK : IsUnit ((W * V)ᵀ * (W * V)).det :=
     isUnit_det_transpose_mul_self (W := Uᵀ) (by rwa [← Matrix.mul_assoc])
   have e : (W * V) * ((Uᵀ * W * V)⁻¹ * Uᵀ * W) = W := by
     conv_rhs => rw [← hsk]
     simp only [Matrix.mul_assoc]
-  calc colP (W * V) * W = colP (W * V) * ((W * V) * ((Uᵀ * W * V)⁻¹ * Uᵀ * W)) := by rw [e]
+  calc colProj (W * V) * W = colProj (W * V) * ((W * V) * ((Uᵀ * W * V)⁻¹ * Uᵀ * W)) := by rw [e]
     _ = (W * V) * ((Uᵀ * W * V)⁻¹ * Uᵀ * W) := by
         rw [← Matrix.mul_assoc, colP_mul_self hK]
     _ = W := e
 
 lemma IsFactorization.colP_eq {W : Matrix m n ℝ} (h' : IsFactorization W U' S' V')
     {C : Matrix (Fin r) m ℝ} {D : Matrix n (Fin r) ℝ} (hB : IsUnit (C * W * D).det) :
-    colP (W * D) = U' * U'ᵀ := by
+    colProj (W * D) = U' * U'ᵀ := by
   have hG : W * D = U' * (S' * V'ᵀ * D) := by
     rw [h'.eq]
     simp only [Matrix.mul_assoc]
@@ -1724,19 +1729,19 @@ noncomputable abbrev lm (P : Matrix m m ℝ) : Matrix m n ℝ →L[ℝ] Matrix m
 noncomputable abbrev rm (Q : Matrix n n ℝ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
   (Frobenius.mulCLM (m := m) (l := n) (n := n)).flip Q
 
-/-- Near a factorized point, `Π` is given by the two projectors `colP (W V)`, `colP (Wᵀ U)`, which
-depend differentiably on `W`. -/
+/-- Near a factorized point, `Π` is given by the two projectors `colProj (W V)`,
+`colProj (Wᵀ U)`, which depend differentiably on `W`. -/
 lemma tanProj_eq_tangent {W : Matrix m n ℝ} (hrank : W.rank = r)
     (hB : IsUnit (Uᵀ * W * V).det) :
-    tanProj W = tangent (lm (colP (W * V))) (rm (colP (Wᵀ * U))) := by
+    tanProj W = tangent (lm (colProj (W * V))) (rm (colProj (Wᵀ * U))) := by
   obtain ⟨U', S', V', h'⟩ := exists_factorization (r := r) hrank
-  have h1 : colP (W * V) = U' * U'ᵀ := h'.colP_eq (C := Uᵀ) hB
+  have h1 : colProj (W * V) = U' * U'ᵀ := h'.colP_eq (C := Uᵀ) hB
   have hB' : IsUnit (Vᵀ * Wᵀ * U).det := by
     have e : Vᵀ * Wᵀ * U = (Uᵀ * W * V)ᵀ := by
       simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
     rw [e, Matrix.det_transpose]
     exact hB
-  have h2 : colP (Wᵀ * U) = V' * V'ᵀ := h'.transpose.colP_eq (C := Vᵀ) hB'
+  have h2 : colProj (Wᵀ * U) = V' * V'ᵀ := h'.transpose.colP_eq (C := Vᵀ) hB'
   rw [h'.tanProj_eq, h1, h2]
   refine ContinuousLinearMap.ext fun q => ?_
   rw [tangentProj_apply, tangent_apply]
@@ -1745,7 +1750,7 @@ lemma tanProj_eq_tangent {W : Matrix m n ℝ} (hrank : W.rank = r)
 /-- The derivative of the left projector of `Y t` along a curve on `M_r`. -/
 lemma deriv_left [DecidableEq m] (h : IsFactorization (Y 0) U S V)
     (hrank : ∀ᶠ t in 𝓝 (0 : ℝ), (Y t).rank = r) (hY : HasDerivAt Y T 0) :
-    HasDerivAt (fun t => colP (Y t * V)) (dColP U S V T) 0 ∧
+    HasDerivAt (fun t => colProj (Y t * V)) (dColP U S V T) 0 ∧
       dColP U S V T * Y 0 = (1 - U * Uᵀ) * T := by
   have hcomp : ContinuousAt (fun t => Uᵀ * Y t * V) 0 :=
     (Frobenius.hasDerivAt_mul_const V (Frobenius.hasDerivAt_const_mul Uᵀ hY)).continuousAt
@@ -1758,7 +1763,7 @@ lemma deriv_left [DecidableEq m] (h : IsFactorization (Y 0) U S V)
       IsUnit ((W * V)ᵀ * (W * V)).det := fun hb =>
     isUnit_det_transpose_mul_self (W := Uᵀ) (by rwa [← Matrix.mul_assoc])
   obtain ⟨P', hP'⟩ := hasDerivAt_colP hK (hunit hB0)
-  have hP0 : colP (Y 0 * V) = U * Uᵀ := h.colP_eq (C := Uᵀ) hB0
+  have hP0 : colProj (Y 0 * V) = U * Uᵀ := h.colP_eq (C := Uᵀ) hB0
   have hd := deriv_range_proj hP' (Eventually.of_forall fun t => colP_transpose _)
     (hB.mono fun t ht => colP_idem (hunit ht))
     ((hB.and hrank).mono fun t ht => colP_mul_of_rank (le_of_eq ht.2) ht.1) hY h hP0
@@ -1788,20 +1793,20 @@ theorem isProjectorCurve_tanProj [DecidableEq m] [DecidableEq n]
   have hL := deriv_left (Y := fun t => (Y t)ᵀ) (T := Tᵀ) h.transpose
     (hrank.mono fun t ht => by rwa [Matrix.rank_transpose]) (Frobenius.hasDerivAt_transpose hY)
   have hR := deriv_left h hrank hY
-  have hP0 : colP (Y 0 * V) = U * Uᵀ := h.colP_eq (C := Uᵀ) hB0
+  have hP0 : colProj (Y 0 * V) = U * Uᵀ := h.colP_eq (C := Uᵀ) hB0
   have hB0' : IsUnit (Vᵀ * (Y 0)ᵀ * U).det := by
     rw [h.transpose.sandwich]
     exact h.transpose.det
-  have hQ0 : colP ((Y 0)ᵀ * U) = V * Vᵀ := h.transpose.colP_eq (C := Vᵀ) hB0'
-  have hLm : HasDerivAt (fun t => lm (n := n) (colP (Y t * V))) (lm (dColP U S V T)) 0 :=
+  have hQ0 : colProj ((Y 0)ᵀ * U) = V * Vᵀ := h.transpose.colP_eq (C := Vᵀ) hB0'
+  have hLm : HasDerivAt (fun t => lm (n := n) (colProj (Y t * V))) (lm (dColP U S V T)) 0 :=
     (Frobenius.mulCLM (m := m) (l := m) (n := n)).hasFDerivAt.comp_hasDerivAt 0 hR.1
-  have hRm : HasDerivAt (fun t => rm (m := m) (colP ((Y t)ᵀ * U))) (rm (dColP V Sᵀ U Tᵀ)) 0 :=
+  have hRm : HasDerivAt (fun t => rm (m := m) (colProj ((Y t)ᵀ * U))) (rm (dColP V Sᵀ U Tᵀ)) 0 :=
     ((Frobenius.mulCLM (m := m) (l := n) (n := n)).flip).hasFDerivAt.comp_hasDerivAt 0 hL.1
   have hprod := hLm.clm_comp hRm
   have htan := (hLm.add hRm).sub hprod
   have hev : (fun t => tanProj (Y t)) =ᶠ[𝓝 0] fun t =>
-      lm (colP (Y t * V)) + rm (colP ((Y t)ᵀ * U)) -
-        (lm (colP (Y t * V))).comp (rm (colP ((Y t)ᵀ * U))) := by
+      lm (colProj (Y t * V)) + rm (colProj ((Y t)ᵀ * U)) -
+        (lm (colProj (Y t * V))).comp (rm (colProj ((Y t)ᵀ * U))) := by
     filter_upwards [hB, hrank] with t hb hr
     rw [tanProj_eq_tangent hr hb]
     rfl
@@ -2312,8 +2317,9 @@ theorem IsEulerKLSStep.eq_klsRetr_add (hs : IsEulerKLSStep F dt U₀ S₀ V₀ U
         (V₁ * V₁ᵀ)) := by
   classical
   obtain ⟨h1, h2⟩ := hs.bases_eq h
-  have hP : colP ((X + dt • tanProj X (F X)) * V₀) = U₁ * U₁ᵀ := colP_of_qr hs.orthU₁ hs.detSU h1
-  have hQ : colP ((X + dt • tanProj X (F X))ᵀ * U₀) = V₁ * V₁ᵀ := colP_of_qr hs.orthV₁ hs.detSV h2
+  have hP : colProj ((X + dt • tanProj X (F X)) * V₀) = U₁ * U₁ᵀ := colP_of_qr hs.orthU₁ hs.detSU h1
+  have hQ : colProj ((X + dt • tanProj X (F X))ᵀ * U₀) = V₁ * V₁ᵀ :=
+    colP_of_qr hs.orthV₁ hs.detSV h2
   have eX : U₁ * (U₁ᵀ * U₀ * S₀ * (V₀ᵀ * V₁)) * V₁ᵀ = U₁ * U₁ᵀ * X * (V₁ * V₁ᵀ) := by
     rw [h.eq]
     simp only [Matrix.mul_assoc]
@@ -2347,7 +2353,7 @@ theorem IsEulerKSLStep.eq_kslRetr_add (hs : IsEulerKSLStep F dt U₀ S₀ V₀ U
   classical
   have h1 : (X + dt • tanProj X (F X)) * V₀ = U₁ * Sh := by
     rw [hs.kStep, ← h.eq, Matrix.add_mul, h.mul_V, Matrix.smul_mul, h.tanProj_mul_V]
-  have hP : colP ((X + dt • tanProj X (F X)) * V₀) = U₁ * U₁ᵀ := colP_of_qr hs.orthU₁ hs.detSh h1
+  have hP : colProj ((X + dt • tanProj X (F X)) * V₀) = U₁ * U₁ᵀ := colP_of_qr hs.orthU₁ hs.detSh h1
   have ht : S₁ * V₁ᵀ = St * V₀ᵀ + dt • (U₁ᵀ * F (U₁ * St * V₀ᵀ)) := by
     have := congrArg Matrix.transpose hs.lStep
     simpa only [Matrix.transpose_mul, Matrix.transpose_add, Matrix.transpose_smul,
@@ -2581,5 +2587,9 @@ theorem isEulerKLSStep_of_bugStep {G : Matrix m n ℝ} {t₀ t₁ : ℝ} {U₀ U
     rw [odeSolution_const (c := U₁ᵀ * G * V₁) hs.sSol (fun _ _ => rfl) ht, hs.sStart]
 
 end BUGConstant
+
+/-- The local projector `A (Aᵀ A)⁻¹ Aᵀ` of this file, replaced by the core `Matrix.colProj` (the
+same matrix: `Matrix.colProj_def`). -/
+@[deprecated (since := "2026-11-09")] alias colP := Matrix.colProj
 
 end LeanDLRA.Literature.P2309_06125

@@ -1,17 +1,19 @@
+import LeanDLRA.LinearAlgebra.Projection.Defs
 import Mathlib.Algebra.Order.Star.Real
 import Mathlib.Analysis.Matrix.Spectrum
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.LinearAlgebra.Matrix.Rank
 
 /-!
-# Definitions: pseudoinverses of real matrices
+# Definitions: pseudoinverses, factorizations, and the projectors built from them
 
 The vocabulary of layer 1 (`LinearAlgebra/`) for generalized inverses. Low-rank integrators meet
 pseudoinverses in two forms: the **Moore–Penrose inverse** `A⁺`, defined for every matrix by the
 four Penrose equations, and the **Gram formula** `(Aᵀ A)⁻¹ Aᵀ`, which papers write as `A⁺` (or
 `A†`) for matrices of full column rank (bases `U`, sketches `Ω`, factors `K = U S`). This file
 defines both, proves that the Penrose equations have exactly one solution, and characterizes
-exactly when the two agree.
+exactly when the two agree. The same holds for the projectors built from them: the orthogonal
+projector `A A⁺` onto the column space, and the Gram formula `A (Aᵀ A)⁻¹ Aᵀ`.
 
 ## Main definitions
 
@@ -21,6 +23,21 @@ exactly when the two agree.
   decomposition `Aᵀ A = W diag(λ) Wᵀ` as `A⁺ = W diag(λ⁺) Wᵀ Aᵀ` with `λ⁺ = λ⁻¹` (and `0⁻¹ = 0`).
 * `Matrix.gramPinv A`: the Gram pseudoinverse `(Aᵀ A)⁻¹ Aᵀ`, a left inverse of every matrix of
   full column rank.
+* `Matrix.rangeProj A`: the orthogonal projector `A A⁺` onto the column space of `A`, for every
+  `A`.
+* `Matrix.colProj A`: the Gram column-space projector `A (Aᵀ A)⁻¹ Aᵀ`.
+* `LeanDLRA.galerkinProj U V`: the Galerkin projector `Z ↦ U Uᵀ Z V Vᵀ` onto the matrices
+  `U S Vᵀ`.
+* `Matrix.IsOrthCapture W X`: `W` has orthonormal columns and `W Wᵀ X = X` (the capture
+  hypothesis that replaces QR in the step structures); `Matrix.IsOrthBasisOf W X`: in addition the
+  columns of `W` lie in the column space of `X`.
+* `Matrix.IsQR K Q R`: `K = Q R` with orthonormal `Q` and upper triangular `R`.
+* `Matrix.IsSVD A U σ V`: `A = U diag(σ) Vᵀ` with orthonormal `U`, `V` and
+  `σ₀ ≥ ⋯ ≥ σ_{p-1} ≥ 0`; `Matrix.svdTrunc U σ V r`: its truncation
+  `U diag(σ₀, …, σ_{r-1}, 0, …, 0) Vᵀ` to the first `r` triplets; `LeanDLRA.tailSqSum σ r`: the
+  discarded weight `∑_{i ≥ r} σᵢ²`.
+* `LeanDLRA.IsBestLowRankApprox r A X`: `X` has rank `≤ r` and is a closest such matrix to `A` in
+  the Frobenius norm.
 
 ## Main results
 
@@ -35,6 +52,21 @@ exactly when the two agree.
   the Moore–Penrose inverse.
 * `Matrix.gramPinv_eq_pinv_iff`: in general `A.gramPinv = A.pinv` iff `A` has full column rank or
   `A = 0`; the `example` after it shows a rank-deficient matrix for which the two differ.
+* `Matrix.eq_rangeProj_iff`: `rangeProj A` is the only symmetric matrix `A C` that fixes the
+  columns of `A`; hence `Matrix.rangeProj_eq_mul_transpose` (`U Uᵀ` for orthonormal `U`),
+  `Matrix.rangeProj_eq_of_capture` (every orthonormal basis of the column space computes it) and
+  `Matrix.rangeProj_eq_rangeProj_of_mul` (it depends only on the column space).
+* `Matrix.colProj_eq_rangeProj`, `Matrix.colProj_eq_rangeProj_iff`: the Gram formula is the
+  column-space projector iff `A` has full column rank or `A = 0`.
+* `LeanDLRA.isOrthProj_galerkinProj`: for orthonormal `U`, `V` the Galerkin projector is an
+  orthogonal projector; `LeanDLRA.obliqueProj_self`: the oblique projector with test matrix `A`
+  is `colProj A`.
+* `Matrix.isOrthCapture_iff` (capture iff `X = W R`), `Matrix.IsQR.isOrthCapture`,
+  `Matrix.IsQR.isOrthBasisOf`, `Matrix.IsOrthBasisOf.mul_transpose_eq_rangeProj`: a QR
+  factorization with invertible `R` gives an orthonormal basis of the column space, and every such
+  basis computes `rangeProj`.
+* `Matrix.svdTrunc_eq_submatrix`: for `r ≤ p`, `svdTrunc U σ V r = U_{:r} Σ_r V_{:r}ᵀ`, the
+  leading-column form in which papers write the truncation.
 
 ## Implementation notes
 
@@ -42,7 +74,20 @@ The scalar field is `ℝ` (`docs/CONVENTIONS.md` §5), so `Aᴴ = Aᵀ` and the 
 stated with the transpose. `A.pinv` is defined explicitly, not by choice; that it satisfies the
 Penrose equations is `isMoorePenrose_pinv`, and every other solution equals it. The Gram formula
 uses Mathlib's `⁻¹` on square matrices, which is `0` for singular matrices; hence
-`A.gramPinv = 0` when `Aᵀ A` is singular (`gramPinv_of_not_isUnit`).
+`A.gramPinv = 0` and `A.colProj = 0` when `Aᵀ A` is singular (`gramPinv_of_not_isUnit`,
+`colProj_of_not_isUnit`). `A.rangeProj` is defined through `A.pinv` with classical decidable
+equality on the column indices, so that it needs no `DecidableEq` argument
+(`rangeProj_eq_mul_pinv` rewrites it for any instance).
+
+The three projectors are projectors of layer 1 and belong with `LinearAlgebra/Projection/Defs.lean`
+(`docs/CONVENTIONS.md` §3, `wip/UNIFY.md` §a2). They are defined here because `rangeProj` and
+`colProj` are built from `pinv` and `gramPinv`, and `galerkinProj` joined them so that batch C2
+did not touch the root of the import graph; moving them is hash-neutral. Likewise
+`Matrix.svdTrunc`, `LeanDLRA.tailSqSum` and `LeanDLRA.IsBestLowRankApprox` belong with
+`LinearAlgebra/SVD/Defs.lean` and `LinearAlgebra/LowRank/Defs.lean` (`wip/UNIFY.md` §a4, §a5),
+which batch B5 creates; they were added here in batch C3 and move there with B5 (hash-neutral).
+`IsBestLowRankApprox` is the minimizer form; it does not need the distance `distLR` of
+`Matrix/LowRankDistance.lean`.
 
 ## References
 
@@ -431,6 +476,363 @@ theorem gramPinv_eq_pinv_iff {A : Matrix m k ℝ} :
 
 end Gram
 
+/-! ### Projectors onto the column space of a matrix -/
+
+/-- The **orthogonal projector onto the column space** of `A`: `A A⁺` with the Moore–Penrose
+inverse `A⁺ = Matrix.pinv A`. It is defined for every `A`, whatever its rank: it is symmetric
+(`transpose_rangeProj`), idempotent, fixes the columns of `A` (`rangeProj_mul_self`) and is the
+only symmetric matrix of the form `A C` that does (`eq_rangeProj_of_mul_self`). For orthonormal
+`U` it is `U Uᵀ` (`rangeProj_eq_mul_transpose`); for `A` of full column rank it is the Gram
+formula `A (Aᵀ A)⁻¹ Aᵀ = colProj A` (`colProj_eq_rangeProj`). -/
+noncomputable def rangeProj (A : Matrix m k ℝ) : Matrix m m ℝ :=
+  letI := Classical.decEq k; A * A.pinv
+
+/-- `rangeProj A = A A⁺`, for any decidable equality on the column indices. -/
+theorem rangeProj_eq_mul_pinv [inst : DecidableEq k] (A : Matrix m k ℝ) :
+    A.rangeProj = A * A.pinv := by
+  have h : Classical.decEq k = inst := Subsingleton.elim _ _
+  unfold rangeProj
+  rw [h]
+
+/-- The column-space projector is symmetric. -/
+theorem transpose_rangeProj (A : Matrix m k ℝ) : A.rangeProjᵀ = A.rangeProj := by
+  classical
+  rw [rangeProj_eq_mul_pinv]
+  exact A.transpose_mul_pinv
+
+/-- The column-space projector fixes the columns of `A`: `A A⁺ A = A`. -/
+theorem rangeProj_mul_self (A : Matrix m k ℝ) : A.rangeProj * A = A := by
+  classical
+  rw [rangeProj_eq_mul_pinv]
+  exact A.mul_pinv_mul_self
+
+/-- The column-space projector is idempotent. -/
+theorem rangeProj_mul_rangeProj (A : Matrix m k ℝ) : A.rangeProj * A.rangeProj = A.rangeProj := by
+  classical
+  rw [rangeProj_eq_mul_pinv, ← Matrix.mul_assoc, A.mul_pinv_mul_self]
+
+/-- The column-space projector is an orthogonal projector matrix. -/
+theorem isOrthProjMat_rangeProj (A : Matrix m k ℝ) :
+    LeanDLRA.Curvature.IsOrthProjMat A.rangeProj :=
+  ⟨transpose_rangeProj A, rangeProj_mul_rangeProj A⟩
+
+/-- The column-space projector has the form `A C`: its columns lie in the column space of `A`. -/
+theorem exists_rangeProj_eq_mul (A : Matrix m k ℝ) : ∃ C : Matrix k m ℝ, A.rangeProj = A * C := by
+  classical
+  exact ⟨A.pinv, rangeProj_eq_mul_pinv A⟩
+
+/-- **Uniqueness of the column-space projector.** A symmetric matrix `P = A C` whose columns lie in
+the column space of `A` and that fixes the columns of `A` is `rangeProj A`. -/
+theorem eq_rangeProj_of_mul_self {A : Matrix m k ℝ} {P : Matrix m m ℝ} {C : Matrix k m ℝ}
+    (hsymm : Pᵀ = P) (hfix : P * A = A) (hfac : P = A * C) : P = A.rangeProj := by
+  classical
+  have h1 : A.rangeProj * P = P := by rw [hfac, ← Matrix.mul_assoc, rangeProj_mul_self]
+  have h2 := congrArg Matrix.transpose h1
+  rw [Matrix.transpose_mul, hsymm, transpose_rangeProj] at h2
+  rw [← h2, rangeProj_eq_mul_pinv, ← Matrix.mul_assoc, hfix]
+
+/-- `rangeProj A` is characterized by three properties: it is symmetric, it fixes the columns of
+`A`, and it has the form `A C`. -/
+theorem eq_rangeProj_iff {A : Matrix m k ℝ} {P : Matrix m m ℝ} :
+    P = A.rangeProj ↔ Pᵀ = P ∧ P * A = A ∧ ∃ C : Matrix k m ℝ, P = A * C := by
+  constructor
+  · rintro rfl
+    exact ⟨transpose_rangeProj A, rangeProj_mul_self A, exists_rangeProj_eq_mul A⟩
+  · rintro ⟨hs, hf, C, hC⟩
+    exact eq_rangeProj_of_mul_self hs hf hC
+
+omit [Fintype n] in
+/-- `rangeProj A * X = X` iff the columns of `X` lie in the column space of `A`. -/
+theorem rangeProj_mul_eq_self_iff {A : Matrix m k ℝ} {X : Matrix m n ℝ} :
+    A.rangeProj * X = X ↔ ∃ C : Matrix k n ℝ, X = A * C := by
+  classical
+  constructor
+  · intro h
+    exact ⟨A.pinv * X, by rw [← Matrix.mul_assoc, ← rangeProj_eq_mul_pinv, h]⟩
+  · rintro ⟨C, rfl⟩
+    rw [← Matrix.mul_assoc, rangeProj_mul_self]
+
+/-- **Orthonormal bases.** The column-space projector of a matrix with orthonormal columns
+`Uᵀ U = 1` is `U Uᵀ`. -/
+theorem rangeProj_eq_mul_transpose [DecidableEq k] {U : Matrix m k ℝ} (hU : Uᵀ * U = 1) :
+    U.rangeProj = U * Uᵀ := by
+  refine (eq_rangeProj_of_mul_self (C := Uᵀ) ?_ ?_ rfl).symm
+  · rw [Matrix.transpose_mul, Matrix.transpose_transpose]
+  · rw [Matrix.mul_assoc, hU, Matrix.mul_one]
+
+/-- **Capture.** If the columns of `W` lie in the column space of `A` (`W = A C`) and `W Wᵀ` fixes
+the columns of `A`, then `rangeProj A = W Wᵀ`: an orthonormal basis of the column space computes
+the projector, whichever way it was obtained (QR, SVD, Gram–Schmidt). Orthonormality of `W` is not
+needed as a hypothesis; it follows (`W Wᵀ` is then idempotent). -/
+theorem rangeProj_eq_of_capture {l : Type*} [Fintype l] {A : Matrix m k ℝ} {W : Matrix m l ℝ}
+    {C : Matrix k l ℝ} (hcap : W * Wᵀ * A = A) (hWA : W = A * C) : A.rangeProj = W * Wᵀ := by
+  refine (eq_rangeProj_of_mul_self (C := C * Wᵀ) ?_ hcap ?_).symm
+  · rw [Matrix.transpose_mul, Matrix.transpose_transpose]
+  · rw [← Matrix.mul_assoc, ← hWA]
+
+/-- The column-space projector depends only on the column space: if `A = B C` and `B = A D`, then
+`rangeProj A = rangeProj B`. -/
+theorem rangeProj_eq_rangeProj_of_mul {l : Type*} [Fintype l] {A : Matrix m k ℝ}
+    {B : Matrix m l ℝ} {C : Matrix l k ℝ} {D : Matrix k l ℝ} (hA : A = B * C) (hB : B = A * D) :
+    A.rangeProj = B.rangeProj := by
+  obtain ⟨E, hE⟩ := exists_rangeProj_eq_mul B
+  refine (eq_rangeProj_of_mul_self (C := D * E) (transpose_rangeProj B) ?_ ?_).symm
+  · rw [hA, ← Matrix.mul_assoc, rangeProj_mul_self]
+  · rw [hE, hB, Matrix.mul_assoc]
+
+/-- The column-space projector of the zero matrix is `0`. -/
+theorem rangeProj_zero : (0 : Matrix m k ℝ).rangeProj = 0 := by
+  classical
+  rw [rangeProj_eq_mul_pinv, Matrix.zero_mul]
+
+/-! ### The Gram column-space projector -/
+
+section Gram
+
+variable [DecidableEq k]
+
+/-- The **Gram column-space projector** `A (Aᵀ A)⁻¹ Aᵀ = A A⁺`, with the Gram pseudoinverse
+`A⁺ = Matrix.gramPinv A`. Papers on low-rank integrators write it for bases of full column rank
+(`IsUnit (Aᵀ * A).det`); there it is the orthogonal projector `rangeProj A` onto the column space
+(`colProj_eq_rangeProj`), and it equals `U Uᵀ` for every QR factorization `A = U R`
+(`colProj_mul_of_isUnit`, `colProj_eq_mul_transpose`). For a rank-deficient `A` Mathlib's
+`(Aᵀ A)⁻¹` is `0`, so `colProj A = 0` (`colProj_of_not_isUnit`), which differs from
+`rangeProj A` unless `A = 0` (`colProj_eq_rangeProj_iff` and the `example` below). -/
+noncomputable def colProj (A : Matrix m k ℝ) : Matrix m m ℝ := A * A.gramPinv
+
+/-- Unfolding lemma: `colProj A = A (Aᵀ A)⁻¹ Aᵀ`. -/
+theorem colProj_def (A : Matrix m k ℝ) : A.colProj = A * (Aᵀ * A)⁻¹ * Aᵀ := by
+  rw [colProj, gramPinv, Matrix.mul_assoc]
+
+/-- The Gram column-space projector is symmetric. -/
+theorem transpose_colProj (A : Matrix m k ℝ) : A.colProjᵀ = A.colProj :=
+  transpose_mul_gramPinv A
+
+/-- The Gram column-space projector vanishes when `Aᵀ A` is singular. -/
+theorem colProj_of_not_isUnit {A : Matrix m k ℝ} (h : ¬IsUnit (Aᵀ * A).det) : A.colProj = 0 := by
+  rw [colProj, gramPinv_of_not_isUnit h, Matrix.mul_zero]
+
+/-- **Bridge (full column rank).** For `A` of full column rank, `A (Aᵀ A)⁻¹ Aᵀ` is the orthogonal
+projector onto the column space. -/
+theorem colProj_eq_rangeProj {A : Matrix m k ℝ} (h : IsUnit (Aᵀ * A).det) :
+    A.colProj = A.rangeProj := by
+  rw [colProj, rangeProj_eq_mul_pinv, gramPinv_eq_pinv h]
+
+/-- For `A` of full column rank, `colProj A` fixes the columns of `A`. -/
+theorem colProj_mul_self {A : Matrix m k ℝ} (h : IsUnit (Aᵀ * A).det) : A.colProj * A = A := by
+  rw [colProj_eq_rangeProj h, rangeProj_mul_self]
+
+/-- The Gram column-space projector is idempotent, for every `A` (it is `0` without full column
+rank). -/
+theorem colProj_mul_colProj (A : Matrix m k ℝ) : A.colProj * A.colProj = A.colProj := by
+  by_cases h : IsUnit (Aᵀ * A).det
+  · rw [colProj_eq_rangeProj h, rangeProj_mul_rangeProj]
+  · rw [colProj_of_not_isUnit h, Matrix.zero_mul]
+
+/-- **Exactly when the Gram formula gives the column-space projector**: `colProj A = rangeProj A`
+iff `A` has full column rank or `A = 0`. -/
+theorem colProj_eq_rangeProj_iff {A : Matrix m k ℝ} :
+    A.colProj = A.rangeProj ↔ IsUnit (Aᵀ * A).det ∨ A = 0 := by
+  refine ⟨fun hA => ?_, ?_⟩
+  · by_cases h : IsUnit (Aᵀ * A).det
+    · exact Or.inl h
+    · right
+      rw [← rangeProj_mul_self A, ← hA, colProj_of_not_isUnit h, Matrix.zero_mul]
+  · rintro (h | rfl)
+    · exact colProj_eq_rangeProj h
+    · rw [rangeProj_zero, colProj, Matrix.zero_mul]
+
+/-- `colProj U = U Uᵀ` for orthonormal columns `Uᵀ U = 1`. -/
+theorem colProj_eq_mul_transpose {U : Matrix m k ℝ} (hU : Uᵀ * U = 1) : U.colProj = U * Uᵀ := by
+  rw [colProj, gramPinv_eq_transpose hU]
+
+/-- **Change of basis.** `colProj (A C) = colProj A` for invertible `C`; with
+`colProj_eq_mul_transpose` this gives `colProj A = U Uᵀ` for every QR factorization `A = U R`. -/
+theorem colProj_mul_of_isUnit {A : Matrix m k ℝ} {C : Matrix k k ℝ} (hC : IsUnit C.det) :
+    (A * C).colProj = A.colProj := by
+  have hG : (A * C)ᵀ * (A * C) = Cᵀ * (Aᵀ * A) * C := by
+    rw [Matrix.transpose_mul]; simp only [Matrix.mul_assoc]
+  have hCt : IsUnit Cᵀ.det := by rwa [det_transpose]
+  by_cases h : IsUnit (Aᵀ * A).det
+  · have h' : IsUnit ((A * C)ᵀ * (A * C)).det := by
+      rw [hG, det_mul, det_mul]
+      exact (hCt.mul h).mul hC
+    rw [colProj_eq_rangeProj h, colProj_eq_rangeProj h']
+    refine rangeProj_eq_rangeProj_of_mul (D := C⁻¹) rfl ?_
+    rw [Matrix.mul_assoc, mul_nonsing_inv _ hC, Matrix.mul_one]
+  · have h' : ¬IsUnit ((A * C)ᵀ * (A * C)).det := by
+      rw [hG, det_mul, det_mul]
+      exact fun hu => h (isUnit_of_mul_isUnit_right (isUnit_of_mul_isUnit_left hu))
+    rw [colProj_of_not_isUnit h, colProj_of_not_isUnit h']
+
+end Gram
+
+/-! ### Orthonormal frames, QR and SVD data -/
+
+section Frames
+
+variable {l : Type*} [Fintype l] [DecidableEq l]
+
+omit [Fintype k] in
+/-- `W` is an **orthonormal frame capturing `X`**: `W` has orthonormal columns (`Wᵀ W = 1`) and
+`W Wᵀ X = X`, i.e. the columns of `X` lie in the column space of `W`. This is what the QR step of
+a BUG-type integrator provides (`K₁ = U₁ R` gives `U₁ U₁ᵀ K₁ = K₁`); the error analysis uses
+nothing else (`docs/CONVENTIONS.md` §6.3). -/
+structure IsOrthCapture (W : Matrix m l ℝ) (X : Matrix m k ℝ) : Prop where
+  /-- `W` has orthonormal columns. -/
+  orth : Wᵀ * W = 1
+  /-- `W Wᵀ` fixes the columns of `X`. -/
+  capture : W * Wᵀ * X = X
+
+/-- `W` is an **orthonormal basis of the column space of `X`**: an orthonormal frame capturing `X`
+whose columns lie in the column space of `X` (`W = X C`). Then `W Wᵀ` is the orthogonal projector
+onto the column space of `X` (`IsOrthBasisOf.mul_transpose_eq_rangeProj`). -/
+structure IsOrthBasisOf (W : Matrix m l ℝ) (X : Matrix m k ℝ) : Prop where
+  /-- `W` has orthonormal columns. -/
+  orth : Wᵀ * W = 1
+  /-- `W Wᵀ` fixes the columns of `X`. -/
+  capture : W * Wᵀ * X = X
+  /-- The columns of `W` lie in the column space of `X`. -/
+  span : ∃ C : Matrix k l ℝ, W = X * C
+
+/-- An orthonormal basis of the column space captures it. -/
+theorem IsOrthBasisOf.isOrthCapture {W : Matrix m l ℝ} {X : Matrix m k ℝ}
+    (h : IsOrthBasisOf W X) : IsOrthCapture W X :=
+  ⟨h.orth, h.capture⟩
+
+omit [Fintype k] in
+/-- An orthonormal frame `W` captures `X` iff `X = W R` for some `R` (then `R = Wᵀ X`). -/
+theorem isOrthCapture_iff {W : Matrix m l ℝ} {X : Matrix m k ℝ} :
+    IsOrthCapture W X ↔ Wᵀ * W = 1 ∧ ∃ R : Matrix l k ℝ, X = W * R := by
+  constructor
+  · rintro ⟨hW, hc⟩
+    exact ⟨hW, Wᵀ * X, by rw [← Matrix.mul_assoc, hc]⟩
+  · rintro ⟨hW, R, rfl⟩
+    exact ⟨hW, by rw [Matrix.mul_assoc, ← Matrix.mul_assoc Wᵀ, hW, Matrix.one_mul]⟩
+
+/-- **Bridge.** For an orthonormal basis `W` of the column space of `X`, `W Wᵀ` is the orthogonal
+projector `rangeProj X` onto it. -/
+theorem IsOrthBasisOf.mul_transpose_eq_rangeProj {W : Matrix m l ℝ} {X : Matrix m k ℝ}
+    (h : IsOrthBasisOf W X) : W * Wᵀ = X.rangeProj := by
+  obtain ⟨C, hC⟩ := h.span
+  exact (rangeProj_eq_of_capture h.capture hC).symm
+
+/-- `W` is an orthonormal basis of its own column space. -/
+theorem isOrthBasisOf_self {W : Matrix m l ℝ} (hW : Wᵀ * W = 1) : IsOrthBasisOf W W :=
+  ⟨hW, by rw [Matrix.mul_assoc, hW, Matrix.mul_one], 1, (Matrix.mul_one W).symm⟩
+
+end Frames
+
+section QR
+
+variable {p : ℕ}
+
+/-- `K = Q R` is a **(thin) QR factorization**: `Q` has orthonormal columns and `R` is upper
+triangular. -/
+structure IsQR (K Q : Matrix m (Fin p) ℝ) (R : Matrix (Fin p) (Fin p) ℝ) : Prop where
+  /-- `K = Q R`. -/
+  eq : K = Q * R
+  /-- `Q` has orthonormal columns. -/
+  orth : Qᵀ * Q = 1
+  /-- `R` is upper triangular. -/
+  upper : R.BlockTriangular id
+
+/-- The orthonormal factor of a QR factorization captures `K` (the capture hypothesis of the
+BUG-type steps, `docs/CONVENTIONS.md` §6.3). -/
+theorem IsQR.isOrthCapture {K Q : Matrix m (Fin p) ℝ} {R : Matrix (Fin p) (Fin p) ℝ}
+    (h : IsQR K Q R) : IsOrthCapture Q K :=
+  isOrthCapture_iff.2 ⟨h.orth, R, h.eq⟩
+
+/-- With invertible `R`, the orthonormal factor of a QR factorization is an orthonormal basis of
+the column space of `K`, so `Q Qᵀ = rangeProj K`. -/
+theorem IsQR.isOrthBasisOf {K Q : Matrix m (Fin p) ℝ} {R : Matrix (Fin p) (Fin p) ℝ}
+    (h : IsQR K Q R) (hR : IsUnit R.det) : IsOrthBasisOf Q K := by
+  refine ⟨h.orth, h.isOrthCapture.capture, R⁻¹, ?_⟩
+  rw [h.eq, Matrix.mul_assoc, mul_nonsing_inv _ hR, Matrix.mul_one]
+
+/-- Non-vacuity: `1 = 1 · 1` is a QR factorization. -/
+example : IsQR (1 : Matrix (Fin 2) (Fin 2) ℝ) 1 1 :=
+  ⟨(Matrix.one_mul 1).symm, by simp, blockTriangular_one⟩
+
+end QR
+
+section SVD
+
+variable {p : ℕ}
+
+/-- `A = U diag(σ) Vᵀ` is a **singular value decomposition with `p` triplets**: `U` and `V` have
+orthonormal columns and `σ₀ ≥ σ₁ ≥ ⋯ ≥ σ_{p-1} ≥ 0`. This covers the thin SVD (`p = rank A`) and
+the reduced SVD (`p = min (m, n)`). -/
+structure IsSVD (A : Matrix m n ℝ) (U : Matrix m (Fin p) ℝ) (σ : Fin p → ℝ)
+    (V : Matrix n (Fin p) ℝ) : Prop where
+  /-- `U` has orthonormal columns. -/
+  orthU : Uᵀ * U = 1
+  /-- `V` has orthonormal columns. -/
+  orthV : Vᵀ * V = 1
+  /-- The singular values are sorted decreasingly. -/
+  antitone : Antitone σ
+  /-- The singular values are nonnegative. -/
+  nonneg : ∀ i, 0 ≤ σ i
+  /-- `A = U diag(σ) Vᵀ`. -/
+  eq : A = U * diagonal σ * Vᵀ
+
+/-- Non-vacuity: `1 = 1 · diag(1, 1) · 1ᵀ` is an SVD. -/
+example : IsSVD (1 : Matrix (Fin 2) (Fin 2) ℝ) (1 : Matrix (Fin 2) (Fin 2) ℝ) (fun _ => 1) 1 :=
+  ⟨by simp, by simp, fun _ _ _ => le_rfl, fun _ => zero_le_one, by simp⟩
+
+end SVD
+
+section Truncation
+
+variable {p : ℕ}
+
+omit [Fintype m] [Fintype n] in
+/-- The **truncated SVD** `U diag(σ₀, …, σ_{r-1}, 0, …, 0) Vᵀ = U_{:r} Σ_r V_{:r}ᵀ`: the first `r`
+triplets of `U diag(σ) Vᵀ`. For an SVD of `A` (`Matrix.IsSVD`) it is a best rank-`r`
+approximation of `A`, with error `‖A - svdTrunc U σ V r‖² = tailSqSum σ r`. -/
+def svdTrunc (U : Matrix m (Fin p) ℝ) (σ : Fin p → ℝ) (V : Matrix n (Fin p) ℝ) (r : ℕ) :
+    Matrix m n ℝ :=
+  U * diagonal (fun i : Fin p => if (i : ℕ) < r then σ i else 0) * Vᵀ
+
+omit [Fintype m] [Fintype n] in
+/-- Unfolding lemma for `svdTrunc`. -/
+theorem svdTrunc_def (U : Matrix m (Fin p) ℝ) (σ : Fin p → ℝ) (V : Matrix n (Fin p) ℝ) (r : ℕ) :
+    svdTrunc U σ V r = U * diagonal (fun i : Fin p => if (i : ℕ) < r then σ i else 0) * Vᵀ := rfl
+
+/-- Sums over the first `r` of `p` indices. -/
+private theorem sum_castLE_eq_sum_ite {r : ℕ} (hr : r ≤ p) (g : Fin p → ℝ) :
+    ∑ i : Fin r, g (Fin.castLE hr i) = ∑ i : Fin p, if (i : ℕ) < r then g i else 0 := by
+  rw [← Finset.sum_filter]
+  have h : Finset.filter (fun i : Fin p => (i : ℕ) < r) Finset.univ =
+      Finset.univ.map (Fin.castLEEmb hr) := by
+    ext i
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_map,
+      Fin.castLEEmb_apply]
+    constructor
+    · intro hi
+      exact ⟨⟨i, hi⟩, rfl⟩
+    · rintro ⟨j, rfl⟩
+      exact j.2
+  rw [h, Finset.sum_map]
+  rfl
+
+omit [Fintype m] [Fintype n] in
+/-- **Bridge to the leading-column form.** For `r ≤ p`, the truncation is
+`U_{:r} diag(σ₀, …, σ_{r-1}) V_{:r}ᵀ`, the form in which papers write it. -/
+theorem svdTrunc_eq_submatrix (U : Matrix m (Fin p) ℝ) (σ : Fin p → ℝ) (V : Matrix n (Fin p) ℝ)
+    {r : ℕ} (hr : r ≤ p) :
+    svdTrunc U σ V r = U.submatrix id (Fin.castLE hr) * diagonal (σ ∘ Fin.castLE hr) *
+      (V.submatrix id (Fin.castLE hr))ᵀ := by
+  ext a b
+  rw [svdTrunc_def, Matrix.mul_apply, Matrix.mul_apply]
+  simp only [Matrix.mul_diagonal, Matrix.transpose_apply, Matrix.submatrix_apply, id,
+    Function.comp]
+  rw [sum_castLE_eq_sum_ite hr (fun i => U a i * σ i * V b i)]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  split_ifs <;> simp
+
+end Truncation
+
 /-! ### Examples -/
 
 /-- `diag(1, 0)` is idempotent. -/
@@ -463,4 +865,158 @@ example : (diagonal ![(1 : ℝ), 0]).gramPinv ≠ (diagonal ![(1 : ℝ), 0]).pin
   have := congrFun (congrFun h 0) 0
   simp at this
 
+/-- Non-vacuity: the column-space projector of the column `e₁ = (1, 0)ᵀ` is `diag(1, 0)`. -/
+example : (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ).rangeProj = diagonal ![(1 : ℝ), 0] := by
+  rw [rangeProj_eq_mul_transpose (by ext i j; fin_cases i; fin_cases j; simp [Matrix.mul_apply])]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply]
+
+/-- **Capture does not give a basis of the column space.** The identity frame captures the column
+`e₁ = (1, 0)ᵀ`, but its columns do not lie in the column space of `e₁`: `IsOrthCapture` does not
+imply `IsOrthBasisOf`. -/
+example : IsOrthCapture (1 : Matrix (Fin 2) (Fin 2) ℝ) (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) ∧
+    ¬IsOrthBasisOf (1 : Matrix (Fin 2) (Fin 2) ℝ) (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) := by
+  refine ⟨⟨by simp, by simp⟩, fun h => ?_⟩
+  obtain ⟨C, hC⟩ := h.span
+  have := congrFun (congrFun hC 1) 1
+  simp [Matrix.mul_apply] at this
+
+/-- **The Gram projector is not the column-space projector without full column rank.** For
+`A = diag(1, 0)`, `Aᵀ A` is singular, so `A (Aᵀ A)⁻¹ Aᵀ = 0`, while `rangeProj A = A ≠ 0`. -/
+example : (diagonal ![(1 : ℝ), 0]).colProj ≠ (diagonal ![(1 : ℝ), 0]).rangeProj := by
+  rw [Ne, colProj_eq_rangeProj_iff, not_or, diagonal_transpose, diagonal_one_zero_mul_self,
+    det_diagonal, Fin.prod_univ_two]
+  refine ⟨by simp, fun h => ?_⟩
+  have := congrFun (congrFun h 0) 0
+  simp at this
+
 end Matrix
+
+namespace LeanDLRA
+
+open scoped RealInnerProductSpace
+
+/-! ### Galerkin projectors on matrices -/
+
+section Galerkin
+
+open scoped LeanDLRA.Frobenius
+
+variable {m n k k' : Type*} [Fintype m] [Fintype n] [Fintype k] [Fintype k']
+
+/-- The **Galerkin projector** `Z ↦ U Uᵀ Z V Vᵀ`, the composition `leftProj U * rightProj V`. For
+orthonormal `U`, `V` it is the orthogonal projector onto the matrices `U S Vᵀ`
+(`isOrthProj_galerkinProj`); the S-substep of every BUG-type integrator is the Galerkin flow of
+this projector. -/
+noncomputable def galerkinProj (U : Matrix m k ℝ) (V : Matrix n k' ℝ) :
+    Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
+  leftProj U * rightProj V
+
+/-- Unfolding lemma: `galerkinProj U V = leftProj U * rightProj V`. -/
+theorem galerkinProj_def (U : Matrix m k ℝ) (V : Matrix n k' ℝ) :
+    galerkinProj U V = (leftProj U * rightProj V : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) := rfl
+
+/-- `galerkinProj U V X = U Uᵀ X V Vᵀ`. -/
+theorem galerkinProj_apply (U : Matrix m k ℝ) (V : Matrix n k' ℝ) (X : Matrix m n ℝ) :
+    galerkinProj U V X = U * Uᵀ * X * (V * Vᵀ) := by
+  change leftProj U (rightProj V X) = _
+  simp only [leftProj_apply, rightProj_apply', Matrix.mul_assoc]
+
+/-- The Frobenius inner product as a trace (a private copy of `Frobenius.inner_eq_trace`, which
+lives in a theorem file). -/
+private theorem galerkinProj_inner_eq_trace (A B : Matrix m n ℝ) :
+    ⟪A, B⟫ = Matrix.trace (Aᵀ * B) := by
+  simp only [Frobenius.inner_def, Matrix.trace, Matrix.diag, Matrix.mul_apply,
+    Matrix.transpose_apply]
+  exact Finset.sum_comm
+
+/-- For orthonormal `U` and `V` (`Uᵀ U = 1`, `Vᵀ V = 1`) the Galerkin projector is an orthogonal
+projector. -/
+theorem isOrthProj_galerkinProj [DecidableEq k] [DecidableEq k'] {U : Matrix m k ℝ}
+    {V : Matrix n k' ℝ} (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) : IsOrthProj (galerkinProj U V) where
+  idem X := by
+    simp only [galerkinProj_apply]
+    have hP : U * Uᵀ * (U * Uᵀ) = U * Uᵀ := by
+      rw [Matrix.mul_assoc, ← Matrix.mul_assoc Uᵀ, hU, Matrix.one_mul]
+    have hQ : V * Vᵀ * (V * Vᵀ) = V * Vᵀ := by
+      rw [Matrix.mul_assoc, ← Matrix.mul_assoc Vᵀ, hV, Matrix.one_mul]
+    calc U * Uᵀ * (U * Uᵀ * X * (V * Vᵀ)) * (V * Vᵀ)
+        = U * Uᵀ * (U * Uᵀ) * X * (V * Vᵀ * (V * Vᵀ)) := by simp only [Matrix.mul_assoc]
+      _ = U * Uᵀ * X * (V * Vᵀ) := by rw [hP, hQ]
+  symm X Y := by
+    have hP : (U * Uᵀ)ᵀ = U * Uᵀ := by rw [Matrix.transpose_mul, Matrix.transpose_transpose]
+    have hQ : (V * Vᵀ)ᵀ = V * Vᵀ := by rw [Matrix.transpose_mul, Matrix.transpose_transpose]
+    rw [galerkinProj_apply, galerkinProj_apply]
+    calc ⟪U * Uᵀ * X * (V * Vᵀ), Y⟫ = Matrix.trace (V * Vᵀ * (Xᵀ * (U * Uᵀ) * Y)) := by
+          rw [galerkinProj_inner_eq_trace, Matrix.transpose_mul (U * Uᵀ * X), hQ,
+            Matrix.transpose_mul, hP]
+          simp only [Matrix.mul_assoc]
+      _ = Matrix.trace (Xᵀ * (U * Uᵀ) * Y * (V * Vᵀ)) := Matrix.trace_mul_comm _ _
+      _ = ⟪X, U * Uᵀ * Y * (V * Vᵀ)⟫ := by
+          rw [galerkinProj_inner_eq_trace]
+          simp only [Matrix.mul_assoc]
+
+end Galerkin
+
+section Oblique
+
+open Matrix
+
+variable {m k : Type*} [Fintype m] [Fintype k] [DecidableEq k]
+
+/-- The oblique projector `U (Sᵀ U)⁻¹ Sᵀ` with test matrix `S = A` is the Gram column-space
+projector `A (Aᵀ A)⁻¹ Aᵀ`. -/
+theorem obliqueProj_self (A : Matrix m k ℝ) : obliqueProj A A = A.colProj := by
+  rw [obliqueProj, colProj_def]
+
+end Oblique
+
+section Truncation
+
+/-- The **discarded weight** `∑_{i ≥ r} σᵢ²` of the singular values `σ₀, …, σ_{p-1}` beyond rank `r`
+(zero-indexed): the squared Frobenius error of `Matrix.svdTrunc` for an SVD. -/
+def tailSqSum {p : ℕ} (σ : Fin p → ℝ) (r : ℕ) : ℝ :=
+  ∑ i : Fin p, if r ≤ (i : ℕ) then σ i ^ 2 else 0
+
+/-- Unfolding lemma for `tailSqSum`. -/
+theorem tailSqSum_def {p : ℕ} (σ : Fin p → ℝ) (r : ℕ) :
+    tailSqSum σ r = ∑ i : Fin p, if r ≤ (i : ℕ) then σ i ^ 2 else 0 := rfl
+
+/-- The discarded weight is nonnegative. -/
+theorem tailSqSum_nonneg {p : ℕ} (σ : Fin p → ℝ) (r : ℕ) : 0 ≤ tailSqSum σ r :=
+  Finset.sum_nonneg fun i _ => by split_ifs <;> simp [sq_nonneg]
+
+/-- Nothing is discarded at rank `p`. -/
+theorem tailSqSum_of_le {p : ℕ} (σ : Fin p → ℝ) {r : ℕ} (hr : p ≤ r) : tailSqSum σ r = 0 :=
+  Finset.sum_eq_zero fun i _ => ite_eq_right_iff.2 fun h => absurd (i.2.trans_le hr) (not_lt.2 h)
+
+/-- Non-vacuity: for `σ = (3, 2, 1)`, the weight discarded at rank `1` is `2² + 1² = 5`. -/
+example : tailSqSum ![(3 : ℝ), 2, 1] 1 = 5 := by
+  simp [tailSqSum, Fin.sum_univ_three]
+  norm_num
+
+end Truncation
+
+section BestApprox
+
+open scoped LeanDLRA.Frobenius
+
+variable {m n : Type*} [Fintype m] [Fintype n]
+
+/-- `X` is a **best rank-`r` approximation** of `A` in the Frobenius norm: `rank X ≤ r` and
+`‖A - X‖ ≤ ‖A - B‖` for every matrix `B` of rank at most `r`. -/
+def IsBestLowRankApprox (r : ℕ) (A X : Matrix m n ℝ) : Prop :=
+  X.rank ≤ r ∧ ∀ B : Matrix m n ℝ, B.rank ≤ r → ‖A - X‖ ≤ ‖A - B‖
+
+/-- A matrix of rank at most `r` is its own best rank-`r` approximation. -/
+theorem isBestLowRankApprox_self {r : ℕ} {A : Matrix m n ℝ} (hA : A.rank ≤ r) :
+    IsBestLowRankApprox r A A :=
+  ⟨hA, fun B _ => by rw [sub_self, norm_zero]; exact norm_nonneg _⟩
+
+/-- Non-vacuity: `0` is a best rank-`0` approximation of `0`. -/
+example : IsBestLowRankApprox 0 (0 : Matrix (Fin 2) (Fin 2) ℝ) 0 :=
+  isBestLowRankApprox_self (by simp)
+
+end BestApprox
+
+end LeanDLRA

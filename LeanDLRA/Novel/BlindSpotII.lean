@@ -7,6 +7,7 @@ import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Novel.BlindSpot
 import LeanDLRA.Training.Descent
 import LeanDLRA.Training.FactorizedDynamics
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # The blind spot and the probe, for the concrete algorithm
@@ -103,6 +104,7 @@ open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius ENNReal
 namespace LeanDLRA.Novel.BlindSpotII
 
 open LeanDLRA FactorizedDynamics BlindSpot EckartYoung
+open Matrix (rangeProj)
 
 section Truncation
 
@@ -2954,28 +2956,40 @@ section ColProj
 
 variable {m j j' : Type*} [Fintype m] [Fintype j] [Fintype j'] [DecidableEq j] [DecidableEq j']
 
-/-- The orthogonal projector `orth K (orth K)ᵀ` onto the column space of `K`.  It does not depend on
-the chosen basis (`colProj_eq_of_capture`). -/
-noncomputable def colProj (K : Matrix m j ℝ) : Matrix m m ℝ := orth K * (orth K)ᵀ
+/-- **Bridge.** The orthogonal projector `orth K (orth K)ᵀ` onto the column space of `K` is the
+core column-space projector `Matrix.rangeProj K = K K⁺` (the local `colProj` of an earlier
+version of this file was this matrix, unification batch C2). It does not depend on the chosen basis
+(`colProj_eq_of_capture`). -/
+theorem rangeProj_eq_orth_mul_transpose (K : Matrix m j ℝ) :
+    K.rangeProj = orth K * (orth K)ᵀ := by
+  obtain ⟨B, hB⟩ := exists_orth_eq K
+  exact Matrix.rangeProj_eq_of_capture (thinU_capture K) hB
 
-lemma colProj_transpose (K : Matrix m j ℝ) : (colProj K)ᵀ = colProj K := by
-  simp [colProj, Matrix.transpose_mul]
+omit [Fintype j'] [DecidableEq j] [DecidableEq j'] in
+/-- The column-space projector is symmetric (the core `Matrix.transpose_rangeProj`). -/
+lemma colProj_transpose (K : Matrix m j ℝ) : (rangeProj K)ᵀ = rangeProj K :=
+  Matrix.transpose_rangeProj K
 
-omit [Fintype j'] [DecidableEq j'] in
-lemma colProj_mul_self (K : Matrix m j ℝ) : colProj K * K = K := thinU_capture K
+omit [Fintype j'] [DecidableEq j] [DecidableEq j'] in
+/-- The column-space projector fixes the columns of `K` (the core `Matrix.rangeProj_mul_self`). -/
+lemma colProj_mul_self (K : Matrix m j ℝ) : rangeProj K * K = K :=
+  Matrix.rangeProj_mul_self K
 
+omit [Fintype j'] [DecidableEq j] [DecidableEq j'] in
 /-- A matrix fixing all columns of `K` fixes the projector onto its column space. -/
 lemma mul_colProj_of_capture {P : Matrix m m ℝ} {K : Matrix m j ℝ} (h : P * K = K) :
-    P * colProj K = colProj K := by
+    P * rangeProj K = rangeProj K := by
+  classical
   obtain ⟨B, hB⟩ := exists_orth_eq K
   have h1 : P * orth K = orth K := by rw [hB, ← Matrix.mul_assoc, h]
-  rw [colProj, ← Matrix.mul_assoc, h1]
+  rw [rangeProj_eq_orth_mul_transpose, ← Matrix.mul_assoc, h1]
 
+omit [DecidableEq j] [DecidableEq j'] in
 /-- The projector depends only on the column space. -/
 theorem colProj_eq_of_capture {K : Matrix m j ℝ} {K' : Matrix m j' ℝ}
-    (h : colProj K * K' = K') (h' : colProj K' * K = K) : colProj K = colProj K' := by
-  have h1 : colProj K * colProj K' = colProj K' := mul_colProj_of_capture h
-  have h2 : colProj K' * colProj K = colProj K := mul_colProj_of_capture h'
+    (h : rangeProj K * K' = K') (h' : rangeProj K' * K = K) : rangeProj K = rangeProj K' := by
+  have h1 : rangeProj K * rangeProj K' = rangeProj K' := mul_colProj_of_capture h
+  have h2 : rangeProj K' * rangeProj K = rangeProj K := mul_colProj_of_capture h'
   have h3 := congrArg Matrix.transpose h2
   rw [Matrix.transpose_mul, colProj_transpose, colProj_transpose] at h3
   rw [← h3, h1]
@@ -3063,7 +3077,7 @@ theorem tikProj_eq {ε : ℝ} (hε : 0 < ε) (K : Matrix m j ℝ) :
 
 /-- The Tikhonov limit: `K (KᵀK + ε)⁻¹ Kᵀ → orth K (orth K)ᵀ` entrywise as `ε ↓ 0`. -/
 theorem tendsto_tikProj (K : Matrix m j ℝ) (a b : m) :
-    Tendsto (fun t : ℕ => tikProj (1 / ((t : ℝ) + 1)) K a b) atTop (𝓝 (colProj K a b)) := by
+    Tendsto (fun t : ℕ => tikProj (1 / ((t : ℝ) + 1)) K a b) atTop (𝓝 (rangeProj K a b)) := by
   have hε : ∀ t : ℕ, (0 : ℝ) < 1 / ((t : ℝ) + 1) := fun t => by positivity
   have hlim : Tendsto (fun t : ℕ => (1 : ℝ) / ((t : ℝ) + 1)) atTop (𝓝 0) :=
     tendsto_one_div_add_atTop_nhds_zero_nat
@@ -3079,14 +3093,16 @@ theorem tendsto_tikProj (K : Matrix m j ℝ) (a b : m) :
     rw [tikProj_eq (hε t), Matrix.mul_apply]
     refine Finset.sum_congr rfl fun l _ => ?_
     rw [Matrix.mul_diagonal, Matrix.transpose_apply]
-  have hcp : colProj K a b = ∑ l, orth K a l * 1 * orth K b l := by
-    simp [colProj, Matrix.mul_apply]
+  have hcp : rangeProj K a b = ∑ l, orth K a l * 1 * orth K b l := by
+    simp [rangeProj_eq_orth_mul_transpose, Matrix.mul_apply]
   simp_rw [hexp]
   rw [hcp]
   exact tendsto_finsetSum _ fun l _ => ((hi l).const_mul _).mul_const _
 
+omit [Fintype j'] [DecidableEq j] [DecidableEq j'] in
 /-- **The column-space projector is a Borel function of the matrix.** -/
-theorem measurable_colProj : Measurable (colProj (m := m) (j := j)) := by
+theorem measurable_colProj : Measurable (rangeProj (m := m) (k := j)) := by
+  classical
   refine Measurable.of_eval_matrix _ fun a b => ?_
   refine measurable_of_tendsto_metrizable
     (f := fun (t : ℕ) (K : Matrix m j ℝ) => tikProj (1 / ((t : ℝ) + 1)) K a b) (fun t => ?_)
@@ -3153,10 +3169,12 @@ lemma capture_mul_thinV {P : Matrix k k ℝ} {A : Matrix k n ℝ} {W : Matrix m 
 
 variable [DecidableEq m]
 
+omit [DecidableEq m] in
 /-- The left projector of the probed step in terms of explicit, measurable data. -/
 theorem colProj_probeK (G W : Matrix m n ℝ) (ω : n → ℝ) :
-    colProj (probeK G W ω) = colProj (Matrix.fromCols (Matrix.fromCols W (G * Wᵀ))
+    rangeProj (probeK G W ω) = rangeProj (Matrix.fromCols (Matrix.fromCols W (G * Wᵀ))
       (Matrix.replicateCol Unit (G *ᵥ ω))) := by
+  classical
   set K := Matrix.fromCols (Matrix.fromCols W (G * Wᵀ)) (Matrix.replicateCol Unit (G *ᵥ ω))
     with hK
   have h1 := capture_fromCols (colProj_mul_self (probeK G W ω))
@@ -3165,40 +3183,44 @@ theorem colProj_probeK (G W : Matrix m n ℝ) (ω : n → ℝ) :
   have h2' := capture_fromCols h2.1
   refine colProj_eq_of_capture ?_ ?_
   · rw [hK, Matrix.mul_fromCols, Matrix.mul_fromCols, h1.2]
-    have e1 : colProj (probeK G W ω) * W = W := by
+    have e1 : rangeProj (probeK G W ω) * W = W := by
       simpa using capture_mul_self (A := (1 : Matrix m m ℝ)) (W := W) (by simpa using h1'.1)
     rw [e1, capture_mul_transpose h1'.2]
   · rw [Matrix.mul_fromCols, Matrix.mul_fromCols, h2.2]
-    have e1 : colProj K * thinU W = thinU W := by
+    have e1 : rangeProj K * thinU W = thinU W := by
       simpa using capture_mul_thinU (A := (1 : Matrix m m ℝ)) (W := W) (by simpa using h2'.1)
     rw [e1, capture_mul_thinV h2'.2]
 
+omit [DecidableEq m] in
 /-- The right projector of the sequential step in terms of explicit, measurable data. -/
 theorem colProj_probeV (G W : Matrix m n ℝ) (ω : n → ℝ) :
-    colProj (Matrix.fromCols (thinV W) (Gᵀ * probeU G W ω)) =
-      colProj (Matrix.fromCols Wᵀ (Gᵀ * colProj (probeK G W ω))) := by
-  set K := Matrix.fromCols Wᵀ (Gᵀ * colProj (probeK G W ω)) with hK
+    rangeProj (Matrix.fromCols (thinV W) (Gᵀ * probeU G W ω)) =
+      rangeProj (Matrix.fromCols Wᵀ (Gᵀ * rangeProj (probeK G W ω))) := by
+  classical
+  set K := Matrix.fromCols Wᵀ (Gᵀ * rangeProj (probeK G W ω)) with hK
   set K₃ := Matrix.fromCols (thinV W) (Gᵀ * probeU G W ω) with hK₃
   have h1 := capture_fromCols (colProj_mul_self K₃)
   have h2 := capture_fromCols (colProj_mul_self K)
-  have hfac : Gᵀ * colProj (probeK G W ω) = (Gᵀ * probeU G W ω) * (probeU G W ω)ᵀ := by
-    rw [colProj, Matrix.mul_assoc]
-  have hfac' : Gᵀ * probeU G W ω = (Gᵀ * colProj (probeK G W ω)) * probeU G W ω := by
+  have hfac : Gᵀ * rangeProj (probeK G W ω) = (Gᵀ * probeU G W ω) * (probeU G W ω)ᵀ := by
+    rw [rangeProj_eq_orth_mul_transpose, Matrix.mul_assoc]
+  have hfac' : Gᵀ * probeU G W ω = (Gᵀ * rangeProj (probeK G W ω)) * probeU G W ω := by
     rw [hfac, Matrix.mul_assoc, thinU_orthonormal, Matrix.mul_one]
   refine colProj_eq_of_capture ?_ ?_
   · rw [hK, Matrix.mul_fromCols, hfac, mul_mul_of_capture h1.2]
-    have e1 : colProj K₃ * Wᵀ = Wᵀ := by
+    have e1 : rangeProj K₃ * Wᵀ = Wᵀ := by
       simpa using capture_mul_transpose (A := (1 : Matrix n n ℝ)) (W := W) (by simpa using h1.1)
     rw [e1]
   · rw [hK₃, Matrix.mul_fromCols, hfac', mul_mul_of_capture h2.2]
-    have e1 : colProj K * thinV W = thinV W := by
+    have e1 : rangeProj K * thinV W = thinV W := by
       simpa using capture_mul_thinV (A := (1 : Matrix n n ℝ)) (W := W) (by simpa using h2.1)
     rw [e1]
 
+omit [DecidableEq m] in
 /-- The right projector of the parallel step in terms of explicit, measurable data. -/
 theorem colProj_parK (G W : Matrix m n ℝ) (ωl : m → ℝ) :
-    colProj (parK G W ωl) = colProj (Matrix.fromCols (Matrix.fromCols Wᵀ (Gᵀ * W))
+    rangeProj (parK G W ωl) = rangeProj (Matrix.fromCols (Matrix.fromCols Wᵀ (Gᵀ * W))
       (Matrix.replicateCol Unit (Gᵀ *ᵥ ωl))) := by
+  classical
   set K := Matrix.fromCols (Matrix.fromCols Wᵀ (Gᵀ * W)) (Matrix.replicateCol Unit (Gᵀ *ᵥ ωl))
     with hK
   have h1 := capture_fromCols (colProj_mul_self (parK G W ωl))
@@ -3207,42 +3229,51 @@ theorem colProj_parK (G W : Matrix m n ℝ) (ωl : m → ℝ) :
   have h2' := capture_fromCols h2.1
   refine colProj_eq_of_capture ?_ ?_
   · rw [hK, Matrix.mul_fromCols, Matrix.mul_fromCols, h1.2]
-    have e1 : colProj (parK G W ωl) * Wᵀ = Wᵀ := by
+    have e1 : rangeProj (parK G W ωl) * Wᵀ = Wᵀ := by
       simpa using capture_mul_transpose (A := (1 : Matrix n n ℝ)) (W := W) (by simpa using h1'.1)
     rw [e1, capture_mul_self h1'.2]
   · rw [Matrix.mul_fromCols, Matrix.mul_fromCols, h2.2]
-    have e1 : colProj K * thinV W = thinV W := by
+    have e1 : rangeProj K * thinV W = thinV W := by
       simpa using capture_mul_thinV (A := (1 : Matrix n n ℝ)) (W := W) (by simpa using h2'.1)
     rw [e1, capture_mul_thinU h2'.2]
 
 /-- The left projector of the sequential probed step, from explicit data. -/
 noncomputable def probeL (G W : Matrix m n ℝ) (ω : n → ℝ) : Matrix m m ℝ :=
-  colProj (Matrix.fromCols (Matrix.fromCols W (G * Wᵀ)) (Matrix.replicateCol Unit (G *ᵥ ω)))
+  rangeProj (Matrix.fromCols (Matrix.fromCols W (G * Wᵀ)) (Matrix.replicateCol Unit (G *ᵥ ω)))
 
 /-- The right projector of the sequential probed step, from explicit data. -/
 noncomputable def probeR (G W : Matrix m n ℝ) (ω : n → ℝ) : Matrix n n ℝ :=
-  colProj (Matrix.fromCols Wᵀ (Gᵀ * probeL G W ω))
+  rangeProj (Matrix.fromCols Wᵀ (Gᵀ * probeL G W ω))
 
+omit [DecidableEq m] in
+/-- The probed projector `Π̂ X = P̂ X Q̂` with the explicit projectors `probeL`, `probeR`. -/
 theorem probeProj_eq (G W : Matrix m n ℝ) (ω : n → ℝ) (X : Matrix m n ℝ) :
     probeProj G W ω X = probeL G W ω * X * probeR G W ω := by
-  have e1 : probeL G W ω = probeU G W ω * (probeU G W ω)ᵀ := (colProj_probeK G W ω).symm
+  classical
+  have e1 : probeL G W ω = probeU G W ω * (probeU G W ω)ᵀ :=
+    (colProj_probeK G W ω).symm.trans (rangeProj_eq_orth_mul_transpose _)
   have e2 : probeR G W ω = probeV G W ω * (probeV G W ω)ᵀ := by
     rw [probeR, probeL, ← colProj_probeK]
-    exact (colProj_probeV G W ω).symm
+    exact (colProj_probeV G W ω).symm.trans (rangeProj_eq_orth_mul_transpose _)
   change leftProj (probeU G W ω) (rightProj (probeV G W ω) X) = _
   rw [leftProj_apply, rightProj_apply', e1, e2]
   simp only [Matrix.mul_assoc]
 
+omit [DecidableEq m] in
+/-- The probed pre-truncation step `P̂ (W - λ G) Q̂` with the explicit projectors. -/
 theorem probePre_eq (g : Matrix m n ℝ → Matrix m n ℝ) (lr : ℝ) (ω : n → ℝ) (W : Matrix m n ℝ) :
     probePre g lr ω W = probeL (g W) W ω * (W - lr • g W) * probeR (g W) W ω := by
+  classical
   have e1 : probeL (g W) W ω = probeU (g W) W ω * (probeU (g W) W ω)ᵀ :=
-    (colProj_probeK (g W) W ω).symm
+    (colProj_probeK (g W) W ω).symm.trans (rangeProj_eq_orth_mul_transpose _)
   have e2 : probeR (g W) W ω = probeV (g W) W ω * (probeV (g W) W ω)ᵀ := by
     rw [probeR, probeL, ← colProj_probeK]
-    exact (colProj_probeV (g W) W ω).symm
+    exact (colProj_probeV (g W) W ω).symm.trans (rangeProj_eq_orth_mul_transpose _)
   rw [e1, e2]
   rfl
 
+omit [DecidableEq n] [DecidableEq m] in
+/-- `probeL` is a Borel function of the data. -/
 theorem measurable_probeL {α : Type*} [MeasurableSpace α] {G W : α → Matrix m n ℝ}
     {ω : α → n → ℝ} (hG : Measurable G) (hW : Measurable W) (hω : Measurable ω) :
     Measurable fun x => probeL (G x) (W x) (ω x) :=
@@ -3250,12 +3281,15 @@ theorem measurable_probeL {α : Type*} [MeasurableSpace α] {G W : α → Matrix
     (measurable_mat_fromCols hW (measurable_mat_mul hG (measurable_mat_transpose hW)))
     (measurable_mat_replicateCol (measurable_mat_mulVec hG hω)))
 
+omit [DecidableEq n] [DecidableEq m] in
+/-- `probeR` is a Borel function of the data. -/
 theorem measurable_probeR {α : Type*} [MeasurableSpace α] {G W : α → Matrix m n ℝ}
     {ω : α → n → ℝ} (hG : Measurable G) (hW : Measurable W) (hω : Measurable ω) :
     Measurable fun x => probeR (G x) (W x) (ω x) :=
   measurable_colProj.comp (measurable_mat_fromCols (measurable_mat_transpose hW)
     (measurable_mat_mul (measurable_mat_transpose hG) (measurable_probeL hG hW hω)))
 
+omit [DecidableEq m] in
 set_option linter.unusedDecidableInType false in
 /-- **The sequential pre-truncation map is Borel** in the iterate and the probe. -/
 theorem measurable_probePre {α : Type*} [MeasurableSpace α] {g : Matrix m n ℝ → Matrix m n ℝ}
@@ -3266,21 +3300,23 @@ theorem measurable_probePre {α : Type*} [MeasurableSpace α] {g : Matrix m n �
   exact measurable_mat_mul (measurable_mat_mul (measurable_probeL hG hW hω) (measurable_mat_sub hW
     (measurable_mat_const_smul lr hG))) (measurable_probeR hG hW hω)
 
+omit [DecidableEq m] in
 set_option linter.unusedDecidableInType false in
 /-- **The parallel pre-truncation map is Borel** in the iterate and the probes. -/
 theorem measurable_parPre {α : Type*} [MeasurableSpace α] {g : Matrix m n ℝ → Matrix m n ℝ}
     (hg : Measurable g) (lr : ℝ) {W : α → Matrix m n ℝ} {ωr : α → n → ℝ} {ωl : α → m → ℝ}
     (hW : Measurable W) (hr : Measurable ωr) (hl : Measurable ωl) :
     Measurable fun x => parPre g lr (ωr x) (ωl x) (W x) := by
+  classical
   have hG : Measurable fun x => g (W x) := hg.comp hW
   have hP : Measurable fun x =>
-      colProj (Matrix.fromCols (Matrix.fromCols (W x) (g (W x) * (W x)ᵀ))
+      rangeProj (Matrix.fromCols (Matrix.fromCols (W x) (g (W x) * (W x)ᵀ))
         (Matrix.replicateCol Unit (g (W x) *ᵥ ωr x))) :=
     measurable_colProj.comp (measurable_mat_fromCols
       (measurable_mat_fromCols hW (measurable_mat_mul hG (measurable_mat_transpose hW)))
       (measurable_mat_replicateCol (measurable_mat_mulVec hG hr)))
   have hQ : Measurable fun x =>
-      colProj (Matrix.fromCols (Matrix.fromCols (W x)ᵀ ((g (W x))ᵀ * W x))
+      rangeProj (Matrix.fromCols (Matrix.fromCols (W x)ᵀ ((g (W x))ᵀ * W x))
         (Matrix.replicateCol Unit ((g (W x))ᵀ *ᵥ ωl x))) :=
     measurable_colProj.comp (measurable_mat_fromCols
       (measurable_mat_fromCols (measurable_mat_transpose hW)
@@ -3288,12 +3324,13 @@ theorem measurable_parPre {α : Type*} [MeasurableSpace α] {g : Matrix m n ℝ 
       (measurable_mat_replicateCol
         (measurable_mat_mulVec (measurable_mat_transpose hG) hl)))
   have e : (fun x => parPre g lr (ωr x) (ωl x) (W x)) = fun x =>
-      colProj (Matrix.fromCols (Matrix.fromCols (W x) (g (W x) * (W x)ᵀ))
+      rangeProj (Matrix.fromCols (Matrix.fromCols (W x) (g (W x) * (W x)ᵀ))
           (Matrix.replicateCol Unit (g (W x) *ᵥ ωr x))) * (W x - lr • g (W x)) *
-        colProj (Matrix.fromCols (Matrix.fromCols (W x)ᵀ ((g (W x))ᵀ * W x))
+        rangeProj (Matrix.fromCols (Matrix.fromCols (W x)ᵀ ((g (W x))ᵀ * W x))
           (Matrix.replicateCol Unit ((g (W x))ᵀ *ᵥ ωl x))) := by
     funext x
-    rw [← colProj_probeK, ← colProj_parK]
+    rw [← colProj_probeK, ← colProj_parK, rangeProj_eq_orth_mul_transpose,
+      rangeProj_eq_orth_mul_transpose]
     rfl
   rw [e]
   exact measurable_mat_mul (measurable_mat_mul hP (measurable_mat_sub hW
@@ -4232,5 +4269,9 @@ theorem tendsto_lintegral_gaussian_grad_sq [Nonempty m] [Nonempty n] {ℒ : Matr
       coupledStep T g lr c₀ B ξ.ofLp W) hstep W₀ k))).ennreal_ofReal)
 
 end GaussianRank
+
+/-- The local column-space projector `orth K (orth K)ᵀ` of this file, replaced by the core
+`Matrix.rangeProj` (equal: `rangeProj_eq_orth_mul_transpose`). -/
+@[deprecated (since := "2026-11-09")] alias colProj := Matrix.rangeProj
 
 end LeanDLRA.Novel.BlindSpotII

@@ -1,8 +1,8 @@
 import LeanDLRA.Integrators.BUG
-import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Curvature
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Differentiating through a DLRA integrator: discrete adjoints of BUG-type steps
@@ -66,6 +66,13 @@ projection of `Z` onto the new tangent space up to a product of two sines (`norm
 column rank (`Matrix.gramPinv_eq_pinv`), which is where the results here use it.  The local `pinv`
 of an earlier version of this file was the same definition (unification batch C1).
 
+## Projector
+
+`P₁ = K K⁺ = K (Kᵀ K)⁻¹ Kᵀ` is the core Gram column-space projector `Matrix.colProj`
+(`LinearAlgebra/Factorization/Defs.lean`); where `K` has full column rank it is the orthogonal
+projector `Matrix.rangeProj K` onto the column space (`Matrix.colProj_eq_rangeProj`). The local
+`colProj` of an earlier version of this file was the same definition (unification batch C2).
+
 ## Not covered
 
 Exact (non-Euler) substeps, and differentiability of rank truncation at a general matrix with a
@@ -79,6 +86,7 @@ open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius
 namespace LeanDLRA.Novel.OpTR37
 
 open LeanDLRA LeanDLRA.Frobenius LeanDLRA.Curvature
+open Matrix (colProj)
 
 set_option linter.unusedSectionVars false
 set_option linter.unusedDecidableInType false
@@ -177,10 +185,6 @@ section Projector
 
 variable [DecidableEq r]
 
-/-- The orthogonal projector `K K⁺` onto the column space of `K`.  QR factorisation enters a BUG
-step only through this matrix, see `colProj_eq_of_qr`. -/
-noncomputable def colProj (K : Matrix m r ℝ) : Matrix m m ℝ := K * K.gramPinv
-
 /-- `K⁺ K = 1` for `K` of full column rank (the core `Matrix.gramPinv_mul_self`). -/
 lemma pinv_mul_self {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) : K.gramPinv * K = 1 :=
   Matrix.gramPinv_mul_self ((Matrix.isUnit_iff_isUnit_det _).1 hK)
@@ -189,8 +193,9 @@ lemma pinv_mul_self {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) : K.gramPinv *
 lemma pinv_transpose (K : Matrix m r ℝ) : (K.gramPinv)ᵀ = K * (Kᵀ * K)⁻¹ :=
   Matrix.transpose_gramPinv K
 
-lemma colProj_transpose (K : Matrix m r ℝ) : (colProj K)ᵀ = colProj K := by
-  rw [colProj, Matrix.transpose_mul, pinv_transpose, Matrix.gramPinv, Matrix.mul_assoc]
+/-- `K K⁺` is symmetric (the core `Matrix.transpose_colProj`). -/
+lemma colProj_transpose (K : Matrix m r ℝ) : (colProj K)ᵀ = colProj K :=
+  Matrix.transpose_colProj K
 
 lemma colProj_mul_self {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) : colProj K * K = K := by
   rw [colProj, Matrix.mul_assoc, pinv_mul_self hK, Matrix.mul_one]
@@ -205,28 +210,17 @@ lemma isOrthProjMat_colProjK {K : Matrix m r ℝ} (hK : IsUnit (Kᵀ * K)) :
     simp only [colProj]
     rw [Matrix.mul_assoc, ← Matrix.mul_assoc (K.gramPinv), pinv_mul_self hK, Matrix.one_mul]⟩
 
-/-- Replacing a basis by another basis of the same column space does not change the projector. -/
+/-- Replacing a basis by another basis of the same column space does not change the projector
+(the core `Matrix.colProj_mul_of_isUnit`). -/
 lemma colProj_mul_unit {K : Matrix m r ℝ} {C : Matrix r r ℝ} (hC : IsUnit C) :
-    colProj (K * C) = colProj K := by
-  have hdC := (Matrix.isUnit_iff_isUnit_det C).1 hC
-  have hdCt : IsUnit Cᵀ.det := by rwa [Matrix.det_transpose]
-  have hinv : ((K * C)ᵀ * (K * C))⁻¹ = C⁻¹ * (Kᵀ * K)⁻¹ * Cᵀ⁻¹ := by
-    have : (K * C)ᵀ * (K * C) = Cᵀ * ((Kᵀ * K) * C) := by
-      rw [Matrix.transpose_mul]; simp only [Matrix.mul_assoc]
-    rw [this, Matrix.mul_inv_rev, Matrix.mul_inv_rev, Matrix.mul_assoc]
-  rw [colProj, Matrix.gramPinv, hinv, colProj, Matrix.gramPinv, Matrix.transpose_mul]
-  calc K * C * (C⁻¹ * (Kᵀ * K)⁻¹ * Cᵀ⁻¹ * (Cᵀ * Kᵀ))
-      = K * (C * C⁻¹) * (Kᵀ * K)⁻¹ * (Cᵀ⁻¹ * Cᵀ) * Kᵀ := by simp only [Matrix.mul_assoc]
-    _ = K * ((Kᵀ * K)⁻¹ * Kᵀ) := by
-      rw [Matrix.mul_nonsing_inv _ hdC, Matrix.nonsing_inv_mul _ hdCt]
-      simp only [Matrix.mul_one, Matrix.mul_assoc]
+    colProj (K * C) = colProj K :=
+  Matrix.colProj_mul_of_isUnit ((Matrix.isUnit_iff_isUnit_det C).1 hC)
 
 /-- **QR enters only through the projector.**  If `K = U₁ R` with orthonormal `U₁` and invertible
 `R`, then `U₁ U₁ᵀ = K K⁺`, for every QR factorisation of `K`. -/
 theorem colProj_eq_of_qr {K U₁ : Matrix m r ℝ} {R : Matrix r r ℝ} (hK : K = U₁ * R)
     (hU : U₁ᵀ * U₁ = 1) (hR : IsUnit R) : colProj K = U₁ * U₁ᵀ := by
-  subst hK
-  rw [colProj_mul_unit hR, colProj, Matrix.gramPinv, hU, inv_one, Matrix.one_mul]
+  rw [hK, colProj_mul_unit hR, Matrix.colProj_eq_mul_transpose hU]
 
 variable [DecidableEq m]
 
@@ -2546,5 +2540,10 @@ end Step
 /-- The local left inverse of this file, replaced by the core `Matrix.gramPinv` (same definition,
 `(KᵀK)⁻¹Kᵀ`). -/
 @[deprecated (since := "2026-11-09")] alias pinv := Matrix.gramPinv
+
+/-- The local column-space projector `K K⁺` of this file, replaced by the core `Matrix.colProj`
+(same definition). QR factorisation enters a BUG step only through this matrix, see
+`colProj_eq_of_qr`. -/
+@[deprecated (since := "2026-11-09")] alias colProj := Matrix.colProj
 
 end LeanDLRA.Novel.OpTR37
