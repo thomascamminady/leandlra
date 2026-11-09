@@ -4,6 +4,7 @@ import LeanDLRA.Integrators.ParallelBUG
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.LinearAlgebra.Frobenius.Defs
+import LeanDLRA.Analysis.Defs
 
 /-!
 # Exactness of low-rank integrators for rank-`r` data
@@ -124,12 +125,7 @@ section Abstract
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
-/-- The right-hand side `F` equals `Ȧ(t)` on `[t₀, t₁]`, independently of the state: `A` is
-continuous on `[t₀, t₁]` and has right derivative `F t Y` at every `t ∈ [t₀, t₁)`, for every
-state `Y`. -/
-structure IsDerivRHS (F : ℝ → E → E) (A : ℝ → E) (t₀ t₁ : ℝ) : Prop where
-  cont : ContinuousOn A (Icc t₀ t₁)
-  deriv : ∀ t ∈ Ico t₀ t₁, ∀ Y, HasDerivWithinAt A (F t Y) (Ici t) t
+/- `IsDerivRHS` is defined in `LeanDLRA/Analysis/Defs.lean`. -/
 
 /-- **Explicit solution for a state-independent right-hand side.**  If `y' = f(t, y)` on
 `[a, b]` and along the solution `f(t, y(t)) = Φ (Ȧ(t))` for a continuous linear map `Φ`, then

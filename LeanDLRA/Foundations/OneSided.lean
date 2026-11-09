@@ -1,4 +1,5 @@
 import LeanDLRA.Foundations.ODE
+import LeanDLRA.Analysis.Defs
 
 /-!
 # One-sided Lipschitz vector fields: stability for stiff and dissipative problems
@@ -69,19 +70,10 @@ namespace LeanDLRA
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
-/-! ### Definitions -/
+/-! ### Definitions
 
-/-- The vector field `F` is **one-sided Lipschitz** with constant `ℓ` (uniformly in time):
-`⟪F t x - F t y, x - y⟫ ≤ ℓ ‖x - y‖²` for all `t, x, y` (Carrel–Vandereycken, arXiv 2312.00172,
-Definition 1).  The constant `ℓ` may be negative (dissipative problems). -/
-def IsOneSidedLipschitzField (F : ℝ → E → E) (ℓ : ℝ) : Prop :=
-  ∀ t x y, ⟪F t x - F t y, x - y⟫ ≤ ℓ * ‖x - y‖ ^ 2
-
-/-- Localised one-sided Lipschitz condition: the one-sided inequality holds for states in the set
-`K` only (Hu–Yu, arXiv 2610.41606, eq. (3.3) and (5.1): one-sided stability in an
-energy-localised region). -/
-def IsOneSidedLipschitzOn (F : ℝ → E → E) (K : Set E) (ℓ : ℝ) : Prop :=
-  ∀ t, ∀ x ∈ K, ∀ y ∈ K, ⟪F t x - F t y, x - y⟫ ≤ ℓ * ‖x - y‖ ^ 2
+`IsOneSidedLipschitzField` and `IsOneSidedLipschitzOn` are defined in
+`LeanDLRA/Analysis/Defs.lean`. -/
 
 /-! ### Calculus of one-sided Lipschitz constants -/
 

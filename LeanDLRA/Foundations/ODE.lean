@@ -1,4 +1,5 @@
 import LeanDLRA.Foundations.Projector
+import LeanDLRA.Analysis.Defs
 
 /-!
 # ODE toolkit for dynamical low-rank error analysis
@@ -16,6 +17,8 @@ We fix the conventions used throughout the library:
   Grönwall/uniqueness theorems (continuity on `Icc a b` and right derivatives on `Ico a b`);
 * `IsLipschitzField f L` : `‖f t x - f t y‖ ≤ L * ‖x - y‖` for all `t, x, y`;
 * `IsBoundedField f B` : `‖f t x‖ ≤ B` for all `t, x`.
+
+These predicates are defined in `LeanDLRA/Analysis/Defs.lean`.
 -/
 
 open Set
@@ -23,20 +26,6 @@ open Set
 namespace LeanDLRA
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-
-/-- `y` solves the ODE `y' = f t (y t)` on `[a, b]` (right derivatives on `[a, b)`, continuity on
-`[a, b]`), the convention of Mathlib's `ODE_solution_unique` and Grönwall bounds. -/
-structure ODESolution (f : ℝ → E → E) (y : ℝ → E) (a b : ℝ) : Prop where
-  cont : ContinuousOn y (Icc a b)
-  deriv : ∀ t ∈ Ico a b, HasDerivWithinAt y (f t (y t)) (Ici t) t
-
-/-- The vector field `f` is Lipschitz in the state variable with constant `L`, uniformly in time. -/
-def IsLipschitzField (f : ℝ → E → E) (L : ℝ) : Prop :=
-  ∀ t x y, ‖f t x - f t y‖ ≤ L * ‖x - y‖
-
-/-- The vector field `f` is bounded by `B`. -/
-def IsBoundedField (f : ℝ → E → E) (B : ℝ) : Prop :=
-  ∀ t x, ‖f t x‖ ≤ B
 
 namespace IsLipschitzField
 
