@@ -139,6 +139,7 @@ import LeanDLRA.Literature.Randomized.P2308_16547a
 import LeanDLRA.Literature.Randomized.P2308_16547b
 import LeanDLRA.Literature.Randomized.P2401_04249a
 import LeanDLRA.Literature.Randomized.P2402_18721a
+import LeanDLRA.Literature.Randomized.P2402_18721b
 import LeanDLRA.Literature.Randomized.P2408_16591a
 import LeanDLRA.Literature.Randomized.P2409_06384a
 import LeanDLRA.Literature.Randomized.P2410_17091a
@@ -431,6 +432,7 @@ import LeanDLRA.Stochastic.MeanSquare
 import LeanDLRA.Tensor.Defs
 import LeanDLRA.Tensor.TT.AugmentedBUG
 import LeanDLRA.Tensor.TT.Basic
+import LeanDLRA.Tensor.TT.ObliqueProjector
 import LeanDLRA.Tensor.TT.Operations
 import LeanDLRA.Tensor.TT.ProjectorSplitting
 import LeanDLRA.Tensor.TT.TangentProjector

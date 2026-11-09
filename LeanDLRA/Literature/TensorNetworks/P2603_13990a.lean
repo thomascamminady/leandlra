@@ -1,26 +1,53 @@
+
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Tensor.TT.AugmentedBUG
 
 /-!
-# Results of arXiv 2603.13990: Rank-adaptive tensor BUG for Schrödinger
+# Results of arXiv 2603.13990: Schrödinger dynamics with rank-adaptive tensor decompositions
 
-This module proves the unitarity of the implicit midpoint rule for Hermitian Hamiltonians
-(Sec. 3 of arXiv 2603.13990), as the matrix statement
-`1 + (i h/2) H` and `1 - (i h/2) H` give a unitary one-step map `U` for every Hermitian `H` on
-`ℂⁿ`. The implicit midpoint step for `y' = -i H y` is `y₁ = y₀ - (i h/2) H (y₀ + y₁)`. We show that
-it is well defined (the solution is unique), that the solution map is unitary, and hence that the
-step conserves the Euclidean norm. Both are stated on `Matrix n n ℂ` and `n → ℂ` with Mathlib's
-`dotProduct`/`mulVec`, which is the abstract core of the paper's statement.
+Petersson–Hodges-Heilmann–Günther describe the implicit midpoint rule, the tensor-train (MPS)
+formats with their canonical forms, the TDVP and TDVP-2 algorithms, and the BUG integrators for
+matrices, Tucker tensors and tensor trains (MPS-BUG). The tensor-train statements are proved in
+the core (`Tensor/TT/`) for real tensor trains; this module proves the implicit midpoint results
+(complex, §3) and the invariance of mixed canonical and bond-centred states under the local
+projectors (§4.2), and records the rest against the library.
 
-Not formalized here, and why:
-* Lemma 1 (orthonormality of MPS state vectors) and Algorithm 1 / Sec. 5 (MPS-BUG sweeps): they need
-  tensor-train infrastructure that the library does not have. The matrix and Tucker versions of
-  the rank-adaptive step already exist (`TuckerBUG.lean`, `RankAdaptiveBUG.lean`), so nothing is
-  duplicated.
-* Eq. (4.19) (the TDVP tangent projector as a telescoping sum of nested projectors): not done here.
-* Appendix A (truncated SVD, Eckart–Young): already proved in `LeanDLRA/Classical/EckartYoung.lean`
-  (`sq_norm_sub_truncation`, `norm_sub_truncation`, `specNorm_sub_truncation`); not duplicated.
-* TDVP norm and energy conservation: the Galerkin norm conservation is in `LeanDLRA/Foundations`.
+* §3, Eqs. (3.7)–(3.8), implicit midpoint rule is unitary and norm-conserving (complex):
+  `implicitMidpoint_unitary`, `implicitMidpoint_norm_conserved`.
+* §4, gauge invariance (after (4.3)), Eqs. (4.11), (4.13) (moving the orthogonality centre):
+  `Tensor.tt_gauge`, `Tensor.ttBond_eq_tt`.
+* §4, Lemma 1, Eqs. (4.9)–(4.10) (orthonormal left/right state vectors):
+  `Tensor.ttLeft_transpose_mul_self`, `Tensor.ttRight_transpose_mul_self`.
+* §4, Eq. (4.12) and the Schmidt rank: `Tensor.ttBond`, `Tensor.rank_unfold_ttBond`.
+* §4.2, Eqs. (4.18)–(4.19), (4.28) (TDVP tangent projector, an orthogonal projector, and its
+  terms): `Tensor.isOrthProj_ttTangentProj`, `Tensor.ttTangentProj_eq_sum_substeps`,
+  `Tensor.isOrthProj_ttKProj`, `Tensor.isOrthProj_ttSProj`.
+* §4.2, mixed canonical and bond-centred states are fixed by their local projectors:
+  `mixedCanonical_leftProj`, `mixedCanonical_rightProj`, `bondCentred_proj`.
+* §4.2, Eqs. (4.22)–(4.27) (core- and bond-centred contractions): `Tensor.ttCoreCoeff`,
+  `Tensor.ttCoreCoeff_tt_update`, `Tensor.ttCoreCoeff_ttKProj`, `Tensor.tt_update_ttCoreCoeff`,
+  `Tensor.ttBondCoeff`, `Tensor.ttBondCoeff_ttBond`, `Tensor.ttBondCoeff_ttSProj`,
+  `Tensor.ttBond_ttBondCoeff`.
+* §4.3, Eqs. (4.29)–(4.30) (TDVP sweep) and "TDVP conserves norm and energy":
+  `Tensor.IsTTKSLStep`, `Tensor.IsTTKSLStep.norm_eq`, `Tensor.IsTTKSLStep.energy_eq`.
+* §5.1, Algorithm 1 (rank-adaptive BUG for matrices): `MatrixBUG.IsRankAdaptiveStep`,
+  `MatrixBUG.rankAdaptive_global_error_le` (Ceruti–Kusch–Lubich).
+* §5.2, Eqs. (5.6)–(5.12) (MPS-BUG with a centre site): `Tensor.IsTTAugBUGStep` with
+  `m = n + 1`, `Tensor.IsTTAugGalerkinStep.eq_tt_update`.
+* Appendix A (truncated SVD): `LeanDLRA/Classical/EckartYoung.lean`.
+
+Differences from the paper. The tensor-train statements are for real tensor trains with the
+Frobenius inner product; the paper's states are complex (`ψ ∈ ℂ^{d₁ × ⋯ × d_N}`). The core is
+real and complex tensor trains are not realified at the level of cores (the realification of a
+complex core doubles its bonds but does not keep the one-element boundary bonds of the core
+format), so Lemma 1 and the statements of §4.2 are proved only for real cores; for the
+Schrödinger equation the abstract realification bridge `P2609_12848.realify_schrodinger_inner_self`
+applies to the Galerkin steps. The implicit midpoint statements of §3 are complex. The MPO
+representation (4.14)–(4.17), TDVP-2, the consolidation of bond dimensions in MPS-BUG ("beyond
+the scope of this presentation"), the observed second order and all numerical results of §6 are
+not formalized. Core definitions used: `Tensor.TTCores`, `Tensor.tt`, `Tensor.ttMix`,
+`Tensor.ttBond`, `Tensor.ttLeftProj`, `Tensor.ttRightProj`.
 -/
 
 open Set Filter Topology Finset
@@ -62,8 +89,10 @@ private lemma imagCoef_mulVec_injective [DecidableEq n] (H : Matrix n n ℂ)
 `h`, the implicit midpoint rule for `y' = -i H y`, `y₁ = y₀ - (i h/2) H (y₀ + y₁)`, has a unique
 solution `y₁`, and the map `y₀ ↦ y₁` is given by a unitary matrix `U` (`Uᴴ U = 1 = U Uᴴ`).
 
-The paper states unitarity of the Cayley transform `(1 - i h H/2)(1 + i h H/2)⁻¹` for the implicit
-midpoint rule; here `U = (1 + c H)⁻¹ (1 - c H)` with `c = i h/2`, written for the solution. -/
+The paper (§3, after Eq. (3.6)) calls the IMR (3.7)–(3.8) "unconditionally stable,
+norm-conserving and time-reversible" without stating the step map; its unitarity, with
+`U = (1 + c H)⁻¹ (1 - c H)` and `c = i h/2`, is the reason for norm conservation. In (3.8) the
+Hamiltonian is evaluated at the midpoint `t_k + δ/2`, a fixed Hermitian matrix in each step. -/
 theorem implicitMidpoint_unitary [DecidableEq n] (H : Matrix n n ℂ) (hH : H.IsHermitian) (h : ℝ) :
     ∃ U : Matrix n n ℂ, Uᴴ * U = 1 ∧ U * Uᴴ = 1 ∧
       ∀ y0 y1 : n → ℂ, y1 = y0 - (Complex.I * ((h / 2 : ℝ) : ℂ)) • (H *ᵥ (y0 + y1)) →
@@ -140,5 +169,59 @@ example (y0 : Fin 2 → ℂ) :
     y0 = y0 - (Complex.I * ((1 / 2 : ℝ) : ℂ)) •
       ((0 : Matrix (Fin 2) (Fin 2) ℂ) *ᵥ (y0 + y0)) := by
   simp
+
+/-! ### Mixed canonical and bond-centred states (§4.2) -/
+
+section Canonical
+
+open LeanDLRA.Tensor
+
+variable {d : ℕ} {ι : Fin d → Type*} [∀ i, Fintype (ι i)] {β : ℕ → Type*}
+  [∀ k, Fintype (β k)] [∀ k, DecidableEq (β k)]
+
+/-- arXiv 2603.13990, §4.2, before Eq. (4.22) (real tensor trains): a state in mixed canonical
+form with orthogonality centre at core `j` (left-normalized cores `A` before `j`, centre `M`) is
+fixed by the left projector `P̂^{L}_{j-1}` built from its own left cores. -/
+theorem mixedCanonical_leftProj [Subsingleton (β 0)] {A B : TTCores ι β} {j : ℕ} (hj : j < d)
+    (hA : ∀ i : Fin d, i.val < j → IsLeftOrth A i) (M : β j → ι ⟨j, hj⟩ → β (j + 1) → ℝ) :
+    ttLeftProj A j (tt (Function.update (ttMix A B j) ⟨j, hj⟩ M)) =
+      tt (Function.update (ttMix A B j) ⟨j, hj⟩ M) := by
+  have e : ttLeftProj A j = ttLeftProj (Function.update (ttMix A B j) ⟨j, hj⟩ M) j := by
+    simp only [ttLeftProj, ttLeft_update _ ⟨j, hj⟩ M le_rfl, ttLeft_ttMix A B le_rfl]
+  rw [e]
+  refine ttLeftProj_tt hj.le fun i hi => ?_
+  have hne : i ≠ ⟨j, hj⟩ := fun h => by have := congrArg Fin.val h; simp at this; omega
+  intro b b'
+  simp only [Function.update_of_ne hne, ttMix, hi, ↓reduceIte]
+  exact hA i hi b b'
+
+/-- arXiv 2603.13990, §4.2, before Eq. (4.22) (real tensor trains): a state in mixed canonical
+form with centre at core `j` (right-normalized cores `B` after `j`) is fixed by the right
+projector `P̂^{R}_{j+1}` built from its own right cores. -/
+theorem mixedCanonical_rightProj [Subsingleton (β d)] {A B : TTCores ι β} {j : ℕ} (hj : j < d)
+    (hB : ∀ i : Fin d, j + 1 ≤ i.val → IsRightOrth B i) (M : β j → ι ⟨j, hj⟩ → β (j + 1) → ℝ) :
+    ttRightProj B (j + 1) (tt (Function.update (ttMix A B j) ⟨j, hj⟩ M)) =
+      tt (Function.update (ttMix A B j) ⟨j, hj⟩ M) := by
+  have e : ttRightProj B (j + 1) =
+      ttRightProj (Function.update (ttMix A B j) ⟨j, hj⟩ M) (j + 1) := by
+    simp only [ttRightProj, ttRight_update _ ⟨j, hj⟩ M (Nat.lt_succ_self j),
+      ttRight_ttMix A B (Nat.le_succ j)]
+  rw [e]
+  refine ttRightProj_tt hj fun i hi => ?_
+  have hne : i ≠ ⟨j, hj⟩ := fun h => by have := congrArg Fin.val h; simp at this; omega
+  intro a a'
+  simp only [Function.update_of_ne hne, ttMix, show ¬ i.val < j by omega, ↓reduceIte]
+  exact hB i hi a a'
+
+/-- arXiv 2603.13990, §4.2, before Eq. (4.22) (real tensor trains): a state in bond-centred form
+(4.12) is fixed by the left projector `P̂^{L}_{j}` and the right projector `P̂^{R}_{j+1}` of its
+bond, i.e. by the second-sum terms of (4.19). -/
+theorem bondCentred_proj [Subsingleton (β 0)] [Subsingleton (β d)] {A B : TTCores ι β} {j : ℕ}
+    (hj : j ≤ d) (hA : ∀ i : Fin d, i.val < j → IsLeftOrth A i)
+    (hB : ∀ i : Fin d, j ≤ i.val → IsRightOrth B i) (S : Matrix (β j) (β j) ℝ) :
+    ttLeftProj A j (ttRightProj B j (ttBond A B j S)) = ttBond A B j S := by
+  rw [← ttBond_ttBondCoeff, ttBondCoeff_ttBond hj hA hB]
+
+end Canonical
 
 end LeanDLRA.Literature.P2603_13990
