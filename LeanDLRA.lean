@@ -35,6 +35,7 @@ import LeanDLRA.Integrators.PerturbedField
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Integrators.TuckerBUG
+import LeanDLRA.LinearAlgebra.Frobenius.Defs
 import LeanDLRA.Literature.Applications.P2110_13481a
 import LeanDLRA.Literature.Applications.P2201_12340a
 import LeanDLRA.Literature.Applications.P2306_17526a

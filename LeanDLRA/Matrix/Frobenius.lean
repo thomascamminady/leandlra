@@ -1,125 +1,41 @@
 import Mathlib
+import LeanDLRA.LinearAlgebra.Frobenius.Defs
 
 /-!
 # The Frobenius inner product on real matrices
 
 Dynamical low-rank approximation (DLRA) works on the space `ℝ^{m × n}` equipped with the
-Frobenius inner product `⟪A, B⟫ = ∑ᵢ ∑ⱼ Aᵢⱼ Bᵢⱼ = tr (Aᵀ B)`, see e.g. Koch–Lubich,
-*Dynamical low-rank approximation* (SIAM J. Matrix Anal. Appl. 29, 2007, §2), Lubich–Oseledets
-(arXiv 1301.1058, §2) and Ceruti–Lubich (arXiv 2010.02022, §2).  Mathlib only provides the
-Frobenius *norm* on `Matrix m n α` as non-instance definitions
-(`Matrix.frobeniusNormedAddCommGroup`, `Matrix.frobeniusNormedSpace`), because several matrix
-norms are natural.  This file
+Frobenius inner product `⟪A, B⟫ = ∑ᵢ ∑ⱼ Aᵢⱼ Bᵢⱼ = tr (Aᵀ B)` [KochLubich2007, §2]. The scoped
+instances (`open scoped LeanDLRA.Frobenius`) and the matrix operations as continuous linear maps
+are defined in `LeanDLRA/LinearAlgebra/Frobenius/Defs.lean`. This file proves their properties.
 
-* registers these two Mathlib definitions as *scoped* instances, activated by
-  `open scoped LeanDLRA.Frobenius` (so files that use
-  `attribute [local instance] Matrix.frobeniusNormedAddCommGroup` are compatible);
-* builds on top of them a scoped `InnerProductSpace ℝ (Matrix m n ℝ)` with
-  `⟪A, B⟫ = ∑ i, ∑ j, A i j * B i j`, whose norm is *definitionally* the Frobenius norm
-  (no instance diamond, see the `example`s below);
-* proves the adjoint identities `⟪A * B, C⟫ = ⟪B, Aᵀ * C⟫ = ⟪A, C * Bᵀ⟫`, the trace formula,
-  invariance under transposition and under multiplication by matrices with orthonormal columns,
-  and submultiplicativity for rectangular matrices;
-* packages left/right multiplication, matrix multiplication and transposition as continuous
-  (bi)linear maps and transfers derivatives along them (product rule for matrix-valued curves),
-  as needed for the gauge-fixed factor ODEs of Koch–Lubich (Prop. 2.1) and for factor-level
-  integrators.
+## Main results
+
+* `LeanDLRA.Frobenius.inner_eq_trace`: `⟪A, B⟫ = tr (Aᵀ B)`.
+* `LeanDLRA.Frobenius.inner_mul_left`, `inner_mul_right`: the adjoint identities
+  `⟪A B, C⟫ = ⟪B, Aᵀ C⟫ = ⟪A, C Bᵀ⟫`.
+* `LeanDLRA.Frobenius.inner_transpose`, `norm_mul_of_orthonormal`,
+  `norm_mul_transpose_of_orthonormal`: invariance under transposition and under multiplication by
+  matrices with orthonormal columns.
+* `LeanDLRA.Frobenius.hasDerivWithinAt_mul`, `hasDerivWithinAt_mul_mul`,
+  `hasDerivWithinAt_transpose`: product rule for matrix-valued curves and differentiation of the
+  transpose, as needed for the gauge-fixed factor ODEs [KochLubich2007, Prop. 2.1] and for
+  factor-level integrators.
+
+## References
+
+* [KochLubich2007]
+* [LubichOseledets2014, §2]
+* [CerutiLubich2022, §2]
 -/
 
 open scoped Matrix RealInnerProductSpace
 
 namespace LeanDLRA.Frobenius
 
-attribute [scoped instance] Matrix.frobeniusNormedAddCommGroup Matrix.frobeniusNormedSpace
-
 variable {k l m n : Type*} [Fintype k] [Fintype l] [Fintype m] [Fintype n]
 
-/-- The uniform structure of the Frobenius norm.  Mathlib also has a global product uniformity
-`Matrix.instUniformSpace`; the two are definitionally equal, but only after unfolding
-definitions, so we give the Frobenius one high priority inside the scope.  This makes all
-statements about matrices elaborate with the instances that the abstract (normed-space) API of
-`LeanDLRA.Foundations` expects. -/
-noncomputable scoped instance (priority := high) frobeniusUniformSpace :
-    UniformSpace (Matrix m n ℝ) :=
-  PseudoMetricSpace.toUniformSpace
-
-/-- The topology of the Frobenius norm (definitionally the product topology, see
-`frobeniusTopologicalSpace_eq`), preferred inside the scope for the same reason as
-`frobeniusUniformSpace`. -/
-noncomputable scoped instance (priority := high) frobeniusTopologicalSpace :
-    TopologicalSpace (Matrix m n ℝ) :=
-  UniformSpace.toTopologicalSpace
-
-/-- The Frobenius topology is Mathlib's (product) topology on matrices. -/
-theorem frobeniusTopologicalSpace_eq :
-    (frobeniusTopologicalSpace : TopologicalSpace (Matrix m n ℝ)) =
-      (inferInstanceAs (TopologicalSpace (m → n → ℝ))) := rfl
-
-/-- The Frobenius uniformity is Mathlib's (product) uniformity on matrices. -/
-theorem frobeniusUniformSpace_eq :
-    (frobeniusUniformSpace : UniformSpace (Matrix m n ℝ)) = Matrix.instUniformSpace m n ℝ := rfl
-
-/-- No instance diamond with the abstract API: the scoped topology is the one induced by the
-scoped Frobenius normed group, even at instance transparency. -/
-example : (frobeniusTopologicalSpace : TopologicalSpace (Matrix m n ℝ)) =
-    (Matrix.frobeniusNormedAddCommGroup :
-      NormedAddCommGroup (Matrix m n ℝ)).toUniformSpace.toTopologicalSpace := by
-  with_reducible_and_instances rfl
-
-/-- `Matrix m n ℝ` is complete for the Frobenius norm. -/
-scoped instance completeSpace : CompleteSpace (Matrix m n ℝ) :=
-  FiniteDimensional.complete ℝ _
-
-/-! ### The Frobenius norm -/
-
-/-- The squared Frobenius norm is the sum of the squared entries. -/
-theorem norm_sq_eq_sum (A : Matrix m n ℝ) : ‖A‖ ^ 2 = ∑ i, ∑ j, A i j ^ 2 := by
-  change ‖WithLp.toLp 2 fun i => WithLp.toLp 2 fun j => A i j‖ ^ 2 = _
-  rw [PiLp.norm_sq_eq_of_L2]
-  congr 1; ext i
-  rw [PiLp.norm_sq_eq_of_L2]
-  simp
-
-/-- The Frobenius norm `‖A‖ = √(∑ᵢ ∑ⱼ Aᵢⱼ²)`. -/
-theorem norm_def (A : Matrix m n ℝ) : ‖A‖ = √(∑ i, ∑ j, A i j ^ 2) := by
-  rw [← norm_sq_eq_sum, Real.sqrt_sq (norm_nonneg A)]
-
 /-! ### The Frobenius inner product -/
-
-/-- The Frobenius inner product `⟪A, B⟫ = ∑ᵢ ∑ⱼ Aᵢⱼ Bᵢⱼ` on real `m × n` matrices.  Its
-underlying normed space is Mathlib's `Matrix.frobeniusNormedSpace`, so the norm induced by the
-inner product is (definitionally) the Frobenius norm. -/
-noncomputable scoped instance innerProductSpace : InnerProductSpace ℝ (Matrix m n ℝ) where
-  toNormedSpace := Matrix.frobeniusNormedSpace
-  inner A B := ∑ i, ∑ j, A i j * B i j
-  norm_sq_eq_re_inner A := by
-    rw [norm_sq_eq_sum, RCLike.re_to_real]
-    simp only [sq]
-  conj_inner_symm A B := by
-    simp only [conj_trivial]
-    exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => mul_comm _ _
-  add_left A B C := by
-    simp only [Matrix.add_apply, add_mul, Finset.sum_add_distrib]
-  smul_left A B r := by
-    simp only [Matrix.smul_apply, smul_eq_mul, conj_trivial, Finset.mul_sum, mul_assoc]
-
-/-- The Frobenius inner product is the sum of the entrywise products. -/
-theorem inner_def (A B : Matrix m n ℝ) : ⟪A, B⟫ = ∑ i, ∑ j, A i j * B i j := rfl
-
-/-- No instance diamond: the normed space structure underlying the inner product space is
-Mathlib's Frobenius normed space, even at instance transparency. -/
-example : (innerProductSpace.toNormedSpace : NormedSpace ℝ (Matrix m n ℝ)) =
-    Matrix.frobeniusNormedSpace := by
-  with_reducible_and_instances rfl
-
-/-- No instance diamond: the norm induced by the inner product is the Frobenius norm. -/
-example (A : Matrix m n ℝ) : ‖A‖ = √(∑ i, ∑ j, A i j ^ 2) ∧ ‖A‖ ^ 2 = ⟪A, A⟫ :=
-  ⟨norm_def A, (real_inner_self_eq_norm_sq A).symm⟩
-
-/-- The module structure of the Frobenius normed space is the usual one on matrices. -/
-example : (Matrix.frobeniusNormedSpace : NormedSpace ℝ (Matrix m n ℝ)).toModule =
-    Matrix.module := by
-  with_reducible_and_instances rfl
 
 /-- The Frobenius inner product as a trace: `⟪A, B⟫ = tr (Aᵀ B)`. -/
 theorem inner_eq_trace (A B : Matrix m n ℝ) : ⟪A, B⟫ = Matrix.trace (Aᵀ * B) := by
@@ -154,26 +70,9 @@ theorem inner_transpose (A B : Matrix m n ℝ) : ⟪Aᵀ, Bᵀ⟫ = ⟪A, B⟫ :
   simp only [inner_def, Matrix.transpose_apply]
   exact Finset.sum_comm
 
-/-- Transposition preserves the Frobenius norm. -/
-theorem norm_transpose (A : Matrix m n ℝ) : ‖Aᵀ‖ = ‖A‖ :=
-  Matrix.frobenius_norm_transpose A
-
-/-- Submultiplicativity of the Frobenius norm for rectangular matrices. -/
-theorem norm_mul_le (A : Matrix m l ℝ) (B : Matrix l n ℝ) : ‖A * B‖ ≤ ‖A‖ * ‖B‖ :=
-  Matrix.frobenius_norm_mul A B
-
 /-- An entry is bounded by the Frobenius norm. -/
 theorem abs_apply_le_norm (A : Matrix m n ℝ) (i : m) (j : n) : |A i j| ≤ ‖A‖ :=
   Matrix.norm_apply_le_frobenius_norm A i j
-
-/-- Transposition as a linear isometric equivalence for the Frobenius norm. -/
-noncomputable def transposeLIE : Matrix m n ℝ ≃ₗᵢ[ℝ] Matrix n m ℝ :=
-  { Matrix.transposeLinearEquiv m n ℝ ℝ with norm_map' := norm_transpose }
-
-@[simp] theorem transposeLIE_apply (A : Matrix m n ℝ) : transposeLIE A = Aᵀ := rfl
-
-@[simp] theorem transposeLIE_symm_apply (A : Matrix n m ℝ) :
-    (transposeLIE : Matrix m n ℝ ≃ₗᵢ[ℝ] Matrix n m ℝ).symm A = Aᵀ := rfl
 
 /-! ### Isometries: matrices with orthonormal columns -/
 
@@ -196,54 +95,6 @@ theorem norm_mul_transpose_of_orthonormal [DecidableEq k] {V : Matrix n k ℝ} (
 theorem inner_mul_mul_of_orthonormal [DecidableEq k] {U : Matrix m k ℝ} (hU : Uᵀ * U = 1)
     (X Y : Matrix k n ℝ) : ⟪U * X, U * Y⟫ = ⟪X, Y⟫ := by
   rw [inner_mul_left, ← Matrix.mul_assoc, hU, Matrix.one_mul]
-
-/-! ### Multiplication as continuous linear maps -/
-
-/-- Left multiplication `X ↦ M X` as a continuous linear map (operator norm `≤ ‖M‖`). -/
-noncomputable def leftMulCLM (M : Matrix m l ℝ) : Matrix l n ℝ →L[ℝ] Matrix m n ℝ :=
-  LinearMap.mkContinuous
-    { toFun := fun X => M * X
-      map_add' := Matrix.mul_add M
-      map_smul' := fun c X => Matrix.mul_smul M c X }
-    ‖M‖ fun X => norm_mul_le M X
-
-@[simp] theorem leftMulCLM_apply (M : Matrix m l ℝ) (X : Matrix l n ℝ) :
-    leftMulCLM M X = M * X := rfl
-
-theorem norm_leftMulCLM_le (M : Matrix m l ℝ) :
-    ‖(leftMulCLM M : Matrix l n ℝ →L[ℝ] Matrix m n ℝ)‖ ≤ ‖M‖ :=
-  LinearMap.mkContinuous_norm_le _ (norm_nonneg M) _
-
-/-- Right multiplication `X ↦ X M` as a continuous linear map (operator norm `≤ ‖M‖`). -/
-noncomputable def rightMulCLM (M : Matrix l n ℝ) : Matrix m l ℝ →L[ℝ] Matrix m n ℝ :=
-  LinearMap.mkContinuous
-    { toFun := fun X => X * M
-      map_add' := fun X Y => Matrix.add_mul X Y M
-      map_smul' := fun c X => Matrix.smul_mul c X M }
-    ‖M‖ fun X => by rw [mul_comm]; exact norm_mul_le X M
-
-@[simp] theorem rightMulCLM_apply (M : Matrix l n ℝ) (X : Matrix m l ℝ) :
-    rightMulCLM M X = X * M := rfl
-
-theorem norm_rightMulCLM_le (M : Matrix l n ℝ) :
-    ‖(rightMulCLM M : Matrix m l ℝ →L[ℝ] Matrix m n ℝ)‖ ≤ ‖M‖ :=
-  LinearMap.mkContinuous_norm_le _ (norm_nonneg M) _
-
-/-- Matrix multiplication `(A, B) ↦ A B` as a continuous bilinear map. -/
-noncomputable def mulCLM : Matrix m l ℝ →L[ℝ] Matrix l n ℝ →L[ℝ] Matrix m n ℝ :=
-  LinearMap.mkContinuous₂
-    (LinearMap.mk₂ ℝ (fun A B => A * B) Matrix.add_mul (fun c A B => Matrix.smul_mul c A B)
-      Matrix.mul_add (fun c A B => Matrix.mul_smul A c B))
-    1 fun A B => by rw [one_mul]; exact norm_mul_le A B
-
-@[simp] theorem mulCLM_apply (A : Matrix m l ℝ) (B : Matrix l n ℝ) : mulCLM A B = A * B := rfl
-
-/-- Transposition as a continuous linear map. -/
-noncomputable def transposeCLM : Matrix m n ℝ →L[ℝ] Matrix n m ℝ :=
-  LinearMap.mkContinuous (Matrix.transposeLinearEquiv m n ℝ ℝ).toLinearMap 1
-    fun A => by rw [one_mul]; exact (norm_transpose A).le
-
-@[simp] theorem transposeCLM_apply (A : Matrix m n ℝ) : transposeCLM A = Aᵀ := rfl
 
 /-! ### Derivatives of matrix-valued curves -/
 

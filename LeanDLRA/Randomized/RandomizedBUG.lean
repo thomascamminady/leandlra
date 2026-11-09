@@ -2,6 +2,7 @@ import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Classical.EckartYoung
+import LeanDLRA.LinearAlgebra.Frobenius.Defs
 
 /-!
 # Dynamical randomized SVD and generalized Nyström as BUG-type steps
@@ -270,22 +271,18 @@ theorem bStep_full {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {W : Matrix n
   odeSolution_map hB (Frobenius.rightMulCLM Wᵀ) fun t _ => by
     simp [rightProj_apply]
 
-/-- The continuous linear map `C ↦ Q Cᵀ`. -/
-noncomputable def mulTransposeCLM (Q : Matrix m k ℝ) : Matrix n k ℝ →L[ℝ] Matrix m n ℝ :=
-  LinearMap.toContinuousLinearMap
-    { toFun := fun C => Q * Cᵀ
-      map_add' := fun X Y => by rw [Matrix.transpose_add, Matrix.mul_add]
-      map_smul' := fun c X => by simp [Matrix.transpose_smul, Matrix.mul_smul] }
-
 /-- **The C-step is a one-sided Galerkin step**: if `C' = F(Q Cᵀ)ᵀ Q` (arXiv 2410.17091,
 eq. (14)), then `Y_C = Q Cᵀ` solves `Y_C' = Q Qᵀ F(Y_C)`. -/
 theorem cStep_full {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {Q : Matrix m k ℝ}
     {Cs : ℝ → Matrix n k ℝ} {a b : ℝ}
     (hC : ODESolution (fun t C => (F t (Q * Cᵀ))ᵀ * Q) Cs a b) :
-    ODESolution (fun t Y => leftProj Q (F t Y)) (fun t => Q * (Cs t)ᵀ) a b :=
-  odeSolution_map hC (mulTransposeCLM Q) (g := fun t Y => leftProj Q (F t Y)) fun t _ => by
-    change Q * ((F t (Q * (Cs t)ᵀ))ᵀ * Q)ᵀ = Q * Qᵀ * F t (Q * (Cs t)ᵀ)
-    rw [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
+    ODESolution (fun t Y => leftProj Q (F t Y)) (fun t => Q * (Cs t)ᵀ) a b := by
+  classical
+  have h := odeSolution_map hC (Frobenius.sandwichTransposeCLM Q (1 : Matrix n n ℝ))
+    (g := fun t Y => leftProj Q (F t Y)) fun t _ => by
+      simp only [Frobenius.sandwichTransposeCLM_apply, Matrix.mul_one, leftProj_apply,
+        Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
+  simpa only [Frobenius.sandwichTransposeCLM_apply, Matrix.mul_one] using h
 
 /-- **The DGN core step is a two-sided Galerkin step**: if `D' = Qᵀ F(Q D Wᵀ) W`
 (arXiv 2410.17091, eq. (16)), then `Y_D = Q D Wᵀ` solves `Y_D' = Q Qᵀ F(Y_D) W Wᵀ`. -/
@@ -293,7 +290,7 @@ theorem dStep_full {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {Q : Matrix m
     {Ds : ℝ → Matrix k l ℝ} {a b : ℝ}
     (hD : ODESolution (fun t D => Qᵀ * F t (Q * D * Wᵀ) * W) Ds a b) :
     ODESolution (fun t Y => leftProj Q (rightProj W (F t Y))) (fun t => Q * Ds t * Wᵀ) a b := by
-  have h := odeSolution_map hD (Exactness.sandwichCLM Q Wᵀ)
+  have h := odeSolution_map hD (Frobenius.sandwichCLM Q Wᵀ)
     (g := fun t Y => leftProj Q (rightProj W (F t Y))) fun t _ => by
       change Q * (Qᵀ * F t (Q * Ds t * Wᵀ) * W) * Wᵀ
         = Q * Qᵀ * (F t (Q * Ds t * Wᵀ) * (W * Wᵀ))

@@ -1,6 +1,7 @@
 import Mathlib
 import LeanDLRA.Foundations.ODE
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.LinearAlgebra.Frobenius.Defs
 
 /-!
 # Gauge-fixed factor ODEs of dynamical low-rank approximation
@@ -108,26 +109,6 @@ namespace GaugeODE
 
 variable {k l m n : Type*} [Fintype k] [Fintype l] [Fintype m] [Fintype n]
 
-/-- Matrix multiplication `(A, B) ↦ A B` as a continuous bilinear map for the Frobenius norm. -/
-noncomputable def mulBilin : Matrix m l ℝ →L[ℝ] Matrix l n ℝ →L[ℝ] Matrix m n ℝ :=
-  LinearMap.mkContinuous₂
-    (LinearMap.mk₂ ℝ (fun A B => A * B) Matrix.add_mul (fun c A B => Matrix.smul_mul c A B)
-      Matrix.mul_add (fun c A B => Matrix.mul_smul A c B))
-    1 fun A B => by rw [one_mul]; exact Matrix.frobenius_norm_mul A B
-
-@[simp] theorem mulBilin_apply (A : Matrix m l ℝ) (B : Matrix l n ℝ) :
-    mulBilin A B = A * B := rfl
-
-/-- Transposition as a continuous linear map for the Frobenius norm. -/
-noncomputable def transposeCLM : Matrix m n ℝ →L[ℝ] Matrix n m ℝ :=
-  LinearMap.mkContinuous
-    { toFun := Matrix.transpose
-      map_add' := Matrix.transpose_add
-      map_smul' := fun c A => Matrix.transpose_smul c A }
-    1 fun A => by rw [one_mul]; exact (Matrix.frobenius_norm_transpose A).le
-
-@[simp] theorem transposeCLM_apply (A : Matrix m n ℝ) : transposeCLM A = Aᵀ := rfl
-
 variable {s : Set ℝ} {t : ℝ}
 
 /- The calculus lemmas below only need the outer index types to be finite: their statements use
@@ -143,7 +124,7 @@ theorem hasDerivWithinAt_mul {K : ℝ → Matrix m l ℝ} {L : ℝ → Matrix l 
     HasDerivWithinAt (fun t => K t * L t) (K' * L t + K t * L') s t := by
   have := Fintype.ofFinite m
   have := Fintype.ofFinite n
-  have h := (mulBilin : Matrix m l ℝ →L[ℝ] Matrix l n ℝ →L[ℝ] Matrix m n ℝ)
+  have h := (Frobenius.mulCLM : Matrix m l ℝ →L[ℝ] Matrix l n ℝ →L[ℝ] Matrix m n ℝ)
     |>.hasDerivWithinAt_of_bilinear hK hL
   rw [add_comm] at h
   exact h
@@ -162,7 +143,8 @@ theorem hasDerivWithinAt_transpose {K : ℝ → Matrix m n ℝ} {K' : Matrix m n
     (hK : HasDerivWithinAt K K' s t) : HasDerivWithinAt (fun t => (K t)ᵀ) K'ᵀ s t := by
   have := Fintype.ofFinite m
   have := Fintype.ofFinite n
-  exact (transposeCLM : Matrix m n ℝ →L[ℝ] Matrix n m ℝ).hasFDerivAt.comp_hasDerivWithinAt t hK
+  exact (Frobenius.transposeCLM : Matrix m n ℝ →L[ℝ] Matrix n m ℝ).hasFDerivAt
+    |>.comp_hasDerivWithinAt t hK
 
 /-- Transposition commutes with differentiation. -/
 theorem hasDerivAt_transpose {K : ℝ → Matrix m n ℝ} {K' : Matrix m n ℝ}
@@ -176,7 +158,7 @@ theorem continuousOn_mul {K : ℝ → Matrix m l ℝ} {L : ℝ → Matrix l n �
     (hK : ContinuousOn K s) (hL : ContinuousOn L s) : ContinuousOn (fun t => K t * L t) s := by
   have := Fintype.ofFinite m
   have := Fintype.ofFinite n
-  exact ((mulBilin : Matrix m l ℝ →L[ℝ] Matrix l n ℝ →L[ℝ] Matrix m n ℝ).continuous
+  exact ((Frobenius.mulCLM : Matrix m l ℝ →L[ℝ] Matrix l n ℝ →L[ℝ] Matrix m n ℝ).continuous
     |>.comp_continuousOn hK).clm_apply hL
 
 /-- Continuity of `t ↦ (K t)ᵀ` on a set. -/
@@ -184,7 +166,8 @@ theorem continuousOn_transpose {K : ℝ → Matrix m n ℝ} (hK : ContinuousOn K
     ContinuousOn (fun t => (K t)ᵀ) s := by
   have := Fintype.ofFinite m
   have := Fintype.ofFinite n
-  exact (transposeCLM : Matrix m n ℝ →L[ℝ] Matrix n m ℝ).continuous.comp_continuousOn hK
+  exact (Frobenius.transposeCLM : Matrix m n ℝ →L[ℝ] Matrix n m ℝ).continuous
+    |>.comp_continuousOn hK
 
 /-- Derivative of a factorized curve `t ↦ U t * S t * (V t)ᵀ`, within a set. -/
 theorem hasDerivWithinAt_factorProduct {r : Type*} [Fintype r] {U : ℝ → Matrix m r ℝ}

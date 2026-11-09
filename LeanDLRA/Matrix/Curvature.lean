@@ -1,6 +1,7 @@
 import Mathlib
 import LeanDLRA.Foundations.Projector
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.LinearAlgebra.Frobenius.Defs
 
 /-!
 # Curvature bounds for the manifold of fixed-rank matrices
@@ -204,11 +205,7 @@ section Spectral
 
 variable [DecidableEq m] [DecidableEq n] [DecidableEq k]
 
-/-- The spectral norm `‖A‖₂` of a real matrix: the operator norm of `x ↦ A x` on Euclidean
-spaces.  It agrees with Mathlib's `Matrix.instL2OpNormedAddCommGroup` (`specNorm_eq_l2`), but is
-given a separate name so that it can be used alongside the Frobenius norm. -/
-noncomputable def specNorm (A : Matrix m n ℝ) : ℝ :=
-  ‖LinearMap.toContinuousLinearMap (Matrix.toEuclideanLin A)‖
+/- `specNorm` is defined in `LeanDLRA/LinearAlgebra/Frobenius/Defs.lean`. -/
 
 section L2
 

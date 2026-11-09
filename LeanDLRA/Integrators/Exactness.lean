@@ -3,6 +3,7 @@ import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.ParallelBUG
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Matrix.Orthonormal
+import LeanDLRA.LinearAlgebra.Frobenius.Defs
 
 /-!
 # Exactness of low-rank integrators for rank-`r` data
@@ -608,24 +609,6 @@ attribute [local instance] Matrix.frobeniusNormedAddCommGroup Matrix.frobeniusNo
 
 variable {m n r p q : Type*} [Fintype m] [Fintype n] [Fintype r] [Fintype p] [Fintype q]
 
-/-- The continuous linear map `X ↦ M X N` on real matrices (for the product topology, which is
-the topology of the Frobenius norm). -/
-noncomputable def sandwichCLM (M : Matrix p m ℝ) (N : Matrix n q ℝ) :
-    Matrix m n ℝ →L[ℝ] Matrix p q ℝ :=
-  LinearMap.toContinuousLinearMap
-    { toFun := fun X => M * X * N
-      map_add' := fun X Y => by rw [Matrix.mul_add, Matrix.add_mul]
-      map_smul' := fun c X => by simp [Matrix.mul_smul, Matrix.smul_mul] }
-
-/-- The continuous linear map `X ↦ M Xᵀ N` on real matrices (for the product topology, which is
-the topology of the Frobenius norm). -/
-noncomputable def sandwichTransposeCLM (M : Matrix p n ℝ) (N : Matrix m q ℝ) :
-    Matrix m n ℝ →L[ℝ] Matrix p q ℝ :=
-  LinearMap.toContinuousLinearMap
-    { toFun := fun X => M * Xᵀ * N
-      map_add' := fun X Y => by rw [Matrix.transpose_add, Matrix.mul_add, Matrix.add_mul]
-      map_smul' := fun c X => by simp [Matrix.transpose_smul, Matrix.mul_smul, Matrix.smul_mul] }
-
 /-- **Factor ODEs with a state-independent right-hand side.**  If `S' = M F(t, Ψ(S)) N` (for any
 reconstruction map `Ψ`, e.g. `Ψ S = U₁ S V₁ᵀ`) and `F(t,Y) = Ȧ(t)`, then
 `S(t) = S(t₀) + M (A(t) - A(t₀)) N`.  This covers the S-steps of the BUG, augmented BUG,
@@ -637,7 +620,7 @@ theorem factorODE_eq_add {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A : �
     (hS : ODESolution f S t₀ t₁) :
     ∀ t ∈ Icc t₀ t₁, S t = S t₀ + M * (A t - A t₀) * N := by
   intro t ht
-  exact hS.eq_add_map_sub (sandwichCLM M N) (A' := fun t => F t (Ψ (S t))) hA.cont
+  exact hS.eq_add_map_sub (Frobenius.sandwichCLM M N) (A' := fun t => F t (Ψ (S t))) hA.cont
     (fun t ht => hA.deriv t ht _) (fun t _ => by rw [hf]; rfl) t ht
 
 /-- **Exact K-step** (Ceruti–Lubich, arXiv:2010.02022, proof of Lemma 1; Lubich–Oseledets,
@@ -661,7 +644,7 @@ theorem lStepODE_eq_add {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A : ℝ
     ∀ t ∈ Icc t₀ t₁, L t = L t₀ + (A t - A t₀)ᵀ * U₀ := by
   classical
   intro t ht
-  have h := hL.eq_add_map_sub (sandwichTransposeCLM 1 U₀)
+  have h := hL.eq_add_map_sub (Frobenius.sandwichTransposeCLM 1 U₀)
     (A' := fun t => F t (U₀ * (L t)ᵀ)) hA.cont (fun t ht => hA.deriv t ht _)
     (fun t _ => by
       change _ = (1 : Matrix n n ℝ) * (F t (U₀ * (L t)ᵀ))ᵀ * U₀
