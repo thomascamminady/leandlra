@@ -3,6 +3,7 @@ import Mathlib.Data.Matrix.Mul
 import Mathlib.Data.Matrix.Auto
 import Mathlib.Basic.Real.Basic
 import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Results of arXiv 2607.27438: Dynamical low-rank smoothing
@@ -16,14 +17,18 @@ uses it for the gain in Proposition 4.1.
 
 Contents:
 
-* `IsMoorePenrose X G`: the four Penrose equations, a definition of `G = X†` for square matrices.
-* `IsMoorePenrose.unique`: the Moore–Penrose inverse is unique, so `G = X†` is well defined.
+* `IsMoorePenrose.transpose`, `IsMoorePenrose.unique`: the Penrose equations (core
+  `Matrix.IsMoorePenrose`) are stable under transposition and have at most one solution, so
+  `G = X†` is well defined; both are the core lemmas for square matrices.
 * `isMoorePenrose_orthonormal_sandwich`: `Uᵀ C⁻¹ U` satisfies the Penrose equations for `Uᵀ C U`.
-* `moorePenrose_orthonormal_sandwich`: the paper's identity `(Uᵀ C U)† = Uᵀ C⁻¹ U`.
+* `moorePenrose_orthonormal_sandwich`: the paper's identity `(Uᵀ C U)† = Uᵀ C⁻¹ U`, and
+  `pinv_orthonormal_sandwich`: the same with the core Moore–Penrose inverse `Matrix.pinv`.
 * `example`: a non-vacuous instance with `k = 1`, `d = 2`, `U = (1, 0)` and `C = (2)`.
 
-Core definitions: the library has no Moore–Penrose inverse on matrices (only the Penrose conditions
-written in comments), so `IsMoorePenrose` is defined locally from Mathlib's `Matrix` and `⁻¹`.
+Core definitions: `Matrix.IsMoorePenrose` (the four Penrose equations) and `Matrix.pinv`
+(`LinearAlgebra/Factorization/Defs.lean`). The local square-matrix `IsMoorePenrose` of an earlier
+version of this file had the same four equations and was replaced by the core definition
+(unification batch C1); its deprecated alias is at the end of the file.
 
 Left out, not formalized: Propositions 3.1 and 3.2 (the classical and ensemble Rauch–Tung–Striebel
 smoothers, cited from the literature), Propositions 3.3 and 4.1 themselves (the mean, covariance and
@@ -37,97 +42,49 @@ open scoped Matrix
 
 namespace LeanDLRA.Literature.P2607_27438
 
-/-- The Penrose equations: `IsMoorePenrose X G` says that `G` is the Moore–Penrose inverse `X†` of
-the square matrix `X`, namely `X G X = X`, `G X G = G`, and `X G`, `G X` are symmetric. -/
-structure IsMoorePenrose {n : Type*} [Fintype n] (X G : Matrix n n ℝ) : Prop where
-  xgx : X * G * X = X
-  gxg : G * X * G = G
-  xg_symm : (X * G)ᵀ = X * G
-  gx_symm : (G * X)ᵀ = G * X
-
-/-- The Penrose equations are stable under transposition. -/
+/-- The Penrose equations are stable under transposition (the core
+`Matrix.IsMoorePenrose.transpose` for square matrices). -/
 lemma IsMoorePenrose.transpose {n : Type*} [Fintype n] {X G : Matrix n n ℝ}
-    (h : IsMoorePenrose X G) : IsMoorePenrose Xᵀ Gᵀ := by
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · have := congrArg Matrix.transpose h.xgx
-    simpa [Matrix.transpose_mul, Matrix.mul_assoc] using this
-  · have := congrArg Matrix.transpose h.gxg
-    simpa [Matrix.transpose_mul, Matrix.mul_assoc] using this
-  · have := h.gx_symm
-    simp only [Matrix.transpose_mul, Matrix.transpose_transpose] at this ⊢
-    exact this.symm
-  · have := h.xg_symm
-    simp only [Matrix.transpose_mul, Matrix.transpose_transpose] at this ⊢
-    exact this.symm
+    (h : X.IsMoorePenrose G) : Xᵀ.IsMoorePenrose Gᵀ :=
+  Matrix.IsMoorePenrose.transpose h
 
-/-- Step of the uniqueness proof: two Moore–Penrose inverses of `X` give the same product `X G`. -/
-private lemma xg_eq_of_penrose {n : Type*} [Fintype n] {X G H : Matrix n n ℝ}
-    (hG : IsMoorePenrose X G) (hH : IsMoorePenrose X H) : X * G = X * H := by
-  have h1 : (X * G) * (X * H) = X * H := by
-    calc (X * G) * (X * H) = X * G * X * H := by simp [Matrix.mul_assoc]
-      _ = X * H := by rw [hG.xgx]
-  have h2 : (X * H) * (X * G) = X * G := by
-    calc (X * H) * (X * G) = X * H * X * G := by simp [Matrix.mul_assoc]
-      _ = X * G := by rw [hH.xgx]
-  calc X * G = (X * G)ᵀ := hG.xg_symm.symm
-    _ = ((X * H) * (X * G))ᵀ := by rw [h2]
-    _ = (X * G)ᵀ * (X * H)ᵀ := Matrix.transpose_mul _ _
-    _ = (X * G) * (X * H) := by rw [hG.xg_symm, hH.xg_symm]
-    _ = X * H := h1
-
-/-- The Moore–Penrose inverse is unique: the Penrose equations determine `X†`. -/
+/-- The Moore–Penrose inverse is unique: the Penrose equations determine `X†` (the core
+`Matrix.IsMoorePenrose.unique` for square matrices). -/
 theorem IsMoorePenrose.unique {n : Type*} [Fintype n] {X G H : Matrix n n ℝ}
-    (hG : IsMoorePenrose X G) (hH : IsMoorePenrose X H) : G = H := by
-  have hXG : X * G = X * H := xg_eq_of_penrose hG hH
-  have hGX : G * X = H * X := by
-    have hT := xg_eq_of_penrose hG.transpose hH.transpose
-    have := congrArg Matrix.transpose hT
-    simpa [Matrix.transpose_mul] using this
-  calc G = G * X * G := hG.gxg.symm
-    _ = G * (X * G) := Matrix.mul_assoc G X G
-    _ = G * (X * H) := by rw [hXG]
-    _ = G * X * H := (Matrix.mul_assoc G X H).symm
-    _ = H * X * H := by rw [hGX]
-    _ = H := hH.gxg
+    (hG : X.IsMoorePenrose G) (hH : X.IsMoorePenrose H) : G = H :=
+  Matrix.IsMoorePenrose.unique hG hH
 
 /-- Key identity (paper, proof of Proposition 3.3): if `U` has orthonormal rows and `C` is
-invertible, then `Uᵀ C⁻¹ U` satisfies the Penrose equations for `Uᵀ C U`. -/
+invertible, then `Uᵀ C⁻¹ U` satisfies the Penrose equations for `Uᵀ C U`. This is the core
+`Matrix.isMoorePenrose_mul_mul_transpose` for the orthonormal columns `Uᵀ`. -/
 theorem isMoorePenrose_orthonormal_sandwich {k d : Type*} [Fintype k] [DecidableEq k]
     [Fintype d]
     (U : Matrix k d ℝ) (hU : U * Uᵀ = 1) (C : Matrix k k ℝ) (hC : IsUnit C.det) :
-    IsMoorePenrose (Uᵀ * C * U) (Uᵀ * C⁻¹ * U) := by
-  have hC1 : C⁻¹ * C = 1 := Matrix.nonsing_inv_mul C hC
-  have hC2 : C * C⁻¹ = 1 := Matrix.mul_nonsing_inv C hC
-  have hUU : ∀ M : Matrix k d ℝ, U * (Uᵀ * M) = M := fun M => by
-    rw [← Matrix.mul_assoc, hU, Matrix.one_mul]
-  have hCC1 : ∀ M : Matrix k d ℝ, C⁻¹ * (C * M) = M := fun M => by
-    rw [← Matrix.mul_assoc, hC1, Matrix.one_mul]
-  have hCC2 : ∀ M : Matrix k d ℝ, C * (C⁻¹ * M) = M := fun M => by
-    rw [← Matrix.mul_assoc, hC2, Matrix.one_mul]
-  have hXG : Uᵀ * C * U * (Uᵀ * C⁻¹ * U) = Uᵀ * U := by
-    simp only [Matrix.mul_assoc, hUU, hCC2]
-  have hGX : Uᵀ * C⁻¹ * U * (Uᵀ * C * U) = Uᵀ * U := by
-    simp only [Matrix.mul_assoc, hUU, hCC1]
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · simp only [Matrix.mul_assoc, hUU, hCC2]
-  · simp only [Matrix.mul_assoc, hUU, hCC1]
-  · rw [hXG]
-    simp [Matrix.transpose_mul]
-  · rw [hGX]
-    simp [Matrix.transpose_mul]
+    (Uᵀ * C * U).IsMoorePenrose (Uᵀ * C⁻¹ * U) := by
+  have hU' : Uᵀᵀ * Uᵀ = 1 := by rwa [Matrix.transpose_transpose]
+  simpa only [Matrix.transpose_transpose] using
+    Matrix.isMoorePenrose_mul_mul_transpose hU' hU' hC
 
 /-- The paper's identity `(Uᵀ C U)† = Uᵀ C⁻¹ U` (proof of Proposition 3.3), for `U` with orthonormal
 rows and `C` invertible: any Moore–Penrose inverse of `Uᵀ C U` equals `Uᵀ C⁻¹ U`. -/
 theorem moorePenrose_orthonormal_sandwich {k d : Type*} [Fintype k] [DecidableEq k]
     [Fintype d]
     (U : Matrix k d ℝ) (hU : U * Uᵀ = 1) (C : Matrix k k ℝ) (hC : IsUnit C.det)
-    {G : Matrix d d ℝ} (hG : IsMoorePenrose (Uᵀ * C * U) G) :
+    {G : Matrix d d ℝ} (hG : (Uᵀ * C * U).IsMoorePenrose G) :
     G = Uᵀ * C⁻¹ * U :=
   hG.unique (isMoorePenrose_orthonormal_sandwich U hU C hC)
 
+/-- The paper's identity `(Uᵀ C U)† = Uᵀ C⁻¹ U` (proof of Proposition 3.3) with the core
+Moore–Penrose inverse `Matrix.pinv`, for `U` with orthonormal rows and `C` invertible. -/
+theorem pinv_orthonormal_sandwich {k d : Type*} [Fintype k] [DecidableEq k]
+    [Fintype d] [DecidableEq d]
+    (U : Matrix k d ℝ) (hU : U * Uᵀ = 1) (C : Matrix k k ℝ) (hC : IsUnit C.det) :
+    (Uᵀ * C * U).pinv = Uᵀ * C⁻¹ * U :=
+  (isMoorePenrose_orthonormal_sandwich U hU C hC).eq_pinv.symm
+
 /-- Non-vacuity: `U = (1, 0)` has orthonormal rows and `C = (2)` is invertible, so the identity
 applies to the instance `Uᵀ C U = [[2, 0], [0, 0]]`. -/
-example : IsMoorePenrose (!![(1 : ℝ), 0]ᵀ * !![(2 : ℝ)] * !![(1 : ℝ), 0])
+example : (!![(1 : ℝ), 0]ᵀ * !![(2 : ℝ)] * !![(1 : ℝ), 0]).IsMoorePenrose
     (!![(1 : ℝ), 0]ᵀ * !![(2 : ℝ)]⁻¹ * !![(1 : ℝ), 0]) := by
   have hU : (!![(1 : ℝ), 0] : Matrix (Fin 1) (Fin 2) ℝ) * !![(1 : ℝ), 0]ᵀ = 1 := by
     ext i j
@@ -138,5 +95,11 @@ example : IsMoorePenrose (!![(1 : ℝ), 0]ᵀ * !![(2 : ℝ)] * !![(1 : ℝ), 0]
     rw [Matrix.det_fin_one_of]
     exact isUnit_iff_ne_zero.mpr two_ne_zero
   exact isMoorePenrose_orthonormal_sandwich _ hU _ hC
+
+/-- The local square-matrix Penrose predicate of this file, replaced by the core
+`Matrix.IsMoorePenrose` (same four equations). -/
+@[deprecated "use the core `Matrix.IsMoorePenrose`" (since := "2026-11-09")]
+abbrev IsMoorePenrose {n : Type*} [Fintype n] (X G : Matrix n n ℝ) : Prop :=
+  Matrix.IsMoorePenrose X G
 
 end LeanDLRA.Literature.P2607_27438

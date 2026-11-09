@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Projectors
 
 /-!
@@ -14,6 +15,11 @@ matrices and contains `Z` with `θ_Z(Z) = (0,0,G)`,
 and the parameter space has dimension `r(n+m-r)`.  Mathlib has no Grassmannian manifold or the
 required analytic structure, so smoothness of transition maps, openness of `U_Z`, and the principal
 `GL_r`-bundle structure are not formalized.
+
+The paper's `U⁺ = (UᵀU)⁻¹Uᵀ` is the core Gram pseudoinverse `Matrix.gramPinv`
+(`LinearAlgebra/Factorization/Defs.lean`), which is the Moore–Penrose inverse for the
+full-column-rank bases used here (`Matrix.gramPinv_eq_pinv`).  The local `pinv` of an earlier
+version of this file was the same definition (unification batch C1).
 -/
 
 open Set Filter Topology Finset
@@ -23,10 +29,6 @@ namespace LeanDLRA.Literature.P2001_08599
 
 variable {ι κ ρ σ τ : Type*} [Fintype ι] [Fintype κ] [Fintype ρ] [Fintype σ] [Fintype τ]
   [DecidableEq ρ] [DecidableEq σ] [DecidableEq τ]
-
-/-- Moore–Penrose pseudo-inverse of a full-column-rank matrix, `A⁺ = (AᵀA)⁻¹Aᵀ`. -/
-noncomputable def pinv {a b : Type*} [Fintype a] [Fintype b] [DecidableEq b]
-    (A : Matrix a b ℝ) : Matrix b a ℝ := (Aᵀ * A)⁻¹ * Aᵀ
 
 /-- Data of the paper: `U` (`n × r`) of full column rank and `U⊥` (`n × (n-r)`) of full column
 rank with `U⊥ᵀ U = 0`; the number of columns adds up to `n`. -/
@@ -53,41 +55,45 @@ def nbhd (U : Matrix ι ρ ℝ) (Up : Matrix ι σ ℝ) (V : Matrix κ ρ ℝ) (
 noncomputable def chart (U : Matrix ι ρ ℝ) (Up : Matrix ι σ ℝ) (V : Matrix κ ρ ℝ)
     (Vp : Matrix κ τ ℝ) (W : Matrix ι κ ℝ) :
     Matrix σ ρ ℝ × Matrix τ ρ ℝ × Matrix ρ ρ ℝ :=
-  (pinv Up * W * (pinv V)ᵀ * (pinv U * W * (pinv V)ᵀ)⁻¹,
-   pinv Vp * Wᵀ * (pinv U)ᵀ * (pinv V * Wᵀ * (pinv U)ᵀ)⁻¹,
-   pinv U * W * (pinv V)ᵀ)
+  (Up.gramPinv * W * (V.gramPinv)ᵀ * (U.gramPinv * W * (V.gramPinv)ᵀ)⁻¹,
+   Vp.gramPinv * Wᵀ * (U.gramPinv)ᵀ * (V.gramPinv * Wᵀ * (U.gramPinv)ᵀ)⁻¹,
+   U.gramPinv * W * (V.gramPinv)ᵀ)
 
 section
 variable {U : Matrix ι ρ ℝ} {Up : Matrix ι σ ℝ} {V : Matrix κ ρ ℝ} {Vp : Matrix κ τ ℝ}
 
+/-- `A⁺ A = 1` for `A` of full column rank (the core `Matrix.gramPinv_mul_self`). -/
 lemma pinv_mul_self {a b : Type*} [Fintype a] [Fintype b] [DecidableEq b] {A : Matrix a b ℝ}
-    (h : IsUnit (Aᵀ * A).det) : pinv A * A = 1 := by
-  unfold pinv
-  rw [Matrix.mul_assoc, Matrix.nonsing_inv_mul _ h]
+    (h : IsUnit (Aᵀ * A).det) : A.gramPinv * A = 1 :=
+  Matrix.gramPinv_mul_self h
 
-lemma pinv_mul_perp (hU : IsChartBasis U Up) : pinv U * Up = 0 := by
-  unfold pinv
+/-- `U⁺ U⊥ = 0`. -/
+lemma pinv_mul_perp (hU : IsChartBasis U Up) : U.gramPinv * Up = 0 := by
+  unfold Matrix.gramPinv
   have : Uᵀ * Up = 0 := by
     have := congrArg Matrix.transpose hU.orth
     simpa [Matrix.transpose_mul] using this
   rw [Matrix.mul_assoc, this, Matrix.mul_zero]
 
+/-- `U⁺ (U + U⊥ X) = 1`. -/
 lemma pinv_mul_chartLeft (hU : IsChartBasis U Up) (X : Matrix σ ρ ℝ) :
-    pinv U * (U + Up * X) = 1 := by
+    U.gramPinv * (U + Up * X) = 1 := by
   rw [Matrix.mul_add, pinv_mul_self hU.gram, ← Matrix.mul_assoc, pinv_mul_perp hU]
   simp
 
+/-- `U⊥⁺ (U + U⊥ X) = X`. -/
 lemma pinvperp_mul_chartLeft (hU : IsChartBasis U Up) (X : Matrix σ ρ ℝ) :
-    pinv Up * (U + Up * X) = X := by
+    Up.gramPinv * (U + Up * X) = X := by
   rw [Matrix.mul_add, ← Matrix.mul_assoc, pinv_mul_self hU.gram_perp]
-  have : pinv Up * U = 0 := by
-    unfold pinv
+  have : Up.gramPinv * U = 0 := by
+    unfold Matrix.gramPinv
     rw [Matrix.mul_assoc, hU.orth, Matrix.mul_zero]
   rw [this]; simp
 
+/-- `(A + A⊥ Z)ᵀ (A⁺)ᵀ = 1`. -/
 lemma chartT_mul_pinvT {a c : Type*} [Fintype a] [Fintype c] [DecidableEq c]
     {A : Matrix a ρ ℝ} {Ap : Matrix a c ℝ} (hA : IsChartBasis A Ap) (Z : Matrix c ρ ℝ) :
-    (A + Ap * Z)ᵀ * (pinv A)ᵀ = 1 := by
+    (A + Ap * Z)ᵀ * (A.gramPinv)ᵀ = 1 := by
   rw [← Matrix.transpose_mul, pinv_mul_chartLeft hA, Matrix.transpose_one]
 
 end
@@ -103,20 +109,20 @@ theorem chart_chartInv {U : Matrix ι ρ ℝ} {Up : Matrix ι σ ℝ} {V : Matri
   obtain ⟨X, Y, H⟩ := p
   have hdet : IsUnit H.det := hp
   have hdetT : IsUnit Hᵀ.det := by simpa using hdet
-  have key1 : pinv U * chartInv U Up V Vp (X, Y, H) * (pinv V)ᵀ = H := by
-    calc _ = (pinv U * (U + Up * X)) * H * ((V + Vp * Y)ᵀ * (pinv V)ᵀ) := by
+  have key1 : U.gramPinv * chartInv U Up V Vp (X, Y, H) * (V.gramPinv)ᵀ = H := by
+    calc _ = (U.gramPinv * (U + Up * X)) * H * ((V + Vp * Y)ᵀ * (V.gramPinv)ᵀ) := by
           simp only [chartInv, Matrix.mul_assoc]
       _ = H := by rw [pinv_mul_chartLeft hU, chartT_mul_pinvT hV Y]; simp
-  have key2 : pinv Up * chartInv U Up V Vp (X, Y, H) * (pinv V)ᵀ = X * H := by
-    calc _ = (pinv Up * (U + Up * X)) * H * ((V + Vp * Y)ᵀ * (pinv V)ᵀ) := by
+  have key2 : Up.gramPinv * chartInv U Up V Vp (X, Y, H) * (V.gramPinv)ᵀ = X * H := by
+    calc _ = (Up.gramPinv * (U + Up * X)) * H * ((V + Vp * Y)ᵀ * (V.gramPinv)ᵀ) := by
           simp only [chartInv, Matrix.mul_assoc]
       _ = X * H := by rw [pinvperp_mul_chartLeft hU, chartT_mul_pinvT hV Y]; simp
-  have key3 : pinv V * (chartInv U Up V Vp (X, Y, H))ᵀ * (pinv U)ᵀ = Hᵀ := by
-    calc _ = (pinv V * (V + Vp * Y)) * Hᵀ * ((U + Up * X)ᵀ * (pinv U)ᵀ) := by
+  have key3 : V.gramPinv * (chartInv U Up V Vp (X, Y, H))ᵀ * (U.gramPinv)ᵀ = Hᵀ := by
+    calc _ = (V.gramPinv * (V + Vp * Y)) * Hᵀ * ((U + Up * X)ᵀ * (U.gramPinv)ᵀ) := by
           simp only [chartInv, Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
       _ = Hᵀ := by rw [pinv_mul_chartLeft hV, chartT_mul_pinvT hU X]; simp
-  have key4 : pinv Vp * (chartInv U Up V Vp (X, Y, H))ᵀ * (pinv U)ᵀ = Y * Hᵀ := by
-    calc _ = (pinv Vp * (V + Vp * Y)) * Hᵀ * ((U + Up * X)ᵀ * (pinv U)ᵀ) := by
+  have key4 : Vp.gramPinv * (chartInv U Up V Vp (X, Y, H))ᵀ * (U.gramPinv)ᵀ = Y * Hᵀ := by
+    calc _ = (Vp.gramPinv * (V + Vp * Y)) * Hᵀ * ((U + Up * X)ᵀ * (U.gramPinv)ᵀ) := by
           simp only [chartInv, Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
       _ = Y * Hᵀ := by rw [pinvperp_mul_chartLeft hV, chartT_mul_pinvT hU X]; simp
   unfold chart
@@ -164,13 +170,13 @@ theorem rank_of_mem_nbhd {U : Matrix ι ρ ℝ} {Up : Matrix ι σ ℝ} {V : Mat
     unfold chartInv
     calc _ ≤ ((U + Up * X) * H).rank := Matrix.rank_mul_le_left _ _
       _ ≤ H.rank := Matrix.rank_mul_le_right _ _
-  have key1 : pinv U * chartInv U Up V Vp (X, Y, H) * (pinv V)ᵀ = H := by
-    calc _ = (pinv U * (U + Up * X)) * H * ((V + Vp * Y)ᵀ * (pinv V)ᵀ) := by
+  have key1 : U.gramPinv * chartInv U Up V Vp (X, Y, H) * (V.gramPinv)ᵀ = H := by
+    calc _ = (U.gramPinv * (U + Up * X)) * H * ((V + Vp * Y)ᵀ * (V.gramPinv)ᵀ) := by
           simp only [chartInv, Matrix.mul_assoc]
       _ = H := by rw [pinv_mul_chartLeft hU, chartT_mul_pinvT hV Y]; simp
   have hge : H.rank ≤ (chartInv U Up V Vp (X, Y, H)).rank := by
-    calc H.rank = (pinv U * chartInv U Up V Vp (X, Y, H) * (pinv V)ᵀ).rank := by rw [key1]
-      _ ≤ (pinv U * chartInv U Up V Vp (X, Y, H)).rank := Matrix.rank_mul_le_left _ _
+    calc H.rank = (U.gramPinv * chartInv U Up V Vp (X, Y, H) * (V.gramPinv)ᵀ).rank := by rw [key1]
+      _ ≤ (U.gramPinv * chartInv U Up V Vp (X, Y, H)).rank := Matrix.rank_mul_le_left _ _
       _ ≤ _ := Matrix.rank_mul_le_right _ _
   exact le_antisymm (hle.trans hH.le) (hH ▸ hge)
 
@@ -219,5 +225,9 @@ theorem isChartBasis_example :
   · rw [h2]; simp
   · ext a b
     simp [Matrix.mul_apply]
+
+/-- The local Gram pseudoinverse of this file, replaced by the core `Matrix.gramPinv` (same
+definition, `(AᵀA)⁻¹Aᵀ`). -/
+@[deprecated (since := "2026-11-09")] alias pinv := Matrix.gramPinv
 
 end LeanDLRA.Literature.P2001_08599

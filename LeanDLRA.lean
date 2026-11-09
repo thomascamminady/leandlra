@@ -35,6 +35,7 @@ import LeanDLRA.Integrators.PerturbedField
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Integrators.TuckerBUG
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.LinearAlgebra.Frobenius.Defs
 import LeanDLRA.Literature.Applications.P2110_13481a
 import LeanDLRA.Literature.Applications.P2201_12340a
@@ -202,6 +203,7 @@ import LeanDLRA.Literature.Stochastic.P2609_20307a
 import LeanDLRA.Literature.Stochastic.P2609_20317a
 import LeanDLRA.Literature.TensorNetworks.P1709_02594a
 import LeanDLRA.Literature.TensorNetworks.P2002_11392a
+import LeanDLRA.Literature.TensorNetworks.P2002_11392b
 import LeanDLRA.Literature.TensorNetworks.P2407_11792a
 import LeanDLRA.Literature.TensorNetworks.P2412_00858a
 import LeanDLRA.Literature.TensorNetworks.P2501_04157a
@@ -437,7 +439,9 @@ import LeanDLRA.Tensor.TTN.Integrators
 import LeanDLRA.Tensor.TTN.ParallelBUG
 import LeanDLRA.Tensor.TTN.ProjectorSplitting
 import LeanDLRA.Tensor.TTN.ProjectorSplittingExactness
+import LeanDLRA.Tensor.TTN.Prolongation
 import LeanDLRA.Tensor.Tucker.Basic
+import LeanDLRA.Tensor.Tucker.Tangent
 import LeanDLRA.Tensor.Unfolding
 import LeanDLRA.Training.Descent
 import LeanDLRA.Training.FactorizedDynamics
