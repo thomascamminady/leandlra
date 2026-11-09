@@ -1,5 +1,7 @@
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Exactness
+import LeanDLRA.LinearAlgebra.Factorization.Defs
+import LeanDLRA.Literature.Integrators.P2001_08599b
 import LeanDLRA.Matrix.GaugeODE
 import LeanDLRA.Matrix.Projectors
 
@@ -33,6 +35,16 @@ the fibre bundle structure of matrix manifolds":
   rank-deficient `K₁` is arbitrary, even for `A(t)` of rank exactly `r`; with rank exactly `r` at
   `t_{k-1}` and `V(t_k)ᵀ V(t_{k-1})` invertible it is proved via Lemma 3.11 and the library's KSL
   exactness.
+
+## Pseudoinverses and chart data
+
+The paper's `U⁺ = (UᵀU)⁻¹Uᵀ` is the core Gram pseudoinverse `Matrix.gramPinv`
+(`LinearAlgebra/Factorization/Defs.lean`); it is the Moore–Penrose inverse for the
+full-column-rank matrices used here (`Matrix.gramPinv_eq_pinv`).  The local `pinvL` of an earlier
+version of this file was the same definition (unification batch C1).  The data `IsChartData` of
+Section 2.1 is equivalent to two `IsChartBasis` (the chart data of `P2001_08599b`) and an invertible
+`G` (`isChartData_iff`): the completeness `U U⁺ + U⊥ U⊥⁺ = 1` is the dimension count
+`r + (n - r) = n`.
 -/
 
 open Set Filter Topology Finset
@@ -44,9 +56,6 @@ variable {m n r p q : Type*} [Fintype m] [Fintype n] [Fintype r] [Fintype p] [Fi
   [DecidableEq r] [DecidableEq p] [DecidableEq q]
 
 /-! ### The chart and its tangent map (Section 2.1) -/
-
-/-- The Moore–Penrose pseudo-inverse of a full-column-rank matrix, `U⁺ = (UᵀU)⁻¹Uᵀ`. -/
-noncomputable def pinvL (U : Matrix m r ℝ) : Matrix r m ℝ := (Uᵀ * U)⁻¹ * Uᵀ
 
 /-- The data of Section 2.1: `U ∈ ℝ^{m×r}`, `V ∈ ℝ^{n×r}` of full column rank, `G` invertible,
 and matrices `Up = U⊥`, `Vp = V⊥` of full column rank with `U⊥ᵀ U = 0`, `V⊥ᵀ V = 0`, spanning the
@@ -62,8 +71,8 @@ structure IsChartData [DecidableEq m] [DecidableEq n]
   isUnit_G : IsUnit G.det
   Up_orth : Upᵀ * U = 0
   Vp_orth : Vpᵀ * V = 0
-  compl_U : U * pinvL U + Up * pinvL Up = 1
-  compl_V : V * pinvL V + Vp * pinvL Vp = 1
+  compl_U : U * U.gramPinv + Up * Up.gramPinv = 1
+  compl_V : V * V.gramPinv + Vp * Vp.gramPinv = 1
 
 /-- The tangent map `T_Z i : (δX, δY, δH) ↦ U⊥ δX G Vᵀ + U G (V⊥ δY)ᵀ + U δH Vᵀ`. -/
 noncomputable def tangentMap (U : Matrix m r ℝ) (V : Matrix n r ℝ) (Up : Matrix m p ℝ)
@@ -81,8 +90,8 @@ noncomputable def tangentMap (U : Matrix m r ℝ) (V : Matrix n r ℝ) (Up : Mat
 noncomputable def tangentInv (U : Matrix m r ℝ) (V : Matrix n r ℝ) (Up : Matrix m p ℝ)
     (Vp : Matrix n q ℝ) (G : Matrix r r ℝ) (W : Matrix m n ℝ) :
     Matrix p r ℝ × Matrix q r ℝ × Matrix r r ℝ :=
-  (pinvL Up * W * (pinvL V)ᵀ * G⁻¹, pinvL Vp * Wᵀ * (pinvL U)ᵀ * (G⁻¹)ᵀ,
-    pinvL U * W * (pinvL V)ᵀ)
+  (Up.gramPinv * W * (V.gramPinv)ᵀ * G⁻¹, Vp.gramPinv * Wᵀ * (U.gramPinv)ᵀ * (G⁻¹)ᵀ,
+    U.gramPinv * W * (V.gramPinv)ᵀ)
 
 section
 variable [DecidableEq m] [DecidableEq n]
@@ -90,50 +99,98 @@ variable [DecidableEq m] [DecidableEq n]
   {G : Matrix r r ℝ}
 
 omit [DecidableEq m] [DecidableEq n] in
-lemma pinvL_mul {M : Matrix m r ℝ} (hU : IsUnit (Mᵀ * M).det) : pinvL M * M = 1 := by
-  unfold pinvL
-  rw [Matrix.mul_assoc, Matrix.nonsing_inv_mul _ hU]
+/-- `M⁺ M = 1` for `M` of full column rank (the core `Matrix.gramPinv_mul_self`). -/
+lemma pinvL_mul {M : Matrix m r ℝ} (hU : IsUnit (Mᵀ * M).det) : M.gramPinv * M = 1 :=
+  Matrix.gramPinv_mul_self hU
 
 omit [DecidableEq m] [DecidableEq n] in
-lemma transpose_pinvL {M : Matrix m r ℝ} : (pinvL M)ᵀ = M * (Mᵀ * M)⁻¹ := by
-  unfold pinvL
-  rw [Matrix.transpose_mul, Matrix.transpose_nonsing_inv, Matrix.transpose_mul,
-    Matrix.transpose_transpose]
+/-- `(M⁺)ᵀ = M (MᵀM)⁻¹` (the core `Matrix.transpose_gramPinv`). -/
+lemma transpose_pinvL {M : Matrix m r ℝ} : (M.gramPinv)ᵀ = M * (Mᵀ * M)⁻¹ :=
+  Matrix.transpose_gramPinv M
 
 omit [DecidableEq m] [DecidableEq n] in
+/-- `Mᵀ (M⁺)ᵀ = 1` for `M` of full column rank. -/
 lemma transpose_mul_pinvL_transpose {M : Matrix m r ℝ} (hU : IsUnit (Mᵀ * M).det) :
-    Mᵀ * (pinvL M)ᵀ = 1 := by
+    Mᵀ * (M.gramPinv)ᵀ = 1 := by
   rw [transpose_pinvL, ← Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hU]
 
-lemma pinvL_Up_mul_U (hc : IsChartData U V Up Vp G) : pinvL Up * U = 0 := by
-  unfold pinvL
+/-- `U⊥⁺ U = 0`. -/
+lemma pinvL_Up_mul_U (hc : IsChartData U V Up Vp G) : Up.gramPinv * U = 0 := by
+  unfold Matrix.gramPinv
   rw [Matrix.mul_assoc, hc.Up_orth, Matrix.mul_zero]
 
-lemma pinvL_U_mul_Up (hc : IsChartData U V Up Vp G) : pinvL U * Up = 0 := by
-  unfold pinvL
+/-- `U⁺ U⊥ = 0`. -/
+lemma pinvL_U_mul_Up (hc : IsChartData U V Up Vp G) : U.gramPinv * Up = 0 := by
+  unfold Matrix.gramPinv
   have : Uᵀ * Up = 0 := by
     have := congrArg Matrix.transpose hc.Up_orth
     simpa [Matrix.transpose_mul] using this
   rw [Matrix.mul_assoc, this, Matrix.mul_zero]
 
-lemma Up_transpose_mul_pinvL (hc : IsChartData U V Up Vp G) : Upᵀ * (pinvL U)ᵀ = 0 := by
+/-- `U⊥ᵀ (U⁺)ᵀ = 0`. -/
+lemma Up_transpose_mul_pinvL (hc : IsChartData U V Up Vp G) : Upᵀ * (U.gramPinv)ᵀ = 0 := by
   have := congrArg Matrix.transpose (pinvL_U_mul_Up hc)
   simpa [Matrix.transpose_mul] using this
 
-lemma pinvL_Vp_mul_V (hc : IsChartData U V Up Vp G) : pinvL Vp * V = 0 := by
-  unfold pinvL
+/-- `V⊥⁺ V = 0`. -/
+lemma pinvL_Vp_mul_V (hc : IsChartData U V Up Vp G) : Vp.gramPinv * V = 0 := by
+  unfold Matrix.gramPinv
   rw [Matrix.mul_assoc, hc.Vp_orth, Matrix.mul_zero]
 
-lemma pinvL_V_mul_Vp (hc : IsChartData U V Up Vp G) : pinvL V * Vp = 0 := by
-  unfold pinvL
+/-- `V⁺ V⊥ = 0`. -/
+lemma pinvL_V_mul_Vp (hc : IsChartData U V Up Vp G) : V.gramPinv * Vp = 0 := by
+  unfold Matrix.gramPinv
   have : Vᵀ * Vp = 0 := by
     have := congrArg Matrix.transpose hc.Vp_orth
     simpa [Matrix.transpose_mul] using this
   rw [Matrix.mul_assoc, this, Matrix.mul_zero]
 
-lemma Vp_transpose_mul_pinvL (hc : IsChartData U V Up Vp G) : Vpᵀ * (pinvL V)ᵀ = 0 := by
+/-- `V⊥ᵀ (V⁺)ᵀ = 0`. -/
+lemma Vp_transpose_mul_pinvL (hc : IsChartData U V Up Vp G) : Vpᵀ * (V.gramPinv)ᵀ = 0 := by
   have := congrArg Matrix.transpose (pinvL_V_mul_Vp hc)
   simpa [Matrix.transpose_mul] using this
+
+omit [DecidableEq m] [DecidableEq n] in
+/-- Completeness of a chart basis: for `A`, `A⊥` of full column rank with `A⊥ᵀ A = 0`, the
+identity `A A⁺ + A⊥ A⊥⁺ = 1` holds iff the numbers of columns add up to the number of rows. -/
+private theorem add_mul_gramPinv_eq_one_iff {a b c : Type*} [Fintype a] [Fintype b] [Fintype c]
+    [DecidableEq a] [DecidableEq b] [DecidableEq c] {A : Matrix a b ℝ} {Ap : Matrix a c ℝ}
+    (hA : IsUnit (Aᵀ * A).det) (hAp : IsUnit (Apᵀ * Ap).det) (horth : Apᵀ * A = 0) :
+    A * A.gramPinv + Ap * Ap.gramPinv = 1 ↔
+      Fintype.card b + Fintype.card c = Fintype.card a := by
+  constructor
+  · intro h
+    have ht := congrArg Matrix.trace h
+    rw [Matrix.trace_add, Matrix.trace_mul_comm A, Matrix.trace_mul_comm Ap,
+      Matrix.gramPinv_mul_self hA, Matrix.gramPinv_mul_self hAp, Matrix.trace_one,
+      Matrix.trace_one, Matrix.trace_one] at ht
+    exact_mod_cast ht
+  · intro h
+    have horth' : Aᵀ * Ap = 0 := by
+      simpa [Matrix.transpose_mul] using congrArg Matrix.transpose horth
+    have e : a ≃ b ⊕ c := Fintype.equivOfCardEq (by rw [Fintype.card_sum, h])
+    rw [← Matrix.fromCols_mul_fromRows, Matrix.fromCols_mul_fromRows_eq_one_comm e,
+      Matrix.fromRows_mul_fromCols, Matrix.gramPinv_mul_self hA, Matrix.gramPinv_mul_self hAp,
+      Matrix.gramPinv_def A, Matrix.mul_assoc, horth', Matrix.mul_zero, Matrix.gramPinv_def Ap,
+      Matrix.mul_assoc, horth, Matrix.mul_zero, Matrix.fromBlocks_one]
+
+/-- **The two chart data of Section 2.1 agree.** `IsChartData U V U⊥ V⊥ G` (completeness written
+as `U U⁺ + U⊥ U⊥⁺ = 1`) holds iff `(U, U⊥)` and `(V, V⊥)` are `IsChartBasis` (the chart data of
+`P2001_08599b`, completeness written as the dimension count `r + (m - r) = m`) and `G` is
+invertible. -/
+theorem isChartData_iff :
+    IsChartData U V Up Vp G ↔ IsChartBasis U Up ∧ IsChartBasis V Vp ∧ IsUnit G.det := by
+  constructor
+  · intro hc
+    exact ⟨⟨hc.isUnit_U, hc.isUnit_Up, hc.Up_orth,
+        (add_mul_gramPinv_eq_one_iff hc.isUnit_U hc.isUnit_Up hc.Up_orth).1 hc.compl_U⟩,
+      ⟨hc.isUnit_V, hc.isUnit_Vp, hc.Vp_orth,
+        (add_mul_gramPinv_eq_one_iff hc.isUnit_V hc.isUnit_Vp hc.Vp_orth).1 hc.compl_V⟩,
+      hc.isUnit_G⟩
+  · rintro ⟨hU, hV, hG⟩
+    exact ⟨hU.gram, hV.gram, hU.gram_perp, hV.gram_perp, hG, hU.orth, hV.orth,
+      (add_mul_gramPinv_eq_one_iff hU.gram hU.gram_perp hU.orth).2 hU.card_eq,
+      (add_mul_gramPinv_eq_one_iff hV.gram hV.gram_perp hV.orth).2 hV.card_eq⟩
 
 /-- `T_Z i` has the left inverse of eq. (7). -/
 theorem tangentInv_tangentMap (hc : IsChartData U V Up Vp G)
@@ -159,59 +216,59 @@ theorem tangentInv_tangentMap (hc : IsChartData U V Up Vp G)
     rw [← Matrix.transpose_mul, hG', Matrix.transpose_one]
   simp only [tangentInv, tangentMap, LinearMap.coe_mk, AddHom.coe_mk]
   refine Prod.ext ?_ (Prod.ext ?_ ?_)
-  · have t1 : pinvL Up * (Up * X * G * Vᵀ) * (pinvL V)ᵀ * G⁻¹ = X := by
-      calc _ = (pinvL Up * Up) * X * G * (Vᵀ * (pinvL V)ᵀ) * G⁻¹ := by simp only [Matrix.mul_assoc]
+  · have t1 : Up.gramPinv * (Up * X * G * Vᵀ) * (V.gramPinv)ᵀ * G⁻¹ = X := by
+      calc _ = (Up.gramPinv * Up) * X * G * (Vᵀ * (V.gramPinv)ᵀ) * G⁻¹ := by
+            simp only [Matrix.mul_assoc]
         _ = X := by rw [a1, a4]; simp [Matrix.mul_assoc, hG]
-    have t2 : pinvL Up * (U * G * (Vp * Y)ᵀ) * (pinvL V)ᵀ * G⁻¹ = 0 := by
-      calc _ = (pinvL Up * U) * (G * (Vp * Y)ᵀ * (pinvL V)ᵀ * G⁻¹) := by
+    have t2 : Up.gramPinv * (U * G * (Vp * Y)ᵀ) * (V.gramPinv)ᵀ * G⁻¹ = 0 := by
+      calc _ = (Up.gramPinv * U) * (G * (Vp * Y)ᵀ * (V.gramPinv)ᵀ * G⁻¹) := by
             simp only [Matrix.mul_assoc]
         _ = 0 := by rw [a2]; simp
-    have t3 : pinvL Up * (U * H * Vᵀ) * (pinvL V)ᵀ * G⁻¹ = 0 := by
-      calc _ = (pinvL Up * U) * (H * Vᵀ * (pinvL V)ᵀ * G⁻¹) := by simp only [Matrix.mul_assoc]
+    have t3 : Up.gramPinv * (U * H * Vᵀ) * (V.gramPinv)ᵀ * G⁻¹ = 0 := by
+      calc _ = (Up.gramPinv * U) * (H * Vᵀ * (V.gramPinv)ᵀ * G⁻¹) := by simp only [Matrix.mul_assoc]
         _ = 0 := by rw [a2]; simp
-    calc _ = pinvL Up * (Up * X * G * Vᵀ) * (pinvL V)ᵀ * G⁻¹
-          + pinvL Up * (U * G * (Vp * Y)ᵀ) * (pinvL V)ᵀ * G⁻¹
-          + pinvL Up * (U * H * Vᵀ) * (pinvL V)ᵀ * G⁻¹ := by
+    calc _ = Up.gramPinv * (Up * X * G * Vᵀ) * (V.gramPinv)ᵀ * G⁻¹
+          + Up.gramPinv * (U * G * (Vp * Y)ᵀ) * (V.gramPinv)ᵀ * G⁻¹
+          + Up.gramPinv * (U * H * Vᵀ) * (V.gramPinv)ᵀ * G⁻¹ := by
             simp only [Matrix.mul_add, Matrix.add_mul]
       _ = X := by rw [t1, t2, t3]; simp
-  · have t1 : pinvL Vp * (Up * X * G * Vᵀ)ᵀ * (pinvL U)ᵀ * (G⁻¹)ᵀ = 0 := by
-      calc _ = (pinvL Vp * V) * (Gᵀ * Xᵀ * (Upᵀ * (pinvL U)ᵀ) * (G⁻¹)ᵀ) := by
+  · have t1 : Vp.gramPinv * (Up * X * G * Vᵀ)ᵀ * (U.gramPinv)ᵀ * (G⁻¹)ᵀ = 0 := by
+      calc _ = (Vp.gramPinv * V) * (Gᵀ * Xᵀ * (Upᵀ * (U.gramPinv)ᵀ) * (G⁻¹)ᵀ) := by
             simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
         _ = 0 := by rw [a8]; simp
-    have t2 : pinvL Vp * (U * G * (Vp * Y)ᵀ)ᵀ * (pinvL U)ᵀ * (G⁻¹)ᵀ = Y := by
-      calc _ = (pinvL Vp * Vp) * Y * (Gᵀ * (Uᵀ * (pinvL U)ᵀ) * (G⁻¹)ᵀ) := by
+    have t2 : Vp.gramPinv * (U * G * (Vp * Y)ᵀ)ᵀ * (U.gramPinv)ᵀ * (G⁻¹)ᵀ = Y := by
+      calc _ = (Vp.gramPinv * Vp) * Y * (Gᵀ * (Uᵀ * (U.gramPinv)ᵀ) * (G⁻¹)ᵀ) := by
             simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
         _ = Y := by rw [a9, a11]; simp [hGt']
-    have t3 : pinvL Vp * (U * H * Vᵀ)ᵀ * (pinvL U)ᵀ * (G⁻¹)ᵀ = 0 := by
-      calc _ = (pinvL Vp * V) * (Hᵀ * (Uᵀ * (pinvL U)ᵀ) * (G⁻¹)ᵀ) := by
+    have t3 : Vp.gramPinv * (U * H * Vᵀ)ᵀ * (U.gramPinv)ᵀ * (G⁻¹)ᵀ = 0 := by
+      calc _ = (Vp.gramPinv * V) * (Hᵀ * (Uᵀ * (U.gramPinv)ᵀ) * (G⁻¹)ᵀ) := by
             simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
         _ = 0 := by rw [a8]; simp
-    calc _ = pinvL Vp * (Up * X * G * Vᵀ)ᵀ * (pinvL U)ᵀ * (G⁻¹)ᵀ
-          + pinvL Vp * (U * G * (Vp * Y)ᵀ)ᵀ * (pinvL U)ᵀ * (G⁻¹)ᵀ
-          + pinvL Vp * (U * H * Vᵀ)ᵀ * (pinvL U)ᵀ * (G⁻¹)ᵀ := by
+    calc _ = Vp.gramPinv * (Up * X * G * Vᵀ)ᵀ * (U.gramPinv)ᵀ * (G⁻¹)ᵀ
+          + Vp.gramPinv * (U * G * (Vp * Y)ᵀ)ᵀ * (U.gramPinv)ᵀ * (G⁻¹)ᵀ
+          + Vp.gramPinv * (U * H * Vᵀ)ᵀ * (U.gramPinv)ᵀ * (G⁻¹)ᵀ := by
             simp only [Matrix.transpose_add, Matrix.mul_add, Matrix.add_mul]
       _ = Y := by rw [t1, t2, t3]; simp
-  · have t1 : pinvL U * (Up * X * G * Vᵀ) * (pinvL V)ᵀ = 0 := by
-      calc _ = (pinvL U * Up) * (X * G * (Vᵀ * (pinvL V)ᵀ)) := by simp only [Matrix.mul_assoc]
+  · have t1 : U.gramPinv * (Up * X * G * Vᵀ) * (V.gramPinv)ᵀ = 0 := by
+      calc _ = (U.gramPinv * Up) * (X * G * (Vᵀ * (V.gramPinv)ᵀ)) := by simp only [Matrix.mul_assoc]
         _ = 0 := by rw [a3]; simp
-    have t2 : pinvL U * (U * G * (Vp * Y)ᵀ) * (pinvL V)ᵀ = 0 := by
-      calc _ = (pinvL U * U) * G * Yᵀ * (Vpᵀ * (pinvL V)ᵀ) := by
+    have t2 : U.gramPinv * (U * G * (Vp * Y)ᵀ) * (V.gramPinv)ᵀ = 0 := by
+      calc _ = (U.gramPinv * U) * G * Yᵀ * (Vpᵀ * (V.gramPinv)ᵀ) := by
             simp only [Matrix.transpose_mul, Matrix.mul_assoc]
         _ = 0 := by rw [a7]; simp
-    have t3 : pinvL U * (U * H * Vᵀ) * (pinvL V)ᵀ = H := by
-      calc _ = (pinvL U * U) * H * (Vᵀ * (pinvL V)ᵀ) := by simp only [Matrix.mul_assoc]
+    have t3 : U.gramPinv * (U * H * Vᵀ) * (V.gramPinv)ᵀ = H := by
+      calc _ = (U.gramPinv * U) * H * (Vᵀ * (V.gramPinv)ᵀ) := by simp only [Matrix.mul_assoc]
         _ = H := by rw [a10, a4]; simp
-    calc _ = pinvL U * (Up * X * G * Vᵀ) * (pinvL V)ᵀ
-          + pinvL U * (U * G * (Vp * Y)ᵀ) * (pinvL V)ᵀ
-          + pinvL U * (U * H * Vᵀ) * (pinvL V)ᵀ := by
+    calc _ = U.gramPinv * (Up * X * G * Vᵀ) * (V.gramPinv)ᵀ
+          + U.gramPinv * (U * G * (Vp * Y)ᵀ) * (V.gramPinv)ᵀ
+          + U.gramPinv * (U * H * Vᵀ) * (V.gramPinv)ᵀ := by
             simp only [Matrix.mul_add, Matrix.add_mul]
       _ = H := by rw [t1, t2, t3]; simp
 
 omit [DecidableEq m] [DecidableEq n] in
-lemma mul_pinvL_symm {M : Matrix m r ℝ} : (M * pinvL M)ᵀ = M * pinvL M := by
-  have h : (M * pinvL M)ᵀ = M * (Mᵀ * M)⁻¹ * Mᵀ := by
-    rw [Matrix.transpose_mul, transpose_pinvL, Matrix.mul_assoc]
-  rw [h]; unfold pinvL; simp only [Matrix.mul_assoc]
+/-- `M M⁺` is symmetric (the core `Matrix.transpose_mul_gramPinv`). -/
+lemma mul_pinvL_symm {M : Matrix m r ℝ} : (M * M.gramPinv)ᵀ = M * M.gramPinv :=
+  Matrix.transpose_mul_gramPinv M
 
 /-- `T_Z i` is injective (Proposition 2.2). -/
 theorem tangentMap_injective (hc : IsChartData U V Up Vp G) :
@@ -233,19 +290,20 @@ theorem mem_range_tangentMap_iff (hc : IsChartData U V Up Vp G) (W : Matrix m n 
   · rintro ⟨B, C, rfl⟩
     have hG : G * G⁻¹ = 1 := Matrix.mul_nonsing_inv _ hc.isUnit_G
     have hG' : G⁻¹ * G = 1 := Matrix.nonsing_inv_mul _ hc.isUnit_G
-    have hUp : Up * pinvL Up = 1 - U * pinvL U := eq_sub_of_add_eq' hc.compl_U
-    have hVp : Vp * pinvL Vp = 1 - V * pinvL V := eq_sub_of_add_eq' hc.compl_V
-    refine ⟨(pinvL Up * C * G⁻¹, pinvL Vp * Bᵀ * (G⁻¹)ᵀ, B * V * (Vᵀ * V)⁻¹ + pinvL U * C), ?_⟩
-    have e1 : Up * (pinvL Up * C * G⁻¹) * G * Vᵀ = (Up * pinvL Up) * C * Vᵀ := by
-      calc _ = (Up * pinvL Up) * C * (G⁻¹ * G) * Vᵀ := by simp only [Matrix.mul_assoc]
+    have hUp : Up * Up.gramPinv = 1 - U * U.gramPinv := eq_sub_of_add_eq' hc.compl_U
+    have hVp : Vp * Vp.gramPinv = 1 - V * V.gramPinv := eq_sub_of_add_eq' hc.compl_V
+    refine ⟨(Up.gramPinv * C * G⁻¹, Vp.gramPinv * Bᵀ * (G⁻¹)ᵀ,
+      B * V * (Vᵀ * V)⁻¹ + U.gramPinv * C), ?_⟩
+    have e1 : Up * (Up.gramPinv * C * G⁻¹) * G * Vᵀ = (Up * Up.gramPinv) * C * Vᵀ := by
+      calc _ = (Up * Up.gramPinv) * C * (G⁻¹ * G) * Vᵀ := by simp only [Matrix.mul_assoc]
         _ = _ := by rw [hG']; simp
-    have e2 : U * G * (Vp * (pinvL Vp * Bᵀ * (G⁻¹)ᵀ))ᵀ = U * B * (Vp * pinvL Vp) := by
-      calc _ = U * (G * G⁻¹) * B * (Vp * pinvL Vp)ᵀ := by
+    have e2 : U * G * (Vp * (Vp.gramPinv * Bᵀ * (G⁻¹)ᵀ))ᵀ = U * B * (Vp * Vp.gramPinv) := by
+      calc _ = U * (G * G⁻¹) * B * (Vp * Vp.gramPinv)ᵀ := by
             simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
         _ = _ := by rw [hG, mul_pinvL_symm]; simp
-    have e3 : U * (B * V * (Vᵀ * V)⁻¹ + pinvL U * C) * Vᵀ
-        = U * B * (V * pinvL V) + (U * pinvL U) * C * Vᵀ := by
-      unfold pinvL; simp only [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
+    have e3 : U * (B * V * (Vᵀ * V)⁻¹ + U.gramPinv * C) * Vᵀ
+        = U * B * (V * V.gramPinv) + (U * U.gramPinv) * C * Vᵀ := by
+      unfold Matrix.gramPinv; simp only [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
     simp only [tangentMap, LinearMap.coe_mk, AddHom.coe_mk]
     rw [e1, e2, e3, hUp, hVp]
     simp only [Matrix.sub_mul, Matrix.mul_sub, Matrix.one_mul, Matrix.mul_one]
@@ -282,8 +340,8 @@ theorem prop_2_2 (hc : IsChartData U V Up Vp G) :
 `P_T F = P_U⊥ F P_V + P_U F P_V⊥ + P_U F P_V` with `P_U = U U⁺`, `P_V = V V⁺`. -/
 noncomputable def tangentProjection (U : Matrix m r ℝ) (V : Matrix n r ℝ) (F : Matrix m n ℝ) :
     Matrix m n ℝ :=
-  (1 - U * pinvL U) * F * (V * pinvL V) + (U * pinvL U) * F * (1 - V * pinvL V)
-    + (U * pinvL U) * F * (V * pinvL V)
+  (1 - U * U.gramPinv) * F * (V * V.gramPinv) + (U * U.gramPinv) * F * (1 - V * V.gramPinv)
+    + (U * U.gramPinv) * F * (V * V.gramPinv)
 
 /-- Core of eqs. (8)–(9): `T_Z i` applied to the right-hand side of (9) is
 `P_T F = P_U⊥ F P_V + P_U F P_V⊥ + P_U F P_V`. -/
@@ -291,20 +349,22 @@ theorem tangentMap_tangentInv (hc : IsChartData U V Up Vp G) (F : Matrix m n ℝ
     tangentMap U V Up Vp G (tangentInv U V Up Vp G F) = tangentProjection U V F := by
   have hG : G * G⁻¹ = 1 := Matrix.mul_nonsing_inv _ hc.isUnit_G
   have hG' : G⁻¹ * G = 1 := Matrix.nonsing_inv_mul _ hc.isUnit_G
-  have hUp : Up * pinvL Up = 1 - U * pinvL U := eq_sub_of_add_eq' hc.compl_U
-  have hVp : Vp * pinvL Vp = 1 - V * pinvL V := eq_sub_of_add_eq' hc.compl_V
-  have e1 : Up * (pinvL Up * F * (pinvL V)ᵀ * G⁻¹) * G * Vᵀ
-      = (Up * pinvL Up) * F * (V * pinvL V) := by
-    calc _ = (Up * pinvL Up) * F * ((pinvL V)ᵀ * (G⁻¹ * G) * Vᵀ) := by simp only [Matrix.mul_assoc]
+  have hUp : Up * Up.gramPinv = 1 - U * U.gramPinv := eq_sub_of_add_eq' hc.compl_U
+  have hVp : Vp * Vp.gramPinv = 1 - V * V.gramPinv := eq_sub_of_add_eq' hc.compl_V
+  have e1 : Up * (Up.gramPinv * F * (V.gramPinv)ᵀ * G⁻¹) * G * Vᵀ
+      = (Up * Up.gramPinv) * F * (V * V.gramPinv) := by
+    calc _ = (Up * Up.gramPinv) * F * ((V.gramPinv)ᵀ * (G⁻¹ * G) * Vᵀ) := by
+          simp only [Matrix.mul_assoc]
       _ = _ := by
         rw [hG', Matrix.mul_one, ← Matrix.transpose_mul, mul_pinvL_symm]
-  have e2 : U * G * (Vp * (pinvL Vp * Fᵀ * (pinvL U)ᵀ * (G⁻¹)ᵀ))ᵀ
-      = (U * pinvL U) * F * (Vp * pinvL Vp) := by
-    calc _ = U * (G * G⁻¹) * (pinvL U) * F * (Vp * pinvL Vp)ᵀ := by
+  have e2 : U * G * (Vp * (Vp.gramPinv * Fᵀ * (U.gramPinv)ᵀ * (G⁻¹)ᵀ))ᵀ
+      = (U * U.gramPinv) * F * (Vp * Vp.gramPinv) := by
+    calc _ = U * (G * G⁻¹) * (U.gramPinv) * F * (Vp * Vp.gramPinv)ᵀ := by
           simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
       _ = _ := by rw [hG, mul_pinvL_symm]; simp [Matrix.mul_assoc]
-  have e3 : U * (pinvL U * F * (pinvL V)ᵀ) * Vᵀ = (U * pinvL U) * F * (V * pinvL V) := by
-    calc _ = (U * pinvL U) * F * ((pinvL V)ᵀ * Vᵀ) := by simp only [Matrix.mul_assoc]
+  have e3 : U * (U.gramPinv * F * (V.gramPinv)ᵀ) * Vᵀ =
+      (U * U.gramPinv) * F * (V * V.gramPinv) := by
+    calc _ = (U * U.gramPinv) * F * ((V.gramPinv)ᵀ * Vᵀ) := by simp only [Matrix.mul_assoc]
       _ = _ := by rw [← Matrix.transpose_mul, mul_pinvL_symm]
   simp only [tangentMap, tangentInv, LinearMap.coe_mk, AddHom.coe_mk]
   rw [e1, e2, e3, hUp, hVp]
@@ -336,8 +396,9 @@ variable [DecidableEq m] [DecidableEq n] {U : Matrix m r ℝ} {V : Matrix n r �
   {Up : Matrix m p ℝ} {Vp : Matrix n q ℝ} {G : Matrix r r ℝ}
 
 omit [DecidableEq m] [DecidableEq p] in
-lemma pinvL_of_orthonormal {M : Matrix m r ℝ} (hM : Mᵀ * M = 1) : pinvL M = Mᵀ := by
-  unfold pinvL; rw [hM]; simp
+/-- `M⁺ = Mᵀ` for orthonormal columns (the core `Matrix.gramPinv_eq_transpose`). -/
+lemma pinvL_of_orthonormal {M : Matrix m r ℝ} (hM : Mᵀ * M = 1) : M.gramPinv = Mᵀ :=
+  Matrix.gramPinv_eq_transpose hM
 
 /-- For orthonormal `U`, `V` (`U⁺ = Uᵀ`) the projection `P_T F` of eq. (8) is the library's
 tangent-space projector `tangentProj U V`. -/
@@ -411,7 +472,7 @@ lemma splitP₃_apply (A : Matrix m n ℝ) : splitP₃ P Q A = P * (A - A * Q) :
 
 /-- **Eqs. (17)–(18)** (arXiv 2001.08599; the direct-sum remark after (18)).  For
 symmetric idempotent `P = P_U`, `Q = P_V` (orthogonal projectors; for `U`, `V` of full column
-rank `P_U = U U⁺`, see `isOrthProj_leftMul` and `pinvL`), the maps `P₁ = P_U · P_V`,
+rank `P_U = U U⁺`, see `isOrthProj_leftMul` and `Matrix.gramPinv`), the maps `P₁ = P_U · P_V`,
 `P₂ = P_U⊥ · P_V`, `P₃ = P_U · P_V⊥` satisfy `P₁ + P₂ + P₃ = P_T`, where
 `P_T A = P_U A + A P_V - P_U A P_V` is the tangent-space projection, each `Pᵢ` is an orthogonal
 projector, and the `Pᵢ` are pairwise orthogonal (`Pᵢ Pⱼ = 0` for `i ≠ j`).  Hence the sum is a
@@ -444,8 +505,8 @@ theorem splitting_direct_sum (hP : P * P = P) (hPs : Pᵀ = P) (hQ : Q * Q = Q) 
 
 /-- `U U⁺` (`P_U` of the paper) is a symmetric idempotent matrix when `U` has full column rank. -/
 theorem mulPinvL_idem {M : Matrix m r ℝ} (hM : IsUnit (Mᵀ * M).det) :
-    (M * pinvL M) * (M * pinvL M) = M * pinvL M := by
-  calc _ = M * (pinvL M * M) * pinvL M := by simp only [Matrix.mul_assoc]
+    (M * M.gramPinv) * (M * M.gramPinv) = M * M.gramPinv := by
+  calc _ = M * (M.gramPinv * M) * M.gramPinv := by simp only [Matrix.mul_assoc]
     _ = _ := by rw [pinvL_mul hM, Matrix.mul_one]
 
 /-- Eq. (8) in the form of (17)–(18): `P_T F = P₁ F + P₂ F + P₃ F` with `P_U = U U⁺`,
@@ -453,8 +514,8 @@ theorem mulPinvL_idem {M : Matrix m r ℝ} (hM : IsUnit (Mᵀ * M).det) :
 theorem tangentProjection_eq_sum [DecidableEq m] [DecidableEq n] (U : Matrix m r ℝ)
     (V : Matrix n r ℝ) (F : Matrix m n ℝ) :
     tangentProjection U V F =
-      splitP₁ (U * pinvL U) (V * pinvL V) F + splitP₂ (U * pinvL U) (V * pinvL V) F
-        + splitP₃ (U * pinvL U) (V * pinvL V) F := by
+      splitP₁ (U * U.gramPinv) (V * V.gramPinv) F + splitP₂ (U * U.gramPinv) (V * V.gramPinv) F
+        + splitP₃ (U * U.gramPinv) (V * V.gramPinv) F := by
   unfold tangentProjection
   simp only [splitP₁_apply, splitP₂_apply, splitP₃_apply, Matrix.mul_sub, Matrix.sub_mul,
     Matrix.mul_assoc, Matrix.one_mul, Matrix.mul_one]
@@ -686,5 +747,9 @@ example : ∃ (U₁ V₁ : Matrix (Fin 2) (Fin 1) ℝ) (Gh G₁ : Matrix (Fin 1)
 
 end Examples
 
+
+/-- The local Gram pseudoinverse of this file, replaced by the core `Matrix.gramPinv` (same
+definition, `(UᵀU)⁻¹Uᵀ`). -/
+@[deprecated (since := "2026-11-09")] alias pinvL := Matrix.gramPinv
 
 end LeanDLRA.Literature.P2001_08599

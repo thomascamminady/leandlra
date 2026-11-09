@@ -1,5 +1,6 @@
 import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Foundations.ODE
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Novel.BlindSpotII
@@ -62,6 +63,11 @@ expectation (HMT: `E ‖Ω₂ Ω₁†‖_F² = r/(p - 1) · …`), the propagat
 `E` of the practical B-step are not treated; the counterexample shows that `E` is in general of
 order `h` and not of order `h ε`.
 
+The sketch pseudo-inverse `Ω† = (ΩᵀΩ)⁻¹ Ωᵀ` is the core Gram pseudoinverse `Matrix.gramPinv`
+(`LinearAlgebra/Factorization/Defs.lean`), the Moore–Penrose inverse for sketches with independent
+columns (`Matrix.gramPinv_eq_pinv`); the local `pinvT` of an earlier version of this file was the
+same definition (unification batch C1).
+
 Relation to prior work: arXiv 2410.17091 (DRSVD/DGN, Lemma 2.1, 3.1, 3.2), arXiv 2409.06384
 (flow approximability, Assumption 3), Halko–Martinsson–Tropp 2011 (Thm. 9.1).
 -/
@@ -93,16 +99,13 @@ noncomputable def field (A : Matrix m n ℝ) : Matrix m n ℝ :=
 noncomputable def exactSol (t : ℝ) : Matrix m n ℝ :=
   vecMulVec (Pi.single i₁ 1 + t • (Pi.single i₂ 1 + Pi.single i₃ 1)) (Pi.single j₁ 1)
 
-/-- `Ω† = (Ωᵀ Ω)⁻¹ Ωᵀ`, the pseudo-inverse of a sketch with linearly independent columns. -/
-noncomputable def pinvT (Ω : Matrix n κ ℝ) : Matrix κ n ℝ := (Ωᵀ * Ω)⁻¹ * Ωᵀ
-
 /-- The **capture** `c = (Ω Ω†)_{j₁ j₁} = ‖Π_Ω e_{j₁}‖²` of the coordinate `e_{j₁}` by the
 sketch. -/
-noncomputable def capture (Ω : Matrix n κ ℝ) : ℝ := (Ω * pinvT Ω) j₁ j₁
+noncomputable def capture (Ω : Matrix n κ ℝ) : ℝ := (Ω * Ω.gramPinv) j₁ j₁
 
 /-- The vector field of the practical B-step `Ḃ = F(B Ω†) Ω` (arXiv 2410.17091, eq. (7)). -/
 noncomputable def bField (Ω : Matrix n κ ℝ) (b : Matrix m κ ℝ) : Matrix m κ ℝ :=
-  field i₁ i₂ i₃ j₁ (b * pinvT Ω) * Ω
+  field i₁ i₂ i₃ j₁ (b * Ω.gramPinv) * Ω
 
 /-- The solution of the practical B-step from `B(0) = A(0) Ω`:
 `B(t) = (e_{i₁} + t (e_{i₂} + c e_{i₃})) (e_{j₁}ᵀ Ω)`. -/
@@ -243,9 +246,9 @@ theorem exactSol_unique (h₂ : i₁ ≠ i₂) (h₃ : i₁ ≠ i₃) {A : ℝ �
   rw [eq_add_smul_of_deriv_const hA.cont hK t ht, hA0, exactSol_zero, exactSol_eq, sub_zero]
 
 omit [DecidableEq m] [DecidableEq n] in
-theorem pinvT_mul {Ω : Matrix n κ ℝ} (hΩ : IsUnit (Ωᵀ * Ω)) : pinvT Ω * Ω = 1 := by
-  rw [pinvT, Matrix.mul_assoc]
-  exact Matrix.nonsing_inv_mul _ ((Matrix.isUnit_iff_isUnit_det _).mp hΩ)
+/-- `Ω† Ω = 1` for a sketch with independent columns (the core `Matrix.gramPinv_mul_self`). -/
+theorem pinvT_mul {Ω : Matrix n κ ℝ} (hΩ : IsUnit (Ωᵀ * Ω)) : Ω.gramPinv * Ω = 1 :=
+  Matrix.gramPinv_mul_self ((Matrix.isUnit_iff_isUnit_det _).mp hΩ)
 
 omit [DecidableEq n] in
 theorem bSol_eq (Ω : Matrix n κ ℝ) (t : ℝ) :
@@ -268,9 +271,9 @@ theorem bField_of_row {Ω : Matrix n κ ℝ} (hΩ : IsUnit (Ωᵀ * Ω)) {b : Ma
     (hb : b i₁ = Ω j₁) :
     bField i₁ i₂ i₃ j₁ Ω b =
       vecMulVec (Pi.single i₂ 1 + capture j₁ Ω • Pi.single i₃ 1) (Ω j₁) := by
-  have hrow : (b * pinvT Ω) i₁ = (Ω * pinvT Ω) j₁ := by
+  have hrow : (b * Ω.gramPinv) i₁ = (Ω * Ω.gramPinv) j₁ := by
     rw [mul_apply_eq_vecMul, mul_apply_eq_vecMul, hb]
-  have hΩrow : (Ω * pinvT Ω) j₁ ᵥ* Ω = Ω j₁ := by
+  have hΩrow : (Ω * Ω.gramPinv) j₁ ᵥ* Ω = Ω j₁ := by
     rw [← mul_apply_eq_vecMul, Matrix.mul_assoc, pinvT_mul hΩ, Matrix.mul_one]
   rw [bField, field, vecMulVec_mul, hrow, hΩrow, capture]
 
@@ -362,31 +365,31 @@ theorem norm_sub_exactSol_ge (h₂ : i₁ ≠ i₂) (h₃ : i₁ ≠ i₃) (h₂
 /-! ### The capture is a number in `[0, 1]` -/
 
 omit [DecidableEq m] [DecidableEq n] in
-theorem transpose_mul_pinvT {Ω : Matrix n κ ℝ} : (Ω * pinvT Ω)ᵀ = Ω * pinvT Ω := by
-  rw [pinvT, Matrix.transpose_mul, Matrix.transpose_mul, Matrix.transpose_transpose,
-    Matrix.transpose_nonsing_inv, Matrix.transpose_mul, Matrix.transpose_transpose,
-    Matrix.mul_assoc]
+/-- `Ω Ω†` is symmetric (the core `Matrix.transpose_mul_gramPinv`). -/
+theorem transpose_mul_pinvT {Ω : Matrix n κ ℝ} : (Ω * Ω.gramPinv)ᵀ = Ω * Ω.gramPinv :=
+  Matrix.transpose_mul_gramPinv Ω
 
 omit [DecidableEq m] [DecidableEq n] in
+/-- `Ω Ω†` is idempotent for a sketch with independent columns. -/
 theorem mul_pinvT_mul_mul_pinvT {Ω : Matrix n κ ℝ} (hΩ : IsUnit (Ωᵀ * Ω)) :
-    Ω * pinvT Ω * (Ω * pinvT Ω) = Ω * pinvT Ω := by
-  rw [Matrix.mul_assoc, ← Matrix.mul_assoc (pinvT Ω), pinvT_mul hΩ, Matrix.one_mul]
+    Ω * Ω.gramPinv * (Ω * Ω.gramPinv) = Ω * Ω.gramPinv := by
+  rw [Matrix.mul_assoc, ← Matrix.mul_assoc (Ω.gramPinv), pinvT_mul hΩ, Matrix.one_mul]
 
 omit [DecidableEq m] [DecidableEq n] in
 /-- `0 ≤ c ≤ 1`: `c` is the `(j₁, j₁)` entry of the orthogonal projector `Ω Ω†`. -/
 theorem capture_mem_Icc {Ω : Matrix n κ ℝ} (hΩ : IsUnit (Ωᵀ * Ω)) :
     capture j₁ Ω ∈ Icc (0 : ℝ) 1 := by
-  have hdiag : (Ω * pinvT Ω) j₁ j₁ = ∑ k, (Ω * pinvT Ω) j₁ k ^ 2 := by
+  have hdiag : (Ω * Ω.gramPinv) j₁ j₁ = ∑ k, (Ω * Ω.gramPinv) j₁ k ^ 2 := by
     conv_lhs => rw [← mul_pinvT_mul_mul_pinvT hΩ]
     rw [Matrix.mul_apply]
     refine Finset.sum_congr rfl fun k _ => ?_
-    have : (Ω * pinvT Ω) k j₁ = (Ω * pinvT Ω) j₁ k := by
-      rw [← Matrix.transpose_apply (Ω * pinvT Ω) j₁ k, transpose_mul_pinvT]
+    have : (Ω * Ω.gramPinv) k j₁ = (Ω * Ω.gramPinv) j₁ k := by
+      rw [← Matrix.transpose_apply (Ω * Ω.gramPinv) j₁ k, transpose_mul_pinvT]
     rw [this, sq]
-  have h1 : (Ω * pinvT Ω) j₁ j₁ ^ 2 ≤ ∑ k, (Ω * pinvT Ω) j₁ k ^ 2 :=
+  have h1 : (Ω * Ω.gramPinv) j₁ j₁ ^ 2 ≤ ∑ k, (Ω * Ω.gramPinv) j₁ k ^ 2 :=
     single_le_sum (fun k _ => sq_nonneg _) (mem_univ j₁)
-  have h0 : 0 ≤ ∑ k, (Ω * pinvT Ω) j₁ k ^ 2 := sum_nonneg fun k _ => sq_nonneg _
-  change (Ω * pinvT Ω) j₁ j₁ ∈ Icc (0 : ℝ) 1
+  have h0 : 0 ≤ ∑ k, (Ω * Ω.gramPinv) j₁ k ^ 2 := sum_nonneg fun k _ => sq_nonneg _
+  change (Ω * Ω.gramPinv) j₁ j₁ ∈ Icc (0 : ℝ) 1
   rw [hdiag] at h1 ⊢
   exact ⟨h0, by nlinarith⟩
 
@@ -470,7 +473,7 @@ omit [DecidableEq m] in
 theorem capture_replicateCol (w : n → ℝ) :
     capture j₁ (replicateCol Unit w) = (w ⬝ᵥ Pi.single j₁ 1) ^ 2 / (w ⬝ᵥ w) := by
   rw [dotProduct_single, mul_one]
-  simp [capture, pinvT, Matrix.mul_apply, replicateCol_apply, Matrix.inv_subsingleton,
+  simp [capture, Matrix.gramPinv, Matrix.mul_apply, replicateCol_apply, Matrix.inv_subsingleton,
     Ring.inverse_eq_inv', dotProduct, sq, div_eq_mul_inv]
   ring
 
@@ -701,5 +704,9 @@ theorem norm_sub_truncation_proj_sq_le_svd {Q : Matrix m q ℝ} (hQ : Qᵀ * Q =
     A Ω E hX hcap hcard
 
 end Capture
+
+/-- The local sketch pseudo-inverse of this file, replaced by the core `Matrix.gramPinv` (same
+definition, `(ΩᵀΩ)⁻¹Ωᵀ`). -/
+@[deprecated (since := "2026-11-09")] alias pinvT := Matrix.gramPinv
 
 end LeanDLRA.Novel.OpRS34

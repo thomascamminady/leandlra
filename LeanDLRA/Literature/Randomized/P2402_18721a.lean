@@ -19,18 +19,22 @@ interpolation matrices `S_U`, `S_V` are selection matrices of index sets `I`, `J
   `example_obliqueTangentProj_cross` shows that the hypotheses are satisfiable for a nontrivial
   instance (`2 × 1` bases with `I = {0}`, `J = {0}`).
 
+Elsewhere in the library:
+
+* Prop. 4.1, Lemma 4.1 and Theorem 4.1 (oblique TT tangent projector, cross interpolation) are in
+  the companion module `P2402_18721b`, as corollaries of the core files
+  `Tensor/TT/ObliqueProjector.lean` and `Tensor/TT/TangentProjector.lean`.
+* Eq. (7) (CUR reconstruction of a rank-`r` matrix) is `P2408_16591.cur_eq_self_of_rank_le`; the
+  QR-stabilized form (8) follows with `P2408_16591.qr_cur_eq`.
+
 Not formalized from arXiv 2402.18721 (left out, not claimed):
 
-* Eqs. (6)–(8) (matrix cross integrator): only the reconstruction identity is in the library; the
-  closed ODEs for the sampled rows and columns are not proved here.
-* Theorem 5.1 / Corollary 5.1 (TT-cross-DEIM, nested indices with invertible `M_j`, `N_j`): no TT
-  layer is available in the library.
+* Eq. (6) (matrix cross integrator: the closed ODEs for the sampled rows and columns).
+* Theorem 5.1 / Corollary 5.1 (TT-cross-DEIM, nested indices with invertible `M_j`, `N_j`;
+  exact TT-cross representation (62)).
 * Theorem 6.1 (exact solvability of the Lie–Trotter substeps with frozen interpolatory
-  projectors): not attempted in this module.
-* Proposition 4.1 (TT oblique tangent projector, idempotence of the alternating sum): not attempted;
-  there is no TT layer.
-* Lemma 4.1 / Theorem 4.1 (nested cross interpolation on fibres) belong to the companion slice
-  `wip/Lit2402_18721b.lean` and are not part of this module.
+  projectors); the explicit right-hand sides (26)–(32) are the core theorems
+  `Tensor.actOn_mul_actOn_mul_eq_tt_update` and `Tensor.actOn_mul_actOn_mul_eq_ttBond`.
 -/
 
 open Set Filter Topology Finset

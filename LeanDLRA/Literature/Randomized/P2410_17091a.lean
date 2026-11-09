@@ -1,5 +1,6 @@
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Exactness
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Curvature
@@ -30,8 +31,8 @@ Lemma 2.2 (Gaussian norm estimate), the rank-adaptive variants (§2.3, §3.3), t
   full statement `idealized_rangefinder_range_eq`: `Range(Q_h) = Range(A(h))` and
   `A(h) - Q_h Q_hᵀ A(h) = 0`.  The paper says "fix a sketch matrix Ω"; its proof needs the
   full-row-rank condition, and `sketch_range_ne` shows the conclusion fails without it.
-* **Eq. (7)** (practical B-step `B' = F(B Ω†) Ω`): `gramPinv`, `projOmega`,
-  `projOmega_isOrthProj`, `bStep_iff_projected`; bridges to the core
+* **Eq. (7)** (practical B-step `B' = F(B Ω†) Ω`, with `Ω†` the core `Matrix.gramPinv`):
+  `projOmega`, `projOmega_isOrthProj`, `bStep_iff_projected`; bridges to the core
   (`projOmega_eq_obliqueProj`, `isOrthProjMat_projOmega`, `isOrthProj_rightMulCLM_projOmega`,
   `gramPinv_mul_right`, `projOmega_mul_right`); and the chain `isDRSVDStep_of_sketch`: one
   DRSVD step with the paper's B-step for any sketch `Ω = W R` (`W` orthonormal, `R` invertible)
@@ -53,16 +54,19 @@ Lemma 2.2 (Gaussian norm estimate), the rank-adaptive variants (§2.3, §3.3), t
   `(r + p) = min{m, n}`"): true for `r + p = m` (`range_inclusion_of_square`), false for
   `r + p = n < m` (`LimitCase.counterexample`, `m = 3`, `n = 1`, `r = 1`, `p = 0`).
 * **Algorithm 4, steps 6–9**: `svd_pinv_penrose` (`Ṽ_r Σ_r⁻¹ Ũ_rᵀ` is the Moore–Penrose inverse
-  of `Ũ_r Σ_r Ṽ_rᵀ`, so it is a `{1}`-inverse as required by `RandomizedBUG.dgn_exact`) and
+  of `Ũ_r Σ_r Ṽ_rᵀ` in the sense of the core `Matrix.IsMoorePenrose`, so it is a `{1}`-inverse as
+  required by `RandomizedBUG.dgn_exact`) and
   `dgn_assembly_eq` (`U₁ S₁ V₁ᵀ = B(h) T_r(D(h))† C(h)ᵀ`, i.e. the algorithm computes (17)).
 
 Core definitions used: `ODESolution`, `IsDerivRHS`, `IsOrthProj`, `leftProj`, `rightProj`,
 `Curvature.IsOrthProjMat`, `obliqueProj`, `EckartYoung.truncation`,
-`RandomizedBUG.IsDRSVDStep`.  Local definitions: `gramPinv` and `projOmega` (the paper's `Ω†` and
-`Ω Ω†`; `projOmega_eq_obliqueProj` identifies `projOmega Ω` with the core `obliqueProj Ω Ω`; they
-are kept because the paper writes the B-step with `Ω†`), and the concrete matrices of the
-counterexamples.  Duplicates outside the core: `Novel.OpRS34.pinvT` and `Novel.OpTR37.pinv` are
-the same matrix as `gramPinv`.
+`RandomizedBUG.IsDRSVDStep`, and the pseudoinverses `Matrix.gramPinv` (the paper's
+`Ω† = (ΩᵀΩ)⁻¹Ωᵀ` for a sketch of full column rank, which is then the Moore–Penrose inverse,
+`Matrix.gramPinv_eq_pinv`) and `Matrix.IsMoorePenrose` (`LinearAlgebra/Factorization/Defs.lean`).
+Local definitions: `projOmega` (the paper's `Ω Ω†`; `projOmega_eq_obliqueProj` identifies it with
+the core `obliqueProj Ω Ω`; kept because the paper writes the B-step with `Ω†`), and the concrete
+matrices of the counterexamples.  The local `gramPinv` of an earlier version of this file was the
+same definition as the core `Matrix.gramPinv` and was replaced by it (unification batch C1).
 -/
 
 open Set Filter Topology Finset
@@ -201,21 +205,16 @@ section Projection
 
 variable [DecidableEq k]
 
-/-- The full-column-rank pseudo-inverse `Ω† = (ΩᵀΩ)⁻¹ Ωᵀ` of an `n × k` sketch
-(arXiv 2410.17091, §2.2, step 1).  The same matrix as the core `obliqueProj` factor, see
-`projOmega_eq_obliqueProj`. -/
-noncomputable def gramPinv (Ω : Matrix n k ℝ) : Matrix k n ℝ := (Ωᵀ * Ω)⁻¹ * Ωᵀ
-
 /-- The orthogonal projector `Π_Ω = Ω Ω† = Ω (ΩᵀΩ)⁻¹ Ωᵀ` onto `range Ω` (equal to the core
 `obliqueProj Ω Ω` by `projOmega_eq_obliqueProj`). -/
-noncomputable def projOmega (Ω : Matrix n k ℝ) : Matrix n n ℝ := Ω * gramPinv Ω
+noncomputable def projOmega (Ω : Matrix n k ℝ) : Matrix n n ℝ := Ω * Ω.gramPinv
 
 variable {Ω : Matrix n k ℝ}
 
-/-- `Ω† Ω = I` when `ΩᵀΩ` is invertible. -/
-lemma gramPinv_mul_self (h : IsUnit (Ωᵀ * Ω).det) : gramPinv Ω * Ω = 1 := by
-  unfold gramPinv
-  rw [Matrix.mul_assoc, Matrix.nonsing_inv_mul _ h]
+/-- `Ω† Ω = I` when `ΩᵀΩ` is invertible (the core `Matrix.gramPinv_mul_self`); `Ω† = (ΩᵀΩ)⁻¹ Ωᵀ`
+is the full-column-rank pseudo-inverse of the sketch (arXiv 2410.17091, §2.2, step 1). -/
+lemma gramPinv_mul_self (h : IsUnit (Ωᵀ * Ω).det) : Ω.gramPinv * Ω = 1 :=
+  Matrix.gramPinv_mul_self h
 
 /-- `Ω Ω† Ω = Ω`. -/
 lemma projOmega_mul_self (h : IsUnit (Ωᵀ * Ω).det) : projOmega Ω * Ω = Ω := by
@@ -226,18 +225,18 @@ lemma projOmega_mul_self (h : IsUnit (Ωᵀ * Ω).det) : projOmega Ω * Ω = Ω 
 theorem projOmega_isOrthProj (h : IsUnit (Ωᵀ * Ω).det) :
     projOmega Ω * projOmega Ω = projOmega Ω ∧ (projOmega Ω)ᵀ = projOmega Ω := by
   refine ⟨?_, ?_⟩
-  · have hc : gramPinv Ω * (Ω * gramPinv Ω) = gramPinv Ω := by
+  · have hc : Ω.gramPinv * (Ω * Ω.gramPinv) = Ω.gramPinv := by
       rw [← Matrix.mul_assoc, gramPinv_mul_self h, Matrix.one_mul]
     unfold projOmega
-    rw [Matrix.mul_assoc Ω (gramPinv Ω) (Ω * gramPinv Ω), hc]
+    rw [Matrix.mul_assoc Ω (Ω.gramPinv) (Ω * Ω.gramPinv), hc]
   · have hG : ((Ωᵀ * Ω)⁻¹)ᵀ = (Ωᵀ * Ω)⁻¹ := by
       rw [Matrix.transpose_nonsing_inv, Matrix.transpose_mul, Matrix.transpose_transpose]
-    unfold projOmega gramPinv
+    unfold projOmega Matrix.gramPinv
     simp only [Matrix.transpose_mul, Matrix.transpose_transpose, hG, Matrix.mul_assoc]
 
 /-- **Bridge to the core oblique projector**: `Π_Ω = Ω (ΩᵀΩ)⁻¹ Ωᵀ = obliqueProj Ω Ω`. -/
 theorem projOmega_eq_obliqueProj (Ω : Matrix n k ℝ) : projOmega Ω = obliqueProj Ω Ω := by
-  simp only [projOmega, gramPinv, obliqueProj, Matrix.mul_assoc]
+  simp only [projOmega, Matrix.gramPinv, obliqueProj, Matrix.mul_assoc]
 
 /-- **Bridge to the core matrix projector predicate**: `Π_Ω` is an `IsOrthProjMat`. -/
 theorem isOrthProjMat_projOmega (h : IsUnit (Ωᵀ * Ω).det) :
@@ -256,17 +255,17 @@ stated in the paper).  For a sketch `Ω` of full column rank, `B' = F(B Ω†) �
 random projector `Π_Ω`. -/
 theorem bStep_iff_projected {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
     (h : IsUnit (Ωᵀ * Ω).det) {Bs : ℝ → Matrix m k ℝ} {a b : ℝ} :
-    ODESolution (fun t B => F t (B * gramPinv Ω) * Ω) Bs a b ↔
-      ODESolution (fun t Y => F t Y * projOmega Ω) (fun t => Bs t * gramPinv Ω) a b := by
+    ODESolution (fun t B => F t (B * Ω.gramPinv) * Ω) Bs a b ↔
+      ODESolution (fun t Y => F t Y * projOmega Ω) (fun t => Bs t * Ω.gramPinv) a b := by
   have hG := gramPinv_mul_self h
   constructor
   · intro hB
-    refine RandomizedBUG.odeSolution_map hB (Frobenius.rightMulCLM (gramPinv Ω)) ?_
+    refine RandomizedBUG.odeSolution_map hB (Frobenius.rightMulCLM (Ω.gramPinv)) ?_
     intro t _
     simp only [Frobenius.rightMulCLM_apply, projOmega, Matrix.mul_assoc]
   · intro hY
     have h2 := RandomizedBUG.odeSolution_map hY (Frobenius.rightMulCLM Ω)
-      (g := fun t B => F t (B * gramPinv Ω) * Ω) ?_
+      (g := fun t B => F t (B * Ω.gramPinv) * Ω) ?_
     · convert h2 using 1
       funext t
       simp only [Frobenius.rightMulCLM_apply, Matrix.mul_assoc, hG, Matrix.mul_one]
@@ -281,15 +280,11 @@ lemma isUnit_det_gram_mul_right {W : Matrix n k ℝ} (hW : Wᵀ * W = 1) {R : Ma
   rw [hG, Matrix.det_mul, Matrix.det_transpose]
   exact hR.mul hR
 
-/-- For `Ω = W R` (`W` orthonormal, `R` invertible): `Ω† = R⁻¹ Wᵀ`. -/
+/-- For `Ω = W R` (`W` orthonormal, `R` invertible): `Ω† = R⁻¹ Wᵀ` (the core
+`Matrix.gramPinv_mul`). -/
 theorem gramPinv_mul_right {W : Matrix n k ℝ} (hW : Wᵀ * W = 1) {R : Matrix k k ℝ}
-    (hR : IsUnit R.det) : gramPinv (W * R) = R⁻¹ * Wᵀ := by
-  have hRt : IsUnit Rᵀ.det := by rwa [Matrix.det_transpose]
-  have hG : (W * R)ᵀ * (W * R) = Rᵀ * R := by
-    rw [Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc Wᵀ, hW, Matrix.one_mul]
-  unfold gramPinv
-  rw [hG, Matrix.mul_inv_rev, Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc Rᵀ⁻¹,
-    Matrix.nonsing_inv_mul _ hRt, Matrix.one_mul]
+    (hR : IsUnit R.det) : (W * R).gramPinv = R⁻¹ * Wᵀ :=
+  Matrix.gramPinv_mul hW hR
 
 /-- **The random projector only depends on the range of the sketch**: for `Ω = W R` (`W`
 orthonormal, `R` invertible), `Π_Ω = W Wᵀ`, from the core `obliqueProj_self_mul_right`.  Hence
@@ -314,14 +309,14 @@ theorem isDRSVDStep_of_sketch [DecidableEq l] {F : ℝ → Matrix m n ℝ → Ma
     {ε ϑ t₀ t₁ : ℝ} {Y₀ Y₁ : Matrix m n ℝ} {W : Matrix n k ℝ} (hW : Wᵀ * W = 1)
     {R : Matrix k k ℝ} (hR : IsUnit R.det) {Q : Matrix m l ℝ} (hQ : Qᵀ * Q = 1)
     {Bs : ℝ → Matrix m k ℝ}
-    (hB : ODESolution (fun t B => F t (B * gramPinv (W * R)) * (W * R)) Bs t₀ t₁)
+    (hB : ODESolution (fun t B => F t (B * (W * R).gramPinv) * (W * R)) Bs t₀ t₁)
     (hB₀ : Bs t₀ = Y₀ * (W * R)) (haug : Y₀ * W * Wᵀ = Y₀) (hcap : Q * Qᵀ * Bs t₁ = Bs t₁)
     (hε : ∀ t ∈ Icc t₀ t₁,
-      ‖(1 - leftProj Q) ((1 - rightProj W) (F t (Bs t₁ * gramPinv (W * R))))‖ ≤ ε)
+      ‖(1 - leftProj Q) ((1 - rightProj W) (F t (Bs t₁ * (W * R).gramPinv)))‖ ≤ ε)
     {Cs : ℝ → Matrix n l ℝ} (hC : ODESolution (fun t C => (F t (Q * Cᵀ))ᵀ * Q) Cs t₀ t₁)
     (hC₀ : Cs t₀ = Y₀ᵀ * Q) (htr : ‖Y₁ - Q * (Cs t₁)ᵀ‖ ≤ ϑ) :
     RandomizedBUG.IsDRSVDStep F ε ϑ (rightProj W) (leftProj Q) t₀ t₁ Y₀
-      (fun t => Bs t * gramPinv (W * R)) (fun t => Q * (Cs t)ᵀ) Y₁ where
+      (fun t => Bs t * (W * R).gramPinv) (fun t => Q * (Cs t)ᵀ) Y₁ where
   projΩ := isOrthProj_rightProj hW
   projP := isOrthProj_leftProj hQ
   bSol := by
@@ -331,11 +326,11 @@ theorem isDRSVDStep_of_sketch [DecidableEq l] {F : ℝ → Matrix m n ℝ → Ma
       rw [projOmega_mul_right hW hR, rightProj_apply, Matrix.mul_assoc]
     rwa [hf] at h
   bStart := by
-    have hP : W * R * gramPinv (W * R) = W * Wᵀ := projOmega_mul_right hW hR
-    change Bs t₀ * gramPinv (W * R) = Y₀
+    have hP : W * R * (W * R).gramPinv = W * Wᵀ := projOmega_mul_right hW hR
+    change Bs t₀ * (W * R).gramPinv = Y₀
     rw [hB₀, Matrix.mul_assoc, hP, ← Matrix.mul_assoc, haug]
   rangeCap := by
-    change Q * Qᵀ * (Bs t₁ * gramPinv (W * R)) = Bs t₁ * gramPinv (W * R)
+    change Q * Qᵀ * (Bs t₁ * (W * R).gramPinv) = Bs t₁ * (W * R).gramPinv
     rw [← Matrix.mul_assoc, hcap]
   bNormal := hε
   cSol := RandomizedBUG.cStep_full hC
@@ -457,7 +452,7 @@ lemma rank_A_one : (A 1).rank = 2 := by
       _ ≤ (A 1).rank := Matrix.rank_mul_le_left _ _
 
 /-- `Bs` solves the B-step (7). -/
-lemma Bs_ode : ODESolution (fun t B => F t (B * gramPinv Ω) * Ω) Bs 0 1 :=
+lemma Bs_ode : ODESolution (fun t B => F t (B * Ω.gramPinv) * Ω) Bs 0 1 :=
   Exactness.odeSolution_add_smul_of_const (c := G * Ω) (fun _ _ => rfl) (Y₀ * Ω) 0 1
 
 /-- `B(1) = A(1) Ω = Ω`, so `Q_h = orth(B(1)) = Ω`. -/
@@ -466,7 +461,7 @@ lemma Bs_one : Bs 1 = Ω :=
     _ = Ω := A_one_mul_Ω
 
 /-- `Bt` solves the B-step of the transposed problem (`X ↦ F(Xᵀ)ᵀ`). -/
-lemma Bt_ode : ODESolution (fun t B => (F t (B * gramPinv Ω)ᵀ)ᵀ * Ω) Bt 0 1 :=
+lemma Bt_ode : ODESolution (fun t B => (F t (B * Ω.gramPinv)ᵀ)ᵀ * Ω) Bt 0 1 :=
   Exactness.odeSolution_add_smul_of_const (c := Gᵀ * Ω) (fun _ _ => rfl) (Y₀ᵀ * Ω) 0 1
 
 /-- `B(1) = Ω` for the transposed rangefinder, so `W_h = Ω`. -/
@@ -518,7 +513,7 @@ statement, with `rank A(h) ≤ r`, is `RandomizedBUG.drsvd_exact_iff`. -/
 theorem drsvd_counterexample :
     ODESolution F A 0 1 ∧ A 0 = e₁ * (1 : Matrix (Fin 1) (Fin 1) ℝ) * e₁ᵀ ∧ e₁ᵀ * e₁ = 1 ∧
       (A 1).rank ≤ 1 + 1 ∧
-      Ωᵀ * Ω = 1 ∧ ODESolution (fun t B => F t (B * gramPinv Ω) * Ω) Bs 0 1 ∧
+      Ωᵀ * Ω = 1 ∧ ODESolution (fun t B => F t (B * Ω.gramPinv) * Ω) Bs 0 1 ∧
       Bs 0 = A 0 * Ω ∧ Bs 1 = Ω ∧
       Qᵀ * Q = 1 ∧ Q * Qᵀ * Matrix.fromCols e₁ Ω = Matrix.fromCols e₁ Ω ∧
       Q = Matrix.fromCols e₁ Ω * (Matrix.fromCols e₁ Ω)ᵀ ∧
@@ -542,7 +537,7 @@ BCD-step (16) with `B(0) = A₀ W`, `C(0) = A₀ᵀ Q`, `D(0) = Qᵀ A₀ W`.  T
 `T_1(D(1))†` of (17)) the DGN output `B(1) G' C(1)ᵀ` differs from `A(1)`, because it has rank
 `≤ 1 < 2 = rank A(1)`.  The corrected statement is `RandomizedBUG.dgn_exact`. -/
 theorem dgn_counterexample :
-    ODESolution (fun t B => (F t (B * gramPinv Ω)ᵀ)ᵀ * Ω) Bt 0 1 ∧ Bt 0 = (A 0)ᵀ * Ω ∧
+    ODESolution (fun t B => (F t (B * Ω.gramPinv)ᵀ)ᵀ * Ω) Bt 0 1 ∧ Bt 0 = (A 0)ᵀ * Ω ∧
       Bt 1 = Ω ∧ Wᵀ * W = 1 ∧ W * Wᵀ * Matrix.fromCols e₁ Ω = Matrix.fromCols e₁ Ω ∧
       W = Matrix.fromCols e₁ Ω * (Matrix.fromCols e₁ Ω)ᵀ ∧
       (∀ t ∈ Icc (0 : ℝ) 1, Q * Qᵀ * A t = A t ∧ W * Wᵀ * (A t)ᵀ = (A t)ᵀ) ∧
@@ -637,12 +632,12 @@ theorem counterexample :
     ODESolution (fun _ X => F X) a 0 1 ∧
       a 0 = U₀ * (1 : Matrix (Fin 1) (Fin 1) ℝ) * (1 : Matrix (Fin 1) (Fin 1) ℝ)ᵀ ∧
       U₀ᵀ * U₀ = 1 ∧ (a 1).rank ≤ 1 + 0 ∧
-      ODESolution (fun _ B => F (B * gramPinv (1 : Matrix (Fin 1) (Fin 1) ℝ))
+      ODESolution (fun _ B => F (B * (1 : Matrix (Fin 1) (Fin 1) ℝ).gramPinv)
         * (1 : Matrix (Fin 1) (Fin 1) ℝ)) a 0 1 ∧
       (∃ Q : Matrix (Fin 3) (Fin 2) ℝ, Qᵀ * Q = 1 ∧ Q * Qᵀ * U₀ = U₀ ∧ Q * Qᵀ * a 1 = a 1) ∧
       ∀ Q : Matrix (Fin 3) (Fin 2) ℝ, Q * Qᵀ * U₀ = U₀ → Q * Qᵀ * a 1 = a 1 →
         Q * Qᵀ * a (1 / 2) ≠ a (1 / 2) := by
-  have hpinv : gramPinv (1 : Matrix (Fin 1) (Fin 1) ℝ) = 1 := by simp [gramPinv]
+  have hpinv : (1 : Matrix (Fin 1) (Fin 1) ℝ).gramPinv = 1 := by simp [Matrix.gramPinv]
   refine ⟨a_ode, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · ext i j; fin_cases i <;> fin_cases j <;> simp [a, U₀]
   · ext i j; fin_cases i; fin_cases j; simp [U₀, Matrix.mul_apply, Fin.sum_univ_three]
@@ -696,32 +691,16 @@ variable {p q r : Type*} [Fintype p] [Fintype q] [Fintype r] [DecidableEq r]
 
 /-- **Pseudo-inverse of a truncated SVD** (arXiv 2410.17091, §1.1 "`(U Σ Vᵀ)† = V Σ⁻¹ Uᵀ`" and
 Algorithm 4, steps 6–8).  If `Ũ_r`, `Ṽ_r` have orthonormal columns and `Σ_r` is invertible, then
-`G = Ṽ_r Σ_r⁻¹ Ũ_rᵀ` satisfies the four Penrose equations for `X = Ũ_r Σ_r Ṽ_rᵀ`, i.e. it is the
-Moore–Penrose inverse `T_r(D)†` of (17).  In particular `X G X = X`, the `{1}`-inverse hypothesis
-of `RandomizedBUG.dgn_exact`.  (`Σ_r` need not be diagonal.) -/
+`G = Ṽ_r Σ_r⁻¹ Ũ_rᵀ` satisfies the four Penrose equations (`Matrix.IsMoorePenrose`) for
+`X = Ũ_r Σ_r Ṽ_rᵀ`, i.e. it is the Moore–Penrose inverse `T_r(D)†` of (17)
+(`Matrix.pinv_mul_mul_transpose`).  In particular
+`X G X = X` (`Matrix.IsMoorePenrose.mul_pinv_mul`), the `{1}`-inverse hypothesis of
+`RandomizedBUG.dgn_exact`.  (`Σ_r` need not be diagonal.)  This is the core
+`Matrix.isMoorePenrose_mul_mul_transpose`. -/
 theorem svd_pinv_penrose {Ur : Matrix p r ℝ} {Sr : Matrix r r ℝ} {Vr : Matrix q r ℝ}
     (hU : Urᵀ * Ur = 1) (hV : Vrᵀ * Vr = 1) (hS : IsUnit Sr.det) :
-    Ur * Sr * Vrᵀ * (Vr * Sr⁻¹ * Urᵀ) * (Ur * Sr * Vrᵀ) = Ur * Sr * Vrᵀ ∧
-      Vr * Sr⁻¹ * Urᵀ * (Ur * Sr * Vrᵀ) * (Vr * Sr⁻¹ * Urᵀ) = Vr * Sr⁻¹ * Urᵀ ∧
-      (Ur * Sr * Vrᵀ * (Vr * Sr⁻¹ * Urᵀ))ᵀ = Ur * Sr * Vrᵀ * (Vr * Sr⁻¹ * Urᵀ) ∧
-      (Vr * Sr⁻¹ * Urᵀ * (Ur * Sr * Vrᵀ))ᵀ = Vr * Sr⁻¹ * Urᵀ * (Ur * Sr * Vrᵀ) := by
-  have hXG : Ur * Sr * Vrᵀ * (Vr * Sr⁻¹ * Urᵀ) = Ur * Urᵀ := by
-    calc _ = Ur * (Sr * (Vrᵀ * Vr) * Sr⁻¹) * Urᵀ := by simp only [Matrix.mul_assoc]
-      _ = Ur * Urᵀ := by
-        rw [hV, Matrix.mul_one, Matrix.mul_nonsing_inv _ hS, Matrix.mul_one]
-  have hGX : Vr * Sr⁻¹ * Urᵀ * (Ur * Sr * Vrᵀ) = Vr * Vrᵀ := by
-    calc _ = Vr * (Sr⁻¹ * (Urᵀ * Ur) * Sr) * Vrᵀ := by simp only [Matrix.mul_assoc]
-      _ = Vr * Vrᵀ := by
-        rw [hU, Matrix.mul_one, Matrix.nonsing_inv_mul _ hS, Matrix.mul_one]
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · rw [hXG]
-    calc _ = Ur * (Urᵀ * Ur) * Sr * Vrᵀ := by simp only [Matrix.mul_assoc]
-      _ = _ := by rw [hU, Matrix.mul_one]
-  · rw [hGX]
-    calc _ = Vr * (Vrᵀ * Vr) * Sr⁻¹ * Urᵀ := by simp only [Matrix.mul_assoc]
-      _ = _ := by rw [hV, Matrix.mul_one]
-  · rw [hXG, Matrix.transpose_mul, Matrix.transpose_transpose]
-  · rw [hGX, Matrix.transpose_mul, Matrix.transpose_transpose]
+    (Ur * Sr * Vrᵀ).IsMoorePenrose (Vr * Sr⁻¹ * Urᵀ) :=
+  Matrix.isMoorePenrose_mul_mul_transpose hU hV hS
 
 omit [Fintype m] [Fintype n] in
 /-- **Algorithm 4 computes (17)** (arXiv 2410.17091, Algorithm 4, step 8).  If
@@ -738,5 +717,9 @@ theorem dgn_assembly_eq {Ur : Matrix p r ℝ} {Sr : Matrix r r ℝ} {Vr : Matrix
         rw [h₁, h₂, Matrix.transpose_mul]; simp only [Matrix.mul_assoc]
 
 end Assembly
+
+/-- The local Gram pseudoinverse of this file, replaced by the core `Matrix.gramPinv` (same
+definition, `(ΩᵀΩ)⁻¹Ωᵀ`). -/
+@[deprecated (since := "2026-11-09")] alias gramPinv := Matrix.gramPinv
 
 end LeanDLRA.Literature.P2410_17091
