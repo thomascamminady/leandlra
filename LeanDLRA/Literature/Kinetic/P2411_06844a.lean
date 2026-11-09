@@ -15,22 +15,27 @@ nodes `v` and weights `ω`, as operators whose entries agree with the paper's ma
 (`theorem2_step`, `theorem2_trajectory`, with solvability and positivity of the scheme in
 `isConservativeStep_gNext`, `positive_step`, `consIter_spec`). Two claims of the paper are
 corrected. First, the proofs of Lemma 2 and Theorem 2 use `QuadNormalized`, `(1/√(2π)) Σ_k ω_k
-e^{v_k²/2} = 1`, which the paper does not list and which fails for Gauss-Hermite weights
-(`gaussHermite_one_point`, `lemma2_fails_gaussHermite`); it is necessary
+e^{v_k²/2} = 1`, which the paper does not list and which fails for the Gauss-Hermite weights of
+`e^{-v²}` named in Sec. 3.1 (`gaussHermite_one_point`, `lemma2_fails_gaussHermite`,
+`gaussHermite_three_point_not_quadNormalized`); for `σ > 0` it is necessary
 (`quadNormalized_of_normalized`, `conservative_needs_quadNormalized`), as is the initial
 normalization (`conservative_needs_normalized`), and it holds when `ω_k e^{v_k²/2} / √(2π)` are
-the weights of a Gauss-Hermite rule for `e^{-v²/2}`. Second, **Theorem 3 is false as stated**
-(`theorem3_false`): one step of (15), without truncation, under the CFL condition, increases the
-`ℋ`-norm from `g ≡ 1`. The equalities that its proof deduces from the augmentations (15c), (15e)
-fail (`ce_displayed_equality_fails`), because the S-step output lies in `𝒳̂̂`, not in `X̂`. What
-remains true is formalised on the scheme in projector form `IsDLRAStep`: the mass relation
-(`IsDLRAStep.normalized`), the energy estimate given those equalities
-(`dlra_stable_of_equalities`), stability when the augmented spaces are invariant under the weights
-(`dlra_stable_of_invariant`, `dlra_stable_of_scalar_weights`), and stability of an `ℋ`-orthogonal
-Galerkin step (`hGalerkin_stable`). For `ϑ > 0` the Euclidean truncation is only used through
-`IsMassTruncation`, and its `ℋ`-norm behaviour is a hypothesis. Not treated: the two-dimensional
-setting, and the simplified rank-`2r` scheme of Section 6.1, for which the paper claims no
-theorem.
+the weights of a Gauss-Hermite rule for `e^{-v²/2}`. Second, **Theorem 3 is false**. It fails
+for weights satisfying `QuadNormalized` (`theorem3_false`): one step of (15), without truncation,
+under the CFL condition, increases the `ℋ`-norm from `g ≡ 1`, with the three-point Gauss-Hermite
+rule of `e^{-v²/2}`, for which Lemma 2 and Theorem 2 hold. It also fails for the printed weights,
+the three-point Gauss-Hermite rule of `e^{-v²}` (`gaussHermite_three_point`):
+`theorem3_false_gaussHermite`, one step of (15) with `σ = 0`, `Δx = 1/N_x`, a positive rank-one
+state satisfying (11), and spatial spaces of the full dimensions `2r`, `4r`. The equalities that
+the proof deduces from the augmentations (15c), (15e) fail (`ce_displayed_equality_fails`),
+because the S-step output lies in `𝒳̂̂`, not in `X̂`. What remains true is formalised on the
+scheme in projector form `IsDLRAStep`: the mass relation (`IsDLRAStep.normalized`), the energy
+estimate given those equalities (`dlra_stable_of_equalities`), stability when the augmented spaces
+are invariant under the weights (`dlra_stable_of_invariant`, `dlra_stable_of_scalar_weights`), and
+stability of an `ℋ`-orthogonal Galerkin step (`hGalerkin_stable`). For `ϑ > 0` the Euclidean
+truncation is only used through `IsMassTruncation`, and its `ℋ`-norm behaviour is a hypothesis.
+Not treated: the two-dimensional setting, and the simplified rank-`2r` scheme of Section 6.1, for
+which the paper claims no theorem.
 -/
 
 open Set Filter Topology Finset
@@ -2268,13 +2273,18 @@ private lemma ce_new : 307 < hNormSq ceV ceω (fOf ceV ceρ' ceGhat) := by
     z0, z1, z2, ceN, ceρ, ceρ', ceU0, ceU2, v5_0, v5_1, v5_2, v5_3, v5_4]
   norm_num
 
-/-- **Theorem 3 of arXiv 2411.06844 is false as stated.**  It claims that under
-`max_k |v_k| Δt ≤ Δx` the DLRA scheme (15) satisfies `‖f^{n+1}‖²_ℋ ≤ ‖f^n‖²_ℋ`.  Here is one step of
-(15), in exact arithmetic and without truncation (`ϑ = 0`), with
+/-- **Theorem 3 of arXiv 2411.06844 fails for weights satisfying `QuadNormalized`.**  It claims
+that under `max_k |v_k| Δt ≤ Δx` the DLRA scheme (15) satisfies `‖f^{n+1}‖²_ℋ ≤ ‖f^n‖²_ℋ`.
+Here is one step of (15), in exact arithmetic and without truncation (`ϑ = 0`), with
 `‖f^{n+1}‖²_ℋ > ‖f^n‖²_ℋ = 307`.  It has `N_x = 5` points, `Δx = 1/5`, CFL number `0.9`, collisions
 `σ > 0`, the rank-one state `g ≡ 1` that the paper itself starts from in Section 6.1, and nodes
 `0, ±√3` with `ω_k e^{v_k²/2} / √(2π) = 2/3, 1/6, 1/6`, the three-point Gauss-Hermite rule of the
-weight `e^{-v²/2}`, so that `QuadNormalized` and (11) hold exactly.  The ranks are the full ones:
+weight `e^{-v²/2}`, so that `QuadNormalized` and (11) hold exactly.  Difference from the printed
+setting: Sec. 3.1 names the Gauss-Hermite rule of `e^{-v²}`, whose weights violate `QuadNormalized`
+(`gaussHermite_one_point`, `gaussHermite_three_point_not_quadNormalized`), so that for `σ > 0`
+already Lemma 2 fails for them; the counterexample with those weights is
+`theorem3_false_gaussHermite`.  The weights here are the ones under which the paper's Lemma 2 and
+Theorem 2 hold.  The ranks are the full ones:
 `[K, X]` has rank 2, `𝒳̂̂` has dimension `4` (`ce_augX`), and the velocity projection is the
 identity (`ce_augV`), so the failure is entirely that of the Euclidean spatial Galerkin projection
 in the `ρ'`-weighted norm.  The relation (11) stays exact for `g'`.
@@ -2320,5 +2330,603 @@ theorem ce_displayed_equality_fails :
   linarith
 
 end Counterexample
+
+/-! ### Theorem 3 with the printed Gauss-Hermite weights -/
+
+section CounterexamplePrinted
+
+/-- The nodes `∓√6/2 = ∓√(3/2)` and `0` of the three-point Gauss-Hermite rule for the weight
+`e^{-v²}` named in Section 3.1 of arXiv 2411.06844: the roots of `H₃(v) = 8v³ - 12v`. -/
+noncomputable def ghV : Fin 3 → ℝ := ![-(Real.sqrt 6 / 2), 0, Real.sqrt 6 / 2]
+
+/-- The weights `√π/6, 2√π/3, √π/6` of that rule, see `gaussHermite_three_point`. -/
+noncomputable def ghω : Fin 3 → ℝ :=
+  ![Real.sqrt Real.pi / 6, 2 * Real.sqrt Real.pi / 3, Real.sqrt Real.pi / 6]
+
+private lemma ghV_0 : ghV 0 = -(Real.sqrt 6 / 2) := rfl
+private lemma ghV_1 : ghV 1 = 0 := rfl
+private lemma ghV_2 : ghV 2 = Real.sqrt 6 / 2 := rfl
+private lemma ghω_0 : ghω 0 = Real.sqrt Real.pi / 6 := rfl
+private lemma ghω_1 : ghω 1 = 2 * Real.sqrt Real.pi / 3 := rfl
+private lemma ghω_2 : ghω 2 = Real.sqrt Real.pi / 6 := rfl
+
+private lemma sqrt6_sq : Real.sqrt 6 ^ 2 = 6 := Real.sq_sqrt (by norm_num)
+
+private lemma sqrt6_pos : 0 < Real.sqrt 6 := Real.sqrt_pos.2 (by norm_num)
+
+private lemma ghV0_sq : ghV 0 ^ 2 = 3 / 2 := by
+  rw [ghV_0, neg_sq, div_pow, sqrt6_sq]
+  norm_num
+
+private lemma ghV2_sq : ghV 2 ^ 2 = 3 / 2 := by
+  rw [ghV_2, div_pow, sqrt6_sq]
+  norm_num
+
+/-- `ghV`, `ghω` is the three-point Gauss-Hermite rule for `e^{-v²}`: the nodes are the roots of
+`H₃(v) = 8v³ - 12v`, the weights sum to `∫ e^{-v²} dv = √π`, and the rule reproduces the moments
+`∫ v^m e^{-v²} dv` for `m ≤ 5`: `√π/2` for `m = 2`, `3√π/4` for `m = 4`, `0` for odd `m`.
+arXiv 2411.06844, Section 3.1. -/
+theorem gaussHermite_three_point :
+    (∀ k, 8 * ghV k ^ 3 - 12 * ghV k = 0) ∧ ∑ k, ghω k = ∫ v : ℝ, Real.exp (-v ^ 2) ∧
+      ∑ k, ghω k * ghV k ^ 2 = Real.sqrt Real.pi / 2 ∧
+      ∑ k, ghω k * ghV k ^ 4 = 3 * Real.sqrt Real.pi / 4 ∧
+      ∀ m, Odd m → ∑ k, ghω k * ghV k ^ m = 0 := by
+  have hs := sqrt6_sq
+  have h4 : ∀ k, ghV k ^ 4 = (ghV k ^ 2) ^ 2 := fun k => by ring
+  refine ⟨forall_f3 ?_ ?_ ?_, ?_, ?_, ?_, fun m hm => ?_⟩
+  · rw [ghV_0]
+    linear_combination (-Real.sqrt 6) * hs
+  · rw [ghV_1]
+    ring
+  · rw [ghV_2]
+    linear_combination Real.sqrt 6 * hs
+  · have h := integral_gaussian 1
+    simp only [neg_mul, one_mul, div_one] at h
+    rw [h, Fin.sum_univ_three, ghω_0, ghω_1, ghω_2]
+    ring
+  · rw [Fin.sum_univ_three, ghω_0, ghω_1, ghω_2, ghV0_sq, ghV_1, ghV2_sq]
+    ring
+  · rw [Fin.sum_univ_three, h4, h4, h4, ghω_0, ghω_1, ghω_2, ghV0_sq, ghV_1, ghV2_sq]
+    ring
+  · rw [Fin.sum_univ_three, ghV_0, ghV_1, ghV_2, hm.neg_pow, zero_pow hm.pos.ne', ghω_0, ghω_2]
+    ring
+
+private lemma ghω_pos : ∀ k, 0 < ghω k := by
+  refine forall_f3 ?_ ?_ ?_
+  · rw [ghω_0]
+    positivity
+  · rw [ghω_1]
+    positivity
+  · rw [ghω_2]
+    positivity
+
+private lemma gh_quadZ_pos (k : Fin 3) : 0 < quadZ ghV ghω k :=
+  mul_pos (mul_pos (by positivity) (ghω_pos k)) (Real.exp_pos _)
+
+private lemma gh_quadZ_symm : quadZ ghV ghω 2 = quadZ ghV ghω 0 := by
+  simp only [quadZ, ghV0_sq, ghV2_sq, ghω_0, ghω_2]
+
+/-- `Z_± = e^{3/4} Z_0 / 4` for the printed rule. -/
+private lemma gh_quadZ_ratio : 4 * quadZ ghV ghω 0 = Real.exp (3 / 4) * quadZ ghV ghω 1 := by
+  simp only [quadZ, ghV0_sq, ghV_1, ghω_0, ghω_1]
+  have e1 : (3 : ℝ) / 2 / 2 = 3 / 4 := by norm_num
+  have e2 : (0 : ℝ) ^ 2 / 2 = 0 := by norm_num
+  rw [e1, e2, Real.exp_zero]
+  ring
+
+private lemma two_lt_exp : 2 < Real.exp (3 / 4) := by
+  have h := Real.quadratic_le_exp_of_nonneg (x := 3 / 4) (by norm_num)
+  norm_num at h
+  linarith
+
+private lemma exp_lt_four : Real.exp (3 / 4) < 4 := by
+  have h1 : Real.exp (3 / 4) < Real.exp 1 := Real.exp_lt_exp.2 (by norm_num)
+  have h2 := Real.exp_one_lt_d9
+  have h3 : (2.7182818286 : ℝ) < 4 := by norm_num
+  linarith
+
+/-- The printed weights violate `QuadNormalized`: `Σ_k Z_k = (2 + e^{3/4}) / (3√2) ≈ 0.970`.  So
+`theorem3_false` does not cover them, and the proof of Lemma 2 does not apply to them for `σ > 0`.
+arXiv 2411.06844, Section 3.1 and Lemma 2. -/
+theorem gaussHermite_three_point_not_quadNormalized : ¬ QuadNormalized ghV ghω := by
+  intro h
+  have hr := gh_quadZ_ratio
+  have h2 : (11 / 8 : ℝ) < Real.sqrt 2 := by
+    rw [Real.lt_sqrt (by norm_num)]
+    norm_num
+  have he : Real.exp (3 / 4) ≤ 17 / 8 := by
+    have h := Real.exp_bound' (x := 3 / 4) (by norm_num) (by norm_num) (n := 3) (by norm_num)
+    norm_num [Finset.sum_range_succ, Nat.factorial] at h
+    linarith
+  have hz1 : quadZ ghV ghω 1 * Real.sqrt 2 = 2 / 3 := by
+    simp only [quadZ, ghV_1, ghω_1]
+    rw [Real.sqrt_mul (by norm_num : (0 : ℝ) ≤ 2)]
+    have hp : 0 < Real.sqrt Real.pi := by positivity
+    have hq : 0 < Real.sqrt 2 := by positivity
+    have e2 : (0 : ℝ) ^ 2 / 2 = 0 := by norm_num
+    rw [e2, Real.exp_zero]
+    field_simp
+  rw [QuadNormalized, Fin.sum_univ_three, gh_quadZ_symm] at h
+  have h1 : (Real.exp (3 / 4) / 2 + 1) * quadZ ghV ghω 1 = 1 := by linarith
+  have key : (Real.exp (3 / 4) / 2 + 1) * (2 / 3) = Real.sqrt 2 := by
+    calc (Real.exp (3 / 4) / 2 + 1) * (2 / 3)
+        = (Real.exp (3 / 4) / 2 + 1) * (quadZ ghV ghω 1 * Real.sqrt 2) := by rw [hz1]
+      _ = Real.sqrt 2 := by rw [← mul_assoc, h1, one_mul]
+  linarith
+
+/-- `Δt = 0.9 Δx / max_k |v_k|` for the printed nodes and `Δx = 1/5`. -/
+noncomputable def ghDt : ℝ := 3 * Real.sqrt 6 / 50
+
+/-- The velocity profile `h_k = c_k / Z_k` with `c = (1/6, 2/3, 1/6)`, so that `g = 𝟙 hᵀ` satisfies
+(11) for the printed weights. -/
+noncomputable def ghH (k : Fin 3) : ℝ := ceZ k / quadZ ghV ghω k
+
+/-- `‖h‖`. -/
+noncomputable def ghHn : ℝ := Real.sqrt (∑ k, ghH k ^ 2)
+
+/-- The velocity basis `V = h / ‖h‖` of rank one. -/
+noncomputable def ghB : Matrix (Fin 3) Unit ℝ := Matrix.of fun k _ => ghH k / ghHn
+
+/-- The coefficient `S = √5 ‖h‖`, so that `X S Vᵀ = 𝟙 hᵀ` with `X = 𝟙/√5`. -/
+noncomputable def ghS : Matrix Unit Unit ℝ := Matrix.of fun _ _ => Real.sqrt 5 * ghHn
+
+/-- The operator `G` of (14a) for this state and `σ = 0`. -/
+noncomputable def ghG : Matrix (ZMod 5) (Fin 3) ℝ :=
+  Matrix.of fun j k => ghH k * (ceU k j / ceρ' j)
+
+/-- The result `ĝ` of the S-step. -/
+noncomputable def ghGhat : Matrix (ZMod 5) (Fin 3) ℝ :=
+  Matrix.of fun j k => ghH k * (ceU k j / ceρ' j - ceκ k * ceN j)
+
+private lemma ghH_pos (k : Fin 3) : 0 < ghH k := div_pos (ceZ_pos k) (gh_quadZ_pos k)
+
+private lemma gh_c (k : Fin 3) : quadZ ghV ghω k * ghH k = ceZ k := by
+  have := (gh_quadZ_pos k).ne'
+  simp only [ghH]
+  field_simp
+
+private lemma ghH_symm : ghH 2 = ghH 0 := by
+  simp only [ghH, gh_quadZ_symm]
+  rfl
+
+private lemma ghH_lt : 2 * ghH 0 < ghH 1 ∧ ghH 1 < 4 * ghH 0 := by
+  have h0 := gh_quadZ_pos 0
+  have h1 := gh_quadZ_pos 1
+  have hr := gh_quadZ_ratio
+  have z0 : ceZ 0 = 1 / 6 := rfl
+  have z1 : ceZ 1 = 2 / 3 := rfl
+  have a := mul_lt_mul_of_pos_right two_lt_exp h1
+  have b := mul_lt_mul_of_pos_right exp_lt_four h1
+  simp only [ghH, z0, z1]
+  constructor
+  · rw [show 2 * (1 / 6 / quadZ ghV ghω 0) = 1 / 3 / quadZ ghV ghω 0 by ring,
+      div_lt_div_iff₀ h0 h1]
+    linarith
+  · rw [show 4 * (1 / 6 / quadZ ghV ghω 0) = 2 / 3 / quadZ ghV ghω 0 by ring,
+      div_lt_div_iff₀ h1 h0]
+    linarith
+
+private lemma ghHn_sq : ghHn ^ 2 = ∑ k, ghH k ^ 2 :=
+  Real.sq_sqrt (Finset.sum_nonneg fun _ _ => sq_nonneg _)
+
+private lemma ghHn_pos : 0 < ghHn := by
+  refine Real.sqrt_pos.2 ?_
+  rw [Fin.sum_univ_three]
+  have := ghH_pos 0
+  nlinarith [sq_nonneg (ghH 1), sq_nonneg (ghH 2)]
+
+private lemma ghDt_mul : ghDt * (Real.sqrt 6 / 2) = 9 / 10 * (1 / 5) := by
+  rw [ghDt]
+  linear_combination (3 / 100 : ℝ) * sqrt6_sq
+
+private lemma ghDt_pos : 0 < ghDt := by
+  have := sqrt6_pos
+  rw [ghDt]
+  positivity
+
+private lemma gh_cfl : ∀ k, |ghV k| * ghDt < 1 / 5 := by
+  have h6 := sqrt6_pos
+  refine forall_f3 ?_ ?_ ?_
+  · rw [ghV_0, abs_neg, abs_of_pos (by positivity), mul_comm, ghDt_mul]
+    norm_num
+  · rw [ghV_1]
+    simp
+  · rw [ghV_2, abs_of_pos (by positivity), mul_comm, ghDt_mul]
+    norm_num
+
+/-- `g = X S Vᵀ = 𝟙 hᵀ`.
+arXiv 2411.06844, counterexample to Theorem 3 with the printed weights. -/
+theorem gh_g (j : ZMod 5) (k : Fin 3) : (ceX * ghS * ghBᵀ) j k = ghH k := by
+  have h5 := sqrt5_pos.ne'
+  have hn := ghHn_pos.ne'
+  simp only [Matrix.mul_apply, Matrix.transpose_apply, ceX, ghS, ghB, Matrix.of_apply,
+    Finset.univ_unique, Finset.sum_singleton]
+  field_simp
+
+private lemma gh_U : ∀ (k : Fin 3) (j : ZMod 5),
+    ceρ j - ghDt * upw (1 / 5) (ghV k) ceρ j = ceU k j := by
+  have h5 : (1 / 5 : ℝ) ≠ 0 := by norm_num
+  have h6 := sqrt6_pos
+  refine forall_f3 ?_ ?_ ?_
+  · intro j
+    have h := upw_step_left (dx := 1 / 5) (dt := ghDt) (a := -(Real.sqrt 6 / 2)) (l := 9 / 10) h5
+      (by linarith) (by rw [neg_neg]; exact ghDt_mul) ceρ j
+    have e2 : ceU 0 = ceU0 := rfl
+    rw [ghV_0, h, e2]
+    clear h
+    revert j
+    refine forall_z5 ?_ ?_ ?_ ?_ ?_ <;>
+      simp only [ceρ, ceU0, s0, s1, s2, s3, s4, v5_0, v5_1, v5_2, v5_3, v5_4] <;> norm_num
+  · intro j
+    have e2 : ceU 1 = ceρ := rfl
+    rw [ghV_1, e2]
+    simp [upw]
+  · intro j
+    have h := upw_step_right (dx := 1 / 5) (dt := ghDt) (a := Real.sqrt 6 / 2) (l := 9 / 10) h5
+      (by positivity) ghDt_mul ceρ j
+    have e2 : ceU 2 = ceU2 := rfl
+    rw [ghV_2, h, e2]
+    clear h
+    revert j
+    refine forall_z5 ?_ ?_ ?_ ?_ ?_ <;>
+      simp only [ceρ, ceU2, p0, p1, p2, p3, p4, v5_0, v5_1, v5_2, v5_3, v5_4] <;> norm_num
+
+private lemma gh_u (k : Fin 3) :
+    (fun i => ceρ i * (ceX * ghS * ghBᵀ) i k) = fun i => ghH k * ceρ i := by
+  funext i
+  rw [gh_g, mul_comm]
+
+private lemma gh_density (j : ZMod 5) :
+    ceρ' j = densityNext ghDt (1 / 5) ghV ghω ceρ (ceX * ghS * ghBᵀ) j := by
+  rw [densityNext_eq ghDt (1 / 5) ghV ghω ceρ (ceX * ghS * ghBᵀ) j]
+  simp only [gh_u, upw_const_mul, Fin.sum_univ_three]
+  have c0 := gh_c 0
+  have c1 := gh_c 1
+  have c2 := gh_c 2
+  have z0 : ceZ 0 = 1 / 6 := rfl
+  have z1 : ceZ 1 = 2 / 3 := rfl
+  have z2 : ceZ 2 = 1 / 6 := rfl
+  rw [z0] at c0
+  rw [z1] at c1
+  rw [z2] at c2
+  linear_combination ce_mean j - 1 / 6 * gh_U 0 j - 2 / 3 * gh_U 1 j - 1 / 6 * gh_U 2 j
+    + (ghDt * upw (1 / 5) (ghV 0) ceρ j) * c0 + (ghDt * upw (1 / 5) (ghV 1) ceρ j) * c1
+    + (ghDt * upw (1 / 5) (ghV 2) ceρ j) * c2
+
+private lemma gh_rhsG : rhsG 0 ghDt (1 / 5) ghV ceρ ceρ' (ceX * ghS * ghBᵀ) = ghG := by
+  ext j k
+  rw [rhsG_apply _ _ _ _ _ fun j => (ceρ'_pos j).ne', gh_u, gh_g, upw_const_mul]
+  simp only [ghG, Matrix.of_apply]
+  rw [← gh_U k j]
+  ring
+
+private lemma gh_colK : (fun j => (ghG * ghB) j ()) = fun j =>
+    ghHn⁻¹ * (6 * ghH 0 ^ 2 + (ghH 1 ^ 2 - 4 * ghH 0 ^ 2) * (ceρ j / ceρ' j)) := by
+  funext j
+  have hm := ce_mean j
+  have e1 : ceU 1 = ceρ := rfl
+  rw [e1] at hm
+  have hU2 : ceU 2 j = 6 * ceρ' j - 4 * ceρ j - ceU 0 j := by linarith
+  have hρ' := (ceρ'_pos j).ne'
+  have hn := ghHn_pos.ne'
+  simp only [Matrix.mul_apply, ghG, ghB, Matrix.of_apply, Fin.sum_univ_three, ghH_symm, e1, hU2]
+  field_simp
+  ring
+
+private lemma gh_Kt : ∀ j, ceKt j = 63 / 10 - 3 * (ceρ j / ceρ' j) := by
+  refine forall_z5 ?_ ?_ ?_ ?_ ?_ <;>
+    simp only [ceKt, ceρ, ceρ', v5_0, v5_1, v5_2, v5_3, v5_4] <;> norm_num
+
+private lemma gh_sup :
+    colSpace (ghG * ghB) ⊔ colSpace ceX = colSpace (ceG * ceB) ⊔ colSpace ceX := by
+  have h3 := sqrt3_pos.ne'
+  have h5 := sqrt5_pos.ne'
+  have hn := ghHn_pos.ne'
+  have hb : ghH 1 ^ 2 - 4 * ghH 0 ^ 2 ≠ 0 := by
+    have h1 := ghH_lt.1
+    have := ghH_pos 0
+    nlinarith
+  have one_eq : (fun _ : ZMod 5 => (1 : ℝ)) = Real.sqrt 5 • fun i => ceX i () := by
+    funext i
+    simp only [ceX, Matrix.of_apply, Pi.smul_apply, smul_eq_mul]
+    field_simp
+  have kt_eq : ceKt = Real.sqrt 3 • fun j => (ceG * ceB) j () := by
+    rw [ce_colK, smul_smul, mul_one_div_cancel h3, one_smul]
+  apply le_antisymm
+  · refine sup_le (colSpace_unit_le _ ?_) le_sup_right
+    have e : (fun j => (ghG * ghB) j ()) =
+        (ghHn⁻¹ * (6 * ghH 0 ^ 2 + 21 / 10 * (ghH 1 ^ 2 - 4 * ghH 0 ^ 2))) •
+          (fun _ : ZMod 5 => (1 : ℝ)) + (-(ghHn⁻¹ * (ghH 1 ^ 2 - 4 * ghH 0 ^ 2) / 3)) • ceKt := by
+      rw [gh_colK]
+      funext j
+      simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, gh_Kt j]
+      ring
+    rw [e, one_eq, kt_eq]
+    exact add_mem
+      (Submodule.smul_mem _ _ (Submodule.mem_sup_right
+        (Submodule.smul_mem _ _ (col_mem_colSpace _ _))))
+      (Submodule.smul_mem _ _ (Submodule.mem_sup_left
+        (Submodule.smul_mem _ _ (col_mem_colSpace _ _))))
+  · refine sup_le (colSpace_unit_le _ ?_) le_sup_right
+    have e : (fun j => (ceG * ceB) j ()) =
+        (1 / Real.sqrt 3 * (63 / 10 + 18 * ghH 0 ^ 2 / (ghH 1 ^ 2 - 4 * ghH 0 ^ 2))) •
+          (fun _ : ZMod 5 => (1 : ℝ)) +
+        (-(1 / Real.sqrt 3 * (3 * ghHn / (ghH 1 ^ 2 - 4 * ghH 0 ^ 2)))) •
+          fun j => (ghG * ghB) j () := by
+      rw [ce_colK, gh_colK]
+      funext j
+      simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, gh_Kt j]
+      generalize ghH 1 ^ 2 - 4 * ghH 0 ^ 2 = B at hb ⊢
+      field_simp
+      ring
+    rw [e, one_eq]
+    exact add_mem
+      (Submodule.smul_mem _ _ (Submodule.mem_sup_right
+        (Submodule.smul_mem _ _ (col_mem_colSpace _ _))))
+      (Submodule.smul_mem _ _ (Submodule.mem_sup_left (col_mem_colSpace _ _)))
+
+/-- The twice augmented spatial space is the same hyperplane `ceN^⊥` as in `theorem3_false`, of
+dimension `4 = 4 r`; `[K, X]` has rank `2 = 2 r`.
+arXiv 2411.06844, counterexample to Theorem 3 with the printed weights. -/
+theorem gh_augX : augment (fun j => ceρ' j ^ 2) (ghG * ghB) ceX = hyperplane ceN := by
+  rw [← ce_augX]
+  unfold augment
+  rw [gh_sup]
+
+private lemma gh_Ssum : ∀ k, ∑ j, ceU k j / ceρ' j = ceLt k - 1 / 2 := by
+  have e0 : ceU 0 = ceU0 := rfl
+  have e1 : ceU 1 = ceρ := rfl
+  have e2 : ceU 2 = ceU2 := rfl
+  have l0 : ceLt 0 = (1708607789 / 258677100) := rfl
+  have l1 : ceLt 1 = (2283223 / 470322) := rfl
+  have l2 : ceLt 2 = (601548637 / 86225700) := rfl
+  refine forall_f3 ?_ ?_ ?_ <;> rw [sum_z5] <;>
+    simp only [e0, e1, e2, l0, l1, l2, ceρ, ceρ', ceU0, ceU2, v5_0, v5_1, v5_2, v5_3, v5_4] <;>
+    norm_num
+
+private lemma gh_w (k : Fin 3) :
+    ghω k * Real.exp (ghV k ^ 2 / 2) = Real.sqrt (2 * Real.pi) * quadZ ghV ghω k := by
+  have := sqrt_two_pi_ne
+  simp only [quadZ]
+  field_simp
+
+/-- The twice augmented velocity space is all of `ℝ³` (`4 r = 4` exceeds the `3` nodes).
+arXiv 2411.06844, counterexample to Theorem 3 with the printed weights. -/
+theorem gh_augV :
+    augment (fun k => ghω k * Real.exp (ghV k ^ 2 / 2)) (ghGᵀ * ceX) ghB = ⊤ := by
+  have h5 := sqrt5_pos.ne'
+  have hs := sqrt_two_pi_ne
+  have hn := ghHn_pos.ne'
+  have hm : 4 * ghH 0 - ghH 1 ≠ 0 := by
+    have := ghH_lt.2
+    linarith
+  have hH2 := ghH_symm
+  rw [eq_top_iff]
+  intro x _
+  set W := augment (fun k => ghω k * Real.exp (ghV k ^ 2 / 2)) (ghGᵀ * ceX) ghB with hW
+  have mB : (fun k => ghB k ()) ∈ colSpace (ghGᵀ * ceX) ⊔ colSpace ghB :=
+    Submodule.mem_sup_right (col_mem_colSpace _ _)
+  have mL : (fun k => (ghGᵀ * ceX) k ()) ∈ colSpace (ghGᵀ * ceX) ⊔ colSpace ghB :=
+    Submodule.mem_sup_left (col_mem_colSpace _ _)
+  have mh : ghH ∈ W := by
+    have e : ghH = ghHn • fun k => ghB k () := by
+      funext k
+      simp only [ghB, Matrix.of_apply, Pi.smul_apply, smul_eq_mul]
+      field_simp
+    rw [e]
+    exact W.smul_mem _ (sup_le_augment _ _ _ mB)
+  have mc : ceZ ∈ W := by
+    have e : ceZ = (ghHn / Real.sqrt (2 * Real.pi)) •
+        fun k => (ghω k * Real.exp (ghV k ^ 2 / 2)) * ghB k () := by
+      funext k
+      simp only [Pi.smul_apply, smul_eq_mul, gh_w, ghB, Matrix.of_apply]
+      rw [← gh_c k]
+      field_simp
+    rw [e]
+    exact W.smul_mem _ (mem_augment_diag mB)
+  have colL : ∀ k, (ghGᵀ * ceX) k () = ghH k * (ceLt k - 1 / 2) / Real.sqrt 5 := by
+    intro k
+    simp only [Matrix.mul_apply, Matrix.transpose_apply, ghG, ceX, Matrix.of_apply]
+    rw [← gh_Ssum k, Finset.mul_sum, Finset.sum_div]
+    exact Finset.sum_congr rfl fun j _ => by ring
+  have mq : (fun k => ceZ k * (ceLt k - 1 / 2)) ∈ W := by
+    have e : (fun k => ceZ k * (ceLt k - 1 / 2)) = (Real.sqrt 5 / Real.sqrt (2 * Real.pi)) •
+        fun k => (ghω k * Real.exp (ghV k ^ 2 / 2)) * (ghGᵀ * ceX) k () := by
+      funext k
+      simp only [Pi.smul_apply, smul_eq_mul, gh_w, colL]
+      rw [← gh_c k]
+      field_simp
+    rw [e]
+    exact W.smul_mem _ (mem_augment_diag mL)
+  have z0 : ceZ 0 = 1 / 6 := rfl
+  have z1 : ceZ 1 = 2 / 3 := rfl
+  have z2 : ceZ 2 = 1 / 6 := rfl
+  have l0 : ceLt 0 = (1708607789 / 258677100) := rfl
+  have l1 : ceLt 1 = (2283223 / 470322) := rfl
+  have l2 : ceLt 2 = (601548637 / 86225700) := rfl
+  have hdq : ceZ 0 * (ceLt 0 - 1 / 2) - ceZ 2 * (ceLt 2 - 1 / 2) ≠ 0 := by
+    rw [z0, z2, l0, l2]
+    norm_num
+  obtain ⟨γ, hγ⟩ : ∃ γ : ℝ, γ * (ceZ 0 * (ceLt 0 - 1 / 2) - ceZ 2 * (ceLt 2 - 1 / 2))
+      = x 0 - x 2 :=
+    ⟨(x 0 - x 2) / (ceZ 0 * (ceLt 0 - 1 / 2) - ceZ 2 * (ceLt 2 - 1 / 2)), div_mul_cancel₀ _ hdq⟩
+  obtain ⟨α, hα⟩ : ∃ α : ℝ, α * (4 * ghH 0 - ghH 1)
+      = 4 * (x 0 - γ * (ceZ 0 * (ceLt 0 - 1 / 2))) - (x 1 - γ * (ceZ 1 * (ceLt 1 - 1 / 2))) :=
+    ⟨(4 * (x 0 - γ * (ceZ 0 * (ceLt 0 - 1 / 2))) - (x 1 - γ * (ceZ 1 * (ceLt 1 - 1 / 2))))
+      / (4 * ghH 0 - ghH 1), div_mul_cancel₀ _ hm⟩
+  have e : x = α • ghH + (6 * (x 0 - γ * (ceZ 0 * (ceLt 0 - 1 / 2)) - α * ghH 0)) • ceZ
+      + γ • fun k => ceZ k * (ceLt k - 1 / 2) := by
+    simp only [z0, z1, z2, l0, l1, l2] at hγ hα
+    funext k
+    revert k
+    refine forall_f3 ?_ ?_ ?_ <;>
+      simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, z0, z1, z2, l0, l1, l2, hH2]
+    · ring
+    · linear_combination hα
+    · linear_combination hγ
+  rw [e]
+  exact W.add_mem (W.add_mem (W.smul_mem _ mh) (W.smul_mem _ mc)) (W.smul_mem _ mq)
+
+private lemma gh_kappa :
+    ∀ k, (ceN ⬝ᵥ ceN)⁻¹ * (ceN ⬝ᵥ fun j => ghG j k) = ghH k * ceκ k := by
+  intro k
+  have hsum : (ceN ⬝ᵥ fun _ : ZMod 5 => (1 : ℝ)) = 0 := by
+    rw [dotProduct, sum_z5]
+    simp only [ceN, v5_0, v5_1, v5_2, v5_3, v5_4]
+    norm_num
+  have e : (fun j => ghG j k) =
+      ghH k • ((fun j => ceG j k) - (1 / 10 : ℝ) • fun _ : ZMod 5 => (1 : ℝ)) := by
+    funext j
+    simp only [ghG, ceG, Matrix.of_apply, Pi.smul_apply, Pi.sub_apply, smul_eq_mul]
+    ring
+  rw [e, dotProduct_smul, dotProduct_sub, dotProduct_smul, hsum, ← ce_kappa k]
+  simp only [smul_eq_mul]
+  ring
+
+private lemma gh_ghat_eq :
+    (1 + 0 * ghDt)⁻¹ • (hyperProj ceN * ghG * (1 : Matrix (Fin 3) (Fin 3) ℝ)) = ghGhat := by
+  ext j k
+  rw [Matrix.mul_one, zero_mul, add_zero, inv_one, one_smul]
+  have h : (hyperProj ceN * ghG) j k = (hyperProj ceN *ᵥ fun i => ghG i k) j := rfl
+  rw [h, hyperProj_mulVec, gh_kappa]
+  simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul, ghGhat, ghG, Matrix.of_apply]
+  ring
+
+/-- One exact step of the DLRA scheme (15) with the printed quadrature, `σ = 0` and no truncation.
+arXiv 2411.06844, counterexample to Theorem 3 with the printed weights. -/
+theorem gh_step : IsDLRAStep 0 ghDt (1 / 5) 0 ghV ghω ceρ ceX ghS ghB ceρ' (hyperProj ceN) 1
+    ghGhat ghGhat := by
+  have hX : ceXᵀ * ceX = 1 := by
+    ext a b
+    have hab : a = b := Subsingleton.elim a b
+    subst hab
+    have hs : 1 / Real.sqrt 5 * (1 / Real.sqrt 5) = 1 / 5 := by
+      rw [one_div_mul_one_div, Real.mul_self_sqrt (by norm_num)]
+    rw [Matrix.one_apply_eq, Matrix.mul_apply, sum_z5]
+    simp only [Matrix.transpose_apply, ceX, Matrix.of_apply, hs]
+    norm_num
+  have hV : ghBᵀ * ghB = 1 := by
+    ext a b
+    have hab : a = b := Subsingleton.elim a b
+    subst hab
+    have hn := ghHn_pos.ne'
+    rw [Matrix.one_apply_eq, Matrix.mul_apply]
+    simp only [Matrix.transpose_apply, ghB, Matrix.of_apply]
+    calc ∑ k, ghH k / ghHn * (ghH k / ghHn) = (∑ k, ghH k ^ 2) / ghHn ^ 2 := by
+          rw [Finset.sum_div]
+          exact Finset.sum_congr rfl fun k _ => by ring
+      _ = 1 := by rw [← ghHn_sq, div_self (pow_ne_zero 2 hn)]
+  refine ⟨hX, hV, gh_density, ?_, ?_, ?_, ?_⟩
+  · rw [gh_rhsG, gh_augX]
+    exact isOrthProjOnto_hyperProj ce_N_ne
+  · rw [gh_rhsG, gh_augV]
+    exact ⟨Matrix.transpose_one, fun _ => Submodule.mem_top, fun _ _ => Matrix.one_mulVec _⟩
+  · rw [gh_rhsG, gh_ghat_eq]
+  · exact isMassTruncation_self (fun h => (gh_quadZ_pos 0).ne' (congrFun h 0)) _
+
+private lemma gh_normalized_g : IsNormalized ghV ghω (ceX * ghS * ghBᵀ) := by
+  intro j
+  have z0 : ceZ 0 = 1 / 6 := rfl
+  have z1 : ceZ 1 = 2 / 3 := rfl
+  have z2 : ceZ 2 = 1 / 6 := rfl
+  simp only [gh_g, Fin.sum_univ_three]
+  rw [mul_comm (ghH 0), gh_c, mul_comm (ghH 1), gh_c, mul_comm (ghH 2), gh_c, z0, z1, z2]
+  norm_num
+
+private lemma gh_normalized_ghat : IsNormalized ghV ghω ghGhat := by
+  intro j
+  have hρ' := (ceρ'_pos j).ne'
+  have hm := ce_mean j
+  have hc : ∀ k (a : ℝ), ghH k * a * quadZ ghV ghω k = ceZ k * a := fun k a => by
+    rw [← gh_c k]
+    ring
+  have z0 : ceZ 0 = 1 / 6 := rfl
+  have z1 : ceZ 1 = 2 / 3 := rfl
+  have z2 : ceZ 2 = 1 / 6 := rfl
+  have k1 : ceκ 1 = 0 := rfl
+  have k2 : ceκ 2 = -ceκ 0 := by
+    simp only [ceκ]
+    norm_num
+  simp only [ghGhat, Matrix.of_apply, Fin.sum_univ_three, hc, z0, z1, z2, k1, k2]
+  calc 1 / 6 * (ceU 0 j / ceρ' j - ceκ 0 * ceN j) + 2 / 3 * (ceU 1 j / ceρ' j - 0 * ceN j)
+        + 1 / 6 * (ceU 2 j / ceρ' j - -ceκ 0 * ceN j)
+      = (1 / 6 * ceU 0 j + 2 / 3 * ceU 1 j + 1 / 6 * ceU 2 j) / ceρ' j := by ring
+    _ = 1 := by rw [← hm, div_self hρ']
+
+/-- `‖f‖²_ℋ` of a state `ρ_j h_k a_{jk}`: `Σ_k c_k h_k Σ_j (ρ_j a_{jk})²`. -/
+private lemma gh_zE (ρ'' : ZMod 5 → ℝ) (a : ZMod 5 → Fin 3 → ℝ) :
+    zE (quadZ ghV ghω) (fun j k => ρ'' j * (ghH k * a j k))
+      = ∑ k, ceZ k * ghH k * ∑ j, (ρ'' j * a j k) ^ 2 := by
+  simp only [zE]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  rw [Finset.mul_sum, ← gh_c k]
+  exact Finset.sum_congr rfl fun j _ => by ring
+
+private lemma gh_grow : hNormSq ghV ghω (fOf ghV ceρ (ceX * ghS * ghBᵀ))
+    < hNormSq ghV ghω (fOf ghV ceρ' ghGhat) := by
+  rw [hNormSq_fOf ghV ghω ceρ (ceX * ghS * ghBᵀ), hNormSq_fOf ghV ghω ceρ' ghGhat]
+  have eo : (fun j k => ceρ j * (ceX * ghS * ghBᵀ) j k)
+      = fun j k => ceρ j * (ghH k * (fun _ _ => (1 : ℝ)) j k) := by
+    funext j k
+    rw [gh_g, mul_one]
+  have en : (fun j k => ceρ' j * ghGhat j k)
+      = fun j k => ceρ' j * (ghH k * (fun j k => ceU k j / ceρ' j - ceκ k * ceN j) j k) := rfl
+  rw [eo, en, gh_zE, gh_zE, Fin.sum_univ_three, Fin.sum_univ_three, ghH_symm]
+  have z0 : ceZ 0 = 1 / 6 := rfl
+  have z1 : ceZ 1 = 2 / 3 := rfl
+  have z2 : ceZ 2 = 1 / 6 := rfl
+  have e0 : ceU 0 = ceU0 := rfl
+  have e1 : ceU 1 = ceρ := rfl
+  have e2 : ceU 2 = ceU2 := rfl
+  have k0 : ceκ 0 = (669826467 / 1178320249435354810) := rfl
+  have k1 : ceκ 1 = 0 := rfl
+  have k2 : ceκ 2 = (-(669826467 / 1178320249435354810)) := rfl
+  have r : ∀ k : Fin 3, ∑ j, (ceρ j * (fun _ _ => (1 : ℝ)) j k) ^ 2 = 307 := by
+    intro k
+    rw [sum_z5]
+    simp only [ceρ, v5_0, v5_1, v5_2, v5_3, v5_4]
+    norm_num
+  have t1 : ∑ j, (ceρ' j * (ceU 1 j / ceρ' j - ceκ 1 * ceN j)) ^ 2 = 307 := by
+    rw [sum_z5]
+    simp only [e1, k1, ceρ, ceρ', v5_0, v5_1, v5_2, v5_3, v5_4]
+    norm_num
+  have t02 : 614 < ∑ j, (ceρ' j * (ceU 0 j / ceρ' j - ceκ 0 * ceN j)) ^ 2
+      + ∑ j, (ceρ' j * (ceU 2 j / ceρ' j - ceκ 2 * ceN j)) ^ 2 := by
+    rw [sum_z5, sum_z5]
+    simp only [e0, e2, k0, k2, ceN, ceρ', ceU0, ceU2, v5_0, v5_1, v5_2, v5_3, v5_4]
+    norm_num
+  rw [r 0]
+  rw [t1, z0, z1, z2]
+  have h0 := ghH_pos 0
+  linarith [mul_lt_mul_of_pos_left t02 h0]
+
+/-- **Theorem 3 of arXiv 2411.06844 fails for the printed Gauss-Hermite weights.**  Section 3.1
+(p. 4) names the Gauss-Hermite rule of `e^{-v²}`; here it is the three-point rule, nodes `0`,
+`±√(3/2)`, weights `2√π/3, √π/6` (`gaussHermite_three_point`), which violates `QuadNormalized`
+(`gaussHermite_three_point_not_quadNormalized`), so that `theorem3_false` does not apply to it.
+One exact step of (15), without truncation (`ϑ = 0`), under the CFL condition with CFL number `0.9`,
+on `N_x = 5` points with `Δx = 1/N_x` as printed, from the positive rank-one state `g = 𝟙 hᵀ`,
+`h_k = c_k / Z_k`, `c = (1/6, 2/3, 1/6)`, which satisfies (11), increases the `ℋ`-norm.  The
+relation (11) also holds after the step.  The collision coefficient is `σ = 0`, which Theorem 3
+does not exclude and for which neither the proof of Lemma 2 nor that of Theorem 2 uses
+`QuadNormalized`; the failure comes from the projection alone, as in `theorem3_false`: the S-step
+output lies in `𝒳̂̂ = ceN^⊥` (`gh_augX`, the same space as there), and `ρ'² 𝒳̂̂ ⊄ 𝒳̂̂`.  The spatial
+spaces have full dimension, `[K, X]` rank `2 = 2r` and `𝒳̂̂` dimension `4 = 4r`; the velocity
+projection is the identity (`gh_augV`).  A floating-point run gives the growth factor `≈ 1.022`
+for (15), and `≈ 0.991` for the full scheme (8) from the same data. -/
+theorem theorem3_false_gaussHermite :
+    ∃ (dt : ℝ) (ρ ρ' : ZMod 5 → ℝ) (X : Matrix (ZMod 5) Unit ℝ) (S : Matrix Unit Unit ℝ)
+      (V : Matrix (Fin 3) Unit ℝ) (PX : Matrix (ZMod 5) (ZMod 5) ℝ)
+      (PV : Matrix (Fin 3) (Fin 3) ℝ) (ghat g' : Matrix (ZMod 5) (Fin 3) ℝ),
+      0 < dt ∧ (∀ k, |ghV k| * dt < 1 / 5) ∧ (∀ j, 0 < ρ j) ∧ (∀ j, 0 < ρ' j) ∧
+      (∀ j k, 0 < (X * S * Vᵀ) j k) ∧ IsNormalized ghV ghω (X * S * Vᵀ) ∧
+      IsDLRAStep 0 dt (1 / 5) 0 ghV ghω ρ X S V ρ' PX PV ghat g' ∧ IsNormalized ghV ghω g' ∧
+      hNormSq ghV ghω (fOf ghV ρ (X * S * Vᵀ)) < hNormSq ghV ghω (fOf ghV ρ' g') :=
+  ⟨ghDt, ceρ, ceρ', ceX, ghS, ghB, hyperProj ceN, 1, ghGhat, ghGhat, ghDt_pos, gh_cfl, ceρ_pos,
+    ceρ'_pos, fun j k => by rw [gh_g]; exact ghH_pos k, gh_normalized_g, gh_step,
+    gh_normalized_ghat, gh_grow⟩
+
+end CounterexamplePrinted
 
 end LeanDLRA.Literature.P2411_06844
