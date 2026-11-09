@@ -425,6 +425,7 @@ import LeanDLRA.Stochastic.KalmanBucy
 import LeanDLRA.Stochastic.MeanSquare
 import LeanDLRA.Tensor.Defs
 import LeanDLRA.Tensor.TT.Basic
+import LeanDLRA.Tensor.TT.Operations
 import LeanDLRA.Tensor.TT.TangentProjector
 import LeanDLRA.Tensor.TTN.Basic
 import LeanDLRA.Tensor.TTN.Integrators
