@@ -428,6 +428,8 @@ import LeanDLRA.Tensor.TT.Basic
 import LeanDLRA.Tensor.TT.TangentProjector
 import LeanDLRA.Tensor.TTN.Basic
 import LeanDLRA.Tensor.TTN.Integrators
+import LeanDLRA.Tensor.TTN.ParallelBUG
+import LeanDLRA.Tensor.TTN.ProjectorSplitting
 import LeanDLRA.Tensor.Tucker.Basic
 import LeanDLRA.Tensor.Unfolding
 import LeanDLRA.Training.Descent
