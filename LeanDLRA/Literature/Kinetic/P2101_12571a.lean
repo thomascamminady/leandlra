@@ -41,9 +41,11 @@ for quadratics is `implicitMidpoint_quadratic_eq` in the library, and the abstra
 linear invariants and of the energy defect are in `Stability/Conservation.lean` and
 `vp_energy_defect`.  Differences from the paper.  (a) Eq. (15) as printed, with `(S^{n+1})⁻¹_{ik}`,
 is a misprint: it gives `X^{n+1} S^{n+1} = K^{n+1}` for all data only for symmetric `S^{n+1}`
-(`eq15_as_printed_iff`), so `IsEuler` uses `(S^{n+1})⁻¹_{ki}`.  (b) In the display before (17)
-`∇ ⋅ Q^n` carries the wrong sign, which does not matter after integration.  (c) The paper says that
-FFT or centered differences with the trapezoidal rule integrate by parts without error.  On a
+(`eq15_as_printed_iff`), so `IsEuler` uses `(S^{n+1})⁻¹_{ki}`.  (b) In the display before (17),
+and again in the display for `E^{n+1/2}` on p. 12, `∇ ⋅ Q^n` carries the wrong sign (by
+`kin_vlasov`, `½ ∫ v² D[f] dv = -∇ ⋅ Q - E ⋅ j`), which does not matter after integration.  (c) The
+paper says that FFT or centered differences with the trapezoidal rule integrate by parts without
+error.  On a
 truncated velocity grid, against the non-periodic `v`, `v²`, this holds only up to boundary terms
 (`not_velIBP_const`), which is why `VelIBP` is a hypothesis on `f` and not on the grid.  (d) With
 `E^{n+1/2}` in the update, conservation of momentum is not covered: the field is not the field of

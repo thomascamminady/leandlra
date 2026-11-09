@@ -8,8 +8,9 @@ This module formalizes the discrete adjoint consistency of the explicit Euler fo
 schemes of arXiv 2506.21405, Sec. 3.3, eqs. (19)–(20), in the abstract form that the paper's
 stencils instantiate: for a linear generator `L` on a real inner product space, with forward Euler
 `u^{n+1} = u^n + Δt L u^n` and backward Euler `w^n = w^{n+1} + Δt L† w^{n+1}` (where `L†` is the
-Mathlib adjoint), the pairing `⟪w^n, u^n⟫` is constant in `n`. This is the identity that makes the
-rectangle-rule gradient (eq. (21)) consistent with the discrete forward and adjoint problems.
+Mathlib adjoint), the pairing `⟪w^n, u^n⟫` is constant in `n`. The paper does not state this
+identity; it is the discrete counterpart of the duality between the forward problem (3) and the
+adjoint problem (5). Nothing is claimed here about the gradient formula (21).
 
 **Proved (new):**
 * `euler_adjoint_inner_step`: one-step identity `⟪w^n, u^n⟫ = ⟪w^{n+1}, u^{n+1}⟫`.
@@ -19,11 +20,12 @@ rectangle-rule gradient (eq. (21)) consistent with the discrete forward and adjo
 **Abstraction and differences from the paper.** The paper's operator (19)–(20) acts on the
 coefficient arrays `u_{jkm}`, `w_{jkm}` with the centred stencils `D^x`, `D^{xx}`, the matrices
 `A`, `|A|`, `E`, and the cross section `σ_j`. Here these are replaced by one linear map `L`,
-and the paper's backward operator is the adjoint `L†`. The statement that the paper's transposed
-stencils `D^x_{ji}`, `D^{xx}_{ji}` and `A_{kℓ}` are exactly the adjoint of the forward stencils
-is NOT formalized: the theorems apply to any `L`, and the paper's specific `L` is an instance only
-once that transposition is verified. The time index runs over `ℕ` with the forward recursion
-on `n < N` and the backward recursion on `n < N`, matching the time cells `t_0, …, t_{N_t}`.
+and the paper's backward operator is the adjoint `L†`. Eq. (20) uses the same stencils as (19)
+with the sign of the `D^x` term flipped; it is the adjoint of (19) because the periodic `D^x` is
+antisymmetric and `D^{xx}`, `A`, `|A|` are symmetric. That check is NOT formalized: the theorems
+apply to any `L`, and the paper's specific `L` is an instance only once it is verified. The time
+index runs over `ℕ` with the forward and the backward recursion on `n < N`, matching the time
+cells `t_0, …, t_{N_t}`.
 
 **Core definitions used.** Only Mathlib's `ContinuousLinearMap.adjoint` and the real inner product
 are used. No local definitions are added.
@@ -58,7 +60,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteS
 If `u` solves the explicit Euler step `u^{n+1} = u^n + Δt L u^n` (eq. (19) abstracted to a linear
 generator `L`) and `w` solves the backward explicit Euler step `w^n = w^{n+1} + Δt L† w^{n+1}`
 (eq. (20) abstracted, with `L†` the Mathlib adjoint in place of the paper's transposed stencils),
-then `⟪w^n, u^n⟫ = ⟪w^{n+1}, u^{n+1}⟫`. -/
+then `⟪w^n, u^n⟫ = ⟪w^{n+1}, u^{n+1}⟫`. The paper does not state this identity. -/
 theorem euler_adjoint_inner_step (L : E →L[ℝ] E) (dt : ℝ) (u w : ℕ → E) (n : ℕ)
     (hu : u (n + 1) = u n + dt • L (u n))
     (hw : w n = w (n + 1) + dt • ContinuousLinearMap.adjoint L (w (n + 1))) :
@@ -69,7 +71,7 @@ theorem euler_adjoint_inner_step (L : E →L[ℝ] E) (dt : ℝ) (u w : ℕ → E
 /-- **Discrete adjoint consistency over the whole time grid (arXiv 2506.21405, Sec. 3.3).**
 With `N` time cells, forward Euler `u^{n+1} = u^n + Δt L u^n` and backward Euler
 `w^n = w^{n+1} + Δt L† w^{n+1}` for `n < N`, the pairing is constant:
-`⟪w^n, u^n⟫ = ⟪w^N, u^N⟫` for every `n ≤ N`. -/
+`⟪w^n, u^n⟫ = ⟪w^N, u^N⟫` for every `n ≤ N`. Not stated in the paper (see the module docstring). -/
 theorem euler_adjoint_inner_const (L : E →L[ℝ] E) (dt : ℝ) (N : ℕ) (u w : ℕ → E)
     (hu : ∀ n < N, u (n + 1) = u n + dt • L (u n))
     (hw : ∀ n < N, w n = w (n + 1) + dt • ContinuousLinearMap.adjoint L (w (n + 1))) :

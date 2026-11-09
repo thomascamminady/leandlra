@@ -61,25 +61,34 @@ replaces the formal argument.  `mom f = f Φ` on the grid, `IsClosure` collects 
   Maxwellian, the scheme yields a Maxwellian, up to `O(e^{-t/ε} + ε)`, and exactly without
   transport.
 
-## What is false in the paper
+## Misprints in the paper
+
+Each is checked against the printed PDF (pp. 11, 12, 17) and refuted by a Lean counterexample.
 
 * Eq. (23) has the wrong sign of the collision term, and contradicts the paper's Eq. (26):
   `eq23_printed_iff`, `eq23_printed_false`.
-* Eq. (25) has `-L̇_i` where `+L̇_i` is meant: `eq25_printed_iff`, `eq25_printed_false`.  Its first
-  line also has `X¹_j` for `X¹_i`.
+* The second equality of Eq. (25) has the wrong overall sign: its right-hand side is `+L̇_i`, not
+  `-L̇_i` (`eq25_printed_iff`, `eq25_printed_false`).  The first equality, `-L̇_i = (X¹_j, …)`, is
+  right except for the index, `X¹_j` for `X¹_i`.
 * The formulas for `L_i` and `S_{ij}` in Section 4 lack the factor `(2π)^{-d/2}`, which the formula
-  for `K_j` has: `lConstraint_printed_false`, `sConstraint_printed_false`.
-* "We obtain a very similar result" for the S-step holds only formally.  The S-step runs backward,
-  so its constraint repels: `IsRelaxSol.defect_ge`, `pure_relaxation` (`σ = -1`).  By
-  `sStep_diverges`, solutions off the constraint leave every ball on `[0, τ]` as `ε → 0`, whereas
-  `sStep_formal_constraint` needs a family that converges with `ε Ṡ_ε → 0`.  Starting from the
-  K-step does not rescue this: `sStep_undoes_kStep`, `sStep_constraint_fails` give an S-step whose
-  defect is the initial defect of the K-step, for every `ε`.  The L-step then relaxes again.
-* The K-step does not enforce its constraint in general: the paper says that it does as long as
-  `V` represents the Maxwellian accurately, and `kStep_reproduces_maxwellian` confirms the exact
-  case, but if `V` holds neither the moments nor the Maxwellian the constraint can repel,
-  `kStep_repels`.  So the hypothesis of moment conservation in `kStep_singular_limit` is needed.
-  The L-step needs no such hypothesis (`lStep_isRelaxSol`).
+  for `K_j` has: `lConstraint_printed_false`, `sConstraint_printed_false`, with instances in the
+  last section where the constraint holds with nonzero `L₀`, `S₀`.
+
+## How far the formal argument of Section 4 goes
+
+The paper takes `ε → 0` formally in each substep.  The theorems here say when that step is valid.
+
+* For the S-step ("we obtain a very similar result") the formal step is valid only for families
+  that converge with `ε Ṡ_ε → 0` (`sStep_formal_constraint`).  The S-step runs backward, so its
+  constraint repels: `IsRelaxSol.defect_ge`, `pure_relaxation` (`σ = -1`).  By `sStep_diverges`,
+  solutions off the constraint leave every ball on `[0, τ]` as `ε → 0`.  Starting from the K-step
+  does not change this: `sStep_undoes_kStep`, `sStep_constraint_fails` give an S-step whose defect
+  is the initial defect of the K-step, for every `ε`.  The L-step then relaxes again.
+* For the K-step the paper's proviso, that `V` represent the Maxwellian accurately, is needed:
+  `kStep_reproduces_maxwellian` confirms the exact case, and if `V` holds neither the moments nor
+  the Maxwellian the constraint can repel, `kStep_repels`.  So the hypothesis of moment
+  conservation in `kStep_singular_limit` cannot be dropped.  The L-step needs no such hypothesis
+  (`lStep_isRelaxSol`).
 
 ## Differences from the paper, and what is left
 
@@ -2828,6 +2837,45 @@ theorem eq25_printed_false :
   have h2 := congrFun (congrFun h1 0) 0
   have h3 : gaussConst 1 - 1 = 0 := by simpa [dOne] using h2
   exact gaussConst_one_ne (sub_eq_zero.1 h3)
+
+/-- One cell, one velocity `ξ = 0`, and the quadrature weight `w = (2π)^{1/2}`, which integrates
+the Gaussian exactly: then every `f` is its own discrete Maxwellian. -/
+private lemma discreteMaxwellian_exact (f : Matrix (Fin 1) (Fin 1) ℝ) :
+    discreteMaxwellian (d := 1) (fun _ => (gaussConst 1)⁻¹) (fun _ => 0) f = f := by
+  have hc := (gaussConst_pos 1).ne'
+  ext i j
+  fin_cases i
+  fin_cases j
+  simp [discreteMaxwellian, density, momentum, bulk, maxwellian]
+  field_simp
+
+/-- **The formula for `L_i` printed in Section 4 fails** (arXiv 1804.04561), unconditionally: with
+the data of `discreteMaxwellian_exact` and `X = 1`, `L₀ = 1` satisfies the constraint of the
+L-step, and `lConstraint_printed_false` applies. -/
+example : ∃ (w : Fin 1 → ℝ) (L₀ : Matrix (Fin 1) (Fin 1) ℝ),
+    L₀ = (discreteMaxwellian (d := 1) w (fun _ => 0) (1 * L₀ᵀ))ᵀ * 1 ∧
+    L₀ 0 0 ≠ ∑ k, (1 : Matrix (Fin 1) (Fin 1) ℝ) k 0 * density w (1 * L₀ᵀ) k *
+      Real.exp (-‖(0 : Vel 1) - bulk w (fun _ => 0) (1 * L₀ᵀ) k‖ ^ 2 / 2) := by
+  have h : (1 : Matrix (Fin 1) (Fin 1) ℝ) =
+      (discreteMaxwellian (d := 1) (fun _ => (gaussConst 1)⁻¹) (fun _ => 0) (1 * 1ᵀ))ᵀ * 1 := by
+    rw [discreteMaxwellian_exact]
+    simp
+  exact ⟨_, 1, h, lConstraint_printed_false one_pos _ h (by simp)⟩
+
+/-- **The formula for `S_{ij}` printed in Section 4 fails** (arXiv 1804.04561), unconditionally:
+with the data of `discreteMaxwellian_exact` and `X = V = 1`, `S₀ = 1` satisfies the constraint of
+the S-step, and `sConstraint_printed_false` applies. -/
+example : ∃ (w : Fin 1 → ℝ) (S₀ : Matrix (Fin 1) (Fin 1) ℝ),
+    S₀ = 1ᵀ * discreteMaxwellian (d := 1) w (fun _ => 0) (1 * S₀ * 1ᵀ) * 1 ∧
+    S₀ 0 0 ≠ ∑ k, ∑ l, (1 : Matrix (Fin 1) (Fin 1) ℝ) k 0 * (1 : Matrix (Fin 1) (Fin 1) ℝ) l 0 *
+      density w (1 * S₀ * 1ᵀ) k *
+        Real.exp (-‖(0 : Vel 1) - bulk w (fun _ => 0) (1 * S₀ * 1ᵀ) k‖ ^ 2 / 2) := by
+  have h : (1 : Matrix (Fin 1) (Fin 1) ℝ) =
+      1ᵀ * discreteMaxwellian (d := 1) (fun _ => (gaussConst 1)⁻¹) (fun _ => 0) (1 * 1 * 1ᵀ) *
+        1 := by
+    rw [discreteMaxwellian_exact]
+    simp
+  exact ⟨_, 1, h, sConstraint_printed_false one_pos _ h (by simp)⟩
 
 /-! #### The hypotheses of the singular limit can hold -/
 

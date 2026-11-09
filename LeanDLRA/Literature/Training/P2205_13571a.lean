@@ -30,12 +30,15 @@ Under the assumptions `IsP1`, `IsP2` this gives the appendix lemmas with the pap
 `dlrt_approximation_fixedRank`) and **Theorem 2** (`dlrt_sStep_dissipation`, `dlrt_descent`,
 `dlrt_descent_of_P1`, `dlrt_descent_explicit`, and for all layers `dlrt_descent_sweep`).
 
-Three claims of the paper are false as printed, and this is proved.  In Theorem 1 the constants
-cannot depend only on `C₁`, `C₂`, they must grow with the final time
+Two claims of the main-text theorems (p. 5) are false as printed, and this is proved.  In
+Theorem 1 the constants cannot depend only on `C₁`, `C₂`, they must grow with the final time
 (`dlrt_constants_depend_on_time`).  In Theorem 2 no positive `α` independent of `t`, `η`, `ϑ`
 exists (`dlrt_no_uniform_descent`, `dlrt_no_uniform_descent_of_bddBelow`); the paper's proof gives
-the step-dependent `α²` of `dlrt_descent`.  Theorem 2 also fails for `adaptive = False`
-(`fixedRank_loss_increases`), since its proof needs the augmentation.
+the step-dependent `α²` of `dlrt_descent`.  A scope remark: the main-text Theorem 2 refers to
+Algorithm 1 without excluding `adaptive = False`, but the appendix proves it only for the
+rank-adaptive algorithm, and the proof needs the augmentation.  For `adaptive = False` even the
+step-dependent form fails: one exact step from a start that scales with `η` raises the loss by
+`3 η`, for every `η > 0` (`fixedRank_loss_increases`).
 
 Differences from the paper.  The substeps are integrated exactly, as in Theorem 1.  Theorem 1 and
 the appendix treat one layer with the others frozen, as the paper does; `dlrt_descent_sweep` updates
@@ -1583,8 +1586,9 @@ theorem ceStep_loss (η : ℝ) :
     Fin.sum_univ_two]
   ring
 
-/-- **Theorem 2 of arXiv 2205.13571 fails for `adaptive = False`.**  Its statement covers
-Algorithm 1 in general, while its proof uses `Ŷ₀ = Y₀`, which needs the augmentation of the bases.
+/-- **Theorem 2 of arXiv 2205.13571 fails for `adaptive = False`.**  The main-text statement
+refers to Algorithm 1 without excluding `adaptive = False`; the appendix proves it only for the
+rank-adaptive algorithm, and the proof uses `Ŷ₀ = Y₀`, which needs the augmentation of the bases.
 For the fixed linear loss `ℒ(Z) = -⟪C, Z⟫`, which satisfies P1 with constants independent of `η`,
 and every step size `η > 0`, one exact fixed-rank step from `Y₀ = η e₁ e₁ᵀ` strictly increases the
 loss, by `3 η` (`ceStep_loss`), so no threshold for `η` depending only on `C₁`, `C₂` helps.  The

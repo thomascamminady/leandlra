@@ -1142,7 +1142,8 @@ integrable truncation with `∑_k E ‖W_{k+1} - Ŵ_k‖ ≤ D`.  If `ℒ ≥ �
 Differences from the paper.  The paper's conclusion contains the stochastic gradient; read
 literally, `liminf E ‖P(W_k) G_k‖² = 0` is false (`stochastic_conclusion_false`), so this theorem
 has the deterministic gradient `∇ℒ`.  The proof in the paper rests on the printed Thm 1, which is
-false; here the variance enters and is summable through `∑ λ_k² < ∞`.  The restriction
+false; here the variance enters and is summable through `∑ λ_k² < ∞`.  The variance bound `σ²`
+follows from the paper's Assumption 3, `‖F(Z) - f(Z)‖ ≤ C` (App. C.3).  The restriction
 `λ_k ≤ 2/L` is not needed.  The rank need not stabilise: only the sum of the truncation errors
 matters.  The measurability of `P(W_k)` is proved (`stronglyMeasurable_tangentAt_apply`). -/
 theorem convergence (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
@@ -2011,8 +2012,10 @@ and `∇ℒ = g` continuous, and let `Y(a)` lie in the range of `Π`.  If `Y(t)`
 rank with bounded inverse core, i.e. `Y(t) = U S Vᵀ` with orthonormal `U`, `V` and `‖S⁻¹‖ ≤ C` for
 `t ∈ [a, b)`, then `Y(t)` stays in the range of `Π`.  (`r` may even depend on `t`.)
 
-The rank condition is what gives the equation a meaning.  The proof in the paper is circular: it
-takes a block SVD of `Y(t)`, which presupposes `Y(t) ∈ range Π`.  Here the Grönwall lemma is
+The rank condition is what gives the equation a meaning; the bound `‖S⁻¹‖ ≤ C` on `[a, b)` is an
+added hypothesis.  The proof in the paper is circular: it writes a block SVD of `Z ∈ range Π` and
+uses `U Uᵀ, V Vᵀ ∈ range Π` for the factors that define `P(Y)`, which are those of `Y(t)`; a
+block SVD of `Y(t)` presupposes `Y(t) ∈ range Π`.  Here the Grönwall lemma is
 applied to `(1 - Π) Y` through `norm_compl_tangentProj_le`; no uniqueness theorem, no block
 decomposition and no structure of the factors is needed.  `Π` is a general block mask; the
 mask `M ⊙ ·` of the paper is `blockMask_adjacency`.  The factors can be taken continuous

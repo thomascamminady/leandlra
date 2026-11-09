@@ -9,17 +9,19 @@ composition matrix `Φ ∈ ℝ^{n × nc}` in arXiv 2503.18271, Sec. 2-3.  The ra
 `Φ̂ = U Σ Yᵀ` with `Uᵀ U = I` and `Yᵀ Y = I`, the right-hand side is `M(Φ̂) = -L(Φ̂) + S(Φ̂)` with
 `L(Φ̂) = D Φ̂` linear, and the factor equations are the projected ones (Eqs. (22a)-(22c)).
 
-* `linear_mixing_annihilated` (Sec. 3, "left-linear mixing does not move the composition basis"):
-  for `L(Φ̂) = D Φ̂` one has `(I - Y Yᵀ) L(Φ̂)ᵀ U Σ⁻ᵀ = 0`, so only the source term moves `Y`.
+* `linear_mixing_annihilated` (Sec. 3, the display ending "since (I - Y Yᵀ) Y = 0": "the linear
+  term does not contribute to the evolution of Y"): for `L(Φ̂) = D Φ̂` one has
+  `(I - Y Yᵀ) L(Φ̂)ᵀ U Σ⁻ᵀ = 0`, so only the source term moves `Y`.
   `Y_equation_source_only` gives the consequence for `M = -L + S`.  The proof uses only `Yᵀ Y = I`
   and needs no invertibility of `Σ`.
 * `tdb_velocity_gauge_free`: for the factor velocities written with arbitrary `r × r` gauge matrices
   `A` (in `U̇ = ... + U A`) and `B` (in `Ẏ = ... + Y B`), the velocity of `Φ̂ = U Σ Yᵀ` equals the
-  tangent-space projection `P_{Φ̂}(M)` of Eq. (11), and the gauge terms cancel.
-  `tdb_velocity_gauge_invariant` states the consequence of the paper's remark that any skew gauge
-  gives equivalent approximations: two gauge choices give the same `Φ̂̇`.
+  tangent-space projection `P_{Φ̂}(M)` of Eqs. (7) and (11), and the gauge terms cancel (Eq. (15)).
+  `tdb_velocity_gauge_invariant` states the velocity-level consequence of the paper's remark after
+  Eq. (13) that any skew gauge gives equivalent approximations: two gauge choices give the same
+  `Φ̂̇`.
 
-Core definitions used: `Matrix.tangentProj` (= `LeanDLRA.tangentProj`, the tangent projector of
+Core definitions used: `LeanDLRA.tangentProj` (the tangent projector of
 `LeanDLRA/Matrix/Projectors.lean`, with the explicit formula `tangentProj_apply`), matrix
 transposition and `Matrix` inverse from Mathlib.  No new definitions are introduced.
 
@@ -31,9 +33,14 @@ Differences from the paper and what is not formalized:
 * The velocity identities need the Y-gauge `B` to be skew (`Bᵀ = -B`, which cancels the terms
   `U Σ B Yᵀ`), but hold for every `A`: the U-gauge `A` cancels without any symmetry.  Skewness
   of `A` and `B` is what keeps `Uᵀ U = I` and `Yᵀ Y = I` along the flow; that is the separate
-  result `GaugeODE.transpose_mul_self_eq_of_skew`, not reproved here.
+  result `LeanDLRA.transpose_mul_self_eq_of_skew` (`LeanDLRA/Matrix/GaugeODE.lean`), not reproved
+  here.  None of the statements here assumes `Uᵀ U = I` or `Yᵀ Y = I` except where stated
+  (`hY`); the identities are algebraic.
 * The paper's Σ-equation (22c) is written for the DO gauge `A = B = 0`; the general-gauge form
   `Σ̇ = Uᵀ M Y + Σ B - A Σ` is the one forced by `Φ̂̇ = P_{Φ̂}(M)`, as stated in the hypotheses.
+* `D` is an arbitrary `n × n` matrix (the paper's `D = Ω (I_n - A_L)`, `A_L` the averaging
+  matrix, is a special case).  The companion display for the `U`-equation,
+  `(I - U Uᵀ) L(Φ̂) Y Σ⁻¹ = (I - U Uᵀ) D U`, is not formalized.
 * The PDE/SGS model, the Langevin equation and the Vreman closure of the paper are not formalized.
 -/
 
@@ -43,10 +50,12 @@ namespace LeanDLRA.Literature.P2503_18271
 
 variable {n nc r : Type*} [Fintype n] [Fintype nc] [Fintype r]
 
-/-- **Sec. 3, left-linear mixing does not move the composition basis** (arXiv 2503.18271,
-Sec. 3).  For the linear mixing term `L(Φ̂) = D Φ̂` evaluated at `Φ̂ = U Σ Yᵀ`, the identity
+/-- **Sec. 3, the linear mixing term does not move the composition basis** (arXiv 2503.18271,
+Sec. 3, display ending "since (I - Y Yᵀ) Y = 0").  For the linear mixing term `L(Φ̂) = D Φ̂`
+evaluated at `Φ̂ = U Σ Yᵀ`, the identity
 `(I - Y Yᵀ) L(Φ̂)ᵀ U Σ⁻ᵀ = 0` holds, given orthonormal columns `Yᵀ Y = I`.
-The paper's `Σ⁻ᵀ` is `(Σ⁻¹)ᵀ` in Lean; no invertibility of `Σ` is needed. -/
+The paper's `Σ⁻ᵀ` is `(Σ⁻¹)ᵀ` in Lean; no invertibility of `Σ` is needed, and `D` is an
+arbitrary `n × n` matrix (the paper has `D = Ω (I_n - A_L)` with `A_L` the averaging matrix). -/
 theorem linear_mixing_annihilated [DecidableEq nc] [DecidableEq r]
     (D : Matrix n n ℝ) (U : Matrix n r ℝ) (Sg : Matrix r r ℝ) (Y : Matrix nc r ℝ)
     (hY : Yᵀ * Y = 1) :
@@ -88,9 +97,11 @@ theorem Y_equation_source_only [DecidableEq nc] [DecidableEq r]
 Let `Φ̂ = U Σ Yᵀ` with `Σ` invertible, and let the factor velocities be
 `U̇ = (I - U Uᵀ) M Y Σ⁻¹ + U A`, `Ẏ = (I - Y Yᵀ) Mᵀ U Σ⁻ᵀ + Y B`, `Σ̇ = Uᵀ M Y + Σ B - A Σ`,
 with `A` arbitrary and `B` skew (`Bᵀ = -B`) of size `r × r`.  Then
-`U̇ Σ Yᵀ + U Σ̇ Yᵀ + U Σ Ẏᵀ = P_{Φ̂}(M)`, the tangent-space projection `tangentProj U Y M`.
-The gauge terms cancel, so the velocity does not depend on the gauge; `A = B = 0` is the DO choice
-of the paper. -/
+`U̇ Σ Yᵀ + U Σ̇ Yᵀ + U Σ Ẏᵀ = P_{Φ̂}(M)`, the tangent-space projection `tangentProj U Y M`
+(Eq. (7)), i.e. Eq. (15).  The gauge terms cancel, so the velocity does not depend on the gauge;
+`A = B = 0` is the DO choice of the paper, for which the factor equations are (22a)-(22c).  The
+paper derives (22a)-(22c) from (15); here the converse direction (factor equations give (15)) is
+proved, without assuming `Uᵀ U = I` or `Yᵀ Y = I`. -/
 theorem tdb_velocity_gauge_free [DecidableEq n] [DecidableEq nc] [DecidableEq r]
     (U : Matrix n r ℝ) (Sg : Matrix r r ℝ) (Y : Matrix nc r ℝ) (M : Matrix n nc ℝ)
     (hSg : Sg.det ≠ 0)
@@ -111,7 +122,7 @@ theorem tdb_velocity_gauge_free [DecidableEq n] [DecidableEq nc] [DecidableEq r]
     hB, Matrix.neg_mul, Matrix.mul_neg, Matrix.mul_assoc, c1, c2]
   abel
 
-/-- **Gauge invariance of the composition velocity** (arXiv 2503.18271, the remark after Eq. (9),
+/-- **Gauge invariance of the composition velocity** (arXiv 2503.18271, the remark after Eq. (13),
 "any skew-symmetric choice ... results in equivalent low-rank approximations").  Two gauge
 choices `(A₁, B₁)` and `(A₂, B₂)` of the factor velocities give the same velocity
 `Φ̂̇ = U̇ Σ Yᵀ + U Σ̇ Yᵀ + U Σ Ẏᵀ` of the approximation.  Only the velocity is compared; the
