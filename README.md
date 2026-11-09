@@ -14,7 +14,7 @@ The library contains no `sorry`. Every constant depends only on `propext`, `Clas
 
 <!-- status:start -->
 
-410 modules, 14457 theorems and lemmas, 178 cited papers.
+431 modules, 15547 theorems and lemmas, 185 cited papers.
 
 <!-- status:end -->
 
