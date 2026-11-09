@@ -5,7 +5,7 @@ import LeanDLRA.Matrix.Frobenius
 # Results of arXiv 2508.04484: High-order deterministic DLRA for proton transport
 
 This module formalizes the material-mixture structure of the collision term in arXiv 2508.04484
-(Sec. 2.1.1, eq. (6); Sec. 3.3.2, eq. (25); Sec. 3.3.3, eq. (26b)). The paper writes the
+(Sec. 2.1, eq. (6); Sec. 3.3.2, eq. (25); Sec. 3.3.3, eq. (26b)). The paper writes the
 cross sections of a mixture of base materials as weighted sums, `Σ_s = Σ_i w_i Σ_{s;i}`, and the
 discretized collision term as `G(t,u) = Σ_i w_i S⁻¹ u (Σ_{t;i} I + G_i) + Σ_i w_i ψᵘ T_M G_i`.
 Matrices are real, with the Frobenius norm (`open scoped LeanDLRA.Frobenius`), and the
@@ -13,12 +13,13 @@ Lipschitz notion is `IsLipschitzField` from `LeanDLRA/Foundations/ODE.lean`. Eve
 for an arbitrary finite family of materials `ι` with time-dependent coefficients `D t i`, `C t i`,
 so the paper's `D_i = w_i S⁻¹` and `C_i = Σ_{t;i} I + G_i` are special cases. Each result:
 
-* `material_mixture_isLipschitz` (Sec. 2.1.1 / 3.3.2, eqs. (6), (25)): the collision field
+* `material_mixture_isLipschitz` (Sec. 2.1 / 3.3.2, eqs. (6), (25)): the collision field
   `u ↦ Σ_i D_i u C_i + B(t)` is Lipschitz in `u` with constant `Σ_i ‖D_i‖ ‖C_i‖`. The constant is
   derived here, the paper states no bound. Only the counting of operations is omitted (see below).
 * `material_mixture_factorized` (Sec. 3.3.2, low-rank evaluation): for `u = U S Vᵀ`, the field is
   evaluated on the factors as `(D_i U) S ((C_iᵀ V))ᵀ`, so it is never formed as a full `n × m`
-  product in the proof. The complexity bound `O(r²(n+m))` claimed in the source is not formalized.
+  product in the proof. The paper does not write this identity; its cost claim `O(r²(n+m))`
+  (Sec. 5, quoted from its ref. [27]) is not formalized.
 * `collided_L_step_galerkin` (Sec. 3.3.3, eq. (26b), step 1): the collided L-step with fixed
   basis `U` equals the Galerkin projection `Uᵀ F(t, U L)` of the collision field onto range(U),
   with `L ∈ ℝ^{r×m}` as in the paper.
@@ -59,7 +60,7 @@ lemma norm_mul_mul_le {ρ' κ' : Type*} [Fintype ρ'] [Fintype κ']
   (LeanDLRA.Frobenius.norm_mul_le _ _).trans
     (mul_le_mul_of_nonneg_right (LeanDLRA.Frobenius.norm_mul_le _ _) (norm_nonneg _))
 
-/-- arXiv 2508.04484, Sec. 2.1.1 eq. (6) and Sec. 3.3.2 eq. (25): the collision field of a
+/-- arXiv 2508.04484, Sec. 2.1 eq. (6) and Sec. 3.3.2 eq. (25): the collision field of a
 mixture of materials, `u ↦ Σ_i D_i u C_i + B(t)`, with `D_i = w_i S⁻¹` and
 `C_i = Σ_{t;i} I + G_i` in the paper, is Lipschitz in `u` with constant `L` whenever
 `Σ_i ‖D_i‖ ‖C_i‖ ≤ L` for every `t`. The constant is derived here, the paper states none. -/
@@ -89,9 +90,9 @@ example (D : Matrix ρ ρ ℝ) (C : Matrix κ κ ℝ) (B : Matrix ρ κ ℝ) :
   material_mixture_isLipschitz (fun _ _ => D) (fun _ _ => C) (fun _ => B)
     (fun _ => by simp)
 
-/-- arXiv 2508.04484, Sec. 2.2 / 3.3.2 (low-rank evaluation): for `u = U S Vᵀ`, the mixture
-field satisfies `Σ_i D_i u C_i = Σ_i (D_i U) S ((C_iᵀ V))ᵀ`, the factorized evaluation. The
-operation-count bound of the paper is not formalized. -/
+/-- arXiv 2508.04484, Sec. 3.3.2 eq. (25) (low-rank evaluation): for `u = U S Vᵀ`, the mixture
+field satisfies `Σ_i D_i u C_i = Σ_i (D_i U) S ((C_iᵀ V))ᵀ`, the factorized evaluation. The paper
+does not write this identity; its operation-count claim (Sec. 5) is not formalized. -/
 theorem material_mixture_factorized (D : ι → Matrix ρ ρ ℝ) (C : ι → Matrix κ κ ℝ)
     (U : Matrix ρ r ℝ) (S : Matrix r r ℝ) (V : Matrix κ r ℝ) :
     ∑ i, D i * (U * S * Vᵀ) * C i = ∑ i, (D i * U) * S * ((C i)ᵀ * V)ᵀ := by

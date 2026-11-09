@@ -22,7 +22,9 @@ core gradient with the Riemannian gradient.  Hypotheses are shown to be satisfia
 `thm_2_1_hypotheses`, `isCoreQR_unitCore`, `exists_core_flow` and `thm_3_2_instance`.
 
 Where the paper needs repair.  The `Kᵢ` equation of Thm 2.1 holds exactly when `Qᵢᵀ Q̇ᵢ = 0`; the
-printed statement omits this and its proof freezes `Vᵢ`.  In Thm 3.1 the constants of the proof
+printed statement omits this and its proof freezes `Vᵢ`, so `thm_2_1` is Thm 2.1 under the extra
+hypothesis `Qᵢᵀ Q̇ᵢ = 0`.  No flow whose QR factors violate it is formalized, so the printed
+statement is not refuted here.  In Thm 3.1 the constants of the proof
 depend on `λ`, and `α > 0` fails at stationary points; the correct uniform statement holds for
 small `λ` away from such points.  In Thm 3.2 the proof applies Lemma G.3 to bases that depend on
 the batch, where it is false; we assume that the batch of the core step is drawn after the bases
@@ -631,8 +633,8 @@ theorem hasDerivAt_K {U : ℝ → ∀ i, Matrix (n i) (r i) ℝ} {U' : ∀ i, Ma
   abel
 
 /-- The paper's `K`-equation holds **if and only if** `Qᵢᵀ Q̇ᵢ = 0`.  So it needs a gauge for `Qᵢ`
-(which the proof of Thm 2.1 obtains by freezing `Vᵢ`), and fails for a generic curve of QR
-factors. -/
+(which the proof of Thm 2.1 obtains by freezing `Vᵢ`), and fails for every curve of QR factors
+with `Qᵢᵀ Q̇ᵢ ≠ 0`. -/
 theorem K_eq_iff {U : ∀ i, Matrix (n i) (r i) ℝ} {X : Tensor n} (horth : ∀ j, (U j)ᵀ * U j = 1)
     {i : ι} {V : Matrix (Rest n i) (r i) ℝ} {Q Q' : Matrix (Rest r i) (r i) ℝ}
     {S : Matrix (r i) (r i) ℝ} (hS : IsUnit S) :
@@ -684,11 +686,13 @@ Let `W(t) = C(t) ×ⱼ Uⱼ(t)` with `Uⱼᵀ Uⱼ = 1`, in the gauge `Uⱼᵀ U
 * `Ċ = -∇ℒ(W) ×ⱼ Uⱼᵀ`, which is the gradient at `C` of `D ↦ ℒ(D ×ⱼ Uⱼ)`, so
   `Ċ = -∇_C ℒ(C ×ⱼ Uⱼ)`.
 
-Differences from the paper.  The printed statement has no condition on `Qᵢ`, and it is false
-without one: `hasDerivAt_K` gives the extra term `Kᵢ Qᵢᵀ Q̇ᵢ` and `K_eq_iff` shows that the formula
-holds exactly when `Qᵢᵀ Q̇ᵢ = 0`.  The paper's proof assumes `V̇ᵢ = 0`, which is a special case
-(`thm_2_1_frozen`); `Qᵢᵀ Q̇ᵢ = 0` is all it needs, and then `Vᵢ` may move with the `Uⱼ`, so the
-result holds along the whole flow and not only for a frozen substep.  The proof in the paper uses
+Differences from the paper.  The printed statement has no condition on `Qᵢ`, so this is Thm 2.1
+under the extra hypothesis `Qᵢᵀ Q̇ᵢ = 0`: `hasDerivAt_K` gives the extra term `Kᵢ Qᵢᵀ Q̇ᵢ` and
+`K_eq_iff` shows that the formula holds exactly when `Qᵢᵀ Q̇ᵢ = 0`.  No flow whose QR factors have
+`Qᵢᵀ Q̇ᵢ ≠ 0` is constructed, so the printed statement is not refuted.  The paper's proof assumes
+`V̇ᵢ = 0`, which is a special case (`thm_2_1_frozen`); `Qᵢᵀ Q̇ᵢ = 0` is all it needs, and then `Vᵢ`
+may move with the `Uⱼ`, so the result holds along the whole flow and not only for a frozen
+substep.  The proof in the paper uses
 `Ẇ = -∇ℒ(W)` at one point and quotes (4); here (3) is the only assumption, and (4) is derived
 (`core_eq_of_flow`, `factor_eq_of_flow`).  The gauge `Uⱼᵀ U̇ⱼ = 0` is implicit in (4). -/
 theorem thm_2_1 {ℒ : Tensor n → ℝ} {g : Tensor n → Tensor n}

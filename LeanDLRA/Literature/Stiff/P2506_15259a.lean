@@ -13,15 +13,19 @@ Eq. (4), which keep rank `r` whenever the non-stiff low-rank integrator does.
 Proved (arXiv 2506.15259):
 * `rank_linFlow`: `rank (e^{τA} M e^{τAᵀ}) = rank M` (Sec. 2.2).
 * `linFlow_mem_tangent`: the tangent projector at `Y = U S Vᵀ` fixes `AY + YAᵀ` (Sec. 2.2).
-* `hasDerivAt_linFlow`: `s ↦ Φ^A_{s-t₀}(M₀)` solves `Ṁ = AM + MAᵀ` (Eq. (2)).
-* `variation_of_constants`: the variation-of-constants formula (Sec. 2). Its integrability
-  hypothesis is continuity of `s ↦ F(s, X(s))` on `[t₀, t]`; the paper does not state it.
+* `hasDerivAt_linFlow`: `s ↦ Φ^A_{s-t₀}(M₀)` solves `Ṁ = AM + MAᵀ` (Eq. (2); the formula
+  `M(t₀ + τ) = e^{τA} M₀ e^{τAᵀ}` is the display in Sec. 2.2).
+* `variation_of_constants`: the variation-of-constants formula (unnumbered display at the start of
+  Sec. 2). Its integrability hypothesis is continuity of `s ↦ F(s, X(s))` on `[t₀, t]`; the paper
+  does not state it. The ODE hypothesis is a two-sided derivative at every point of `[t₀, t]`,
+  endpoints included (`X` is defined on all of `ℝ`).
 * `variation_of_constants_nonvacuous`: the hypotheses of that formula are satisfiable (`F = 0`).
 * `lowRankLie_rank`, `lowRankStrang_rank`: if `Φ̃^F_τ` maps into rank-`r` matrices, then `L̃_τ` and
-  `S̃_τ` do too (Eq. (4), Sec. 2.2 "rank-r approximation"). `lowRankLie_rank_nonvacuous` exhibits an
-  instance.
+  `S̃_τ` do too (Eq. (4) and the display after it, Sec. 2.2 "rank-r approximation").
+  `lowRankLie_rank_nonvacuous` exhibits an instance.
 
-Definitions: `linFlow` (`Φ^A_τ`), `lowRankLie` (`L̃_τ`), `lowRankStrang` (`S̃_τ`), as in Eq. (4).
+Definitions: `linFlow` (`Φ^A_τ`), `lowRankLie` (`L̃_τ`, Eq. (4)), `lowRankStrang` (`S̃_τ`, the
+display after Eq. (4)).
 Core definitions used: `LeanDLRA.tangentProj` and its characterization `tangentProj_eq_self_iff`
 (`LeanDLRA/Matrix/Projectors.lean`). Nothing else from the core is needed.
 The non-stiff integrator `Φ̃^F_τ` is an arbitrary map `G`; the DRSVD/DGN construction is not
@@ -48,7 +52,7 @@ namespace LeanDLRA.Literature.P2506_15259
 variable {n : Type*} [Fintype n] [DecidableEq n]
 
 /-- The exact flow `Φ^A_τ(M) = e^{τA} M e^{τAᵀ}` of the stiff subproblem `Ṁ = AM + MAᵀ`
-(paper Sec. 2.1, Eq. (2)). -/
+(paper Sec. 2.1, Eq. (2); the formula is the display in Sec. 2.2). -/
 noncomputable def linFlow (A : Matrix n n ℝ) (τ : ℝ) (M : Matrix n n ℝ) : Matrix n n ℝ :=
   NormedSpace.exp (τ • A) * M * NormedSpace.exp (τ • Aᵀ)
 
@@ -57,7 +61,8 @@ noncomputable def lowRankLie (A : Matrix n n ℝ) (τ : ℝ) (G : Matrix n n ℝ
     (Y : Matrix n n ℝ) : Matrix n n ℝ :=
   linFlow A τ (G Y)
 
-/-- Low-rank Strang step `S̃_τ = Φ^A_{τ/2} ∘ Φ̃^F_τ ∘ Φ^A_{τ/2}` (paper Eq. (4)). -/
+/-- Low-rank Strang step `S̃_τ = Φ^A_{τ/2} ∘ Φ̃^F_τ ∘ Φ^A_{τ/2}` (paper, the display after
+Eq. (4)). -/
 noncomputable def lowRankStrang (A : Matrix n n ℝ) (τ : ℝ) (G : Matrix n n ℝ → Matrix n n ℝ)
     (Y : Matrix n n ℝ) : Matrix n n ℝ :=
   linFlow A (τ / 2) (G (linFlow A (τ / 2) Y))
@@ -107,8 +112,9 @@ theorem lowRankLie_rank (A : Matrix n n ℝ) (τ : ℝ) (G : Matrix n n ℝ → 
   unfold lowRankLie
   rw [rank_linFlow, hG]
 
-/-- **Sec. 2.2 (rank of the low-rank splittings), arXiv 2506.15259, Eq. (4).** Strang version of
-`lowRankLie_rank`: the step `S̃_τ` has rank `r` whenever `Φ̃^F_τ = G` has rank `r`. -/
+/-- **Sec. 2.2 (rank of the low-rank splittings), arXiv 2506.15259, display after Eq. (4).**
+Strang version of `lowRankLie_rank`: the step `S̃_τ` has rank `r` whenever `Φ̃^F_τ = G` has
+rank `r`. -/
 theorem lowRankStrang_rank (A : Matrix n n ℝ) (τ : ℝ) (G : Matrix n n ℝ → Matrix n n ℝ) (r : ℕ)
     (hG : ∀ N, (G N).rank = r) (Y : Matrix n n ℝ) : (lowRankStrang A τ G Y).rank = r := by
   unfold lowRankStrang
@@ -125,8 +131,10 @@ lemma prod_rule_algebra {R : Type*} [Ring R] (E A X B Et F : R) :
 /-- **Sec. 2 (variation-of-constants formula), arXiv 2506.15259.** For `Ẋ = AX + XAᵀ + F(t,X)` on
 `[t₀, t]` with `X(t₀) = X₀`,
 `X(t) = e^{(t−t₀)A} X₀ e^{(t−t₀)Aᵀ} + ∫_{t₀}^{t} e^{(t−s)A} F(s,X(s)) e^{(t−s)Aᵀ} ds`.
-Hypotheses: `X` solves the ODE on `[t₀, t]`, and `s ↦ F(s, X(s))` is continuous there (needed so
-that the integral exists; the paper does not state this regularity). -/
+Hypotheses: `X` solves the ODE on `[t₀, t]` (two-sided derivative at every point, endpoints
+included, a slightly stronger hypothesis than a solution on the closed interval), and
+`s ↦ F(s, X(s))` is continuous there (needed so that the integral exists; the paper does not
+state this regularity). -/
 theorem variation_of_constants (A : Matrix n n ℝ) (F : ℝ → Matrix n n ℝ → Matrix n n ℝ)
     (X : ℝ → Matrix n n ℝ) {t₀ t : ℝ} (ht : t₀ ≤ t) (X₀ : Matrix n n ℝ) (hinit : X t₀ = X₀)
     (hODE : ∀ s ∈ Icc t₀ t, HasDerivAt X (A * X s + X s * Aᵀ + F s (X s)) s)

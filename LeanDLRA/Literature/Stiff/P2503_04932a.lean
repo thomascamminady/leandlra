@@ -14,13 +14,18 @@ version uses the bases `Ṽ` through `reduce`.
 **Proved (Theorem 3.2, diffusion part).** If `F_x, F_y, F_z` are symmetric negative
 semidefinite, `Ṽ` (new) and `V` (old) have orthonormal columns, `h ≥ 0`, and `G^{n+1}` solves
 `(I − h·Kronecker sum of ṼᵀF Ṽ) G^{n+1} = B` with `B = G^n ×₁ (ṼₓᵀVₓ) ×₂ (ṼᵧᵀVᵧ) ×₃ (Ṽ_zᵀV_z)`
-as in (3.19), then `‖G^{n+1}‖_F ≤ ‖G^n‖_F` (`rail3d_first_order_diffusion_stable`).
+as in (3.19), then `‖G^{n+1}‖_F ≤ ‖G^n‖_F` (`rail3d_first_order_diffusion_stable`). The printed
+statement is `‖Ĝ^{n+1}‖_F ≤ ‖Ĝ^n‖_F` for the cores before truncation; without truncation the core
+`G^n` of the previous step is `Ĝ^n`.
 
 **Differences from the paper.**
 * The explicit convection terms and the source terms of (3.8), (3.18) and (3.19) are not
-  included. The paper's Theorem 3.2 is stated for the whole scheme, but the bound
-  `‖G^{n+1}‖ ≤ ‖G^n‖` is proved here only for the implicit diffusion step. With explicit
-  convection the bound need not hold; this module does not claim it.
+  included. The printed statement names "the first-order implicit RAIL-3D scheme"; its proof
+  works with the update `Ĝ^{n+1} ×₁ (I − A) − Ĝ^{n+1} ×₂ B − Ĝ^{n+1} ×₃ C = Ĝ^n`, which has no
+  convection or source terms. This module proves the bound for that diffusion step only and
+  says nothing about the scheme with those terms.
+* The right-hand side keeps the overlap matrices `ṼᵀV` of (3.19) (the paper's proof writes the
+  right-hand side as `Ĝ^n`); they are contractions, which the proof uses.
 * The time step is `h ≥ 0` (the paper leaves the sign of `Δt` implicit).
 * Symmetry of `F` is part of the hypothesis `IsNegSemidef`; the proof uses only the quadratic
   form `⟪Fv, v⟫ ≤ 0`.
@@ -30,7 +35,8 @@ as in (3.19), then `‖G^{n+1}‖_F ≤ ‖G^n‖_F` (`rail3d_first_order_diffus
 **Left out.**
 * Theorem 2.1 (truncated HOSVD quasi-optimality, cited from [15, 43]): not formalized. It needs
   mode-`n` unfoldings and Eckart–Young for each unfolding, which are not built here.
-* Corollary A.1 (Kronecker tensor solver): not read verbatim, so not formalized.
+* Corollary A.1 (direct solver for the Kronecker-structured core equation via a Schur
+  decomposition and Sylvester solves, extending Theorem 2.1 of [74]): not formalized.
 * The K-steps, the high-order IMEX-RK scheme, the truncation and the LoMaC procedure: not
   formalized.
 
@@ -335,7 +341,8 @@ semidefinite. Let `Vₓ, V_y, V_z` be the orthonormal factor matrices of the cur
 `‖G^{n+1}‖_F ≤ ‖G‖_F`.
 
 Differences from the paper: the explicit convection and source terms of (3.8), (3.18) and (3.19)
-are omitted (this is the diffusion part only), and the time step is `h ≥ 0`. -/
+are omitted (this is the diffusion part only, as in the paper's proof), the time step is `h ≥ 0`,
+and the bound is against the previous core `G` (the paper's `Ĝ^n` when no truncation is done). -/
 theorem rail3d_first_order_diffusion_stable {Nx Ny Nz rx ry rz sx sy sz : ℕ}
     (Fx : Matrix (Fin Nx) (Fin Nx) ℝ) (Fy : Matrix (Fin Ny) (Fin Ny) ℝ)
     (Fz : Matrix (Fin Nz) (Fin Nz) ℝ)

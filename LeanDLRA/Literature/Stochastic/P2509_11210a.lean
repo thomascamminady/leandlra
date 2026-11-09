@@ -8,19 +8,23 @@ Deterministic cores of the DLR Kalman–Bucy results (Nobile–Trigo Trindade). 
 conditional expectations and the Itô derivations are not formalized; each statement below is the
 matrix identity behind a result of the paper.
 
-* `physical_modes_orthonormal` (Lemma 3.2, orthonormality part; eq. (4.2)): if the physical modes
-  solve `U̇ = (I − U Uᵀ) A U` on `[0, ∞)` with `Uᵀ U = I` at time `0`, then `Uᵀ U = I` for
-  all `t ≥ 0`. It reuses `LeanDLRA.transpose_mul_self_eq_one_of_odeSolution` (Grönwall on
-  `I − Uᵀ U`), with `G(t) = A U(t)` so that the field is the library's `(1 − X Xᵀ) G t`.
-* `covariance_range` (Lemma 3.2, range part; eq. (3.10)): for `Uᵀ U = I` and `P = U M Uᵀ`,
+* `physical_modes_orthonormal` (Sec. 4, the remark before (4.1)–(4.3) that `U_0 ∈ St(d, R)`
+  implies `U_t ∈ St(d, R)`; eq. (4.2)): if the physical modes solve `U̇ = (I − U Uᵀ) A U` on
+  `[0, ∞)` with `Uᵀ U = I` at time `0`, then `Uᵀ U = I` for all `t ≥ 0`. It reuses
+  `LeanDLRA.transpose_mul_self_eq_one_of_odeSolution` (Grönwall on `I − Uᵀ U`), with
+  `G(t) = A U(t)` so that the field is the library's `(1 − X Xᵀ) G t`.
+* `covariance_range` (Lemma 3.2, "in particular"; eq. (3.10)): for `Uᵀ U = I` and `P = U M Uᵀ`,
   `Π P = P = P Π` for `Π = U Uᵀ`, and `range P ⊆ range U`. The representation (3.10) itself,
   which the paper derives from the conditional covariance, is taken as the hypothesis `P = U M Uᵀ`.
-* `dlr_covariance_hasDerivAt_iff` (Proposition 4.1, deterministic core; eqs. (4.2), (4.8), (4.13)):
-  for `P = U M Uᵀ` with `Uᵀ U = I` and `U̇ = (I − U Uᵀ) A U` at time `t`, the Gram equation
-  `Ṁ = Uᵀ A U M + M Uᵀ Aᵀ U − M Uᵀ S U M + Uᵀ Sg U` holds iff the covariance equation
-  `Ṗ = A P + P Aᵀ − P S P + Π Sg Π` holds. Only the model-noise term is projected. Neither side is
-  assumed: the Gram equation is not a hypothesis, the equivalence is proved. The Itô identity that
-  gives `Ṗ` from the filter is not formalized.
+  Lemma 3.2 allows non-orthonormal modes (`Π_U = U M_U⁻¹ Uᵀ`); `Uᵀ U = I` is the Sec. 4 case.
+* `dlr_covariance_hasDerivAt_iff` (Lemma 4.5, eq. (4.13), the reduction of (4.8) via (3.10);
+  eqs. (4.2), (4.8), (4.13)): for `P = U M Uᵀ` with `Uᵀ U = I` and `U̇ = (I − U Uᵀ) A U` at
+  time `t`, the Gram equation `Ṁ = Uᵀ A U M + M Uᵀ Aᵀ U − M Uᵀ S U M + Uᵀ Sg U` holds iff the
+  covariance equation `Ṗ = A P + P Aᵀ − P S P + Π Sg Π` holds. Only the model-noise term is
+  projected. Neither side is assumed: the equivalence is proved. The direction (4.8) ⇒ (4.13) is
+  the first claim of Lemma 4.5; the converse is not stated in the paper. Proposition 4.1 itself
+  (the Itô derivation of (4.8)) and the mean equation (4.7) are not formalized, nor are the
+  well-posedness and boundedness claims of Lemma 4.5.
 
 Core definitions used: `LeanDLRA.transpose_mul_self_eq_one_of_odeSolution`, `ODESolution`
 (`LeanDLRA/Foundations/ODE.lean`), and the Frobenius-normed product rule
@@ -28,7 +32,8 @@ Core definitions used: `LeanDLRA.transpose_mul_self_eq_one_of_odeSolution`, `ODE
 `Uᵀ` is `Matrix.transpose`; `Π = U * Uᵀ` (with `Uᵀ * U = 1`) is the orthogonal projector onto
 `range U`. The paper's `S = Hᵀ Γ⁻¹ H` and the noise covariance `Sg` (Σ) are arbitrary real
 matrices here (no positivity is needed for the identities). The hypotheses are satisfiable: the
-constant `U = (1, 0)ᵀ` satisfies `Uᵀ U = 1` and `U̇ = 0` (`instU_orthonormal`).
+constant `U = (1, 0)ᵀ` satisfies `Uᵀ U = 1` and, for `A = 0`, `U̇ = 0` (`instU_orthonormal` and
+the `example` at the end).
 
 Not formalized:
 * Proposition 4.3 (convergence of the Oja/Brockett flow for almost every `U₀`): it needs the
@@ -54,7 +59,8 @@ private lemma transpose_mul_cancel {n : Type*} {U : Matrix (Fin d) (Fin R) ℝ}
     (hUU : Uᵀ * U = 1) (X : Matrix (Fin R) n ℝ) : Uᵀ * (U * X) = X := by
   rw [← Matrix.mul_assoc, hUU, Matrix.one_mul]
 
-/-- **Physical modes stay orthonormal** (paper Lemma 3.2 and eq. (4.2), orthonormality part).
+/-- **Physical modes stay orthonormal** (paper Sec. 4, remark before (4.1)–(4.3), and eq. (4.2)).
+The paper states `U_0 ∈ St(d, R) ⇒ U_t ∈ St(d, R)` for `t ≥ 0` without proof.
 If `U : [0, ∞) → Mat(d × R)` is continuous, has right derivatives `U̇ = (I − U Uᵀ) A U` on
 `[0, ∞)`, and `U(0)ᵀ U(0) = I`, then `U(t)ᵀ U(t) = I` for all `t ≥ 0`. Here `A` is any real
 `d × d` matrix (the paper's `A` is not assumed symmetric for this part). -/
@@ -80,7 +86,8 @@ theorem physical_modes_orthonormal {A : Matrix (Fin d) (Fin d) ℝ}
 
 /-- **Range of the DLR covariance** (paper Lemma 3.2, "in particular"; eq. (3.10)). If
 `Uᵀ U = I` and `P = U M Uᵀ`, then `Π = U Uᵀ` fixes `P` from both sides, and every vector in the
-range of `P` lies in the range of `U`. -/
+range of `P` lies in the range of `U`. Deviation: (3.10) is a hypothesis, and the modes are
+orthonormal (Lemma 3.2 allows any full-rank `U`, with `Π_U = U M_U⁻¹ Uᵀ`). -/
 theorem covariance_range {U : Matrix (Fin d) (Fin R) ℝ} {M : Matrix (Fin R) (Fin R) ℝ}
     {P : Matrix (Fin d) (Fin d) ℝ} (hUU : Uᵀ * U = 1) (hP : P = U * M * Uᵀ) :
     U * Uᵀ * P = P ∧ P * (U * Uᵀ) = P ∧ ∀ x : Fin d → ℝ, ∃ y : Fin R → ℝ, P *ᵥ x = U *ᵥ y := by
@@ -124,14 +131,16 @@ private lemma gram_deriv_alg {A S Sg : Matrix (Fin d) (Fin d) ℝ}
     Matrix.mul_one, Matrix.one_mul, Matrix.mul_assoc, transpose_mul_cancel hUU, hUU]
   abel
 
-/-- **Covariance ODE of the DLR Kalman–Bucy filter, deterministic core** (paper Proposition 4.1,
-eqs. (4.7)–(4.8), with the Gram equation (4.13) of Lemma 4.5 derived rather than assumed).
+/-- **Gram equation of the DLR Kalman–Bucy filter** (paper Lemma 4.5, eq. (4.13), derived from
+the covariance equation (4.8) of Proposition 4.1 and (3.10); the converse is added here).
 
 Let `U` be the physical modes with `Uᵀ U = I` and `U̇ = (I − U Uᵀ) A U` at time `t`, and let
 `P = U M Uᵀ` with `M` the Gram matrix. Then the Gram derivative `Ṁ` satisfies the reduced equation
 `Ṁ = Uᵀ A U M + M Uᵀ Aᵀ U − M Uᵀ S U M + Uᵀ Sg U` if and only if `P` satisfies the covariance
 equation `Ṗ = A P + P Aᵀ − P S P + Π Sg Π`, `Π = U Uᵀ`. Only the model-noise term `Sg` is projected.
-The Itô derivation of `Ṗ` from the filter is not formalized. -/
+The Itô derivation of `Ṗ` from the filter (Proposition 4.1) is not formalized. Deviations: the
+statement is at one time `t` with a two-sided derivative, and `Uᵀ U = I` is assumed for all real
+`s` (the paper has it for `s ≥ 0`). -/
 theorem dlr_covariance_hasDerivAt_iff {A S Sg : Matrix (Fin d) (Fin d) ℝ}
     {U : ℝ → Matrix (Fin d) (Fin R) ℝ} {M : ℝ → Matrix (Fin R) (Fin R) ℝ}
     {P : ℝ → Matrix (Fin d) (Fin d) ℝ} {t : ℝ} {M' : Matrix (Fin R) (Fin R) ℝ}
@@ -172,5 +181,12 @@ private lemma instU_orthonormal : instUᵀ * instU = 1 := by
   fin_cases i
   fin_cases j
   simp [instU, Matrix.mul_apply, Fin.sum_univ_two]
+
+/-- Non-vacuity of the hypotheses `hUU` and `hU` of `dlr_covariance_hasDerivAt_iff` (and of
+`physical_modes_orthonormal`): the constant `U = instU` with `A = 0`. -/
+example : (∀ s : ℝ, ((fun _ : ℝ => instU) s)ᵀ * (fun _ : ℝ => instU) s = 1) ∧
+    HasDerivAt (fun _ : ℝ => instU)
+      ((1 - instU * instUᵀ) * ((0 : Matrix (Fin 2) (Fin 2) ℝ) * instU)) 0 :=
+  ⟨fun _ => instU_orthonormal, by simpa using hasDerivAt_const (0 : ℝ) instU⟩
 
 end LeanDLRA.Literature.P2509_11210

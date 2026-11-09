@@ -6,14 +6,19 @@ import LeanDLRA.Matrix.LowRankDistance
 # Results of arXiv 2606.24190: DLR methods for the Wigner equation I: separable difference potential
 
 This module formalizes one result of arXiv 2606.24190 (Shao and Shao), Sec. 4.1, on the best
-rank-`r` approximation. The paper states, as a remark on its numerical test, that the solution
-of its DLRA algorithm cannot be more accurate than the best rank-`r` approximation of the
-reference solution. Here `distLR r X` (from `LeanDLRA.Matrix.LowRankDistance`) is that best
-error. The theorem `distLR_le_norm_sub_factored` proves the lower bound for every approximant
-of DLRA form `U * S * Vᵀ` with `U : m × r`, `S : r × r`, `V : n × r`, which covers any
-rank-`r` factorization such as `X(t) S(t) K(t)ᵀ` in the paper's (3.8). The identification of
-`distLR r X` with the `(r+1)`-th singular value (Eckart–Young, stated in the paper) is not
-formalized. The example checks that the statement applies to arbitrary factors.
+rank-`r` approximation. The paper states, as a remark on its numerical test (p. 12), that the
+solution of its DLRA algorithm cannot be more accurate than the best rank-`r` approximation of
+the reference solution. Here `distLR r X` (from `LeanDLRA.Matrix.LowRankDistance`) is that best
+error in the Frobenius norm, the discrete analogue (up to the grid weight) of the paper's
+L² error `ε₂` in (4.1). The theorem `distLR_le_norm_sub_factored` proves the lower bound for
+every approximant of DLRA form `U * S * Vᵀ` with `U : m × r`, `S : r × r`, `V : n × r`, which
+covers any rank-`r` factorization such as `X(t) S(t) K(t)ᵀ` in the paper's (3.8). The example
+checks that the statement applies to arbitrary factors.
+
+Deviation: the paper's Fig. 1(a) measures the best rank-`r` error in the matrix norm in which it
+equals the `(r+1)`-th singular value (the spectral norm). In the Frobenius norm used here the
+best error is the tail `(∑_{j>r} σ_j²)^{1/2}` instead. The remark holds in both norms; only the
+Frobenius version is formalized, and no singular values (Eckart–Young) are used.
 
 Core definitions used: `LeanDLRA.distLR` and `LeanDLRA.lowRankSet` (Frobenius norm, via
 `open scoped LeanDLRA.Frobenius`). No local definitions are added.
