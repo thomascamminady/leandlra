@@ -26,19 +26,24 @@ The main new statement is `IsIMEXKSLStep.ap_step_le`: `g = 1 + O(ε)`, which Sec
 granted, is proved at fixed time step, for every input and every rank, with an explicit constant,
 provided `⟨V⟩ ≠ 0`.
 
-False or incomplete claims of the paper:
-* Remark 4.2: for `T = 1` the viscous stress is `∇u + (∇u)ᵀ`, not `σ(u)` of (2.10)
+Points where the printed paper is wrong, misprinted or silent (each checked in the PDF):
+* Remark 4.2: for `T = 1` the Chapman–Enskog stress (formally, from (2.3) and (2.6)) is
+  `∇u + (∇u)ᵀ`, not `σ(u)` of (2.10)
   (`chapmanEnskog_stress`, `transportM_euler`, `remark_4_2_false`); (2.9), and with it (2.12) and
   (4.22), rely on the energy equation, which the isothermal model does not have. The two stresses
   differ by `(2 / d) (∇ · u) I`, and the momentum equations by `(2 / d) ε ∇ (∇ · u)`.
-* (4.19) lacks a factor `Δt` (`printed_update_iff`); with it, (4.18)–(4.19) do not update `ρ u`
-  conservatively (`forwardEuler_momentum`), so (6.1) fails by `O(Δt)` for this update. The scheme of
-  Sec. 5.2 is conservative.
-* The S-step can be singular for `ρ_min ≤ ε / Δt ≤ ρ_max`, and then no step exists
+* (4.19) is misprinted: it lacks a factor `Δt` (`printed_update_iff`). With it, (4.18)–(4.19)
+  give `ρ¹ u¹ = ρ u + Δt I₂ + (Δt² I₁ / ρ) (I₂ - I₁ u)` (`forwardEuler_momentum`), so (6.1) holds
+  for this update only up to an `O(Δt)` defect in the momentum. The scheme of Sec. 5.2 updates
+  `(ρ, ρ u)` directly and has no such defect.
+* The paper does not discuss solvability of the S-step: it can be singular for
+  `ρ_min ≤ ε / Δt ≤ ρ_max`, and then no step exists
   (`isUnit_one_sub_stiffness`, `not_exists_imexKSLStep`).
-* `g = 1 + O(ε)` fails for `⟨V⟩ = 0` (`not_ap_of_mean_zero`).
-The note in the list of results for this slice has the wrong sign for the relaxation
-(`resolvent_sign`).
+* The step "`g = 1 + O(ε)` (the first equality implies so)" below (6.3) fails for `⟨V⟩ = 0`
+  (`not_ap_of_mean_zero`); `ap_step_le` proves it for `⟨V⟩ ≠ 0`.
+
+Not about the paper: `resolvent_sign` records that an internal planning note for this slice had
+the wrong sign for the relaxation; the paper's signs agree with `imex_iff_resolvent`.
 
 Not formalized: the cost claims and FFT interpolation; the derivation of (4.2), (4.3) by
 differentiating under the integral (only `collision_invariants`); the Chapman–Enskog expansion as
@@ -1548,10 +1553,12 @@ theorem printed_update_iff {ρ Δt : ℝ} (hρ : ρ ≠ 0) (u w : Vel d) :
     · rw [one_div]
     · simp
 
-/-- **The forward Euler step (4.18)–(4.19) of arXiv 2101.07104, with `Δt` restored, does not update
-the momentum conservatively**: with `w = I₂ - I₁ u`, `ρ¹ u¹ = ρ u + Δt I₂ + (Δt² I₁ / ρ) w`, and the
-last term is not a divergence. So (6.1) has a defect of order `Δt` in the momentum for this time
-discretization. The scheme of Sec. 5.2 updates `(ρ, ρ u)` and does not have it. -/
+/-- **The forward Euler step (4.18)–(4.19) of arXiv 2101.07104, with `Δt` restored, is not the
+momentum update `ρ u + Δt I₂`**: with `w = I₂ - I₁ u`, `ρ¹ u¹ = ρ u + Δt I₂ + (Δt² I₁ / ρ) w`, and
+the last term is nonzero whenever `I₁ ≠ 0` and `w ≠ 0`. So (6.1) has a defect of order `Δt` in the
+momentum for this time discretization. (That the extra term is in general not a divergence, so
+that total momentum is not conserved, is not proved here.) The scheme of Sec. 5.2 updates
+`(ρ, ρ u)` and does not have it. -/
 theorem forwardEuler_momentum {ρ I₁ Δt : ℝ} (hρ : ρ ≠ 0) (u I₂ : Vel d) :
     (ρ + Δt * I₁) • (u + (Δt / ρ) • (I₂ - I₁ • u)) =
       ρ • u + Δt • I₂ + (Δt ^ 2 * I₁ / ρ) • (I₂ - I₁ • u) := by
@@ -1658,7 +1665,9 @@ theorem imex_eq_resolvent {H : Type*} [NormedAddCommGroup H] [NormedSpace ℝ H]
   rw [key, ← hAy]
   exact ⟨fun h1 => by rw [← h1, hl], fun h1 => by rw [h1, hr]⟩
 
-/-- The slice note on arXiv 2101.07104, read literally, has the wrong sign: implicit Euler for
+/-- Not a statement about the paper: the internal planning note for this slice (not arXiv
+2101.07104, whose signs agree with `imex_iff_resolvent`), read literally, has the wrong sign:
+implicit Euler for
 `Y' = Q (N + S Y)` with `Q = S = 1`, `N = 0`, `h = 1/2`, `Y₀ = 1` gives `Y₁ = 2`, not
 `(1 + h)⁻¹ Y₀ = 2/3`. The correct statement, for `Y' = Q (N - S Y)`, is `imex_iff_resolvent`. -/
 theorem resolvent_sign :
