@@ -82,7 +82,14 @@ def reject(path: Path, reason: str) -> None:
 
 
 def remove_target(target: Path) -> None:
-    """Take a slice back out of the library tree."""
+    """Take a slice back out of the library tree.
+
+    A module that is already on main (an audit fix of a landed file) is restored from ``HEAD``
+    instead of deleted, so a rejected fix never removes a proven module.
+    """
+    if run("git", "cat-file", "-e", f"HEAD:{target.relative_to(ROOT)}")[0] == 0:
+        run("git", "checkout", "-q", "HEAD", "--", str(target))
+        return
     run("git", "rm", "-q", "--cached", "--ignore-unmatch", str(target))
     target.unlink(missing_ok=True)
 
@@ -152,8 +159,15 @@ def process(batch: list[Path]) -> bool:
     # 3. Commit and push.
     ops = sorted({op for p in accepted for op in table[p.stem]["ops"]})
     names = ", ".join(p.stem for p in accepted)
+    updated = [
+        p
+        for p in accepted
+        if run("git", "cat-file", "-e", f"HEAD:{targets[p.stem].relative_to(ROOT)}")[0]
+        == 0
+    ]
+    verb = "Update" if len(updated) == len(accepted) else "Add"
     title = (
-        f"Add {len(accepted)} {'slices' if len(accepted) > 1 else 'slice'} ({names})"
+        f"{verb} {len(accepted)} {'slices' if len(accepted) > 1 else 'slice'} ({names})"
     )
     message = f"{title}\n\n{' '.join(ops)}\n\n{TRAILER}\n"
     run(
