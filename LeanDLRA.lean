@@ -100,6 +100,7 @@ import LeanDLRA.Literature.Kinetic.P2101_12571b
 import LeanDLRA.Literature.Kinetic.P2107_07282a
 import LeanDLRA.Literature.Kinetic.P2111_07160a
 import LeanDLRA.Literature.Kinetic.P2112_02695a
+import LeanDLRA.Literature.Kinetic.P2205_08417a
 import LeanDLRA.Literature.Kinetic.P2206_09374a
 import LeanDLRA.Literature.Kinetic.P2212_12012a
 import LeanDLRA.Literature.Kinetic.P2302_01391a
@@ -224,6 +225,7 @@ import LeanDLRA.Literature.Training.P2509_15113a
 import LeanDLRA.Literature.Training.P2511_04485a
 import LeanDLRA.Literature.Training.P2601_08882a
 import LeanDLRA.Literature.Training.P2602_06208a
+import LeanDLRA.Literature.Training.P2603_30033a
 import LeanDLRA.Literature.Training.P2607_05872a
 import LeanDLRA.Literature.Training.P2609_21039a
 import LeanDLRA.Literature.Training.P2609_32615a
@@ -418,7 +420,9 @@ import LeanDLRA.Stochastic.KalmanBucy
 import LeanDLRA.Stochastic.MeanSquare
 import LeanDLRA.Tensor.Defs
 import LeanDLRA.Tensor.TT.Basic
+import LeanDLRA.Tensor.TT.TangentProjector
 import LeanDLRA.Tensor.TTN.Basic
+import LeanDLRA.Tensor.TTN.Integrators
 import LeanDLRA.Tensor.Tucker.Basic
 import LeanDLRA.Tensor.Unfolding
 import LeanDLRA.Training.Descent
