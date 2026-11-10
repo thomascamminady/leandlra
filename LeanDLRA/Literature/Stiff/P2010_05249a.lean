@@ -1,5 +1,6 @@
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.FixedRank.TangentSpace
 
 /-!
 # Results of arXiv 2010.05249: Low-rank Lie-Trotter for fractional Ginzburg-Landau
@@ -53,16 +54,14 @@ variable {k k' m n : Type*} [Fintype k] [Fintype k'] [Fintype m] [Fintype n]
 
 /-- **arXiv 2010.05249, Sec. 2.3 (tangent part).** For `X = U S Vᵀ` with orthonormal `U`, `V`, the
 vector field `A_x X + X A_y = (A_x U S) Vᵀ + U (S Vᵀ A_y)` lies in the range of the tangent
-projector `P(X)` of the rank-`r` manifold, for arbitrary square generators `A_x`, `A_y`. -/
+projector `P(X)` of the rank-`r` manifold, for arbitrary square generators `A_x`, `A_y` (the core
+`LeanDLRA.mul_add_mul_mem_range_tangentProj`). -/
 theorem stiff_derivative_mem_tangent' [DecidableEq k] [DecidableEq k'] {U : Matrix m k ℝ}
     {V : Matrix n k' ℝ} (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (S : Matrix k k' ℝ)
     (Ax : Matrix m m ℝ) (Ay : Matrix n n ℝ) :
     Ax * (U * S * Vᵀ) + (U * S * Vᵀ) * Ay ∈
-      LinearMap.range (tangentProj U V : Matrix m n ℝ →ₗ[ℝ] Matrix m n ℝ) := by
-  rw [mem_range_tangentProj hU hV]
-  refine ⟨S * Vᵀ * Ay, Ax * U * S, ?_⟩
-  simp only [Matrix.mul_assoc]
-  abel
+      LinearMap.range (tangentProj U V : Matrix m n ℝ →ₗ[ℝ] Matrix m n ℝ) :=
+  mul_add_mul_mem_range_tangentProj hU hV S Ax Ay
 
 /-- **arXiv 2010.05249, Sec. 2.3 (rank part).** The exact stiff flow `X ↦ e^{tA_x} X e^{tA_y}` of
 `X = U S Vᵀ` has the same rank as `X` for every `t`, because both matrix exponentials are

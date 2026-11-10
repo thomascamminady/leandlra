@@ -282,10 +282,8 @@ lemma upsilon_sub_of_horizontal {Q : Matrix m n ℝ} (S : Matrix n n ℝ) {V W :
 
 omit [DecidableEq m] in
 lemma norm_mul_le_of_orthonormal {k : Type*} [Fintype k] [DecidableEq k]
-    {Q : Matrix n k ℝ} (hQ : Qᵀ * Q = 1) (M : Matrix m n ℝ) : ‖M * Q‖ ≤ ‖M‖ := by
-  have h := (isOrthProj_rightProj (m := m) hQ).norm_le M
-  rw [rightProj_apply, Frobenius.norm_mul_transpose_of_orthonormal hQ (M * Q)] at h
-  exact h
+    {Q : Matrix n k ℝ} (hQ : Qᵀ * Q = 1) (M : Matrix m n ℝ) : ‖M * Q‖ ≤ ‖M‖ :=
+  LeanDLRA.norm_mul_le_of_orthonormal hQ M
 
 /-- The horizontal space `H_Q = {V : Qᵀ V = 0, V J_{2n} = J_{2N} V}` (arXiv 2008.07427, (4.7)). -/
 def IsHorizontal (Q V : Matrix (ι ⊕ ι) (κ ⊕ κ) ℝ) : Prop :=

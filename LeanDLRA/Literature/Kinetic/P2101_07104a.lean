@@ -1705,15 +1705,13 @@ structure IsIMEXKSLStep (ρ : m → ℝ) (e : Matrix m Unit ℝ) (b : Matrix n U
 
 omit [DecidableEq m] in
 lemma norm_mul_le_of_orthonormal {W : Matrix n r ℝ} (hW : Wᵀ * W = 1) (Z : Matrix m n ℝ) :
-    ‖Z * W‖ ≤ ‖Z‖ := by
-  rw [← norm_mul_transpose_of_orthonormal hW (Z * W)]
-  simpa using (isOrthProj_rightProj (m := m) hW).norm_le Z
+    ‖Z * W‖ ≤ ‖Z‖ :=
+  LeanDLRA.norm_mul_le_of_orthonormal hW Z
 
 omit [DecidableEq m] in
 lemma norm_transpose_mul_le {W : Matrix m r ℝ} (hW : Wᵀ * W = 1) (Z : Matrix m n ℝ) :
-    ‖Wᵀ * Z‖ ≤ ‖Z‖ := by
-  rw [← norm_transpose, Matrix.transpose_mul, Matrix.transpose_transpose]
-  exact (norm_mul_le_of_orthonormal hW Zᵀ).trans (norm_transpose Z).le
+    ‖Wᵀ * Z‖ ≤ ‖Z‖ :=
+  LeanDLRA.norm_transpose_mul_le hW Z
 
 omit [DecidableEq m] [DecidableEq r] in
 lemma norm_mul_transpose_unit (a : Matrix m Unit ℝ) (c : Matrix r Unit ℝ) :

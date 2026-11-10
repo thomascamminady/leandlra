@@ -3,6 +3,7 @@ import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Foundations.Existence
 import LeanDLRA.OpenProblems.Stiff.Part2a
+import LeanDLRA.FixedRank.TangentSpace
 
 /-!
 # Results of arXiv 1803.10473: Low-rank Lie-Trotter splitting for stiff matrix ODEs
@@ -94,16 +95,14 @@ variable {k k' m : Type*} [Fintype k] [Fintype k'] [Fintype m]
 
 /-- **arXiv 1803.10473, Sec. 3.2 (tangent part).** For `Y = U S Vᵀ` with orthonormal `U`, `V`, the
 matrix `A Y + Y Aᵀ = (A U) S Vᵀ + U (S (A V)ᵀ)` is a tangent vector at `Y`: it lies in the range of
-the tangent projector `P(Y)` of the rank-`r` manifold. The core `S` need not be invertible. -/
+the tangent projector `P(Y)` of the rank-`r` manifold. The core `S` need not be invertible. This is
+the case `A_x = A`, `A_y = Aᵀ` of the core `LeanDLRA.mul_add_mul_mem_range_tangentProj`. -/
 theorem stiff_derivative_mem_tangent [DecidableEq k] [DecidableEq k'] {U : Matrix m k ℝ}
     {V : Matrix m k' ℝ} (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (S : Matrix k k' ℝ)
     (A : Matrix m m ℝ) :
     A * (U * S * Vᵀ) + (U * S * Vᵀ) * Aᵀ ∈
-      LinearMap.range (tangentProj U V : Matrix m m ℝ →ₗ[ℝ] Matrix m m ℝ) := by
-  rw [mem_range_tangentProj hU hV]
-  refine ⟨S * (A * V)ᵀ, A * U * S, ?_⟩
-  simp only [Matrix.transpose_mul, Matrix.mul_assoc]
-  abel
+      LinearMap.range (tangentProj U V : Matrix m m ℝ →ₗ[ℝ] Matrix m m ℝ) :=
+  mul_add_mul_mem_range_tangentProj hU hV S A Aᵀ
 
 /-- **arXiv 1803.10473, Sec. 3.2 (rank part).** The congruence flow `Y ↦ e^{tA} Y e^{tAᵀ}` preserves
 the rank of `Y = U S Vᵀ` for every `t`, since `e^{tA}` and `e^{tAᵀ}` are invertible. The paper
