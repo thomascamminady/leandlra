@@ -7,9 +7,9 @@ import LeanDLRA.Foundations.Galerkin
 # The recursive TTN projector-splitting integrator on concrete tree tensor networks
 
 The recursive tree tensor network (TTN) projector-splitting integrator of Ceruti–Lubich–Walach
-(arXiv 2002.11392, §4, Algorithms 4–6) is stated in `OpenProblems.TensorNetworks` on an abstract
-inner product space, with the projectors of every inner node existentially quantified
-(`OpenProblems.TensorNetworks.IsTTNKSLStep` over a `TreeShape`); its robust global error bound
+(arXiv 2002.11392, §4, Algorithms 4–6) is stated on an abstract inner product space
+(`Tensor/Steps.lean`), with the projectors of every inner node existentially quantified
+(`IsTTNKSLStep` over a `TreeShape`); its robust global error bound
 (`ttn_ksl_global_error`, Thm 6.1 of the paper) holds for every family of commuting orthogonal
 projectors. This file realizes the integrator on actual tensors `Tensor ι` over a dimension tree
 `τ : DimTree κ`: at an inner node `τ = (τ₁, …, τ_m)` the new basis projector of child `i` is the
@@ -189,7 +189,7 @@ theorem isProjectorSplittingStep_node {m : ℕ} {cs : Fin m → DimTree κ}
 
 /-- **Concrete steps are abstract steps.** Every step of the recursive TTN projector-splitting
 integrator on concrete tree tensor networks of the dimension tree `τ` is a step of the abstract
-recursive integrator `OpenProblems.TensorNetworks.IsTTNKSLStep` of shape `τ.toTreeShape`. -/
+recursive integrator `IsTTNKSLStep` of shape `τ.toTreeShape`. -/
 theorem IsProjectorSplittingStep.isTTNKSLStep :
     ∀ {τ : DimTree κ} {F : ℝ → Tensor ι → Tensor ι} {ε t₀ t₁ : ℝ} {Y₀ Y₁ : Tensor ι},
       τ.IsProjectorSplittingStep F ε t₀ t₁ Y₀ Y₁ → IsTTNKSLStep τ.toTreeShape F ε t₀ t₁ Y₀ Y₁

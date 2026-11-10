@@ -63,9 +63,13 @@ Tucker tensors, tensor trains (matrix product states) and tree tensor networks.
   classes at every inner node), with `TTNFrame.height`, `TTNFrame.size`, the recursive local
   error bound `ttnErrBound`, and the (recursive) augmented recoverability conditions
   `IsAugRecoverable`, `IsTTNAugRecoverable`. The TTN step predicates on frames (`IsTTNBUGStep`,
-  `IsAugTTNBUGStep`, `IsParTTNBUGStep`, `IsTTNRecoverable`) and `tuckerTangentProj` are still in
-  `OpenProblems/Curated/TensorNetworksDefs.lean`: they use `modeProd`, `modeProdLeOne`,
-  `parTuckerBUG` and `Exactness.IsRecoverable`, which are not yet in a `Defs.lean`.
+  `IsAugTTNBUGStep`, `IsParTTNBUGStep`, `IsTTNRecoverable`) and the abstract `tuckerTangentProj`
+  are in `Tensor/Steps.lean`: they use `modeProd`, `modeProdLeOne`, `parTuckerBUG` and
+  `Exactness.IsRecoverable`, which are not yet in a `Defs.lean`.
+* `LeanDLRA.TreeShape`: the shape of a dimension tree without mode labels (a leaf, or an inner
+  node with `m` children), over which the recursive projector-splitting step `IsTTNKSLStep`
+  (`Tensor/Steps.lean`) is defined; `DimTree.toTreeShape` (`Tensor/TTN/Integrators.lean`) forgets
+  the labels of a dimension tree.
 -/
 
 open scoped Matrix RealInnerProductSpace
@@ -550,5 +554,16 @@ def IsTTNAugRecoverable : TTNFrame E → E → Prop
       IsTTNAugRecoverable (cs i) (Q₀ i x)
 
 end Frame
+
+/-! ### Shapes of dimension trees -/
+
+/-- The shape of a dimension tree: a leaf (a physical mode, integrated exactly) or an inner node
+with `m` children. -/
+inductive TreeShape : Type
+  | leaf : TreeShape
+  | node (m : ℕ) (cs : Fin m → TreeShape) : TreeShape
+
+/-- A tree shape: the root with two leaves (the shape of the matrix case). -/
+example : TreeShape := .node 2 fun _ => .leaf
 
 end LeanDLRA

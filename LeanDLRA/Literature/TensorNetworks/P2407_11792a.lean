@@ -40,7 +40,7 @@ S-step field gives (29)–(30) (`sField_nodeField`, via `sField_eq_neg_transpose
 factors of both children gives (34)–(35) (`galerkin_nodeField`). These are coordinate
 identities at the level of one node; the recursive bookkeeping of the tree (QR factorizations
 of the connecting tensors, the sweep order) is not formalized here. The abstract recursive
-integrator of the library is `OpenProblems.TensorNetworks.IsTTNKSLStep` (Ceruti–Lubich–Walach),
+integrator of the library is `IsTTNKSLStep` (Ceruti–Lubich–Walach),
 with concrete node steps `DimTree.IsValid.isTuckerKSLStep`.
 
 Not formalized: the finite state projection bound (cited from Munsky–Khammash), the relations

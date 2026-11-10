@@ -45,6 +45,8 @@ import LeanDLRA.Integrators.Matrix.ParallelBUGStep
 import LeanDLRA.Integrators.Matrix.ProjectorSplitting
 import LeanDLRA.Integrators.Matrix.Symmetry
 import LeanDLRA.Integrators.Method
+import LeanDLRA.Integrators.MethodGrid
+import LeanDLRA.Integrators.MethodTolerance
 import LeanDLRA.Integrators.ParallelBUG
 import LeanDLRA.Integrators.PerturbedField
 import LeanDLRA.Integrators.ProjectorSplitting
@@ -88,6 +90,7 @@ import LeanDLRA.OpenProblems.TensorNetworks.Part2Defs
 import LeanDLRA.OpenProblems.TensorNetworks.Part2b
 import LeanDLRA.Randomized.ObliqueBUG
 import LeanDLRA.Randomized.RandomizedBUG
+import LeanDLRA.Research.AugmentationRank
 import LeanDLRA.Research.DataDrivenErrorRecursion
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.SameMinibatchAugmentation
@@ -99,6 +102,7 @@ import LeanDLRA.Stiff.ImplicitSolvability
 import LeanDLRA.Stochastic.KalmanBucy
 import LeanDLRA.Stochastic.MeanSquare
 import LeanDLRA.Tensor.Defs
+import LeanDLRA.Tensor.Steps
 import LeanDLRA.Tensor.TT.AugmentedBUG
 import LeanDLRA.Tensor.TT.Basic
 import LeanDLRA.Tensor.TT.ObliqueProjector

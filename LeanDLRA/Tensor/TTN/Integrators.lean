@@ -1,6 +1,6 @@
 import LeanDLRA.Tensor.TTN.Basic
 import LeanDLRA.Integrators.TuckerBUG
-import LeanDLRA.OpenProblems.TensorNetworks.Part1Defs
+import LeanDLRA.Tensor.Steps
 import LeanDLRA.Classical.CommutingProjectorTelescoping
 
 /-!
@@ -9,7 +9,7 @@ import LeanDLRA.Classical.CommutingProjectorTelescoping
 The recursive tree tensor network integrators of the library are stated on an abstract inner
 product space with families of projectors per inner node:
 
-* the TTN projector-splitting integrator `OpenProblems.TensorNetworks.IsTTNKSLStep` over a
+* the TTN projector-splitting integrator `IsTTNKSLStep` over a
   `TreeShape` (Ceruti–Lubich–Walach, arXiv 2002.11392, §4; robust error bound
   `ttn_ksl_global_error`, Thm 6.1), whose nodes are nested Tucker KSL steps
   (`IsTuckerKSLStep`);
@@ -28,7 +28,7 @@ orthonormal tree tensor network is fixed by the subtree projectors of its own ba
 ## Main definitions
 
 * `DimTree.toTreeShape`: the shape of a dimension tree (bridge to
-  `OpenProblems.TensorNetworks.TreeShape`, which forgets the mode labels).
+  `TreeShape`, which forgets the mode labels).
 
 ## Main results
 
@@ -48,18 +48,18 @@ namespace DimTree
 
 /-- The shape of a dimension tree, forgetting the mode labels of the leaves (bridge to the
 `TreeShape` of the abstract TTN projector-splitting integrator). -/
-def toTreeShape {κ : Type*} : DimTree κ → OpenProblems.TensorNetworks.TreeShape
+def toTreeShape {κ : Type*} : DimTree κ → TreeShape
   | leaf _ => .leaf
   | @node _ m cs => .node m fun i => (cs i).toTreeShape
 
 /-- The shape of a leaf. -/
 @[simp] lemma toTreeShape_leaf {κ : Type*} (k : κ) :
-    (leaf k).toTreeShape = OpenProblems.TensorNetworks.TreeShape.leaf := rfl
+    (leaf k).toTreeShape = TreeShape.leaf := rfl
 
 /-- The shape of an inner node. -/
 @[simp] lemma toTreeShape_node {κ : Type*} {m : ℕ} (cs : Fin m → DimTree κ) :
     (node cs).toTreeShape =
-      OpenProblems.TensorNetworks.TreeShape.node m fun i => (cs i).toTreeShape := rfl
+      TreeShape.node m fun i => (cs i).toTreeShape := rfl
 
 variable {κ : Type*} [Fintype κ] [DecidableEq κ] {ι : κ → Type*} [∀ k, Fintype (ι k)]
 
@@ -129,7 +129,7 @@ theorem IsValid.isTuckerKSLStep {m : ℕ} {cs : Fin m → DimTree κ} (hv : (nod
     (sStart : ∀ i, YS i t₀ = K i) (next : ∀ i, X i.succ = YS i t₁)
     (cSol : ODESolution (fun t x => modeProd (fun i => (cs i).subtreeProj (U₁ i)) (F t x)) YC t₀ t₁)
     (cStart : YC t₀ = X (Fin.last m)) :
-    OpenProblems.TensorNetworks.IsTuckerKSLStep F ε
+    IsTuckerKSLStep F ε
       (fun i => Tensor.actOn (· ∉ (cs i).modes) (V₀ i * (V₀ i)ᵀ))
       (fun i => (cs i).subtreeProj (U₁ i)) t₀ t₁ Y₀ X K YS YC where
   projQ₀ i := isOrthProj_coRangeProj (cs i) (hV₀ i)

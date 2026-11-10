@@ -15,7 +15,7 @@ results of the paper are in the library.
 * **Lemma 2.4**: `basis_transpose_mul_self_iff` (this module, the equivalence as printed); its
   recursive consequence for orthonormal tree tensor networks is `TTN.basis_transpose_mul_self`.
 * Algorithms 4–6 (the recursive TTN integrator): `DimTree.IsProjectorSplittingStep`, whose nodes
-  are nested Tucker projector-splitting steps (`OpenProblems.TensorNetworks.IsTuckerKSLStep`) with
+  are nested Tucker projector-splitting steps (`IsTuckerKSLStep`) with
   subtree and co-range projectors of orthonormal matrices.
 * **Lemma 4.1** (restriction and prolongation): abstractly `restriction_prolongation` (part a); for
   the concrete maps `π = DimTree.prolong τ V`, `π† = DimTree.restrict τ V` of a child of the root:
