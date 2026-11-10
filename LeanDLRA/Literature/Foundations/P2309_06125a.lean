@@ -1,19 +1,23 @@
 import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Classical.SVD
+import LeanDLRA.FixedRank.TangentSpace
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Matrix.BUG
 import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.LinearAlgebra.Factorization.Defs
+import LeanDLRA.LinearAlgebra.LowRank.SepRank
 
 /-!
 # Results of arXiv 2309.06125: Low-rank retractions and DLRA
 
 Séguin, Ceruti and Kressner, *From low-rank retractions to dynamical low-rank approximation and
-back*. On the set `M_r` of rank-`r` matrices with the Frobenius inner product, this module defines
-the tangent space `tangentSpace Y = {A Y + Y B}`, which is shown to be exactly the set of velocities
-of curves on `M_r` (`mem_tangentSpace_iff_velocity`), and its orthogonal projection `tanProj Y`,
-which is the library's `tangentProj U V` at a factorized point (eq. (1)). A retraction is defined as
+back*. On the set `M_r` of rank-`r` matrices (the core `LeanDLRA.fixedRankSet`) with the Frobenius
+inner product, this module uses the core tangent space `LeanDLRA.tangentSpaceAt Y = {A Y + Y B}`,
+which is shown to be exactly the set of velocities of curves on `M_r`
+(`mem_tangentSpace_iff_velocity`), and the core tangent projector `LeanDLRA.tangentProjAt Y`, its
+orthogonal projection (`mem_orthogonal_iff_tanProj`), which is the library's `tangentProj U V` at
+a factorized point (eq. (1)). A retraction is defined as
 in the condensed form of §2.1 of the paper, through its curves `τ ↦ R_x(τ v)` (`IsRetraction`,
 `IsSecondOrderRetraction`), and any retraction has local error `O(τ²)` (eqs. (8)-(9):
 `IsRetraction.local_error`, `dlra_local_error`). The orthographic, KLS and KSL retractions are given
@@ -279,41 +283,21 @@ section Geometry
 
 variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ}
 
-/-- The manifold `M_r` of rank-`r` matrices, as a set. -/
-def rankSet (m n : Type*) [Fintype m] [Fintype n] (r : ℕ) : Set (Matrix m n ℝ) :=
-  {Y | Y.rank = r}
+/-- The tangent projector `Π(Y)` of arXiv 2309.06125, eq. (1), is the core `tangentProjAt Y`: an
+orthogonal projector of the Frobenius space (the core `isOrthProj_tangentProjAt`). -/
+lemma isOrthProj_tanProj (Y : Matrix m n ℝ) : IsOrthProj (tangentProjAt Y) :=
+  isOrthProj_tangentProjAt Y
 
-/-- The tangent space `T_Y M_r = {A Y + Y B}`.  This form needs no factorization of `Y`.  At a
-factorized point it is `{U B + C Vᵀ}` (`IsFactorization.mem_tangentSpace_iff`), and at a point of
-`M_r` it consists exactly of the velocities of curves on `M_r` (`mem_tangentSpace_iff_velocity`). -/
-def tangentSpace (Y : Matrix m n ℝ) : Submodule ℝ (Matrix m n ℝ) where
-  carrier := {Z | ∃ (A : Matrix m m ℝ) (B : Matrix n n ℝ), Z = A * Y + Y * B}
-  add_mem' := by
-    rintro _ _ ⟨A, B, rfl⟩ ⟨C, D, rfl⟩
-    exact ⟨A + C, B + D, by simp only [Matrix.add_mul, Matrix.mul_add]; abel⟩
-  zero_mem' := ⟨0, 0, by simp⟩
-  smul_mem' := by
-    rintro c _ ⟨A, B, rfl⟩
-    exact ⟨c • A, c • B, by simp [Matrix.smul_mul, Matrix.mul_smul, smul_add]⟩
-
-/-- The orthogonal projection `Π(Y)` onto the tangent space `T_Y M_r` (arXiv 2309.06125,
-eq. (1)). -/
-noncomputable def tanProj (Y : Matrix m n ℝ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  (tangentSpace Y).starProjection
-
-lemma isOrthProj_tanProj (Y : Matrix m n ℝ) : IsOrthProj (tanProj Y) where
-  idem x := by
-    have h := (Submodule.isIdempotentElem_starProjection (tangentSpace Y)).eq
-    exact congrArg (fun P : Matrix m n ℝ →L[ℝ] Matrix m n ℝ => P x) h
-  symm x y := Submodule.inner_starProjection_left_eq_right _ x y
-
-lemma tanProj_eq_self_iff {Y Z : Matrix m n ℝ} : tanProj Y Z = Z ↔ Z ∈ tangentSpace Y :=
-  Submodule.starProjection_eq_self_iff
+/-- The fixed points of `Π(Y)` are the tangent vectors `A Y + Y B` (the core
+`tangentProjAt_eq_self_iff`). -/
+lemma tanProj_eq_self_iff {Y Z : Matrix m n ℝ} : tangentProjAt Y Z = Z ↔ Z ∈ tangentSpaceAt Y :=
+  tangentProjAt_eq_self_iff
 
 lemma mem_orthogonal_iff_tanProj {Y N : Matrix m n ℝ} :
-    N ∈ (tangentSpace Y)ᗮ ↔ tanProj Y N = 0 := by
+    N ∈ (tangentSpaceAt Y)ᗮ ↔ tangentProjAt Y N = 0 := by
   constructor
   · intro hN
+    rw [tangentProjAt_eq_starProjection]
     refine Submodule.eq_starProjection_of_mem_of_inner_eq_zero (Submodule.zero_mem _) fun w hw => ?_
     rw [sub_zero, real_inner_comm]
     exact (Submodule.mem_orthogonal _ _).1 hN w hw
@@ -353,7 +337,7 @@ lemma IsFactorization.Ut_mul (h : IsFactorization X U S V) : Uᵀ * X = S * Vᵀ
 
 /-- Fixed points of `tangentProj U V` are exactly the elements of the tangent space. -/
 lemma IsFactorization.mem_tangentSpace_iff (h : IsFactorization X U S V) (Z : Matrix m n ℝ) :
-    Z ∈ tangentSpace X ↔ tangentProj U V Z = Z := by
+    Z ∈ tangentSpaceAt X ↔ tangentProj U V Z = Z := by
   rw [tangentProj_eq_self_iff h.orthU h.orthV]
   constructor
   · rintro ⟨A, B, rfl⟩
@@ -378,22 +362,18 @@ lemma IsFactorization.mem_tangentSpace_iff (h : IsFactorization X U S V) (Z : Ma
 
 /-- **Eq. (1) of arXiv 2309.06125**: the projection onto the tangent space is the library's
 `tangentProj U V`, `Π(X) Z = U Uᵀ Z + Z V Vᵀ - U Uᵀ Z V Vᵀ`. -/
-theorem IsFactorization.tanProj_eq (h : IsFactorization X U S V) : tanProj X = tangentProj U V := by
-  have hP := isOrthProj_tangentProj (m := m) (n := n) h.orthU h.orthV
-  refine ContinuousLinearMap.ext fun q => ?_
-  refine Submodule.eq_starProjection_of_mem_of_inner_eq_zero ?_ fun w hw => ?_
-  · rw [h.mem_tangentSpace_iff]
-    exact hP.idem q
-  · rw [h.mem_tangentSpace_iff] at hw
-    rw [← hw, ← hP.symm, map_sub, hP.idem, sub_self, inner_zero_left]
+theorem IsFactorization.tanProj_eq (h : IsFactorization X U S V) :
+    tangentProjAt X = tangentProj U V := by
+  rw [h.eq]
+  exact tangentProjAt_eq_tangentProj h.orthU h.orthV h.det
 
 lemma IsFactorization.tanProj_apply (h : IsFactorization X U S V) (q : Matrix m n ℝ) :
-    tanProj X q = U * Uᵀ * q + q * V * Vᵀ - U * Uᵀ * q * V * Vᵀ := by
+    tangentProjAt X q = U * Uᵀ * q + q * V * Vᵀ - U * Uᵀ * q * V * Vᵀ := by
   rw [h.tanProj_eq, tangentProj_apply]
 
 /-- A normal vector is annihilated by `Vᵀ` from the right. -/
 lemma IsFactorization.normal_mul_V (h : IsFactorization X U S V) {N : Matrix m n ℝ}
-    (hN : tanProj X N = 0) : N * V = 0 := by
+    (hN : tangentProjAt X N = 0) : N * V = 0 := by
   rw [h.tanProj_apply] at hN
   have h2 := congrArg (· * V) hN
   simp only [Matrix.sub_mul, Matrix.add_mul, Matrix.zero_mul, Matrix.mul_assoc, h.orthV,
@@ -402,7 +382,7 @@ lemma IsFactorization.normal_mul_V (h : IsFactorization X U S V) {N : Matrix m n
 
 /-- A normal vector is annihilated by `Uᵀ` from the left. -/
 lemma IsFactorization.Ut_mul_normal (h : IsFactorization X U S V) {N : Matrix m n ℝ}
-    (hN : tanProj X N = 0) : Uᵀ * N = 0 := by
+    (hN : tangentProjAt X N = 0) : Uᵀ * N = 0 := by
   rw [h.tanProj_apply] at hN
   have h2 := congrArg (Uᵀ * ·) hN
   have e : ∀ B : Matrix (Fin r) n ℝ, Uᵀ * (U * B) = B := fun B => by
@@ -467,7 +447,7 @@ lemma add_base (h : IsTangentRep U V M Up Vp T) (hX : X = U * S * Vᵀ) :
 
 /-- Every matrix with such a representation is tangent. -/
 lemma mem_tangentSpace (hT : IsTangentRep U V M Up Vp T) (h : IsFactorization X U S V) :
-    T ∈ tangentSpace X := by
+    T ∈ tangentSpaceAt X := by
   rw [h.mem_tangentSpace_iff, tangentProj_eq_self_iff h.orthU h.orthV]
   refine ⟨M * Vᵀ + Vpᵀ, Up, ?_⟩
   rw [hT.eq, Matrix.mul_add, Matrix.mul_assoc]
@@ -478,7 +458,7 @@ end IsTangentRep
 /-- Every tangent vector has the representation of arXiv 2309.06125, §2.1, with `M = Uᵀ T V`,
 `U_p = (1 - U Uᵀ) T V`, `V_p = (1 - V Vᵀ) Tᵀ U`. -/
 theorem IsFactorization.tangentRep [DecidableEq m] [DecidableEq n] (h : IsFactorization X U S V)
-    (hT : T ∈ tangentSpace X) :
+    (hT : T ∈ tangentSpaceAt X) :
     IsTangentRep U V (Uᵀ * T * V) ((1 - U * Uᵀ) * T * V) ((1 - V * Vᵀ) * Tᵀ * U) T where
   gaugeU := by
     have e : Uᵀ * (1 - U * Uᵀ) = 0 := by
@@ -713,7 +693,7 @@ theorem kslRetr_eq (h : IsFactorization X U S V) (rep : IsTangentRep U V M Up Vp
 
 /-- The affine slice `X + Z + N_X M_r` of arXiv 2309.06125, eq. (15). -/
 def normalSlice (X Z : Matrix m n ℝ) : Set (Matrix m n ℝ) :=
-  {Y | Y - (X + Z) ∈ (tangentSpace X)ᗮ}
+  {Y | Y - (X + Z) ∈ (tangentSpaceAt X)ᗮ}
 
 /-- A point `Y` of the slice has the same compressions as `X + Z`. -/
 lemma IsFactorization.compressions (h : IsFactorization X U S V) (hY : Y ∈ normalSlice X Z) :
@@ -728,7 +708,7 @@ lemma IsFactorization.compressions (h : IsFactorization X U S V) (hY : Y ∈ nor
 /-- Matrices `U_p B V_pᵀ` are normal at `X`. -/
 lemma IsFactorization.tanProj_Up_mul_Vp (h : IsFactorization X U S V)
     (rep : IsTangentRep U V M Up Vp Z) (B : Matrix (Fin r) (Fin r) ℝ) :
-    tanProj X (Up * B * Vpᵀ) = 0 := by
+    tangentProjAt X (Up * B * Vpᵀ) = 0 := by
   have e1 : Uᵀ * (Up * B * Vpᵀ) = 0 := by
     rw [← Matrix.mul_assoc, ← Matrix.mul_assoc, rep.gaugeU, Matrix.zero_mul, Matrix.zero_mul]
   have e2 : Up * B * Vpᵀ * V = 0 := by
@@ -757,14 +737,14 @@ lemma orthRetr_factor (U : Matrix m (Fin r) ℝ) (V : Matrix n (Fin r) ℝ) (X Z
 /-- The orthographic retraction lies in the slice `X + Z + N_X M_r` of arXiv 2309.06125, eq. (15),
 and has rank `r`. -/
 theorem IsFactorization.orthRetr_mem (h : IsFactorization X U S V)
-    (hZ : Z ∈ tangentSpace X) (hA : IsUnit (Uᵀ * (X + Z) * V).det) :
-    orthRetr U V X Z ∈ normalSlice X Z ∩ rankSet m n r := by
+    (hZ : Z ∈ tangentSpaceAt X) (hA : IsUnit (Uᵀ * (X + Z) * V).det) :
+    orthRetr U V X Z ∈ normalSlice X Z ∩ fixedRankSet m n r := by
   classical
   have rep := h.tangentRep hZ
   have hA' : IsUnit (S + Uᵀ * Z * V).det := by rwa [← h.compression_eq rep]
   have hform := orthRetr_eq h rep hA'
   have hmem : orthRetr U V X Z ∈ normalSlice X Z := by
-    change orthRetr U V X Z - (X + Z) ∈ (tangentSpace X)ᗮ
+    change orthRetr U V X Z - (X + Z) ∈ (tangentSpaceAt X)ᗮ
     rw [hform, add_sub_cancel_left, mem_orthogonal_iff_tanProj]
     exact h.tanProj_Up_mul_Vp rep _
   refine ⟨hmem, ?_⟩
@@ -777,18 +757,18 @@ theorem IsFactorization.orthRetr_mem (h : IsFactorization X U S V)
 `X + Z + N_X M_r` meets `M_r` in exactly one point, the output of Algorithm 4.  In particular the
 minimization problem (15) is well posed; `orthRetr_isMinOn` states it in that form. -/
 theorem IsFactorization.normalSlice_inter_rankSet
-    (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpace X)
+    (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpaceAt X)
     (hA : IsUnit (Uᵀ * (X + Z) * V).det) :
-    normalSlice X Z ∩ rankSet m n r = {orthRetr U V X Z} := by
+    normalSlice X Z ∩ fixedRankSet m n r = {orthRetr U V X Z} := by
   refine Set.eq_singleton_iff_unique_mem.2 ⟨h.orthRetr_mem hZ hA, fun Y hY => ?_⟩
   exact h.eq_orthRetr hY.1 (le_of_eq hY.2) hA
 
 /-- **Eq. (15) of arXiv 2309.06125.**  `R^ORTH_X(Z)` solves
 `min {‖X + Z - Y‖_F : Y ∈ (X + Z + N_X M_r) ∩ M_r}`. -/
 theorem IsFactorization.orthRetr_isMinOn
-    (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpace X)
+    (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpaceAt X)
     (hA : IsUnit (Uᵀ * (X + Z) * V).det) :
-    IsMinOn (fun Y => ‖X + Z - Y‖) (normalSlice X Z ∩ rankSet m n r) (orthRetr U V X Z) := by
+    IsMinOn (fun Y => ‖X + Z - Y‖) (normalSlice X Z ∩ fixedRankSet m n r) (orthRetr U V X Z) := by
   rw [h.normalSlice_inter_rankSet hZ hA]
   exact isMinOn_iff.2 fun Y hY => by rw [Set.mem_singleton_iff.1 hY]
 
@@ -835,8 +815,8 @@ theorem IsFactorization.isUnit_compression
 
 /-- **Eq. (16) of arXiv 2309.06125, left inverse.**  `Π(X) (R^ORTH_X(Z) - X) = Z`. -/
 theorem IsFactorization.tanProj_orthRetr_sub
-    (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpace X)
-    (hA : IsUnit (Uᵀ * (X + Z) * V).det) : tanProj X (orthRetr U V X Z - X) = Z := by
+    (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpaceAt X)
+    (hA : IsUnit (Uᵀ * (X + Z) * V).det) : tangentProjAt X (orthRetr U V X Z - X) = Z := by
   classical
   have rep := h.tangentRep hZ
   have hA' : IsUnit (S + Uᵀ * Z * V).det := by rwa [← h.compression_eq rep]
@@ -848,13 +828,13 @@ compression `Uᵀ Y V` (for instance `‖Y - X‖ < σ_min(S)`, see
 `IsFactorization.isUnit_compression`) satisfies `R^ORTH_X(Π(X) (Y - X)) = Y`. -/
 theorem IsFactorization.orthRetr_tanProj_sub (h : IsFactorization X U S V)
     (hrank : Y.rank ≤ r) (hY : IsUnit (Uᵀ * Y * V).det) :
-    orthRetr U V X (tanProj X (Y - X)) = Y := by
-  set Z := tanProj X (Y - X) with hZ
+    orthRetr U V X (tangentProjAt X (Y - X)) = Y := by
+  set Z := tangentProjAt X (Y - X) with hZ
   have hP := isOrthProj_tanProj X
   have hmem : Y ∈ normalSlice X Z := by
-    change Y - (X + Z) ∈ (tangentSpace X)ᗮ
+    change Y - (X + Z) ∈ (tangentSpaceAt X)ᗮ
     rw [mem_orthogonal_iff_tanProj]
-    have e : Y - (X + Z) = (Y - X) - tanProj X (Y - X) := by rw [← hZ]; abel
+    have e : Y - (X + Z) = (Y - X) - tangentProjAt X (Y - X) := by rw [← hZ]; abel
     rw [e, map_sub, hP.idem, sub_self]
   obtain ⟨-, h2⟩ := h.compressions hmem
   have hB : Uᵀ * (X + Z) * V = Uᵀ * Y * V := by rw [h2]
@@ -1319,7 +1299,7 @@ end
 lemma IsFactorization.curve_props (h : IsFactorization X U S V)
     (rep : IsTangentRep U V M Up Vp Z) {γ c : ℝ → Matrix m n ℝ} (hc : ContDiffAt ℝ 2 c 0)
     (hc0 : c 0 = Up * S⁻¹ * Vpᵀ) (he : ∀ᶠ τ in 𝓝 (0 : ℝ), γ τ = X + τ • Z + τ ^ 2 • c τ) :
-    γ 0 = X ∧ HasDerivAt γ Z 0 ∧ tanProj X (deriv (deriv γ) 0) = 0 ∧
+    γ 0 = X ∧ HasDerivAt γ Z 0 ∧ tangentProjAt X (deriv (deriv γ) 0) = 0 ∧
       ∀ᶠ τ in 𝓝 (0 : ℝ), IsUnit (Uᵀ * γ τ * V).det := by
   obtain ⟨h0, hvel, hacc⟩ := jet_of_expansion hc he
   refine ⟨h0, hvel, ?_, ?_⟩
@@ -1334,19 +1314,19 @@ lemma IsFactorization.curve_props (h : IsFactorization X U S V)
 factors through `ℝ^r` is a second-order retraction on `M_r`. -/
 lemma isSecondOrder_of_curves {R : Matrix m n ℝ → Matrix m n ℝ → Matrix m n ℝ}
     (hR : ∀ (X : Matrix m n ℝ) (U : Matrix m (Fin r) ℝ) (S : Matrix (Fin r) (Fin r) ℝ)
-      (V : Matrix n (Fin r) ℝ), IsFactorization X U S V → ∀ Z ∈ tangentSpace X,
+      (V : Matrix n (Fin r) ℝ), IsFactorization X U S V → ∀ Z ∈ tangentSpaceAt X,
       ContDiffAt ℝ ∞ (fun τ : ℝ => R X (τ • Z)) 0 ∧
       (∀ τ : ℝ, ∃ (P : Matrix m (Fin r) ℝ) (Q : Matrix (Fin r) n ℝ), R X (τ • Z) = P * Q) ∧
       ∃ (M : Matrix (Fin r) (Fin r) ℝ) (Up : Matrix m (Fin r) ℝ) (Vp : Matrix n (Fin r) ℝ)
         (c : ℝ → Matrix m n ℝ), IsTangentRep U V M Up Vp Z ∧ ContDiffAt ℝ 2 c 0 ∧
         c 0 = Up * S⁻¹ * Vpᵀ ∧ ∀ᶠ τ in 𝓝 (0 : ℝ), R X (τ • Z) = X + τ • Z + τ ^ 2 • c τ) :
-    IsSecondOrderRetraction (rankSet m n r) (fun X => (tangentSpace X : Set (Matrix m n ℝ)))
-      (fun X q => tanProj X q) R := by
-  have key : ∀ X ∈ rankSet m n r, ∀ v ∈ tangentSpace X,
+    IsSecondOrderRetraction (fixedRankSet m n r) (fun X => (tangentSpaceAt X : Set (Matrix m n ℝ)))
+      (fun X q => tangentProjAt X q) R := by
+  have key : ∀ X ∈ fixedRankSet m n r, ∀ v ∈ tangentSpaceAt X,
       ContDiffAt ℝ ∞ (fun τ : ℝ => R X (τ • v)) 0 ∧
       R X ((0 : ℝ) • v) = X ∧ HasDerivAt (fun τ : ℝ => R X (τ • v)) v 0 ∧
-      tanProj X (deriv (deriv fun τ : ℝ => R X (τ • v)) 0) = 0 ∧
-      ∀ᶠ τ in 𝓝 (0 : ℝ), R X (τ • v) ∈ rankSet m n r := by
+      tangentProjAt X (deriv (deriv fun τ : ℝ => R X (τ • v)) 0) = 0 ∧
+      ∀ᶠ τ in 𝓝 (0 : ℝ), R X (τ • v) ∈ fixedRankSet m n r := by
     intro X hX v hv
     obtain ⟨U, S, V, h⟩ := exists_factorization (r := r) hX
     obtain ⟨hsm, hfac, M, Up, Vp, c, rep, hc, hc0, he⟩ := hR X U S V h v hv
@@ -1366,8 +1346,8 @@ has acceleration `2 U_p S⁻¹ V_pᵀ ∈ N_X M_r` at `τ = 0`.  "Second-order" 
 `σ̈(0) = Π(X) σ''(0) = 0` (`IsSecondOrderRetraction`); the equivalent characterization (21) by
 `Exp` is not used.  The map is defined on all of `T M_r` by `retrORTH`. -/
 theorem isSecondOrderRetraction_orth :
-    IsSecondOrderRetraction (rankSet m n r) (fun X => (tangentSpace X : Set (Matrix m n ℝ)))
-      (fun X q => tanProj X q) (retrORTH r) := by
+    IsSecondOrderRetraction (fixedRankSet m n r) (fun X => (tangentSpaceAt X : Set (Matrix m n ℝ)))
+      (fun X q => tangentProjAt X q) (retrORTH r) := by
   classical
   refine isSecondOrder_of_curves fun X U S V h Z hZ => ?_
   have rep := h.tangentRep hZ
@@ -1396,8 +1376,8 @@ The comparison with `R^ORTH` is sharper than the paper's `o(t³)`, see
 `klsRetr_sub_orthRetr_isBigO`.  Joint smoothness in the factors is `contDiffAt_klsRetr`, and
 independence of the factorization is `retrKLS_eq`. -/
 theorem isSecondOrderRetraction_kls :
-    IsSecondOrderRetraction (rankSet m n r) (fun X => (tangentSpace X : Set (Matrix m n ℝ)))
-      (fun X q => tanProj X q) (retrKLS r) := by
+    IsSecondOrderRetraction (fixedRankSet m n r) (fun X => (tangentSpaceAt X : Set (Matrix m n ℝ)))
+      (fun X q => tangentProjAt X q) (retrKLS r) := by
   classical
   refine isSecondOrder_of_curves fun X U S V h Z hZ => ?_
   have rep := h.tangentRep hZ
@@ -1424,8 +1404,8 @@ theorem isSecondOrderRetraction_kls :
 /-- **The KSL retraction is a second-order retraction** (arXiv 2309.06125, §3.2, quoted there from
 Absil–Oseledets 2015, Thm 3.3).  Proved directly, as for `isSecondOrderRetraction_kls`. -/
 theorem isSecondOrderRetraction_ksl :
-    IsSecondOrderRetraction (rankSet m n r) (fun X => (tangentSpace X : Set (Matrix m n ℝ)))
-      (fun X q => tanProj X q) (retrKSL r) := by
+    IsSecondOrderRetraction (fixedRankSet m n r) (fun X => (tangentSpaceAt X : Set (Matrix m n ℝ)))
+      (fun X q => tangentProjAt X q) (retrKSL r) := by
   classical
   refine isSecondOrder_of_curves fun X U S V h Z hZ => ?_
   have rep := h.tangentRep hZ
@@ -1451,7 +1431,7 @@ theorem isSecondOrderRetraction_ksl :
 /-- **The KLS retraction agrees with the orthographic one to high order** (the core of the proof of
 Prop. 1 of arXiv 2309.06125).  The paper shows `R^KLS_X(t Z) - R^ORTH_X(t Z) = o(t³)`; the exact
 formula `klsRetr_eq` even gives `O(t⁴)`. -/
-theorem klsRetr_sub_orthRetr_isBigO (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpace X) :
+theorem klsRetr_sub_orthRetr_isBigO (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpaceAt X) :
     (fun τ : ℝ => klsRetr U V X (τ • Z) - orthRetr U V X (τ • Z)) =O[𝓝 0] fun τ => τ ^ 4 := by
   classical
   have rep := h.tangentRep hZ
@@ -1470,14 +1450,14 @@ theorem klsRetr_sub_orthRetr_isBigO (h : IsFactorization X U S V) (hZ : Z ∈ ta
 
 /-- The form stated in the proof of Prop. 1 of arXiv 2309.06125:
 `R^KLS_X(t Z) = R^ORTH_X(t Z) + o(t³)`. -/
-theorem klsRetr_sub_orthRetr_isLittleO (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpace X) :
+theorem klsRetr_sub_orthRetr_isLittleO (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpaceAt X) :
     (fun τ : ℝ => klsRetr U V X (τ • Z) - orthRetr U V X (τ • Z)) =o[𝓝 0] fun τ => τ ^ 3 :=
   (klsRetr_sub_orthRetr_isBigO h hZ).trans_isLittleO
     (Asymptotics.isLittleO_pow_pow (by norm_num))
 
 /-- `R^KSL_X(t Z) = R^ORTH_X(t Z) + O(t³)` (arXiv 2309.06125, §3.2: "coincides modulo third-order
 terms with the orthographic retraction"). -/
-theorem kslRetr_sub_orthRetr_isBigO (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpace X) :
+theorem kslRetr_sub_orthRetr_isBigO (h : IsFactorization X U S V) (hZ : Z ∈ tangentSpaceAt X) :
     (fun τ : ℝ => kslRetr V X (τ • Z) - orthRetr U V X (τ • Z)) =O[𝓝 0] fun τ => τ ^ 3 := by
   classical
   have rep := h.tangentRep hZ
@@ -1733,7 +1713,7 @@ noncomputable abbrev rm (Q : Matrix n n ℝ) : Matrix m n ℝ →L[ℝ] Matrix m
 `colProj (Wᵀ U)`, which depend differentiably on `W`. -/
 lemma tanProj_eq_tangent {W : Matrix m n ℝ} (hrank : W.rank = r)
     (hB : IsUnit (Uᵀ * W * V).det) :
-    tanProj W = tangent (lm (colProj (W * V))) (rm (colProj (Wᵀ * U))) := by
+    tangentProjAt W = tangent (lm (colProj (W * V))) (rm (colProj (Wᵀ * U))) := by
   obtain ⟨U', S', V', h'⟩ := exists_factorization (r := r) hrank
   have h1 : colProj (W * V) = U' * U'ᵀ := h'.colP_eq (C := Uᵀ) hB
   have hB' : IsUnit (Vᵀ * Wᵀ * U).det := by
@@ -1783,7 +1763,7 @@ noncomputable def dTanProj [DecidableEq m] [DecidableEq n] (U : Matrix m (Fin r)
 theorem isProjectorCurve_tanProj [DecidableEq m] [DecidableEq n]
     (h : IsFactorization (Y 0) U S V) (hrank : ∀ᶠ t in 𝓝 (0 : ℝ), (Y t).rank = r)
     (hY : HasDerivAt Y T 0) :
-    IsProjectorCurve (fun t => tanProj (Y t)) (dTanProj U S V T) := by
+    IsProjectorCurve (fun t => tangentProjAt (Y t)) (dTanProj U S V T) := by
   have hcomp : ContinuousAt (fun t => Uᵀ * Y t * V) 0 :=
     (Frobenius.hasDerivAt_mul_const V (Frobenius.hasDerivAt_const_mul Uᵀ hY)).continuousAt
   have hB0 : IsUnit (Uᵀ * Y 0 * V).det := by
@@ -1804,7 +1784,7 @@ theorem isProjectorCurve_tanProj [DecidableEq m] [DecidableEq n]
     ((Frobenius.mulCLM (m := m) (l := n) (n := n)).flip).hasFDerivAt.comp_hasDerivAt 0 hL.1
   have hprod := hLm.clm_comp hRm
   have htan := (hLm.add hRm).sub hprod
-  have hev : (fun t => tanProj (Y t)) =ᶠ[𝓝 0] fun t =>
+  have hev : (fun t => tangentProjAt (Y t)) =ᶠ[𝓝 0] fun t =>
       lm (colProj (Y t * V)) + rm (colProj ((Y t)ᵀ * U)) -
         (lm (colProj (Y t * V))).comp (rm (colProj ((Y t)ᵀ * U))) := by
     filter_upwards [hB, hrank] with t hb hr
@@ -1818,7 +1798,7 @@ theorem isProjectorCurve_tanProj [DecidableEq m] [DecidableEq n]
 arXiv 2309.06125, §2.1, one inclusion). -/
 theorem velocity_mem_tangentSpace (h : IsFactorization (Y 0) U S V)
     (hrank : ∀ᶠ t in 𝓝 (0 : ℝ), (Y t).rank = r) (hY : HasDerivAt Y T 0) :
-    T ∈ tangentSpace (Y 0) := by
+    T ∈ tangentSpaceAt (Y 0) := by
   classical
   have hd := (deriv_left h hrank hY).2
   have hX : Y 0 * (1 - V * Vᵀ) = 0 := by
@@ -1834,9 +1814,9 @@ theorem velocity_mem_tangentSpace (h : IsFactorization (Y 0) U S V)
   rwa [e, add_zero] at this
 
 /-- **The tangent space consists exactly of the velocities of curves on `M_r`**
-(arXiv 2309.06125, §2.1).  This justifies the algebraic definition `tangentSpace`. -/
+(arXiv 2309.06125, §2.1).  This justifies the algebraic definition `tangentSpaceAt`. -/
 theorem mem_tangentSpace_iff_velocity (hX : X.rank = r) (Z : Matrix m n ℝ) :
-    Z ∈ tangentSpace X ↔ ∃ γ : ℝ → Matrix m n ℝ, γ 0 = X ∧
+    Z ∈ tangentSpaceAt X ↔ ∃ γ : ℝ → Matrix m n ℝ, γ 0 = X ∧
       (∀ᶠ t in 𝓝 (0 : ℝ), (γ t).rank = r) ∧ HasDerivAt γ Z 0 := by
   constructor
   · intro hZ
@@ -1893,7 +1873,7 @@ theorem weingarten_diagonal (rep : IsTangentRep U V M Up Vp T) (hU : Uᵀ * U = 
   rw [weingarten_of_rep rep hU hV, Matrix.transpose_nonsing_inv, Matrix.diagonal_transpose]
 
 /-- `DΠ(X)[T]` acts on normal vectors as the Weingarten map. -/
-lemma dTanProj_normal (h : IsFactorization X U S V) (hN : tanProj X N = 0)
+lemma dTanProj_normal (h : IsFactorization X U S V) (hN : tangentProjAt X N = 0)
     (T : Matrix m n ℝ) : dTanProj U S V T N = weingarten U S V T N := by
   have hV0 := h.normal_mul_V hN
   have hU0 := h.Ut_mul_normal hN
@@ -1926,12 +1906,13 @@ is tangent, and it equals `Π DΠ[T] Π⊥ q`.  The paper's vector fields are re
 `pairing_weingarten`. -/
 theorem weingarten_eq_deriv (h : IsFactorization (Y 0) U S V)
     (hrank : ∀ᶠ t in 𝓝 (0 : ℝ), (Y t).rank = r) (hY : HasDerivAt Y T 0)
-    (hq : q - tanProj (Y 0) q = N) :
-    HasDerivAt (fun t => tanProj (Y t) N) (weingarten U S V T N) 0 ∧
-      tanProj (Y 0) (weingarten U S V T N) = weingarten U S V T N ∧
-      weingarten U S V T N = tanProj (Y 0) (dTanProj U S V T (q - tanProj (Y 0) q)) := by
+    (hq : q - tangentProjAt (Y 0) q = N) :
+    HasDerivAt (fun t => tangentProjAt (Y t) N) (weingarten U S V T N) 0 ∧
+      tangentProjAt (Y 0) (weingarten U S V T N) = weingarten U S V T N ∧
+      weingarten U S V T N =
+        tangentProjAt (Y 0) (dTanProj U S V T (q - tangentProjAt (Y 0) q)) := by
   have hP := isProjectorCurve_tanProj h hrank hY
-  have hn : tanProj (Y 0) N = 0 := by
+  have hn : tangentProjAt (Y 0) N = 0 := by
     rw [← hq, map_sub, (isOrthProj_tanProj _).idem, sub_self]
   have e := dTanProj_normal h hn T
   obtain ⟨h1, -⟩ := hP.weingarten_eq hq
@@ -1947,8 +1928,8 @@ field along a curve `Y` on `M_r` with velocity `T`, then for normal `N` the seco
 theorem pairing_weingarten (h : IsFactorization (Y 0) U S V)
     (hrank : ∀ᶠ t in 𝓝 (0 : ℝ), (Y t).rank = r) (hY : HasDerivAt Y T 0)
     {ζ : ℝ → Matrix m n ℝ} {ζ' : Matrix m n ℝ} (hζ : HasDerivAt ζ ζ' 0)
-    (hmem : ∀ᶠ t in 𝓝 (0 : ℝ), ζ t ∈ tangentSpace (Y t)) (hN : tanProj (Y 0) N = 0) :
-    ⟪N, ζ' - tanProj (Y 0) ζ'⟫ = ⟪weingarten U S V T N, ζ 0⟫ := by
+    (hmem : ∀ᶠ t in 𝓝 (0 : ℝ), ζ t ∈ tangentSpaceAt (Y t)) (hN : tangentProjAt (Y 0) N = 0) :
+    ⟪N, ζ' - tangentProjAt (Y 0) ζ'⟫ = ⟪weingarten U S V T N, ζ 0⟫ := by
   have hP := isProjectorCurve_tanProj h hrank hY
   rw [← dTanProj_normal h hN T]
   exact (hP.pairing hζ (hmem.mono fun t ht => tanProj_eq_self_iff.2 ht) hN).1
@@ -2045,22 +2026,23 @@ derivatives of `Y` nor a differentiable factorization are assumed.  The statemen
 which loses nothing because the time origin is arbitrary. -/
 theorem dlra_acceleration [DecidableEq m] [DecidableEq n] (h : IsFactorization (Y 0) U S V)
     (hrank : ∀ᶠ t in 𝓝 (0 : ℝ), (Y t).rank = r)
-    (hode : ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt Y (tanProj (Y t) (F (Y t))) t)
+    (hode : ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt Y (tangentProjAt (Y t) (F (Y t))) t)
     {DF : Matrix m n ℝ →L[ℝ] Matrix m n ℝ} (hF : HasFDerivAt F DF (Y 0)) :
     DifferentiableAt ℝ (deriv Y) 0 ∧
-      tanProj (Y 0) (deriv (deriv Y) 0) =
-        tanProj (Y 0) (DF (tanProj (Y 0) (F (Y 0)))) +
-          weingarten U S V (tanProj (Y 0) (F (Y 0))) (F (Y 0) - tanProj (Y 0) (F (Y 0))) := by
-  set T := tanProj (Y 0) (F (Y 0)) with hT
+      tangentProjAt (Y 0) (deriv (deriv Y) 0) =
+        tangentProjAt (Y 0) (DF (tangentProjAt (Y 0) (F (Y 0)))) +
+          weingarten U S V (tangentProjAt (Y 0) (F (Y 0)))
+            (F (Y 0) - tangentProjAt (Y 0) (F (Y 0))) := by
+  set T := tangentProjAt (Y 0) (F (Y 0)) with hT
   have hY0 : HasDerivAt Y T 0 := hode.self_of_nhds
   have hG : HasDerivAt (fun t => F (Y t)) (DF T) 0 := hF.comp_hasDerivAt 0 hY0
   have hP := isProjectorCurve_tanProj h hrank hY0
   obtain ⟨h1, h2⟩ := hP.acceleration hG
-  have hd : deriv Y =ᶠ[𝓝 0] fun t => tanProj (Y t) (F (Y t)) := by
+  have hd : deriv Y =ᶠ[𝓝 0] fun t => tangentProjAt (Y t) (F (Y t)) := by
     filter_upwards [hode] with t ht using ht.deriv
   have h3 := h1.congr_of_eventuallyEq hd
   refine ⟨h3.differentiableAt, ?_⟩
-  have hN : tanProj (Y 0) (F (Y 0) - T) = 0 := by
+  have hN : tangentProjAt (Y 0) (F (Y 0) - T) = 0 := by
     rw [map_sub, hT, (isOrthProj_tanProj _).idem, sub_self]
   rw [h3.deriv, h2, ← dTanProj_normal h hN T]
 
@@ -2070,10 +2052,10 @@ below.  This bound is not stated in the paper; it follows from `norm_weingarten_
 theorem norm_curvature_term_le [DecidableEq m] [DecidableEq n] (h : IsFactorization X U S V)
     {ρ B ε : ℝ} (hρ : 0 < ρ)
     (hS : ∀ v : EuclideanSpace ℝ (Fin r), ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖)
-    {F₀ : Matrix m n ℝ} (hB : ‖F₀‖ ≤ B) (hε : ‖F₀ - tanProj X F₀‖ ≤ ε) :
-    ‖weingarten U S V (tanProj X F₀) (F₀ - tanProj X F₀)‖ ≤ 2 * B * ε / ρ := by
+    {F₀ : Matrix m n ℝ} (hB : ‖F₀‖ ≤ B) (hε : ‖F₀ - tangentProjAt X F₀‖ ≤ ε) :
+    ‖weingarten U S V (tangentProjAt X F₀) (F₀ - tangentProjAt X F₀)‖ ≤ 2 * B * ε / ρ := by
   refine (norm_weingarten_le h hρ hS _ _).trans ?_
-  have h1 : ‖tanProj X F₀‖ ≤ B := ((isOrthProj_tanProj X).norm_le F₀).trans hB
+  have h1 : ‖tangentProjAt X F₀‖ ≤ B := ((isOrthProj_tanProj X).norm_le F₀).trans hB
   have hB0 : 0 ≤ B := (norm_nonneg _).trans hB
   gcongr
 
@@ -2082,7 +2064,7 @@ theorem norm_curvature_term_le [DecidableEq m] [DecidableEq n] (h : IsFactorizat
 theorem exists_dlra_curve (hX : X.rank = r) :
     (∀ᶠ t in 𝓝 (0 : ℝ), (Real.exp t • X).rank = r) ∧
       ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt (fun t : ℝ => Real.exp t • X)
-        (tanProj (Real.exp t • X) (id (Real.exp t • X))) t := by
+        (tangentProjAt (Real.exp t • X) (id (Real.exp t • X))) t := by
   classical
   obtain ⟨U, S, V, h⟩ := exists_factorization (r := r) hX
   have hf : ∀ t : ℝ, IsFactorization (Real.exp t • X) U (Real.exp t • S) V := fun t =>
@@ -2095,7 +2077,7 @@ theorem exists_dlra_curve (hX : X.rank = r) :
         rw [h.eq]
         simp only [Matrix.smul_mul, Matrix.mul_smul] }
   refine ⟨Eventually.of_forall fun t => (hf t).rank, Eventually.of_forall fun t => ?_⟩
-  have hmem : Real.exp t • X ∈ tangentSpace (Real.exp t • X) := ⟨1, 0, by simp⟩
+  have hmem : Real.exp t • X ∈ tangentSpaceAt (Real.exp t • X) := ⟨1, 0, by simp⟩
   rw [id, tanProj_eq_self_iff.2 hmem]
   exact (Real.hasDerivAt_exp t).smul_const X
 
@@ -2103,18 +2085,18 @@ theorem exists_dlra_curve (hX : X.rank = r) :
 `Y₁ = R_{Y(0)}(Δt Π(Y(0)) F(Y(0)))` has local error `O(Δt²)` with respect to the exact solution of
 `Y' = Π(Y) F(Y)`. -/
 theorem dlra_local_error {R : Matrix m n ℝ → Matrix m n ℝ → Matrix m n ℝ}
-    (hR : IsRetraction (rankSet m n r) (fun X => (tangentSpace X : Set (Matrix m n ℝ))) R)
+    (hR : IsRetraction (fixedRankSet m n r) (fun X => (tangentSpaceAt X : Set (Matrix m n ℝ))) R)
     (hrank : ∀ᶠ t in 𝓝 (0 : ℝ), (Y t).rank = r)
-    (hode : ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt Y (tanProj (Y t) (F (Y t))) t)
+    (hode : ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt Y (tangentProjAt (Y t) (F (Y t))) t)
     (hF : DifferentiableAt ℝ F (Y 0)) :
-    (fun dt : ℝ => Y dt - R (Y 0) (dt • tanProj (Y 0) (F (Y 0)))) =O[𝓝 0]
+    (fun dt : ℝ => Y dt - R (Y 0) (dt • tangentProjAt (Y 0) (F (Y 0)))) =O[𝓝 0]
       fun dt : ℝ => dt ^ 2 := by
   classical
   have hr0 : (Y 0).rank = r := hrank.self_of_nhds
   obtain ⟨U, S, V, hfac⟩ := exists_factorization hr0
   obtain ⟨hdd, -⟩ := dlra_acceleration hfac hrank hode hF.hasFDerivAt
-  have hmem : tanProj (Y 0) (F (Y 0)) ∈ tangentSpace (Y 0) :=
-    Submodule.starProjection_apply_mem _ _
+  have hmem : tangentProjAt (Y 0) (F (Y 0)) ∈ tangentSpaceAt (Y 0) :=
+    tangentProjAt_eq_self_iff.1 ((isOrthProj_tangentProjAt _).idem _)
   exact hR.local_error hr0 hmem (hode.mono fun t ht => ht.differentiableAt) hdd rfl
     hode.self_of_nhds.deriv
 
@@ -2122,9 +2104,9 @@ theorem dlra_local_error {R : Matrix m n ℝ → Matrix m n ℝ → Matrix m n �
 By `isSecondOrderRetraction_orth` and `isSecondOrderRetraction_ksl` the same holds for `R^ORTH` and
 `R^KSL`. -/
 theorem kls_local_error (hrank : ∀ᶠ t in 𝓝 (0 : ℝ), (Y t).rank = r)
-    (hode : ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt Y (tanProj (Y t) (F (Y t))) t)
+    (hode : ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt Y (tangentProjAt (Y t) (F (Y t))) t)
     (hF : DifferentiableAt ℝ F (Y 0)) :
-    (fun dt : ℝ => Y dt - retrKLS r (Y 0) (dt • tanProj (Y 0) (F (Y 0)))) =O[𝓝 0]
+    (fun dt : ℝ => Y dt - retrKLS r (Y 0) (dt • tangentProjAt (Y 0) (F (Y 0)))) =O[𝓝 0]
       fun dt : ℝ => dt ^ 2 :=
   dlra_local_error isSecondOrderRetraction_kls.toIsRetraction hrank hode hF
 
@@ -2139,7 +2121,7 @@ noncomputable def retrSVD [DecidableEq n] (r : ℕ) (X Z : Matrix m n ℝ) : Mat
 
 /-- `X + Z` has rank at most `2 r` for `Z ∈ T_X M_r` (arXiv 2309.06125, §3.1). -/
 theorem rank_add_tangent_le (h : IsFactorization X U S V) {Z : Matrix m n ℝ}
-    (hZ : Z ∈ tangentSpace X) : (X + Z).rank ≤ 2 * r := by
+    (hZ : Z ∈ tangentSpaceAt X) : (X + Z).rank ≤ 2 * r := by
   classical
   have rep := (h.tangentRep hZ).add_base h.eq
   have e : X + Z = Matrix.fromCols (U * (S + Uᵀ * Z * V) + (1 - U * Uᵀ) * Z * V) U *
@@ -2165,7 +2147,7 @@ lemma retrSVD_sub_le [DecidableEq n] (h : IsFactorization X U S V) {Z : Matrix m
 holds for the truncation as defined, whichever singular vectors it picks.  Smoothness of `R^SVD`,
 and hence `IsRetraction`, is not proved here. -/
 theorem retrSVD_curve [DecidableEq n] (h : IsFactorization X U S V) {Z : Matrix m n ℝ}
-    (hZ : Z ∈ tangentSpace X) :
+    (hZ : Z ∈ tangentSpaceAt X) :
     retrSVD r X 0 = X ∧ HasDerivAt (fun τ : ℝ => retrSVD r X (τ • Z)) Z 0 ∧
       (fun τ : ℝ => retrSVD r X (τ • Z) - (X + τ • Z)) =O[𝓝 0] fun τ => τ ^ 2 := by
   classical
@@ -2204,14 +2186,14 @@ theorem retrSVD_curve [DecidableEq n] (h : IsFactorization X U S V) {Z : Matrix 
 This follows from quasi-optimality of the truncated SVD, without using smoothness of `R^SVD`. -/
 theorem projectedEuler_local_error [DecidableEq n]
     (hrank : ∀ᶠ t in 𝓝 (0 : ℝ), (Y t).rank = r)
-    (hode : ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt Y (tanProj (Y t) (F (Y t))) t)
+    (hode : ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt Y (tangentProjAt (Y t) (F (Y t))) t)
     (hF : DifferentiableAt ℝ F (Y 0)) :
-    (fun dt : ℝ => Y dt - retrSVD r (Y 0) (dt • tanProj (Y 0) (F (Y 0)))) =O[𝓝 0]
+    (fun dt : ℝ => Y dt - retrSVD r (Y 0) (dt • tangentProjAt (Y 0) (F (Y 0)))) =O[𝓝 0]
       fun dt : ℝ => dt ^ 2 := by
   classical
   obtain ⟨U, S, V, hfac⟩ := exists_factorization (hrank.self_of_nhds)
   obtain ⟨hdd, -⟩ := dlra_acceleration hfac hrank hode hF.hasFDerivAt
-  set v := tanProj (Y 0) (F (Y 0)) with hv
+  set v := tangentProjAt (Y 0) (F (Y 0)) with hv
   set w : ℝ → Matrix m n ℝ := fun τ => Y 0 + τ • v with hw
   have hwd : ∀ τ, HasDerivAt w v τ := fun τ => by
     have h1 := ((hasDerivAt_id τ).smul_const v).const_add (Y 0)
@@ -2275,15 +2257,15 @@ structure IsEulerKSLStep (F : Matrix m n ℝ → Matrix m n ℝ) (dt : ℝ) (U�
 
 /-- `Π(X) G` and `G` have the same K-step. -/
 lemma IsFactorization.tanProj_mul_V (h : IsFactorization X U₀ S₀ V₀) (G : Matrix m n ℝ) :
-    tanProj X G * V₀ = G * V₀ := by
+    tangentProjAt X G * V₀ = G * V₀ := by
   rw [h.tanProj_apply]
   simp only [Matrix.sub_mul, Matrix.add_mul, Matrix.mul_assoc, h.orthV, Matrix.mul_one]
   abel
 
 /-- `Π(X) G` and `G` have the same L-step. -/
 lemma IsFactorization.tanProj_transpose_mul_U (h : IsFactorization X U₀ S₀ V₀)
-    (G : Matrix m n ℝ) : (tanProj X G)ᵀ * U₀ = Gᵀ * U₀ := by
-  have hU : U₀ᵀ * tanProj X G = U₀ᵀ * G := by
+    (G : Matrix m n ℝ) : (tangentProjAt X G)ᵀ * U₀ = Gᵀ * U₀ := by
+  have hU : U₀ᵀ * tangentProjAt X G = U₀ᵀ * G := by
     have e : ∀ B : Matrix (Fin r) n ℝ, U₀ᵀ * (U₀ * B) = B := fun B => by
       rw [← Matrix.mul_assoc, h.orthU, Matrix.one_mul]
     rw [h.tanProj_apply]
@@ -2298,7 +2280,8 @@ lemma IsFactorization.tanProj_transpose_mul_U (h : IsFactorization X U₀ S₀ V
 `Z = Δt Π(Y₀) F(Y₀)`) compute the same new bases `U₁`, `V₁`. -/
 theorem IsEulerKLSStep.bases_eq
     (hs : IsEulerKLSStep F dt U₀ S₀ V₀ U₁ SU V₁ SV S₁) (h : IsFactorization X U₀ S₀ V₀) :
-    (X + dt • tanProj X (F X)) * V₀ = U₁ * SU ∧ (X + dt • tanProj X (F X))ᵀ * U₀ = V₁ * SV := by
+    (X + dt • tangentProjAt X (F X)) * V₀ = U₁ * SU ∧
+      (X + dt • tangentProjAt X (F X))ᵀ * U₀ = V₁ * SV := by
   have e0 := h.eq
   constructor
   · rw [hs.kStep, ← e0, Matrix.add_mul, h.mul_V, Matrix.smul_mul, h.tanProj_mul_V]
@@ -2312,13 +2295,14 @@ without the second term.  The term vanishes if the S-step sees the tangent vecto
 `eulerKLS_ne_klsRetr`. -/
 theorem IsEulerKLSStep.eq_klsRetr_add (hs : IsEulerKLSStep F dt U₀ S₀ V₀ U₁ SU V₁ SV S₁)
     (h : IsFactorization X U₀ S₀ V₀) :
-    U₁ * S₁ * V₁ᵀ = klsRetr U₀ V₀ X (dt • tanProj X (F X)) +
-      dt • (U₁ * U₁ᵀ * (F (U₁ * (U₁ᵀ * U₀ * S₀ * (V₀ᵀ * V₁)) * V₁ᵀ) - tanProj X (F X)) *
+    U₁ * S₁ * V₁ᵀ = klsRetr U₀ V₀ X (dt • tangentProjAt X (F X)) +
+      dt • (U₁ * U₁ᵀ * (F (U₁ * (U₁ᵀ * U₀ * S₀ * (V₀ᵀ * V₁)) * V₁ᵀ) - tangentProjAt X (F X)) *
         (V₁ * V₁ᵀ)) := by
   classical
   obtain ⟨h1, h2⟩ := hs.bases_eq h
-  have hP : colProj ((X + dt • tanProj X (F X)) * V₀) = U₁ * U₁ᵀ := colP_of_qr hs.orthU₁ hs.detSU h1
-  have hQ : colProj ((X + dt • tanProj X (F X))ᵀ * U₀) = V₁ * V₁ᵀ :=
+  have hP : colProj ((X + dt • tangentProjAt X (F X)) * V₀) = U₁ * U₁ᵀ :=
+    colP_of_qr hs.orthU₁ hs.detSU h1
+  have hQ : colProj ((X + dt • tangentProjAt X (F X))ᵀ * U₀) = V₁ * V₁ᵀ :=
     colP_of_qr hs.orthV₁ hs.detSV h2
   have eX : U₁ * (U₁ᵀ * U₀ * S₀ * (V₀ᵀ * V₁)) * V₁ᵀ = U₁ * U₁ᵀ * X * (V₁ * V₁ᵀ) := by
     rw [h.eq]
@@ -2333,7 +2317,7 @@ tangent vector `G ∈ T_{Y₀} M_r` (for instance `G = Π(Y₀) F(Y₀)`), the K
 `R^KLS_{Y₀}(Δt G) = U₁ U₁ᵀ (Y₀ + Δt G) V₁ V₁ᵀ`. -/
 theorem IsEulerKLSStep.eq_klsRetr_of_const {G : Matrix m n ℝ}
     (hs : IsEulerKLSStep (fun _ => G) dt U₀ S₀ V₀ U₁ SU V₁ SV S₁)
-    (h : IsFactorization X U₀ S₀ V₀) (hG : G ∈ tangentSpace X) :
+    (h : IsFactorization X U₀ S₀ V₀) (hG : G ∈ tangentSpaceAt X) :
     U₁ * S₁ * V₁ᵀ = klsRetr U₀ V₀ X (dt • G) := by
   have e := hs.eq_klsRetr_add h
   simp only [tanProj_eq_self_iff.2 hG, sub_self, Matrix.mul_zero, Matrix.zero_mul, smul_zero,
@@ -2347,13 +2331,14 @@ without the second term; it vanishes for a frozen tangent field
 (`IsEulerKSLStep.eq_kslRetr_of_const`), and not in general (`eulerKSL_ne_kslRetr`). -/
 theorem IsEulerKSLStep.eq_kslRetr_add (hs : IsEulerKSLStep F dt U₀ S₀ V₀ U₁ Sh St V₁ S₁)
     (h : IsFactorization X U₀ S₀ V₀) :
-    U₁ * S₁ * V₁ᵀ = kslRetr V₀ X (dt • tanProj X (F X)) +
+    U₁ * S₁ * V₁ᵀ = kslRetr V₀ X (dt • tangentProjAt X (F X)) +
       dt • (U₁ * U₁ᵀ * (F X * (V₀ * V₀ᵀ) - F (U₁ * Sh * V₀ᵀ) * (V₀ * V₀ᵀ) + F (U₁ * St * V₀ᵀ) -
-        tanProj X (F X))) := by
+        tangentProjAt X (F X))) := by
   classical
-  have h1 : (X + dt • tanProj X (F X)) * V₀ = U₁ * Sh := by
+  have h1 : (X + dt • tangentProjAt X (F X)) * V₀ = U₁ * Sh := by
     rw [hs.kStep, ← h.eq, Matrix.add_mul, h.mul_V, Matrix.smul_mul, h.tanProj_mul_V]
-  have hP : colProj ((X + dt • tanProj X (F X)) * V₀) = U₁ * U₁ᵀ := colP_of_qr hs.orthU₁ hs.detSh h1
+  have hP : colProj ((X + dt • tangentProjAt X (F X)) * V₀) = U₁ * U₁ᵀ :=
+    colP_of_qr hs.orthU₁ hs.detSh h1
   have ht : S₁ * V₁ᵀ = St * V₀ᵀ + dt • (U₁ᵀ * F (U₁ * St * V₀ᵀ)) := by
     have := congrArg Matrix.transpose hs.lStep
     simpa only [Matrix.transpose_mul, Matrix.transpose_add, Matrix.transpose_smul,
@@ -2377,7 +2362,7 @@ theorem IsEulerKSLStep.eq_kslRetr_add (hs : IsEulerKSLStep F dt U₀ S₀ V₀ U
 tangent vector `G ∈ T_{Y₀} M_r`, the KSL scheme is exactly `R^KSL_{Y₀}(Δt G)`. -/
 theorem IsEulerKSLStep.eq_kslRetr_of_const {G : Matrix m n ℝ}
     (hs : IsEulerKSLStep (fun _ => G) dt U₀ S₀ V₀ U₁ Sh St V₁ S₁)
-    (h : IsFactorization X U₀ S₀ V₀) (hG : G ∈ tangentSpace X) :
+    (h : IsFactorization X U₀ S₀ V₀) (hG : G ∈ tangentSpaceAt X) :
     U₁ * S₁ * V₁ᵀ = kslRetr V₀ X (dt • G) := by
   have e := hs.eq_kslRetr_add h
   simp only [tanProj_eq_self_iff.2 hG, sub_self, zero_add, Matrix.mul_zero, smul_zero,
@@ -2430,7 +2415,7 @@ private lemma ex_fact : IsFactorization (r := 1) exX e₁ 1 e₁ where
     ext i j
     fin_cases i <;> fin_cases j <;> simp [exX, e₁, Matrix.mul_apply]
 
-private lemma ex_normal : exG - tanProj exX exG = !![0, 0; 0, 1] := by
+private lemma ex_normal : exG - tangentProjAt exX exG = !![0, 0; 0, 1] := by
   have hP : e₁ * e₁ᵀ = !![1, 0; 0, 0] := by
     ext i j
     fin_cases i <;> fin_cases j <;> simp [e₁, Matrix.mul_apply]
@@ -2464,7 +2449,7 @@ theorem eulerKLS_ne_klsRetr :
     ∃ (X G : Matrix (Fin 2) (Fin 2) ℝ) (U₀ U₁ V₀ V₁ : Matrix (Fin 2) (Fin 1) ℝ)
       (S₀ SU SV S₁ : Matrix (Fin 1) (Fin 1) ℝ),
       IsFactorization X U₀ S₀ V₀ ∧ IsEulerKLSStep (fun _ => G) 1 U₀ S₀ V₀ U₁ SU V₁ SV S₁ ∧
-        U₁ * S₁ * V₁ᵀ ≠ klsRetr U₀ V₀ X ((1 : ℝ) • tanProj X G) := by
+        U₁ * S₁ * V₁ᵀ ≠ klsRetr U₀ V₀ X ((1 : ℝ) • tangentProjAt X G) := by
   have hs : IsEulerKLSStep (fun _ => exG) 1 e₁ 1 e₁ u₁ !![2 * s₂] u₁ !![2 * s₂]
       (u₁ᵀ * e₁ * 1 * (e₁ᵀ * u₁) + (1 : ℝ) • (u₁ᵀ * exG * u₁)) :=
     { orthU₁ := ex_orth
@@ -2495,7 +2480,7 @@ theorem eulerKSL_ne_kslRetr :
     ∃ (X G : Matrix (Fin 2) (Fin 2) ℝ) (U₀ U₁ V₀ V₁ : Matrix (Fin 2) (Fin 1) ℝ)
       (S₀ Sh St S₁ : Matrix (Fin 1) (Fin 1) ℝ),
       IsFactorization X U₀ S₀ V₀ ∧ IsEulerKSLStep (fun _ => G) 1 U₀ S₀ V₀ U₁ Sh St V₁ S₁ ∧
-        U₁ * S₁ * V₁ᵀ ≠ kslRetr V₀ X ((1 : ℝ) • tanProj X G) := by
+        U₁ * S₁ * V₁ᵀ ≠ kslRetr V₀ X ((1 : ℝ) • tangentProjAt X G) := by
   have hGe : exG * e₁ = !![0; 1] := by
     ext i j
     fin_cases i <;> fin_cases j <;> simp [exG, e₁, Matrix.mul_apply, Fin.sum_univ_two]
@@ -2591,5 +2576,18 @@ end BUGConstant
 /-- The local projector `A (Aᵀ A)⁻¹ Aᵀ` of this file, replaced by the core `Matrix.colProj` (the
 same matrix: `Matrix.colProj_def`). -/
 @[deprecated (since := "2026-11-09")] alias colP := Matrix.colProj
+
+/-- The orthogonal projection `Π(Y)` onto the tangent space `T_Y M_r` (arXiv 2309.06125, eq. (1))
+was the local definition `tanProj Y` of this file, the orthogonal projection onto `{A Y + Y B}`.
+It is the core `LeanDLRA.tangentProjAt Y` (equal: `LeanDLRA.tangentProjAt_eq_starProjection`). -/
+@[deprecated (since := "2026-11-10")] alias tanProj := tangentProjAt
+
+/-- The tangent space `T_Y M_r = {A Y + Y B}` was the local definition `tangentSpace Y` of this
+file. It is the core `LeanDLRA.tangentSpaceAt Y` (the same definition). -/
+@[deprecated (since := "2026-11-10")] alias tangentSpace := tangentSpaceAt
+
+/-- The manifold `M_r` of rank-`r` matrices, as a set, was the local definition `rankSet m n r` of
+this file. It is the core `LeanDLRA.fixedRankSet m n r` (the same set). -/
+@[deprecated (since := "2026-11-10")] alias rankSet := fixedRankSet
 
 end LeanDLRA.Literature.P2309_06125

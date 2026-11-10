@@ -3,6 +3,7 @@ import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Training.Descent
 import LeanDLRA.Classical.SVD
 import LeanDLRA.Classical.BestApproximation
+import LeanDLRA.FixedRank.TangentSpace
 import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.LowRankDistance
 import LeanDLRA.Matrix.Orthonormal
@@ -37,9 +38,10 @@ wording: line 7 of Algorithm 2 needs the transposed core (`RiemStep`), and "same
 does not define balanced factorizations (`IsBalanced`).
 
 **Differences from the paper.**  `λ > 0` and `ρ > 0` are assumed, since the step sizes divide by
-them.  The Riemannian gradient is the projection onto `tangentSpaceAt X = {A X + X B}`, which is the
-tangent space of `M_{rank X}`, and equals the range of `P_{U,V}` for `X = U S Vᵀ` with invertible
-`S` (`tangentSpaceAt_eq_of_isUnit`).  QR factors are any factorizations with orthonormal columns.
+them.  The Riemannian gradient is the projection onto the core tangent space
+`LeanDLRA.tangentSpaceAt X = {A X + X B}` (`riemGrad_eq_tangentProjAt`), which is the tangent space
+of `M_{rank X}`, and equals the range of `P_{U,V}` for `X = U S Vᵀ` with invertible `S`
+(`tangentSpaceAt_eq_of_isUnit`).  QR factors are any factorizations with orthonormal columns.
 `ϑ` in the corollaries is any positive lower bound of the `ϑ_ℓ`, which covers the infimum of the
 paper (`theta_iInf_pos`).  Mathlib has no embedded Riemannian manifolds, so the Riemannian Hessian
 of `f|M_k` is given by its formula (`riemHess`), which `taylor_on_rank_le` shows to be the
@@ -311,22 +313,11 @@ structure IsSmooth (f : Matrix m n ℝ → ℝ) (G : Matrix m n ℝ → Matrix m
   hasGrad : ∀ X, HasFDerivAt f (innerSL ℝ (G X)) X
   lipschitz : ∀ X Y, ‖G X - G Y‖ ≤ lam * ‖X - Y‖
 
-/-- The tangent space at `X` to the manifold `M_{rank X}` of matrices of the rank of `X`, namely
+/-- The Riemannian gradient of the paper's Definition: the orthogonal projection of `∇f(X)` onto
+the tangent space to `M_{rank X}` at `X`, which is the core `LeanDLRA.tangentSpaceAt X`, namely
 `{A X + X B}` (the tangent space at `X` of the orbit of `GL_m × GL_n`).  For `X = U S Vᵀ` with
 orthonormal `U`, `V` and invertible `S` this is the range of `P_{U,V}`, see
 `tangentSpaceAt_eq_of_isUnit`. -/
-def tangentSpaceAt (X : Matrix m n ℝ) : Submodule ℝ (Matrix m n ℝ) where
-  carrier := {Z | ∃ (A : Matrix m m ℝ) (B : Matrix n n ℝ), Z = A * X + X * B}
-  add_mem' := by
-    rintro _ _ ⟨A, B, rfl⟩ ⟨A', B', rfl⟩
-    exact ⟨A + A', B + B', by simp only [Matrix.add_mul, Matrix.mul_add]; abel⟩
-  zero_mem' := ⟨0, 0, by simp⟩
-  smul_mem' := by
-    rintro c _ ⟨A, B, rfl⟩
-    exact ⟨c • A, c • B, by simp [Matrix.smul_mul, Matrix.mul_smul, smul_add]⟩
-
-/-- The Riemannian gradient of the paper's Definition: the orthogonal projection of `∇f(X)` onto
-the tangent space to `M_{rank X}` at `X`. -/
 noncomputable def riemGrad (G : Matrix m n ℝ → Matrix m n ℝ) (X : Matrix m n ℝ) : Matrix m n ℝ :=
   (tangentSpaceAt X).starProjection (G X)
 
@@ -3972,5 +3963,13 @@ theorem quadratic_instance {U : Matrix m (Fin k) ℝ} {S : Matrix (Fin k) (Fin k
   · exact (blockConst_le hU hV).trans IsOrthProj.one.opNorm_le
 
 end Instances
+
+/-- **Bridge.** The Riemannian gradient is the core tangent projector at `X` applied to the
+gradient, `riemGrad G X = tangentProjAt X (G X)`: the tangent projector at `X` is the orthogonal
+projection onto `tangentSpaceAt X` (`tangentProjAt_eq_starProjection`). -/
+theorem riemGrad_eq_tangentProjAt {m n : Type*} [Fintype m] [Fintype n]
+    (G : Matrix m n ℝ → Matrix m n ℝ) (X : Matrix m n ℝ) :
+    riemGrad G X = tangentProjAt X (G X) := by
+  rw [tangentProjAt_eq_starProjection, riemGrad]
 
 end LeanDLRA.Literature.P2306_00897

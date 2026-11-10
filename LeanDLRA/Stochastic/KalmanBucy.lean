@@ -81,9 +81,9 @@ The statements `riccatiField_isOneSidedLipschitzOn` and
 as `LeanDLRA.KalmanBucy.riccatiField_isOneSidedLipschitzOn` and
 `LeanDLRA.KalmanBucy.dlrKalmanBucy_covariance_error_uniform`.
 
-The Riccati field `riccatiField`, the rotating mode `rotatingMode`, the analysis-step matrices
-`innovCov`, `kalmanGain`, `analysisCov`, `josephCov` and the projector `diagProj` are defined in
-`LeanDLRA/Filtering/Defs.lean`.
+The Riccati field `LeanDLRA.riccatiField` (root namespace), the rotating mode `rotatingMode`, the
+analysis-step matrices `innovCov`, `kalmanGain`, `analysisCov`, `josephCov` and the projector
+`diagProj` are defined in `LeanDLRA/Filtering/Defs.lean`.
 -/
 
 open Set Filter Topology

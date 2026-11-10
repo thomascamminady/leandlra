@@ -1,3 +1,4 @@
+import LeanDLRA.Analysis.Defs
 import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Classical.SVD
 import LeanDLRA.Foundations.ODE
@@ -1274,5 +1275,12 @@ theorem exists_isRobustDLRTStep {ρ : ℕ} (hm : 2 * ρ ≤ Fintype.card m)
     exact hϑ
 
 end Algorithm
+
+/-- **Bridge.** The convexified gradient `filippovGradR` is the core Filippov regularisation
+`LeanDLRA.filippov` of the field `gradR` with respect to the whole space (`M = Set.univ`). The local
+name is kept: the statements of this file are phrased with it. -/
+theorem filippovGradR_eq_filippov (S : Matrix m r ℝ) :
+    filippovGradR S = filippov gradR Set.univ S := by
+  simp only [filippovGradR, filippov, inter_univ]
 
 end LeanDLRA.Literature.P2505_08022

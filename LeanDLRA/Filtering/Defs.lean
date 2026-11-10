@@ -13,8 +13,8 @@ covariance bounds, Loewner monotonicity of the analysis covariance) and in
 
 ## Main definitions
 
-* `KalmanBucy.riccatiField A ρ Qn`: the field `P ↦ A P + P Aᵀ - ρ P² + Qn` of the Kalman–Bucy
-  covariance equation with full observation `S = ρ I`.
+* `riccatiField A ρ Qn` (root namespace `LeanDLRA`): the field `P ↦ A P + P Aᵀ - ρ P² + Qn` of
+  the Kalman–Bucy covariance equation with full observation `S = ρ I`.
 * `KalmanBucy.innovCov`, `KalmanBucy.kalmanGain`, `KalmanBucy.analysisCov`,
   `KalmanBucy.josephCov`: innovation covariance `C Π Cᵀ + R`, gain `Π Cᵀ S⁻¹`, analysis covariance
   `Π - Π Cᵀ S⁻¹ C Π` and its Joseph form for an arbitrary gain.
@@ -23,13 +23,9 @@ covariance bounds, Loewner monotonicity of the analysis covariance) and in
 * `OpenProblems.Stiff.ensCentering M`, `OpenProblems.Stiff.enkfField`: the ensemble centring matrix
   `I - (1/M) 𝟙𝟙ᵀ` and the deterministic ensemble Kalman–Bucy field.
 
-* `LeanDLRA.riccatiField`: the same field in the root namespace (from
-  `OpenProblems/Curated/StiffAndStochasticDefs.lean`), with the same body as
-  `KalmanBucy.riccatiField`; the two are not merged yet (Phase C, batch C13).
-
-The names and namespaces are those of the files the definitions come from (Phase B of
-`wip/UNIFY.md`: moves only). Inside `namespace LeanDLRA.KalmanBucy` the bare name
-`riccatiField` still means `KalmanBucy.riccatiField` (the innermost namespace wins).
+The other names and namespaces are those of the files the definitions come from. `riccatiField`
+is in the root namespace, so the bare name means the same field in `namespace LeanDLRA.KalmanBucy`
+(the theorems of `Stochastic/KalmanBucy.lean`) and in the catalogue.
 -/
 
 open Set Filter Topology
@@ -41,13 +37,7 @@ open scoped LeanDLRA.Frobenius
 
 variable {d : ℕ}
 
-/-! ### The Riccati field and examples -/
-
-/-- The Kalman–Bucy (differential Riccati) covariance field with full observation `S = ρ I`:
-`R(P) = A P + P Aᵀ - ρ P² + Qn` (model-noise covariance `Qn`).  Used by the statements above. -/
-def riccatiField (A : Matrix (Fin d) (Fin d) ℝ) (ρ : ℝ) (Qn : Matrix (Fin d) (Fin d) ℝ) :
-    ℝ → Matrix (Fin d) (Fin d) ℝ → Matrix (Fin d) (Fin d) ℝ :=
-  fun _ P => A * P + P * Aᵀ - ρ • (P * P) + Qn
+/-! ### The matrices of the worked examples -/
 
 /-- The rotating rank-one DO basis `U(t) = cos t • u₀ + sin t • (A u₀)`. -/
 noncomputable def rotatingMode (A : Matrix (Fin d) (Fin d) ℝ) (u₀ : Matrix (Fin d) (Fin 1) ℝ)
@@ -88,7 +78,7 @@ end Analysis
 
 end LeanDLRA.KalmanBucy
 
-/-! ### The Riccati field in the root namespace -/
+/-! ### The Riccati field -/
 
 namespace LeanDLRA
 

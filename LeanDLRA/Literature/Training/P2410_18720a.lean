@@ -1,4 +1,5 @@
 import LeanDLRA.Dynamics.ContinuousDLRA
+import LeanDLRA.FixedRank.TangentSpace
 import LeanDLRA.Foundations.Existence
 import LeanDLRA.Integrators.Matrix.ParallelBUG
 import LeanDLRA.Matrix.GaugeODE
@@ -15,9 +16,10 @@ import LeanDLRA.LinearAlgebra.Factorization.Defs
 Algorithm 1 of the paper, on real matrices with the Frobenius norm, and its analysis.  One iteration
 is `IsGeoLoRAStep` / `IsGeoLoRAUpdate`: the factor updates (6) with the factor gradients of the
 chain rule, the augmented bases (7), the assembly (8), and any truncation.  `geoWhat_eq` proves
-`Ŵ = W₀ - λ P(W₀) G`, `truncation_spec` the error of the SVD truncation, and `tangentAt` is the
-tangent projector `P(W)` of (18) as a function of `W` alone, with `tangentAt_eq` and a measurability
-proof.  **Thm 6**: `update_eq_euler`, `hasDerivWithinAt_KL_of_factorODE`, `odeSolution_frozen_lift`.
+`Ŵ = W₀ - λ P(W₀) G`, `truncation_spec` the error of the SVD truncation, and the tangent projector
+`P(W)` of (18) as a function of `W` alone is the core `LeanDLRA.tangentProjAt W`, with
+`tangentAt_eq` and a measurability proof.  **Thm 6**: `update_eq_euler`,
+`hasDerivWithinAt_KL_of_factorODE`, `odeSolution_frozen_lift`.
 **Thm 1**: the printed bound is false (`LeanDLRA.StochasticDescent.SameBatchExample`,
 `geoLoRA_bound_false`, `geoLoRA_bound_false_mainText`); `descent_estimate` and
 `descent_estimate_of_variance` are the corrected statements, with expectations on a general
@@ -636,42 +638,19 @@ theorem colProj_eq {r : Type*} [Fintype r] [DecidableEq r] {A : Matrix m n ℝ} 
         Matrix.mul_assoc]
     _ = U * Uᵀ := by rw [h1]
 
-/-- The tangent projector `P(W) Z = P_col Z + Z P_row - P_col Z P_row` of arXiv 2410.18720,
-eq. (18), defined from `W` alone, with `P_col`, `P_row` the orthogonal projectors onto the column
-and row space of `W` (for every `W`, whatever its rank). -/
-noncomputable def tangentAt (W : Matrix m n ℝ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  tangent (Frobenius.leftMulCLM (rangeProj W)) (Frobenius.rightMulCLM (rangeProj Wᵀ))
-
 /-- **`P(W)` is the tangent projector of eq. (18)**: for `W = U S Vᵀ` with orthonormal `U`, `V`
-and invertible `S`, `P(W) = U Uᵀ (·) + (·) V Vᵀ - U Uᵀ (·) V Vᵀ`. -/
+and invertible `S`, `P(W) = U Uᵀ (·) + (·) V Vᵀ - U Uᵀ (·) V Vᵀ`.  Here `P(W)` is the core
+`LeanDLRA.tangentProjAt W`, `P(W) Z = P_col Z + Z P_row - P_col Z P_row` with the orthogonal
+projectors `P_col`, `P_row` onto the column and row space of `W`, defined from `W` alone (for
+every `W`, whatever its rank); the statement is the core `LeanDLRA.tangentProjAt_eq_tangentProj`. -/
 theorem tangentAt_eq {r : Type*} [Fintype r] [DecidableEq r] {U : Matrix m r ℝ}
     {S : Matrix r r ℝ} {V : Matrix n r ℝ} (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
-    (hS : IsUnit S.det) : tangentAt (U * S * Vᵀ) = tangentProj U V := by
-  have h1 : rangeProj (U * S * Vᵀ) = U * Uᵀ :=
-    colProj_eq (B := S * Vᵀ) (B' := V * S⁻¹) hU (Matrix.mul_assoc _ _ _) (by
-      rw [Matrix.mul_assoc, ← Matrix.mul_assoc Vᵀ, hV, Matrix.one_mul,
-        Matrix.mul_nonsing_inv _ hS])
-  have h2 : rangeProj (U * S * Vᵀ)ᵀ = V * Vᵀ :=
-    colProj_eq (B := Sᵀ * Uᵀ) (B' := U * (S⁻¹)ᵀ) hV (by
-      simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]) (by
-      rw [Matrix.mul_assoc, ← Matrix.mul_assoc Uᵀ, hU, Matrix.one_mul, ← Matrix.transpose_mul,
-        Matrix.nonsing_inv_mul _ hS, Matrix.transpose_one])
-  rw [tangentAt, h1, h2]
-  rfl
+    (hS : IsUnit S.det) : tangentProjAt (U * S * Vᵀ) = tangentProj U V :=
+  tangentProjAt_eq_tangentProj hU hV hS
 
 /-- `P(W)` is an orthogonal projector for every `W`. -/
-theorem isOrthProj_tangentAt (W : Matrix m n ℝ) : IsOrthProj (tangentAt W) := by
-  have hP := colProj_spec W
-  have hQ := colProj_spec Wᵀ
-  have hL : IsOrthProj (Frobenius.leftMulCLM (rangeProj W) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
-    ⟨fun X => by simp [← Matrix.mul_assoc, hP.idem], fun X Y => by
-      simp only [Frobenius.leftMulCLM_apply]
-      rw [Frobenius.inner_mul_left, hP.symm]⟩
-  have hR : IsOrthProj (Frobenius.rightMulCLM (rangeProj Wᵀ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
-    ⟨fun X => by simp [Matrix.mul_assoc, hQ.idem], fun X Y => by
-      simp only [Frobenius.rightMulCLM_apply]
-      rw [Frobenius.inner_mul_right, hQ.symm]⟩
-  exact hL.tangent hR fun X => by simp [Matrix.mul_assoc]
+theorem isOrthProj_tangentAt (W : Matrix m n ℝ) : IsOrthProj (tangentProjAt W) :=
+  isOrthProj_tangentProjAt W
 
 /-! Measurability: `P(W)` is a Borel function of `W`, entrywise through Gram–Schmidt. -/
 
@@ -752,17 +731,17 @@ lemma stronglyMeasurable_of_entryMeasurable {f : Ω → Matrix m n ℝ} (hf : En
 
 /-- `(W, Y) ↦ P(W) Y` preserves strong measurability, with respect to any `σ`-algebra. -/
 theorem stronglyMeasurable_tangentAt_apply {W Y : Ω → Matrix m n ℝ} (hW : StronglyMeasurable W)
-    (hY : StronglyMeasurable Y) : StronglyMeasurable fun ω => tangentAt (W ω) (Y ω) := by
+    (hY : StronglyMeasurable Y) : StronglyMeasurable fun ω => tangentProjAt (W ω) (Y ω) := by
   classical
   have hW' := entryMeasurable_of_stronglyMeasurable hW
   have hY' := entryMeasurable_of_stronglyMeasurable hY
   have hP := hW'.colProj
   have hQ := hW'.transpose.colProj
-  have e : (fun ω => tangentAt (W ω) (Y ω)) = fun ω =>
+  have e : (fun ω => tangentProjAt (W ω) (Y ω)) = fun ω =>
       rangeProj (W ω) * Y ω + Y ω * rangeProj (W ω)ᵀ -
         rangeProj (W ω) * (Y ω * rangeProj (W ω)ᵀ) := by
     funext ω
-    simp [tangentAt, tangent_apply]
+    simp [tangentProjAt, tangent_apply]
   rw [e]
   exact stronglyMeasurable_of_entryMeasurable (((hP.mul hY').add (hY'.mul hQ)).sub
     (hP.mul (hY'.mul hQ)))
@@ -1024,12 +1003,12 @@ def IsGeoLoRAUpdate (G : Matrix m n ℝ) (lr : ℝ) (W Wh : Matrix m n ℝ) : Pr
 
 /-- The update of Algorithm 1 is `Ŵ = W - λ P(W) G`, and `P(W)` is an orthogonal projector. -/
 theorem IsGeoLoRAUpdate.eq {G W Wh : Matrix m n ℝ} {lr : ℝ} (h : IsGeoLoRAUpdate G lr W Wh) :
-    Wh = W - lr • tangentAt W G := by
+    Wh = W - lr • tangentProjAt W G := by
   obtain ⟨r, s, s', U, S, V, Ut, Vt, hs, rfl, rfl⟩ := h
   rw [geoWhat_eq hs, tangentAt_eq hs.orthU hs.orthV hs.detS]
 
 theorem IsGeoLoRAUpdate.isOrthProj {G W Wh : Matrix m n ℝ} {lr : ℝ}
-    (h : IsGeoLoRAUpdate G lr W Wh) : IsOrthProj (tangentAt W) := by
+    (h : IsGeoLoRAUpdate G lr W Wh) : IsOrthProj (tangentProjAt W) := by
   obtain ⟨r, s, s', U, S, V, Ut, Vt, hs, rfl, -⟩ := h
   rw [tangentAt_eq hs.orthU hs.orthV hs.detS]
   exact isOrthProj_tangentProj hs.orthU hs.orthV
@@ -1059,11 +1038,11 @@ theorem descent_estimate (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hG2 : Integrable (fun ω => ‖G ω‖ ^ 2) μ) (hmean : ∫ ω, G ω ∂μ = g W₀)
     (hstep : ∀ ω, IsGeoLoRAUpdate (G ω) lr W₀ (Wh ω)) (hW₁ : AEStronglyMeasurable W₁ μ)
     (htr : Integrable (fun ω => ‖W₁ ω - Wh ω‖) μ) :
-    ∫ ω, ℒ (W₁ ω) ∂μ ≤ ℒ W₀ - lr * (1 - β * lr / 2) * ‖tangentAt W₀ (g W₀)‖ ^ 2 +
-      β * lr ^ 2 / 2 * ∫ ω, ‖tangentAt W₀ (G ω - g W₀)‖ ^ 2 ∂μ + B * ∫ ω, ‖W₁ ω - Wh ω‖ ∂μ := by
+    ∫ ω, ℒ (W₁ ω) ∂μ ≤ ℒ W₀ - lr * (1 - β * lr / 2) * ‖tangentProjAt W₀ (g W₀)‖ ^ 2 +
+      β * lr ^ 2 / 2 * ∫ ω, ‖tangentProjAt W₀ (G ω - g W₀)‖ ^ 2 ∂μ + B * ∫ ω, ‖W₁ ω - Wh ω‖ ∂μ := by
   have hne : Nonempty Ω := nonempty_of_isProbabilityMeasure μ
   obtain ⟨ω₀⟩ := hne
-  have hT : IsOrthProj (tangentAt W₀) := (hstep ω₀).isOrthProj
+  have hT : IsOrthProj (tangentProjAt W₀) := (hstep ω₀).isOrthProj
   have hB0 : 0 ≤ B := (norm_nonneg _).trans (hB 0)
   have hGi : Integrable G μ :=
     ((memLp_two_iff_integrable_sq_norm hGm).2 hG2).integrable one_le_two
@@ -1078,19 +1057,19 @@ theorem descent_estimate (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     rw [Real.norm_of_nonneg (by positivity)]
     simp only [Pi.add_apply]
     nlinarith [sq_nonneg (‖G ω‖ - ‖g W₀‖)]
-  have hPD : Integrable (fun ω => ‖tangentAt W₀ (G ω - g W₀)‖ ^ 2) μ := by
-    refine hDsq.mono' (((tangentAt W₀).continuous.comp_aestronglyMeasurable
+  have hPD : Integrable (fun ω => ‖tangentProjAt W₀ (G ω - g W₀)‖ ^ 2) μ := by
+    refine hDsq.mono' (((tangentProjAt W₀).continuous.comp_aestronglyMeasurable
       hDi.aestronglyMeasurable).norm.pow 2) (Eventually.of_forall fun ω => ?_)
     rw [Real.norm_of_nonneg (by positivity)]
     exact pow_le_pow_left₀ (norm_nonneg _) (hT.norm_le _) 2
-  have hWh : ∀ ω, Wh ω = W₀ - lr • tangentAt W₀ (G ω) := fun ω => (hstep ω).eq
+  have hWh : ∀ ω, Wh ω = W₀ - lr • tangentProjAt W₀ (G ω) := fun ω => (hstep ω).eq
   have hL1 : Integrable (fun ω => ℒ (W₁ ω)) μ := by
     refine ((integrable_const |ℒ W₀|).add ((htr.add (hGi.norm.const_mul |lr|)).const_mul B)).mono'
       ((continuous_of_hasFDerivAt_innerSL hℒ).comp_aestronglyMeasurable hW₁)
       (Eventually.of_forall fun ω => ?_)
     have h1 := abs_energy_sub_le hℒ (x := W₁ ω) (z := W₀) (fun w _ => hB w)
     have h2 : ‖W₁ ω - W₀‖ ≤ ‖W₁ ω - Wh ω‖ + |lr| * ‖G ω‖ := by
-      have e : W₁ ω - W₀ = (W₁ ω - Wh ω) - lr • tangentAt W₀ (G ω) := by
+      have e : W₁ ω - W₀ = (W₁ ω - Wh ω) - lr • tangentProjAt W₀ (G ω) := by
         rw [hWh ω]; abel
       rw [e]
       refine (norm_sub_le _ _).trans (add_le_add le_rfl ?_)
@@ -1101,12 +1080,12 @@ theorem descent_estimate (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     simp only [Pi.add_apply, Real.norm_eq_abs]
     refine abs_le.2 ⟨?_, ?_⟩ <;> nlinarith [abs_nonneg (ℒ W₀), le_abs_self (ℒ W₀),
       neg_abs_le (ℒ W₀)]
-  have hYD : ∫ ω, ⟪tangentAt W₀ (g W₀), G ω - g W₀⟫ ∂μ = 0 := by
+  have hYD : ∫ ω, ⟪tangentProjAt W₀ (g W₀), G ω - g W₀⟫ ∂μ = 0 := by
     rw [integral_inner hDi, integral_sub hGi (integrable_const _), hmean]
     simp
-  have htr' : Integrable (fun ω => ‖W₁ ω - (W₀ - lr • tangentAt W₀ (G ω))‖) μ := by
+  have htr' : Integrable (fun ω => ‖W₁ ω - (W₀ - lr • tangentProjAt W₀ (G ω))‖) μ := by
     simpa only [hWh] using htr
-  have h := integral_step_le hℒ hg hB (Pr := fun _ => tangentAt W₀) (fun _ => hT)
+  have h := integral_step_le hℒ hg hB (Pr := fun _ => tangentProjAt W₀) (fun _ => hT)
     (W₀ := fun _ => W₀) lr (integrable_const _) hL1 (integrable_const _)
     (hDi.const_inner _) hPD htr'
   rw [hYD] at h
@@ -1155,8 +1134,8 @@ theorem descent_estimate_of_variance (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ
     (hG2 : Integrable (fun ω => ‖G ω‖ ^ 2) μ) (hmean : ∫ ω, G ω ∂μ = g W₀)
     (hstep : ∀ ω, IsGeoLoRAUpdate (G ω) lr W₀ (Wh ω)) (hW₁ : AEStronglyMeasurable W₁ μ)
     (htr : Integrable (fun ω => ‖W₁ ω - Wh ω‖) μ) :
-    ∫ ω, ℒ (W₁ ω) ∂μ ≤ ℒ W₀ - lr * (1 - β * lr / 2) * ∫ ω, ‖tangentAt W₀ (G ω)‖ ^ 2 ∂μ +
-      lr * ∫ ω, ‖tangentAt W₀ (G ω - g W₀)‖ ^ 2 ∂μ + B * ∫ ω, ‖W₁ ω - Wh ω‖ ∂μ := by
+    ∫ ω, ℒ (W₁ ω) ∂μ ≤ ℒ W₀ - lr * (1 - β * lr / 2) * ∫ ω, ‖tangentProjAt W₀ (G ω)‖ ^ 2 ∂μ +
+      lr * ∫ ω, ‖tangentProjAt W₀ (G ω - g W₀)‖ ^ 2 ∂μ + B * ∫ ω, ‖W₁ ω - Wh ω‖ ∂μ := by
   obtain ⟨ω₀⟩ : Nonempty Ω := nonempty_of_isProbabilityMeasure μ
   have h := descent_estimate hℒ hg hB hGm hG2 hmean hstep hW₁ htr
   rw [integral_norm_sq_split (hstep ω₀).isOrthProj hGm hG2 hmean]
@@ -1191,23 +1170,23 @@ theorem convergence (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hD : ∀ n, ∑ k ∈ range n, ∫ ω, ‖W (k + 1) ω - Wh k ω‖ ∂μ ≤ D)
     (hinf : ∀ x, ℒinf ≤ ℒ x) (hlr0 : ∀ k, 0 ≤ lr k) (hdiv : ¬ Summable lr)
     (hsq : Summable fun k => lr k ^ 2) :
-    liminf (fun k => ∫ ω, ‖tangentAt (W k ω) (g (W k ω))‖ ^ 2 ∂μ) atTop = 0 := by
+    liminf (fun k => ∫ ω, ‖tangentProjAt (W k ω) (g (W k ω))‖ ^ 2 ∂μ) atTop = 0 := by
   have hgc : Continuous g := (LipschitzWith.of_dist_le_mul (K := β.toNNReal) fun x y => by
     rw [Real.coe_toNNReal _ hβ, dist_eq_norm, dist_eq_norm]
     exact hg x y).continuous
-  have hWh : ∀ k ω, Wh k ω = W k ω - lr k • tangentAt (W k ω) (G k ω) := fun k ω =>
+  have hWh : ∀ k ω, Wh k ω = W k ω - lr k • tangentProjAt (W k ω) (G k ω) := fun k ω =>
     (hstep k ω).eq
   have key := fun ε (hε : 0 < ε) N => exists_expected_projGrad_lt hℒ hg hB hβ (ℱ := ℱ) (W := W)
-    (G := G) (Pr := fun k ω => tangentAt (W k ω)) (lr := lr) hW hW0 hGm hG2 hmean hvar
+    (G := G) (Pr := fun k ω => tangentProjAt (W k ω)) (lr := lr) hW hW0 hGm hG2 hmean hvar
     (fun k ω => (hstep k ω).isOrthProj)
     (fun k => stronglyMeasurable_tangentAt_apply (mΩ := ℱ k) (hW k)
       (hgc.comp_stronglyMeasurable (hW k)))
     (fun k => stronglyMeasurable_tangentAt_apply ((hW k).mono (ℱ.le k)) (hGm k))
     (by simpa only [hWh] using htr) (by simpa only [hWh] using hD) hinf hlr0 hdiv hsq hε N
-  set b : ℕ → ℝ := fun k => ∫ ω, ‖tangentAt (W k ω) (g (W k ω))‖ ^ 2 ∂μ with hb
+  set b : ℕ → ℝ := fun k => ∫ ω, ‖tangentProjAt (W k ω) (g (W k ω))‖ ^ 2 ∂μ with hb
   have hb0 : ∀ k, 0 ≤ b k := fun k => integral_nonneg fun ω => by positivity
   have hbB : ∀ k, b k ≤ B ^ 2 := fun k => by
-    have hle : ∀ ω, ‖tangentAt (W k ω) (g (W k ω))‖ ^ 2 ≤ B ^ 2 := fun ω =>
+    have hle : ∀ ω, ‖tangentProjAt (W k ω) (g (W k ω))‖ ^ 2 ≤ B ^ 2 := fun ω =>
       pow_le_pow_left₀ (norm_nonneg _) (((hstep k ω).isOrthProj.norm_le _).trans (hB _)) 2
     calc b k ≤ ∫ _, B ^ 2 ∂μ := by
           refine integral_mono_of_nonneg (Eventually.of_forall fun ω => by positivity)
@@ -1318,7 +1297,7 @@ theorem error_bound (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) (hβ : 
     (hB : ∀ x, ‖g x‖ ≤ B) (hlr : 0 < lr) (hε0 : 0 ≤ ε) (hσ0 : 0 ≤ σ) {N : ℕ}
     {A : ℝ → Matrix m n ℝ} (hA : ODESolution (fun _ x => -g x) A t₀ (t₀ + N * lr))
     {W Wh G : ℕ → Matrix m n ℝ} (hstep : ∀ k < N, IsGeoLoRAUpdate (G k) lr (W k) (Wh k))
-    (hnormal : ∀ k < N, ‖(1 - tangentAt (W k)) (g (W k))‖ ≤ ε)
+    (hnormal : ∀ k < N, ‖(1 - tangentProjAt (W k)) (g (W k))‖ ≤ ε)
     (hnoise : ∀ k < N, ‖G k - g (W k)‖ ≤ σ) (htr : ∀ k < N, ‖W (k + 1) - Wh k‖ ≤ ϑ) {T : ℝ} :
     ∀ k ≤ N, (k : ℝ) * lr ≤ T → ‖W k - A (t₀ + k * lr)‖ ≤
       Real.exp (β * T) * (‖W 0 - A t₀‖ + T * (β * B * lr / 2 + ε + σ) + k * ϑ) := by
@@ -1329,8 +1308,8 @@ theorem error_bound (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) (hβ : 
   obtain ⟨Φ, hΦ⟩ := exists_exactFlowFamily hF hBF (fun _ => continuous_const) (t₀ := t₀) hlr.le W
   classical
   set Pr : ℕ → Matrix m n ℝ →L[ℝ] Matrix m n ℝ := fun k =>
-    if k < N then tangentAt (W k) else 0 with hPr
-  have hPrk : ∀ k < N, Pr k = tangentAt (W k) := fun k hk => by simp [hPr, hk]
+    if k < N then tangentProjAt (W k) else 0 with hPr
+  have hPrk : ∀ k < N, Pr k = tangentProjAt (W k) := fun k hk => by simp [hPr, hk]
   refine GradientFlowConvergence.projectedGradient_global_error (g := G) (Pr := Pr) hg hβ hB hlr.le
     hε0 hσ0 hA (fun k _ => (hΦ k).1) (fun k _ => (hΦ k).2) (fun k => ?_) (fun k hk => ?_) hnoise
     (fun k hk => ?_)
@@ -1435,7 +1414,7 @@ theorem theorem3 (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) (hβ : 0 �
     (hA : ODESolution (fun _ x => -g x) A t₀ (t₀ + N * lr))
     {W Wh : ℕ → Matrix m n ℝ} (hA0 : A t₀ = W 0)
     (hstep : ∀ k < N, IsGeoLoRAUpdate (g (W k)) lr (W k) (Wh k))
-    (hnormal : ∀ k < N, ‖(1 - tangentAt (W k)) (g (W k))‖ ≤ ε)
+    (hnormal : ∀ k < N, ‖(1 - tangentProjAt (W k)) (g (W k))‖ ≤ ε)
     (htr : ∀ k < N, ‖W (k + 1) - Wh k‖ ≤ ϑ) {T : ℝ}
     {U : ℝ → Matrix m r ℝ} {S : ℝ → Matrix r r ℝ} {V : ℝ → Matrix n r ℝ}
     (hU : ODESolution (fun t X => (1 - X * Xᵀ) * (-g (U t * S t * (V t)ᵀ)) * V t * (S t)⁻¹) U t₀
@@ -1709,7 +1688,7 @@ def UniformErrorBound (β B c₁ c₂ c₃ : ℝ) : Prop :=
     (∀ x, |ℒ x| ≤ B) → (∀ x, ‖g x‖ ≤ B) → 0 < lr →
     (∀ T, ODESolution (fun _ x => -g x) A 0 T) → A 0 = W 0 →
     (∀ k, IsGeoLoRAUpdate (g (W k)) lr (W k) (Wh k)) → (∀ k, ‖W (k + 1) - Wh k‖ ≤ ϑ) →
-    (∀ Z, ‖(1 - tangentAt Z) (g Z)‖ < ε) →
+    (∀ Z, ‖(1 - tangentProjAt Z) (g Z)‖ < ε) →
     ∀ k : ℕ, ‖A (k * lr) - W k‖ ≤ c₁ * ε + c₂ * lr + c₃ * ϑ / lr
 
 /-- **Thm 3 of arXiv 2410.18720 is false with constants depending only on `L` and `B`**: for all
@@ -2028,7 +2007,7 @@ lemma flow_bound (hE : IsBlockFamily E) (hF : IsBlockFamily F) {r : Type*} [Fint
     [DecidableEq r] {U : Matrix m r ℝ} {S : Matrix r r ℝ} {V : Matrix n r ℝ} (hU : Uᵀ * U = 1)
     (hV : Vᵀ * V = 1) (hS : IsUnit S.det) {W Z : Matrix m n ℝ} (hW : W = U * S * Vᵀ)
     (hZ : blockMask E F Z = Z) {C G : ℝ} (hC : ‖S⁻¹‖ ≤ C) (hG : ‖Z‖ ≤ G) :
-    ‖(1 - blockMask E F) (-tangentAt W Z)‖ ≤
+    ‖(1 - blockMask E F) (-tangentProjAt W Z)‖ ≤
       16 * Fintype.card ι * C * G * ‖(1 - blockMask E F) W‖ := by
   subst hW
   have h1 := norm_compl_tangentProj_le hE hF hU hV hS hZ
@@ -2055,7 +2034,7 @@ mask `M ⊙ ·` of the paper is `blockMask_adjacency`.  The factors can be taken
 instead: `mem_range_blockMask_of_continuous`. -/
 theorem mem_range_blockMask_of_flow (hE : IsBlockFamily E) (hF : IsBlockFamily F)
     (hg : Continuous g) {Y : ℝ → Matrix m n ℝ} {a b C : ℝ}
-    (hY : ODESolution (fun _ y => -tangentAt y (blockMask E F (g y))) Y a b)
+    (hY : ODESolution (fun _ y => -tangentProjAt y (blockMask E F (g y))) Y a b)
     (hfac : ∀ t ∈ Ico a b, ∃ (r : ℕ) (U : Matrix m (Fin r) ℝ) (S : Matrix (Fin r) (Fin r) ℝ)
       (V : Matrix n (Fin r) ℝ), Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ IsUnit S.det ∧ Y t = U * S * Vᵀ ∧
         ‖S⁻¹‖ ≤ C)
@@ -2066,12 +2045,13 @@ theorem mem_range_blockMask_of_flow (hE : IsBlockFamily E) (hF : IsBlockFamily F
   have hf : ContinuousOn (fun t => (1 - blockMask E F) (Y t)) (Icc a b) :=
     (1 - blockMask E F).continuous.comp_continuousOn hY.cont
   have hf' : ∀ t ∈ Ico a b, HasDerivWithinAt (fun t => (1 - blockMask E F) (Y t))
-      ((1 - blockMask E F) (-tangentAt (Y t) (blockMask E F (g (Y t))))) (Ici t) t := fun t ht =>
-    (1 - blockMask E F).hasFDerivAt.comp_hasDerivWithinAt t (hY.deriv t ht)
+      ((1 - blockMask E F) (-tangentProjAt (Y t) (blockMask E F (g (Y t))))) (Ici t) t :=
+    fun t ht => (1 - blockMask E F).hasFDerivAt.comp_hasDerivWithinAt t (hY.deriv t ht)
   have ha : ‖(1 - blockMask E F) (Y a)‖ ≤ 0 := by
     rw [sub_apply, one_apply_eq_self, h0, sub_self, norm_zero]
-  have bound : ∀ t ∈ Ico a b, ‖(1 - blockMask E F) (-tangentAt (Y t) (blockMask E F (g (Y t))))‖ ≤
-      16 * Fintype.card ι * C * G * ‖(1 - blockMask E F) (Y t)‖ + 0 := fun t ht => by
+  have bound : ∀ t ∈ Ico a b,
+      ‖(1 - blockMask E F) (-tangentProjAt (Y t) (blockMask E F (g (Y t))))‖ ≤
+        16 * Fintype.card ι * C * G * ‖(1 - blockMask E F) (Y t)‖ + 0 := fun t ht => by
     obtain ⟨r, U, S, V, hU, hV, hS, hYt, hC⟩ := hfac t ht
     have hGt : ‖blockMask E F (g (Y t))‖ ≤ G :=
       (hPio.norm_le _).trans (hG t (Ico_subset_Icc_self ht))
@@ -2286,7 +2266,7 @@ theorem tangentAt_stack (hE : IsBlockFamily E) (hF : IsBlockFamily F)
     {U : ∀ i, Matrix m (r i) ℝ} {S : ∀ i, Matrix (r i) (r i) ℝ} {V : ∀ i, Matrix n (r i) ℝ}
     (hU : ∀ i, (U i)ᵀ * U i = 1) (hV : ∀ i, (V i)ᵀ * V i = 1) (hS : ∀ i, IsUnit (S i).det)
     (hEU : ∀ i, E i * U i = U i) (hFV : ∀ i, F i * V i = V i) :
-    tangentAt (∑ i, U i * S i * (V i)ᵀ) = tangentProj (stackCols U) (stackCols V) := by
+    tangentProjAt (∑ i, U i * S i * (V i)ᵀ) = tangentProj (stackCols U) (stackCols V) := by
   classical
   rw [← stack_factorization]
   exact tangentAt_eq (stackCols_orth hE hU hEU) (stackCols_orth hF hV hFV)
@@ -2560,7 +2540,7 @@ interval `[a, b]` with orthonormal `U`, `V`, and `S` continuous and invertible, 
 theorem mem_range_blockMask_of_continuous (hE : IsBlockFamily E) (hF : IsBlockFamily F)
     (hg : Continuous g) {r : ℕ} {U : ℝ → Matrix m (Fin r) ℝ} {S : ℝ → Matrix (Fin r) (Fin r) ℝ}
     {V : ℝ → Matrix n (Fin r) ℝ} {Y : ℝ → Matrix m n ℝ} {a b : ℝ}
-    (hY : ODESolution (fun _ y => -tangentAt y (blockMask E F (g y))) Y a b)
+    (hY : ODESolution (fun _ y => -tangentProjAt y (blockMask E F (g y))) Y a b)
     (hfac : ∀ t ∈ Icc a b, Y t = U t * S t * (V t)ᵀ)
     (hUo : ∀ t ∈ Icc a b, (U t)ᵀ * U t = 1) (hVo : ∀ t ∈ Icc a b, (V t)ᵀ * V t = 1)
     (hdet : ∀ t ∈ Icc a b, IsUnit (S t).det) (hSc : ContinuousOn S (Icc a b))
@@ -2578,7 +2558,7 @@ theorem exists_flow_instance {r : ℕ} {U : Matrix m (Fin r) ℝ} {S : Matrix (F
     {V : Matrix n (Fin r) ℝ}
     (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (hS : IsUnit S.det)
     (hY₀ : blockMask E F (U * S * Vᵀ) = U * S * Vᵀ) (a b : ℝ) :
-    ODESolution (fun _ y => -tangentAt y (blockMask E F y))
+    ODESolution (fun _ y => -tangentProjAt y (blockMask E F y))
         (fun t => Real.exp (-t) • (U * S * Vᵀ)) a b ∧
       ∀ t ∈ Ico a b, ∃ (S' : Matrix (Fin r) (Fin r) ℝ), IsUnit S'.det ∧
         Real.exp (-t) • (U * S * Vᵀ) = U * S' * Vᵀ ∧ ‖S'⁻¹‖ ≤ Real.exp b * ‖S⁻¹‖ := by
@@ -2596,7 +2576,7 @@ theorem exists_flow_instance {r : ℕ} {U : Matrix m (Fin r) ℝ} {S : Matrix (F
     have h1 : HasDerivAt (fun t : ℝ => Real.exp (-t)) (-Real.exp (-t)) t := by
       simpa using (hasDerivAt_neg t).exp
     simpa using h1.smul_const (U * S * Vᵀ)
-  have hfield : ∀ t : ℝ, -tangentAt (Real.exp (-t) • (U * S * Vᵀ))
+  have hfield : ∀ t : ℝ, -tangentProjAt (Real.exp (-t) • (U * S * Vᵀ))
       (blockMask E F (Real.exp (-t) • (U * S * Vᵀ))) = -(Real.exp (-t) • (U * S * Vᵀ)) := by
     intro t
     rw [map_smul, hY₀, hfac t, tangentAt_eq hU hV (hdet t), ← hfac t, map_smul,
@@ -2740,7 +2720,7 @@ lemma wOf_step (ξ lr a : ℝ) :
   ⟨e₁_orth, vOf_orth a, sOf_det a, hat_orth, vHat_orth a, by rw [hat_proj, Matrix.one_mul],
     by rw [vHat_proj, Matrix.one_mul]⟩
 
-lemma tangentAt_wOf (a ξ : ℝ) : tangentAt (wOf a) (ξ • Eo) = ξ • Eo := by
+lemma tangentAt_wOf (a ξ : ℝ) : tangentProjAt (wOf a) (ξ • Eo) = ξ • Eo := by
   rw [← wOf_eq, tangentAt_eq e₁_orth (vOf_orth a) (sOf_det a), map_smul, tangentProj_Eo]
 
 lemma wOf_update (ξ lr a : ℝ) : IsGeoLoRAUpdate (ξ • Eo) lr (wOf a) (wOf (a - lr * ξ)) := by
@@ -2785,7 +2765,7 @@ theorem stochastic_conclusion_false (lr : ℕ → ℝ) :
       (∀ k, ∫ ω, ‖G k ω‖ ^ 2 ∂coins ≤ 1) ∧
       (∀ k ω, IsGeoLoRAUpdate (G k ω) (lr k) (W k ω) (Wh k ω)) ∧
       (∀ k ω, W (k + 1) ω = Wh k ω) ∧
-      liminf (fun k => ∫ ω, ‖tangentAt (W k ω) (G k ω)‖ ^ 2 ∂coins) atTop = 1 := by
+      liminf (fun k => ∫ ω, ‖tangentProjAt (W k ω) (G k ω)‖ ^ 2 ∂coins) atTop = 1 := by
   set G : ℕ → (ℕ → Bool) → Matrix (Fin 2) (Fin 2) ℝ := fun k ω => rad (k + 1) ω • Eo with hG
   set W : ℕ → (ℕ → Bool) → Matrix (Fin 2) (Fin 2) ℝ := fun k ω => wOf (aSeq lr k ω) with hW
   have hnorm : ∀ k ω, ‖G k ω‖ ^ 2 = 1 := fun k ω => by
@@ -2813,8 +2793,8 @@ theorem stochastic_conclusion_false (lr : ℕ → ℝ) :
     exact stronglyMeasurable_const.add (h.smul_const Eo)
   · simp only [hnorm]
     simp
-  · have h : ∀ k, ∫ ω, ‖tangentAt (W k ω) (G k ω)‖ ^ 2 ∂coins = 1 := fun k => by
-      have e : ∀ ω, ‖tangentAt (W k ω) (G k ω)‖ ^ 2 = 1 := fun ω => by
+  · have h : ∀ k, ∫ ω, ‖tangentProjAt (W k ω) (G k ω)‖ ^ 2 ∂coins = 1 := fun k => by
+      have e : ∀ ω, ‖tangentProjAt (W k ω) (G k ω)‖ ^ 2 = 1 := fun ω => by
         rw [hW, hG]
         simp only
         rw [tangentAt_wOf]
@@ -2830,5 +2810,10 @@ end NoiseFloor
 replaced in all statements by the core `Matrix.rangeProj` (equal:
 `gramSchmidtProj_eq_rangeProj`). -/
 @[deprecated (since := "2026-11-09")] alias colProj := Matrix.rangeProj
+
+/-- The tangent projector `P(W)` of arXiv 2410.18720, eq. (18), as a function of `W` alone was
+the local definition `tangentAt W` of this file. It is the core `LeanDLRA.tangentProjAt W` (the
+same term). -/
+@[deprecated (since := "2026-11-10")] alias tangentAt := tangentProjAt
 
 end LeanDLRA.Literature.P2410_18720

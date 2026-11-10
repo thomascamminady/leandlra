@@ -130,5 +130,11 @@
   "LeanDLRA.OpenProblems.TensorNetworks.TreeShape.node.injEq": "LeanDLRA.TreeShape.node.injEq",
   "LeanDLRA.OpenProblems.TensorNetworks.TreeShape.node.sizeOf_spec": "LeanDLRA.TreeShape.node.sizeOf_spec",
   "LeanDLRA.OpenProblems.TensorNetworks.TreeShape.rec": "LeanDLRA.TreeShape.rec",
-  "LeanDLRA.OpenProblems.TensorNetworks.kslModeField": "LeanDLRA.kslModeField"
+  "LeanDLRA.OpenProblems.TensorNetworks.kslModeField": "LeanDLRA.kslModeField",
+  "LeanDLRA.Literature.P2410_18720.tangentAt": "LeanDLRA.tangentProjAt",
+  "LeanDLRA.Literature.P2309_06125.tanProj": "LeanDLRA.tangentProjAt",
+  "LeanDLRA.Literature.P2309_06125.tangentSpace": "LeanDLRA.tangentSpaceAt",
+  "LeanDLRA.Literature.P2306_00897.tangentSpaceAt": "LeanDLRA.tangentSpaceAt",
+  "LeanDLRA.Literature.P2309_06125.rankSet": "LeanDLRA.fixedRankSet",
+  "LeanDLRA.KalmanBucy.riccatiField": "LeanDLRA.riccatiField"
 }

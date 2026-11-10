@@ -67,7 +67,7 @@ variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] {
 
 /-- The normal part `F - Π(X) F = (1 - U Uᵀ) F (1 - V Vᵀ)`. -/
 lemma normal_eq (h : IsFactorization X U S V) (F : Matrix m n ℝ) :
-    F - tanProj X F = (1 - U * Uᵀ) * F * (1 - V * Vᵀ) := by
+    F - tangentProjAt X F = (1 - U * Uᵀ) * F * (1 - V * Vᵀ) := by
   rw [h.tanProj_apply]
   simp only [Matrix.sub_mul, Matrix.mul_sub, Matrix.one_mul, Matrix.mul_one, Matrix.mul_assoc]
   abel
@@ -81,14 +81,14 @@ lemma colCompl_idem (hU : Uᵀ * U = 1) : (1 - U * Uᵀ) * (1 - U * Uᵀ) = 1 - 
 omit [DecidableEq m] in
 /-- The normal part is fixed by `1 - V Vᵀ` from the right. -/
 lemma normal_mul_rowCompl (h : IsFactorization X U S V) (F : Matrix m n ℝ) :
-    (F - tanProj X F) * (1 - V * Vᵀ) = F - tanProj X F := by
+    (F - tangentProjAt X F) * (1 - V * Vᵀ) = F - tangentProjAt X F := by
   classical
   rw [normal_eq h F, Matrix.mul_assoc, rowCompl_idem h.orthV]
 
 omit [DecidableEq n] in
 /-- The normal part is fixed by `1 - U Uᵀ` from the left. -/
 lemma colCompl_mul_normal (h : IsFactorization X U S V) (F : Matrix m n ℝ) :
-    (1 - U * Uᵀ) * (F - tanProj X F) = F - tanProj X F := by
+    (1 - U * Uᵀ) * (F - tangentProjAt X F) = F - tangentProjAt X F := by
   classical
   rw [normal_eq h F, ← Matrix.mul_assoc, ← Matrix.mul_assoc, colCompl_idem h.orthU]
 
@@ -99,11 +99,11 @@ This is eq. (34) of arXiv 2309.06125 with `U_p = (1 - U Uᵀ) F V`, `V_p = (1 - 
 written without the tangent representation; it is the form in which the structure of `F` can be
 used. -/
 theorem weingarten_eq_ginv (h : IsFactorization X U S V) (F : Matrix m n ℝ) :
-    weingarten U S V (tanProj X F) (F - tanProj X F) =
-      (F - tanProj X F) * Fᵀ * (U * (S⁻¹)ᵀ * Vᵀ) +
-        (U * (S⁻¹)ᵀ * Vᵀ) * Fᵀ * (F - tanProj X F) := by
-  set T := tanProj X F with hT
-  set N := F - tanProj X F with hN
+    weingarten U S V (tangentProjAt X F) (F - tangentProjAt X F) =
+      (F - tangentProjAt X F) * Fᵀ * (U * (S⁻¹)ᵀ * Vᵀ) +
+        (U * (S⁻¹)ᵀ * Vᵀ) * Fᵀ * (F - tangentProjAt X F) := by
+  set T := tangentProjAt X F with hT
+  set N := F - tangentProjAt X F with hN
   have hTU : Tᵀ * U = Fᵀ * U := h.tanProj_transpose_mul_U F
   have hTV : T * V = F * V := h.tanProj_mul_V F
   have hN1 : N * (1 - V * Vᵀ) = N := normal_mul_rowCompl h F
@@ -249,12 +249,12 @@ bound `norm_curvature_term_le` of the library, where `B` bounds `‖F‖` and `�
 error. -/
 theorem norm_curvature_term_le_one (h : IsFactorization X U S V) {ρ B ε : ℝ} (hρ : 0 < ρ)
     (hS : ∀ v : EuclideanSpace ℝ (Fin r), ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖)
-    {F : Matrix m n ℝ} (hB : ‖F‖ ≤ B) (hε : ‖F - tanProj X F‖ ≤ ε) :
-    ‖weingarten U S V (tanProj X F) (F - tanProj X F)‖ ≤ B * ε / ρ := by
-  have hN : Uᵀ * (F - tanProj X F) = 0 :=
+    {F : Matrix m n ℝ} (hB : ‖F‖ ≤ B) (hε : ‖F - tangentProjAt X F‖ ≤ ε) :
+    ‖weingarten U S V (tangentProjAt X F) (F - tangentProjAt X F)‖ ≤ B * ε / ρ := by
+  have hN : Uᵀ * (F - tangentProjAt X F) = 0 :=
     h.Ut_mul_normal (by rw [map_sub, (isOrthProj_tanProj X).idem, sub_self])
   refine (norm_weingarten_le_one h hρ hS _ _ hN).trans ?_
-  have h1 : ‖tanProj X F‖ ≤ B := ((isOrthProj_tanProj X).norm_le F).trans hB
+  have h1 : ‖tangentProjAt X F‖ ≤ B := ((isOrthProj_tanProj X).norm_le F).trans hB
   have hB0 : 0 ≤ B := (norm_nonneg _).trans hB
   gcongr
 
@@ -292,7 +292,7 @@ variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] {
 only sees the error `E = A - X`: `N = (1 - U Uᵀ) (L E + E R) (1 - V Vᵀ)`. -/
 theorem normal_linear_eq (h : IsFactorization X U S V) (L : Matrix m m ℝ) (R : Matrix n n ℝ)
     (A : Matrix m n ℝ) :
-    (L * A + A * R) - tanProj X (L * A + A * R) =
+    (L * A + A * R) - tangentProjAt X (L * A + A * R) =
       (1 - U * Uᵀ) * (L * (A - X) + (A - X) * R) * (1 - V * Vᵀ) := by
   rw [normal_eq h]
   have e3 : (1 - U * Uᵀ) * X = 0 := by
@@ -310,7 +310,7 @@ theorem normal_linear_eq (h : IsFactorization X U S V) (L : Matrix m m ℝ) (R :
 /-- `‖N‖ ≤ (‖L‖₂ + ‖R‖₂) ‖A - X‖` for the normal part of `F = L A + A R` at `X`. -/
 theorem norm_normal_linear_le (h : IsFactorization X U S V) (L : Matrix m m ℝ) (R : Matrix n n ℝ)
     (A : Matrix m n ℝ) :
-    ‖(L * A + A * R) - tanProj X (L * A + A * R)‖ ≤ (specNorm L + specNorm R) * ‖A - X‖ := by
+    ‖(L * A + A * R) - tangentProjAt X (L * A + A * R)‖ ≤ (specNorm L + specNorm R) * ‖A - X‖ := by
   rw [normal_linear_eq h]
   have hP := (isOrthProjMat_mul_transpose h.orthU).compl
   have hQ := (isOrthProjMat_mul_transpose h.orthV).compl
@@ -328,14 +328,15 @@ theorem norm_normal_linear_le (h : IsFactorization X U S V) (L : Matrix m m ℝ)
 The pseudo-inverse `G` only meets the error `E`, never `A` itself: `G X = V Vᵀ`, `X G = U Uᵀ`. -/
 theorem weingarten_linear_eq (h : IsFactorization X U S V) (L : Matrix m m ℝ) (R : Matrix n n ℝ)
     (A : Matrix m n ℝ) :
-    weingarten U S V (tanProj X (L * A + A * R)) ((L * A + A * R) - tanProj X (L * A + A * R)) =
-      ((L * A + A * R) - tanProj X (L * A + A * R)) *
+    weingarten U S V (tangentProjAt X (L * A + A * R))
+        ((L * A + A * R) - tangentProjAt X (L * A + A * R)) =
+      ((L * A + A * R) - tangentProjAt X (L * A + A * R)) *
           (Rᵀ * (V * Vᵀ) + (V * S⁻¹ * Uᵀ * L * (A - X))ᵀ + (V * S⁻¹ * Uᵀ * (A - X) * R)ᵀ) +
         (U * Uᵀ * Lᵀ + (L * (A - X) * (V * S⁻¹ * Uᵀ))ᵀ + ((A - X) * R * (V * S⁻¹ * Uᵀ))ᵀ) *
-          ((L * A + A * R) - tanProj X (L * A + A * R)) := by
+          ((L * A + A * R) - tangentProjAt X (L * A + A * R)) := by
   rw [weingarten_eq_ginv h]
   set F := L * A + A * R with hF
-  set N := F - tanProj X F with hN
+  set N := F - tangentProjAt X F with hN
   set G := V * S⁻¹ * Uᵀ with hG
   set E := A - X with hE
   have hGt : U * (S⁻¹)ᵀ * Vᵀ = Gᵀ := by
@@ -390,15 +391,15 @@ The singular values of `X` enter only through the four relative errors `X⁺ L E
 general bound `‖Π F‖ ‖N‖ / σ_r` (`norm_weingarten_le_one`). -/
 theorem norm_weingarten_linear_le (h : IsFactorization X U S V) (L : Matrix m m ℝ)
     (R : Matrix n n ℝ) (A : Matrix m n ℝ) :
-    ‖weingarten U S V (tanProj X (L * A + A * R))
-        ((L * A + A * R) - tanProj X (L * A + A * R))‖ ≤
-      ‖(L * A + A * R) - tanProj X (L * A + A * R)‖ *
+    ‖weingarten U S V (tangentProjAt X (L * A + A * R))
+        ((L * A + A * R) - tangentProjAt X (L * A + A * R))‖ ≤
+      ‖(L * A + A * R) - tangentProjAt X (L * A + A * R)‖ *
         (specNorm L + specNorm R + specNorm (V * S⁻¹ * Uᵀ * L * (A - X)) +
           specNorm (V * S⁻¹ * Uᵀ * (A - X) * R) + specNorm (L * (A - X) * (V * S⁻¹ * Uᵀ)) +
           specNorm ((A - X) * R * (V * S⁻¹ * Uᵀ))) := by
   rw [weingarten_linear_eq h]
   set F := L * A + A * R with hF
-  set N := F - tanProj X F with hN
+  set N := F - tangentProjAt X F with hN
   set G := V * S⁻¹ * Uᵀ with hG
   set E := A - X with hE
   have hPU : IsOrthProjMat (U * Uᵀ) := isOrthProjMat_mul_transpose h.orthU
@@ -448,8 +449,8 @@ independent of `σ_r`: the `1 / σ_r` of the general bound is cancelled by the n
 theorem norm_weingarten_linear_le_sigma (h : IsFactorization X U S V) {ρ : ℝ} (hρ : 0 < ρ)
     (hS : ∀ v : EuclideanSpace ℝ (Fin r), ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖)
     (L : Matrix m m ℝ) (R : Matrix n n ℝ) (A : Matrix m n ℝ) :
-    ‖weingarten U S V (tanProj X (L * A + A * R))
-        ((L * A + A * R) - tanProj X (L * A + A * R))‖ ≤
+    ‖weingarten U S V (tangentProjAt X (L * A + A * R))
+        ((L * A + A * R) - tangentProjAt X (L * A + A * R))‖ ≤
       (specNorm L + specNorm R) ^ 2 * ‖A - X‖ * (1 + 2 * ‖A - X‖ / ρ) := by
   refine (norm_weingarten_linear_le h L R A).trans ?_
   set G := V * S⁻¹ * Uᵀ with hG
@@ -462,7 +463,7 @@ theorem norm_weingarten_linear_le_sigma (h : IsFactorization X U S V) {ρ : ℝ}
   have hE0 := norm_nonneg E
   have hEs0 := specNorm_nonneg E
   have hi0 : 0 ≤ ρ⁻¹ := inv_nonneg.2 hρ.le
-  have hN : ‖(L * A + A * R) - tanProj X (L * A + A * R)‖ ≤ (specNorm L + specNorm R) * ‖E‖ :=
+  have hN : ‖(L * A + A * R) - tangentProjAt X (L * A + A * R)‖ ≤ (specNorm L + specNorm R) * ‖E‖ :=
     norm_normal_linear_le h L R A
   have t1 : specNorm (G * L * E) ≤ ρ⁻¹ * specNorm L * ‖E‖ := by
     calc specNorm (G * L * E) ≤ specNorm (G * L) * specNorm E := specNorm_mul_le _ _
@@ -492,7 +493,7 @@ theorem norm_weingarten_linear_le_sigma (h : IsFactorization X U S V) {ρ : ℝ}
     have := specNorm_nonneg (G * L * E); have := specNorm_nonneg (G * E * R)
     have := specNorm_nonneg (L * E * G); have := specNorm_nonneg (E * R * G)
     linarith
-  calc ‖(L * A + A * R) - tanProj X (L * A + A * R)‖ *
+  calc ‖(L * A + A * R) - tangentProjAt X (L * A + A * R)‖ *
         (specNorm L + specNorm R + specNorm (G * L * E) + specNorm (G * E * R) +
           specNorm (L * E * G) + specNorm (E * R * G))
       ≤ (specNorm L + specNorm R) * ‖E‖ * ((specNorm L + specNorm R) * (1 + 2 * ‖E‖ / ρ)) :=
@@ -576,20 +577,21 @@ theorem weingarten_two_by_two {σ ε : ℝ} (hσ : 0 < σ) :
     let S : Matrix (Fin 1) (Fin 1) ℝ := !![σ]
     let X := U * S * Uᵀ
     let F : Matrix (Fin 2) (Fin 2) ℝ := !![0, 1; 1, ε]
-    tanProj X F = !![0, 1; 1, 0] ∧ F - tanProj X F = !![0, 0; 0, ε] ∧
-      weingarten U S U (tanProj X F) (F - tanProj X F) = !![0, ε / σ; ε / σ, 0] ∧
-      ‖weingarten U S U (tanProj X F) (F - tanProj X F)‖ =
-        ‖tanProj X F‖ * ‖F - tanProj X F‖ / σ := by
+    tangentProjAt X F = !![0, 1; 1, 0] ∧ F - tangentProjAt X F = !![0, 0; 0, ε] ∧
+      weingarten U S U (tangentProjAt X F) (F - tangentProjAt X F) = !![0, ε / σ; ε / σ, 0] ∧
+      ‖weingarten U S U (tangentProjAt X F) (F - tangentProjAt X F)‖ =
+        ‖tangentProjAt X F‖ * ‖F - tangentProjAt X F‖ / σ := by
   intro U S X F
   have h := isFactorization_two hσ.ne'
-  have hT : tanProj X F = !![0, 1; 1, 0] := by
+  have hT : tangentProjAt X F = !![0, 1; 1, 0] := by
     rw [h.tanProj_apply]
     ext i j; fin_cases i <;> fin_cases j <;>
       simp [F, Matrix.mul_apply, Matrix.vecMul, dotProduct, Fin.sum_univ_succ,
         Matrix.transpose_apply]
-  have hN : F - tanProj X F = !![0, 0; 0, ε] := by
+  have hN : F - tangentProjAt X F = !![0, 0; 0, ε] := by
     rw [hT]; ext i j; fin_cases i <;> fin_cases j <;> simp [F]
-  have hW : weingarten U S U (tanProj X F) (F - tanProj X F) = !![0, ε / σ; ε / σ, 0] := by
+  have hW : weingarten U S U (tangentProjAt X F) (F - tangentProjAt X F) =
+      !![0, ε / σ; ε / σ, 0] := by
     rw [hN, hT]
     unfold weingarten
     rw [show S⁻¹ = !![σ⁻¹] from inv_one_by_one hσ.ne']
@@ -651,12 +653,13 @@ theorem weingarten_relative_counterexample {s δ : ℝ} (hs : 0 < s) (hδ : 0 �
     let E : Matrix (Fin 3) (Fin 3) ℝ := !![0, 0, 0; 0, 0, δ; 0, 0, δ]
     let F := L * (X + E) + (X + E) * 0
     IsOrthProjMat L ∧
-      F - tanProj X F = !![0, 0, 0; 0, 0, 0; 0, 0, δ] ∧
-      ‖F - tanProj X F‖ = δ ∧
+      F - tangentProjAt X F = !![0, 0, 0; 0, 0, 0; 0, 0, δ] ∧
+      ‖F - tangentProjAt X F‖ = δ ∧
       U * S⁻¹ * Uᵀ * L * E = !![0, 0, 0; 0, 0, δ / s; 0, 0, 0] ∧
       ‖U * S⁻¹ * Uᵀ * L * E‖ = δ / s ∧
-      weingarten U S U (tanProj X F) (F - tanProj X F) = !![0, 0, 0; 0, 0, 0; 0, δ ^ 2 / s, 0] ∧
-      ‖weingarten U S U (tanProj X F) (F - tanProj X F)‖ = δ ^ 2 / s := by
+      weingarten U S U (tangentProjAt X F) (F - tangentProjAt X F) =
+        !![0, 0, 0; 0, 0, 0; 0, δ ^ 2 / s, 0] ∧
+      ‖weingarten U S U (tangentProjAt X F) (F - tangentProjAt X F)‖ = δ ^ 2 / s := by
   intro U S X L E F
   have h := isFactorization_three hs.ne'
   have hL : IsOrthProjMat L := by
@@ -669,17 +672,17 @@ theorem weingarten_relative_counterexample {s δ : ℝ} (hs : 0 < s) (hδ : 0 �
     change L * (U * S * Uᵀ + E) + (U * S * Uᵀ + E) * 0 = _
     rw [hUt]
     ext i j; fin_cases i <;> fin_cases j <;> simp [L, E, U, S]
-  have hN : F - tanProj X F = !![0, 0, 0; 0, 0, 0; 0, 0, δ] := by
+  have hN : F - tangentProjAt X F = !![0, 0, 0; 0, 0, 0; 0, 0, δ] := by
     rw [hF, h.tanProj_apply, hUt]
     ext i j; fin_cases i <;> fin_cases j <;> simp
   have hSi : S⁻¹ = !![1, 0; 0, s⁻¹] := inv_two_by_two hs.ne'
   have hGE : U * S⁻¹ * Uᵀ * L * E = !![0, 0, 0; 0, 0, δ / s; 0, 0, 0] := by
     rw [hSi, hUt]
     ext i j; fin_cases i <;> fin_cases j <;> simp [U, L, E, div_eq_mul_inv, mul_comm]
-  have hT : tanProj X F = !![0, 0, 0; 0, s, δ; 0, 0, 0] := by
+  have hT : tangentProjAt X F = !![0, 0, 0; 0, s, δ; 0, 0, 0] := by
     rw [hF, h.tanProj_apply, hUt]
     ext i j; fin_cases i <;> fin_cases j <;> simp
-  have hW : weingarten U S U (tanProj X F) (F - tanProj X F) =
+  have hW : weingarten U S U (tangentProjAt X F) (F - tangentProjAt X F) =
       !![0, 0, 0; 0, 0, 0; 0, δ ^ 2 / s, 0] := by
     rw [hN, hT]
     unfold weingarten

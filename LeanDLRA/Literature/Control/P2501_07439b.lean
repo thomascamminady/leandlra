@@ -15,7 +15,7 @@ Corollary A.3); this module builds on it and on the core.
 **Core definitions used.** `LeanDLRA.ODESolution` and the sibling's
 `closedLoop_param_sensitivity` (Corollary A.3) and `closedLoop_speed_antitone` (Proposition A.4)
 for the trajectories; `LeanDLRA.tangentProj` (Matrix/Projectors) for the factor equations;
-`LeanDLRA.KalmanBucy.riccatiField` (Stochastic/KalmanBucy) through the bridge
+`LeanDLRA.riccatiField` (Filtering/Defs) through the bridge
 `riccatiField_eq_riccatiRes`. Matrix norms are Mathlib's operator 2-norm
 (`Matrix.Norms.L2Operator`), the paper's norm in Theorem 3.4; positive (semi)definiteness is
 Mathlib's `Matrix.PosDef`/`Matrix.PosSemidef`.
@@ -23,7 +23,7 @@ Mathlib's `Matrix.PosDef`/`Matrix.PosSemidef`.
 **Local definitions** (the core has no control theory): `IsHurwitz` (stable, Definition 2.1, via
 Mathlib's `spectrum` of the complexified matrix), `IsStabilizable` (Definition 2.1),
 `IsDetectable` (Definition 2.2), `riccatiRes` (the residual (2.7); the core filter field
-`KalmanBucy.riccatiField` is the special case `F = ρ I` of the transposed system,
+`riccatiField` is the special case `F = ρ I` of the transposed system,
 `riccatiField_eq_riccatiRes`), and `colKron` (the column-wise Kronecker square `V_⊗` of
 Section 4.2). The paper's `Q^{1/2}` is replaced by any `C` with `Q = Cᵀ C`; detectability of
 `(A, C)` depends only on `ker C = ker Q`, so this includes `C = Q^{1/2}`.
@@ -1364,8 +1364,8 @@ end Dec
 /-- The core filter Riccati field is the residual (2.7) of the transposed system with
 `F = ρ I`: `A P + P Aᵀ - ρ P² + Qn = riccatiRes Aᵀ (ρ • 1) Qn P`. -/
 theorem riccatiField_eq_riccatiRes {d : ℕ} (A Qn P : Matrix (Fin d) (Fin d) ℝ) (ρ t : ℝ) :
-    KalmanBucy.riccatiField A ρ Qn t P = riccatiRes Aᵀ (ρ • 1) Qn P := by
-  simp [KalmanBucy.riccatiField, riccatiRes]
+    riccatiField A ρ Qn t P = riccatiRes Aᵀ (ρ • 1) Qn P := by
+  simp [riccatiField, riccatiRes]
 
 /-- **Stationary Kalman–Bucy covariances are stabilizing.** If `P ⪰ 0` is a zero of the core
 filter Riccati field `A P + P Aᵀ - ρ P² + Qn` with `ρ ≥ 0`, `Qn = Cᵀ C` and `(Aᵀ, C)`
@@ -1373,7 +1373,7 @@ detectable, then `Aᵀ - ρ P` is Hurwitz (`riccati_closedLoop_isHurwitz` throug
 theorem riccatiField_stationary_isHurwitz {d : ℕ} {k : Type*} [Fintype k]
     {A Qn P : Matrix (Fin d) (Fin d) ℝ} {ρ : ℝ} {C : Matrix k (Fin d) ℝ} (hρ : 0 ≤ ρ)
     (hQ : Qn = Cᵀ * C) (hd : IsDetectable Aᵀ C) (hP : P.PosSemidef)
-    (h : KalmanBucy.riccatiField A ρ Qn 0 P = 0) : IsHurwitz (Aᵀ - ρ • P) := by
+    (h : riccatiField A ρ Qn 0 P = 0) : IsHurwitz (Aᵀ - ρ • P) := by
   rw [riccatiField_eq_riccatiRes] at h
   have hF : (ρ • (1 : Matrix (Fin d) (Fin d) ℝ)).PosSemidef := Matrix.PosSemidef.one.smul hρ
   have := riccati_closedLoop_isHurwitz hF hQ hd hP h
