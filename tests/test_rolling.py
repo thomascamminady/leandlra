@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import subprocess
 import sys
@@ -298,6 +299,113 @@ def test_diff_command_prints_the_counts_for_the_gate(
         .read_text()
         .startswith("# Statement hash diff")
     )
+
+
+def counts(capsys: pytest.CaptureFixture[str]) -> gate.Stats:
+    """The numbers that `rolling.py diff` hands to the gate."""
+    capsys.readouterr()
+    rolling.diff()
+    stats = gate.parse_stats(capsys.readouterr().out)
+    assert stats is not None
+    return stats
+
+
+def with_settled_alias(lib: Library) -> None:
+    """A library whose core kept `f` as a deprecated alias of `g` in an earlier round."""
+    lib.modules[CORE_A] = [
+        thm("core_a", "1 = 1"),
+        define("g", "Nat", "fun x => x"),
+        define("f", "Nat", "g"),
+    ]
+    lib.renames({"f": "g"})
+    rolling.seed()
+
+
+def test_settled_alias_is_not_counted_as_added(
+    lib: Library, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with_settled_alias(lib)
+    lib.round(LIT_X)
+    res = lib.diff()
+    assert res.settled == [("f", CORE_A)]
+    assert (res.aliases, res.appeared, res.renamed) == ([], [], [])
+    assert counts(capsys) == gate.Stats("", 6, 0, 0, 0, 0)
+    assert rolling.accept_round(lib.root)
+    # The next round adds one theorem: one added, whatever aliases are standing.
+    lib.modules[CORE_B].append(thm("new_b", "True"))
+    lib.round()
+    assert lib.diff().settled == [("f", CORE_A)]
+    assert counts(capsys) == gate.Stats("", 5, 0, 0, 1, 0)
+
+
+def test_new_alias_is_counted_as_added_in_its_round_only(
+    lib: Library, capsys: pytest.CaptureFixture[str]
+) -> None:
+    lib.modules[CORE_A] = [
+        thm("core_a", "1 = 1"),
+        define("g", "Nat", "fun x => x"),
+        define("f", "Nat", "g"),
+    ]
+    lib.modules[CORE_B] = [thm("core_b", "g = g")]
+    lib.renames({"f": "g"})
+    lib.round()
+    res = lib.diff()
+    assert res.renamed == [("f", "g")]
+    assert res.aliases == [("f", CORE_A)]
+    assert res.settled == []
+    assert counts(capsys) == gate.Stats("", 4, 0, 0, 1, 0)
+    assert rolling.accept_round(lib.root)
+    lib.round()
+    res = lib.diff()
+    assert (res.renamed, res.aliases) == ([], [])
+    assert res.settled == [("f", CORE_A)]
+    assert counts(capsys) == gate.Stats("", 4, 0, 0, 0, 0)
+
+
+def test_rename_without_alias_adds_nothing(
+    lib: Library, capsys: pytest.CaptureFixture[str]
+) -> None:
+    lib.modules[CORE_A] = [thm("core_a", "1 = 1"), define("g", "Nat", "fun x => x")]
+    lib.modules[CORE_B] = [thm("core_b", "g = g")]
+    lib.round()
+    # Without the map: `f` removed, `g` added, `core_b` changed.
+    assert counts(capsys) == gate.Stats("", 3, 1, 0, 1, 1)
+    lib.renames({"f": "g"})
+    res = lib.diff()
+    assert res.renamed == [("f", "g")]
+    assert (res.aliases, res.settled, res.appeared) == ([], [], [])
+    assert counts(capsys) == gate.Stats("", 3, 0, 0, 0, 0)
+
+
+def test_settled_alias_that_moves_is_moved_not_added(
+    lib: Library, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with_settled_alias(lib)
+    lib.modules[CORE_A] = [thm("core_a", "1 = 1"), define("g", "Nat", "fun x => x")]
+    lib.modules[CORE_B] = [thm("core_b", "f = f"), define("f", "Nat", "g")]
+    lib.round()
+    res = lib.diff()
+    assert res.settled == [("f", CORE_A)]
+    assert res.moved == [("f", CORE_A, CORE_B)]
+    assert counts(capsys) == gate.Stats("", 4, 0, 1, 0, 0)
+
+
+def test_diff_line_has_exactly_the_fields_that_the_gate_reads(
+    lib: Library, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with_settled_alias(lib)
+    lib.round()
+    capsys.readouterr()
+    rolling.diff()
+    out = capsys.readouterr().out
+    last = out.strip().splitlines()[-1]
+    assert last.startswith("HASHDIFF {")
+    fields = {f.name for f in dataclasses.fields(gate.Stats)}
+    assert set(json.loads(last.removeprefix("HASHDIFF "))) == fields
+    assert (
+        "| deprecated alias of an earlier rename (in both dumps, not new) | 1 |" in out
+    )
+    assert "| appeared as deprecated alias (old name in the rename map) | 0 |" in out
 
 
 def test_diff_without_a_round_cannot_run(lib: Library) -> None:

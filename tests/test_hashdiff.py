@@ -36,6 +36,16 @@ def run(
     return hashdiff.compare(iter(before), iter(after), renames or {})
 
 
+def added(res: hashdiff.Result) -> int:
+    """The "added" count of a gate round (``scripts/rolling.py diff``)."""
+    return len(res.appeared) + len(res.aliases)
+
+
+def accounted(res: hashdiff.Result) -> int:
+    """Declarations of the after dump by outcome (dumps without repeated names)."""
+    return res.unchanged + len(res.type_changed) + len(res.value_changed) + added(res)
+
+
 def test_normalize_follows_chains_and_drops_identities() -> None:
     raw = {"A": "B", "B": "C", "D": "D"}
     assert hashdiff.normalize_renames(raw) == {"A": "C", "B": "C"}
@@ -119,6 +129,7 @@ def test_rename_with_deprecated_alias() -> None:
     assert res.failures() == 0
     assert res.renamed == [(A, B)]
     assert res.aliases == [(A, "LeanDLRA.M")]
+    assert res.settled == []
     assert res.unchanged == 2
 
 
@@ -134,7 +145,8 @@ def test_alias_carried_over_from_an_earlier_rename() -> None:
     ]
     res = run(before, after, {A: B})
     assert res.failures() == 0
-    assert res.aliases == [(A, "LeanDLRA.M")]
+    assert res.settled == [(A, "LeanDLRA.M")]
+    assert res.aliases == []
 
 
 def test_settled_alias_of_another_kind_is_not_a_change() -> None:
@@ -147,7 +159,8 @@ def test_settled_alias_of_another_kind_is_not_a_change() -> None:
     res = run(both, list(both), {A: B})
     assert res.failures() == 0
     assert res.renamed == []
-    assert res.aliases == [(A, "LeanDLRA.M")]
+    assert res.settled == [(A, "LeanDLRA.M")]
+    assert res.aliases == []
     assert res.unchanged == 3
 
 
@@ -199,6 +212,144 @@ def test_settled_alias_whose_statement_changes_is_flagged() -> None:
     ]
     res = run(before, after, {A: B})
     assert res.type_changed == [B]
+
+
+# -- what counts as new: settled aliases, new aliases, renames with and without alias ------------
+
+A_APPLY, B_APPLY = A + "_apply", B + "_apply"
+STANDING = [
+    rec(B, "0 ⊢ Nat -> Nat", "def", value="fun (x : Nat) => x"),
+    rec(B_APPLY, f"0 ⊢ forall (x : Nat), Eq ({B} x) x"),
+    rec(A, "0 ⊢ Nat -> Nat", "def", value=B),
+    rec(A_APPLY, f"0 ⊢ forall (x : Nat), Eq ({B} x) x"),
+]
+STANDING_MAP = {A: B, A_APPLY: B_APPLY}
+
+
+def test_settled_aliases_are_not_new() -> None:
+    # A definition and a theorem kept as deprecated aliases by an earlier round.
+    after = [*STANDING, rec("LeanDLRA.fresh", "0 ⊢ True")]
+    res = run(STANDING, after, STANDING_MAP)
+    assert res.failures() == 0
+    assert res.settled == [(A, "LeanDLRA.M"), (A_APPLY, "LeanDLRA.M")]
+    assert res.aliases == []
+    assert res.appeared == [("LeanDLRA.fresh", "LeanDLRA.M")]
+    assert res.renamed == [] and res.moved == [] and res.unapplied == []
+    assert res.unchanged == 4
+    assert added(res) == 1 == res.after_count - res.before_count
+    assert accounted(res) == res.after_count
+
+
+def test_new_alias_is_new_once() -> None:
+    # The round of the rename: the alias is new. Every later round: it is settled.
+    before = [
+        rec(A, "0 ⊢ Nat -> Nat", "def", value="fun (x : Nat) => x"),
+        rec(A_APPLY, f"0 ⊢ forall (x : Nat), Eq ({A} x) x"),
+    ]
+    first = run(before, STANDING, STANDING_MAP)
+    assert first.failures() == 0
+    assert sorted(first.renamed) == [(A, B), (A_APPLY, B_APPLY)]
+    assert sorted(first.aliases) == [(A, "LeanDLRA.M"), (A_APPLY, "LeanDLRA.M")]
+    assert first.settled == [] and first.appeared == []
+    assert added(first) == 2 == first.after_count - first.before_count
+    assert accounted(first) == first.after_count
+    later = run(STANDING, list(STANDING), STANDING_MAP)
+    assert later.failures() == 0
+    assert later.aliases == [] and later.appeared == [] and later.renamed == []
+    assert sorted(later.settled) == sorted(first.aliases)
+    assert added(later) == 0
+    assert accounted(later) == later.after_count
+
+
+def test_new_and_settled_aliases_in_one_comparison() -> None:
+    c, d = "LeanDLRA.Old.c", "LeanDLRA.New.d"
+    before = [*STANDING, rec(c, "0 ⊢ Prop", "def", value="True")]
+    after = [
+        *STANDING,
+        rec(d, "0 ⊢ Prop", "def", value="True"),
+        rec(c, "0 ⊢ Prop", "def", value=d),
+    ]
+    res = run(before, after, {**STANDING_MAP, c: d})
+    assert res.failures() == 0
+    assert res.settled == [(A, "LeanDLRA.M"), (A_APPLY, "LeanDLRA.M")]
+    assert res.aliases == [(c, "LeanDLRA.M")]
+    assert res.renamed == [(c, d)]
+    assert added(res) == 1 == res.after_count - res.before_count
+    assert accounted(res) == res.after_count
+
+
+def test_rename_without_alias() -> None:
+    before = [rec(A, "0 ⊢ Prop", "def", value="True"), rec("LeanDLRA.uses", f"0 ⊢ {A}")]
+    after = [rec(B, "0 ⊢ Prop", "def", value="True"), rec("LeanDLRA.uses", f"0 ⊢ {B}")]
+    res = run(before, after, {A: B})
+    assert res.failures() == 0
+    assert res.renamed == [(A, B)]
+    assert res.aliases == [] and res.settled == [] and res.appeared == []
+    assert added(res) == 0 and res.unchanged == 2
+    # Without the entry in the map: one removed, one added, one changed (as before).
+    res = run(before, after)
+    assert res.disappeared == [(A, "LeanDLRA.M")]
+    assert res.appeared == [(B, "LeanDLRA.M")]
+    assert res.type_changed == ["LeanDLRA.uses"]
+    assert res.aliases == [] and res.settled == []
+
+
+def test_rename_with_alias_but_without_map_entry() -> None:
+    # No entry in the map: the alias is an ordinary declaration whose body changed.
+    before = [rec(A, "0 ⊢ Prop", "def", value="True")]
+    after = [
+        rec(B, "0 ⊢ Prop", "def", value="True"),
+        rec(A, "0 ⊢ Prop", "def", value=B),
+    ]
+    res = run(before, after)
+    assert res.value_changed == [A]
+    assert res.appeared == [(B, "LeanDLRA.M")]
+    assert res.aliases == [] and res.settled == []
+
+
+def test_settled_alias_that_is_removed_disappears() -> None:
+    res = run(STANDING, STANDING[:2], STANDING_MAP)
+    assert sorted(res.renamed) == [(A, B), (A_APPLY, B_APPLY)]
+    assert res.failures() == 0  # the old names are found under their targets
+    assert res.aliases == [] and res.settled == [] and res.appeared == []
+    # Removed together with its map entry, an alias is a removed declaration.
+    res = run(STANDING, STANDING[:2])
+    assert res.disappeared == [(A, "LeanDLRA.M"), (A_APPLY, "LeanDLRA.M")]
+
+
+def test_report_lists_new_and_settled_aliases_apart(tmp_path: Path) -> None:
+    c, d = "LeanDLRA.Old.c", "LeanDLRA.New.d"
+    before = [*STANDING, rec(c, "0 ⊢ Prop", "def", value="True")]
+    after = [
+        *STANDING,
+        rec(d, "0 ⊢ Prop", "def", value="True"),
+        rec(c, "0 ⊢ Prop", "def", value=d),
+    ]
+    renames = {**STANDING_MAP, c: d}
+    text = hashdiff.render(
+        run(before, after, renames),
+        tmp_path / "before",
+        tmp_path / "after",
+        ({}, {}),
+        tmp_path / "renames.json",
+        renames,
+        False,
+        40,
+    )
+    lines = text.splitlines()
+    assert "| appeared | 0 |" in lines
+    assert "| appeared as deprecated alias (old name in the rename map) | 1 |" in lines
+    assert (
+        "| deprecated alias of an earlier rename (in both dumps, not new) | 2 |"
+        in lines
+    )
+    new_at = lines.index("## Deprecated aliases")
+    old_at = lines.index("## Deprecated aliases of earlier renames (in both dumps)")
+    assert lines[new_at + 2 : old_at - 1] == [f"- `{c}` (LeanDLRA.M)"]
+    assert lines[old_at + 2 : old_at + 4] == [
+        f"- `{A}` (LeanDLRA.M)",
+        f"- `{A_APPLY}` (LeanDLRA.M)",
+    ]
 
 
 def test_rename_target_missing_is_reported() -> None:
@@ -265,3 +416,92 @@ def test_library_modules_and_unlisted_sources(tmp_path: Path) -> None:
     everything = hashdiff.library_modules(tmp_path)
     assert everything == ["LeanDLRA.A.B", "LeanDLRA.A.C"]
     assert hashdiff.unlisted_sources(everything, tmp_path) == []
+
+
+# Generated proof constants (T2): a remark in the report, never a change of the counts.
+
+OWN = "LeanDLRA.thinU._proof_1"
+OTHER = "LeanDLRA.svTail._proof_1"
+
+
+def test_number_proofs_names_by_first_occurrence() -> None:
+    text = f"f ({OTHER}.{{u0}} x) ({OWN} x) ({OTHER}.{{u0}} y) Nat.succ._proof_2"
+    assert hashdiff.number_proofs(text) == (
+        "f (_proof#1.{u0} x) (_proof#2 x) (_proof#1.{u0} y) _proof#3"
+    )
+    # Not a generated proof: a longer name, a matcher, a user name that only contains the word.
+    for other in ("A._proof_1.b", "A.match_1", "A.my_proof_1", "A._proof_x"):
+        assert hashdiff.number_proofs(f"f ({other} x)") == f"f ({other} x)"
+
+
+def test_proof_names_only() -> None:
+    renamed = (f"f ({OTHER} x) ({OTHER} y)", f"f ({OWN} x) ({OWN} y)")
+    assert hashdiff.proof_names_only(*renamed)
+    # The same text is no difference at all.
+    assert not hashdiff.proof_names_only(renamed[0], renamed[0])
+    # Two proofs that were one, or one that were two: the sharing pattern differs.
+    assert not hashdiff.proof_names_only(
+        f"f ({OTHER} x) ({OTHER} y)", f"f ({OWN} x) ({OTHER} y)"
+    )
+    # Anything else that differs is a difference.
+    assert not hashdiff.proof_names_only(f"f ({OTHER} x)", f"g ({OWN} x)")
+    assert not hashdiff.proof_names_only("f (A.match_1 x)", "f (B.match_1 x)")
+    assert not hashdiff.proof_names_only("f (A._f x)", "f (B._f x)")
+
+
+def write_dump(path: Path, records: list[dict[str, Any]]) -> Path:
+    with hashdiff.open_text(path, "w") as f:
+        f.write(json.dumps({"format": hashdiff.FORMAT}) + "\n")
+        for r in records:
+            f.write(json.dumps(r) + "\n")
+    return path
+
+
+def test_report_remarks_on_generated_names_and_counts_them_as_before(
+    tmp_path: Path,
+) -> None:
+    d, e, t = "LeanDLRA.thinU", "LeanDLRA.other", "LeanDLRA.thm"
+    before = [
+        rec(d, "0 ⊢ Nat", "def", value=f"g ({OTHER} x)"),
+        rec(e, "0 ⊢ Nat", "def", value="g 1"),
+        rec(t, f"0 ⊢ P ({OTHER} x)"),
+        rec("LeanDLRA.old.match_1", "0 ⊢ Nat", "def", value="m"),
+    ]
+    after = [
+        rec(d, "0 ⊢ Nat", "def", value=f"g ({OWN} x)"),
+        rec(e, "0 ⊢ Nat", "def", value="g 2"),
+        rec(t, f"0 ⊢ P ({OWN} x)"),
+        rec("LeanDLRA.thm.match_1_1", "0 ⊢ Nat", "def", value="m"),
+    ]
+    res = run(before, after)
+    # The counts of the comparison do not know the remark.
+    assert res.type_changed == [t]
+    assert res.value_changed == [d, e]
+    assert [n for n, _ in res.disappeared] == ["LeanDLRA.old.match_1"]
+    assert [n for n, _ in res.appeared] == ["LeanDLRA.thm.match_1_1"]
+    text = hashdiff.render(
+        res,
+        write_dump(tmp_path / "before.jsonl.gz", before),
+        write_dump(tmp_path / "after.jsonl.gz", after),
+        ({}, {}),
+        tmp_path / "renames.json",
+        {},
+        False,
+        40,
+    )
+    lines = text.splitlines()
+    note = " — only names of generated proofs (`X._proof_n`) differ"
+    assert "| **type changed** | 1 |" in lines
+    assert "| **definition body changed** | 2 |" in lines
+    assert "| of the changed: only names of generated proofs differ | 2 |" in lines
+    assert f"- `{t}`{note}" in lines
+    assert f"- `{d}`{note}" in lines
+    assert f"- `{e}`" in lines
+    assert (
+        "- `LeanDLRA.thm.match_1_1` (LeanDLRA.M) — name of a generated matcher of "
+        "`LeanDLRA.thm`" in lines
+    )
+    assert (
+        "- `LeanDLRA.old.match_1` (LeanDLRA.M) — name of a generated matcher of "
+        "`LeanDLRA.old`" in lines
+    )

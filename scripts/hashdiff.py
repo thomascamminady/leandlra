@@ -31,8 +31,9 @@ the file name ends in ``.gz``.
 declaration names and to every constant in the texts of both dumps, then reports every declaration
 whose type (or definition body) changed, disappeared or appeared. Each old declaration is compared
 with its new name. New declarations named like an old name in the map are the deprecated aliases
-a rename leaves behind. With ``--move`` the exit status is 1 if any type or body changed or any
-declaration disappeared: a move must not change what anything says.
+a rename leaves behind; they are listed apart from the aliases of earlier renames, which are in
+both dumps and are not new. With ``--move`` the exit status is 1 if any type or body changed or
+any declaration disappeared: a move must not change what anything says.
 """
 
 from __future__ import annotations
@@ -279,7 +280,15 @@ class Decl:
 
 @dataclass
 class Result:
-    """The outcome of comparing two dumps."""
+    """The outcome of comparing two dumps.
+
+    ``aliases`` and ``settled`` are disjoint. ``aliases`` are declarations that are new in the
+    after dump under an old name of the rename map (what a rename of this comparison leaves
+    behind). ``settled`` are the leftovers of earlier renames: declarations under an old name of
+    the map that are in both dumps, the same in both, next to their target. A settled leftover is
+    compared under its own name like any other declaration of both dumps (it is counted in
+    ``unchanged``, and listed in ``moved`` if it changed its module); it is not new.
+    """
 
     before_count: int = 0
     after_count: int = 0
@@ -291,6 +300,7 @@ class Result:
     disappeared: list[tuple[str, str]] = field(default_factory=list)
     appeared: list[tuple[str, str]] = field(default_factory=list)
     aliases: list[tuple[str, str]] = field(default_factory=list)
+    settled: list[tuple[str, str]] = field(default_factory=list)
     unapplied: list[tuple[str, str]] = field(default_factory=list)
 
     def failures(self) -> int:
@@ -350,9 +360,11 @@ def compare(
     An entry ``old → new`` of the map is applied to an old declaration ``old`` only while the
     rename is being carried out. Once it is settled, that is, ``new`` exists in the old dump too
     and ``old`` is the same declaration in both dumps (what an earlier rename left behind: a
-    deprecated alias, or a specialization of ``new``), ``old`` is compared under its own name.
-    Otherwise a leftover of another kind or type than its target (a ``def`` that abbreviates a
-    structure) would be reported as a changed type in every later comparison.
+    deprecated alias, or a specialization of ``new``), ``old`` is compared under its own name
+    and listed in ``settled``. Otherwise a leftover of another kind or type than its target (a
+    ``def`` that abbreviates a structure) would be reported as a changed type in every later
+    comparison. Only a declaration of the after dump that has no counterpart in the before dump
+    is listed in ``appeared`` or, under an old name of the map, in ``aliases``.
     """
     rename = make_renamer(renames)
     res = Result()
@@ -381,7 +393,7 @@ def compare(
             same_content(own, d) for d in new.get(name, [])
         ):
             old[name].append(own)
-            res.aliases.append((name, own.module))
+            res.settled.append((name, own.module))
         else:
             res.renamed.append((name, target))
             old[target].append(mapped)
@@ -409,6 +421,37 @@ def compare(
         bucket = res.aliases if key in renames else res.appeared
         bucket += [(d.name, d.module) for d in news]
     return res
+
+
+# A generated proof constant inside a canonical text: ``Owner._proof_<n>``. Lean names such a
+# constant after the first declaration of the file that needed the proof, so a change of another
+# declaration can rename it in the text of a declaration that did not change.
+GENERATED_PROOF = re.compile(r"[^\s()\[\]{},:]+\._proof_\d+(?=$|[\s()\[\]{},:]|\.\{)")
+MATCHER_NAME = re.compile(r"^(?P<owner>.+)\.match_\d+(?:_\d+)?$")
+
+
+def number_proofs(text: str) -> str:
+    """``text`` with every generated proof constant named by the order of its first occurrence."""
+    seen: dict[str, str] = {}
+
+    def numbered(m: re.Match[str]) -> str:
+        return seen.setdefault(m.group(0), f"_proof#{len(seen) + 1}")
+
+    return GENERATED_PROOF.sub(numbered, text)
+
+
+def proof_names_only(a: str, b: str) -> bool:
+    """Whether two different texts agree up to a one-to-one renaming of generated proofs.
+
+    Used for a remark in the report only: such a declaration still counts as changed.
+    """
+    return a != b and number_proofs(a) == number_proofs(b)
+
+
+def generated_note(name: str) -> str:
+    """A remark for the report if ``name`` looks like a matcher generated for a declaration."""
+    m = MATCHER_NAME.match(name)
+    return f" — name of a generated matcher of `{m.group('owner')}`" if m else ""
 
 
 def first_difference(a: str, b: str, width: int = 70) -> tuple[str, str]:
@@ -473,6 +516,19 @@ def render(
     def more(items: list[Any]) -> list[str]:
         return [f"- … and {len(items) - limit} more"] if 0 < limit < len(items) else []
 
+    def texts(key: str, index: int) -> tuple[str, str]:
+        return (
+            old_texts.get(key, ("", ""))[index],
+            new_texts.get(key, ("", ""))[index],
+        )
+
+    names_only = {
+        (key, index)
+        for keys, index in ((res.type_changed, 0), (res.value_changed, 1))
+        for key in keys
+        if proof_names_only(*texts(key, index))
+    }
+
     lines = [
         "# Statement hash diff (scripts/hashdiff.py)",
         "",
@@ -488,9 +544,11 @@ def render(
         f"| of which renamed | {len(res.renamed)} |",
         f"| **type changed** | {len(res.type_changed)} |",
         f"| **definition body changed** | {len(res.value_changed)} |",
+        f"| of the changed: only names of generated proofs differ | {len(names_only)} |",
         f"| **disappeared** | {len(res.disappeared)} |",
         f"| appeared | {len(res.appeared)} |",
         f"| appeared as deprecated alias (old name in the rename map) | {len(res.aliases)} |",
+        f"| deprecated alias of an earlier rename (in both dumps, not new) | {len(res.settled)} |",
         "",
     ]
     if res.unapplied:
@@ -504,19 +562,24 @@ def render(
             continue
         lines += [f"## {title}", ""]
         for key in head(keys):
-            a = old_texts.get(key, ("", ""))[index]
-            b = new_texts.get(key, ("", ""))[index]
-            x, y = first_difference(a, b)
-            lines += [f"- `{key}`", "  ```", f"  - {x}", f"  + {y}", "  ```"]
+            x, y = first_difference(*texts(key, index))
+            note = (
+                " — only names of generated proofs (`X._proof_n`) differ"
+                if (key, index) in names_only
+                else ""
+            )
+            lines += [f"- `{key}`{note}", "  ```", f"  - {x}", f"  + {y}", "  ```"]
         lines += [*more(keys), ""]
     for title, pairs in (
         ("Disappeared", res.disappeared),
         ("Appeared", res.appeared),
         ("Deprecated aliases", res.aliases),
+        ("Deprecated aliases of earlier renames (in both dumps)", res.settled),
     ):
         if pairs:
             lines += [f"## {title}", ""]
-            lines += [f"- `{n}` ({m})" for n, m in head(pairs)] + [*more(pairs), ""]
+            lines += [f"- `{n}` ({m}){generated_note(n)}" for n, m in head(pairs)]
+            lines += [*more(pairs), ""]
     if res.moved:
         lines += ["## Moved", ""]
         lines += [f"- `{n}`: {a} → {b}" for n, a, b in head(res.moved)] + [

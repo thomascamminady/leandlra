@@ -1,63 +1,125 @@
 #!/usr/bin/env bash
-# Fast check of a Lean file: elaborates it on top of a saved snapshot of `import Mathlib` plus
-# `import LeanDLRA`, so a check costs seconds instead of a full import.  Processes share the snapshot
-# through the page cache, so many agents can run this at once.
+# Check of one Lean file against the installed `.olean` files: `lake env lean FILE` with the file's
+# own imports and the options of lakefile.toml. Nothing is built: an import without an installed
+# `.olean` is an error (exit 4), not a reason to compile it, and nothing is written into
+# `.lake/build`. Works for core and for catalogue files, for files of the library and for new ones.
 #
-#   scripts/fc FILE.lean             errors and warnings, with line numbers of FILE
-#   scripts/fc --axioms FILE.lean    also fail on any axiom beyond the three standard ones
+#   scripts/fc FILE.lean                 errors and warnings, exit 0 only if there are none
+#   scripts/fc --axioms FILE.lean        also fail on any axiom beyond the three standard ones
+#   scripts/fc --min-free=N FILE.lean    start only if N % of the memory is free (default 35;
+#                                        0 switches the test off)
 #
-# The file's own imports are replaced by the snapshot header, so this checks against a SUPERSET of
-# what the file imports.  It is a development convenience and NOT the gate: `make verify` (cold build
-# and axiom audit) is the only thing that decides whether a proof counts.
+# Exit codes: 0 clean; 1 errors or warnings; 2 usage; 3 not started, too little free memory;
+# 4 an import has no installed `.olean` (the core is rebuilt during a gate round: look once at
+# `tail -n 3 wip/gate.log` and try again later).
+#
+# One check at a time (a lock folder below $FC_STATE, default .lake/warm); further calls wait.
+# Environment: FC_ROOT (repository, default: the folder with lakefile.toml above this script),
+# FC_STATE (lock and temporary files), FC_MIN_FREE (default of --min-free).
+#
+# It is a development convenience and NOT the gate: `scripts/gate.py` (cold build and axiom audit)
+# is the only thing that decides whether a proof counts. Until 2026-11-10 this script elaborated
+# the file on top of a snapshot of `import Mathlib` plus the whole library (`lean --incr-load`);
+# such a snapshot is invalid as soon as one `.olean` below it is rebuilt, which every gate round
+# does, and it cannot hold a file that is itself a module of the library.
 set -uo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-WARM="$ROOT/.lake/warm"
+usage="usage: scripts/fc [--axioms] [--min-free=N] FILE.lean"
+here="$(cd "$(dirname "$0")" && pwd)"
+ROOT="${FC_ROOT:-}"
+if [ -z "$ROOT" ]; then
+  ROOT="$here"
+  while [ "$ROOT" != "/" ] && [ ! -f "$ROOT/lakefile.toml" ]; do ROOT="$(dirname "$ROOT")"; done
+fi
+[ -f "$ROOT/lakefile.toml" ] || { echo "fc: no lakefile.toml in or above $here"; exit 2; }
+STATE="${FC_STATE:-$ROOT/.lake/warm}"
+min_free="${FC_MIN_FREE:-35}"
 axioms=0
-if [ "${1:-}" = "--axioms" ]; then axioms=1; shift; fi
-f="${1:?usage: scripts/fc [--axioms] FILE.lean}"
-[ -f "$f" ] || { echo "no such file: $f"; exit 2; }
-[ -f "$WARM/universe.snap" ] || { echo "no snapshot: run scripts/warm.sh"; exit 2; }
-# shellcheck disable=SC1091
-source "$WARM/env.sh"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --axioms) axioms=1 ;;
+    --min-free=*) min_free="${1#--min-free=}" ;;
+    -h | --help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*) echo "fc: unknown option $1"; echo "$usage"; exit 2 ;;
+    *) break ;;
+  esac
+  shift
+done
+[ $# -eq 1 ] || { echo "$usage"; exit 2; }
+case "$min_free" in '' | *[!0-9]*) echo "fc: --min-free needs a number, got '$min_free'"; exit 2 ;; esac
+[ -f "$1" ] || { echo "no such file: $1"; exit 2; }
+f="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+shown="$1"
 
-mkdir -p "$WARM/tmp"
-tmp="$WARM/tmp/$$-$(basename "$f")"
-trap 'rm -f "$tmp"' EXIT
-# Lines removed before the body and lines added, so messages can quote the original line numbers.
-removed=$(awk '/^(public )?(meta )?import /{n++} /^(namespace|open|noncomputable|section|theorem|lemma|def|\/-!)/{exit} END{print n+0}' "$f")
-{
-  cat "$WARM/header.lean"
-  awk 'BEGIN{b=1} b && /^(public )?(meta )?import /{next} b && /^module *$/{next} {b=0; print}' "$f"
-} > "$tmp"
-if [ "$axioms" = 1 ]; then cat "$ROOT/scripts/axiom_check.lean" >> "$tmp"; fi
-added=$(wc -l < "$WARM/header.lean")
-# At most three checks at once. Each process needs about a gigabyte, and with more of them the machine
-# evicts the memory-mapped oleans and spends its time rereading them from disk, so a queue is faster.
+# The options of the package (lakefile.toml [leanOptions]), so that the result matches the build.
+options=()
+while IFS= read -r opt; do options+=("$opt"); done < <(awk '
+  /^\[/ { on = ($0 ~ /^\[leanOptions\]/); next }
+  on && /=/ {
+    sub(/#.*/, ""); key = $0; sub(/[ \t]*=.*/, "", key); val = $0; sub(/^[^=]*=[ \t]*/, "", val)
+    gsub(/[ \t"]/, "", val); gsub(/[ \t]/, "", key); if (key != "") print "-D" key "=" val
+  }' "$ROOT/lakefile.toml")
+
+# The memory rule of the project: the last line of `memory_pressure` gives the free percentage.
+free_percent() { memory_pressure 2>/dev/null | tail -n 1 | grep -o '[0-9]*%' | tr -d '%'; }
+
+tmpdir=""
 slot=""
-mkdir -p "$WARM/slots"
-trap 'rm -f "$tmp"; [ -n "$slot" ] && rmdir "$slot" 2>/dev/null' EXIT
+cleanup() {
+  [ -n "$tmpdir" ] && rm -rf "$tmpdir"
+  [ -n "$slot" ] && rmdir "$slot" 2>/dev/null
+  return 0
+}
+trap cleanup EXIT
+target="$f"
+if [ "$axioms" = 1 ]; then
+  # A copy with the axiom check appended; the line numbers of FILE stay as they are.
+  mkdir -p "$STATE/tmp"
+  tmpdir="$(mktemp -d "$STATE/tmp/fc.XXXXXX")"
+  target="$tmpdir/$(basename "$f")"
+  { cat "$f"; echo; cat "$ROOT/scripts/axiom_check.lean"; } > "$target"
+fi
+
+# One check at a time; a lock older than 30 minutes belongs to a check that was killed.
+mkdir -p "$STATE/slots"
 while true; do
-  find "$WARM/slots" -maxdepth 1 -name 'fc?' -mmin +15 -exec rmdir {} + 2>/dev/null
-  for i in 1; do
-    if mkdir "$WARM/slots/fc$i" 2>/dev/null; then slot="$WARM/slots/fc$i"; break 2; fi
-  done
+  find "$STATE/slots" -maxdepth 1 -name 'fc?' -mmin +30 -exec rmdir {} + 2>/dev/null
+  if mkdir "$STATE/slots/fc1" 2>/dev/null; then slot="$STATE/slots/fc1"; break; fi
   sleep 3
 done
+
+if [ "$min_free" -gt 0 ]; then
+  free="$(free_percent)"
+  if [ -z "$free" ]; then
+    echo "NOT STARTED [$shown]: memory_pressure gives no free percentage (--min-free=0 to skip)"
+    exit 3
+  fi
+  if [ "$free" -lt "$min_free" ]; then
+    echo "NOT STARTED [$shown]: $free % of the memory free, $min_free % needed"
+    exit 3
+  fi
+fi
+
 start=$(date +%s)
-# With many agents checking at once, per-process parallelism only adds contention.
-out=$(LEAN_IMPORT_WORKERS=2 nice -n 15 lean -j2 --incr-load="$WARM/universe.snap" -DmaxSynthPendingDepth=3 "$tmp" 2>&1)
+out=$(cd "$ROOT" && LEAN_IMPORT_WORKERS=2 nice -n 15 lake env lean -j2 ${options[@]+"${options[@]}"} "$target" 2>&1)
 code=$?
 end=$(date +%s)
-echo "$out" | awk -v tmp="$tmp" -v orig="$f" -v d=$((added - removed)) '
-  index($0, tmp ":") == 1 {
-    rest = substr($0, length(tmp) + 2); n = index(rest, ":")
-    print orig ":" (substr(rest, 1, n - 1) - d) ":" substr(rest, n + 1); next
-  } { print }'
-if [ "$code" = 0 ] && ! echo "$out" | grep -qE 'error|AXIOM-CHECK FAIL'; then
-  if echo "$out" | grep -qE 'warning|declaration uses'; then
-    echo "WARN [$f] ($((end - start)) s)"; exit 1
+if [ -n "$out" ]; then
+  echo "$out" | awk -v tmp="$target" -v orig="$shown" '
+    index($0, tmp ":") == 1 { print orig substr($0, length(tmp) + 1); next } { print }'
+fi
+took="$((end - start)) s"
+if echo "$out" | grep -qE 'object file .* does not exist|unknown module prefix|unknown package'; then
+  echo "NO OLEAN [$shown] ($took): an import is not installed; nothing was built." \
+    "During a gate round: tail -n 3 wip/gate.log, then try again later."
+  exit 4
+fi
+# Lean exits with 1 on any error; the test of the text is a second line of defence. It looks for
+# the message head (`FILE:L:C: error:`), not for the bare word, which a file name may contain.
+if [ "$code" = 0 ] && ! echo "$out" | grep -qE '(^|: )error[:(]|AXIOM-CHECK FAIL'; then
+  if echo "$out" | grep -qE '(^|: )warning[:(]|declaration uses'; then
+    echo "WARN [$shown] ($took)"; exit 1
   fi
-  echo "OK [$f] ($((end - start)) s)"
+  echo "OK [$shown] ($took)"
 else
-  echo "FAIL [$f] ($((end - start)) s)"; exit 1
+  echo "FAIL [$shown] ($took)"; exit 1
 fi

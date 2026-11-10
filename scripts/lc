@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Real-import check of a Lean file: `lake env lean FILE` with the file's own imports, so missing imports
-# and deprecated modules show up (unlike scripts/fc, which checks against a superset snapshot).
+# and deprecated modules show up. `scripts/fc` runs the same check and adds a memory threshold, an
+# optional axiom report and exit codes that tell a check that did not start from one that failed.
 # At most two of these run at once; each needs one to two gigabytes, and with more of them the
 # machine swaps and every check takes many times longer.
 #
