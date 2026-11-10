@@ -174,3 +174,55 @@ moved with names and types unchanged.
 | Tolerance rank of the singular values `min {r : τ_r(X) ≤ ε}` | `epsRank ε X` (distance form) | equal: `WeylSingular.epsRank_eq_sInf_tailNorm`; the copy `P2602_14854.epsRank_eq_sInf_tailNorm` (`Lit/RankAdaptive/P2602_14854a`) is a duplicate (F22) |
 | Global factored normal-component bound | `MatrixBUG.FactoredNormalBound F r ε` | implies the localized one: `nearNormalBound_of_factored`; satisfied with `ε = 0` by the identity field (`example`, `Integrators/Matrix/Defs.lean`) |
 | Localized bound near `Y` on `[t₀, t₁]` | `NearNormalBound F r ε t₀ t₁ Y ρ` | defining; a region-indexed form `FactoredNormalBoundOn` with both bounds as instances is planned (batch D0a) |
+
+## Runge–Kutta tableaux and the `φ`-functions (UNIFY F12, F21, batches C8 and C13, 2026-11-10)
+
+Core file: `LeanDLRA/Analysis/Defs.lean`: `ButcherTableau R s` (arrays `a`, `b`, `c` over any coefficient
+ring `R`), `ButcherTableau.IsExplicit`, `ButcherTableau.IsRowSum`, the tableaux `euler`, `rk4`,
+`ssprk104` (generic in `R`, so the same tableau serves the order conditions over `ℚ` and the steps over
+`ℝ`), and `LeanDLRA.phi1`, `LeanDLRA.phi2` (`φ₁(z) = (eᶻ - 1)/z`, `φ₂(z) = (eᶻ - 1 - z)/z²`, with
+their limits at `0`). The core step structures of `HighOrder/RungeKuttaBUG.lean` keep their raw
+arguments `a b c`; a tableau `T` enters as `T.a T.b T.c`.
+
+| Concept | Core | Relation (lemma) |
+|---|---|---|
+| `rk4A`, `rk4B`, `rk4C` (`Literature/Randomized/P2512_15703a`) | `ButcherTableau.rk4` over `ℝ` | equal (same arrays), replaced (deprecated definitions); `apRK4_eq_rk4` now takes `rk4.a rk4.b rk4.c` and uses `rk4_isExplicit` |
+| `rk4a`, `rk4b` (`Literature/Randomized/P2409_06384a`, `ℕ`-indexed) | `ButcherTableau.rk4` | equal on the indices `< 4` (`P2409_06384.rk4a_eq`, `rk4b_eq`); kept, since the extension by `0` to `ℕ` is the convention of that file's stage maps |
+| `ssprk104A`, `ssprk104b`, `ssprk104c` (`OpenProblems/HighOrder/Part3Defs`, over `ℚ`) | `ButcherTableau.ssprk104` over `ℚ` | equal (`ssprk104A_eq`, `ssprk104b_eq`, `ssprk104c_eq`, all `rfl`); kept under their names because catalogue statements use them (BUNDLES A2) |
+| `ExplicitRK s` (`Literature/HighOrder/P2502_07040b`) | `ButcherTableau ℝ s` with `IsExplicit` | equivalent: `ExplicitRK.equivButcherTableau : ExplicitRK s ≃ {T // T.IsExplicit}`, `ExplicitRK.isExplicit_toButcherTableau`; kept (it bundles explicitness) |
+| `rkStage`, `rkResult` (`Literature/HighOrder/P2502_07040a`) | `RungeKuttaBUG.IsGalerkinRKStep F a b c (fun _ => 1) 1` | for explicit tableaux they form that step (`isGalerkinRKStep_rkStage`) and are its only solution (`eq_rkStage_of_isGalerkinRKStep`, from `galerkinRK_eq_rk`) |
+| `rkConst` (`Literature/HighOrder/P2608_17157a`: `M_p/p! (1/(p+1) + ∑ |bᵢ| cᵢ^p) + L C_st ∑ |bᵢ|`) | `RungeKuttaBUG.rkConst` (Lipschitz stage constant) | **different** constants with the same name: the paper one is renamed `klRKConst` (deprecated alias `rkConst`) |
+| `phi1` (`Literature/Stiff/P2312_00172a`) | `LeanDLRA.phi1` | equal, replaced (deprecated alias) |
+| `phi1`, `phi2` (`OpenProblems/Stiff/Part3Defs`) | `LeanDLRA.phi1`, `LeanDLRA.phi2` | equal (`phi1_eq`, `phi2_eq`, `rfl`); kept (a catalogue statement uses `phi1`) |
+
+## Weighted norms (UNIFY F11, decision Q5, batches C8 and C13, 2026-11-10)
+
+Core file: `LeanDLRA/LinearAlgebra/Frobenius/Defs.lean`. `WeightedMatrix wx wv` is `Matrix m n ℝ` as a
+type synonym carrying the weighted inner product `Frobenius.weightedInner wx wv`
+(`WeightedMatrix.inner_def`); for positive weights (instances `Fact (∀ i, 0 < wx i)`,
+`Fact (∀ j, 0 < wv j)`) it is a real inner product space, so every abstract inner-product theorem
+applies to discrete weighted `L²` norms (`WeightedMatrix.norm_sq_eq`: `‖X‖² = ∑ wxᵢ wvⱼ Xᵢⱼ²`).
+`WeightedMatrix.toFrobenius : WeightedMatrix wx wv ≃ₗᵢ[ℝ] Matrix m n ℝ`, `X ↦ diag(√wx) X diag(√wv)`,
+is the isometry to the Frobenius space (`inner_toFrobenius`, `norm_toFrobenius`; built from
+`Frobenius.weightedInner_eq_inner`). Conversions: `toWeighted`, `ofWeighted` (identities).
+
+| Concept | Core | Relation (lemma) |
+|---|---|---|
+| `gridFrobSq Δx Y = Δx ∑ Yᵢⱼ²` (`Literature/Kinetic/P2607_27736a`) | `WeightedMatrix (fun _ => Δx) (fun _ => 1)` | equal to the squared weighted norm for `Δx > 0` (`gridFrobSq_eq_norm_sq_weighted`) and to `Δx ‖Y‖²` (`gridFrobSq_eq`, exists) |
+| `frob2 A = ∑ Aᵢⱼ²` (`Literature/Kinetic/P2502_20883a`) | Frobenius norm | equal to `‖A‖²` (`frob2_eq_norm_sq`) |
+
+Not bridged yet: the vector and function weighted products `ipx`, `ipv` (`P2101_12571a/b`), `ipw`
+(`P2602_12337a`), `wInner` (`P2311_09425a`), `l2Sq` (`P2212_12012a`, `P1902_00424a`) belong to the
+kinetic framework (batches C9–C12); `frob2` of `P2503_04932a` is on three-way arrays (`Tensor/Defs`).
+
+## Duplicate lemmas and remaining frames (UNIFY F7, F10, F21, F22, batch C13, 2026-11-10)
+
+| Concept | Core | Relation (lemma) |
+|---|---|---|
+| `Novel.OpTR37.tanProj P Q Z = Z - (1 - P) Z (1 - Q)` | `Curvature.tangentProjMat P Q Z` | equal (`tanProj_eq_tangentProjMat`); kept, the proofs of the file compute with its form |
+| `tangentP τ X V` (`Literature/Kinetic/P1801_01103a`) | `LeanDLRA.tangent` | is `tangent` of the function-space projectors by definition (no change) |
+| `stiff_derivative_mem_tangent` (`P1803_10473a`, `A Y + Y Aᵀ`), `stiff_derivative_mem_tangent'` (`P2010_05249a`, `A_x Y + Y A_y`) | `LeanDLRA.mul_add_mul_mem_range_tangentProj` (new, `FixedRank/TangentSpace.lean`) | both are now one-line instances of the core lemma (statements unchanged) |
+| `isOrthProj_leftMul`, `isOrthProj_rightMul` (`P2001_08599a`), `ErrorOrder.isOrthProj_leftMulCLM`, `isOrthProj_rightMulCLM` (`Research/IntegratorErrorOrder`) | `Curvature.IsOrthProjMat.isOrthProj_leftMulCLM`, `isOrthProj_rightMulCLM` | one-line instances (statements unchanged) |
+| `norm_transpose_mul_le`, `norm_mul_le_of_orthonormal` (`P2101_07104a`), `norm_transpose_mul_le`, `norm_mul_orthonormal_le` (`P2107_07282a`), `norm_mul_le_of_orthonormal` (`P2008_07427a`) | `LeanDLRA.norm_transpose_mul_le`, `LeanDLRA.norm_mul_le_of_orthonormal` (`Matrix/Projectors.lean`) | one-line instances (statements unchanged) |
+| `riccatiField` (`OpenProblems/Curated/StiffAndStochasticDefs`) | `KalmanBucy.riccatiField` | equal (`riccatiField_eq_kalmanBucy`, `rfl`); kept (catalogue statement) |
+| `IsXQR Measure.count K X' S'` (`Literature/Kinetic/P2311_09425b`, finite grid) | `Matrix.IsOrthCapture` | equal to `X̃ᵀ X̃ = 1 ∧ K̃ = X̃ S'` for the grid matrices (`isXQR_count_iff`), hence a capture (`IsXQR.isOrthCapture_count`); for a general measure it is the same statement in `L²(ν)` (different carrier). `IsVQR` (in `Lp`) is not bridged: the core has no abstract orthonormal-frame notion yet |
