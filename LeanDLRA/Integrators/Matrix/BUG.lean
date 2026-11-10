@@ -3,6 +3,7 @@ import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Foundations.Existence
+import LeanDLRA.Integrators.Matrix.Defs
 
 /-!
 # The BUG integrator for matrices, at the level of the factors
@@ -363,16 +364,7 @@ section NormalBound
 
 variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
 
-/-- The **factored normal-component assumption** at rank `r` (assumption 2 of Theorem 2 of
-arXiv 2010.02022, in factored global form):
-
-    ∀ t U V S, Uᵀ U = 1 → Vᵀ V = 1 → ‖(I - U Uᵀ) F(t, U S Vᵀ) (I - V Vᵀ)‖ ≤ ε
-
-for `U : m × r`, `V : n × r`, `S : r × r`.  For `Y = U S Vᵀ` with invertible `S`,
-`(I - U Uᵀ) Z (I - V Vᵀ) = (I - P(Y)) Z` is the normal part of `Z` at `Y ∈ M_r`. -/
-def FactoredNormalBound (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) (ε : ℝ) : Prop :=
-  ∀ t (U : Matrix m (Fin r) ℝ) (V : Matrix n (Fin r) ℝ) (S : Matrix (Fin r) (Fin r) ℝ),
-    Uᵀ * U = 1 → Vᵀ * V = 1 → ‖(1 - U * Uᵀ) * F t (U * S * Vᵀ) * (1 - V * Vᵀ)‖ ≤ ε
+/- `FactoredNormalBound` is defined in `LeanDLRA/Integrators/Matrix/Defs.lean`. -/
 
 /-- A constant field `F ≡ C` satisfies the factored normal-component assumption with `ε = ‖C‖`. -/
 theorem factoredNormalBound_const (C : Matrix m n ℝ) (r : ℕ) :

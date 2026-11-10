@@ -1,6 +1,7 @@
 import LeanDLRA.Classical.CourantFischer
 import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.Orthonormal
+import LeanDLRA.LinearAlgebra.SVD.Defs
 
 /-!
 # The thin singular value decomposition
@@ -22,13 +23,11 @@ It also identifies the smallest singular value as the best lower bound of `T`, t
 appears as `σ_min(S) ≥ ρ` in LeanDLRA's curvature estimates.  Mathlib has the singular values but
 no singular vectors and no SVD (as of this toolchain).
 
-## Main definitions
-
-* `LinearMap.rightSingularBasis`: an orthonormal eigenbasis `e₀, …, e_{d-1}` of `T† T`, sorted so
-  that `T† T eᵢ = σᵢ² eᵢ` (`d = dim E`); it is the eigenbasis Mathlib uses to define
-  `LinearMap.singularValues`;
-* `LinearMap.rightSingularVectors`: `vᵢ = eᵢ` for `i < r`;
-* `LinearMap.leftSingularVectors`: `uᵢ = σᵢ⁻¹ T vᵢ` for `i < r`.
+The singular vectors are defined in `LeanDLRA/LinearAlgebra/SVD/Defs.lean`:
+`LinearMap.rightSingularBasis` (an orthonormal eigenbasis `e₀, …, e_{d-1}` of `T† T` with
+`T† T eᵢ = σᵢ² eᵢ`, `d = dim E`; it is the eigenbasis Mathlib uses to define
+`LinearMap.singularValues`), `LinearMap.rightSingularVectors` (`vᵢ = eᵢ` for `i < r`) and
+`LinearMap.leftSingularVectors` (`uᵢ = σᵢ⁻¹ T vᵢ` for `i < r`).
 
 ## Main results
 
@@ -101,11 +100,6 @@ variable {𝕜 E F : Type*} [RCLike 𝕜] [NormedAddCommGroup E] [InnerProductSp
   [FiniteDimensional 𝕜 E] [NormedAddCommGroup F] [InnerProductSpace 𝕜 F] [FiniteDimensional 𝕜 F]
   (T : E →ₗ[𝕜] F)
 
-/-- The **right singular basis** of `T`: an orthonormal eigenbasis `e₀, …, e_{d-1}` of `T† T`,
-sorted so that the eigenvalues `σᵢ(T)²` decrease (`d = dim E`). -/
-noncomputable def rightSingularBasis : OrthonormalBasis (Fin (finrank 𝕜 E)) 𝕜 E :=
-  T.isSymmetric_adjoint_comp_self.eigenvectorBasis rfl
-
 /-- `T† T eᵢ = σᵢ² eᵢ`. -/
 theorem adjoint_apply_rightSingularBasis (i : Fin (finrank 𝕜 E)) :
     adjoint T (T (T.rightSingularBasis i)) =
@@ -137,19 +131,6 @@ theorem apply_rightSingularBasis_eq_zero {i : Fin (finrank 𝕜 E)}
   rw [← norm_eq_zero, norm_apply_rightSingularBasis,
     T.singularValues_eq_zero_iff_le_finrank_range]
   exact hi
-
-omit [FiniteDimensional 𝕜 F] in
-/-- `dim range T ≤ dim E`. -/
-theorem finrank_range_le_finrank : finrank 𝕜 (range T) ≤ finrank 𝕜 E :=
-  T.finrank_range_le
-
-/-- The **right singular vectors** `vᵢ = eᵢ`, `i < r = dim range T`. -/
-noncomputable def rightSingularVectors : Fin (finrank 𝕜 (range T)) → E :=
-  fun i => T.rightSingularBasis (Fin.castLE T.finrank_range_le_finrank i)
-
-/-- The **left singular vectors** `uᵢ = σᵢ⁻¹ T vᵢ`, `i < r = dim range T`. -/
-noncomputable def leftSingularVectors : Fin (finrank 𝕜 (range T)) → F :=
-  fun i => ((T.singularValues i : ℝ) : 𝕜)⁻¹ • T (T.rightSingularVectors i)
 
 /-- The first `r = dim range T` singular values are positive. -/
 theorem singularValues_pos (i : Fin (finrank 𝕜 (range T))) : 0 < T.singularValues i :=

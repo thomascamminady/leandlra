@@ -1,4 +1,5 @@
 import LeanDLRA.Matrix.Interpolation
+import LeanDLRA.LinearAlgebra.SVD.Defs
 
 /-!
 # The Eckart–Young–Mirsky theorem for real matrices
@@ -88,6 +89,9 @@ eigenbases (as produced by `LinearMap.IsSymmetric.eigenvectorBasis` with `hn := 
 also how `LinearMap.singularValues` is defined), and state the final results with
 `Fintype.card n`.  The Frobenius norm is the scoped instance of `LeanDLRA.Frobenius`, the
 spectral norm is `LeanDLRA.Curvature.specNorm`, so both can be used in one file.
+
+`rightSingularVectors`, `topRightSingularVectors` and `truncation` are defined in
+`LeanDLRA/LinearAlgebra/SVD/Defs.lean`.
 -/
 
 open Matrix WithLp Module Finset
@@ -211,11 +215,7 @@ end Frobenius
 
 /-! ### Right singular vectors -/
 
-/-- The right singular vectors of `A`: an orthonormal eigenbasis of `Aᵀ A` (as the operator
-`T† T`, `T = toEuclideanLin A`), sorted so that the eigenvalues `σ_i(A)²` decrease. -/
-noncomputable def rightSingularVectors (A : Matrix m n ℝ) :
-    OrthonormalBasis (Fin (finrank ℝ (EuclideanSpace ℝ n))) ℝ (EuclideanSpace ℝ n) :=
-  (toEuclideanLin A).isSymmetric_adjoint_comp_self.eigenvectorBasis rfl
+/- `rightSingularVectors` is defined in `LeanDLRA/LinearAlgebra/SVD/Defs.lean`. -/
 
 /-- `T† T e_i = σ_i² e_i`. -/
 theorem adjoint_toEuclideanLin_rightSingularVectors (A : Matrix m n ℝ)
@@ -299,14 +299,8 @@ end Bridge
 
 /-! ### The truncation `B⋆ = A V_r V_rᵀ` -/
 
-/-- `V_r`: the matrix whose columns are the right singular vectors `e_i`, `i < r`. -/
-noncomputable def topRightSingularVectors (A : Matrix m n ℝ) (r : ℕ) :
-    Matrix n {i : Fin (finrank ℝ (EuclideanSpace ℝ n)) // (i : ℕ) < r} ℝ :=
-  fun j i ↦ rightSingularVectors A i j
-
-/-- The **truncated SVD** `B⋆ = A V_r V_rᵀ` of rank `≤ r`. -/
-noncomputable def truncation (A : Matrix m n ℝ) (r : ℕ) : Matrix m n ℝ :=
-  A * topRightSingularVectors A r * (topRightSingularVectors A r)ᵀ
+/- `topRightSingularVectors` and `truncation` are defined in
+`LeanDLRA/LinearAlgebra/SVD/Defs.lean`. -/
 
 /-- `V_r` has orthonormal columns. -/
 theorem transpose_mul_topRightSingularVectors (A : Matrix m n ℝ) (r : ℕ) :

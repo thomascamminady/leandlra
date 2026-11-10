@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.Matrix.BUG
+import LeanDLRA.Integrators.Matrix.Defs
 import LeanDLRA.LinearAlgebra.LowRank.Defs
 
 /-!
@@ -12,7 +13,8 @@ result below is proved from the definition.  The distance is the robust replacem
 rank-`r` DLRA solution" in several error analyses whose hypotheses fail when singular values
 become small.
 
-`lowRankSet`, `distLR` and `epsRank` are defined in `LeanDLRA/LinearAlgebra/LowRank/Defs.lean`.
+`lowRankSet`, `distLR` and `epsRank` are defined in `LeanDLRA/LinearAlgebra/LowRank/Defs.lean`,
+`NearNormalBound` and `nearNormalBound_of_factored` in `LeanDLRA/Integrators/Matrix/Defs.lean`.
 
 ## Main results
 
@@ -436,23 +438,6 @@ theorem exists_factor_of_rank_le {Y : Matrix m n ℝ} (hY : Y.rank ≤ r)
   refine ⟨U, Uᵀ * Y * V, V, hU, hV, ?_⟩
   calc Y = U * Uᵀ * (Y * V * Vᵀ) := by rw [hYV, hUY]
     _ = U * (Uᵀ * Y * V) * Vᵀ := by simp only [Matrix.mul_assoc]
-
-/-- The **localized factored normal-component assumption**: on `[t₀, t₁]`, the doubly-normal
-part `(I - U Uᵀ) F(t, U S Vᵀ) (I - V Vᵀ)` is `ε`-small at all points `U S Vᵀ` (orthonormal
-`U : m × r`, `V : n × r`, arbitrary `S`) within distance `ρ` of `Y`.  This is assumption 2 of
-Theorem 2 of arXiv 2010.02022 ("for `Y ∈ M_r` in a neighbourhood of `A(t)`"), imposed only near
-the starting value; `MatrixBUG.FactoredNormalBound` is the global version. -/
-def NearNormalBound (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) (ε t₀ t₁ : ℝ)
-    (Y : Matrix m n ℝ) (ρ : ℝ) : Prop :=
-  ∀ t ∈ Icc t₀ t₁, ∀ (U : Matrix m (Fin r) ℝ) (V : Matrix n (Fin r) ℝ)
-    (S : Matrix (Fin r) (Fin r) ℝ), Uᵀ * U = 1 → Vᵀ * V = 1 → ‖U * S * Vᵀ - Y‖ ≤ ρ →
-      ‖(1 - U * Uᵀ) * F t (U * S * Vᵀ) * (1 - V * Vᵀ)‖ ≤ ε
-
-/-- The global factored assumption implies the localized one. -/
-theorem nearNormalBound_of_factored {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
-    {ε : ℝ} (hε : MatrixBUG.FactoredNormalBound F r ε) (t₀ t₁ : ℝ) (Y : Matrix m n ℝ) (ρ : ℝ) :
-    NearNormalBound F r ε t₀ t₁ Y ρ :=
-  fun t _ U V S hU hV _ => hε t U V S hU hV
 
 variable {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {L B ε h t₀ t₁ : ℝ} {A : ℝ → Matrix m n ℝ}
 

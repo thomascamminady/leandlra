@@ -29,6 +29,7 @@ import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Integrators.InexactSubsteps
 import LeanDLRA.Integrators.KStep
 import LeanDLRA.Integrators.Matrix.BUG
+import LeanDLRA.Integrators.Matrix.Defs
 import LeanDLRA.Integrators.Matrix.ParallelBUG
 import LeanDLRA.Integrators.Matrix.ProjectorSplitting
 import LeanDLRA.Integrators.Matrix.Symmetry
@@ -41,6 +42,7 @@ import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.LinearAlgebra.Frobenius.Defs
 import LeanDLRA.LinearAlgebra.LowRank.Defs
 import LeanDLRA.LinearAlgebra.Projection.Defs
+import LeanDLRA.LinearAlgebra.SVD.Defs
 import LeanDLRA.Literature.Applications.P2110_13481a
 import LeanDLRA.Literature.Applications.P2201_12340a
 import LeanDLRA.Literature.Applications.P2306_17526a
