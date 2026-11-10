@@ -1,5 +1,5 @@
 import LeanDLRA.Tensor.TTN.Integrators
-import LeanDLRA.OpenProblems.Curated.TensorNetworksHardParTTNglobalerrorle
+import LeanDLRA.Tensor.TTN.Abstract.ParallelBUG
 
 /-!
 # Basis frames and the parallel BUG integrator on concrete tree tensor networks

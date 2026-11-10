@@ -113,6 +113,9 @@ import LeanDLRA.Tensor.TT.ObliqueProjector
 import LeanDLRA.Tensor.TT.Operations
 import LeanDLRA.Tensor.TT.ProjectorSplitting
 import LeanDLRA.Tensor.TT.TangentProjector
+import LeanDLRA.Tensor.TTN.Abstract.BUG
+import LeanDLRA.Tensor.TTN.Abstract.ParallelBUG
+import LeanDLRA.Tensor.TTN.Abstract.RankAdaptiveBUG
 import LeanDLRA.Tensor.TTN.Basic
 import LeanDLRA.Tensor.TTN.Integrators
 import LeanDLRA.Tensor.TTN.ParallelBUG
