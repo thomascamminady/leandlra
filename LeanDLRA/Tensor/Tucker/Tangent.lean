@@ -1,4 +1,5 @@
 import LeanDLRA.Tensor.Tucker.Basic
+import LeanDLRA.Tensor.Steps
 
 /-!
 # The tangent space of constrained Tucker manifolds and its orthogonal projector
@@ -37,6 +38,9 @@ Remark 4.3 (non-orthonormal `Uₖ`) and the curvature bounds (Props. 4.7–4.11)
 * `tuckerTangentProj_eq_starProjection` (**Prop. 4.2**): `P_X` is the orthogonal projection onto
   `T_X ℳ`; `isOrthProj_tuckerTangentProj`, `tuckerTangentProj_eq_self_iff`, and
   `mem_tuckerTangentSpace_iff` (the vectors (4.5) already form the subspace).
+* `tuckerTangentProj_one_eq`: for `P_C = 1` the projector is the abstract tangent projector
+  `LeanDLRA.tuckerTangentProj` (`Tensor/Steps.lean`) of the mode projectors and the co-range
+  projectors; it rests on `modeProd_modeAct` and `tuckerCLM_comp_tuckerCLM_transpose`.
 -/
 
 open scoped Matrix RealInnerProductSpace
@@ -425,5 +429,91 @@ example : tuckerTangentProj (ι := fun _ : Fin 1 => Fin 1) (r := fun _ => Fin 1)
       rw [Matrix.mul_apply]
       simp
     exact h
+
+/-! ### The abstract tangent projector -/
+
+section AbstractTangentProj
+
+variable {d : ℕ} {ι r : Fin d → Type*} [∀ k, Fintype (ι k)] [∀ k, Fintype (r k)]
+
+/-- The ordered product of the mode actions of a family of matrices is the multilinear product
+with this family: `(∏ₖ (· ×ₖ Aₖ)) Z = Z ×₁ A₁ ⋯ ×_d A_d`. -/
+theorem modeProd_modeAct (A : ∀ k, Matrix (ι k) (ι k) ℝ) (Z : Tensor ι) :
+    modeProd (fun k => modeAct k (A k)) Z = tucker Z A := by
+  classical
+  have key : ∀ l : List (Fin d), l.Nodup →
+      (l.map fun k => modeAct k (A k)).prod Z = tucker Z fun k => if k ∈ l then A k else 1 := by
+    intro l
+    induction l with
+    | nil =>
+      intro _
+      simp [tucker_one]
+    | cons k l ih =>
+      intro h
+      obtain ⟨hk, hl⟩ := List.nodup_cons.mp h
+      rw [List.map_cons, List.prod_cons, mul_apply_eq_comp, ih hl, modeAct_tucker]
+      congr 1
+      funext j
+      by_cases hj : j = k
+      · subst hj
+        simp [hk]
+      · simp [hj]
+  rw [modeProd, List.ofFn_eq_map, key _ (List.nodup_finRange d)]
+  simp [List.mem_finRange]
+
+/-- Non-vacuity of `modeProd_modeAct` with nonzero data: two modes of dimension one and the
+matrix `2` in each mode. -/
+example :
+    let A : ∀ _ : Fin 2, Matrix (Fin 1) (Fin 1) ℝ := fun _ => 2
+    ∀ Z : Tensor fun _ : Fin 2 => Fin 1,
+      modeProd (fun k => modeAct k (A k)) Z = tucker Z A := by
+  intro A Z
+  exact modeProd_modeAct A Z
+
+/-- `Z ↦ (Z ×ₖ Uₖᵀ) ×ₖ Uₖ` is the product of the mode projectors of the bases `Uₖ`. -/
+theorem tuckerCLM_comp_tuckerCLM_transpose (U : ∀ k, Matrix (ι k) (r k) ℝ) :
+    (tuckerCLM U).comp (tuckerCLM fun k => (U k)ᵀ) = modeProd fun k => modeProj k (U k) := by
+  refine ContinuousLinearMap.ext fun Z => ?_
+  rw [ContinuousLinearMap.comp_apply, tuckerCLM_apply, tuckerCLM_apply, tucker_tucker]
+  exact (modeProd_modeAct (fun k => U k * (U k)ᵀ) Z).symm
+
+/-- Non-vacuity of `tuckerCLM_comp_tuckerCLM_transpose` with nonzero data: two modes of dimension
+one and the `1 × 1` identity as basis of each mode. -/
+example :
+    let U : ∀ _ : Fin 2, Matrix (Fin 1) (Fin 1) ℝ := fun _ => 1
+    (tuckerCLM (ι := fun _ : Fin 2 => Fin 1) U).comp (tuckerCLM fun k => (U k)ᵀ) =
+      modeProd fun k => modeProj k (U k) := by
+  intro U
+  exact tuckerCLM_comp_tuckerCLM_transpose U
+
+/-- **The two tangent projectors of the Tucker manifold agree.** For the trivial core projector
+`P_C = 1` (the Tucker manifold itself), the tangent projector `tuckerTangentProj U 1 W` of
+arXiv 2308.16720, Prop. 4.2, is the abstract tangent projector `LeanDLRA.tuckerTangentProj` of
+the mode projectors `P₀ k = modeProj k (U k)` and the co-range projectors
+`Q₀ k = actOn (· ≠ k) (W k (W k)ᵀ)`. -/
+theorem tuckerTangentProj_one_eq {s : Fin d → Type*} [∀ k, Fintype (s k)]
+    (U : ∀ k, Matrix (ι k) (r k) ℝ)
+    (W : ∀ k, Matrix (∀ j : {j : Fin d // j ≠ k}, ι j) (s k) ℝ) :
+    tuckerTangentProj U 1 W =
+      _root_.LeanDLRA.tuckerTangentProj (fun k => modeProj k (U k))
+        fun k => actOn (· ≠ k) (W k * (W k)ᵀ) := by
+  unfold tuckerTangentProj _root_.LeanDLRA.tuckerTangentProj
+  congr 1
+  rw [ContinuousLinearMap.one_def, ContinuousLinearMap.id_comp]
+  exact tuckerCLM_comp_tuckerCLM_transpose U
+
+/-- Non-vacuity of `tuckerTangentProj_one_eq`: two modes of dimension one, the `1 × 1` identity as
+basis of each mode and co-range bases with the entry one. -/
+example :
+    let U : ∀ _ : Fin 2, Matrix (Fin 1) (Fin 1) ℝ := fun _ => 1
+    let W : ∀ k : Fin 2, Matrix ({j : Fin 2 // j ≠ k} → Fin 1) (Fin 1) ℝ :=
+      fun _ => Matrix.of fun _ _ => 1
+    tuckerTangentProj (ι := fun _ : Fin 2 => Fin 1) U 1 W =
+      _root_.LeanDLRA.tuckerTangentProj (fun k => modeProj k (U k))
+        fun k => actOn (· ≠ k) (W k * (W k)ᵀ) := by
+  intro U W
+  exact tuckerTangentProj_one_eq U W
+
+end AbstractTangentProj
 
 end LeanDLRA.Tensor

@@ -4,12 +4,14 @@ import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.LowRankDistance
 import LeanDLRA.Stability.Energy
+import LeanDLRA.Tensor.Defs
 import Mathlib.Analysis.Normed.Algebra.MatrixExponential
 
 /-!
 # Definitions for TensorNetworks Part2
 
-Local definitions used by the theorems of the corresponding modules.
+Local definitions used by the theorems of the corresponding modules. The alternating sum
+`ttTangentSum` is `Tensor.ttTangentSum` of the core (`ttTangentSum_eq_tensor`).
 -/
 
 open Set Finset
@@ -59,6 +61,19 @@ Lubich–Oseledets–Vandereycken, arXiv 1407.2042, Thm 3.1), with left interfac
 (`P_{>k}`, acting on the modes `k+1, …, d`, `Pr d = 1`), all in full-space form. -/
 def ttTangentSum (Pl Pr : ℕ → E →L[ℝ] E) (d : ℕ) : E →L[ℝ] E :=
   (∑ k ∈ range d, Pl k * Pr (k + 1)) - ∑ k ∈ range (d - 1), Pl (k + 1) * Pr (k + 1)
+
+/-- **Bridge to the core.** The alternating sum `ttTangentSum` of this file is
+`Tensor.ttTangentSum` of the core: the same expression, which the core states for every normed
+space. -/
+theorem ttTangentSum_eq_tensor (Pl Pr : ℕ → E →L[ℝ] E) (d : ℕ) :
+    ttTangentSum Pl Pr d = Tensor.ttTangentSum Pl Pr d :=
+  rfl
+
+/-- Non-vacuity of `ttTangentSum_eq_tensor` with nonzero data: for identity interface operators on
+`ℝ` and two modes both sides are the identity. -/
+example : ttTangentSum (fun _ => (1 : ℝ →L[ℝ] ℝ)) (fun _ => 1) 2 = 1 := by
+  rw [ttTangentSum_eq_tensor]
+  norm_num [Tensor.ttTangentSum]
 
 end TTTangent
 

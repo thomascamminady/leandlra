@@ -4,13 +4,15 @@ import LeanDLRA.Foundations.Gronwall
 import LeanDLRA.HighOrder.MidpointBUG
 import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.LowRankDistance
+import LeanDLRA.Tensor.Defs
 import Mathlib.Analysis.Matrix.HermitianFunctionalCalculus
 import Mathlib.LinearAlgebra.Matrix.Kronecker
 
 /-!
 # Definitions for TensorNetworks Part3
 
-Local definitions used by the theorems of the corresponding modules.
+Local definitions used by the theorems of the corresponding modules. On three modes the Tucker
+tensor `Tensor.tucker` of the core is `tucker3` (`tucker_apply_eq_tucker3`).
 -/
 
 open Set Finset Filter Topology
@@ -168,5 +170,48 @@ end CP
 section SchmidtGradient
 
 end SchmidtGradient
+
+section TuckerThreeModes
+
+/-- The multi-index on three modes with the entries `i`, `j`, `k`. -/
+def tripleIndex {ρ : Fin 3 → Type*} (i : ρ 0) (j : ρ 1) (k : ρ 2) : ∀ m, ρ m
+  | 0 => i
+  | 1 => j
+  | 2 => k
+
+/-- Multi-indices on three modes are triples. -/
+def tripleIndexEquiv (ρ : Fin 3 → Type*) : ρ 0 × ρ 1 × ρ 2 ≃ ∀ m, ρ m where
+  toFun p := tripleIndex p.1 p.2.1 p.2.2
+  invFun y := (y 0, y 1, y 2)
+  left_inv _ := rfl
+  right_inv y := by
+    funext m
+    fin_cases m <;> rfl
+
+/-- **Bridge to the core.** On three modes the Tucker tensor `Tensor.tucker C U` of the core is
+`tucker3` of the core tensor and the three basis matrices, entry by entry. -/
+theorem tucker_apply_eq_tucker3 {ι ρ : Fin 3 → Type*} [∀ m, Fintype (ρ m)] (C : Tensor ρ)
+    (U : ∀ m, Matrix (ι m) (ρ m) ℝ) (x : ∀ m, ι m) :
+    Tensor.tucker C U x =
+      tucker3 (fun i j k => C (tripleIndex i j k)) (U 0) (U 1) (U 2) (x 0) (x 1) (x 2) := by
+  calc Tensor.tucker C U x
+      = ∑ y, (∏ m, U m (x m) (y m)) * C y := rfl
+    _ = ∑ p : ρ 0 × ρ 1 × ρ 2, (∏ m, U m (x m) (tripleIndex p.1 p.2.1 p.2.2 m)) *
+          C (tripleIndex p.1 p.2.1 p.2.2) :=
+        ((tripleIndexEquiv ρ).sum_comp fun y => (∏ m, U m (x m) (y m)) * C y).symm
+    _ = ∑ i, ∑ j, ∑ k, (∏ m, U m (x m) (tripleIndex i j k m)) * C (tripleIndex i j k) := by
+        simp only [Fintype.sum_prod_type]
+    _ = tucker3 (fun i j k => C (tripleIndex i j k)) (U 0) (U 1) (U 2) (x 0) (x 1) (x 2) := by
+        simp only [Fin.prod_univ_three]
+        rfl
+
+/-- Non-vacuity of `tucker_apply_eq_tucker3` with nonzero data: for modes of size one, the core
+entry `2` and the basis entries `3`, both sides are `3 * 3 * 3 * 2 = 54`. -/
+example : Tensor.tucker (ι := fun _ : Fin 3 => Fin 1) (ρ := fun _ => Fin 1)
+    (WithLp.toLp 2 fun _ => 2) (fun _ => Matrix.of fun _ _ => 3) (fun _ => 0) = 54 := by
+  rw [tucker_apply_eq_tucker3]
+  norm_num [tucker3]
+
+end TuckerThreeModes
 
 end LeanDLRA.OpenProblems.TensorNetworks

@@ -30,7 +30,7 @@ only the nesting of the interfaces `U_{≤k+1} = (U_{≤k} ⊗ I) A_k^{<l>}`,
 `V_{>k} = (I ⊗ V_{>k+1}) B_k^{<r>}ᵀ` and the commutation of left and right operators, and gives
 the idempotence `P_Y² = P_Y` for all `d`. (The idempotence of the factors `P_{≤k}`, `P_{>k}`,
 which is what the printed proof checks, does not imply it for `d ≥ 3`; compare
-`OpenProblems.TensorNetworks.ttTangentSum_idem`, which needs range and kernel nesting.) With the
+`ttTangentSum_idem`, which assumes range and kernel nesting of the left operators.) With the
 orthonormal interfaces as test matrices `P_Y` is the orthogonal TT tangent projector
 `ttTangentProj` (bridging lemma `ttObliqueTangentProj_self`), so `P_Y` is an oblique projector
 onto the range of the orthogonal one in the sense of the core structure `IsObliqueProj`, and the
