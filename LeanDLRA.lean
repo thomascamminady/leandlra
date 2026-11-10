@@ -12,6 +12,7 @@ import LeanDLRA.Corrections.CatalogueStatements
 import LeanDLRA.Corrections.NormalLowerRank
 import LeanDLRA.Corrections.PPCAResidual
 import LeanDLRA.Corrections.StrangNotRobust
+import LeanDLRA.DLRA.Defs
 import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.FixedRank.Defs
 import LeanDLRA.FixedRank.TangentSpace
@@ -25,6 +26,7 @@ import LeanDLRA.Foundations.Projector
 import LeanDLRA.HighOrder.MidpointBUG
 import LeanDLRA.HighOrder.RungeKuttaBUG
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Integrators.Defs
 import LeanDLRA.Integrators.EulerBUG
 import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Integrators.InexactSubsteps

@@ -39,6 +39,20 @@ calculus), `LeanDLRA/Integrators/Exactness.lean` (state-independent right-hand s
 * `LeanDLRA.entrywiseCubic`: the entrywise cubic nonlinearity `Xᵢⱼ ↦ Xᵢⱼ³` on matrices.
 * `LeanDLRA.filippov f M y`: the Filippov regularisation `⋂_{δ > 0} cl conv f(B(y, δ) ∩ M)` of a
   possibly discontinuous vector field.
+* `LeanDLRA.IsLipschitzFieldOn F D L`, `LeanDLRA.IsBoundedFieldOn F D B`,
+  `LeanDLRA.IsOneSidedLipschitzFieldOn F D ℓ`: the three conditions on `F` above, required only at
+  the points `(t, x)` of a region `D ⊆ ℝ × E` (for example the tube around a reference solution).
+
+## Main results
+
+* `LeanDLRA.isLipschitzField_iff_univ`, `LeanDLRA.isBoundedField_iff_univ`,
+  `LeanDLRA.isOneSidedLipschitzField_iff_univ`: the global conditions are the region conditions
+  for `D = univ`.
+* `LeanDLRA.isLipschitzOnTube_iff`, `LeanDLRA.isBoundedOnTube_iff`: the tube conditions are the
+  region conditions for `D = tubeSet A a b ρ`; `LeanDLRA.isOneSidedLipschitzOn_iff`: the condition
+  on a set `K` of states is the region condition for `D = univ ×ˢ K`.
+* `LeanDLRA.isLipschitzFieldOn_iff_lipschitzOnWith`: the region condition in terms of Mathlib's
+  `LipschitzOnWith`.
 
 ## Implementation notes
 
@@ -313,5 +327,141 @@ noncomputable def phi1 (z : ℝ) : ℝ := if z = 0 then 1 else (Real.exp z - 1) 
 /-- `φ₂(z) = (eᶻ - 1 - z)/z²`, `φ₂(0) = 1/2`, the second `φ`-function of exponential
 integrators. -/
 noncomputable def phi2 (z : ℝ) : ℝ := if z = 0 then 1 / 2 else (Real.exp z - 1 - z) / z ^ 2
+
+/-! ### Conditions on a vector field on a region of `ℝ × E` -/
+
+section Region
+
+variable {E : Type*} [NormedAddCommGroup E]
+
+/-- The vector field `F` is **Lipschitz on the region** `D ⊆ ℝ × E` with constant `L`:
+`‖F t x - F t y‖ ≤ L ‖x - y‖` whenever `(t, x) ∈ D` and `(t, y) ∈ D`. Only states at the same
+time `t` are compared, so the region may move with time; the typical region is the tube
+`tubeSet A a b ρ` of radius `ρ` around a reference solution `A`. For `D = univ` this is
+`IsLipschitzField` (`isLipschitzField_iff_univ`), for the tube it is `IsLipschitzOnTube`
+(`isLipschitzOnTube_iff`). Nonnegativity of `L` is not part of the condition. -/
+def IsLipschitzFieldOn (F : ℝ → E → E) (D : Set (ℝ × E)) (L : ℝ) : Prop :=
+  ∀ ⦃t x y⦄, (t, x) ∈ D → (t, y) ∈ D → ‖F t x - F t y‖ ≤ L * ‖x - y‖
+
+/-- The vector field `F` is **bounded by `B` on the region** `D ⊆ ℝ × E`: `‖F t x‖ ≤ B` for every
+`(t, x) ∈ D`. For `D = univ` this is `IsBoundedField` (`isBoundedField_iff_univ`), for the tube
+around a curve it is `IsBoundedOnTube` (`isBoundedOnTube_iff`). -/
+def IsBoundedFieldOn (F : ℝ → E → E) (D : Set (ℝ × E)) (B : ℝ) : Prop :=
+  ∀ ⦃t x⦄, (t, x) ∈ D → ‖F t x‖ ≤ B
+
+variable {F : ℝ → E → E} {A : ℝ → E} {D D' : Set (ℝ × E)} {a b ρ L L' B B' : ℝ}
+
+/-- The Lipschitz condition passes to smaller regions and larger constants. -/
+theorem IsLipschitzFieldOn.mono (h : IsLipschitzFieldOn F D L) (hD : D' ⊆ D) (hL : L ≤ L') :
+    IsLipschitzFieldOn F D' L' := fun _ _ _ hx hy =>
+  (h (hD hx) (hD hy)).trans (mul_le_mul_of_nonneg_right hL (norm_nonneg _))
+
+/-- The bound passes to smaller regions and larger constants. -/
+theorem IsBoundedFieldOn.mono (h : IsBoundedFieldOn F D B) (hD : D' ⊆ D) (hB : B ≤ B') :
+    IsBoundedFieldOn F D' B' := fun _ _ hx => (h (hD hx)).trans hB
+
+/-- For `0 ≤ L`, the Lipschitz condition on a region says that every time slice `F t` is
+`L`-Lipschitz in Mathlib's sense (`LipschitzOnWith`) on the slice `{x | (t, x) ∈ D}`. -/
+theorem isLipschitzFieldOn_iff_lipschitzOnWith (hL : 0 ≤ L) :
+    IsLipschitzFieldOn F D L ↔
+      ∀ t, LipschitzOnWith (Real.toNNReal L) (F t) {x | (t, x) ∈ D} := by
+  refine ⟨fun h t => lipschitzOnWith_iff_norm_sub_le.2 fun x hx y hy => ?_,
+    fun h t x y hx hy => ?_⟩
+  · rw [Real.coe_toNNReal _ hL]
+    exact h hx hy
+  · have := lipschitzOnWith_iff_norm_sub_le.1 (h t) hx hy
+    rwa [Real.coe_toNNReal _ hL] at this
+
+/-- The global Lipschitz condition is the Lipschitz condition on the region `univ`. -/
+theorem isLipschitzField_iff_univ : IsLipschitzField F L ↔ IsLipschitzFieldOn F univ L :=
+  ⟨fun h t x y _ _ => h t x y, fun h _ _ _ => h (mem_univ _) (mem_univ _)⟩
+
+/-- The global bound is the bound on the region `univ`. -/
+theorem isBoundedField_iff_univ : IsBoundedField F B ↔ IsBoundedFieldOn F univ B :=
+  ⟨fun h t x _ => h t x, fun h _ _ => h (mem_univ _)⟩
+
+/-- The Lipschitz condition on the tube around `A` is the Lipschitz condition on the region
+`tubeSet A a b ρ`. -/
+theorem isLipschitzOnTube_iff :
+    IsLipschitzOnTube F A a b ρ L ↔ IsLipschitzFieldOn F (tubeSet A a b ρ) L :=
+  ⟨fun h t x y hx hy => h t hx.1 x y hx.2 hy.2,
+    fun h t ht x y hx hy => h (t := t) (x := x) (y := y) ⟨ht, hx⟩ ⟨ht, hy⟩⟩
+
+/-- The bound on the tube around `A` is the bound on the region `tubeSet A a b ρ`. -/
+theorem isBoundedOnTube_iff :
+    IsBoundedOnTube F A a b ρ B ↔ IsBoundedFieldOn F (tubeSet A a b ρ) B :=
+  ⟨fun h t x hx => h t hx.1 x hx.2, fun h t ht x hx => h (t := t) (x := x) ⟨ht, hx⟩⟩
+
+end Region
+
+section RegionInner
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-- The vector field `F` is **one-sided Lipschitz on the region** `D ⊆ ℝ × E` with constant `ℓ`:
+`⟪F t x - F t y, x - y⟫ ≤ ℓ ‖x - y‖²` whenever `(t, x) ∈ D` and `(t, y) ∈ D`. The constant may be
+negative (dissipative problems) and can be much smaller than a Lipschitz constant, which makes it
+the natural condition for stiff problems. For `D = univ` this is `IsOneSidedLipschitzField`
+(`isOneSidedLipschitzField_iff_univ`), for the region `univ ×ˢ K` given by a set `K` of states it
+is `IsOneSidedLipschitzOn` (`isOneSidedLipschitzOn_iff`). -/
+def IsOneSidedLipschitzFieldOn (F : ℝ → E → E) (D : Set (ℝ × E)) (ℓ : ℝ) : Prop :=
+  ∀ ⦃t x y⦄, (t, x) ∈ D → (t, y) ∈ D → ⟪F t x - F t y, x - y⟫ ≤ ℓ * ‖x - y‖ ^ 2
+
+variable {F : ℝ → E → E} {D D' : Set (ℝ × E)} {L ℓ ℓ' : ℝ}
+
+/-- The one-sided Lipschitz condition passes to smaller regions and larger constants. -/
+theorem IsOneSidedLipschitzFieldOn.mono (h : IsOneSidedLipschitzFieldOn F D ℓ) (hD : D' ⊆ D)
+    (hℓ : ℓ ≤ ℓ') : IsOneSidedLipschitzFieldOn F D' ℓ' := fun _ _ _ hx hy =>
+  (h (hD hx) (hD hy)).trans (mul_le_mul_of_nonneg_right hℓ (sq_nonneg _))
+
+/-- An `L`-Lipschitz field on a region is one-sided Lipschitz there with constant `L`
+(Cauchy–Schwarz). -/
+theorem IsLipschitzFieldOn.isOneSidedLipschitzFieldOn (h : IsLipschitzFieldOn F D L) :
+    IsOneSidedLipschitzFieldOn F D L := fun t x y hx hy =>
+  calc ⟪F t x - F t y, x - y⟫ ≤ ‖F t x - F t y‖ * ‖x - y‖ := real_inner_le_norm _ _
+    _ ≤ L * ‖x - y‖ * ‖x - y‖ := mul_le_mul_of_nonneg_right (h hx hy) (norm_nonneg _)
+    _ = L * ‖x - y‖ ^ 2 := by ring
+
+/-- The global one-sided Lipschitz condition is the condition on the region `univ`. -/
+theorem isOneSidedLipschitzField_iff_univ :
+    IsOneSidedLipschitzField F ℓ ↔ IsOneSidedLipschitzFieldOn F univ ℓ :=
+  ⟨fun h t x y _ _ => h t x y, fun h _ _ _ => h (mem_univ _) (mem_univ _)⟩
+
+/-- The one-sided Lipschitz condition on a set `K` of states (for all times) is the condition on
+the region `univ ×ˢ K`. -/
+theorem isOneSidedLipschitzOn_iff {K : Set E} :
+    IsOneSidedLipschitzOn F K ℓ ↔ IsOneSidedLipschitzFieldOn F (univ ×ˢ K) ℓ :=
+  ⟨fun h t x y hx hy => h t x hx.2 y hy.2,
+    fun h t x hx y hy => h (t := t) (x := x) (y := y) ⟨mem_univ t, hx⟩ ⟨mem_univ t, hy⟩⟩
+
+/-! Non-vacuity: linear fields `F(t, x) = T x + g`. For matrices, `T Y = M Y + Y Nᵀ` gives the
+field `M Y + Y Nᵀ + G` of Lyapunov and Sylvester type, with `‖T‖ ≤ ‖M‖ + ‖N‖`. -/
+
+/-- A linear field `F(t, x) = T x + g` (`T` a continuous linear map, `g` a constant source) is
+Lipschitz with constant `‖T‖` on every region. -/
+example (T : E →L[ℝ] E) (g : E) (D : Set (ℝ × E)) :
+    IsLipschitzFieldOn (fun _ x => T x + g) D ‖T‖ := fun _ x y _ _ => by
+  rw [add_sub_add_right_eq_sub, ← map_sub]
+  exact T.le_opNorm _
+
+/-- On the tube of radius `ρ` around the constant curve `c`, the linear field `T x + g` is
+bounded by `‖T‖ ρ + ‖T c + g‖`. -/
+example (T : E →L[ℝ] E) (g c : E) (a b ρ : ℝ) :
+    IsBoundedFieldOn (fun _ x => T x + g) (tubeSet (fun _ => c) a b ρ) (‖T‖ * ρ + ‖T c + g‖) := by
+  intro t x hx
+  have hx' : ‖x - c‖ ≤ ρ := hx.2
+  calc ‖T x + g‖ = ‖T (x - c) + (T c + g)‖ := by rw [map_sub]; congr 1; abel
+    _ ≤ ‖T (x - c)‖ + ‖T c + g‖ := norm_add_le _ _
+    _ ≤ ‖T‖ * ρ + ‖T c + g‖ := by
+        gcongr
+        exact (T.le_opNorm _).trans (mul_le_mul_of_nonneg_left hx' (norm_nonneg _))
+
+/-- The linear field `F(t, x) = c x + g` is one-sided Lipschitz on every region with constant `c`,
+of either sign; for `c < 0` it is dissipative. -/
+example (c : ℝ) (g : E) (D : Set (ℝ × E)) :
+    IsOneSidedLipschitzFieldOn (fun _ x => c • x + g) D c := fun _ x y _ _ => by
+  rw [add_sub_add_right_eq_sub, ← smul_sub, real_inner_smul_left, real_inner_self_eq_norm_sq]
+
+end RegionInner
 
 end LeanDLRA
