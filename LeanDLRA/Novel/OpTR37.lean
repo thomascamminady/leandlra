@@ -548,6 +548,17 @@ noncomputable def tanProj (P : Matrix m m ℝ) (Q : Matrix n n ℝ) (Z : Matrix 
     Matrix m n ℝ :=
   Z - (1 - P) * Z * (1 - Q)
 
+
+/-- **Bridge.** `tanProj P Q Z = Z - (1 - P) Z (1 - Q)` is the core tangent-space projector
+`Curvature.tangentProjMat P Q Z = P Z + Z Q - P Z Q` (for `P = U Uᵀ`, `Q = V Vᵀ` it is
+`tangentProj U V`, `tangentProjMat_eq_tangentProj`). The local form is kept because the proofs of
+this file compute with it. -/
+theorem tanProj_eq_tangentProjMat (P : Matrix m m ℝ) (Q : Matrix n n ℝ) (Z : Matrix m n ℝ) :
+    tanProj P Q Z = Curvature.tangentProjMat P Q Z := by
+  simp only [tanProj, Curvature.tangentProjMat, Matrix.sub_mul, Matrix.mul_sub, Matrix.one_mul,
+    Matrix.mul_one]
+  abel
+
 variable (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (hS : IsUnit S) (hNU : Uᵀ * N = 0) (hNV : N * V = 0)
 include hU hV hS hNU hNV
 

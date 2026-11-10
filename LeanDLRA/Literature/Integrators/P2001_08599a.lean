@@ -2,6 +2,7 @@ import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Exactness
 import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Literature.Integrators.P2001_08599b
+import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.GaugeODE
 import LeanDLRA.Matrix.Projectors
 
@@ -428,21 +429,17 @@ open scoped LeanDLRA.Frobenius
 variable {P : Matrix m m ℝ} {Q : Matrix n n ℝ}
 
 /-- Left multiplication by a symmetric idempotent matrix is an orthogonal projector on the
-space of matrices with the Frobenius inner product. -/
+space of matrices with the Frobenius inner product (an instance of the core
+`Curvature.IsOrthProjMat.isOrthProj_leftMulCLM`). -/
 theorem isOrthProj_leftMul (hP : P * P = P) (hs : Pᵀ = P) :
-    IsOrthProj (Frobenius.leftMulCLM P : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) where
-  idem X := by simp only [Frobenius.leftMulCLM_apply, ← Matrix.mul_assoc, hP]
-  symm X Y := by
-    simp only [Frobenius.leftMulCLM_apply]
-    rw [Frobenius.inner_mul_left, hs]
+    IsOrthProj (Frobenius.leftMulCLM P : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
+  (⟨hs, hP⟩ : Curvature.IsOrthProjMat P).isOrthProj_leftMulCLM
 
-/-- Right multiplication by a symmetric idempotent matrix is an orthogonal projector. -/
+/-- Right multiplication by a symmetric idempotent matrix is an orthogonal projector (an instance
+of the core `Curvature.IsOrthProjMat.isOrthProj_rightMulCLM`). -/
 theorem isOrthProj_rightMul (hQ : Q * Q = Q) (hs : Qᵀ = Q) :
-    IsOrthProj (Frobenius.rightMulCLM Q : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) where
-  idem X := by simp only [Frobenius.rightMulCLM_apply, Matrix.mul_assoc, hQ]
-  symm X Y := by
-    simp only [Frobenius.rightMulCLM_apply]
-    rw [Frobenius.inner_mul_right, hs]
+    IsOrthProj (Frobenius.rightMulCLM Q : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
+  (⟨hs, hQ⟩ : Curvature.IsOrthProjMat Q).isOrthProj_rightMulCLM
 
 /-- The three projections of eq. (18): `P₁ A = P_U A P_V`, `P₂ A = P_U⊥ A P_V`,
 `P₃ A = P_U A P_V⊥`, for symmetric idempotent `P = P_U`, `Q = P_V` (so that `P_U⊥ = 1 - P_U`

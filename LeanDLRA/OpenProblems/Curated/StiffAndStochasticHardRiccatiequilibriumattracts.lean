@@ -313,6 +313,14 @@ theorem riccati_equilibrium_attracts {A Qn : Matrix (Fin d) (Fin d) ℝ} {ρ μ 
   · exact KalmanBucy.riccati_stationary_unique hA hμ hρ hP' hPSD e' e
   · exact KalmanBucy.riccati_attracts_stationary hA hρ hPSD e hP hpsd
 
+/-- **Bridge.** The Riccati field `riccatiField` of the curated open problems
+(`StiffAndStochasticDefs`) is `KalmanBucy.riccatiField` (same definition), so every
+`KalmanBucy` theorem applies to it. It is kept under its name because a catalogue statement is
+phrased with it. -/
+theorem riccatiField_eq_kalmanBucy (A : Matrix (Fin d) (Fin d) ℝ) (ρ : ℝ)
+    (Qn : Matrix (Fin d) (Fin d) ℝ) : riccatiField A ρ Qn = KalmanBucy.riccatiField A ρ Qn :=
+  rfl
+
 end Riccati
 
 section Adjoint

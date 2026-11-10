@@ -1650,6 +1650,12 @@ end Setup
 /-- The square of the Frobenius norm. -/
 def frob2 {m n : Type*} [Fintype m] [Fintype n] (A : Matrix m n ℝ) : ℝ := ∑ i, ∑ j, A i j ^ 2
 
+open scoped LeanDLRA.Frobenius in
+/-- **Bridge.** `frob2 A` is the squared core Frobenius norm `‖A‖²` (`Frobenius.norm_sq_eq_sum`). -/
+theorem frob2_eq_norm_sq {m n : Type*} [Fintype m] [Fintype n] (A : Matrix m n ℝ) :
+    frob2 A = ‖A‖ ^ 2 :=
+  (Frobenius.norm_sq_eq_sum A).symm
+
 /-- Limits of matrix products. -/
 theorem tendsto_matrix_mul {a b c : Type*} [Fintype b] {l : Filter ℝ} {A : ℝ → Matrix a b ℝ}
     {B : ℝ → Matrix b c ℝ} {A₀ : Matrix a b ℝ} {B₀ : Matrix b c ℝ} (hA : Tendsto A l (𝓝 A₀))

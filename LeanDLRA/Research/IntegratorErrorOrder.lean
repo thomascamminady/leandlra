@@ -1,5 +1,6 @@
 import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Matrix.Curvature
 
 /-!
 # An error partial order of KSL, BUG, augmented BUG and parallel BUG
@@ -457,18 +458,18 @@ open scoped Matrix LeanDLRA.Frobenius
 variable {m n : Type*} [Fintype m] [Fintype n]
 
 /-- Left multiplication by a symmetric idempotent matrix is an orthogonal projector on
-`ℝ^{m × n}` with the Frobenius inner product. -/
+`ℝ^{m × n}` with the Frobenius inner product (an instance of the core
+`Curvature.IsOrthProjMat.isOrthProj_leftMulCLM`). -/
 theorem isOrthProj_leftMulCLM {M : Matrix m m ℝ} (hM : M * M = M) (hMt : Mᵀ = M) :
-    IsOrthProj (Frobenius.leftMulCLM M : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) where
-  idem X := by simp only [Frobenius.leftMulCLM_apply]; rw [← Matrix.mul_assoc, hM]
-  symm X Y := by simp only [Frobenius.leftMulCLM_apply]; rw [Frobenius.inner_mul_left, hMt]
+    IsOrthProj (Frobenius.leftMulCLM M : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
+  (⟨hMt, hM⟩ : Curvature.IsOrthProjMat M).isOrthProj_leftMulCLM
 
 /-- Right multiplication by a symmetric idempotent matrix is an orthogonal projector on
-`ℝ^{m × n}` with the Frobenius inner product. -/
+`ℝ^{m × n}` with the Frobenius inner product (an instance of the core
+`Curvature.IsOrthProjMat.isOrthProj_rightMulCLM`). -/
 theorem isOrthProj_rightMulCLM {M : Matrix n n ℝ} (hM : M * M = M) (hMt : Mᵀ = M) :
-    IsOrthProj (Frobenius.rightMulCLM M : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) where
-  idem X := by simp only [Frobenius.rightMulCLM_apply]; rw [Matrix.mul_assoc, hM]
-  symm X Y := by simp only [Frobenius.rightMulCLM_apply]; rw [Frobenius.inner_mul_right, hMt]
+    IsOrthProj (Frobenius.rightMulCLM M : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
+  (⟨hMt, hM⟩ : Curvature.IsOrthProjMat M).isOrthProj_rightMulCLM
 
 /-- Step data on `ℝ^{m × n}` given by matrices: `P₀ = M₀ ·`, `Q₀ = · N₀`, `P₁ = M₁ ·`,
 `Q₁ = · N₁`, `Pa = Ma ·`, `Qa = · Na`. -/

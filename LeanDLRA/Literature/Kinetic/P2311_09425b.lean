@@ -1,5 +1,6 @@
 import Mathlib
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Projectors
 
 /-!
@@ -1317,6 +1318,38 @@ theorem exists_isXQR [Fintype 𝕏] [MeasurableSpace 𝕏] [MeasurableSingletonC
     simp [mul_comm]
   · have := congrArg (fun y : EuclideanSpace ℝ 𝕏 => y x) (hR j)
     simpa [mul_comm] using this
+
+/-- **Bridge to the core frames.** On a finite grid with the counting measure, the spatial QR
+factorization `IsXQR` is the factorization `K̃ = X̃ S'` of the grid matrices `K̃ x j = K j x`,
+`X̃ x i = X' i x` with orthonormal columns `X̃ᵀ X̃ = 1`. (For a general measure `ν` it is the same
+statement in `L²(ν)`, a different carrier.) -/
+theorem isXQR_count_iff [Fintype 𝕏] [MeasurableSpace 𝕏] [MeasurableSingletonClass 𝕏]
+    {K X' : ι → 𝕏 → ℝ} {S' : Matrix ι ι ℝ} :
+    IsXQR Measure.count K X' S' ↔
+      (Matrix.of fun x i => X' i x)ᵀ * Matrix.of (fun x i => X' i x) = 1 ∧
+        Matrix.of (fun x j => K j x) = Matrix.of (fun x i => X' i x) * S' := by
+  constructor
+  · rintro ⟨horth, hfac⟩
+    refine ⟨?_, ?_⟩
+    · ext i j
+      rw [Matrix.one_apply, ← horth i j, integral_count]
+      simp [Matrix.mul_apply]
+    · ext x j
+      simp [Matrix.mul_apply, hfac j x]
+  · rintro ⟨horth, hfac⟩
+    refine ⟨fun i j => ?_, fun j x => ?_⟩
+    · have := congrFun (congrFun horth i) j
+      rw [integral_count]
+      simpa [Matrix.mul_apply, Matrix.one_apply] using this
+    · have := congrFun (congrFun hfac x) j
+      simpa [Matrix.mul_apply] using this
+
+/-- On a finite grid with the counting measure, the orthonormal factor of `IsXQR` is an orthonormal
+frame capturing the grid matrix of `K` (the core `Matrix.IsOrthCapture`). -/
+theorem IsXQR.isOrthCapture_count [Fintype 𝕏] [MeasurableSpace 𝕏] [MeasurableSingletonClass 𝕏]
+    {K X' : ι → 𝕏 → ℝ} {S' : Matrix ι ι ℝ} (h : IsXQR Measure.count K X' S') :
+    Matrix.IsOrthCapture (Matrix.of fun x i => X' i x) (Matrix.of fun x j => K j x) :=
+  Matrix.isOrthCapture_iff.2 ⟨(isXQR_count_iff.1 h).1, S', (isXQR_count_iff.1 h).2⟩
 
 variable [MeasurableSpace 𝕏] {ν : Measure 𝕏}
 
