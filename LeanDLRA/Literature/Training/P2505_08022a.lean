@@ -2,6 +2,7 @@ import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Classical.SVD
 import LeanDLRA.Foundations.ODE
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Orthonormal
@@ -595,39 +596,18 @@ lemma specNorm_mul_mul_transpose {U : Matrix a b ℝ} {V : Matrix c b ℝ} (hU :
   conv_lhs => rw [e]
   exact specNorm_mul_mul_le hu' hv _
 
-omit [DecidableEq c] in
 /-- The pseudo-inverse in the condition number of arXiv 2505.08022, Sec. 2: for `W = U S Vᵀ` with
-`U`, `V` orthonormal and `S` invertible, `G = V S⁻¹ Uᵀ` is the Moore–Penrose inverse `W†`, that is,
-the four Penrose equations hold. -/
-theorem isMoorePenrose_mul_mul {U : Matrix a b ℝ} {V : Matrix c b ℝ} (hU : Uᵀ * U = 1)
-    (hV : Vᵀ * V = 1) {S : Matrix b b ℝ} (hS : IsUnit S.det) :
-    (U * S * Vᵀ) * (V * S⁻¹ * Uᵀ) * (U * S * Vᵀ) = U * S * Vᵀ ∧
-      (V * S⁻¹ * Uᵀ) * (U * S * Vᵀ) * (V * S⁻¹ * Uᵀ) = V * S⁻¹ * Uᵀ ∧
-      ((U * S * Vᵀ) * (V * S⁻¹ * Uᵀ))ᵀ = (U * S * Vᵀ) * (V * S⁻¹ * Uᵀ) ∧
-      ((V * S⁻¹ * Uᵀ) * (U * S * Vᵀ))ᵀ = (V * S⁻¹ * Uᵀ) * (U * S * Vᵀ) := by
-  have e1 : (U * S * Vᵀ) * (V * S⁻¹ * Uᵀ) = U * Uᵀ := by
-    calc (U * S * Vᵀ) * (V * S⁻¹ * Uᵀ) = U * (S * (Vᵀ * V) * S⁻¹) * Uᵀ := by
-          simp only [Matrix.mul_assoc]
-      _ = _ := by rw [hV, Matrix.mul_one, Matrix.mul_nonsing_inv _ hS, Matrix.mul_one]
-  have e2 : (V * S⁻¹ * Uᵀ) * (U * S * Vᵀ) = V * Vᵀ := by
-    calc (V * S⁻¹ * Uᵀ) * (U * S * Vᵀ) = V * (S⁻¹ * (Uᵀ * U) * S) * Vᵀ := by
-          simp only [Matrix.mul_assoc]
-      _ = _ := by rw [hU, Matrix.mul_one, Matrix.nonsing_inv_mul _ hS, Matrix.mul_one]
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · rw [e1]
-    calc U * Uᵀ * (U * S * Vᵀ) = U * (Uᵀ * U) * S * Vᵀ := by simp only [Matrix.mul_assoc]
-      _ = _ := by rw [hU, Matrix.mul_one]
-  · rw [e2]
-    calc V * Vᵀ * (V * S⁻¹ * Uᵀ) = V * (Vᵀ * V) * S⁻¹ * Uᵀ := by simp only [Matrix.mul_assoc]
-      _ = _ := by rw [hV, Matrix.mul_one]
-  · rw [e1, Matrix.transpose_mul, Matrix.transpose_transpose]
-  · rw [e2, Matrix.transpose_mul, Matrix.transpose_transpose]
+`U`, `V` orthonormal and `S` invertible, `G = V S⁻¹ Uᵀ` is the Moore–Penrose inverse `W†`. This is
+the core `Matrix.isMoorePenrose_mul_mul_transpose`; the copy of an earlier version of this file
+stated the four Penrose equations as a conjunction (unification, follow-up of batch C1). -/
+@[deprecated Matrix.isMoorePenrose_mul_mul_transpose (since := "2026-11-10")]
+alias isMoorePenrose_mul_mul := Matrix.isMoorePenrose_mul_mul_transpose
 
 variable [DecidableEq a]
 
 /-- `κ(U S Vᵀ) = κ(S)` (arXiv 2505.08022, Sec. 2): for `U`, `V` with orthonormal columns and
 invertible `S`, `‖U S Vᵀ‖ ‖(U S Vᵀ)†‖ = ς₁(S) / ς_r(S)` in the spectral norm, with the
-pseudo-inverse `(U S Vᵀ)† = V S⁻¹ Uᵀ` of `isMoorePenrose_mul_mul`. -/
+pseudo-inverse `(U S Vᵀ)† = V S⁻¹ Uᵀ` of `Matrix.isMoorePenrose_mul_mul_transpose`. -/
 theorem specNorm_mul_specNorm_pinv [Nonempty b] {U : Matrix a b ℝ} {V : Matrix c b ℝ}
     (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) {S : Matrix b b ℝ} (hS : IsUnit S.det) :
     Curvature.specNorm (U * S * Vᵀ) * Curvature.specNorm (V * S⁻¹ * Uᵀ) = kappa S := by

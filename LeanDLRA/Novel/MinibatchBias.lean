@@ -69,6 +69,7 @@ open scoped RealInnerProductSpace Matrix
 namespace LeanDLRA.Novel.MinibatchBias
 
 open LeanDLRA.StochasticDescent
+open Matrix (IsOrthBasisOf)
 
 /-! ### Part I: the first-order bias of a minibatch-dependent projector -/
 
@@ -1672,8 +1673,9 @@ GeoLoRA (`sum_inner_tangent`). -/
 theorem abcPSI_first_order (hU : IsOrthBasisOf Uh (augBasis e₁ Gp e₁))
     (hU' : IsOrthBasisOf Uh' (augBasis e₁ Gm e₁)) :
     1 / 2 * ⟪grad W₀, leftProj Uh Gp⟫ + 1 / 2 * ⟪grad W₀, leftProj Uh' Gm⟫ = -1 := by
-  rw [leftProj_apply, leftProj_apply, (hU.mul_transpose_eq augBasis_Gp Up_orth).trans
-    Up_mul_transpose, (hU'.mul_transpose_eq augBasis_Gm Um_orth).trans Um_mul_transpose, grad_W₀,
+  rw [leftProj_apply, leftProj_apply,
+    (hU.mul_transpose_eq_mul_transpose augBasis_Gp Up_orth).trans Up_mul_transpose,
+    (hU'.mul_transpose_eq_mul_transpose augBasis_Gm Um_orth).trans Um_mul_transpose, grad_W₀,
     Frobenius.inner_def, Frobenius.inner_def]
   norm_num [G, Gp, Gm, N, Pp, Pm, Matrix.mul_apply, Fin.sum_univ_three]
 
@@ -1788,14 +1790,16 @@ variable {δ c} {Uh Vh Uh' Vh' : Matrix (Fin 3) (Fin 2) ℝ}
 lemma fam_galerkin_plus (hU : IsOrthBasisOf Uh (augBasis e₁ (famP δ c) e₁))
     (hV : IsOrthBasisOf Vh (augBasis e₁ (famP δ c)ᵀ e₁)) (X : Matrix (Fin 3) (Fin 3) ℝ) :
     galerkinProj Uh Vh X = Pp * X * Pp := by
-  rw [galerkinProj_apply, (hU.mul_transpose_eq (famP_aug δ c) Up_orth).trans Up_mul_transpose,
-    (hV.mul_transpose_eq (famP_aug' δ c) Up_orth).trans Up_mul_transpose]
+  rw [galerkinProj_apply,
+    (hU.mul_transpose_eq_mul_transpose (famP_aug δ c) Up_orth).trans Up_mul_transpose,
+    (hV.mul_transpose_eq_mul_transpose (famP_aug' δ c) Up_orth).trans Up_mul_transpose]
 
 lemma fam_galerkin_minus (hU : IsOrthBasisOf Uh (augBasis e₁ (famM δ c) e₁))
     (hV : IsOrthBasisOf Vh (augBasis e₁ (famM δ c)ᵀ e₁)) (X : Matrix (Fin 3) (Fin 3) ℝ) :
     galerkinProj Uh Vh X = Pm * X * Pm := by
-  rw [galerkinProj_apply, (hU.mul_transpose_eq (famM_aug δ c) Um_orth).trans Um_mul_transpose,
-    (hV.mul_transpose_eq (famM_aug' δ c) Um_orth).trans Um_mul_transpose]
+  rw [galerkinProj_apply,
+    (hU.mul_transpose_eq_mul_transpose (famM_aug δ c) Um_orth).trans Um_mul_transpose,
+    (hV.mul_transpose_eq_mul_transpose (famM_aug' δ c) Um_orth).trans Um_mul_transpose]
 
 /-- The bases of the family exist as soon as `δ ≠ 0`. -/
 lemma fam_isOrthBasisOf (hδ : δ ≠ 0) :
@@ -1806,8 +1810,10 @@ lemma fam_isOrthBasisOf (hδ : δ ≠ 0) :
     ⟨(2 * δ)⁻¹, mul_inv_cancel₀ (mul_ne_zero two_ne_zero hδ)⟩
   have h1 : !![1, 0; 0, 2 * δ] * !![1, 0; 0, w] = (1 : Matrix (Fin 2) (Fin 2) ℝ) := by
     ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two, hw]
-  refine ⟨⟨Up_orth, !![1, 0; 0, w], ?_⟩, ⟨Up_orth, !![1, 0; 0, w], ?_⟩,
-    ⟨Um_orth, !![1, 0; 0, w], ?_⟩, ⟨Um_orth, !![1, 0; 0, w], ?_⟩⟩
+  refine ⟨isOrthBasisOf_iff.1 ⟨Up_orth, !![1, 0; 0, w], ?_⟩,
+    isOrthBasisOf_iff.1 ⟨Up_orth, !![1, 0; 0, w], ?_⟩,
+    isOrthBasisOf_iff.1 ⟨Um_orth, !![1, 0; 0, w], ?_⟩,
+    isOrthBasisOf_iff.1 ⟨Um_orth, !![1, 0; 0, w], ?_⟩⟩
   · rw [famP_aug, Matrix.mul_assoc, h1, Matrix.mul_one]
   · rw [famP_aug', Matrix.mul_assoc, h1, Matrix.mul_one]
   · rw [famM_aug, Matrix.mul_assoc, h1, Matrix.mul_one]
@@ -1933,8 +1939,8 @@ lemma sh_isOrthBasisOf (s : ℝ) :
     have h' : √(1 + s ^ 2) * (√(1 + s ^ 2))⁻¹ = 1 := by rw [mul_comm]; exact h
     ext i j; fin_cases i <;> fin_cases j <;>
       simp [shD, Matrix.mul_apply, Fin.sum_univ_two, h']
-  refine ⟨⟨shU_orth s, !![1, 0; 0, (√(1 + s ^ 2))⁻¹], ?_⟩,
-    ⟨shU_orth s, !![1, 0; 0, (√(1 + s ^ 2))⁻¹], ?_⟩⟩
+  refine ⟨isOrthBasisOf_iff.1 ⟨shU_orth s, !![1, 0; 0, (√(1 + s ^ 2))⁻¹], ?_⟩,
+    isOrthBasisOf_iff.1 ⟨shU_orth s, !![1, 0; 0, (√(1 + s ^ 2))⁻¹], ?_⟩⟩
   · rw [sh_aug, Matrix.mul_assoc, h1, Matrix.mul_one]
   · rw [sh_aug', Matrix.mul_assoc, h1, Matrix.mul_one]
 
@@ -1943,8 +1949,9 @@ variable {s : ℝ} {Uh Vh Uh' Vh' : Matrix (Fin 3) (Fin 2) ℝ}
 lemma sh_galerkin (hU : IsOrthBasisOf Uh (augBasis e₁ (shg s) e₁))
     (hV : IsOrthBasisOf Vh (augBasis e₁ (shg s)ᵀ e₁)) (X : Matrix (Fin 3) (Fin 3) ℝ) :
     galerkinProj Uh Vh X = shQ s * X * shQ s := by
-  rw [galerkinProj_apply, (hU.mul_transpose_eq (sh_aug s) (shU_orth s)).trans (shU_mul_transpose s),
-    (hV.mul_transpose_eq (sh_aug' s) (shU_orth s)).trans (shU_mul_transpose s)]
+  rw [galerkinProj_apply,
+    (hU.mul_transpose_eq_mul_transpose (sh_aug s) (shU_orth s)).trans (shU_mul_transpose s),
+    (hV.mul_transpose_eq_mul_transpose (sh_aug' s) (shU_orth s)).trans (shU_mul_transpose s)]
 
 /-- `Q (shg t) Q`: only the first row and column survive. -/
 lemma shQ_conj (s t : ℝ) : shQ s * shg t * shQ s =

@@ -1,5 +1,6 @@
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Exactness
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
@@ -170,6 +171,51 @@ theorem exists_isQRRoutine {a : Type*} [Fintype a] (h : r ≤ Fintype.card a) :
   choose U hU hK using fun K : Matrix a (Fin r) ℝ => exists_orthonormal_capture_of_le_card K h
   refine ⟨fun K => (U K, (U K)ᵀ * K), ⟨hU, fun K => ?_⟩⟩
   simpa [Matrix.mul_assoc] using hK K
+
+/-- **Bridge to the core frames.** A QR routine returns, for every input `K`, an orthonormal frame
+capturing `K` (`Matrix.IsOrthCapture`, `Qᵀ Q = 1`, `Q Qᵀ K = K`) together with `R = Qᵀ K`, and
+conversely. So `IsQRRoutine` is the capture hypothesis of the core step structures, made
+algorithmic. -/
+theorem isQRRoutine_iff {a : Type*} [Fintype a]
+    {qr : Matrix a (Fin r) ℝ → Matrix a (Fin r) ℝ × Matrix (Fin r) (Fin r) ℝ} :
+    IsQRRoutine qr ↔ ∀ K, Matrix.IsOrthCapture (qr K).1 K ∧ (qr K).2 = (qr K).1ᵀ * K := by
+  constructor
+  · intro h K
+    refine ⟨Matrix.isOrthCapture_iff.2 ⟨h.orth K, (qr K).2, (h.fact K).symm⟩, ?_⟩
+    calc (qr K).2 = (qr K).1ᵀ * ((qr K).1 * (qr K).2) := by
+          rw [← Matrix.mul_assoc, h.orth K, Matrix.one_mul]
+      _ = (qr K).1ᵀ * K := by rw [h.fact K]
+  · intro h
+    refine ⟨fun K => (h K).1.orth, fun K => ?_⟩
+    rw [(h K).2, ← Matrix.mul_assoc, (h K).1.capture]
+
+/-- The first factor of a QR routine is an orthonormal frame capturing the input. -/
+theorem IsQRRoutine.isOrthCapture {a : Type*} [Fintype a]
+    {qr : Matrix a (Fin r) ℝ → Matrix a (Fin r) ℝ × Matrix (Fin r) (Fin r) ℝ}
+    (h : IsQRRoutine qr) (K : Matrix a (Fin r) ℝ) : Matrix.IsOrthCapture (qr K).1 K :=
+  (isQRRoutine_iff.1 h K).1
+
+/-- A routine returning thin QR factorizations in the sense of the core `Matrix.IsQR` (upper
+triangular `R`) is a QR routine. -/
+theorem isQRRoutine_of_isQR {a : Type*} [Fintype a]
+    {qr : Matrix a (Fin r) ℝ → Matrix a (Fin r) ℝ × Matrix (Fin r) (Fin r) ℝ}
+    (h : ∀ K, Matrix.IsQR K (qr K).1 (qr K).2) : IsQRRoutine qr :=
+  ⟨fun K => (h K).orth, fun K => (h K).eq.symm⟩
+
+/-- **Separating example.** `IsQRRoutine` does not imply `Matrix.IsQR`: the routine
+`K ↦ (J, Jᵀ K)` with the swap `J` is a QR routine, but for `K = 1` its `R = Jᵀ` is not upper
+triangular. -/
+example : ∃ qr : Matrix (Fin 2) (Fin 2) ℝ → Matrix (Fin 2) (Fin 2) ℝ × Matrix (Fin 2) (Fin 2) ℝ,
+    IsQRRoutine qr ∧ ¬Matrix.IsQR 1 (qr 1).1 (qr 1).2 := by
+  have hJ : (!![0, 1; 1, 0] : Matrix (Fin 2) (Fin 2) ℝ)ᵀ * !![0, 1; 1, 0] = 1 := by
+    ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
+  have hJ' : (!![0, 1; 1, 0] : Matrix (Fin 2) (Fin 2) ℝ) * !![0, 1; 1, 0]ᵀ = 1 := by
+    ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
+  refine ⟨fun K => (!![0, 1; 1, 0], !![0, 1; 1, 0]ᵀ * K), ⟨fun _ => hJ, fun K => ?_⟩, ?_⟩
+  · simp only [← Matrix.mul_assoc, hJ', Matrix.one_mul]
+  · intro h
+    have := h.upper (i := 1) (j := 0) (by decide)
+    simp at this
 
 /-- The stochastic projection of eq. (4) from the answers `y j` to the probes `z j`:
 `P₂ = w ∑ⱼ zⱼ yⱼᵀ U`. The paper has `w = 1` (lines 14 and 16 of Algorithm 1). -/

@@ -13,6 +13,8 @@ namespace LeanDLRA
 
 namespace StochasticDescent
 
+open Matrix (IsOrthBasisOf)
+
 /-! ### Weighted averages of projected stochastic gradients -/
 
 section Abstract
@@ -237,15 +239,14 @@ def augBasis (U₀ : Matrix m (Fin 1) ℝ) (A : Matrix m n ℝ) (V₀ : Matrix n
     Matrix m (Fin 2) ℝ :=
   Matrix.of fun i => ![U₀ i 0, (A * V₀) i 0]
 
-/-- `Û` is an orthonormal basis whose columns lie in the column space of `K`
-(`Ûᵀ Û = 1`, `Û = K C`); for `K` of full column rank this is `Û = orth(K)` up to a rotation. -/
-def IsOrthBasisOf (Û K : Matrix m k ℝ) : Prop :=
-  Ûᵀ * Û = 1 ∧ ∃ C : Matrix k k ℝ, Û = K * C
-
-/-- **Bridge.** For bases with the same number of columns, `IsOrthBasisOf Û K` is the core
-`Matrix.IsOrthBasisOf Û K`: the capture `Û Ûᵀ K = K` that the core predicate also asks for follows,
-because `Ûᵀ K C = Ûᵀ Û = 1` makes the square matrix `C` invertible. -/
-theorem isOrthBasisOf_iff {Û K : Matrix m k ℝ} : IsOrthBasisOf Û K ↔ Matrix.IsOrthBasisOf Û K := by
+/-- **Bridge.** `Û` is an orthonormal basis of the column space of `K` (`Ûᵀ Û = 1`, `Û = K C`;
+for `K` of full column rank, `Û = orth(K)` up to a rotation) in the sense of the core
+`Matrix.IsOrthBasisOf Û K` as soon as `Û` has as many columns as `K`: the capture `Û Ûᵀ K = K`
+that the core predicate also asks for follows, because `Ûᵀ K C = Ûᵀ Û = 1` makes the square matrix
+`C` invertible. The left side was the local `IsOrthBasisOf` of an earlier version of this file,
+replaced by the core predicate (unification, follow-up of batch C4). -/
+theorem isOrthBasisOf_iff {Û K : Matrix m k ℝ} :
+    (Ûᵀ * Û = 1 ∧ ∃ C : Matrix k k ℝ, Û = K * C) ↔ Matrix.IsOrthBasisOf Û K := by
   constructor
   · rintro ⟨hÛ, C, hC⟩
     have h1 : Ûᵀ * K * C = 1 := by rw [Matrix.mul_assoc, ← hC, hÛ]
@@ -267,13 +268,15 @@ lemma mul_transpose_eq_of_eq_mul {U U' : Matrix m k ℝ} (hU : Uᵀ * U = 1)
   have h2 : C * Cᵀ = 1 := mul_eq_one_comm.1 h1
   rw [hC, Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc C, h2, Matrix.one_mul]
 
-/-- The projector of an orthonormal basis of the column space of `K = U' D` is `U' U'ᵀ`, for any
-reference orthonormal basis `U'`: the Galerkin projector does not depend on how `orth` is
-computed. -/
-lemma IsOrthBasisOf.mul_transpose_eq {Û K U' : Matrix m k ℝ} (h : IsOrthBasisOf Û K)
-    {D : Matrix k k ℝ} (hK : K = U' * D) (hU' : U'ᵀ * U' = 1) : Û * Ûᵀ = U' * U'ᵀ := by
-  obtain ⟨hÛ, C, hC⟩ := h
-  exact mul_transpose_eq_of_eq_mul hÛ (C := D * C) (by rw [hC, hK, Matrix.mul_assoc]) hU'
+/-- The projector of an orthonormal basis `Û` of the column space of `K = U' D` with as many
+columns as `K` is `U' U'ᵀ`, for any reference orthonormal basis `U'`: the Galerkin projector does
+not depend on how `orth` is computed. (A statement about the core `Matrix.IsOrthBasisOf`; it belongs
+with it in `LinearAlgebra/Factorization/Defs.lean` and moves there under the same name.) -/
+theorem _root_.Matrix.IsOrthBasisOf.mul_transpose_eq_mul_transpose {Û K U' : Matrix m k ℝ}
+    (h : Matrix.IsOrthBasisOf Û K) {D : Matrix k k ℝ} (hK : K = U' * D) (hU' : U'ᵀ * U' = 1) :
+    Û * Ûᵀ = U' * U'ᵀ := by
+  obtain ⟨C, hC⟩ := h.span
+  exact mul_transpose_eq_of_eq_mul h.orth (C := D * C) (by rw [hC, hK, Matrix.mul_assoc]) hU'
 
 /-! The Galerkin projector `Z ↦ U Uᵀ Z V Vᵀ` onto `{U S Vᵀ}` is the core `LeanDLRA.galerkinProj`
 (`galerkinProj_apply`, `isOrthProj_galerkinProj`); the local copy of an earlier version of this
@@ -411,26 +414,29 @@ lemma Pd_conj (X : Matrix (Fin 3) (Fin 3) ℝ) :
 lemma galerkinProj_plus {Û Vh : Matrix (Fin 3) (Fin 2) ℝ}
     (hÛ : IsOrthBasisOf Û (augBasis e₁ Gp e₁)) (hVh : IsOrthBasisOf Vh (augBasis e₁ Gpᵀ e₁))
     (X : Matrix (Fin 3) (Fin 3) ℝ) : galerkinProj Û Vh X = Pp * X * Pp := by
-  rw [galerkinProj_apply, (hÛ.mul_transpose_eq augBasis_Gp Up_orth).trans Up_mul_transpose,
-    (hVh.mul_transpose_eq augBasis_Gp_transpose Up_orth).trans Up_mul_transpose]
+  rw [galerkinProj_apply,
+    (hÛ.mul_transpose_eq_mul_transpose augBasis_Gp Up_orth).trans Up_mul_transpose,
+    (hVh.mul_transpose_eq_mul_transpose augBasis_Gp_transpose Up_orth).trans Up_mul_transpose]
 
 /-- The same-minibatch Galerkin projector of outcome `-` keeps the `{1,3} × {1,3}` block. -/
 lemma galerkinProj_minus {Û Vh : Matrix (Fin 3) (Fin 2) ℝ}
     (hÛ : IsOrthBasisOf Û (augBasis e₁ Gm e₁)) (hVh : IsOrthBasisOf Vh (augBasis e₁ Gmᵀ e₁))
     (X : Matrix (Fin 3) (Fin 3) ℝ) : galerkinProj Û Vh X = Pm * X * Pm := by
-  rw [galerkinProj_apply, (hÛ.mul_transpose_eq augBasis_Gm Um_orth).trans Um_mul_transpose,
-    (hVh.mul_transpose_eq augBasis_Gm_transpose Um_orth).trans Um_mul_transpose]
+  rw [galerkinProj_apply,
+    (hÛ.mul_transpose_eq_mul_transpose augBasis_Gm Um_orth).trans Um_mul_transpose,
+    (hVh.mul_transpose_eq_mul_transpose augBasis_Gm_transpose Um_orth).trans Um_mul_transpose]
 
 /-- The deterministic augmented Galerkin projector (bases augmented with the full gradient). -/
 lemma galerkinProj_det {Û Vh : Matrix (Fin 3) (Fin 2) ℝ}
     (hÛ : IsOrthBasisOf Û (augBasis e₁ G e₁)) (hVh : IsOrthBasisOf Vh (augBasis e₁ Gᵀ e₁))
     (X : Matrix (Fin 3) (Fin 3) ℝ) : galerkinProj Û Vh X = Pd * X * Pd := by
-  rw [galerkinProj_apply, (hÛ.mul_transpose_eq augBasis_G Ud_orth).trans Ud_mul_transpose,
-    (hVh.mul_transpose_eq augBasis_G_transpose Ud_orth).trans Ud_mul_transpose]
+  rw [galerkinProj_apply,
+    (hÛ.mul_transpose_eq_mul_transpose augBasis_G Ud_orth).trans Ud_mul_transpose,
+    (hVh.mul_transpose_eq_mul_transpose augBasis_G_transpose Ud_orth).trans Ud_mul_transpose]
 
 /-- The reference bases are admissible. -/
 lemma isOrthBasisOf_Up : IsOrthBasisOf Up (augBasis e₁ Gp e₁) :=
-  ⟨Up_orth, !![1, 0; 0, 1 / 2], by
+  isOrthBasisOf_iff.1 ⟨Up_orth, !![1, 0; 0, 1 / 2], by
     rw [augBasis_Gp, Matrix.mul_assoc]
     ext i j; fin_cases i <;> fin_cases j <;>
       norm_num [Up, D2, Matrix.mul_apply, Fin.sum_univ_two]⟩
@@ -439,7 +445,7 @@ lemma isOrthBasisOf_Up' : IsOrthBasisOf Up (augBasis e₁ Gpᵀ e₁) := by
   rw [augBasis_Gp_transpose, ← augBasis_Gp]; exact isOrthBasisOf_Up
 
 lemma isOrthBasisOf_Um : IsOrthBasisOf Um (augBasis e₁ Gm e₁) :=
-  ⟨Um_orth, !![1, 0; 0, 1 / 2], by
+  isOrthBasisOf_iff.1 ⟨Um_orth, !![1, 0; 0, 1 / 2], by
     rw [augBasis_Gm, Matrix.mul_assoc]
     ext i j; fin_cases i <;> fin_cases j <;>
       norm_num [Um, D2, Matrix.mul_apply, Fin.sum_univ_two]⟩
@@ -753,6 +759,13 @@ definition `leftProj U * rightProj V`). -/
 /-- Replaced by the core `LeanDLRA.isOrthProj_galerkinProj`. -/
 @[deprecated (since := "2026-11-09")] alias isOrthProj_galerkinProj :=
   LeanDLRA.isOrthProj_galerkinProj
+
+/-! The local predicate `IsOrthBasisOf` (`Ûᵀ Û = 1 ∧ ∃ C, Û = K C`) of an earlier version of this
+file is replaced by the core `Matrix.IsOrthBasisOf` (equal for bases with as many columns as `K`,
+`isOrthBasisOf_iff`), and `IsOrthBasisOf.mul_transpose_eq` by
+`Matrix.IsOrthBasisOf.mul_transpose_eq_mul_transpose`. No deprecated alias is left: an alias
+`StochasticDescent.IsOrthBasisOf` would make `IsOrthBasisOf` ambiguous in the modules that open
+both this namespace and `Matrix (IsOrthBasisOf)`, and no other module used the old names. -/
 
 end StochasticDescent
 

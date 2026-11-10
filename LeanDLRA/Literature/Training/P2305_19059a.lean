@@ -1,6 +1,7 @@
 import LeanDLRA.Foundations.Existence
 import LeanDLRA.Foundations.Galerkin
 import LeanDLRA.Foundations.OneSided
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Training.Descent
@@ -429,6 +430,34 @@ lemma IsCoreQR.mat_eq {i : ι} {C : Tensor r} {Q : Matrix (Rest r i) (r i) ℝ}
 lemma IsCoreQR.mat_mul {i : ι} {C : Tensor r} {Q : Matrix (Rest r i) (r i) ℝ}
     {S : Matrix (r i) (r i) ℝ} (h : IsCoreQR i C Q S) : mat i C * Q = S := by
   rw [h.mat_eq, Matrix.mul_assoc, h.orth, Matrix.mul_one]
+
+/-- **Bridge to the core frames.** `IsCoreQR i C Q S` says exactly that `Q` is an orthonormal basis
+of the column space of `Matᵢ(C)ᵀ` (the core `Matrix.IsOrthBasisOf`) and `S = Matᵢ(C) Q`. The
+invertibility of `S` asked for by `IsCoreQR` is then automatic, because `Q` has as many columns as
+`Matᵢ(C)ᵀ`. -/
+theorem isCoreQR_iff {i : ι} {C : Tensor r} {Q : Matrix (Rest r i) (r i) ℝ}
+    {S : Matrix (r i) (r i) ℝ} :
+    IsCoreQR i C Q S ↔ Matrix.IsOrthBasisOf Q (mat i C)ᵀ ∧ S = mat i C * Q := by
+  constructor
+  · intro h
+    have hS : IsUnit Sᵀ.det := by
+      rw [Matrix.det_transpose]; exact (Matrix.isUnit_iff_isUnit_det S).1 h.unit
+    refine ⟨⟨h.orth, ?_, Sᵀ⁻¹, ?_⟩, h.mat_mul.symm⟩
+    · rw [h.fact, ← Matrix.mul_assoc, Matrix.mul_assoc Q, h.orth, Matrix.mul_one]
+    · rw [h.fact, Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hS, Matrix.mul_one]
+  · rintro ⟨hb, rfl⟩
+    obtain ⟨C₀, hC₀⟩ := hb.span
+    have hQt : Qᵀ = C₀ᵀ * mat i C := by
+      rw [hC₀, Matrix.transpose_mul, Matrix.transpose_transpose]
+    have h1 : C₀ᵀ * (mat i C * Q) = 1 := by rw [← Matrix.mul_assoc, ← hQt, hb.orth]
+    refine ⟨hb.orth, ?_, (Matrix.isUnit_iff_isUnit_det _).2 (Matrix.isUnit_det_of_left_inverse h1)⟩
+    rw [Matrix.transpose_mul, ← Matrix.mul_assoc, hb.capture]
+
+/-- The orthonormal factor of the QR decomposition of `Matᵢ(C)ᵀ` is an orthonormal basis of its
+column space (`Matrix.IsOrthBasisOf`), hence captures it (`Matrix.IsOrthCapture`). -/
+theorem IsCoreQR.isOrthBasisOf {i : ι} {C : Tensor r} {Q : Matrix (Rest r i) (r i) ℝ}
+    {S : Matrix (r i) (r i) ℝ} (h : IsCoreQR i C Q S) : Matrix.IsOrthBasisOf Q (mat i C)ᵀ :=
+  (isCoreQR_iff.1 h).1
 
 /-- The matrix `Vᵢ = (⊗_{j ≠ i} Uⱼ) Qᵢ` of arXiv 2305.19059; `Matᵢ(W) = Uᵢ Sᵢ Vᵢᵀ`. -/
 def coFrame (U : ∀ i, Matrix (n i) (r i) ℝ) (i : ι) (Q : Matrix (Rest r i) (r i) ℝ) :

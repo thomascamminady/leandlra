@@ -1,4 +1,5 @@
 import LeanDLRA.Classical.EckartYoung
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Literature.RankAdaptive.P2007_13153a
 import LeanDLRA.Literature.Foundations.P2008_07427a
 import LeanDLRA.Literature.Randomized.P2308_16547b
@@ -292,6 +293,62 @@ theorem proposition_1 {ι : Type*} [Fintype ι] (S : Matrix ι σ ℝ) (Rs : Mat
 noncomputable def svdPinv (Us : Matrix μ ρ ℝ) (sv : ρ → ℝ) (Vs : Matrix κ ρ ℝ) :
     Matrix κ μ ℝ :=
   Vs * diagonal sv⁻¹ * Usᵀ
+
+omit [Fintype κ] [Fintype μ] in
+/-- `diag(σ⁻¹)` is the Moore–Penrose inverse of `diag(σ)` for every `σ` (with `0⁻¹ = 0`). (A
+statement about the core `Matrix.IsMoorePenrose`; it belongs in
+`LinearAlgebra/Factorization/Defs.lean` and moves there under the same name.) -/
+theorem _root_.Matrix.isMoorePenrose_diagonal (d : ρ → ℝ) :
+    (diagonal d).IsMoorePenrose (diagonal d⁻¹) := by
+  have h1 : ∀ x : ℝ, x * x⁻¹ * x = x := fun x => by
+    rcases eq_or_ne x 0 with rfl | hx
+    · simp
+    · rw [mul_inv_cancel₀ hx, one_mul]
+  have h2 : ∀ x : ℝ, x⁻¹ * x * x⁻¹ = x⁻¹ := fun x => by
+    simpa only [inv_inv] using h1 x⁻¹
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · rw [diagonal_mul_diagonal, diagonal_mul_diagonal]; congr 1; funext i; exact h1 (d i)
+  · rw [diagonal_mul_diagonal, diagonal_mul_diagonal]; congr 1; funext i; exact h2 (d i)
+  · rw [diagonal_mul_diagonal, diagonal_transpose]
+  · rw [diagonal_mul_diagonal, diagonal_transpose]
+
+/-- **Bridge to the core Moore–Penrose inverse.** For orthonormal `U*`, `V*`, the pseudo-inverse
+`svdPinv U* σ V* = V* diag(σ⁻¹) U*ᵀ` of Algorithm 1 satisfies the four Penrose equations for
+`C* = U* diag(σ) V*ᵀ`, for every `σ` (zero entries included). -/
+theorem isMoorePenrose_svdPinv {Us : Matrix μ ρ ℝ} {sv : ρ → ℝ} {Vs : Matrix κ ρ ℝ}
+    (hU : Usᵀ * Us = 1) (hV : Vsᵀ * Vs = 1) :
+    (Us * diagonal sv * Vsᵀ).IsMoorePenrose (svdPinv Us sv Vs) := by
+  obtain ⟨p1, p2, p3, p4⟩ := Matrix.isMoorePenrose_diagonal sv
+  have e1 : Us * diagonal sv * Vsᵀ * svdPinv Us sv Vs =
+      Us * (diagonal sv * diagonal sv⁻¹) * Usᵀ := by
+    calc _ = Us * diagonal sv * (Vsᵀ * Vs) * diagonal sv⁻¹ * Usᵀ := by
+          simp only [svdPinv, Matrix.mul_assoc]
+      _ = _ := by rw [hV, Matrix.mul_one]; simp only [Matrix.mul_assoc]
+  have e2 : svdPinv Us sv Vs * (Us * diagonal sv * Vsᵀ) =
+      Vs * (diagonal sv⁻¹ * diagonal sv) * Vsᵀ := by
+    calc _ = Vs * diagonal sv⁻¹ * (Usᵀ * Us) * diagonal sv * Vsᵀ := by
+          simp only [svdPinv, Matrix.mul_assoc]
+      _ = _ := by rw [hU, Matrix.mul_one]; simp only [Matrix.mul_assoc]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · rw [e1]
+    calc _ = Us * (diagonal sv * diagonal sv⁻¹ * ((Usᵀ * Us) * diagonal sv)) * Vsᵀ := by
+          simp only [Matrix.mul_assoc]
+      _ = _ := by rw [hU, Matrix.one_mul, p1]
+  · rw [e2]
+    calc _ = Vs * (diagonal sv⁻¹ * diagonal sv * ((Vsᵀ * Vs) * diagonal sv⁻¹)) * Usᵀ := by
+          simp only [svdPinv, Matrix.mul_assoc]
+      _ = _ := by rw [hV, Matrix.one_mul, p2, svdPinv]
+  · rw [e1, Matrix.transpose_mul, Matrix.transpose_mul, Matrix.transpose_transpose, p3]
+    simp only [Matrix.mul_assoc]
+  · rw [e2, Matrix.transpose_mul, Matrix.transpose_mul, Matrix.transpose_transpose, p4]
+    simp only [Matrix.mul_assoc]
+
+/-- `svdPinv U* σ V*` is the core Moore–Penrose inverse `(U* diag(σ) V*ᵀ)⁺` (`Matrix.pinv`) for
+orthonormal `U*`, `V*`. -/
+theorem svdPinv_eq_pinv [DecidableEq κ] {Us : Matrix μ ρ ℝ} {sv : ρ → ℝ} {Vs : Matrix κ ρ ℝ}
+    (hU : Usᵀ * Us = 1) (hV : Vsᵀ * Vs = 1) :
+    svdPinv Us sv Vs = (Us * diagonal sv * Vsᵀ).pinv :=
+  (isMoorePenrose_svdPinv hU hV).eq_pinv
 
 /-- The singular values of `Y` vanish from index `rank Y` on. -/
 lemma sum_Ico_rank_eq_zero (Y : Matrix σ ρ ℝ) :
