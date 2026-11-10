@@ -39,6 +39,7 @@ import LeanDLRA.Integrators.Matrix.Defs
 import LeanDLRA.Integrators.Matrix.ParallelBUG
 import LeanDLRA.Integrators.Matrix.ProjectorSplitting
 import LeanDLRA.Integrators.Matrix.Symmetry
+import LeanDLRA.Integrators.Method
 import LeanDLRA.Integrators.ParallelBUG
 import LeanDLRA.Integrators.PerturbedField
 import LeanDLRA.Integrators.ProjectorSplitting

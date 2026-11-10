@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.Matrix.BUGTube
+import LeanDLRA.Integrators.Method
 import LeanDLRA.Matrix.LowRankDistance
 
 /-!
@@ -42,6 +43,9 @@ for the one constructed (`MatrixBUG.IsRun.norm_sub_le`).
 * `MatrixBUG.IsRun.norm_sub_le`: every run satisfies the error bound.
 * `MatrixBUG.norm_sub_le_of_isStep`: the error bound for a chain of factor steps
   (`MatrixBUG.IsStep`).
+* `MatrixBUG.isTubeLocal_stepRel`: the integrator is a tube-local method
+  (`StepMethod.IsTubeLocal`) with the matrices of rank at most `r` as admissible values and
+  margin constant `4`.
 * `MatrixBUG.exists_run_norm_sub_le`: a run exists, has rank at most `r` and satisfies the error
   bound.
 * `exists_bugGlobalBound_lt`: the smallness condition can be met.
@@ -51,10 +55,16 @@ stationary point. This field is not bounded, so it is covered only by the tube f
 
 ## Implementation notes
 
-The run is constructed step by step (`exists_isRun`). The field `F` is replaced by its extension
-`tubeExt F A t₀ (t₀ + N h) ρ`, which is globally Lipschitz, so a step of the extension exists; the
-error bound for the run constructed so far shows that the last value lies well inside the tube,
-and there the steps of the extension are steps of `F` (`MatrixBUG.stepRel_tubeExt_iff_of_near`).
+`MatrixBUG.exists_run_norm_sub_le` is an instance of the theorem for tube-local methods,
+`StepMethod.IsTubeLocal.exists_run_norm_sub_le`. That theorem constructs the run step by step:
+the field `F` is replaced by its extension `tubeExt F A t₀ (t₀ + N h) ρ`, which is globally
+Lipschitz, so a step of the extension exists; the error bound for the run constructed so far
+shows that the last value lies well inside the tube, and there the steps of the extension are
+steps of `F`. What is specific to the BUG integrator is collected in
+`MatrixBUG.isTubeLocal_stepRel` (existence of a step for globally Lipschitz fields,
+`MatrixBUG.exists_stepRel`; the rank bound, `MatrixBUG.stepRel.rank_le`; locality,
+`MatrixBUG.stepRel_tubeExt_iff_of_near`) and in the local error
+`MatrixBUG.stepRel.hasLocalError_of_tube`.
 
 ## References
 
@@ -245,6 +255,26 @@ theorem norm_sub_le_of_isStep {U : ℕ → Matrix m (Fin r) ℝ} {Sm : ℕ → M
       (fun j hj => by rw [e j]; exact hS j hj)
   exact IsRun.norm_sub_le hP hc hε hε₀ hh hhH hNT hsmall hrun hδ
 
+omit [DecidableEq m] [DecidableEq n] in
+/-- **The fixed-rank BUG integrator is a tube-local method** (`StepMethod.IsTubeLocal`), with
+the matrices of rank at most `r` as admissible values and margin constant `4`:
+
+* a step exists from every matrix of rank at most `r`, for every globally Lipschitz field that is
+  continuous in time on the step interval (`MatrixBUG.exists_stepRel`);
+* the result of a step has rank at most `r` (`MatrixBUG.stepRel.rank_le`);
+* if `‖Y₀ - A t₀‖ + 4 B (t₁ - t₀) < ρ`, a step from `Y₀` of the extended field
+  `tubeExt F A a b ρ` is a step of `F` (`MatrixBUG.stepRel_tubeExt_iff_of_near`).
+
+With the local error `MatrixBUG.stepRel.hasLocalError_of_tube` this is all that
+`StepMethod.IsTubeLocal.exists_run_norm_sub_le` needs. -/
+theorem isTubeLocal_stepRel (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n) :
+    StepMethod.IsTubeLocal (fun G : ℝ → Matrix m n ℝ → Matrix m n ℝ => stepRel G r)
+      (fun Y => Y.rank ≤ r) 4 where
+  exists_step := fun hG hc h01 hY₀ => exists_stepRel hG hc h01 hrm hrn hY₀
+  adm_of_step := fun _ _ hstep => hstep.rank_le
+  step_of_tubeExt := fun hFB hB ha hb h01 hA _ hsmall hstep =>
+    (stepRel_tubeExt_iff_of_near hFB hB ha hb h01 hA hsmall).1 hstep
+
 /-- **Existence and robust error bound for the fixed-rank BUG integrator**
 [CerutiLubich2022, Thm. 4]. Let `A` solve `Y' = F(t, Y)` on `[t₀, t₀ + N h]`, and let `F` be
 `L`-Lipschitz and bounded by `B` on the tube of radius `ρ` around `A` (`DLRAProblem`), jointly
@@ -262,10 +292,12 @@ the previous one by a BUG step of size `h`, all of rank at most `r`, with
 the right-hand side being `bugGlobalBound L B H T δ ε h`. The constants are independent of the
 singular values of the matrices `Y n`, and nothing is assumed about `F` outside the tube.
 
-The steps exist because the error bound keeps the run constructed so far inside the tube, where
-`F` and its globally Lipschitz extension `tubeExt F A t₀ (t₀ + N h) ρ` have the same steps. The
-bound itself holds for every run (`MatrixBUG.IsRun.norm_sub_le`), and the smallness condition
-can be met by small `δ` and `h` (`exists_bugGlobalBound_lt`). -/
+This is `StepMethod.IsTubeLocal.exists_run_norm_sub_le` for the tube-local method
+`MatrixBUG.isTubeLocal_stepRel`: the steps exist because the error bound keeps the run constructed
+so far inside the tube, where `F` and its globally Lipschitz extension
+`tubeExt F A t₀ (t₀ + N h) ρ` have the same steps. The bound itself holds for every run
+(`MatrixBUG.IsRun.norm_sub_le`), and the smallness condition can be met by small `δ` and `h`
+(`exists_bugGlobalBound_lt`). -/
 theorem exists_run_norm_sub_le
     (hP : DLRAProblem F A t₀ (t₀ + N * h) ρ L B)
     (hc : ContinuousOn (Function.uncurry F) (tubeSet A t₀ (t₀ + N * h) ρ))
@@ -276,37 +308,19 @@ theorem exists_run_norm_sub_le
     (hsmall : bugGlobalBound L B H T δ ε h + 4 * B * h < ρ) :
     ∃ Y : ℕ → Matrix m n ℝ, Y 0 = Y₀ ∧ IsRun (stepRel F r) (uniformGrid t₀ h) N Y ∧
       ∀ n ≤ N, (Y n).rank ≤ r ∧ ‖Y n - A (t₀ + n * h)‖ ≤ bugGlobalBound L B H T δ ε h := by
-  have hT : 0 ≤ T := (mul_nonneg (Nat.cast_nonneg N) hh).trans hNT
+  have hH : 0 ≤ H := hh.trans hhH
+  have hc₀ : 0 ≤ bugC₁ L H * ε + bugC₂ L B H * h :=
+    add_nonneg (mul_nonneg (bugC₁_nonneg hP.L_nonneg hH) hε₀)
+      (mul_nonneg (bugC₂_nonneg hP.L_nonneg hP.B_nonneg hH) hh)
   have hBh : 0 ≤ B * h := mul_nonneg hP.B_nonneg hh
-  have hρ : 0 ≤ ρ := by
-    have hM := bugGlobalBound_nonneg hP.L_nonneg hP.B_nonneg (hh.trans hhH) hT
-      ((norm_nonneg _).trans hδ) hε₀ hh
-    linarith
-  have hGL : IsLipschitzField (tubeExt F A t₀ (t₀ + N * h) ρ) L :=
-    isLipschitzField_tubeExt hP.lipschitz hP.L_nonneg hρ
-  have hGc : ∀ Z, ContinuousOn (fun t => tubeExt F A t₀ (t₀ + N * h) ρ t Z)
-      (Icc t₀ (t₀ + N * h)) := fun Z => continuousOn_tubeExt hc hP.sol.cont hρ Z
-  obtain ⟨Y, hY0, hY⟩ : ∃ Y : ℕ → Matrix m n ℝ, Y 0 = Y₀ ∧
-      IsRun (stepRel F r) (uniformGrid t₀ h) N Y := by
-    refine exists_isRun (isGrid_uniformGrid hh N) Y₀ fun n hn Y hY0 hY => ?_
-    obtain ⟨ha, h01, hb, hsub⟩ := uniformGrid_step (t₀ := t₀) hh hn
-    have hnN : (n : ℝ) * h ≤ N * h := mul_le_mul_of_nonneg_right (Nat.cast_le.2 hn.le) hh
-    have hbn : t₀ + n * h ≤ t₀ + N * h := by linarith
-    have hD : tubeSet A t₀ (t₀ + n * h) ρ ⊆ tubeSet A t₀ (t₀ + N * h) ρ :=
-      fun p hp => ⟨⟨hp.1.1, hp.1.2.trans hbn⟩, hp.2⟩
-    -- the run constructed so far satisfies the error bound, so its last value is in the tube
-    have herr := IsRun.norm_sub_le (hP.mono le_rfl hbn le_rfl) (hc.mono hD) (hε.mono hD le_rfl)
-      hε₀ hh hhH (hnN.trans hNT) hsmall hY (by rw [hY0]; exact hδ) n le_rfl
-    have hrank := IsRun.rank_le hY (by rw [hY0]; exact hY₀) n le_rfl
-    -- a step of the extended field exists, and it is a step of `F`
-    obtain ⟨Y₁, hY₁⟩ := exists_stepRel hGL (fun Z => (hGc Z).mono (Icc_subset_Icc ha hb)) h01
-      hrm hrn hrank
-    have e : uniformGrid t₀ h (n + 1) = t₀ + ((n : ℝ) + 1) * h := by simp [uniformGrid]
-    rw [e]
-    exact ⟨Y₁, (stepRel_tubeExt_iff_of_near hP.bounded hP.B_nonneg ha hb h01 (hP.sol.mono ha hb)
-      (by rw [hsub]; linarith)).1 hY₁⟩
-  exact ⟨Y, hY0, hY, fun n hn => ⟨IsRun.rank_le hY (by rw [hY0]; exact hY₀) n hn,
-    IsRun.norm_sub_le hP hc hε hε₀ hh hhH hNT hsmall hY (by rw [hY0]; exact hδ) n hn⟩⟩
+  rw [bugGlobalBound_eq] at hsmall ⊢
+  refine (isTubeLocal_stepRel hrm hrn).exists_run_norm_sub_le (by norm_num) hP hc
+    (fun k hk Z₀ Z₁ _ hnear hstep => ?_) hc₀ hh hNT hY₀ hδ hsmall
+  -- the local error of a step that starts within the error bound of `A`
+  obtain ⟨ha, h01, hb, hsub⟩ := uniformGrid_step (t₀ := t₀) hh hk
+  have hloc := stepRel.hasLocalError_of_tube hstep hε hP.lipschitz hP.L_nonneg hP.bounded
+    hP.B_nonneg ha hb h01 (hsub.le.trans hhH) (hP.sol.mono ha hb) (by rw [hsub]; linarith)
+  rwa [hsub] at hloc
 
 end Error
 
