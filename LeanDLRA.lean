@@ -26,6 +26,7 @@ import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Defs
 import LeanDLRA.Integrators.EulerBUG
 import LeanDLRA.Integrators.Exactness
+import LeanDLRA.Integrators.GlobalError
 import LeanDLRA.Integrators.InexactSubsteps
 import LeanDLRA.Integrators.KStep
 import LeanDLRA.Integrators.Matrix.BUG
