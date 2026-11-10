@@ -2,6 +2,7 @@ import LeanDLRA.Classical.WeylSingular
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.LowRankDistance
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Kinetic.Defs
 
 /-!
 # Rank decay in the diffusive scaling
@@ -51,6 +52,8 @@ The truncated Hilbert expansion is not formalised.  The hypothesis `⟨μ⟩ = 0
 it needs is not used for the implicit scheme, and is used for IMEX Euler.  The formula
 `⌈log tol / log ε⌉ + 1` holds only under a condition (`epsRank_ideas_formula`);
 the parameter is `ε ‖D‖ / σ`, not `ε`.
+
+The velocity quadratures `Quadrature` are defined in `LeanDLRA/Kinetic/Defs.lean`.
 -/
 
 open Set Filter Topology Finset
@@ -139,16 +142,6 @@ end Filter
 /-! ### The scheme -/
 
 section Scheme
-
-/-- A velocity quadrature: nodes `μ_v` and positive weights `w_v` of total mass one, so that
-`⟨g⟩ = ∑_v w_v g_v` is the normalised velocity average. -/
-structure Quadrature (V : Type*) [Fintype V] where
-  /-- the nodes -/
-  μ : V → ℝ
-  /-- the weights -/
-  w : V → ℝ
-  w_pos : ∀ v, 0 < w v
-  sum_w : ∑ v, w v = 1
 
 variable {X V : Type*} [Fintype X] [Fintype V]
 

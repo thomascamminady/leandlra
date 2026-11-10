@@ -1,4 +1,5 @@
 import Mathlib
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # The conservative `L²`-orthogonal DLRA of BGK can increase the entropy
@@ -192,9 +193,6 @@ theorem dlraField_moment (PU : Matrix m m ℝ) {PV : Matrix n n ℝ} (Z : Matrix
     abel
   exact congrFun this i
 
-/-- The column space of `f`. -/
-def colSpace (f : Matrix m n ℝ) : Submodule ℝ (m → ℝ) := LinearMap.range f.mulVecLin
-
 /-- The velocity space of the conservative DLRA of `f`: the span of the rows of `f` and of the
 collision invariants (basis augmentation by `1, v, v²`). -/
 def augSpace (v : n → ℝ) (f : Matrix m n ℝ) : Submodule ℝ (n → ℝ) :=
@@ -206,48 +204,9 @@ section Projector
 
 variable {ι : Type*} [Fintype ι]
 
-/-- `Q` is the matrix of the orthogonal projector onto `S`.  There is at most one such matrix,
-see `IsOrthProjOnto.unique`. -/
-structure IsOrthProjOnto (Q : Matrix ι ι ℝ) (S : Submodule ℝ (ι → ℝ)) : Prop where
-  symm : Qᵀ = Q
-  mem : ∀ x, Q *ᵥ x ∈ S
-  fix : ∀ x ∈ S, Q *ᵥ x = x
-
-/-- The orthogonal projector onto a subspace is unique. -/
-theorem IsOrthProjOnto.unique {Q Q' : Matrix ι ι ℝ} {S : Submodule ℝ (ι → ℝ)}
-    (h : IsOrthProjOnto Q S) (h' : IsOrthProjOnto Q' S) : Q = Q' := by
-  have key : ∀ {A B : Matrix ι ι ℝ}, IsOrthProjOnto A S → IsOrthProjOnto B S → A * B = B := by
-    intro A B hA hB
-    apply Matrix.mulVec_injective
-    funext x
-    rw [← Matrix.mulVec_mulVec, hA.fix _ (hB.mem x)]
-  have h1 : Q * Q' = Q' := key h h'
-  have h2 : Q' * Q = Q := key h' h
-  have h3 : Q' * Q = Q' := by
-    have := congrArg Matrix.transpose h1
-    rwa [Matrix.transpose_mul, h.symm, h'.symm] at this
-  rw [← h2, h3]
-
-/-- The hyperplane `u^⊥`. -/
-def hyperplane (u : ι → ℝ) : Submodule ℝ (ι → ℝ) where
-  carrier := {x | u ⬝ᵥ x = 0}
-  add_mem' := by
-    intro a b (ha : u ⬝ᵥ a = 0) (hb : u ⬝ᵥ b = 0)
-    change u ⬝ᵥ (a + b) = 0
-    rw [dotProduct_add, ha, hb, add_zero]
-  zero_mem' := dotProduct_zero u
-  smul_mem' := by
-    intro c x (hx : u ⬝ᵥ x = 0)
-    change u ⬝ᵥ (c • x) = 0
-    rw [dotProduct_smul, hx, smul_zero]
-
 lemma mem_hyperplane {u x : ι → ℝ} : x ∈ hyperplane u ↔ u ⬝ᵥ x = 0 := Iff.rfl
 
 variable [DecidableEq ι]
-
-/-- The orthogonal projector onto `u^⊥`, `I - u uᵀ / ‖u‖²`. -/
-noncomputable def hyperProj (u : ι → ℝ) : Matrix ι ι ℝ :=
-  1 - (u ⬝ᵥ u)⁻¹ • vecMulVec u u
 
 lemma hyperProj_mulVec (u x : ι → ℝ) :
     hyperProj u *ᵥ x = x - ((u ⬝ᵥ u)⁻¹ * (u ⬝ᵥ x)) • u := by

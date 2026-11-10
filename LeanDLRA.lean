@@ -40,6 +40,7 @@ import LeanDLRA.Integrators.PerturbedField
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Integrators.TuckerBUG
+import LeanDLRA.Kinetic.Defs
 import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.LinearAlgebra.Frobenius.Defs
 import LeanDLRA.LinearAlgebra.LowRank.Defs

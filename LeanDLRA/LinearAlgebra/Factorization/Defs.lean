@@ -41,6 +41,11 @@ projector `A A⁺` onto the column space, and the Gram formula `A (Aᵀ A)⁻¹ 
   the Frobenius norm.
 * `LeanDLRA.KyFan.podBasis A hr`: the POD basis of rank `r`, the top `r` eigenvectors of `Aᵀ A`
   (right singular vectors of `A`) as the columns of an `n × r` matrix.
+* `LeanDLRA.Novel.BGKEntropy.colSpace A`: the column space of `A` as a subspace of `m → ℝ`;
+  `LeanDLRA.Novel.BGKEntropy.IsOrthProjOnto Q S`: `Q` is the matrix of the orthogonal projector
+  onto the subspace `S`; `LeanDLRA.Novel.BGKEntropy.hyperplane u` and
+  `LeanDLRA.Novel.BGKEntropy.hyperProj u`: the hyperplane `u^⊥` and its projector
+  `I - u uᵀ / ‖u‖²`. They keep the names of the file in which they were first stated.
 
 ## Main results
 
@@ -70,6 +75,12 @@ projector `A A⁺` onto the column space, and the Gram formula `A (Aᵀ A)⁻¹ 
   basis computes `rangeProj`.
 * `Matrix.svdTrunc_eq_submatrix`: for `r ≤ p`, `svdTrunc U σ V r = U_{:r} Σ_r V_{:r}ᵀ`, the
   leading-column form in which papers write the truncation.
+* `LeanDLRA.Novel.BGKEntropy.isOrthProjOnto_colSpace_iff`: `Q` is the orthogonal projector onto
+  the column space of `A` iff `Q = A.rangeProj`;
+  `LeanDLRA.Novel.BGKEntropy.isOrthProjMat_iff_isOrthProjOnto`: the symmetric idempotent matrices
+  are the projectors onto their column space;
+  `LeanDLRA.Novel.BGKEntropy.colSpan_eq_map_colSpace`: `colSpan A` is `colSpace A` seen in
+  `EuclideanSpace ℝ m`.
 
 ## Implementation notes
 
@@ -83,11 +94,11 @@ equality on the column indices, so that it needs no `DecidableEq` argument
 (`rangeProj_eq_mul_pinv` rewrites it for any instance).
 
 The three projectors are projectors of layer 1 and belong with `LinearAlgebra/Projection/Defs.lean`
-(`docs/CONVENTIONS.md` §3, `wip/UNIFY.md` §a2). They are defined here because `rangeProj` and
+(`docs/CONVENTIONS.md` §3). They are defined here because `rangeProj` and
 `colProj` are built from `pinv` and `gramPinv`, and `galerkinProj` joined them so that batch C2
 did not touch the root of the import graph; moving them is hash-neutral. Likewise
 `Matrix.svdTrunc`, `LeanDLRA.tailSqSum` and `LeanDLRA.IsBestLowRankApprox` belong with
-`LinearAlgebra/SVD/Defs.lean` and `LinearAlgebra/LowRank/Defs.lean` (`wip/UNIFY.md` §a4, §a5),
+`LinearAlgebra/SVD/Defs.lean` and `LinearAlgebra/LowRank/Defs.lean`,
 which batch B5 created; they were added here in batch C3 and can move there (hash-neutral).
 `KyFan.podBasis` (with the two symmetry lemmas for `Aᵀ A` it uses) is here and not in
 `LinearAlgebra/SVD/Defs.lean` or `LinearAlgebra/LowRank/Defs.lean` because a definition body
@@ -1062,3 +1073,137 @@ noncomputable def podBasis (A : Matrix m n ℝ) {r : ℕ} (hr : r ≤ Fintype.ca
 end LeanDLRA.KyFan
 
 end POD
+
+/-! ### Column spaces in `m → ℝ` and the projector matrix onto a subspace
+
+`colSpace`, `IsOrthProjOnto`, `IsOrthProjOnto.unique`, `hyperplane` and `hyperProj` were stated in
+`Novel/BGKEntropy.lean` and keep the names they had there. The lemmas after them connect them to
+the rest of this layer: `IsOrthProjOnto Q (colSpace A)` holds exactly for `Q = A.rangeProj`, a
+matrix is an `IsOrthProjOnto` of its own column space exactly if it is a
+`Curvature.IsOrthProjMat`, and `colSpan A` is `colSpace A` seen in `EuclideanSpace ℝ m`. -/
+
+namespace LeanDLRA.Novel.BGKEntropy
+
+open Filter Topology Matrix
+
+section General
+
+variable {m n : Type*} [Fintype n]
+
+variable [Fintype m]
+
+/-- The column space of `f`. -/
+def colSpace (f : Matrix m n ℝ) : Submodule ℝ (m → ℝ) := LinearMap.range f.mulVecLin
+
+end General
+
+section Projector
+
+variable {ι : Type*} [Fintype ι]
+
+/-- `Q` is the matrix of the orthogonal projector onto `S`.  There is at most one such matrix,
+see `IsOrthProjOnto.unique`. -/
+structure IsOrthProjOnto (Q : Matrix ι ι ℝ) (S : Submodule ℝ (ι → ℝ)) : Prop where
+  symm : Qᵀ = Q
+  mem : ∀ x, Q *ᵥ x ∈ S
+  fix : ∀ x ∈ S, Q *ᵥ x = x
+
+/-- The orthogonal projector onto a subspace is unique. -/
+theorem IsOrthProjOnto.unique {Q Q' : Matrix ι ι ℝ} {S : Submodule ℝ (ι → ℝ)}
+    (h : IsOrthProjOnto Q S) (h' : IsOrthProjOnto Q' S) : Q = Q' := by
+  have key : ∀ {A B : Matrix ι ι ℝ}, IsOrthProjOnto A S → IsOrthProjOnto B S → A * B = B := by
+    intro A B hA hB
+    apply Matrix.mulVec_injective
+    funext x
+    rw [← Matrix.mulVec_mulVec, hA.fix _ (hB.mem x)]
+  have h1 : Q * Q' = Q' := key h h'
+  have h2 : Q' * Q = Q := key h' h
+  have h3 : Q' * Q = Q' := by
+    have := congrArg Matrix.transpose h1
+    rwa [Matrix.transpose_mul, h.symm, h'.symm] at this
+  rw [← h2, h3]
+
+/-- The hyperplane `u^⊥`. -/
+def hyperplane (u : ι → ℝ) : Submodule ℝ (ι → ℝ) where
+  carrier := {x | u ⬝ᵥ x = 0}
+  add_mem' := by
+    intro a b (ha : u ⬝ᵥ a = 0) (hb : u ⬝ᵥ b = 0)
+    change u ⬝ᵥ (a + b) = 0
+    rw [dotProduct_add, ha, hb, add_zero]
+  zero_mem' := dotProduct_zero u
+  smul_mem' := by
+    intro c x (hx : u ⬝ᵥ x = 0)
+    change u ⬝ᵥ (c • x) = 0
+    rw [dotProduct_smul, hx, smul_zero]
+
+variable [DecidableEq ι]
+
+/-- The orthogonal projector onto `u^⊥`, `I - u uᵀ / ‖u‖²`. -/
+noncomputable def hyperProj (u : ι → ℝ) : Matrix ι ι ℝ :=
+  1 - (u ⬝ᵥ u)⁻¹ • vecMulVec u u
+
+end Projector
+
+section Bridges
+
+variable {m k : Type*} [Fintype m] [Fintype k]
+
+/-- The matrix of the orthogonal projector onto a subspace is symmetric and idempotent. -/
+theorem IsOrthProjOnto.isOrthProjMat {Q : Matrix m m ℝ} {S : Submodule ℝ (m → ℝ)}
+    (h : IsOrthProjOnto Q S) : Curvature.IsOrthProjMat Q := by
+  refine ⟨h.symm, ?_⟩
+  apply Matrix.mulVec_injective
+  funext x
+  rw [← Matrix.mulVec_mulVec, h.fix _ (h.mem x)]
+
+/-- A symmetric idempotent matrix is the orthogonal projector onto its own column space. -/
+theorem isOrthProjOnto_colSpace_self {Q : Matrix m m ℝ} (h : Curvature.IsOrthProjMat Q) :
+    IsOrthProjOnto Q (colSpace Q) := by
+  refine ⟨h.symm, fun x => LinearMap.mem_range.mpr ⟨x, rfl⟩, fun x hx => ?_⟩
+  obtain ⟨y, rfl⟩ := LinearMap.mem_range.mp hx
+  change Q *ᵥ (Q *ᵥ y) = Q *ᵥ y
+  rw [Matrix.mulVec_mulVec, h.idem]
+
+/-- **Projector matrices are the projectors onto their column space**: `Curvature.IsOrthProjMat`
+(symmetric and idempotent) and `IsOrthProjOnto` (symmetric, maps into the subspace and fixes it)
+describe the same matrices. -/
+theorem isOrthProjMat_iff_isOrthProjOnto {Q : Matrix m m ℝ} :
+    Curvature.IsOrthProjMat Q ↔ IsOrthProjOnto Q (colSpace Q) :=
+  ⟨isOrthProjOnto_colSpace_self, IsOrthProjOnto.isOrthProjMat⟩
+
+/-- `A.rangeProj = A A⁺` is the orthogonal projector onto the column space of `A`. -/
+theorem isOrthProjOnto_rangeProj (A : Matrix m k ℝ) :
+    IsOrthProjOnto A.rangeProj (colSpace A) := by
+  classical
+  refine ⟨Matrix.transpose_rangeProj A,
+    fun x => LinearMap.mem_range.mpr ⟨A.pinv *ᵥ x, ?_⟩, fun x hx => ?_⟩
+  · change A *ᵥ (A.pinv *ᵥ x) = A.rangeProj *ᵥ x
+    rw [Matrix.mulVec_mulVec, Matrix.rangeProj_eq_mul_pinv]
+  · obtain ⟨y, rfl⟩ := LinearMap.mem_range.mp hx
+    change A.rangeProj *ᵥ (A *ᵥ y) = A *ᵥ y
+    rw [Matrix.mulVec_mulVec, Matrix.rangeProj_mul_self]
+
+/-- **The two descriptions of the column-space projector agree**: `Q` is the orthogonal projector
+onto the column space of `A` in the sense of `IsOrthProjOnto` iff it is `A.rangeProj = A A⁺`. -/
+theorem isOrthProjOnto_colSpace_iff {A : Matrix m k ℝ} {Q : Matrix m m ℝ} :
+    IsOrthProjOnto Q (colSpace A) ↔ Q = A.rangeProj :=
+  ⟨fun h => h.unique (isOrthProjOnto_rangeProj A), fun h => h ▸ isOrthProjOnto_rangeProj A⟩
+
+omit [Fintype m] in
+/-- The span of the columns `colSpan A`, a subspace of `EuclideanSpace ℝ m`, is the column space
+`colSpace A`, a subspace of `m → ℝ`, under the identification of the two spaces. -/
+theorem colSpan_eq_map_colSpace (A : Matrix m k ℝ) :
+    colSpan A = (colSpace A).map (WithLp.linearEquiv 2 ℝ (m → ℝ)).symm.toLinearMap := by
+  rw [colSpace, Matrix.range_mulVecLin, Submodule.map_span, ← Set.range_comp]
+  rfl
+
+/-- The projector `!![1, 0; 0, 0]` onto the first coordinate axis is the `IsOrthProjOnto` of its
+column space. -/
+example : IsOrthProjOnto (!![1, 0; 0, 0] : Matrix (Fin 2) (Fin 2) ℝ) (colSpace !![1, 0; 0, 0]) :=
+  isOrthProjOnto_colSpace_self
+    ⟨by ext i j; fin_cases i <;> fin_cases j <;> rfl,
+      by ext i j; fin_cases i <;> fin_cases j <;> simp⟩
+
+end Bridges
+
+end LeanDLRA.Novel.BGKEntropy
