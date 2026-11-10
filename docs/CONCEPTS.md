@@ -226,3 +226,26 @@ kinetic framework (batches C9–C12); `frob2` of `P2503_04932a` is on three-way 
 | `norm_transpose_mul_le`, `norm_mul_le_of_orthonormal` (`P2101_07104a`), `norm_transpose_mul_le`, `norm_mul_orthonormal_le` (`P2107_07282a`), `norm_mul_le_of_orthonormal` (`P2008_07427a`) | `LeanDLRA.norm_transpose_mul_le`, `LeanDLRA.norm_mul_le_of_orthonormal` (`Matrix/Projectors.lean`) | one-line instances (statements unchanged) |
 | `riccatiField` (`OpenProblems/Curated/StiffAndStochasticDefs`) | `KalmanBucy.riccatiField` | equal (`riccatiField_eq_kalmanBucy`, `rfl`); kept (catalogue statement) |
 | `IsXQR Measure.count K X' S'` (`Literature/Kinetic/P2311_09425b`, finite grid) | `Matrix.IsOrthCapture` | equal to `X̃ᵀ X̃ = 1 ∧ K̃ = X̃ S'` for the grid matrices (`isXQR_count_iff`), hence a capture (`IsXQR.isOrthCapture_count`); for a general measure it is the same statement in `L²(ν)` (different carrier). `IsVQR` (in `Lp`) is not bridged: the core has no abstract orthonormal-frame notion yet |
+
+## Tensor, training and filtering vocabulary (UNIFY B11, B12, 2026-11-10)
+
+Core files: `LeanDLRA/Tensor/Defs.lean` (extended: `modePrefix`, `tuckerSqrtC₁`, `tuckerSqrtC₂`,
+`TTNFrame` with `height`, `size`, `ttnErrBound`, `IsAugRecoverable`, `IsTTNAugRecoverable`),
+`LeanDLRA/Training/Defs.lean` (`projGradStep`, `geoLoRADir`, `IsGeoLoRABases`, `geoLoRAStep`,
+`fedClientIter`, `fedRound`, `fedDrift`, `fedAvgClientIter`, `fedAvgRound`,
+`FactorizedDynamics.loraPrecond`, `InexactGradient.ArmijoTest`,
+`InexactGradient.IsDiscreteGradient`), `LeanDLRA/Filtering/Defs.lean` (`KalmanBucy.riccatiField`,
+`rotatingMode`, `diagProj`, `innovCov`, `kalmanGain`, `analysisCov`, `josephCov`,
+`LeanDLRA.riccatiField`, `OpenProblems.Stiff.ensCentering`, `enkfField`). All moved with names
+and types unchanged.
+
+| Concept | Core | Relation (lemma) |
+|---|---|---|
+| Ordered prefix product `P 0 ⋯ P (k-1)` of mode operators | `modePrefix P k` | equal to `modeProd P` for `d ≤ k`: `modePrefix_of_le` (`Classical/CommutingProjectorTelescoping.lean`) |
+| `√d` constants of the Tucker BUG local error | `tuckerSqrtC₁`, `tuckerSqrtC₂` | at most `tuckerC₁`, `tuckerC₂`: `tuckerSqrtC₁_le`, `tuckerSqrtC₂_le` |
+| Frame of a tree tensor network step | `TTNFrame E` | relation to `DimTree`/`TTN` (expected: implies) not proved; the step predicates on frames (`IsTTNBUGStep`, `IsAugTTNBUGStep`, `IsParTTNBUGStep`, `IsTTNRecoverable`) and `tuckerTangentProj` stay in `OpenProblems/Curated/TensorNetworksDefs.lean` until `modeProd`, `parTuckerBUG`, `Exactness.IsRecoverable` are in a `Defs.lean` |
+| Alternating sum of TT interface operators | `Tensor.ttTangentSum` | `OpenProblems.TensorNetworks.ttTangentSum` has the same text (bridge and replacement: C14) |
+| Projected gradient step `x - h Π ∇ℒ(x)` | `projGradStep` | the GeoLoRA step is one: `geoLoRAStep_eq`; the FeDLRT round is one plus drift: `fedRound_eq` |
+| Factor-wise (LoRA) preconditioner | `FactorizedDynamics.loraPrecond` | quadratic form: `inner_loraPrecond`, `inner_loraPrecond_self_nonneg` |
+| Kalman–Bucy covariance field `A P + P Aᵀ - ρ P² + Qn` | `KalmanBucy.riccatiField` | `LeanDLRA.riccatiField` (from `OpenProblems/Curated/StiffAndStochasticDefs.lean`) has the same body; the two now sit in one file, merge in C13 |
+| One Kalman analysis step | `innovCov`, `kalmanGain`, `analysisCov`, `josephCov` | Joseph identity `josephCov_sub_analysisCov`, `analysisCov_mono` (`Stochastic/KalmanBucy.lean`) |
