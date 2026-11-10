@@ -17,11 +17,13 @@ federated round.
 
 * `loss_sub_le_exp_of_projGradFlow_PL`: along the projected gradient flow `ẏ = -Π(t) g(y)`, if
   `2 μ (ℒ(y) - ℒ⋆) ≤ ‖Π g(y)‖²`, then `ℒ(y t) - ℒ⋆ ≤ e^{-2 μ (t - a)} (ℒ(y a) - ℒ⋆)`.
-* `loss_sub_le_of_riemannianPL_truncated`: steps with an augmented projector `Q k` that fixes the
-  tangent gradient `T k g(x k)`, followed by a truncation of size `ϑ`, satisfy under
+* `loss_sub_le_pow_of_riemannianPL_truncated`: steps with an augmented projector `Q k` that
+  fixes the tangent gradient `T k g(x k)`, followed by a truncation of size `ϑ`, satisfy under
   `2 μ (ℒ(x k) - ℒ⋆) ≤ ‖T k g(x k)‖²` the bound
   `ℒ(xₙ) - ℒ⋆ ≤ (1 - 2 μ c)ⁿ (ℒ(x₀) - ℒ⋆) + G ϑ / (2 μ c)`, `c = h (1 - β h / 2)`, where `G`
   bounds the gradient on the truncation segments.
+* `loss_sub_le_of_riemannianPL_truncated`: the same statement with the additional hypothesis
+  `ℒ⋆ ≤ ℒ(x k)` for all `k`.
 * `exists_grad_sq_le_of_lazyRefresh`: if the projector `R j` is kept for the `T` steps after the
   refresh iterate `x (j T)`, captures the fraction `γ` of the gradient energy there, and
   `2 T β h ≤ 1`, then `γ ‖g(x (j T))‖² ≤ 8 (ℒ(x₀) - ℒ_inf) / (n T h)` for some `j < n`.
@@ -109,24 +111,27 @@ theorem loss_sub_le_exp_of_projGradFlow_PL (hℒ : ∀ x, HasFDerivAt ℒ (inner
         (Real.exp (2 * μ * (t - a)) * (ℒ (y t) - ℒstar)) := by rw [← mul_assoc, e, one_mul]
     _ ≤ _ := mul_le_mul_of_nonneg_left this (Real.exp_pos _).le
 
-/-- **Linear convergence of truncated DLRT / GeoLoRA under a Riemannian PL inequality**
-(source: research idea; OP-HO-14, OP-TR-30). Augmented steps `x̂ = x - h Q_k ∇ℒ(x)` whose
-augmented projector `Q_k` absorbs the tangent gradient `T_k ∇ℒ(x_k)`, followed by a truncation of
-size `ϑ`, converge linearly to a `G ϑ`-neighbourhood of the optimal value when
-`2μ (ℒ(x_k) - ℒ⋆) ≤ ‖T_k ∇ℒ(x_k)‖²`:
-`ℒ(x_n) - ℒ⋆ ≤ (1 - 2μc)^n (ℒ(x₀) - ℒ⋆) + G ϑ / (2μc)` with `c = h (1 - β h / 2)`. -/
-theorem loss_sub_le_of_riemannianPL_truncated (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
+/-- **Linear convergence of truncated DLRT / GeoLoRA under a Riemannian PL inequality, for any
+reference value `ℒ⋆`** (the statement of `loss_sub_le_of_riemannianPL_truncated`, whose docstring
+names the sources, without the hypothesis `ℒ⋆ ≤ ℒ(x_k)`). Augmented steps
+`x̂ = x - h Q_k ∇ℒ(x)` whose augmented projector `Q_k` absorbs the tangent gradient
+`T_k ∇ℒ(x_k)`, followed by a truncation of size `ϑ`, satisfy under
+`2μ (ℒ(x_k) - ℒ⋆) ≤ ‖T_k ∇ℒ(x_k)‖²` the bound
+`ℒ(x_n) - ℒ⋆ ≤ (1 - 2μc)^n (ℒ(x₀) - ℒ⋆) + G ϑ / (2μc)` with `c = h (1 - β h / 2)`. The number
+`ℒ⋆` is any real number for which the PL inequality holds along the iteration; that it is a
+lower bound of the loss is not assumed. -/
+theorem loss_sub_le_pow_of_riemannianPL_truncated
+    (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) {T Q : ℕ → E →L[ℝ] E}
     (hT : ∀ k, IsOrthProj (T k)) (hQ : ∀ k, IsOrthProj (Q k)) {x : ℕ → E}
     (habs : ∀ k, Q k (T k (g (x k))) = T k (g (x k))) {h ϑ G μ ℒstar : ℝ}
     (htr : ∀ k, ‖x (k + 1) - projGradStep (Q k) g h (x k)‖ ≤ ϑ)
     (hG : ∀ k, ∀ w ∈ segment ℝ (projGradStep (Q k) g h (x k)) (x (k + 1)), ‖g w‖ ≤ G)
     (hPL : ∀ k, 2 * μ * (ℒ (x k) - ℒstar) ≤ ‖T k (g (x k))‖ ^ 2)
-    (hstar : ∀ k, ℒstar ≤ ℒ (x k)) (hμ : 0 < μ) (hh : 0 < h * (1 - β * h / 2))
+    (hμ : 0 < μ) (hh : 0 < h * (1 - β * h / 2))
     (hq : 2 * μ * (h * (1 - β * h / 2)) ≤ 1) (n : ℕ) :
     ℒ (x n) - ℒstar ≤ (1 - 2 * μ * (h * (1 - β * h / 2))) ^ n * (ℒ (x 0) - ℒstar) +
       G * ϑ / (2 * μ * (h * (1 - β * h / 2))) := by
-  have _ := hstar 0
   set c : ℝ := h * (1 - β * h / 2) with hc
   have hq0 : 0 < 2 * μ * c := by positivity
   set q : ℝ := 2 * μ * c with hqdef
@@ -163,6 +168,28 @@ theorem loss_sub_le_of_riemannianPL_truncated (hℒ : ∀ x, HasFDerivAt ℒ (in
     apply div_le_div_of_nonneg_right _ hq0.le
     nlinarith
   linarith
+
+/-- **Linear convergence of truncated DLRT / GeoLoRA under a Riemannian PL inequality**
+(source: research idea; OP-HO-14, OP-TR-30). Augmented steps `x̂ = x - h Q_k ∇ℒ(x)` whose
+augmented projector `Q_k` absorbs the tangent gradient `T_k ∇ℒ(x_k)`, followed by a truncation of
+size `ϑ`, converge linearly to a `G ϑ`-neighbourhood of the optimal value when
+`2μ (ℒ(x_k) - ℒ⋆) ≤ ‖T_k ∇ℒ(x_k)‖²`:
+`ℒ(x_n) - ℒ⋆ ≤ (1 - 2μc)^n (ℒ(x₀) - ℒ⋆) + G ϑ / (2μc)` with `c = h (1 - β h / 2)`.
+This is the recorded form of the statement, with the redundant hypothesis `ℒ⋆ ≤ ℒ(x_k)`;
+`loss_sub_le_pow_of_riemannianPL_truncated` is the same statement without it. -/
+theorem loss_sub_le_of_riemannianPL_truncated (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
+    (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) {T Q : ℕ → E →L[ℝ] E}
+    (hT : ∀ k, IsOrthProj (T k)) (hQ : ∀ k, IsOrthProj (Q k)) {x : ℕ → E}
+    (habs : ∀ k, Q k (T k (g (x k))) = T k (g (x k))) {h ϑ G μ ℒstar : ℝ}
+    (htr : ∀ k, ‖x (k + 1) - projGradStep (Q k) g h (x k)‖ ≤ ϑ)
+    (hG : ∀ k, ∀ w ∈ segment ℝ (projGradStep (Q k) g h (x k)) (x (k + 1)), ‖g w‖ ≤ G)
+    (hPL : ∀ k, 2 * μ * (ℒ (x k) - ℒstar) ≤ ‖T k (g (x k))‖ ^ 2)
+    (hstar : ∀ k, ℒstar ≤ ℒ (x k)) (hμ : 0 < μ) (hh : 0 < h * (1 - β * h / 2))
+    (hq : 2 * μ * (h * (1 - β * h / 2)) ≤ 1) (n : ℕ) :
+    ℒ (x n) - ℒstar ≤ (1 - 2 * μ * (h * (1 - β * h / 2))) ^ n * (ℒ (x 0) - ℒstar) +
+      G * ϑ / (2 * μ * (h * (1 - β * h / 2))) := by
+  have _ := hstar 0
+  exact loss_sub_le_pow_of_riemannianPL_truncated hℒ hg hT hQ habs htr hG hPL hμ hh hq n
 
 end PL
 

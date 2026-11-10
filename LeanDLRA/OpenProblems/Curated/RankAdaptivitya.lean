@@ -17,8 +17,11 @@ fixed subspace.
 * `singularValues_pred_epsRank_gt`: if `r₁ = epsRank θ A > 0` for `A ∈ ℝ^{m×n}`, the smallest
   retained singular value satisfies `σ_{r₁-1}(A) > θ / √(n - r₁ + 1)` (singular values counted
   from `σ₀`).
-* `norm_sq_enrich_ge`: enlarging an orthonormal basis `U` by a unit vector `w ⊥ U` lowers
-  `‖(1 - U Uᵀ) G‖²` (Frobenius norm) by at most the squared spectral norm of `(1 - U Uᵀ) G`.
+* `norm_sq_sub_specNorm_sq_le_norm_sq_enrich`: for a unit vector `w` with `Uᵀ w = 0`, passing
+  from `1 - U Uᵀ` to `1 - U Uᵀ - w wᵀ` lowers `‖(1 - U Uᵀ) G‖²` (Frobenius norm) by at most the
+  squared spectral norm of `(1 - U Uᵀ) G`.
+* `norm_sq_enrich_ge`: the same statement with the additional hypothesis `Uᵀ U = 1`, that is,
+  for the enlargement of an orthonormal basis `U` by `w`.
 * `exists_enrich_top_singular`: if `(1 - U Uᵀ) G ≠ 0`, some unit vector `w ⊥ U` attains this
   bound with equality.
 * `not_continuousAt_truncation_tie`: the rank-one truncation of `2 × 2` matrices is not
@@ -104,19 +107,48 @@ private theorem norm_sq_enrich_eq [DecidableEq m] {k : Type*} [Fintype k] {U : M
     Frobenius.norm_mul_of_orthonormal hw]
   ring
 
+/-- **One-vector enrichment gains at most `σ₁` of the residual, for any `U`** (the statement of
+`norm_sq_enrich_ge`, whose docstring names the source, without the hypothesis `Uᵀ U = 1`). For a
+unit vector `w` with `Uᵀ w = 0`,
+`‖(I - U Uᵀ) G‖_F² - ‖(I - U Uᵀ) G‖₂² ≤ ‖(I - U Uᵀ - w wᵀ) G‖_F²`. The inequality uses
+`wᵀ w = 1` and `Uᵀ w = 0` only; the columns of `U` need not be orthonormal. -/
+theorem norm_sq_sub_specNorm_sq_le_norm_sq_enrich [DecidableEq m] [DecidableEq n] {k : Type*}
+    [Fintype k] {U : Matrix m k ℝ} (G : Matrix m n ℝ) {w : Matrix m (Fin 1) ℝ}
+    (hw : wᵀ * w = 1) (hUw : Uᵀ * w = 0) :
+    ‖(1 - U * Uᵀ) * G‖ ^ 2 - Curvature.specNorm ((1 - U * Uᵀ) * G) ^ 2 ≤
+      ‖(1 - U * Uᵀ - w * wᵀ) * G‖ ^ 2 := by
+  rw [norm_sq_enrich_eq G hw hUw]
+  have h3 : ‖wᵀ * ((1 - U * Uᵀ) * G)‖ ^ 2 ≤ Curvature.specNorm ((1 - U * Uᵀ) * G) ^ 2 :=
+    pow_le_pow_left₀ (norm_nonneg _) (norm_wT_mul_le hw _) 2
+  linarith
+
 /-- **One-vector enrichment gains at most `σ₁` of the residual** (source: OP-RA-27). Enlarging
 an orthonormal basis `U` by one unit vector `w ⊥ U` reduces `‖(I - U Uᵀ) G‖_F²` by at most
-`‖(I - U Uᵀ) G‖₂² = σ₁((I - U Uᵀ) G)²`. -/
+`‖(I - U Uᵀ) G‖₂² = σ₁((I - U Uᵀ) G)²`.
+This is the recorded form of the statement, with the redundant hypothesis `Uᵀ U = 1`;
+`norm_sq_sub_specNorm_sq_le_norm_sq_enrich` is the same statement without it. -/
 theorem norm_sq_enrich_ge [DecidableEq m] [DecidableEq n] {k : Type*} [Fintype k]
     [DecidableEq k] {U : Matrix m k ℝ} (hU : Uᵀ * U = 1) (G : Matrix m n ℝ)
     {w : Matrix m (Fin 1) ℝ} (hw : wᵀ * w = 1) (hUw : Uᵀ * w = 0) :
     ‖(1 - U * Uᵀ) * G‖ ^ 2 - Curvature.specNorm ((1 - U * Uᵀ) * G) ^ 2 ≤
       ‖(1 - U * Uᵀ - w * wᵀ) * G‖ ^ 2 := by
   have _ := hU
-  rw [norm_sq_enrich_eq G hw hUw]
-  have h3 : ‖wᵀ * ((1 - U * Uᵀ) * G)‖ ^ 2 ≤ Curvature.specNorm ((1 - U * Uᵀ) * G) ^ 2 :=
-    pow_le_pow_left₀ (norm_nonneg _) (norm_wT_mul_le hw _) 2
-  linarith
+  exact norm_sq_sub_specNorm_sq_le_norm_sq_enrich G hw hUw
+
+/-- The hypotheses of `norm_sq_sub_specNorm_sq_le_norm_sq_enrich` hold for `U = e₁` and
+`w = e₂` in `ℝ^{2×1}` and every `G ∈ ℝ^{2×2}`. -/
+example (G : Matrix (Fin 2) (Fin 2) ℝ) (U w : Matrix (Fin 2) (Fin 1) ℝ) (hU : U = !![1; 0])
+    (hw : w = !![0; 1]) :
+    ‖(1 - U * Uᵀ) * G‖ ^ 2 - Curvature.specNorm ((1 - U * Uᵀ) * G) ^ 2 ≤
+      ‖(1 - U * Uᵀ - w * wᵀ) * G‖ ^ 2 := by
+  subst hU hw
+  refine norm_sq_sub_specNorm_sq_le_norm_sq_enrich G ?_ ?_
+  · ext i j
+    fin_cases i; fin_cases j
+    simp [Matrix.mul_apply, Fin.sum_univ_two]
+  · ext i j
+    fin_cases i; fin_cases j
+    simp [Matrix.mul_apply, Fin.sum_univ_two]
 
 private theorem norm_col_eq {p : Type*} [Fintype p] (v : EuclideanSpace ℝ p) :
     ‖(Matrix.of fun i (_ : Fin 1) => v i : Matrix p (Fin 1) ℝ)‖ = ‖v‖ := by

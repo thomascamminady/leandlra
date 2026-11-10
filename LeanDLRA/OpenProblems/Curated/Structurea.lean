@@ -16,9 +16,10 @@ the untruncated parallel BUG step can only gain norm.
 
 ## Main results
 
-* `IsBUGStep.norm_sq_add_defect`: for a norm-conserving field bounded by `B`, the result
-  `Y₁ = YS t₁` satisfies `‖Y₁‖² + ‖Y₀ - P₁ Q₁ Y₀‖² = ‖Y₀‖²`, and
+* `IsBUGStep.norm_sq_add_defect_sq_and_defect_le`: for a norm-conserving field bounded by `B`,
+  the result `Y₁ = YS t₁` satisfies `‖Y₁‖² + ‖Y₀ - P₁ Q₁ Y₀‖² = ‖Y₀‖²`, and
   `‖Y₀ - P₁ Q₁ Y₀‖ ≤ 2 B (t₁ - t₀)`.
+* `IsBUGStep.norm_sq_add_defect`: the same statement with the additional hypothesis `0 ≤ B`.
 * `IsKSLStep.norm_eq`: if the projectors commute, `Q₀ Y₀ = Y₀` and the field conserves the norm,
   the result `Y₁ = YL t₁` of one KSL step satisfies `‖Y₁‖ = ‖Y₀‖`, the backward S-step
   included.
@@ -51,17 +52,18 @@ section Abstract
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
-/-- **Norm defect of the fixed-rank BUG integrator** (source: OP-SB-03; arXiv 2306.17526,
-Sec. 6, observed mass/energy defect of BUG).  The bound on the defect is a research idea.  For a
-norm-conserving field, one BUG step loses exactly the projection defect of the starting value,
-`‖Y₁‖² + ‖Y₀ - P₁ Q₁ Y₀‖² = ‖Y₀‖²`, and this defect is at most `2 B h`. -/
-theorem IsBUGStep.norm_sq_add_defect {F : ℝ → E → E} {ε B : ℝ} {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E}
-    {t₀ t₁ : ℝ} {Y₀ : E} {YK YL YS : ℝ → E}
+/-- **Norm defect of the fixed-rank BUG integrator, without a sign condition on the bound**
+(the statement of `IsBUGStep.norm_sq_add_defect`, whose docstring names the sources, without the
+hypothesis `0 ≤ B`). For a field with `⟪F(t, x), x⟫ = 0` that is bounded by `B`, one BUG step
+loses exactly the projection defect of the starting value,
+`‖Y₁‖² + ‖Y₀ - P₁ Q₁ Y₀‖² = ‖Y₀‖²`, and this defect is at most `2 B h`, `h = t₁ - t₀`. That `B`
+is nonnegative is a consequence of the bound on the field (`IsBoundedField.nonneg`). -/
+theorem IsBUGStep.norm_sq_add_defect_sq_and_defect_le {F : ℝ → E → E} {ε B : ℝ}
+    {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E} {t₀ t₁ : ℝ} {Y₀ : E} {YK YL YS : ℝ → E}
     (hs : IsBUGStep F ε P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS) (h01 : t₀ ≤ t₁)
-    (hB : IsBoundedField F B) (hB₀ : 0 ≤ B) (hF : ∀ t x, ⟪F t x, x⟫ = 0) :
+    (hB : IsBoundedField F B) (hF : ∀ t x, ⟪F t x, x⟫ = 0) :
     ‖YS t₁‖ ^ 2 + ‖Y₀ - P₁ (Q₁ Y₀)‖ ^ 2 = ‖Y₀‖ ^ 2 ∧
       ‖Y₀ - P₁ (Q₁ Y₀)‖ ≤ 2 * B * (t₁ - t₀) := by
-  have _ := hB₀
   have hPQ : IsOrthProj (P₁ * Q₁) := hs.projP₁.mul hs.projQ₁ hs.comm₁
   have ht₁ : t₁ ∈ Icc t₀ t₁ := ⟨h01, le_rfl⟩
   have h0 : (P₁ * Q₁) (YS t₀) = YS t₀ := by
@@ -99,6 +101,21 @@ theorem IsBUGStep.norm_sq_add_defect {F : ℝ → E → E} {ε B : ℝ} {P₀ Q�
   calc _ ≤ ‖(1 - P₁) Y₀‖ + ‖P₁ ((1 - Q₁) Y₀)‖ := norm_add_le _ _
     _ ≤ B * (t₁ - t₀) + B * (t₁ - t₀) := add_le_add b1 b2
     _ = 2 * B * (t₁ - t₀) := by ring
+
+/-- **Norm defect of the fixed-rank BUG integrator** (source: OP-SB-03; arXiv 2306.17526,
+Sec. 6, observed mass/energy defect of BUG).  The bound on the defect is a research idea.  For a
+norm-conserving field, one BUG step loses exactly the projection defect of the starting value,
+`‖Y₁‖² + ‖Y₀ - P₁ Q₁ Y₀‖² = ‖Y₀‖²`, and this defect is at most `2 B h`.
+This is the recorded form of the statement, with the redundant hypothesis `0 ≤ B`;
+`IsBUGStep.norm_sq_add_defect_sq_and_defect_le` is the same statement without it. -/
+theorem IsBUGStep.norm_sq_add_defect {F : ℝ → E → E} {ε B : ℝ} {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E}
+    {t₀ t₁ : ℝ} {Y₀ : E} {YK YL YS : ℝ → E}
+    (hs : IsBUGStep F ε P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS) (h01 : t₀ ≤ t₁)
+    (hB : IsBoundedField F B) (hB₀ : 0 ≤ B) (hF : ∀ t x, ⟪F t x, x⟫ = 0) :
+    ‖YS t₁‖ ^ 2 + ‖Y₀ - P₁ (Q₁ Y₀)‖ ^ 2 = ‖Y₀‖ ^ 2 ∧
+      ‖Y₀ - P₁ (Q₁ Y₀)‖ ≤ 2 * B * (t₁ - t₀) := by
+  have _ := hB₀
+  exact IsBUGStep.norm_sq_add_defect_sq_and_defect_le hs h01 hB hF
 
 /-- **Exact norm conservation of the projector-splitting integrator** (source: OP-SB-03, OP-SB-65;
 Lubich–Oseledets, arXiv 1301.1058).  If `⟪F(t, Y), Y⟫ = 0`, the left and right

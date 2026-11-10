@@ -14,17 +14,20 @@ starting value.
 
 ## Main results
 
-* `distLR_flow_le_sharp`: for an exact solution `A` on `[t₀, t₁]`,
+* `distLR_flow_le_exp_mul_add`: for an exact solution `A` on `[t₀, t₁]`,
   `distLR r (A t) ≤ e^{L (t - t₀)} distLR r (A t₀) + ε (t - t₀) e^{L (t - t₀)}`.
+* `distLR_flow_le_sharp`: the same statement with the additional hypothesis that the field is
+  continuous in time.
 
 ## Implementation notes
 
-The theorem is an upper bound. For a start of rank at most `r` it gives `h ε e^{L h}` after time
-`h`, half of the bound `2 h ε e^{L h}` of `distLR_flow_le_exp`. That the constant in front of `ε`
-cannot be lowered is not proved here: for the constant field `F ≡ [[0, 1], [1, 0]]` (`L = 0`,
-`r = 1`) the library certifies the lower bound `t / 3` for the distance of `A t = t F`
-(`le_distLR_cx`), not its exact value. The smaller expression `ε (e^{L τ} - 1) / L` in the
-place of `ε τ e^{L τ}` is not proved here; the form stated needs no separate case `L = 0`.
+The bound is an upper bound, and continuity of the field in time is not needed for it. For a
+start of rank at most `r` it gives `h ε e^{L h}` after time `h`, half of the bound
+`2 h ε e^{L h}` of `distLR_flow_le_exp`. That the constant in front of `ε` cannot be lowered is
+not proved here: for the constant field `F ≡ [[0, 1], [1, 0]]` (`L = 0`, `r = 1`) the library
+certifies the lower bound `t / 3` for the distance of `A t = t F` (`le_distLR_cx`), not its
+exact value. The smaller expression `ε (e^{L τ} - 1) / L` in the place of `ε τ e^{L τ}` is not
+proved here; the form stated needs no separate case `L = 0`.
 -/
 
 open Set Finset Matrix
@@ -225,20 +228,17 @@ private theorem frequently_slope_distLR_lt_of_bounded (hB : IsBoundedField F B)
     _ ≤ (z - a)⁻¹ * ‖A z - A a‖ := mul_le_mul_of_nonneg_left (by linarith) hinv.le
     _ < ρ := hslope
 
-/-- **Growth of the distance to `M_{≤ r}` with the constant one in front of `ε`.** Along every
-exact solution, starting anywhere,
-`dist(A(t), M_{≤ r}) ≤ e^{L(t - t₀)} dist(A(t₀), M_{≤ r}) + ε (t - t₀) e^{L(t - t₀)}`, with `ε`
-the factored normal-component bound. This is an upper bound. For `F ≡ [[0,1],[1,0]]` (`L = 0`,
-`r = 1`) and the solution `A(t) = t F` from `0`, `le_distLR_cx` with `δ = 0` certifies the lower
-bound `t/3` for the distance to `M_{≤ 1}`; its exact value is not formalised, so the constant is
-not proved to be optimal. The smaller expression `ε (e^{L τ} - 1)/L` is not proved here; the
-form stated needs no separate case `L = 0`. -/
-theorem distLR_flow_le_sharp (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
-    (hc : ∀ Y, Continuous fun t => F t Y) (hε0 : 0 ≤ ε) (hε : MatrixBUG.FactoredNormalBound F r ε)
+/-- **Growth of the distance to `M_{≤ r}` along the exact flow, without continuity in time**
+(the statement of `distLR_flow_le_sharp` without the hypothesis that the field is continuous in
+time). For an `L`-Lipschitz field bounded by `B` with the factored normal-component bound `ε`,
+along every exact solution, starting anywhere,
+`dist(A(t), M_{≤ r}) ≤ e^{L(t - t₀)} dist(A(t₀), M_{≤ r}) + ε (t - t₀) e^{L(t - t₀)}`. This is
+an upper bound; that the constant in front of `ε` is optimal is not proved. -/
+theorem distLR_flow_le_exp_mul_add (hF : IsLipschitzField F L) (hL : 0 ≤ L)
+    (hB : IsBoundedField F B) (hε0 : 0 ≤ ε) (hε : MatrixBUG.FactoredNormalBound F r ε)
     (hA : ODESolution F A t₀ t₁) :
     ∀ t ∈ Icc t₀ t₁, distLR r (A t) ≤
       Real.exp (L * (t - t₀)) * distLR r (A t₀) + ε * (t - t₀) * Real.exp (L * (t - t₀)) := by
-  have _ := hc
   intro t ht
   set d : ℝ → ℝ := fun s => distLR r (A s) with hd
   have hcont : ContinuousOn d (Icc t₀ t₁) :=
@@ -296,6 +296,43 @@ theorem distLR_flow_le_sharp (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : Is
       _ = _ := by rw [← e']
   rw [e] at h
   exact h
+
+/-- **Growth of the distance to `M_{≤ r}` with the constant one in front of `ε`.** Along every
+exact solution, starting anywhere,
+`dist(A(t), M_{≤ r}) ≤ e^{L(t - t₀)} dist(A(t₀), M_{≤ r}) + ε (t - t₀) e^{L(t - t₀)}`, with `ε`
+the factored normal-component bound. This is an upper bound. For `F ≡ [[0,1],[1,0]]` (`L = 0`,
+`r = 1`) and the solution `A(t) = t F` from `0`, `le_distLR_cx` with `δ = 0` certifies the lower
+bound `t/3` for the distance to `M_{≤ 1}`; its exact value is not formalised, so the constant is
+not proved to be optimal. The smaller expression `ε (e^{L τ} - 1)/L` is not proved here; the
+form stated needs no separate case `L = 0`.
+This is the recorded form of the statement, with the redundant hypothesis that the field is
+continuous in time; `distLR_flow_le_exp_mul_add` is the same statement without it. -/
+theorem distLR_flow_le_sharp (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
+    (hc : ∀ Y, Continuous fun t => F t Y) (hε0 : 0 ≤ ε) (hε : MatrixBUG.FactoredNormalBound F r ε)
+    (hA : ODESolution F A t₀ t₁) :
+    ∀ t ∈ Icc t₀ t₁, distLR r (A t) ≤
+      Real.exp (L * (t - t₀)) * distLR r (A t₀) + ε * (t - t₀) * Real.exp (L * (t - t₀)) := by
+  have _ := hc
+  exact distLR_flow_le_exp_mul_add hF hL hB hε0 hε hA
+
+/-- The hypotheses of `distLR_flow_le_exp_mul_add` hold for the constant field
+`F ≡ [[0, 1], [1, 0]]` (`L = 0`, `B = ε = ‖F‖`, `r = 1`) and the solution `A t = Y₀ + t F` from
+`Y₀ = diag(δ, 0)`. -/
+example (δ h : ℝ) : ∀ t ∈ Icc (0 : ℝ) h,
+    distLR 1 (cxY₀ δ + (t - 0) • swapMat) ≤
+      Real.exp (0 * (t - 0)) * distLR 1 (cxY₀ δ + ((0 : ℝ) - 0) • swapMat) +
+        ‖swapMat‖ * (t - 0) * Real.exp (0 * (t - 0)) := by
+  have hA : ODESolution (fun _ _ => swapMat) (fun t => cxY₀ δ + (t - 0) • swapMat) 0 h :=
+    MatrixBUG.odeSolution_affine (cxY₀ δ) swapMat 0 h
+  have hFL : IsLipschitzField (fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => swapMat) 0 :=
+    fun _ _ _ => by simp
+  have hFB : IsBoundedField (fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => swapMat) ‖swapMat‖ :=
+    fun _ _ => le_rfl
+  have hε : MatrixBUG.FactoredNormalBound
+      (fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => swapMat) 1 ‖swapMat‖ :=
+    MatrixBUG.factoredNormalBound_const swapMat 1
+  have key := distLR_flow_le_exp_mul_add hFL le_rfl hFB (norm_nonneg _) hε hA
+  exact key
 
 end Distance
 

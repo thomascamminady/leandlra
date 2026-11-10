@@ -9,9 +9,38 @@ import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.Projectors
 
 /-!
-# RankAdaptivity c
+# Quasi-optimality of dynamical low-rank approximation for matrices
 
-Proofs for the open problems.
+Let `A` be a differentiable curve of matrices and `X t = truncation (A t) r` its best
+approximation of rank `r`. The dynamical low-rank approximation `Y` of rank `r` has the form
+`Y t = U t * S t * (V t)ᵀ` with orthonormal columns of `U t` and `V t`, solves
+`Y' = tangentProj (U t) (V t) (A' t)` and starts at `Y 0 = X 0`. As long as `X` stays close to
+`A` and the `r`-th singular value of `A` stays away from zero, the distance of `Y` to the best
+approximation is bounded by the time integral of the best-approximation error, with explicit
+constants. All norms are Frobenius norms.
+
+## Main results
+
+* `dlra_norm_sub_truncation_le_integral`: assume on `[0, T]` that `‖A' t‖ ≤ μ`, that the `r`-th
+  singular value of `A t` is at least `ρ > 0`, that `‖X t - A t‖ ≤ ρ / 16`, and that `X` is
+  differentiable. Then, with `β = 8 μ / ρ`, for every `t ∈ [0, T]`,
+  `‖Y t - X t‖ ≤ 2 β e^{β t} ∫₀ᵗ ‖X s - A s‖ ds`.
+* `dlra_quasiOptimal_matrix`: the same bound under the additional hypotheses that the derivative
+  of `X` is continuous and that `‖Y s - X s‖ ≤ ρ / 16` for all `s ∈ [0, t]`.
+
+## Implementation notes
+
+The first theorem assumes neither smallness of `‖Y - X‖` nor continuity of the derivative of
+`X`. The Lipschitz bound of `tangentProj` in its base point that the proof uses
+(`Curvature.koch_lubich_tangent_frob`) needs the lower bound `ρ` for the singular values at one
+of the two base points only, here at `X t`. The proof is the matrix case of the comparison
+argument of `ODESolution.dlra_norm_sub_le_of_comparison_integral`, with this Lipschitz bound as
+the curvature bound.
+
+## References
+
+* O. Koch, Ch. Lubich, Dynamical low-rank approximation, SIAM J. Matrix Anal. Appl. 29 (2007),
+  Theorem 5.1.
 -/
 
 open Set Finset Matrix
@@ -183,26 +212,28 @@ private theorem truncation_factor {r : ℕ} (hr : 0 < r) {A : Matrix m n ℝ} {�
     rw [hT, tangentProj_apply, t3, t1, t2]
     simp
 
-set_option linter.unusedDecidableInType false in
-/-- **Quasi-optimality of matrix DLRA** (source: Koch–Lubich, SIAM J. Matrix Anal. Appl. 29
-(2007), Theorem 5.1). Let `X(t) = T_r(A(t))` be a `C¹` best rank-`r` approximation with
-`σ_r(X(t)) ≥ ρ` and `‖X(t) - A(t)‖_F ≤ ρ/16`, `‖Ȧ‖_F ≤ μ`, and let `Y = U S Vᵀ` solve the DLRA
-equation `Ẏ = P(Y) Ȧ` with `Y(0) = X(0)`. While `‖Y - X‖_F ≤ ρ/16`,
-`‖Y(t) - X(t)‖_F ≤ 2 β e^{β t} ∫₀ᵗ ‖X(s) - A(s)‖_F ds`, `β = 8 μ / ρ`. -/
-theorem dlra_quasiOptimal_matrix {r : ℕ} (hr : 0 < r) {A A' X X' Y : ℝ → Matrix m n ℝ}
-    {T μ ρ : ℝ} (hρ : 0 < ρ) (hA : ∀ t ∈ Icc 0 T, HasDerivAt A (A' t) t)
+omit [DecidableEq m] in
+/-- **Quasi-optimality of matrix DLRA without a condition on `‖Y - X‖`** (the statement of
+`dlra_quasiOptimal_matrix`, whose docstring names the source, with two hypotheses removed). Let
+`X(t) = T_r(A(t))` be a differentiable best rank-`r` approximation with `σ_r(A(t)) ≥ ρ`,
+`‖X(t) - A(t)‖_F ≤ ρ/16` and `‖Ȧ‖_F ≤ μ`, and let `Y = U S Vᵀ` solve the DLRA equation
+`Ẏ = P(Y) Ȧ` with `Y(0) = X(0)`. Then, for every `t ∈ [0, T]`,
+`‖Y(t) - X(t)‖_F ≤ 2 β e^{β t} ∫₀ᵗ ‖X(s) - A(s)‖_F ds`, `β = 8 μ / ρ`. Neither continuity of
+the derivative of `X` nor smallness of `‖Y - X‖_F` is assumed. -/
+theorem dlra_norm_sub_truncation_le_integral {r : ℕ} (hr : 0 < r)
+    {A A' X X' Y : ℝ → Matrix m n ℝ} {T μ ρ : ℝ} (hρ : 0 < ρ)
+    (hA : ∀ t ∈ Icc 0 T, HasDerivAt A (A' t) t)
     (hμ : ∀ t ∈ Icc 0 T, ‖A' t‖ ≤ μ) (hXbest : ∀ t ∈ Icc 0 T, X t = truncation (A t) r)
-    (hX : ∀ t ∈ Icc 0 T, HasDerivAt X (X' t) t) (hX'c : ContinuousOn X' (Icc 0 T))
+    (hX : ∀ t ∈ Icc 0 T, HasDerivAt X (X' t) t)
     (hσ : ∀ t ∈ Icc 0 T, ρ ≤ (toEuclideanLin (A t)).singularValues (r - 1))
     (hd : ∀ t ∈ Icc 0 T, ‖X t - A t‖ ≤ ρ / 16)
     {U : ℝ → Matrix m (Fin r) ℝ} {S : ℝ → Matrix (Fin r) (Fin r) ℝ} {V : ℝ → Matrix n (Fin r) ℝ}
     (hUV : ∀ t ∈ Icc 0 T, (U t)ᵀ * U t = 1 ∧ (V t)ᵀ * V t = 1 ∧ Y t = U t * S t * (V t)ᵀ)
     (hY : ODESolution (fun t _ => tangentProj (U t) (V t) (A' t)) Y 0 T) (hY₀ : Y 0 = X 0) :
-    ∀ t ∈ Icc 0 T, (∀ s ∈ Icc 0 t, ‖Y s - X s‖ ≤ ρ / 16) →
-      ‖Y t - X t‖ ≤
-        2 * (8 * μ / ρ) * Real.exp (8 * μ / ρ * t) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖ := by
-  intro t0 ht0 _
-  have _ := hX'c
+    ∀ t ∈ Icc 0 T, ‖Y t - X t‖ ≤
+      2 * (8 * μ / ρ) * Real.exp (8 * μ / ρ * t) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖ := by
+  classical
+  intro t0 ht0
   rcases eq_or_lt_of_le ht0.1 with h0 | hpos
   · subst h0
     simp [hY₀]
@@ -418,6 +449,32 @@ theorem dlra_quasiOptimal_matrix {r : ℕ} (hr : 0 < r) {A A' X X' Y : ℝ → M
           (by rw [zero_add]; positivity) (Real.exp_pos _).le
     _ = _ := by ring
 
+set_option linter.unusedDecidableInType false in
+/-- **Quasi-optimality of matrix DLRA** (source: Koch–Lubich, SIAM J. Matrix Anal. Appl. 29
+(2007), Theorem 5.1). Let `X(t) = T_r(A(t))` be a `C¹` best rank-`r` approximation with
+`σ_r(X(t)) ≥ ρ` and `‖X(t) - A(t)‖_F ≤ ρ/16`, `‖Ȧ‖_F ≤ μ`, and let `Y = U S Vᵀ` solve the DLRA
+equation `Ẏ = P(Y) Ȧ` with `Y(0) = X(0)`. While `‖Y - X‖_F ≤ ρ/16`,
+`‖Y(t) - X(t)‖_F ≤ 2 β e^{β t} ∫₀ᵗ ‖X(s) - A(s)‖_F ds`, `β = 8 μ / ρ`.
+This is the recorded form of the statement, with the redundant hypotheses that the derivative of
+`X` is continuous and that `‖Y s - X s‖ ≤ ρ / 16` on `[0, t]`, and with the instance
+`DecidableEq m`, which its type does not use; `dlra_norm_sub_truncation_le_integral` is the same
+statement without them. -/
+theorem dlra_quasiOptimal_matrix {r : ℕ} (hr : 0 < r) {A A' X X' Y : ℝ → Matrix m n ℝ}
+    {T μ ρ : ℝ} (hρ : 0 < ρ) (hA : ∀ t ∈ Icc 0 T, HasDerivAt A (A' t) t)
+    (hμ : ∀ t ∈ Icc 0 T, ‖A' t‖ ≤ μ) (hXbest : ∀ t ∈ Icc 0 T, X t = truncation (A t) r)
+    (hX : ∀ t ∈ Icc 0 T, HasDerivAt X (X' t) t) (hX'c : ContinuousOn X' (Icc 0 T))
+    (hσ : ∀ t ∈ Icc 0 T, ρ ≤ (toEuclideanLin (A t)).singularValues (r - 1))
+    (hd : ∀ t ∈ Icc 0 T, ‖X t - A t‖ ≤ ρ / 16)
+    {U : ℝ → Matrix m (Fin r) ℝ} {S : ℝ → Matrix (Fin r) (Fin r) ℝ} {V : ℝ → Matrix n (Fin r) ℝ}
+    (hUV : ∀ t ∈ Icc 0 T, (U t)ᵀ * U t = 1 ∧ (V t)ᵀ * V t = 1 ∧ Y t = U t * S t * (V t)ᵀ)
+    (hY : ODESolution (fun t _ => tangentProj (U t) (V t) (A' t)) Y 0 T) (hY₀ : Y 0 = X 0) :
+    ∀ t ∈ Icc 0 T, (∀ s ∈ Icc 0 t, ‖Y s - X s‖ ≤ ρ / 16) →
+      ‖Y t - X t‖ ≤
+        2 * (8 * μ / ρ) * Real.exp (8 * μ / ρ * t) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖ := by
+  have _ := hX'c
+  let _ : DecidableEq m := inferInstance
+  exact fun t ht _ =>
+    dlra_norm_sub_truncation_le_integral hr hρ hA hμ hXbest hX hσ hd hUV hY hY₀ t ht
 
 end QuasiOptimal
 

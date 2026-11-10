@@ -15,10 +15,11 @@ such step, for the quadratic loss `½ ‖x - a‖²` and for losses with a `β`-
 and after one step of the backward-corrected variant (arXiv 2502.03006, Sec. 3.3), in which
 the S-step is replaced by the projection onto the new left basis.
 
-Unless stated otherwise, `P₁` and `Q₀` are commuting orthogonal projectors, the state `x` lies
-in the range of `Q₀`, the new basis captures the K-step, `P₁ (x - h Q₀ g(x)) = x - h Q₀ g(x)`
-(the property that a QR factorisation of the K-step result provides), `y` is the result of the
-step, `T₁ = tangent P₁ Q₀ = P₁ + Q₀ - P₁ Q₀`, and gradients are exact.
+Unless stated otherwise, `P₁` and `Q₀` are commuting orthogonal projectors, the new basis
+captures the K-step, `P₁ (x - h Q₀ g(x)) = x - h Q₀ g(x)` (the property that a QR factorisation
+of the K-step result provides), `y` is the result of the step,
+`T₁ = tangent P₁ Q₀ = P₁ + Q₀ - P₁ Q₀`, and gradients are exact. The state `x` need not lie in
+the range of `Q₀`; only `loss_kslEulerStep_gt_of_goldenRatio_lt` assumes `Q₀ x = x`.
 
 ## Main definitions
 
@@ -104,15 +105,13 @@ lemma kslEulerStep_neg_eq (g : E → E) (h : ℝ) {x : E}
 
 /-- The displacement of one PSI step is `-h T₁ ∇ℒ(x)` plus gradient-variation remainders:
 `y - x = -h T₁ g(x) + h (P₁ Q₀ (g k - g x) - P₁ (g s - g x))`. -/
-lemma kslEulerStep_neg_sub (hQ₀ : IsOrthProj Q₀) (g : E → E) (h : ℝ) {x : E} (hx : Q₀ x = x)
+lemma kslEulerStep_neg_sub (g : E → E) (h : ℝ) {x : E}
     (hcap : P₁ (x - h • Q₀ (g x)) = x - h • Q₀ (g x)) :
     kslEulerStep P₁ Q₀ (fun y => -g y) h x - x =
       -(h • tangent P₁ Q₀ (g x)) +
         h • (P₁ (Q₀ (g (x - h • Q₀ (g x)) - g x)) -
           P₁ (g (x - h • Q₀ (g x) + h • P₁ (Q₀ (g (x - h • Q₀ (g x))))) - g x)) := by
   rw [kslEulerStep_neg_eq g h hcap]
-  have _ := hQ₀
-  have _ := hx
   simp only [tangent_apply, map_sub, smul_sub, smul_add]
   abel
 
@@ -134,7 +133,7 @@ lemma norm_components_le_tangent (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q
 
 /-- **Robust loss descent of the explicit Euler PSI training step** (the training algorithm of
 arXiv 2502.03006, Sec. 3.2).  Let `ℒ` be `β`-smooth, let
-`P₁, Q₀` be commuting orthogonal projectors (new left basis, old right basis), `x ∈ range Q₀`,
+`P₁, Q₀` be commuting orthogonal projectors (new left basis, old right basis),
 and let the new basis capture the K-step result.  Then, with `T₁ = P₁ + Q₀ - P₁ Q₀`,
 
 `ℒ(y) ≤ ℒ(x) - h (1 - βh(2 + βh) - (βh/2)(1 + βh)⁴) ‖T₁ ∇ℒ(x)‖²`.
@@ -145,7 +144,7 @@ iterate enters, so descent is robust.  Compare the bound `-h α_K² + h α_S² -
 arXiv 2502.03006, Lemma 5.1, which cannot be signed. -/
 theorem loss_kslEulerStep_le_of_smooth (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀)
-    (hc : ∀ x, P₁ (Q₀ x) = Q₀ (P₁ x)) (hβ : 0 ≤ β) (hh : 0 ≤ h) {x : E} (hx : Q₀ x = x)
+    (hc : ∀ x, P₁ (Q₀ x) = Q₀ (P₁ x)) (hβ : 0 ≤ β) (hh : 0 ≤ h) {x : E}
     (hcap : P₁ (x - h • Q₀ (g x)) = x - h • Q₀ (g x)) :
     ℒ (kslEulerStep P₁ Q₀ (fun y => -g y) h x) ≤
       ℒ x - h * (1 - β * h * (2 + β * h) - β * h / 2 * (1 + β * h) ^ 4) *
@@ -161,7 +160,7 @@ theorem loss_kslEulerStep_le_of_smooth (hℒ : ∀ x, HasFDerivAt ℒ (innerSL �
   have hT := hP₁.tangent hQ₀ hc
   obtain ⟨hat, hbt, hpqt, hnt⟩ := norm_components_le_tangent hP₁ hQ₀ hc (g x)
   have hdisp : y - x = -(h • tangent P₁ Q₀ (g x)) + h • r :=
-    kslEulerStep_neg_sub hQ₀ g h hx hcap
+    kslEulerStep_neg_sub g h hcap
   have ht0 : 0 ≤ t := norm_nonneg _
   -- remainders
   have hd₁n : ‖d₁‖ ≤ β * h * a := by
@@ -234,9 +233,9 @@ gradient descent (`loss_projGradStep_le_self`). -/
 theorem loss_kslEulerStep_le_of_smooth_quarter (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀)
     (hc : ∀ x, P₁ (Q₀ x) = Q₀ (P₁ x)) (hβ : 0 ≤ β) (hh : 0 ≤ h) (hβh : β * h ≤ 1 / 4) {x : E}
-    (hx : Q₀ x = x) (hcap : P₁ (x - h • Q₀ (g x)) = x - h • Q₀ (g x)) :
+    (hcap : P₁ (x - h • Q₀ (g x)) = x - h • Q₀ (g x)) :
     ℒ (kslEulerStep P₁ Q₀ (fun y => -g y) h x) ≤ ℒ x - h / 8 * ‖tangent P₁ Q₀ (g x)‖ ^ 2 := by
-  have h0 := loss_kslEulerStep_le_of_smooth hℒ hg hP₁ hQ₀ hc hβ hh hx hcap
+  have h0 := loss_kslEulerStep_le_of_smooth hℒ hg hP₁ hQ₀ hc hβ hh hcap
   set X := β * h with hX
   have hX0 : 0 ≤ X := mul_nonneg hβ hh
   have hX2 : X ^ 2 ≤ (1 / 4) ^ 2 := pow_le_pow_left₀ hX0 hβh 2
@@ -249,7 +248,7 @@ theorem loss_kslEulerStep_le_of_smooth_quarter (hℒ : ∀ x, HasFDerivAt ℒ (i
 
 /-- **Convergence of PSI training to tangent stationarity**.  Along an
 iteration `x_{k+1} = kslEulerStep (P k) (Q k) (-∇ℒ) h x_k` with commuting orthogonal
-projectors, `x_k ∈ range (Q k)`, QR capture at every step, `βh ≤ 1/4` and a lower bound `ℒinf`,
+projectors, QR capture at every step, `βh ≤ 1/4` and a lower bound `ℒinf`,
 `min_{k<n} ‖T_k ∇ℒ(x_k)‖² ≤ 8 (ℒ(x₀) - ℒinf) / (n h)`, where `T_k = P_k + Q_k - P_k Q_k`.  In
 particular `‖∇ℒ(x_k) V_k‖` and `‖U_{k+1}ᵀ ∇ℒ(x_k)‖` (both `≤ ‖T_k ∇ℒ(x_k)‖`,
 `norm_components_le_tangent`) tend to zero along a subsequence, with a rate that does not involve
@@ -257,7 +256,7 @@ the singular values of the iterates. -/
 theorem exists_tangentGrad_sq_le_of_psi (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) {P Q : ℕ → E →L[ℝ] E} (hP : ∀ k, IsOrthProj (P k))
     (hQ : ∀ k, IsOrthProj (Q k)) (hc : ∀ k x, P k (Q k x) = Q k (P k x)) {x : ℕ → E}
-    {ℒinf : ℝ} (hβ : 0 ≤ β) (hh : 0 < h) (hβh : β * h ≤ 1 / 4) (hx : ∀ k, Q k (x k) = x k)
+    {ℒinf : ℝ} (hβ : 0 ≤ β) (hh : 0 < h) (hβh : β * h ≤ 1 / 4)
     (hcap : ∀ k, P k (x k - h • Q k (g (x k))) = x k - h • Q k (g (x k)))
     (hstep : ∀ k, x (k + 1) = kslEulerStep (P k) (Q k) (fun y => -g y) h (x k))
     (hinf : ∀ k, ℒinf ≤ ℒ (x k)) {n : ℕ} (hn : 0 < n) :
@@ -269,7 +268,7 @@ theorem exists_tangentGrad_sq_le_of_psi (hℒ : ∀ x, HasFDerivAt ℒ (innerSL 
         (a := fun k => h / 8 * ‖tangent (P k) (Q k) (g (x k))‖ ^ 2) (e := fun _ => 0)
         (fun k => by
           have := loss_kslEulerStep_le_of_smooth_quarter hℒ hg (hP k) (hQ k) (hc k) hβ hh.le hβh
-            (hx k) (hcap k)
+            (hcap k)
           rw [← hstep k] at this
           simp only [add_zero]
           linarith) n
@@ -293,12 +292,10 @@ variable {P₁ Q₀ : E →L[ℝ] E} {h : ℝ}
 /-- For the quadratic `ℒ(x) = ½‖x - a‖²` (gradient `x - a`), the PSI step is the affine map
 `y - a = E - h T₁ E - h²(1 - h) P₁ Q₀ E`, `E = x - a`. -/
 lemma kslEulerStep_quadratic_sub (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀) (a : E) {x : E}
-    (hx : Q₀ x = x)
     (hcap : P₁ (x - h • Q₀ (x - a)) = x - h • Q₀ (x - a)) :
     kslEulerStep P₁ Q₀ (fun y => -(y - a)) h x - a =
       (x - a) - h • tangent P₁ Q₀ (x - a) - (h ^ 2 * (1 - h)) • P₁ (Q₀ (x - a)) := by
   rw [kslEulerStep_neg_eq (fun y => y - a) h hcap]
-  have _ := hx
   simp only [tangent_apply, map_sub, map_add, map_smul, smul_sub, smul_add, smul_smul,
     hQ₀.idem, hP₁.idem]
   module
@@ -320,12 +317,12 @@ net effect of the backward S-step on the core, negative for `h ≤ √2`.  The b
 `U₀ → U₁` (which carries the factor `1/σ_r`) enters only through `T₁` and does not produce a
 term of indefinite sign: no singular value of the state enters the identity. -/
 theorem kslEulerStep_frobenius_sq_identity (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀)
-    (hc : ∀ x, P₁ (Q₀ x) = Q₀ (P₁ x)) (a : E) {x : E} (hx : Q₀ x = x)
+    (hc : ∀ x, P₁ (Q₀ x) = Q₀ (P₁ x)) (a : E) {x : E}
     (hcap : P₁ (x - h • Q₀ (x - a)) = x - h • Q₀ (x - a)) :
     ‖kslEulerStep P₁ Q₀ (fun y => -(y - a)) h x - a‖ ^ 2 - ‖x - a‖ ^ 2 =
       -(h * (2 - h)) * ‖tangent P₁ Q₀ (x - a)‖ ^ 2 -
         h ^ 2 * (1 - h) ^ 2 * (2 - h ^ 2) * ‖P₁ (Q₀ (x - a))‖ ^ 2 := by
-  rw [kslEulerStep_quadratic_sub hP₁ hQ₀ a hx hcap]
+  rw [kslEulerStep_quadratic_sub hP₁ hQ₀ a hcap]
   set e := x - a
   set T := tangent P₁ Q₀ with hT
   have hTo := hP₁.tangent hQ₀ hc
@@ -360,10 +357,10 @@ since `2 - h ≥ 1 + h - h²`, the guaranteed PSI gain is never larger, with equ
 Descent is unconditional in the singular values of the iterate. -/
 theorem loss_kslEulerStep_quadratic_le (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀)
     (hc : ∀ x, P₁ (Q₀ x) = Q₀ (P₁ x)) (hh : 0 ≤ h) (hφ : h ≤ Real.goldenRatio) (a : E)
-    {x : E} (hx : Q₀ x = x) (hcap : P₁ (x - h • Q₀ (x - a)) = x - h • Q₀ (x - a)) :
+    {x : E} (hcap : P₁ (x - h • Q₀ (x - a)) = x - h • Q₀ (x - a)) :
     1 / 2 * ‖kslEulerStep P₁ Q₀ (fun y => -(y - a)) h x - a‖ ^ 2 ≤
       1 / 2 * ‖x - a‖ ^ 2 - h / 2 * (1 + h - h ^ 2) * ‖tangent P₁ Q₀ (x - a)‖ ^ 2 := by
-  have hid := kslEulerStep_frobenius_sq_identity hP₁ hQ₀ hc a hx hcap
+  have hid := kslEulerStep_frobenius_sq_identity hP₁ hQ₀ hc a hcap
   set t := ‖tangent P₁ Q₀ (x - a)‖ ^ 2 with ht
   set p := ‖P₁ (Q₀ (x - a))‖ ^ 2 with hp
   have hpt : p ≤ t := pow_le_pow_left₀ (norm_nonneg _) (norm_mul_apply_le_tangent hP₁ hQ₀ hc _) 2
@@ -567,11 +564,8 @@ theorem loss_psiTrainStep_le [DecidableEq r] {ℒ : Matrix m n ℝ → ℝ}
     ℒ (psiTrainStep g h U₀ S₀ V₀ U₁) ≤
       ℒ (U₀ * S₀ * V₀ᵀ) - h / 8 * ‖tangentProj U₁ V₀ (g (U₀ * S₀ * V₀ᵀ))‖ ^ 2 := by
   rw [psiTrainStep_eq_kslEulerStep g h hcap]
-  have hx : rightProj V₀ (U₀ * S₀ * V₀ᵀ) = U₀ * S₀ * V₀ᵀ := by
-    simp only [rightProj_apply, Matrix.mul_assoc]
-    rw [← Matrix.mul_assoc V₀ᵀ V₀, hV₀, Matrix.one_mul]
   exact loss_kslEulerStep_le_of_smooth_quarter hℒ hg (isOrthProj_leftProj hU₁)
-    (isOrthProj_rightProj hV₀) (leftProj_rightProj_comm U₁ V₀) hβ hh hβh hx
+    (isOrthProj_rightProj hV₀) (leftProj_rightProj_comm U₁ V₀) hβ hh hβh
     (capture_of_mul g h hcap)
 
 /-- **Descent of the factored bc-PSI training step**: for a `β`-smooth loss,
