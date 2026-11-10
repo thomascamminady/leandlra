@@ -505,3 +505,54 @@ def test_report_remarks_on_generated_names_and_counts_them_as_before(
         "- `LeanDLRA.old.match_1` (LeanDLRA.M) — name of a generated matcher of "
         "`LeanDLRA.old`" in lines
     )
+
+
+# ---------------------------------------------------------------------------------------------
+# Texts of the dumper since T6: a helper constant is printed by its content (`_f T v`,
+# `_match T v`; a helper theorem with its arguments as `_proof`), not by its name.
+
+
+def body(weight: str, step: int) -> str:
+    """The body of a structural recursion as the dumper prints it."""
+    step_text = f"HAdd.hAdd.{{0, 0, 0}} Nat Nat Nat inst ({weight} x) {step}"
+    return f"fun (x : Nat) => _f (Nat → Nat) (fun (x : Nat) => {step_text}) _proof"
+
+
+def test_content_of_helpers_follows_the_rename_map_and_shows_changes() -> None:
+    before = [
+        rec("LeanDLRA.weight", "0 ⊢ Nat → Nat", "def", value="fun (x : Nat) => x"),
+        rec("LeanDLRA.sumTo", "0 ⊢ Nat → Nat", "def", value=body("LeanDLRA.weight", 1)),
+        rec("LeanDLRA.user", "0 ⊢ Eq.{1} Nat (LeanDLRA.sumTo 0) 0"),
+    ]
+    renames = {
+        "LeanDLRA.weight": "LeanDLRA.weight2",
+        "LeanDLRA.sumTo": "LeanDLRA.sumUpTo",
+    }
+    renamed = [
+        rec("LeanDLRA.weight2", "0 ⊢ Nat → Nat", "def", value="fun (x : Nat) => x"),
+        rec(
+            "LeanDLRA.sumUpTo",
+            "0 ⊢ Nat → Nat",
+            "def",
+            value=body("LeanDLRA.weight2", 1),
+        ),
+        rec("LeanDLRA.user", "0 ⊢ Eq.{1} Nat (LeanDLRA.sumUpTo 0) 0"),
+    ]
+    # A rename of a constant that is mentioned inside a helper is no change of its users.
+    res = run(before, renamed, renames)
+    assert sorted(res.renamed) == sorted(renames.items())
+    assert (res.type_changed, res.value_changed, res.disappeared) == ([], [], [])
+    assert res.unchanged == 3
+    # Without the map it is one.
+    assert run(before, renamed).failures() > 0
+    # A change inside the helper is a change of the definition that owns it.
+    changed = [before[0], {**before[1], "value": body("LeanDLRA.weight", 2)}, before[2]]
+    res = run(before, changed)
+    assert (res.type_changed, res.value_changed) == ([], ["LeanDLRA.sumTo"])
+
+
+def test_content_of_helpers_is_no_generated_proof_name() -> None:
+    text = body("LeanDLRA.weight", 1)
+    assert hashdiff.number_proofs(text) == text
+    assert not hashdiff.proof_names_only(text, body("LeanDLRA.weight", 2))
+    assert hashdiff.generated_note("LeanDLRA.sumTo") == ""
