@@ -1,4 +1,4 @@
-import LeanDLRA.OpenProblems.Curated.TensorNetworksDefs
+import LeanDLRA.Tensor.Tucker.Tangent
 import LeanDLRA.Integrators.TuckerBUG
 import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Classical.CommutingProjectorTelescoping
@@ -89,60 +89,10 @@ private theorem modeProd_apply_compl {d : ℕ} {P : Fin d → E →L[ℝ] E}
   rw [show (1 - P j) y = y - P j y by simp, map_sub, modeProd_apply_proj hc,
     apply_modeProd_eq_self hidem hc, sub_self]
 
-private theorem tuckerTangentProj_isOrthProj {d : ℕ} {P₀ Q₀ : Fin d → E →L[ℝ] E}
-    (hP₀ : ∀ i, IsOrthProj (P₀ i)) (hQ₀ : ∀ i, IsOrthProj (Q₀ i))
-    (hc₀₀ : ∀ i j x, P₀ i (P₀ j x) = P₀ j (P₀ i x))
-    (hcQ₀ : ∀ i x, Q₀ i (P₀ i x) = P₀ i (Q₀ i x))
-    (hQsub : ∀ i j, j ≠ i → ∀ x, P₀ j (Q₀ i x) = Q₀ i x) :
-    IsOrthProj (tuckerTangentProj P₀ Q₀) := by
-  have hidem : ∀ i x, P₀ i (P₀ i x) = P₀ i x := fun i => (hP₀ i).idem
-  have hpi : ∀ i, IsOrthProj ((1 - P₀ i) * Q₀ i) := fun i =>
-    (hP₀ i).compl.mul (hQ₀ i) fun x => by
-      simp only [sub_apply, one_apply_eq_self, map_sub,
-        hcQ₀ i x]
-  have hp0 : IsOrthProj (modeProd P₀) := IsOrthProj.modeProd hP₀ hc₀₀
-  have hT : ∀ x, tuckerTangentProj P₀ Q₀ x
-      = modeProd P₀ x + ∑ i, (1 - P₀ i) (Q₀ i x) := by
-    intro x; simp [tuckerTangentProj]
-  -- blocks kill ranges of `P₀ i`
-  have hkill : ∀ i z, P₀ i z = z → (1 - P₀ i) (Q₀ i z) = 0 := by
-    intro i z hz
-    have : Q₀ i z = P₀ i (Q₀ i z) := by rw [← hcQ₀ i z, hz]
-    simp [← this]
-  have hrange : ∀ i x, P₀ i (modeProd P₀ x) = modeProd P₀ x := fun i x =>
-    apply_modeProd_eq_self hidem hc₀₀ i x
-  have hrange2 : ∀ i j, j ≠ i → ∀ x, P₀ j ((1 - P₀ i) (Q₀ i x)) = (1 - P₀ i) (Q₀ i x) := by
-    intro i j hji x
-    simp only [sub_apply, one_apply_eq_self, map_sub]
-    rw [hc₀₀ j i, hQsub i j hji]
-  have h00 : ∀ x, modeProd P₀ (modeProd P₀ x) = modeProd P₀ x := hp0.idem
-  have h0i : ∀ i x, modeProd P₀ ((1 - P₀ i) (Q₀ i x)) = 0 := fun i x =>
-    modeProd_apply_compl hidem hc₀₀ i _
-  have hi0 : ∀ i x, (1 - P₀ i) (Q₀ i (modeProd P₀ x)) = 0 := fun i x => hkill i _ (hrange i x)
-  have hii : ∀ i x, (1 - P₀ i) (Q₀ i ((1 - P₀ i) (Q₀ i x))) = (1 - P₀ i) (Q₀ i x) :=
-    fun i x => (hpi i).idem x
-  have hij : ∀ i j, j ≠ i → ∀ x, (1 - P₀ i) (Q₀ i ((1 - P₀ j) (Q₀ j x))) = 0 := by
-    intro i j hij x
-    exact hkill i _ (hrange2 j i (Ne.symm hij) x)
-  constructor
-  · intro x
-    rw [hT, hT, map_add, map_sum]
-    simp only [h00, h0i, Finset.sum_const_zero, add_zero, map_add, map_sum, hi0, zero_add]
-    congr 1
-    refine Finset.sum_congr rfl fun i _ => ?_
-    rw [Finset.sum_eq_single i]
-    · rw [hii]
-    · intro j _ hji; exact hij i j hji x
-    · simp
-  · intro x y
-    rw [hT, hT, inner_add_left, inner_add_right, sum_inner, inner_sum, hp0.symm]
-    congr 1
-    exact Finset.sum_congr rfl fun i _ => (hpi i).symm x y
-
 /-- **Capture with a `d`-independent `ε`-constant** (source: research idea; sharpens
 the `d ϑ` / `√d ϑ` capture constants of OP-TN-21 and OP-TN-04). For the rank-adaptive Tucker BUG
 integrator (new bases `P₁ i ⊇ P₀ i` capturing the exact `K`-steps) and the normal bound
-`‖(1 - T) F(t, Y₀)‖ ≤ ε` for the Tucker tangent projector `T = tuckerTangentProj P₀ Q₀`,
+`‖(1 - T) F(t, Y₀)‖ ≤ ε` for the Tucker tangent projector `T = modeTangentProj P₀ Q₀`,
 `‖A(t₁) - (∏ P₁ i) A(t₁)‖ ≤ h (ε + L B h) + √d L B h²`.  The linear (`d ϑ`,
 `tucker_capture`) and Pythagorean (`√d ϑ`, `tucker_capture'`) telescoping bounds both carry
 `d` resp. `√d` in front of `h ε`; here the normal part is treated once and only the
@@ -162,7 +112,7 @@ theorem aug_tucker_capture_dindep {d : ℕ} {P₀ Q₀ P₁ : Fin d → E →L[�
     (hA : ODESolution F A t₀ t₁) (hA₀ : A t₀ = Y₀)
     (hK : ∀ i, ODESolution (fun t x => Q₀ i (F t x)) (YK i) t₀ t₁) (hK₀ : ∀ i, YK i t₀ = Y₀)
     (hKcap : ∀ i, P₁ i (YK i t₁) = YK i t₁)
-    (hε : ∀ t ∈ Icc t₀ t₁, ‖F t Y₀ - tuckerTangentProj P₀ Q₀ (F t Y₀)‖ ≤ ε) :
+    (hε : ∀ t ∈ Icc t₀ t₁, ‖F t Y₀ - modeTangentProj P₀ Q₀ (F t Y₀)‖ ≤ ε) :
     ‖A t₁ - modeProd P₁ (A t₁)‖ ≤ h * (ε + L * B * h) + √(d : ℝ) * (L * B * h ^ 2) := by
   have _unused : _ ∧ _ := And.intro hc₀₁ hcQ₁
   have hle : t₀ ≤ t₁ := by linarith
@@ -170,7 +120,7 @@ theorem aug_tucker_capture_dindep {d : ℕ} {P₀ Q₀ P₁ : Fin d → E →L[�
   have hB0 : 0 ≤ B := (norm_nonneg _).trans (hB t₀ 0)
   have hidem₁ : ∀ i x, P₁ i (P₁ i x) = P₁ i x := fun i => (hP₁ i).idem
   have hPi1 : IsOrthProj (modeProd P₁) := IsOrthProj.modeProd hP₁ hc₁₁
-  have hT := tuckerTangentProj_isOrthProj hP₀ hQ₀ hc₀₀ hcQ₀ hQsub
+  have hT := modeTangentProj_isOrthProj hP₀ hQ₀ hc₀₀ hcQ₀ hQsub
   have hY₁ : ∀ i, P₁ i Y₀ = Y₀ := fun i => by
     have := hnest i Y₀
     rwa [hY₀ i] at this
@@ -209,29 +159,29 @@ theorem aug_tucker_capture_dindep {d : ℕ} {P₀ Q₀ P₁ : Fin d → E →L[�
       refine modeProd_apply_eq_self fun i => ?_
       rw [← apply_modeProd_eq_self (P := P₀) (fun i => (hP₀ i).idem) hc₀₀ i w, hnest i]
     simp [this]
-  have hdecw : w = (1 - tuckerTangentProj P₀ Q₀) w + modeProd P₀ w + ∑ i, u i := by
-    have hTw : tuckerTangentProj P₀ Q₀ w = modeProd P₀ w + ∑ i, u i := by
-      simp [tuckerTangentProj, hu]
+  have hdecw : w = (1 - modeTangentProj P₀ Q₀) w + modeProd P₀ w + ∑ i, u i := by
+    have hTw : modeTangentProj P₀ Q₀ w = modeProd P₀ w + ∑ i, u i := by
+      simp [modeTangentProj, hu]
     rw [sub_apply, one_apply_eq_self, hTw]; abel
-  have hsplit : (1 - modeProd P₁) w = (1 - modeProd P₁) ((1 - tuckerTangentProj P₀ Q₀) w)
+  have hsplit : (1 - modeProd P₁) w = (1 - modeProd P₁) ((1 - modeTangentProj P₀ Q₀) w)
       + ∑ i, e i := by
     conv_lhs => rw [hdecw]
     rw [map_add, map_add, hPi0w, add_zero, map_sum]
     simp only [hPiu]
   -- the normal part
-  have hnormal : ‖(1 - tuckerTangentProj P₀ Q₀) w‖ ≤ h * (ε + L * B * h) := by
-    have hgc : ContinuousOn (fun t => (1 - tuckerTangentProj P₀ Q₀) (A t)) (Icc t₀ t₁) :=
-      (1 - tuckerTangentProj P₀ Q₀).continuous.comp_continuousOn hA.cont
-    have hgd : ∀ t ∈ Ico t₀ t₁, HasDerivWithinAt (fun t => (1 - tuckerTangentProj P₀ Q₀) (A t))
-        ((1 - tuckerTangentProj P₀ Q₀) (F t (A t))) (Ici t) t := fun t ht =>
-      (1 - tuckerTangentProj P₀ Q₀).hasFDerivAt.comp_hasDerivWithinAt t (hA.deriv t ht)
-    have hbd : ∀ t ∈ Ico t₀ t₁, ‖(1 - tuckerTangentProj P₀ Q₀) (F t (A t))‖
+  have hnormal : ‖(1 - modeTangentProj P₀ Q₀) w‖ ≤ h * (ε + L * B * h) := by
+    have hgc : ContinuousOn (fun t => (1 - modeTangentProj P₀ Q₀) (A t)) (Icc t₀ t₁) :=
+      (1 - modeTangentProj P₀ Q₀).continuous.comp_continuousOn hA.cont
+    have hgd : ∀ t ∈ Ico t₀ t₁, HasDerivWithinAt (fun t => (1 - modeTangentProj P₀ Q₀) (A t))
+        ((1 - modeTangentProj P₀ Q₀) (F t (A t))) (Ici t) t := fun t ht =>
+      (1 - modeTangentProj P₀ Q₀).hasFDerivAt.comp_hasDerivWithinAt t (hA.deriv t ht)
+    have hbd : ∀ t ∈ Ico t₀ t₁, ‖(1 - modeTangentProj P₀ Q₀) (F t (A t))‖
         ≤ ε + L * B * h := by
       intro t ht
       have htI : t ∈ Icc t₀ t₁ := Ico_subset_Icc_self ht
-      have hdec : (1 - tuckerTangentProj P₀ Q₀) (F t (A t))
-          = (1 - tuckerTangentProj P₀ Q₀) (F t (A t) - F t Y₀)
-            + (F t Y₀ - tuckerTangentProj P₀ Q₀ (F t Y₀)) := by
+      have hdec : (1 - modeTangentProj P₀ Q₀) (F t (A t))
+          = (1 - modeTangentProj P₀ Q₀) (F t (A t) - F t Y₀)
+            + (F t Y₀ - modeTangentProj P₀ Q₀ (F t Y₀)) := by
         simp only [map_sub, sub_apply, one_apply_eq_self]; abel
       have hAt : ‖A t - Y₀‖ ≤ B * h := by
         have := hA.norm_sub_le_of_bounded hB t htI
@@ -239,8 +189,8 @@ theorem aug_tucker_capture_dindep {d : ℕ} {P₀ Q₀ P₁ : Fin d → E →L[�
         have h2 : t - t₀ ≤ h := by linarith [htI.2]
         nlinarith
       rw [hdec]
-      calc _ ≤ ‖(1 - tuckerTangentProj P₀ Q₀) (F t (A t) - F t Y₀)‖
-            + ‖F t Y₀ - tuckerTangentProj P₀ Q₀ (F t Y₀)‖ := norm_add_le _ _
+      calc _ ≤ ‖(1 - modeTangentProj P₀ Q₀) (F t (A t) - F t Y₀)‖
+            + ‖F t Y₀ - modeTangentProj P₀ Q₀ (F t Y₀)‖ := norm_add_le _ _
         _ ≤ ‖F t (A t) - F t Y₀‖ + ε :=
             add_le_add (hT.compl.norm_le _) (hε t htI)
         _ ≤ L * ‖A t - Y₀‖ + ε := add_le_add (hF t _ _) le_rfl
@@ -326,8 +276,8 @@ theorem aug_tucker_capture_dindep {d : ℕ} {P₀ Q₀ P₁ : Fin d → E →L[�
             exact hedef i
       _ = d * (L * B * h ^ 2) ^ 2 := by simp
   rw [hgoal, hsplit]
-  calc _ ≤ ‖(1 - modeProd P₁) ((1 - tuckerTangentProj P₀ Q₀) w)‖ + ‖∑ i, e i‖ := norm_add_le _ _
-    _ ≤ ‖(1 - tuckerTangentProj P₀ Q₀) w‖ + ‖∑ i, e i‖ :=
+  calc _ ≤ ‖(1 - modeProd P₁) ((1 - modeTangentProj P₀ Q₀) w)‖ + ‖∑ i, e i‖ := norm_add_le _ _
+    _ ≤ ‖(1 - modeTangentProj P₀ Q₀) w‖ + ‖∑ i, e i‖ :=
         add_le_add (hPi1.compl.norm_le _) le_rfl
     _ ≤ _ := add_le_add hnormal hsum
 
@@ -350,7 +300,7 @@ theorem aug_tucker_local_error_dindep {d : ℕ} {P₀ Q₀ P₁ : Fin d → E �
     (hA : ODESolution F A t₀ t₁) (hA₀ : A t₀ = Y₀)
     (hK : ∀ i, ODESolution (fun t x => Q₀ i (F t x)) (YK i) t₀ t₁) (hK₀ : ∀ i, YK i t₀ = Y₀)
     (hKcap : ∀ i, P₁ i (YK i t₁) = YK i t₁)
-    (hε : ∀ t ∈ Icc t₀ t₁, ‖F t Y₀ - tuckerTangentProj P₀ Q₀ (F t Y₀)‖ ≤ ε)
+    (hε : ∀ t ∈ Icc t₀ t₁, ‖F t Y₀ - modeTangentProj P₀ Q₀ (F t Y₀)‖ ≤ ε)
     (hS : ODESolution (fun t x => modeProd P₁ (F t x)) YS t₀ t₁) (hS₀ : YS t₀ = Y₀) :
     ‖YS t₁ - A t₁‖ ≤ (Real.exp (L * h) - 1) *
         (B * h + (h * (ε + L * B * h) + √(d : ℝ) * (L * B * h ^ 2))) +

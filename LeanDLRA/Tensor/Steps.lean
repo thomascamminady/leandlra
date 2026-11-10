@@ -21,7 +21,7 @@ instances on tensors `Tensor ι` over a dimension tree are in `Tensor/TTN/`.
   rank-adaptive and the parallel TTN BUG integrator over a `TTNFrame` (Ceruti–Lubich–Sulz,
   SINUM 2023; arXiv 2412.00858, §4).
 * `IsTTNRecoverable`: recursive recoverability along a frame.
-* `tuckerTangentProj`: the tangent projector of the Tucker manifold in terms of abstract mode
+* `modeTangentProj`: the tangent projector of the Tucker manifold in terms of abstract mode
   projectors, `∏ᵢ P₀ i + ∑ᵢ (1 - P₀ i) Q₀ i`.
 
 These definitions are not in `Tensor/Defs.lean` because they use `modeProd`, `modeProdLeOne`,
@@ -224,7 +224,7 @@ def IsTTNRecoverable : TTNFrame E → E → Prop
 `i`-th summand the basis variation `C ×ᵢ δUᵢ ×_{j ≠ i} U⁰ⱼ` (`δUᵢ ⊥ U⁰ᵢ`, row space of the `i`-th
 matricization in the co-range of `Matᵢ(Y₀)`).  Unlike the tangent hull
 `modeProdLeOne P₀ (1 - P₀)` it is the exact tangent projector also for `d ≥ 3`. -/
-noncomputable def tuckerTangentProj {d : ℕ} (P₀ Q₀ : Fin d → E →L[ℝ] E) : E →L[ℝ] E :=
+noncomputable def modeTangentProj {d : ℕ} (P₀ Q₀ : Fin d → E →L[ℝ] E) : E →L[ℝ] E :=
   modeProd P₀ + ∑ i, (1 - P₀ i) * Q₀ i
 
 end TTNBUG

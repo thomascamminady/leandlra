@@ -63,7 +63,7 @@ Tucker tensors, tensor trains (matrix product states) and tree tensor networks.
   classes at every inner node), with `TTNFrame.height`, `TTNFrame.size`, the recursive local
   error bound `ttnErrBound`, and the (recursive) augmented recoverability conditions
   `IsAugRecoverable`, `IsTTNAugRecoverable`. The TTN step predicates on frames (`IsTTNBUGStep`,
-  `IsAugTTNBUGStep`, `IsParTTNBUGStep`, `IsTTNRecoverable`) and the abstract `tuckerTangentProj`
+  `IsAugTTNBUGStep`, `IsParTTNBUGStep`, `IsTTNRecoverable`) and the abstract `modeTangentProj`
   are in `Tensor/Steps.lean`: they use `modeProd`, `modeProdLeOne`, `parTuckerBUG` and
   `Exactness.IsRecoverable`, which are not yet in a `Defs.lean`.
 * `LeanDLRA.TreeShape`: the shape of a dimension tree without mode labels (a leaf, or an inner

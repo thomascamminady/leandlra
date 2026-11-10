@@ -39,8 +39,10 @@ Remark 4.3 (non-orthonormal `Uₖ`) and the curvature bounds (Props. 4.7–4.11)
   `T_X ℳ`; `isOrthProj_tuckerTangentProj`, `tuckerTangentProj_eq_self_iff`, and
   `mem_tuckerTangentSpace_iff` (the vectors (4.5) already form the subspace).
 * `tuckerTangentProj_one_eq`: for `P_C = 1` the projector is the abstract tangent projector
-  `LeanDLRA.tuckerTangentProj` (`Tensor/Steps.lean`) of the mode projectors and the co-range
+  `LeanDLRA.modeTangentProj` (`Tensor/Steps.lean`) of the mode projectors and the co-range
   projectors; it rests on `modeProd_modeAct` and `tuckerCLM_comp_tuckerCLM_transpose`.
+* `modeTangentProj_isOrthProj`: the abstract tangent projector `LeanDLRA.modeTangentProj` is an
+  orthogonal projector for commuting mode projectors and compatible co-range projectors.
 -/
 
 open scoped Matrix RealInnerProductSpace
@@ -488,16 +490,16 @@ example :
 
 /-- **The two tangent projectors of the Tucker manifold agree.** For the trivial core projector
 `P_C = 1` (the Tucker manifold itself), the tangent projector `tuckerTangentProj U 1 W` of
-arXiv 2308.16720, Prop. 4.2, is the abstract tangent projector `LeanDLRA.tuckerTangentProj` of
+arXiv 2308.16720, Prop. 4.2, is the abstract tangent projector `LeanDLRA.modeTangentProj` of
 the mode projectors `P₀ k = modeProj k (U k)` and the co-range projectors
 `Q₀ k = actOn (· ≠ k) (W k (W k)ᵀ)`. -/
 theorem tuckerTangentProj_one_eq {s : Fin d → Type*} [∀ k, Fintype (s k)]
     (U : ∀ k, Matrix (ι k) (r k) ℝ)
     (W : ∀ k, Matrix (∀ j : {j : Fin d // j ≠ k}, ι j) (s k) ℝ) :
     tuckerTangentProj U 1 W =
-      _root_.LeanDLRA.tuckerTangentProj (fun k => modeProj k (U k))
+      modeTangentProj (fun k => modeProj k (U k))
         fun k => actOn (· ≠ k) (W k * (W k)ᵀ) := by
-  unfold tuckerTangentProj _root_.LeanDLRA.tuckerTangentProj
+  unfold tuckerTangentProj modeTangentProj
   congr 1
   rw [ContinuousLinearMap.one_def, ContinuousLinearMap.id_comp]
   exact tuckerCLM_comp_tuckerCLM_transpose U
@@ -509,7 +511,7 @@ example :
     let W : ∀ k : Fin 2, Matrix ({j : Fin 2 // j ≠ k} → Fin 1) (Fin 1) ℝ :=
       fun _ => Matrix.of fun _ _ => 1
     tuckerTangentProj (ι := fun _ : Fin 2 => Fin 1) U 1 W =
-      _root_.LeanDLRA.tuckerTangentProj (fun k => modeProj k (U k))
+      modeTangentProj (fun k => modeProj k (U k))
         fun k => actOn (· ≠ k) (W k * (W k)ᵀ) := by
   intro U W
   exact tuckerTangentProj_one_eq U W
@@ -517,3 +519,81 @@ example :
 end AbstractTangentProj
 
 end LeanDLRA.Tensor
+
+/-! ### The abstract tangent projector is an orthogonal projector -/
+
+namespace LeanDLRA
+
+section ModeTangentProj
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-- The abstract tangent projector `modeTangentProj P₀ Q₀ = ∏ᵢ P₀ i + ∑ᵢ (1 - P₀ i) Q₀ i` is an
+orthogonal projector if the mode projectors `P₀ i` and the co-range projectors `Q₀ i` are
+orthogonal projectors, the `P₀ i` commute with each other, `Q₀ i` commutes with `P₀ i`, and
+`P₀ j` fixes the range of `Q₀ i` for `j ≠ i`. -/
+theorem modeTangentProj_isOrthProj {d : ℕ} {P₀ Q₀ : Fin d → E →L[ℝ] E}
+    (hP₀ : ∀ i, IsOrthProj (P₀ i)) (hQ₀ : ∀ i, IsOrthProj (Q₀ i))
+    (hc₀₀ : ∀ i j x, P₀ i (P₀ j x) = P₀ j (P₀ i x))
+    (hcQ₀ : ∀ i x, Q₀ i (P₀ i x) = P₀ i (Q₀ i x))
+    (hQsub : ∀ i j, j ≠ i → ∀ x, P₀ j (Q₀ i x) = Q₀ i x) :
+    IsOrthProj (modeTangentProj P₀ Q₀) := by
+  have hidem : ∀ i x, P₀ i (P₀ i x) = P₀ i x := fun i => (hP₀ i).idem
+  have hcompl : ∀ j y, modeProd P₀ ((1 - P₀ j) y) = 0 := fun j y => by
+    have hproj : modeProd P₀ (P₀ j y) = P₀ j (modeProd P₀ y) :=
+      (Commute.clm_apply (commute_modeProd (a := P₀ j) fun i =>
+        ContinuousLinearMap.ext (hc₀₀ j i)) y).symm
+    rw [show (1 - P₀ j) y = y - P₀ j y by simp, map_sub, hproj,
+      apply_modeProd_eq_self hidem hc₀₀, sub_self]
+  have hpi : ∀ i, IsOrthProj ((1 - P₀ i) * Q₀ i) := fun i =>
+    (hP₀ i).compl.mul (hQ₀ i) fun x => by
+      simp only [sub_apply, one_apply_eq_self, map_sub,
+        hcQ₀ i x]
+  have hp0 : IsOrthProj (modeProd P₀) := IsOrthProj.modeProd hP₀ hc₀₀
+  have hT : ∀ x, modeTangentProj P₀ Q₀ x
+      = modeProd P₀ x + ∑ i, (1 - P₀ i) (Q₀ i x) := by
+    intro x; simp [modeTangentProj]
+  -- blocks kill ranges of `P₀ i`
+  have hkill : ∀ i z, P₀ i z = z → (1 - P₀ i) (Q₀ i z) = 0 := by
+    intro i z hz
+    have : Q₀ i z = P₀ i (Q₀ i z) := by rw [← hcQ₀ i z, hz]
+    simp [← this]
+  have hrange : ∀ i x, P₀ i (modeProd P₀ x) = modeProd P₀ x := fun i x =>
+    apply_modeProd_eq_self hidem hc₀₀ i x
+  have hrange2 : ∀ i j, j ≠ i → ∀ x, P₀ j ((1 - P₀ i) (Q₀ i x)) = (1 - P₀ i) (Q₀ i x) := by
+    intro i j hji x
+    simp only [sub_apply, one_apply_eq_self, map_sub]
+    rw [hc₀₀ j i, hQsub i j hji]
+  have h00 : ∀ x, modeProd P₀ (modeProd P₀ x) = modeProd P₀ x := hp0.idem
+  have h0i : ∀ i x, modeProd P₀ ((1 - P₀ i) (Q₀ i x)) = 0 := fun i x =>
+    hcompl i _
+  have hi0 : ∀ i x, (1 - P₀ i) (Q₀ i (modeProd P₀ x)) = 0 := fun i x => hkill i _ (hrange i x)
+  have hii : ∀ i x, (1 - P₀ i) (Q₀ i ((1 - P₀ i) (Q₀ i x))) = (1 - P₀ i) (Q₀ i x) :=
+    fun i x => (hpi i).idem x
+  have hij : ∀ i j, j ≠ i → ∀ x, (1 - P₀ i) (Q₀ i ((1 - P₀ j) (Q₀ j x))) = 0 := by
+    intro i j hij x
+    exact hkill i _ (hrange2 j i (Ne.symm hij) x)
+  constructor
+  · intro x
+    rw [hT, hT, map_add, map_sum]
+    simp only [h00, h0i, Finset.sum_const_zero, add_zero, map_add, map_sum, hi0, zero_add]
+    congr 1
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [Finset.sum_eq_single i]
+    · rw [hii]
+    · intro j _ hji; exact hij i j hji x
+    · simp
+  · intro x y
+    rw [hT, hT, inner_add_left, inner_add_right, sum_inner, inner_sum, hp0.symm]
+    congr 1
+    exact Finset.sum_congr rfl fun i _ => (hpi i).symm x y
+
+/-- Non-vacuity of `modeTangentProj_isOrthProj` with nonzero data: two modes, identities of `ℝ`
+as mode and co-range projectors. -/
+example : IsOrthProj (modeTangentProj (fun _ : Fin 2 => (1 : ℝ →L[ℝ] ℝ)) fun _ => 1) :=
+  modeTangentProj_isOrthProj (fun _ => IsOrthProj.one) (fun _ => IsOrthProj.one)
+    (fun _ _ _ => rfl) (fun _ _ => rfl) (fun _ _ _ _ => by simp)
+
+end ModeTangentProj
+
+end LeanDLRA

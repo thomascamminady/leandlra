@@ -146,5 +146,6 @@
   "LeanDLRA.Literature.P2212_12012.Dp_mul_apply": "LeanDLRA.Kinetic.fwdDiff_mul_apply",
   "LeanDLRA.Literature.P2212_12012.Dm_mul_apply": "LeanDLRA.Kinetic.bwdDiff_mul_apply",
   "LeanDLRA.Literature.P2212_12012.Dm_transpose": "LeanDLRA.Kinetic.bwdDiff_transpose",
-  "LeanDLRA.Literature.P2212_12012.Dp_transpose": "LeanDLRA.Kinetic.fwdDiff_transpose"
+  "LeanDLRA.Literature.P2212_12012.Dp_transpose": "LeanDLRA.Kinetic.fwdDiff_transpose",
+  "LeanDLRA.tuckerTangentProj": "LeanDLRA.modeTangentProj"
 }
