@@ -2,6 +2,7 @@ import LeanDLRA.Classical.SVD
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.OpenProblems.Curated.Classicala
 import LeanDLRA.OpenProblems.Stability.Part3c
+import LeanDLRA.Kinetic.LowRank
 
 /-!
 # Quasi-conservative dynamical low-rank approximation for Vlasov (arXiv 1807.02338)
@@ -2076,5 +2077,72 @@ theorem printed_3_14_false (a : Fin d) (μ : Measure (PS d)) [IsProbabilityMeasu
   simp [hrho, hpos.ne']
 
 end Instances
+
+/-! ### The ansatz, the moments and orthonormality in the core kinetic vocabulary -/
+
+section KineticCore
+
+variable {d r : ℕ}
+
+/-- **The ansatz through the core**: the separated function `∑_j A_j(x) B_j(v)` is the core
+`Kinetic.lowRankAnsatz` with the weight `1` and the identity as coefficient matrix. -/
+theorem lowRank_eq_lowRankAnsatz (A B : Fin r → PS d → ℝ) :
+    lowRank A B = Kinetic.lowRankAnsatz 1 A 1 B := by
+  funext x v
+  exact (Kinetic.lowRankAnsatz_one_one A B x v).symm
+
+/-- The separated function with `r` terms has separation rank at most `r`. -/
+theorem hasSepRankLE_lowRank (A B : Fin r → PS d → ℝ) : HasSepRankLE ℝ (lowRank A B) r :=
+  ⟨A, B, fun _ _ => rfl⟩
+
+/-- **The density through the core**: `rho` is the core `Kinetic.velocityMoment` with the function
+`1`. -/
+theorem rho_eq_velocityMoment (ν : Measure (PS d)) (f : PS d → PS d → ℝ) :
+    rho ν f = Kinetic.velocityMoment ν 1 f := by
+  funext x
+  simp [rho, Kinetic.velocityMoment_apply]
+
+/-- The component `a` of the momentum density is the core velocity moment with the function
+`v ↦ v_a`. -/
+theorem momentum_eq_velocityMoment (ν : Measure (PS d)) (f : PS d → PS d → ℝ) (a : Fin d) :
+    momentum ν f a = Kinetic.velocityMoment ν (fun v => v a) f := rfl
+
+/-- The component `(a, b)` of the momentum flux is the core velocity moment with the function
+`v ↦ v_a v_b`. -/
+theorem stress_eq_velocityMoment (ν : Measure (PS d)) (f : PS d → PS d → ℝ) (a b : Fin d) :
+    stress ν f a b = Kinetic.velocityMoment ν (fun v => v a * v b) f := rfl
+
+/-- The conserved moment with index `m` is the core velocity moment with the weight `wt m`. -/
+theorem moment_eq_velocityMoment (ν : Measure (PS d)) (m : Option (Fin d))
+    (f : PS d → PS d → ℝ) : moment ν m f = Kinetic.velocityMoment ν (wt m) f := rfl
+
+/-- The entries `α_j`, `β_j` of the moment matrix are the core velocity moments of the function
+`V_j`, read as a phase-space function that does not depend on `x`. -/
+theorem momentMatrix_apply_eq_velocityMoment (ν : Measure (PS d)) (V : Fin r → PS d → ℝ)
+    (m : Option (Fin d)) (j : Fin r) (x : PS d) :
+    momentMatrix ν V m j = Kinetic.velocityMoment ν (wt m) (fun _ : PS d => V j) x := rfl
+
+/-- **Orthonormality through the core**: `IsOrthonormalL2` of this file is the core
+`Kinetic.IsOrthonormalWrt` for families indexed by `Fin r`. -/
+theorem isOrthonormalL2_iff_isOrthonormalWrt {α : Type*} [MeasurableSpace α] (μ : Measure α)
+    (X : Fin r → α → ℝ) : IsOrthonormalL2 μ X ↔ Kinetic.IsOrthonormalWrt μ X :=
+  ⟨fun h => ⟨h.memLp, h.inner_eq⟩, fun h => ⟨h.memLp, h.inner_eq⟩⟩
+
+/-- The bridges at nonzero data: one term with `A = 2`, `B = 3` has the value `6`; for the Dirac
+mass at the origin the density of `f = 2` is `2`; the constant `1` is orthonormal for the Dirac
+mass. -/
+example :
+    lowRank (d := 1) (fun (_ : Fin 1) _ => 2) (fun _ _ => 3) 0 0 = 6 ∧
+      rho (d := 1) (Measure.dirac 0) (fun _ _ => 2) 0 = 2 ∧
+      IsOrthonormalL2 (Measure.dirac (0 : ℝ)) (fun (_ : Fin 1) (_ : ℝ) => (1 : ℝ)) := by
+  refine ⟨?_, ?_, ?_⟩
+  · rw [lowRank_eq_lowRankAnsatz, Kinetic.lowRankAnsatz_one_one]
+    norm_num
+  · rw [rho_eq_velocityMoment, Kinetic.velocityMoment_apply]
+    simp
+  · rw [isOrthonormalL2_iff_isOrthonormalWrt]
+    exact ⟨fun _ => memLp_const 1, fun i j => by simp [Subsingleton.elim i j]⟩
+
+end KineticCore
 
 end LeanDLRA.Literature.P1807_02338

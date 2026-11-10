@@ -1,5 +1,6 @@
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Kinetic.LowRank
 
 /-!
 # Results of arXiv 2206.09374: Robust conservative DLRA for Vlasov
@@ -2417,5 +2418,68 @@ theorem alg1_hypotheses_hold {L : ℝ} (hL : 0 < L) (hd : 0 < d) (τ : ℝ) :
   exact h1
 
 end Example
+
+/-! ### The ansatz and the moments in the core kinetic vocabulary -/
+
+section KineticCore
+
+variable {ι κ : Type*} [Fintype ι] [Fintype κ]
+
+/-- **The ansatz through the core**: the low-rank function `f₀ᵥ ∑ᵢⱼ Xᵢ Sᵢⱼ Vⱼ` of this file is the
+core `Kinetic.lowRankAnsatz` with the weight `f0`. -/
+theorem lowRank_eq_lowRankAnsatz (X : ι → Pt d → ℝ) (S : Matrix ι κ ℝ) (V : κ → Pt d → ℝ) :
+    lowRank X S V = Kinetic.lowRankAnsatz f0 X S V := rfl
+
+/-- The low-rank function has separation rank at most the number of velocity basis functions. -/
+theorem hasSepRankLE_lowRank (X : ι → Pt d → ℝ) (S : Matrix ι κ ℝ) (V : κ → Pt d → ℝ) :
+    HasSepRankLE ℝ (lowRank X S V) (Fintype.card κ) :=
+  Kinetic.hasSepRankLE_lowRankAnsatz f0 X S V
+
+/-- **The moments through the core**: `mom u f` is the core `Kinetic.velocityMoment` of `f` for
+the Lebesgue measure and the function `u`. -/
+theorem mom_eq_velocityMoment (u : Pt d → ℝ) (f : Pt d → Pt d → ℝ) :
+    mom u f = Kinetic.velocityMoment volume u f := rfl
+
+/-- The density is the core velocity moment with the function `1`. -/
+theorem density_eq_velocityMoment (f : Pt d → Pt d → ℝ) :
+    density f = Kinetic.velocityMoment volume 1 f := by
+  funext x
+  simp [density, Kinetic.velocityMoment_apply]
+
+/-- The component `s` of the current is the core velocity moment with the function `v ↦ vₛ`. -/
+theorem current_eq_velocityMoment (f : Pt d → Pt d → ℝ) (s : Fin d) :
+    current f s = Kinetic.velocityMoment volume (fun v => v s) f := rfl
+
+/-- The component `(r, s)` of the stress is the core velocity moment with the function
+`v ↦ vᵣ vₛ`. -/
+theorem stress_eq_velocityMoment (f : Pt d → Pt d → ℝ) (r s : Fin d) :
+    stress f r s = Kinetic.velocityMoment volume (fun v => v r * v s) f := rfl
+
+/-- The heat flux is half the core velocity moment with the function `v ↦ vₛ v²`. -/
+theorem heatFlux_eq_velocityMoment (f : Pt d → Pt d → ℝ) (s : Fin d) (x : Pt d) :
+    heatFlux f s x = (1 / 2) * Kinetic.velocityMoment volume (fun v => v s * vsq v) f x := rfl
+
+/-- The energy density is half the core velocity moment with the function `v²` plus the field
+energy density. -/
+theorem energyDensity_eq_velocityMoment (f : Pt d → Pt d → ℝ) (E : Fin d → Pt d → ℝ)
+    (x : Pt d) :
+    energyDensity f E x =
+      (1 / 2) * Kinetic.velocityMoment volume vsq f x + (1 / 2) * ∑ s, E s x ^ 2 := rfl
+
+/-- The bridges at nonzero data: the ansatz with `X = 2`, `S = (3)`, `V = 1` has the value `6` at
+the origin, and the core moment of order zero of `f (x, v) = f₀ᵥ (v)` is the Gaussian mass, which
+is positive. -/
+example :
+    lowRank (d := 1) (fun (_ : Fin 1) _ => 2) !![3] (fun (_ : Fin 1) _ => 1) 0 0 = 6 ∧
+      Kinetic.velocityMoment volume 1 (fun _ v : Pt 1 => f0 v) 0 = gaussMass 1 ∧
+      0 < gaussMass 1 := by
+  refine ⟨?_, ?_, gaussMass_pos⟩
+  · rw [lowRank_eq_lowRankAnsatz, Kinetic.lowRankAnsatz_apply]
+    simp [f0, vsq]
+    norm_num
+  · rw [← density_eq_velocityMoment]
+    rfl
+
+end KineticCore
 
 end LeanDLRA.Literature.P2206_09374

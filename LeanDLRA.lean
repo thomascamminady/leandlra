@@ -51,9 +51,11 @@ import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Integrators.Tube
 import LeanDLRA.Integrators.TuckerBUG
 import LeanDLRA.Kinetic.Defs
+import LeanDLRA.Kinetic.LowRank
 import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.LinearAlgebra.Frobenius.Defs
 import LeanDLRA.LinearAlgebra.LowRank.Defs
+import LeanDLRA.LinearAlgebra.LowRank.SepRank
 import LeanDLRA.LinearAlgebra.Projection.Defs
 import LeanDLRA.LinearAlgebra.SVD.Defs
 import LeanDLRA.Matrix.Curvature

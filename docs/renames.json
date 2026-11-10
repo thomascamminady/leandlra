@@ -87,5 +87,6 @@
   "LeanDLRA.Novel.EpsRank.Quadrature.noConfusionType": "LeanDLRA.Kinetic.Quadrature.noConfusionType",
   "LeanDLRA.Novel.EpsRank.Quadrature.mk.noConfusion": "LeanDLRA.Kinetic.Quadrature.mk.noConfusion",
   "LeanDLRA.Novel.EpsRank.Quadrature.ctorIdx": "LeanDLRA.Kinetic.Quadrature.ctorIdx",
-  "LeanDLRA.Literature.P1804_04561.density": "LeanDLRA.Kinetic.density"
+  "LeanDLRA.Literature.P1804_04561.density": "LeanDLRA.Kinetic.density",
+  "LeanDLRA.Literature.P2412_05912.HasRankLEOver": "LeanDLRA.HasSepRankLE"
 }

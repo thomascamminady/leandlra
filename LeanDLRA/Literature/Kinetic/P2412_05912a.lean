@@ -4,6 +4,7 @@ import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Kinetic.Defs
+import LeanDLRA.LinearAlgebra.LowRank.SepRank
 
 /-!
 # Results of arXiv 2412.05912: a review of low-rank methods for kinetic simulations
@@ -87,7 +88,7 @@ second-order bound is not in the library, and it is left out here, since it is t
 * The rank-four claim is proved after discretizing `x` and `v`, since transport on a function space
   is not available, with constant cross section and no source (a constant `σ` is a rescaling). The
   constants are discrete `H⁴` norms of the data, uniform in the mesh when those are.
-* "Rank" is the separation rank `HasRankLEOver`, Eq. (2) with the core absorbed
+* "Rank" is the core separation rank `HasSepRankLE` over a semiring, Eq. (2) with `S` absorbed
   (`hasRankLEOver_of_core`). Over `ℝ` it is `HasSepRankLE` of `P1804_04561a`, and it bounds the
   matrix rank on every grid (`HasRankLEOver.rank_sample_le`). The two false claims stay false over
   `ℂ` (`full_not_complex_rank_le_three`, `landauFull_not_complex_rank_le_two`).
@@ -124,17 +125,11 @@ section Rank
 
 variable {X Y R : Type*}
 
-/-- Eq. (2) of arXiv 2412.05912 with the core `S` absorbed in `U`:
-`f (x, v) = ∑_{k < r} U_k (x) V_k (v)` with values in a semiring `R`. For `R = ℝ` this is the
-separation rank `HasSepRankLE` of `Literature/Kinetic/P1804_04561a.lean`. -/
-def HasRankLEOver (R : Type*) [Semiring R] (f : X → Y → R) (r : ℕ) : Prop :=
-  ∃ (U : Fin r → X → R) (V : Fin r → Y → R), ∀ x y, f x y = ∑ k, U k x * V k y
-
 /-- Eq. (2) of arXiv 2412.05912 as printed, with a core `S`, gives separation rank at most `r`:
 absorbing `S` in `U` loses nothing. -/
 theorem hasRankLEOver_of_core [CommSemiring R] {r : ℕ} (f : X → Y → R) (U : Fin r → X → R)
     (S : Fin r → Fin r → R) (V : Fin r → Y → R)
-    (h : ∀ x y, f x y = ∑ i, ∑ j, U i x * S i j * V j y) : HasRankLEOver R f r := by
+    (h : ∀ x y, f x y = ∑ i, ∑ j, U i x * S i j * V j y) : HasSepRankLE R f r := by
   refine ⟨fun j x => ∑ i, U i x * S i j, V, fun x y => ?_⟩
   rw [h, Finset.sum_comm]
   exact Finset.sum_congr rfl fun j _ => (Finset.sum_mul _ _ _).symm
@@ -146,27 +141,17 @@ def sample {ι κ : Type*} (f : X → Y → R) (xs : ι → X) (ys : κ → Y) :
 /-- Separation rank `≤ r` implies matrix rank `≤ r` on every grid (arXiv 2412.05912, Eq. (2)). -/
 theorem HasRankLEOver.rank_sample_le [CommRing R] [StrongRankCondition R]
     {ι κ : Type*} [Finite ι] [Fintype κ]
-    {f : X → Y → R} {r : ℕ} (h : HasRankLEOver R f r) (xs : ι → X) (ys : κ → Y) :
-    (sample f xs ys).rank ≤ r := by
-  classical
-  have := Fintype.ofFinite ι
-  obtain ⟨U, V, hUV⟩ := h
-  have hfac : sample f xs ys =
-      (Matrix.of fun i k => U k (xs i) : Matrix ι (Fin r) R) *
-        (Matrix.of fun k j => V k (ys j) : Matrix (Fin r) κ R) := by
-    ext i j
-    simp [sample, Matrix.mul_apply, hUV]
-  rw [hfac]
-  refine (Matrix.rank_mul_le_left _ _).trans ?_
-  simpa using Matrix.rank_le_card_width (Matrix.of fun i k => U k (xs i) : Matrix ι (Fin r) R)
+    {f : X → Y → R} {r : ℕ} (h : HasSepRankLE R f r) (xs : ι → X) (ys : κ → Y) :
+    (sample f xs ys).rank ≤ r :=
+  h.rank_le xs ys
 
 /-- A square sample of size `r + 1` with nonzero determinant excludes separation rank `≤ r`
 (arXiv 2412.05912, Eq. (2)). -/
 theorem not_hasRankLEOver_of_det_ne_zero {K : Type*} [Field K] {f : X → Y → K} {r : ℕ}
     (xs : Fin (r + 1) → X) (ys : Fin (r + 1) → Y) (hdet : (sample f xs ys).det ≠ 0) :
-    ¬ HasRankLEOver K f r := by
+    ¬ HasSepRankLE K f r := by
   intro h
-  have h1 := h.rank_sample_le xs ys
+  have h1 := HasRankLEOver.rank_sample_le h xs ys
   have hu : IsUnit (sample f xs ys) :=
     (Matrix.isUnit_iff_isUnit_det _).2 (isUnit_iff_ne_zero.2 hdet)
   have h2 := Matrix.rank_of_isUnit (sample f xs ys) hu
@@ -178,7 +163,7 @@ theorem not_hasRankLEOver_of_det_ne_zero {K : Type*} [Field K] {f : X → Y → 
 conclusions below, unlike the rank of the complex function of Eq. (3). -/
 theorem not_hasRankLEOver_complex_of_det_ne_zero {f : X → Y → ℝ} {r : ℕ}
     (xs : Fin (r + 1) → X) (ys : Fin (r + 1) → Y) (hdet : (sample f xs ys).det ≠ 0) :
-    ¬ HasRankLEOver ℂ (fun x y => ((f x y : ℝ) : ℂ)) r := by
+    ¬ HasSepRankLE ℂ (fun x y => ((f x y : ℝ) : ℂ)) r := by
   refine not_hasRankLEOver_of_det_ne_zero xs ys ?_
   have h : sample (fun x y => ((f x y : ℝ) : ℂ)) xs ys =
       Complex.ofRealHom.mapMatrix (sample f xs ys) := by
@@ -347,7 +332,7 @@ theorem freeStream_unique (k : E) {f : ℝ → E → E → ℂ}
 `t`, the function of Eq. (3) has complex separation rank at most one, and not zero, with an `x`
 factor that does not depend on `t` (Figure 1 of the paper). -/
 theorem freeStream_rank_eq_one (k : E) (t : ℝ) :
-    HasRankLEOver ℂ (freeStream k t) 1 ∧ ¬ HasRankLEOver ℂ (freeStream k t) 0 := by
+    HasSepRankLE ℂ (freeStream k t) 1 ∧ ¬ HasSepRankLE ℂ (freeStream k t) 0 := by
   constructor
   · refine ⟨fun _ x => Complex.exp (Complex.I * ((⟪k, x⟫ : ℝ) : ℂ)), fun _ v =>
       Complex.exp (-Complex.I * ((⟪k, v⟫ : ℝ) : ℂ) * (t : ℂ)) *
@@ -370,7 +355,7 @@ theorem freeStream_sample_rank {ι κ : Type*} [Finite ι] [Fintype κ] [Nonempt
     (sample (freeStream k t) xs vs).rank = 1 := by
   classical
   have := Fintype.ofFinite ι
-  apply le_antisymm ((freeStream_rank_eq_one k t).1.rank_sample_le xs vs)
+  apply le_antisymm (HasRankLEOver.rank_sample_le (freeStream_rank_eq_one k t).1 xs vs)
   by_contra h
   have h0 : (sample (freeStream k t) xs vs).rank = 0 := by omega
   have h1 : (sample (freeStream k t) xs vs).mulVecLin = 0 :=
@@ -387,7 +372,7 @@ theorem freeStream_sample_rank {ι κ : Type*} [Finite ι] [Fintype κ] [Nonempt
 is a complex rank. The real part `cos (k · (x - v t)) exp (-v²/2)` has real separation rank at most
 two for every `t`. It equals `cos (k · x) cos ((k · v) t) e + sin (k · x) sin ((k · v) t) e`. -/
 theorem freeStream_re_rank_le_two (k : E) (t : ℝ) :
-    HasRankLEOver ℝ (fun x v => (freeStream k t x v).re) 2 := by
+    HasSepRankLE ℝ (fun x v => (freeStream k t x v).re) 2 := by
   refine ⟨![fun x => Real.cos ⟪k, x⟫, fun x => Real.sin ⟪k, x⟫],
     ![fun v => Real.cos (⟪k, v⟫ * t) * Real.exp (-‖v‖ ^ 2 / 2),
       fun v => Real.sin (⟪k, v⟫ * t) * Real.exp (-‖v‖ ^ 2 / 2)], fun x v => ?_⟩
@@ -404,7 +389,7 @@ theorem freeStream_re_rank_le_two (k : E) (t : ℝ) :
 /-- The bound `2` of `freeStream_re_rank_le_two` is attained for `k ≠ 0`, `t ≠ 0`: over the reals,
 the solution of Eq. (3) of arXiv 2412.05912 has rank exactly two. -/
 theorem freeStream_re_not_rank_le_one {k : E} (hk : k ≠ 0) {t : ℝ} (ht : t ≠ 0) :
-    ¬ HasRankLEOver ℝ (fun x v => (freeStream k t x v).re) 1 := by
+    ¬ HasSepRankLE ℝ (fun x v => (freeStream k t x v).re) 1 := by
   have hk2 : ⟪k, k⟫ ≠ 0 := by simpa using hk
   set e : E := (⟪k, k⟫)⁻¹ • k with he
   have hke : ⟪k, e⟫ = 1 := by
@@ -1029,8 +1014,8 @@ private lemma det_exp_mul_ne_zero (r : ℕ) :
 /-- **"A nonlinear transformation of a low-rank function is not necessarily low-rank"**
 (arXiv 2412.05912, Sec. 6.3): `(x, v) ↦ x v` has rank one, and `exp (x v)` has no finite rank. -/
 theorem exp_not_low_rank :
-    HasRankLEOver ℝ (fun x v : ℝ => x * v) 1 ∧
-      ∀ r, ¬ HasRankLEOver ℝ (fun x v : ℝ => Real.exp (x * v)) r := by
+    HasSepRankLE ℝ (fun x v : ℝ => x * v) 1 ∧
+      ∀ r, ¬ HasSepRankLE ℝ (fun x v : ℝ => Real.exp (x * v)) r := by
   refine ⟨⟨fun _ x => x, fun _ v => v, fun x v => by simp⟩, fun r => ?_⟩
   exact not_hasRankLEOver_of_det_ne_zero (fun i : Fin (r + 1) => (i : ℝ))
     (fun j : Fin (r + 1) => (j : ℝ)) (det_exp_mul_ne_zero r)
@@ -1039,8 +1024,8 @@ theorem exp_not_low_rank :
 to be made with computational efficiency in mind"; this count is not in the paper): if `g` has rank
 `r`, then `f = g²` has rank at most `r (r + 1) / 2 = C(r + 1, 2)`, so the transformation `f = g²`
 keeps a low-rank `g` low rank in `f`, at a quadratic price. -/
-theorem HasRankLEOver.sq {X Y : Type*} {g : X → Y → ℝ} {r : ℕ} (h : HasRankLEOver ℝ g r) :
-    HasRankLEOver ℝ (fun x y => g x y ^ 2) ((r + 1).choose 2) := by
+theorem HasRankLEOver.sq {X Y : Type*} {g : X → Y → ℝ} {r : ℕ} (h : HasSepRankLE ℝ g r) :
+    HasSepRankLE ℝ (fun x y => g x y ^ 2) ((r + 1).choose 2) := by
   classical
   obtain ⟨U, V, hg⟩ := h
   set m : Sym2 (Fin r) → Y → ℝ := fun p y =>
@@ -1071,7 +1056,7 @@ theorem HasRankLEOver.sq {X Y : Type*} {g : X → Y → ℝ} {r : ℕ} (h : HasR
 decomposition has rank at most two; the leading term `ρ` has rank one, as the paper says. The paper
 prints Eq. (31) and the decompositions with `exp ((v - u)²/2)`; the minus sign is meant. -/
 theorem multiplicative_rank_le {X Y : Type*} (ρ a : X → ℝ) (b : Y → ℝ) (ε : ℝ) :
-    HasRankLEOver ℝ (fun x v => ρ x + ε * (a x * b v)) 2 := by
+    HasSepRankLE ℝ (fun x v => ρ x + ε * (a x * b v)) 2 := by
   refine ⟨![ρ, fun x => ε * a x], ![fun _ => 1, b], fun x v => ?_⟩
   simp only [Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_fin_one]
   ring
@@ -1085,7 +1070,7 @@ decomposition has no finite rank, while the multiplicative one has rank two
 theorem additive_not_low_rank {X : Type*} {u : X → ℝ} {δ ε : ℝ} (hδ : 0 < δ)
     (hu : Icc 0 δ ⊆ range u) (hε : ε ≠ 0) (ρ a : X → ℝ) (b : ℝ → ℝ) (ha : ∀ x, a x ≠ 0)
     (hb : ∀ v, b v ≠ 0) (r : ℕ) :
-    ¬ HasRankLEOver ℝ (fun x v => Real.exp (-(v - u x) ^ 2 / 2) * (ρ x + ε * (a x * b v)) -
+    ¬ HasSepRankLE ℝ (fun x v => Real.exp (-(v - u x) ^ 2 / 2) * (ρ x + ε * (a x * b v)) -
       ρ x * Real.exp (-(v - u x) ^ 2 / 2)) r := by
   set c : ℝ := δ / (r + 1) with hc
   have hc0 : 0 < c := by positivity
@@ -2060,13 +2045,13 @@ theorem isLinearizedVM_pert (α : ℝ) :
     simp [divg, pd]
 
 /-- At `t = 0` the perturbation is one product: rank one (arXiv 2412.05912, Sec. 2). -/
-theorem pert_rank_zero (α : ℝ) : HasRankLEOver ℝ (pert α 0) 1 := by
+theorem pert_rank_zero (α : ℝ) : HasSepRankLE ℝ (pert α 0) 1 := by
   refine ⟨fun _ x => α * wave (x 0), fun _ v => (v 1 * v 2) * maxw3 v, fun x v => ?_⟩
   simp [pert]
   ring
 
 /-- At `t = 0` the whole distribution `M + pert` has rank at most two (arXiv 2412.05912, Sec. 2). -/
-theorem full_rank_zero (α : ℝ) : HasRankLEOver ℝ (fun x v => maxw3 v + pert α 0 x v) 2 := by
+theorem full_rank_zero (α : ℝ) : HasSepRankLE ℝ (fun x v => maxw3 v + pert α 0 x v) 2 := by
   refine ⟨![fun _ => 1, fun x => α * wave (x 0)], ![maxw3, fun v => (v 1 * v 2) * maxw3 v],
     fun x v => ?_⟩
   simp [pert]
@@ -2151,18 +2136,18 @@ lemma full_sample_det_ne_zero {α t : ℝ} (hα : α ≠ 0) (ht : t ≠ 0) :
 /-- **The whole distribution has rank at least four** (arXiv 2412.05912, Sec. 2). For all `α ≠ 0`,
 `t ≠ 0`, the solution `M + pert` of the linearized system has no separation of rank `3`. -/
 theorem full_not_rank_le_three {α t : ℝ} (hα : α ≠ 0) (ht : t ≠ 0) :
-    ¬ HasRankLEOver ℝ (fun x v => maxw3 v + pert α t x v) 3 :=
+    ¬ HasSepRankLE ℝ (fun x v => maxw3 v + pert α t x v) 3 :=
   not_hasRankLEOver_of_det_ne_zero xs₄ (vs₄ t) (full_sample_det_ne_zero hα ht)
 
 /-- `full_not_rank_le_three` over `ℂ` (arXiv 2412.05912, Sec. 2; [61] writes complex modes). -/
 theorem full_not_complex_rank_le_three {α t : ℝ} (hα : α ≠ 0) (ht : t ≠ 0) :
-    ¬ HasRankLEOver ℂ (fun x v => ((maxw3 v + pert α t x v : ℝ) : ℂ)) 3 :=
+    ¬ HasSepRankLE ℂ (fun x v => ((maxw3 v + pert α t x v : ℝ) : ℂ)) 3 :=
   not_hasRankLEOver_complex_of_det_ne_zero xs₄ (vs₄ t) (full_sample_det_ne_zero hα ht)
 
 /-- **The perturbation has rank at least three** (arXiv 2412.05912, Sec. 2), for all `α ≠ 0`,
 `t ≠ 0`. -/
 theorem pert_not_rank_le_two {α t : ℝ} (hα : α ≠ 0) (ht : t ≠ 0) :
-    ¬ HasRankLEOver ℝ (pert α t) 2 := by
+    ¬ HasSepRankLE ℝ (pert α t) 2 := by
   refine not_hasRankLEOver_of_det_ne_zero (fun i : Fin 3 => xs₄ i.castSucc)
     (fun j : Fin 3 => vs₄ t j.castSucc) ?_
   set m : Fin 3 → ℝ := fun j => maxw3 (vs₄ t j.castSucc) with hm
@@ -2185,7 +2170,7 @@ theorem pert_not_rank_le_two {α t : ℝ} (hα : α ≠ 0) (ht : t ≠ 0) :
 Fourier modes in `x`, namely `0, ±1, ±2`, and rank at most `5`: the bound `m + 1` of [61] = arXiv
 1902.00424, Sec. 3, eq. (9), with `m = 4` excited modes, is what holds, and it depends on the
 modes, not on the rank of the initial value. -/
-theorem full_rank_le_five (α t : ℝ) : HasRankLEOver ℝ (fun x v => maxw3 v + pert α t x v) 5 := by
+theorem full_rank_le_five (α t : ℝ) : HasSepRankLE ℝ (fun x v => maxw3 v + pert α t x v) 5 := by
   refine ⟨![fun _ => 1, fun x => α * Real.cos (x 0), fun x => α * Real.sin (x 0),
     fun x => α * Real.cos (2 * x 0), fun x => α * Real.sin (2 * x 0)],
     ![maxw3, fun v => Real.cos (t * v 0) * (v 1 * v 2) * maxw3 v,
@@ -2204,8 +2189,8 @@ rank at most `2`, and for `t ≠ 0` it does not have rank `3`. [61] proves `m + 
 modes, which is a different number: see `full_rank_le_five`. -/
 theorem linearized_rank_claim_false :
     ¬ ∀ (f₀ : R3 → ℝ) (f : ℝ → R3 → R3 → ℝ) (E B : ℝ → R3 → R3), IsLinearizedVM f₀ f E B →
-      ∀ r, HasRankLEOver ℝ (fun x v => f₀ v + f 0 x v) r →
-        ∀ t, HasRankLEOver ℝ (fun x v => f₀ v + f t x v) (r + 1) := fun h =>
+      ∀ r, HasSepRankLE ℝ (fun x v => f₀ v + f 0 x v) r →
+        ∀ t, HasSepRankLE ℝ (fun x v => f₀ v + f t x v) (r + 1) := fun h =>
   full_not_rank_le_three one_ne_zero one_ne_zero
     (h maxw3 (pert 1) _ _ (isLinearizedVM_pert 1) 2 (full_rank_zero 1) 1)
 
@@ -2213,7 +2198,7 @@ theorem linearized_rank_claim_false :
 for `f⁽¹⁾` alone, which starts with rank one and does not have rank two for `t ≠ 0`. -/
 theorem linearized_rank_claim_false_perturbation :
     ¬ ∀ (f₀ : R3 → ℝ) (f : ℝ → R3 → R3 → ℝ) (E B : ℝ → R3 → R3), IsLinearizedVM f₀ f E B →
-      ∀ r, HasRankLEOver ℝ (f 0) r → ∀ t, HasRankLEOver ℝ (f t) (r + 1) := fun h =>
+      ∀ r, HasSepRankLE ℝ (f 0) r → ∀ t, HasSepRankLE ℝ (f t) (r + 1) := fun h =>
   pert_not_rank_le_two one_ne_zero one_ne_zero
     (h maxw3 (pert 1) _ _ (isLinearizedVM_pert 1) 1 (pert_rank_zero 1) 1)
 
@@ -2791,13 +2776,13 @@ theorem landau_initial (k α x v : ℝ) :
   ring
 
 /-- The initial value of the example has rank one, as arXiv 2412.05912, Sec. 2, says. -/
-theorem landau_initial_rank (k α : ℝ) : HasRankLEOver ℝ (landauFull k α 0) 1 := by
+theorem landau_initial_rank (k α : ℝ) : HasSepRankLE ℝ (landauFull k α 0) 1 := by
   refine ⟨fun _ x => 1 + α * Real.cos (k * x), fun _ v => lor v, fun x v => ?_⟩
   simpa using landau_initial k α x v
 
 /-- The perturbation has rank at most two: this is the count in arXiv 2412.05912, Sec. 2, if "the
 solution" there means `f⁽¹⁾` and not `f`. -/
-theorem landauPert_rank_le_two (k α t : ℝ) : HasRankLEOver ℝ (landauPert k α t) 2 := by
+theorem landauPert_rank_le_two (k α t : ℝ) : HasSepRankLE ℝ (landauPert k α t) 2 := by
   refine ⟨![fun x => α * Real.cos (k * x), fun x => α * Real.sin (k * x)],
     ![aL k t, bL k t], fun x v => ?_⟩
   simp only [Fin.sum_univ_two, landauPert, Matrix.cons_val_zero, Matrix.cons_val_one,
@@ -2805,7 +2790,7 @@ theorem landauPert_rank_le_two (k α t : ℝ) : HasRankLEOver ℝ (landauPert k 
   ring
 
 /-- The whole distribution has rank at most three, `f^eq`, `a`, `b` (arXiv 2412.05912, Sec. 2). -/
-theorem landauFull_rank_le_three (k α t : ℝ) : HasRankLEOver ℝ (landauFull k α t) 3 := by
+theorem landauFull_rank_le_three (k α t : ℝ) : HasSepRankLE ℝ (landauFull k α t) 3 := by
   refine ⟨![fun _ => 1, fun x => α * Real.cos (k * x), fun x => α * Real.sin (k * x)],
     ![lor, aL k t, bL k t], fun x v => ?_⟩
   simp only [Fin.sum_univ_three, landauFull, landauPert, Matrix.cons_val_zero, Matrix.cons_val_one,
@@ -2908,14 +2893,14 @@ lemma exists_landau_sample {k α t : ℝ} (hk : 0 < k) (hα : α ≠ 0) (ht : 0 
 `t > 0` the solution `landauFull` of the linearized Vlasov–Poisson system has no separation of rank
 `2`. -/
 theorem landauFull_not_rank_le_two {k α t : ℝ} (hk : 0 < k) (hα : α ≠ 0) (ht : 0 < t) :
-    ¬ HasRankLEOver ℝ (landauFull k α t) 2 := by
+    ¬ HasSepRankLE ℝ (landauFull k α t) 2 := by
   obtain ⟨xs, vs, h⟩ := exists_landau_sample hk hα ht
   exact not_hasRankLEOver_of_det_ne_zero xs vs h
 
 /-- `landauFull_not_rank_le_two` over `ℂ` (arXiv 2412.05912, Sec. 2): complex exponentials do not
 lower the rank of this real function. -/
 theorem landauFull_not_complex_rank_le_two {k α t : ℝ} (hk : 0 < k) (hα : α ≠ 0) (ht : 0 < t) :
-    ¬ HasRankLEOver ℂ (fun x v => ((landauFull k α t x v : ℝ) : ℂ)) 2 := by
+    ¬ HasSepRankLE ℂ (fun x v => ((landauFull k α t x v : ℝ) : ℂ)) 2 := by
   obtain ⟨xs, vs, h⟩ := exists_landau_sample hk hα ht
   exact not_hasRankLEOver_complex_of_det_ne_zero xs vs h
 
@@ -2929,10 +2914,10 @@ it is true of the perturbation `f⁽¹⁾` only. Uniqueness of the solution is n
 theorem linearized_example_rank_eq_three {k α : ℝ} (hk : 0 < k) (hα : α ≠ 0) :
     IsLinearizedVP lor (landauPert k α) (landauField k α) ∧
     (∀ x v, landauFull k α 0 x v = (1 + α * Real.cos (k * x)) * lor v) ∧
-    HasRankLEOver ℝ (landauFull k α 0) 1 ∧
-    ∀ t, 0 < t → HasRankLEOver ℝ (landauFull k α t) 3 ∧
-      ¬ HasRankLEOver ℝ (landauFull k α t) 2 ∧
-      ¬ HasRankLEOver ℂ (fun x v => ((landauFull k α t x v : ℝ) : ℂ)) 2 :=
+    HasSepRankLE ℝ (landauFull k α 0) 1 ∧
+    ∀ t, 0 < t → HasSepRankLE ℝ (landauFull k α t) 3 ∧
+      ¬ HasSepRankLE ℝ (landauFull k α t) 2 ∧
+      ¬ HasSepRankLE ℂ (fun x v => ((landauFull k α t x v : ℝ) : ℂ)) 2 :=
   ⟨isLinearizedVP_landau hk α, landau_initial k α, landau_initial_rank k α,
     fun _ ht => ⟨landauFull_rank_le_three k α _, landauFull_not_rank_le_two hk hα ht,
       landauFull_not_complex_rank_le_two hk hα ht⟩⟩
@@ -2983,5 +2968,9 @@ example (D : Fin 3 → Matrix (Fin 2) (Fin 2) ℝ) (F : Matrix (Fin 2) (Fin 3 ×
   ⟨rfl, sixPointRule.density_eq_kinetic F, sixPointRule.streaming_eq_kinetic D F⟩
 
 end KineticCore
+
+/-- The separation rank of Eq. (2) of arXiv 2412.05912 over a semiring is the core
+`LeanDLRA.HasSepRankLE`; the former name of this file is kept as an alias. -/
+@[deprecated (since := "2026-11-10")] alias HasRankLEOver := LeanDLRA.HasSepRankLE
 
 end LeanDLRA.Literature.P2412_05912

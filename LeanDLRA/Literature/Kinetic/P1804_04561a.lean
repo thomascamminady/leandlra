@@ -4,6 +4,7 @@ import LeanDLRA.Integrators.Matrix.ProjectorSplitting
 import LeanDLRA.Foundations.Galerkin
 import LeanDLRA.Foundations.OneSided
 import LeanDLRA.Kinetic.Defs
+import LeanDLRA.LinearAlgebra.LowRank.SepRank
 
 /-!
 # Low-rank BGK for weakly compressible flow (arXiv 1804.04561)
@@ -3055,6 +3056,21 @@ example :
   rw [momentum_eq_quadMoment]
   simp [Kinetic.quadMoment_apply]
   norm_num
+
+/-- **The separation rank through the core**: `HasSepRankLE f r` of this file is the core
+`LeanDLRA.HasSepRankLE` over the ring `ℝ`. -/
+theorem hasSepRankLE_iff_core {X Y : Type*} (f : X → Y → ℝ) (r : ℕ) :
+    HasSepRankLE f r ↔ LeanDLRA.HasSepRankLE ℝ f r := Iff.rfl
+
+/-- The bridge at nonzero data: `x y + 1` has separation rank at most `2`, and its samples on a
+`4 × 5` grid form a matrix of rank at most `2`. -/
+example (xs : Fin 4 → ℝ) (ys : Fin 5 → ℝ) :
+    HasSepRankLE (fun x y : ℝ => x * y + 1) 2 ∧
+      (Matrix.of fun i j => xs i * ys j + 1).rank ≤ 2 := by
+  have h : LeanDLRA.HasSepRankLE ℝ (fun x y : ℝ => x * y + 1) 2 :=
+    LeanDLRA.HasSepRankLE.of_sum ![fun x => x, fun _ => 1] ![fun y => y, fun _ => 1]
+      (fun x y => by simp [Fin.sum_univ_two]) (by simp)
+  exact ⟨(hasSepRankLE_iff_core _ 2).2 h, h.rank_le xs ys⟩
 
 end KineticCore
 

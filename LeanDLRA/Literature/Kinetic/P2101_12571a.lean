@@ -1,5 +1,6 @@
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Kinetic.LowRank
 
 /-!
 # Results of arXiv 2101.12571: Mass-, momentum- and energy-conservative DLRA for Vlasov
@@ -3273,6 +3274,84 @@ theorem quadratic_step_defect (c : H) (L : H →L[ℝ] K) {Y₀ Y₁ : H}
   exact ⟨rfl, by positivity⟩
 
 end Quadratic
+
+/-! ### The moments and the ansatz in the core kinetic vocabulary -/
+
+section KineticCore
+
+namespace Model
+
+variable {Ix Iv δ ι κ : Type*} [Fintype Ix] [Fintype Iv] [Fintype δ] [Fintype ι] [Fintype κ]
+  (M : Model Ix Iv δ)
+
+/-- **The discrete moments through the core**: `(φ, G)_v` is the core quadrature moment
+`Kinetic.quadMoment` of the matrix of `G` with the weights `hv` and the function `φ`. -/
+theorem mom_eq_quadMoment (φ : Iv → ℝ) (G : Ix → Iv → ℝ) :
+    M.mom φ G = Kinetic.quadMoment M.hv φ (Matrix.of G) := by
+  funext x
+  simp only [mom, Kinetic.quadMoment_apply, Matrix.of_apply, mul_assoc]
+
+/-- The density `ρ` is the core `Kinetic.density` with the weights `hv`. -/
+theorem rho_eq_density (f : Ix → Iv → ℝ) : M.rho f = Kinetic.density M.hv (Matrix.of f) := by
+  funext x
+  simp [rho, mom, Kinetic.density_apply]
+
+/-- The current `j_α` is the core quadrature moment with the function `vel α`. -/
+theorem cur_eq_quadMoment (f : Ix → Iv → ℝ) (α : δ) :
+    M.cur f α = Kinetic.quadMoment M.hv (M.vel α) (Matrix.of f) :=
+  M.mom_eq_quadMoment _ f
+
+/-- The stress `σ_αβ` is the core quadrature moment with the function `vel α * vel β`. -/
+theorem sig_eq_quadMoment (f : Ix → Iv → ℝ) (α β : δ) :
+    M.sig f α β = Kinetic.quadMoment M.hv (fun v => M.vel α v * M.vel β v) (Matrix.of f) :=
+  M.mom_eq_quadMoment _ f
+
+/-- The kinetic energy density is half the core quadrature moment with the function `v²`. -/
+theorem kin_eq_quadMoment (f : Ix → Iv → ℝ) (x : Ix) :
+    M.kin f x = (1 / 2) * Kinetic.quadMoment M.hv M.vsq (Matrix.of f) x := by
+  rw [← M.mom_eq_quadMoment]
+  rfl
+
+/-- The heat flux `Q_α` is half the core quadrature moment with the function `vel α * v²`. -/
+theorem heat_eq_quadMoment (f : Ix → Iv → ℝ) (α : δ) (x : Ix) :
+    M.heat f α x =
+      (1 / 2) * Kinetic.quadMoment M.hv (fun v => M.vel α v * M.vsq v) (Matrix.of f) x := by
+  rw [← M.mom_eq_quadMoment]
+  rfl
+
+/-- **The ansatz through the core**: the ansatz (8) is the core `Kinetic.lowRankAnsatz` with the
+weight `f0`. -/
+theorem lowRank_eq_lowRankAnsatz (X : ι → Ix → ℝ) (S : Matrix ι κ ℝ) (V : κ → Iv → ℝ) :
+    M.lowRank X S V = Kinetic.lowRankAnsatz M.f0 X S V := rfl
+
+/-- The matrix of the ansatz (8) has rank at most the number of basis functions on either
+side. -/
+theorem rank_lowRank_le (X : ι → Ix → ℝ) (S : Matrix ι κ ℝ) (V : κ → Iv → ℝ) :
+    (Matrix.of (M.lowRank X S V)).rank ≤ min (Fintype.card ι) (Fintype.card κ) :=
+  Kinetic.rank_lowRankAnsatz_le M.f0 X S V
+
+end Model
+
+/-- The continuum moment `∫ vᵏ f dv` of Sec. 5 is the core `Kinetic.velocityMoment` for the
+Lebesgue measure and the function `v ↦ vᵏ`. -/
+theorem Continuum.mom_eq_velocityMoment (k : ℕ) (f : ℝ → ℝ → ℝ) :
+    Continuum.mom k f = Kinetic.velocityMoment MeasureTheory.volume (fun v => v ^ k) f := rfl
+
+/-- The bridges at the instance `Ex.M` (four velocity nodes with the weights `1`, `f0 = 1 / 4`):
+the density of `f = 3` is `12`, and the ansatz with `X = 2`, `S = (3)`, `V = 1` has the value
+`3 / 2`. -/
+example :
+    Ex.M.rho (fun _ _ => 3) 0 = 12 ∧
+      Ex.M.lowRank (fun (_ : Fin 1) _ => 2) !![3] (fun (_ : Fin 1) _ => 1) 0 0 = 3 / 2 := by
+  constructor
+  · rw [Model.rho_eq_density, Kinetic.density_apply]
+    simp [Ex.M]
+    norm_num
+  · rw [Model.lowRank_eq_lowRankAnsatz, Kinetic.lowRankAnsatz_apply]
+    simp [Ex.M]
+    norm_num
+
+end KineticCore
 
 end
 

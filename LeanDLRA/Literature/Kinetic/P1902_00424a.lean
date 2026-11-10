@@ -4,6 +4,7 @@ import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Literature.Kinetic.P2303_01856a
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.LinearAlgebra.LowRank.SepRank
 
 /-!
 # Results of arXiv 1902.00424: projector-splitting DLRA for Vlasov-Maxwell, divergence correction
@@ -2925,5 +2926,22 @@ theorem exists_isSpectralSolution {κ : ZMod N → ℝ} (hκ : ∀ k, κ (-k) = 
     exact hasDerivWithinAt_const t (Ici t) (0 : VectorField (ZMod N))
 
 end SpectralLinear
+
+/-! ### The separation rank in the core vocabulary -/
+
+section KineticCore
+
+/-- **The separation rank through the core**: `HasSepRankLE u r` of this file is the core
+`LeanDLRA.HasSepRankLE` over the ring `ℂ`. -/
+theorem hasSepRankLE_iff_core {X Y : Type*} (u : X → Y → ℂ) (r : ℕ) :
+    HasSepRankLE u r ↔ LeanDLRA.HasSepRankLE ℂ u r := Iff.rfl
+
+/-- The bridge at nonzero data: `x y + 1` has separation rank at most `2` over `ℂ`. -/
+example : HasSepRankLE (fun x y : ℂ => x * y + 1) 2 :=
+  (hasSepRankLE_iff_core _ 2).2
+    (LeanDLRA.HasSepRankLE.of_sum ![fun x => x, fun _ => 1] ![fun y => y, fun _ => 1]
+      (fun x y => by simp [Fin.sum_univ_two]) (by simp))
+
+end KineticCore
 
 end LeanDLRA.Literature.P1902_00424

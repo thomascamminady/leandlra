@@ -4,6 +4,7 @@ import LeanDLRA.Foundations.Projector
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Kinetic.LowRank
 
 /-!
 # A low-rank projector-splitting integrator for Vlasov–Poisson (arXiv 1801.01103)
@@ -2276,5 +2277,57 @@ theorem ksl_cancel_of_identity {E : Type*} [NormedAddCommGroup E] [InnerProductS
   exact ⟨hend, hl, by rw [hs.lStart, hend]⟩
 
 end TuckerStep
+
+/-! ### The rank, the ansatz, the charge and orthonormality in the core vocabulary -/
+
+section KineticCore
+
+variable {d r : ℕ}
+
+/-- **The separation rank through the core**: `HasRankLE f k` of this file is the core
+`LeanDLRA.HasSepRankLE` over the ring `ℝ`. -/
+theorem hasRankLE_iff_hasSepRankLE {α β : Type*} (f : α → β → ℝ) (k : ℕ) :
+    HasRankLE f k ↔ HasSepRankLE ℝ f k := Iff.rfl
+
+/-- **The ansatz through the core**: the separated function `∑_j A_j(x) B_j(v)` is the core
+`Kinetic.lowRankAnsatz` with the weight `1` and the identity as coefficient matrix. -/
+theorem lowRank_eq_lowRankAnsatz (A B : Fin r → PS d → ℝ) :
+    lowRank A B = Kinetic.lowRankAnsatz 1 A 1 B := by
+  funext x v
+  exact (Kinetic.lowRankAnsatz_one_one A B x v).symm
+
+/-- The separated function with `r` terms has rank at most `r`. -/
+theorem hasRankLE_lowRank (A B : Fin r → PS d → ℝ) : HasRankLE (lowRank A B) r :=
+  ⟨A, B, fun _ _ => rfl⟩
+
+/-- **The charge through the core**: the charge density is minus the core
+`Kinetic.velocityMoment` with the function `1`. -/
+theorem charge_eq_neg_velocityMoment (ν : Measure (PS d)) (f : PS d → PS d → ℝ) (x : PS d) :
+    charge ν f x = -Kinetic.velocityMoment ν 1 f x := by
+  simp [charge, Kinetic.velocityMoment_apply]
+
+/-- **Orthonormality through the core**: `IsOrthonormalL2` of this file is the core
+`Kinetic.IsOrthonormalWrt` for families indexed by `Fin r`. -/
+theorem isOrthonormalL2_iff_isOrthonormalWrt {α : Type*} [MeasurableSpace α] (μ : Measure α)
+    (X : Fin r → α → ℝ) : IsOrthonormalL2 μ X ↔ Kinetic.IsOrthonormalWrt μ X :=
+  ⟨fun h => ⟨h.memLp, h.inner_eq⟩, fun h => ⟨h.memLp, h.inner_eq⟩⟩
+
+/-- The bridges at nonzero data: one term with `A = 2`, `B = 3` has the value `6` and rank at most
+`1`; for the Dirac mass at the origin the charge of `f = 2` is `-2`; the constant `1` is
+orthonormal for the Dirac mass. -/
+example :
+    lowRank (d := 1) (fun (_ : Fin 1) _ => 2) (fun _ _ => 3) 0 0 = 6 ∧
+      HasSepRankLE ℝ (lowRank (d := 1) (fun (_ : Fin 1) _ => 2) (fun _ _ => 3)) 1 ∧
+      charge (d := 1) (Measure.dirac 0) (fun _ _ => 2) 0 = -2 ∧
+      IsOrthonormalL2 (Measure.dirac (0 : ℝ)) (fun (_ : Fin 1) (_ : ℝ) => (1 : ℝ)) := by
+  refine ⟨?_, (hasRankLE_iff_hasSepRankLE _ 1).1 (hasRankLE_lowRank _ _), ?_, ?_⟩
+  · rw [lowRank_eq_lowRankAnsatz, Kinetic.lowRankAnsatz_one_one]
+    norm_num
+  · rw [charge_eq_neg_velocityMoment, Kinetic.velocityMoment_apply]
+    simp
+  · rw [isOrthonormalL2_iff_isOrthonormalWrt]
+    exact ⟨fun _ => memLp_const 1, fun i j => by simp [Subsingleton.elim i j]⟩
+
+end KineticCore
 
 end LeanDLRA.Literature.P1801_01103

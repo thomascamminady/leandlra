@@ -2,6 +2,7 @@ import Mathlib
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Kinetic.LowRank
 
 /-!
 # arXiv 2311.09425: the second-order conservative low-rank integrator (Theorem 3.2, Corollary 3.3)
@@ -1599,5 +1600,59 @@ theorem rational_run {N : ℕ} [NeZero N] [MeasurableSpace (ZMod N)]
     fourPointBasis.orthonormal_wp_three (fun _ => fourPointBasis.wp_three_mem) s₀ h₀
 
 end Instances
+
+/-! ### The ansatz and the moments in the core kinetic vocabulary -/
+
+section KineticCore
+
+variable {μ : Measure ℝ} {𝕏 ι : Type*} [Fintype ι]
+
+/-- **The ansatz through the core, almost everywhere**: for every `x` the `L²(μ)`-valued low-rank
+function `∑ᵢⱼ Xᵢ(x) Sᵢⱼ Vⱼ` of this file is represented by the core `Kinetic.lowRankAnsatz` (weight
+`1`) of the representatives of the `V j`.  The two are not equal as definitions: this one takes
+values in `L²(μ)`, the core one is a function of `x` and `v`. -/
+theorem coeFn_lowRank (X : ι → 𝕏 → ℝ) (S : Matrix ι ι ℝ) (V : ι → Lp ℝ 2 μ) (x : 𝕏) :
+    ⇑(lowRank X S V x) =ᵐ[μ] Kinetic.lowRankAnsatz 1 X S (fun j => ⇑(V j)) x := by
+  have h2 : ∀ i, ⇑(∑ j, (X i x * S i j) • V j) =ᵐ[μ] ∑ j, (X i x * S i j) • ⇑(V j) := fun i =>
+    (Lp.coeFn_finsetSum _ _).trans (eventuallyEq_sum fun j _ => Lp.coeFn_smul _ _)
+  have h1 : ⇑(lowRank X S V x) =ᵐ[μ] ∑ i, ∑ j, (X i x * S i j) • ⇑(V j) :=
+    (Lp.coeFn_finsetSum _ _).trans (eventuallyEq_sum fun i _ => h2 i)
+  refine h1.trans (Filter.Eventually.of_forall fun v => ?_)
+  simp [Kinetic.lowRankAnsatz_apply, Finset.sum_apply]
+
+namespace MomentBasis
+
+variable (B : MomentBasis μ)
+
+/-- **The charge density through the core**: `ρ` is the core `Kinetic.velocityMoment` of the
+distribution function with the function `1`. -/
+theorem charge_eq_velocityMoment (s : State μ 𝕏 ι) :
+    B.charge s = Kinetic.velocityMoment μ 1 (fun x => ⇑(B.dist s x)) := by
+  funext x
+  simp [charge, Kinetic.velocityMoment_apply]
+
+/-- The current is the core velocity moment with the function `v`. -/
+theorem current_eq_velocityMoment (s : State μ 𝕏 ι) :
+    B.current s = Kinetic.velocityMoment μ (fun v => v) (fun x => ⇑(B.dist s x)) := rfl
+
+/-- The kinetic energy density is the core velocity moment with the function `v² / 2`. -/
+theorem kinetic_eq_velocityMoment (s : State μ 𝕏 ι) :
+    B.kinetic s = Kinetic.velocityMoment μ (fun v => v ^ 2 / 2) (fun x => ⇑(B.dist s x)) := rfl
+
+/-- The energy flux is the core velocity moment with the function `v³ / 2`. -/
+theorem heatFlux_eq_velocityMoment (s : State μ 𝕏 ι) :
+    B.heatFlux s = Kinetic.velocityMoment μ (fun v => v ^ 3 / 2) (fun x => ⇑(B.dist s x)) := rfl
+
+end MomentBasis
+
+/-- The bridge at nonzero data: with `X = 2` and `S = (3)` the low-rank function is represented by
+`6 V₀`. -/
+example (V : Fin 1 → Lp ℝ 2 μ) :
+    ⇑(lowRank (fun (_ : Fin 1) (_ : ℝ) => 2) !![3] V 0) =ᵐ[μ] fun v => 6 * V 0 v := by
+  refine (coeFn_lowRank _ _ V 0).trans (Filter.Eventually.of_forall fun v => ?_)
+  simp [Kinetic.lowRankAnsatz_apply]
+  norm_num
+
+end KineticCore
 
 end LeanDLRA.Literature.P2311_09425
