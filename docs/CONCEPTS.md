@@ -91,7 +91,7 @@ hash-neutral). `epsRank`, `distLR` (`Matrix/LowRankDistance.lean`) and `WeylSing
 | `svdTail σ s = √(∑ …)` (`Literature/Training/P2205_13571a`) | `√(tailSqSum σ s)` | equal: `svdTail_eq_sqrt_tailSqSum`; kept (it is the norm, not the square) |
 | `tolRank A tol = min {r : τ_r(A) ≤ tol}` (`Literature/RankAdaptive/P2602_14854a`) | `epsRank tol A` | equal: `P2602_14854.epsRank_eq_sInf_tailNorm` (the tail is `distLR`, `tailNorm_eq_infDist`), replaced |
 | `adaptiveRank S ϑ` (`Literature/RankAdaptive/P2104_05247a`, same definition) | `epsRank ϑ S` | equal (same argument), replaced |
-| `tolRank ϑ X`, `svTail` (`Novel/BlindSpotII`) | `epsRank ϑ X`, `WeylSingular.tailNorm` | equal: `BlindSpotII.tolRank_eq_epsRank` (exists), `svTail` has the body of `tailNorm`; not yet replaced (follow-up) |
+| `tolRank ϑ X`, `svTail` (`Novel/BlindSpotII`) | `epsRank ϑ X`, `WeylSingular.tailNorm` | equal (`WeylSingular.epsRank_eq_sInf_tailNorm`; `svTail` had the body of `tailNorm`), replaced in `Novel/BlindSpotII` and `Novel/GeoLoRAFreeze` (deprecated aliases, 2026-11-10) |
 
 **Not bridged, with reason.** `IsPartitionedSVD` (`P2609_32615a`) does not sort the singular values
 and splits them into two blocks with a gap `τⱼ < σᵢ`, so it is not an `IsSVD` of the concatenated

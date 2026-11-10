@@ -66,5 +66,7 @@
   "LeanDLRA.StochasticDescent.IsOrthBasisOf.mul_transpose_eq": "Matrix.IsOrthBasisOf.mul_transpose_eq_mul_transpose",
   "LeanDLRA.Literature.P2505_08022.isMoorePenrose_mul_mul": "Matrix.isMoorePenrose_mul_mul_transpose",
   "LeanDLRA.Literature.P2312_00172.phi1": "LeanDLRA.phi1",
-  "LeanDLRA.Literature.P2608_17157.rkConst": "LeanDLRA.Literature.P2608_17157.klRKConst"
+  "LeanDLRA.Literature.P2608_17157.rkConst": "LeanDLRA.Literature.P2608_17157.klRKConst",
+  "LeanDLRA.Novel.BlindSpotII.svTail": "LeanDLRA.WeylSingular.tailNorm",
+  "LeanDLRA.Novel.BlindSpotII.tolRank": "LeanDLRA.epsRank"
 }
