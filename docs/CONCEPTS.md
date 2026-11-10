@@ -21,7 +21,7 @@ core one and was replaced by it, with a deprecated alias left under the old name
 | `Novel.OpRS34.pinvT` | `Matrix.gramPinv` | equal, replaced |
 | `gramPinv` (`Literature/Randomized/P2410_17091a`) | `Matrix.gramPinv` | equal, replaced |
 | `IsMoorePenrose` (`Literature/Stochastic/P2607_27438a`, square matrices) | `Matrix.IsMoorePenrose` at `m = n` | equal (same four equations), replaced |
-| Penrose conjunction of `svd_pinv_penrose` (`P2410_17091a`) and `isMoorePenrose_mul_mul` (`Literature/Training/P2505_08022a`) | `Matrix.isMoorePenrose_mul_mul_transpose`: `(U S Vᵀ)⁺ = V S⁻¹ Uᵀ` | `svd_pinv_penrose` restated with `Matrix.IsMoorePenrose` and proved by the core lemma; `isMoorePenrose_mul_mul` (not a C1 file) still states the conjunction |
+| Penrose conjunction of `svd_pinv_penrose` (`P2410_17091a`) and `isMoorePenrose_mul_mul` (`Literature/Training/P2505_08022a`) | `Matrix.isMoorePenrose_mul_mul_transpose`: `(U S Vᵀ)⁺ = V S⁻¹ Uᵀ` | `svd_pinv_penrose` restated with `Matrix.IsMoorePenrose` and proved by the core lemma; `isMoorePenrose_mul_mul` replaced by the core lemma (deprecated alias, batch C5α) |
 | `{1}`-inverse hypotheses `X G X = X` (`RandomizedBUG.dgn_exact`) | `Matrix.IsMoorePenrose.mul_pinv_mul` | implied by `IsMoorePenrose` (first Penrose equation) |
 | `IsChartData U V U⊥ V⊥ G` (`P2001_08599a`) vs `IsChartBasis` (`P2001_08599b`) | – | equivalent: `isChartData_iff` (`IsChartData ↔ IsChartBasis U U⊥ ∧ IsChartBasis V V⊥ ∧ IsUnit G.det`; `U U⁺ + U⊥ U⊥⁺ = 1` is the dimension count) |
 
@@ -32,10 +32,12 @@ the C1 files carries a full-column-rank hypothesis (`IsUnit (Uᵀ * U).det` or `
 the two notions agree wherever results are stated; `Matrix.gramPinv` stays a separate core
 definition because the papers write the Gram formula.
 
-Not yet bridged (outside the C1 files): `svdPinv` (`Literature/Randomized/P2308_16547a`, expected
-`IsMoorePenrose (U diag σ Vᵀ) (svdPinv …)`), `isMoorePenrose_mul_mul` (`P2505_08022a`, a copy of
-`Matrix.isMoorePenrose_mul_mul_transpose`), the column projectors `A * A.gramPinv` (`colP`,
-`Novel.OpTR37.colProj`, `projOmega`: batch C2).
+Batch C5α (2026-11-10) added: `diag(σ⁻¹)` is the Moore–Penrose inverse of `diag(σ)` for every `σ`
+(`Matrix.isMoorePenrose_diagonal`, stated in `Literature/Randomized/P2308_16547a` for now, to move to
+`Factorization/Defs.lean`), and `svdPinv U σ V = V diag(σ⁻¹) Uᵀ` (`P2308_16547a`) is the Moore–Penrose
+inverse of `U diag(σ) Vᵀ` for orthonormal `U`, `V` and **every** `σ`, zero entries included:
+`P2308_16547.isMoorePenrose_svdPinv`, `svdPinv_eq_pinv` (implies; `svdPinv` is kept because it takes
+the SVD factors). The column projectors `A * A.gramPinv` are batch C2 (below).
 
 ## Column-space and Galerkin projectors (UNIFY F5, batch C2, 2026-11-09)
 
@@ -113,7 +115,9 @@ Core file: `LeanDLRA/LinearAlgebra/Factorization/Defs.lean`.
 | `IsOrthOf Q W` (`Literature/HighOrder/P2502_07040b`, `colSpan Q = W` for a subspace `W`) | `Matrix.IsOrthCapture` | **implies** for every `X` with `colSpan X ≤ W`: `IsOrthOf.isOrthCapture`; kept (its target is a subspace, not a matrix) |
 | `IsBestRankApprox` (`P2502_07040b`) | `IsBestLowRankApprox` | equal (same body), replaced |
 | `IsOrthonormalCols V` (`Literature/Stiff/P2503_04932a`, `∑ₙ V n a V n b = δ_{ab}`) | `Vᵀ * V = 1` | equal (`transpose_mul_self_eq_one_iff`), inlined (`docs/CONVENTIONS.md` §4) |
-| `IsOrthBasisOf Û K` (`Research/SameMinibatchAugmentation`: `Ûᵀ Û = 1 ∧ ∃ C, Û = K C`, same column count) | `Matrix.IsOrthBasisOf` | equal: `StochasticDescent.isOrthBasisOf_iff` (the capture follows because `Ûᵀ K C = 1` makes `C` invertible); not yet replaced (76 uses in `Novel/MinibatchBias`, follow-up) |
+| `IsOrthBasisOf Û K` (`Research/SameMinibatchAugmentation`: `Ûᵀ Û = 1 ∧ ∃ C, Û = K C`, same column count) | `Matrix.IsOrthBasisOf` | equal: `StochasticDescent.isOrthBasisOf_iff` (the capture follows because `Ûᵀ K C = 1` makes `C` invertible); replaced in `Research/SameMinibatchAugmentation` and `Novel/MinibatchBias` (batch C5α; no alias, see the file); `Û Ûᵀ = U' U'ᵀ` for `K = U' D` is `Matrix.IsOrthBasisOf.mul_transpose_eq_mul_transpose` (stated in the research file, to move to `Factorization/Defs.lean`) |
+| `IsQRRoutine qr` (`Literature/Training/P2509_15113a`: `∀ K, Qᵀ Q = 1 ∧ Q R = K`, `R` not triangular) | `Matrix.IsOrthCapture`, `Matrix.IsQR` | equal to `∀ K, IsOrthCapture (qr K).1 K ∧ (qr K).2 = (qr K).1ᵀ K` (`P2509_15113.isQRRoutine_iff`); **implied** by `∀ K, IsQR K (qr K).1 (qr K).2` (`isQRRoutine_of_isQR`); does not imply it (separating `example`: `K ↦ (J, Jᵀ K)` with the swap `J`, `R = Jᵀ` at `K = 1` is not upper triangular). Kept (it is a routine, not a predicate on one matrix) |
+| `IsCoreQR i C Q S` (`Literature/Training/P2305_19059a`: `Qᵀ Q = 1`, `Matᵢ(C)ᵀ = Q Sᵀ`, `S` invertible) | `Matrix.IsOrthBasisOf` | equal to `IsOrthBasisOf Q (Matᵢ C)ᵀ ∧ S = Matᵢ(C) Q` (`P2305_19059.isCoreQR_iff`; invertibility of `S` is automatic since `Q` is square in the column count); `IsCoreQR.isOrthBasisOf`. Kept (it carries `S`) |
 
 **Separating example.** `Matrix.IsOrthCapture` does not imply `Matrix.IsOrthBasisOf`: `W = 1`
 (2 × 2) captures `X = e₁` but its columns do not lie in the column space of `X`. The local `IsQR` of
