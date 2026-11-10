@@ -4,6 +4,7 @@ import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Interpolation
 import LeanDLRA.Matrix.LowRankDistance
 import LeanDLRA.Matrix.Frobenius
+import LeanDLRA.Filtering.Defs
 
 /-!
 # Definitions for Stiff Part3
@@ -58,18 +59,6 @@ noncomputable def hermiteFn (n : ℕ) (v : ℝ) : ℝ :=
     Polynomial.aeval v (Polynomial.hermite n) * Real.exp (-(v ^ 2) / 4)
 
 section EnKF
-
-/-- The ensemble centring matrix `Π = I - (1/M) 𝟙𝟙ᵀ` (local definition for OP-ST-31). -/
-noncomputable def ensCentering (M : ℕ) : Matrix (Fin M) (Fin M) ℝ :=
-  1 - (M : ℝ)⁻¹ • Matrix.of fun _ _ => 1
-
-/-- Deterministic ensemble Kalman–Bucy field on ensembles `X ∈ ℝ^{d × M}`:
-`F(X) = A X - (M-1)⁻¹ X Π Xᵀ Hᵀ R⁻¹ (H X - Y_obs)` (local definition for OP-ST-31; no inverse
-Gram matrix appears). -/
-noncomputable def enkfField {d p M : ℕ} (A : Matrix (Fin d) (Fin d) ℝ)
-    (H : Matrix (Fin p) (Fin d) ℝ) (Rinv : Matrix (Fin p) (Fin p) ℝ)
-    (Yobs : Matrix (Fin p) (Fin M) ℝ) : ℝ → Matrix (Fin d) (Fin M) ℝ → Matrix (Fin d) (Fin M) ℝ :=
-  fun _ X => A * X - ((M : ℝ) - 1)⁻¹ • (X * ensCentering M * Xᵀ * Hᵀ * Rinv * (H * X - Yobs))
 
 open scoped LeanDLRA.Frobenius
 

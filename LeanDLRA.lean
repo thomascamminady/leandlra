@@ -11,6 +11,7 @@ import LeanDLRA.Classical.WeylSingular
 import LeanDLRA.Control.AdjointDLRA
 import LeanDLRA.DLRA.Defs
 import LeanDLRA.Dynamics.ContinuousDLRA
+import LeanDLRA.Filtering.Defs
 import LeanDLRA.FixedRank.Defs
 import LeanDLRA.FixedRank.TangentSpace
 import LeanDLRA.Foundations.Existence

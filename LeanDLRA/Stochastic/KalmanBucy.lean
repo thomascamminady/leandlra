@@ -3,6 +3,7 @@ import LeanDLRA.Foundations.ODE
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Dynamics.ContinuousDLRA
+import LeanDLRA.Filtering.Defs
 
 /-!
 # Dynamical low-rank Kalman–Bucy filters
@@ -79,6 +80,10 @@ The statements `riccatiField_isOneSidedLipschitzOn` and
 `dlrKalmanBucy_covariance_error_uniform` are proved here
 as `LeanDLRA.KalmanBucy.riccatiField_isOneSidedLipschitzOn` and
 `LeanDLRA.KalmanBucy.dlrKalmanBucy_covariance_error_uniform`.
+
+The Riccati field `riccatiField`, the rotating mode `rotatingMode`, the analysis-step matrices
+`innovCov`, `kalmanGain`, `analysisCov`, `josephCov` and the projector `diagProj` are defined in
+`LeanDLRA/Filtering/Defs.lean`.
 -/
 
 open Set Filter Topology
@@ -146,12 +151,6 @@ theorem inner_posSemidef_mul_nonneg {m n : Type*} [Fintype m] [Fintype n] {P : M
   exact inner_mul_posSemidef_nonneg hP.transpose Xᵀ
 
 /-! ### The Riccati field and its one-sided Lipschitz constant (OP-SL-01) -/
-
-/-- The Kalman–Bucy (differential Riccati) covariance field with full observation `S = ρ I`:
-`R(P) = A P + P Aᵀ - ρ P² + Qn` (model-noise covariance `Qn`).  Used by the statements above. -/
-def riccatiField (A : Matrix (Fin d) (Fin d) ℝ) (ρ : ℝ) (Qn : Matrix (Fin d) (Fin d) ℝ) :
-    ℝ → Matrix (Fin d) (Fin d) ℝ → Matrix (Fin d) (Fin d) ℝ :=
-  fun _ P => A * P + P * Aᵀ - ρ • (P * P) + Qn
 
 /-- The difference of two Riccati fields with the same drift: with `Δ = P₁ - P₂`,
 `R(P₁) - R'(P₂) = A Δ + Δ Aᵀ - ρ (P₁ Δ + Δ P₂) + (Q₁ - Q₂)`. -/
@@ -343,11 +342,6 @@ theorem transpose_mul_mul_eq_zero_of_skew {A : Matrix (Fin d) (Fin d) ℝ} (hA :
   have : (2 : ℝ) • (uᵀ * A * u) = 0 := by rw [two_smul]; nth_rw 1 [h1]; abel
   exact (smul_eq_zero.1 this).resolve_left two_ne_zero
 
-/-- The rotating rank-one DO basis `U(t) = cos t • u₀ + sin t • (A u₀)`. -/
-noncomputable def rotatingMode (A : Matrix (Fin d) (Fin d) ℝ) (u₀ : Matrix (Fin d) (Fin 1) ℝ)
-    (t : ℝ) : Matrix (Fin d) (Fin 1) ℝ :=
-  Real.cos t • u₀ + Real.sin t • (A * u₀)
-
 /-- **Exact solution of the DO mode equation for skew drift** (OP-SL-13; arXiv 2606.15843
 Example 5.9, arXiv 2509.11210 Sec. 4.1.2).  If `Aᵀ = -A` and `A² = -1` (skew and orthogonal),
 then the rank-one basis `U(t) = cos t • u₀ + sin t • (A u₀)` solves the deterministic-mode
@@ -436,27 +430,6 @@ theorem rotatingMode_proj_periodic_nonconst (t : ℝ) :
 section Analysis
 
 variable {p : ℕ}
-
-/-- Innovation covariance `S(Π) = C Π Cᵀ + R`. -/
-def innovCov (C : Matrix (Fin p) (Fin d) ℝ) (R : Matrix (Fin p) (Fin p) ℝ)
-    (Pi : Matrix (Fin d) (Fin d) ℝ) : Matrix (Fin p) (Fin p) ℝ :=
-  C * Pi * Cᵀ + R
-
-/-- Kalman gain `K(Π) = Π Cᵀ S(Π)⁻¹`. -/
-noncomputable def kalmanGain (C : Matrix (Fin p) (Fin d) ℝ) (R : Matrix (Fin p) (Fin p) ℝ)
-    (Pi : Matrix (Fin d) (Fin d) ℝ) : Matrix (Fin d) (Fin p) ℝ :=
-  Pi * Cᵀ * (innovCov C R Pi)⁻¹
-
-/-- Kalman analysis (posterior) covariance `Σ(Π) = Π - Π Cᵀ S(Π)⁻¹ C Π`. -/
-noncomputable def analysisCov (C : Matrix (Fin p) (Fin d) ℝ) (R : Matrix (Fin p) (Fin p) ℝ)
-    (Pi : Matrix (Fin d) (Fin d) ℝ) : Matrix (Fin d) (Fin d) ℝ :=
-  Pi - Pi * Cᵀ * (innovCov C R Pi)⁻¹ * C * Pi
-
-/-- Joseph form of the analysis covariance for an arbitrary gain `K`:
-`J(Π, K) = (1 - K C) Π (1 - K C)ᵀ + K R Kᵀ`. -/
-def josephCov (C : Matrix (Fin p) (Fin d) ℝ) (R : Matrix (Fin p) (Fin p) ℝ)
-    (Pi : Matrix (Fin d) (Fin d) ℝ) (K : Matrix (Fin d) (Fin p) ℝ) : Matrix (Fin d) (Fin d) ℝ :=
-  (1 - K * C) * Pi * (1 - K * C)ᵀ + K * R * Kᵀ
 
 /-- **Joseph-form identity** (OP-SL-20 (i)): for symmetric `Π`, `R` and invertible `S = S(Π)`,
 `J(Π, K) - Σ(Π) = (K - K(Π)) S (K - K(Π))ᵀ` for every gain `K`. -/
@@ -655,9 +628,6 @@ theorem odeSolution_const {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     {f : ℝ → E → E} {c : E} {a b : ℝ} (h : ∀ t, f t c = 0) :
     ODESolution f (fun _ => c) a b :=
   ⟨continuousOn_const, fun t _ => by rw [h t]; exact hasDerivWithinAt_const _ _ _⟩
-
-/-- The rank-one coordinate projector `diag(1, 0)` on `ℝ²`. -/
-noncomputable def diagProj : Matrix (Fin 2) (Fin 2) ℝ := Matrix.diagonal ![1, 0]
 
 theorem diagProj_posSemidef : diagProj.PosSemidef := by
   unfold diagProj

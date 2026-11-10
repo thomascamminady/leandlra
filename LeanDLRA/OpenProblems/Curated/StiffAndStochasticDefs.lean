@@ -3,6 +3,7 @@ import LeanDLRA.Foundations.Gronwall
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.Matrix.Frobenius
+import LeanDLRA.Filtering.Defs
 
 /-!
 # Definitions for StiffAndStochastic
@@ -59,13 +60,8 @@ open scoped Matrix LeanDLRA.Frobenius
 
 variable {d : ℕ}
 
-/-- The Kalman–Bucy (differential Riccati) covariance field with full observation `S = ρ I`:
-`R(P) = A P + P Aᵀ - ρ P² + Qn` (model-noise covariance `Qn`). -/
-def riccatiField (A : Matrix (Fin d) (Fin d) ℝ) (ρ : ℝ) (Qn : Matrix (Fin d) (Fin d) ℝ) :
-    ℝ → Matrix (Fin d) (Fin d) ℝ → Matrix (Fin d) (Fin d) ℝ :=
-  fun _ P => A * P + P * Aᵀ - ρ • (P * P) + Qn
-
-/- Proved in `LeanDLRA/Stochastic/KalmanBucy.lean` (OP-SL-01):
+/- The field `riccatiField` is defined in `LeanDLRA/Filtering/Defs.lean`.
+Proved in `LeanDLRA/Stochastic/KalmanBucy.lean` (OP-SL-01):
 `LeanDLRA.KalmanBucy.riccatiField_isOneSidedLipschitzOn` (one-sided Lipschitz on the PSD cone)
 and `LeanDLRA.KalmanBucy.dlrKalmanBucy_covariance_error_uniform` (uniform-in-time DLR-KBP
 covariance error), with the JMCO variant `jmcoKalmanBucy_covariance_error_uniform`. -/
