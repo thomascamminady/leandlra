@@ -1,3 +1,4 @@
+import LeanDLRA.LinearAlgebra.LowRank.Defs
 import LeanDLRA.LinearAlgebra.Projection.Defs
 import Mathlib.Algebra.Order.Star.Real
 import Mathlib.Analysis.Matrix.Spectrum
@@ -38,6 +39,8 @@ projector `A A⁺` onto the column space, and the Gram formula `A (Aᵀ A)⁻¹ 
   discarded weight `∑_{i ≥ r} σᵢ²`.
 * `LeanDLRA.IsBestLowRankApprox r A X`: `X` has rank `≤ r` and is a closest such matrix to `A` in
   the Frobenius norm.
+* `LeanDLRA.KyFan.podBasis A hr`: the POD basis of rank `r`, the top `r` eigenvectors of `Aᵀ A`
+  (right singular vectors of `A`) as the columns of an `n × r` matrix.
 
 ## Main results
 
@@ -85,7 +88,12 @@ The three projectors are projectors of layer 1 and belong with `LinearAlgebra/Pr
 did not touch the root of the import graph; moving them is hash-neutral. Likewise
 `Matrix.svdTrunc`, `LeanDLRA.tailSqSum` and `LeanDLRA.IsBestLowRankApprox` belong with
 `LinearAlgebra/SVD/Defs.lean` and `LinearAlgebra/LowRank/Defs.lean` (`wip/UNIFY.md` §a4, §a5),
-which batch B5 creates; they were added here in batch C3 and move there with B5 (hash-neutral).
+which batch B5 created; they were added here in batch C3 and can move there (hash-neutral).
+`KyFan.podBasis` (with the two symmetry lemmas for `Aᵀ A` it uses) is here and not in
+`LinearAlgebra/SVD/Defs.lean` or `LinearAlgebra/LowRank/Defs.lean` because a definition body
+abstracts its proof arguments into auxiliary theorems that are shared within a module: next to
+`EckartYoung.rightSingularVectors` or `WeylSingular.tailNorm` it would reuse their auxiliary
+proofs and its body would change.
 `IsBestLowRankApprox` is the minimizer form; it does not need the distance `distLR` of
 `Matrix/LowRankDistance.lean`.
 
@@ -1020,3 +1028,37 @@ example : IsBestLowRankApprox 0 (0 : Matrix (Fin 2) (Fin 2) ℝ) 0 :=
 end BestApprox
 
 end LeanDLRA
+
+/-! ### The POD basis -/
+
+section POD
+
+open Finset
+open scoped InnerProductSpace ComplexConjugate
+
+namespace LeanDLRA.KyFan
+
+open scoped Matrix LeanDLRA.Frobenius
+
+variable {m n ι : Type*} [Fintype m] [Fintype n] [DecidableEq n] [Fintype ι] [DecidableEq ι]
+
+omit [Fintype n] [DecidableEq n] in
+/-- The Gram matrix `Aᵀ A` of a real matrix is symmetric. -/
+theorem isHermitian_transpose_mul_self (A : Matrix m n ℝ) : (Aᵀ * A).IsHermitian := by
+  simpa using Matrix.isHermitian_conjTranspose_mul_self A
+
+/-- `Aᵀ A` acts as a symmetric operator on `EuclideanSpace ℝ n`. -/
+theorem isSymmetric_toEuclideanLin_transpose_mul_self (A : Matrix m n ℝ) :
+    (Matrix.toEuclideanLin (Aᵀ * A)).IsSymmetric :=
+  Matrix.isSymmetric_toEuclideanLin_iff.mpr (isHermitian_transpose_mul_self A)
+
+/-- The *POD basis* of rank `r`: the top `r` eigenvectors of `Aᵀ A`, as the columns of an
+`n × r` matrix. -/
+noncomputable def podBasis (A : Matrix m n ℝ) {r : ℕ} (hr : r ≤ Fintype.card n) :
+    Matrix n (Fin r) ℝ :=
+  ofCols fun j => (isSymmetric_toEuclideanLin_transpose_mul_self A).eigenvectorBasis
+    finrank_euclideanSpace (Fin.castLE hr j)
+
+end LeanDLRA.KyFan
+
+end POD

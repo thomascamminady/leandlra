@@ -1,4 +1,5 @@
 import Mathlib
+import LeanDLRA.LinearAlgebra.LowRank.Defs
 
 /-!
 # Orthonormal bases capturing a column space ("QR / orth" step)
@@ -45,7 +46,8 @@ of such bases, together with the elementary rank and projector facts used alongs
 ## Implementation notes
 
 Columns of a matrix are viewed as vectors of `EuclideanSpace ℝ m`; `colSpan A` is the span of the
-columns of `A` there, and `ofCols u` is the matrix with columns `u j`.  The existence proof extends
+columns of `A` there, and `ofCols u` is the matrix with columns `u j` (both defined in
+`LeanDLRA/LinearAlgebra/LowRank/Defs.lean`).  The existence proof extends
 an orthonormal basis of the column space to an orthonormal basis of the ambient space
 (`Orthonormal.exists_orthonormalBasis_extension_of_card_eq`) and keeps the first `r` vectors.
 -/
@@ -97,10 +99,6 @@ theorem exists_orthonormal_of_le {E : Type*} [NormedAddCommGroup E] [InnerProduc
 
 variable {m n ι : Type*}
 
-/-- The span of the columns of `A`, as a subspace of `EuclideanSpace ℝ m`. -/
-def colSpan (A : Matrix m n ℝ) : Submodule ℝ (EuclideanSpace ℝ m) :=
-  span ℝ (Set.range fun j => WithLp.toLp 2 (A.col j))
-
 lemma colSpan_eq_map (A : Matrix m n ℝ) :
     colSpan A = (span ℝ (Set.range A.col)).map
       (WithLp.linearEquiv 2 ℝ (m → ℝ)).symm.toLinearMap := by
@@ -115,12 +113,6 @@ lemma finrank_colSpan [Fintype n] (A : Matrix m n ℝ) :
 lemma toLp_col_mem_colSpan (A : Matrix m n ℝ) (j : n) :
     WithLp.toLp 2 (A.col j) ∈ colSpan A :=
   subset_span ⟨j, rfl⟩
-
-/-- The matrix whose `j`-th column is the Euclidean vector `u j`. -/
-def ofCols (u : ι → EuclideanSpace ℝ m) : Matrix m ι ℝ := Matrix.of fun i j => u j i
-
-@[simp] lemma ofCols_apply (u : ι → EuclideanSpace ℝ m) (i : m) (j : ι) :
-    ofCols u i j = u j i := rfl
 
 lemma toLp_col_ofCols (u : ι → EuclideanSpace ℝ m) (j : ι) :
     WithLp.toLp 2 ((ofCols u).col j) = u j := rfl

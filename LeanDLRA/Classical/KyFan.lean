@@ -1,5 +1,6 @@
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Ky Fan's maximum principle and the optimality of POD bases
@@ -63,6 +64,9 @@ with equality for the top `k` eigenvectors.  For a real matrix `A ∈ ℝ^{m × 
   `dᵢ = ∑ⱼ ‖⟪eᵢ, wⱼ⟫‖²`, where `e` is the eigenvector basis: `dᵢ ≤ 1` is Bessel's inequality and
   `∑ᵢ dᵢ = k` is Parseval's identity.
 * The matrix statements are only for real matrices, the setting of `LeanDLRA.Frobenius`.
+
+`podBasis` and the symmetry lemmas for `Aᵀ A` are in
+`LeanDLRA/LinearAlgebra/Factorization/Defs.lean`.
 
 ## References
 
@@ -229,15 +233,8 @@ open scoped Matrix LeanDLRA.Frobenius
 
 variable {m n ι : Type*} [Fintype m] [Fintype n] [DecidableEq n] [Fintype ι] [DecidableEq ι]
 
-omit [Fintype n] [DecidableEq n] in
-/-- The Gram matrix `Aᵀ A` of a real matrix is symmetric. -/
-theorem isHermitian_transpose_mul_self (A : Matrix m n ℝ) : (Aᵀ * A).IsHermitian := by
-  simpa using Matrix.isHermitian_conjTranspose_mul_self A
-
-/-- `Aᵀ A` acts as a symmetric operator on `EuclideanSpace ℝ n`. -/
-theorem isSymmetric_toEuclideanLin_transpose_mul_self (A : Matrix m n ℝ) :
-    (Matrix.toEuclideanLin (Aᵀ * A)).IsSymmetric :=
-  Matrix.isSymmetric_toEuclideanLin_iff.mpr (isHermitian_transpose_mul_self A)
+/- `isHermitian_transpose_mul_self`, `isSymmetric_toEuclideanLin_transpose_mul_self` and
+`podBasis` are in `LeanDLRA/LinearAlgebra/Factorization/Defs.lean`. -/
 
 /-- `eigenvalues₀` of `Aᵀ A` are the sorted eigenvalues of the symmetric operator `Aᵀ A`. -/
 theorem eigenvalues₀_eq (A : Matrix m n ℝ) (hA : (Aᵀ * A).IsHermitian) :
@@ -280,13 +277,6 @@ theorem sq_norm_mul_eq_of_mul_eq_mul_diagonal (A : Matrix m n ℝ) (hA : (Aᵀ *
   rw [← real_inner_self_eq_norm_sq, Frobenius.inner_mul_left, ← Matrix.mul_assoc, hAW,
     Frobenius.inner_mul_left', hW, Frobenius.inner_def, ← sum_castLE_eq_sum_filter hr]
   simp [Matrix.one_apply, Matrix.diagonal_apply]
-
-/-- The *POD basis* of rank `r`: the top `r` eigenvectors of `Aᵀ A`, as the columns of an
-`n × r` matrix. -/
-noncomputable def podBasis (A : Matrix m n ℝ) {r : ℕ} (hr : r ≤ Fintype.card n) :
-    Matrix n (Fin r) ℝ :=
-  ofCols fun j => (isSymmetric_toEuclideanLin_transpose_mul_self A).eigenvectorBasis
-    finrank_euclideanSpace (Fin.castLE hr j)
 
 /-- The POD basis has orthonormal columns. -/
 theorem transpose_podBasis_mul_podBasis (A : Matrix m n ℝ) {r : ℕ} (hr : r ≤ Fintype.card n) :

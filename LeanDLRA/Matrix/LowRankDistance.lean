@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.Matrix.BUG
+import LeanDLRA.LinearAlgebra.LowRank.Defs
 
 /-!
 # Distance to the low-rank set
@@ -10,6 +11,8 @@ decomposition is used: by Eckart–Young `distLR r X` is the tail `(∑_{j>r} σ
 result below is proved from the definition.  The distance is the robust replacement for "the
 rank-`r` DLRA solution" in several error analyses whose hypotheses fail when singular values
 become small.
+
+`lowRankSet`, `distLR` and `epsRank` are defined in `LeanDLRA/LinearAlgebra/LowRank/Defs.lean`.
 
 ## Main results
 
@@ -95,13 +98,6 @@ section Basic
 
 variable {m n : Type*} [Fintype m] [Fintype n]
 
-/-- The set `M_{≤ r} = {Y ∈ ℝ^{m×n} : rank Y ≤ r}` of matrices of rank at most `r`. -/
-def lowRankSet (m n : Type*) [Fintype n] (r : ℕ) : Set (Matrix m n ℝ) := {Y | Y.rank ≤ r}
-
-omit [Fintype m] in
-@[simp] lemma mem_lowRankSet {r : ℕ} {Y : Matrix m n ℝ} : Y ∈ lowRankSet m n r ↔ Y.rank ≤ r :=
-  Iff.rfl
-
 omit [Fintype m] in
 lemma zero_mem_lowRankSet (r : ℕ) : (0 : Matrix m n ℝ) ∈ lowRankSet m n r := by simp
 
@@ -111,12 +107,6 @@ lemma lowRankSet_nonempty (r : ℕ) : (lowRankSet m n r).Nonempty := ⟨0, zero_
 omit [Fintype m] in
 lemma lowRankSet_mono {r r' : ℕ} (h : r ≤ r') : lowRankSet m n r ⊆ lowRankSet m n r' :=
   fun _ hY => le_trans hY h
-
-/-- The Frobenius distance `dist(X, M_{≤ r}) = inf {‖X - Y‖ : rank Y ≤ r}` of `X` to the set of
-matrices of rank at most `r`.  By the Eckart–Young theorem this is the norm of the tail
-`(σ_{r+1}² + σ_{r+2}² + ⋯)^{1/2}` of the singular values; this identification is *not* used
-anywhere: every statement below is proved from the definition as an infimum. -/
-noncomputable def distLR (r : ℕ) (X : Matrix m n ℝ) : ℝ := infDist X (lowRankSet m n r)
 
 variable {r r' k : ℕ} {X Y Z : Matrix m n ℝ}
 
@@ -167,13 +157,6 @@ end Basic
 section EpsRank
 
 variable {m n : Type*} [Fintype m] [Fintype n] {r k : ℕ} {ε ε' e θ : ℝ} {X Y Xs : Matrix m n ℝ}
-
-/-- The **`ε`-rank** `rank_ε(X) = min {k : dist(X, M_{≤ k}) ≤ ε}`.  For the Frobenius norm this is
-(by Eckart–Young) the rank selected by tolerance truncation of the singular values
-`(∑_{j > k} σ_j²)^{1/2} ≤ ε`, e.g. the rank-adaptive truncation rule (22) of arXiv 2602.06614 and
-step 3 of the rank-adaptive BUG integrator (arXiv 2104.05247).  For `ε < 0` the defining set is
-empty and the value is `0` by convention; all results assume `ε ≥ 0`. -/
-noncomputable def epsRank (ε : ℝ) (X : Matrix m n ℝ) : ℕ := sInf {k | distLR k X ≤ ε}
 
 lemma epsRank_set_nonempty (hε : 0 ≤ ε) : {k | distLR k X ≤ ε}.Nonempty :=
   ⟨X.rank, by simp [distLR_eq_zero_of_rank_le le_rfl, hε]⟩

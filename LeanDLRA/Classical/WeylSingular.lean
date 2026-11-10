@@ -1,4 +1,5 @@
 import LeanDLRA.Classical.EckartYoung
+import LeanDLRA.LinearAlgebra.LowRank.Defs
 
 /-!
 # Weyl's inequality for singular values
@@ -35,6 +36,7 @@ Eckart–Young–Mirsky `τ_r(A)` is the Frobenius distance from `A` to `{rank �
 * `singularValues_add_le`: **Weyl's inequality** `σ_{i+j}(A + B) ≤ σ_i(A) + σ_j(B)`;
 * `tailNorm`, `tailNorm_eq_infDist`, `tailNorm_add_le`: Frobenius tails and their Weyl
   inequality;
+* `epsRank_eq_sInf_tailNorm`: the `ε`-rank `epsRank ε X` is the smallest `r` with `τ_r(X) ≤ ε`;
 * `abs_singularValues_sub_le`, `abs_singularValues_add_sub_le`,
   `abs_singularValues_sub_le_frobenius`: corollary (a);
 * `le_singularValues_of_specNorm_sub_le`, `lt_rank_of_specNorm_sub_le`: corollary (b);
@@ -64,6 +66,10 @@ Eckart–Young–Mirsky `τ_r(A)` is the Frobenius distance from `A` to `{rank �
 
 Mirsky's Frobenius inequality `∑_i (σ_i(A) - σ_i(B))² ≤ ‖A - B‖_F²` needs von Neumann's trace
 inequality and is left for future work; corollary (c) is a weaker, tail-only consequence.
+
+## Implementation notes
+
+`tailNorm` is defined in `LeanDLRA/LinearAlgebra/LowRank/Defs.lean`.
 
 ## References
 
@@ -165,10 +171,7 @@ section Frobenius
 
 open scoped LeanDLRA.Frobenius
 
-/-- The **singular-value tail** `τ_r(A) = (∑_{r ≤ l < n} σ_l(A)²)^{1/2}`, the Frobenius error of
-the best rank-`r` approximation. -/
-noncomputable def tailNorm (A : Matrix m n ℝ) (r : ℕ) : ℝ :=
-  √(∑ l ∈ Ico r (Fintype.card n), (toEuclideanLin A).singularValues l ^ 2)
+/- `tailNorm` is defined in `LeanDLRA/LinearAlgebra/LowRank/Defs.lean`. -/
 
 theorem tailNorm_nonneg (A : Matrix m n ℝ) (r : ℕ) : 0 ≤ tailNorm A r :=
   Real.sqrt_nonneg _
@@ -187,6 +190,14 @@ theorem tailNorm_le_norm_sub (A B : Matrix m n ℝ) {r : ℕ} (hB : B.rank ≤ r
 theorem tailNorm_eq_infDist (A : Matrix m n ℝ) (r : ℕ) :
     tailNorm A r = Metric.infDist A {B : Matrix m n ℝ | B.rank ≤ r} :=
   (infDist_setOf_rank_le A r).symm
+
+/-- The **`ε`-rank is the tolerance rank of the singular values**: `rank_ε(X)` is the smallest `r`
+with `τ_r(X) = (∑_{l ≥ r} σ_l(X)²)^{1/2} ≤ ε`, the rank chosen by tolerance truncation of the SVD
+(Eckart–Young, `tailNorm_eq_infDist`). -/
+theorem epsRank_eq_sInf_tailNorm (ε : ℝ) (X : Matrix m n ℝ) :
+    epsRank ε X = sInf {r | tailNorm X r ≤ ε} := by
+  simp_rw [tailNorm_eq_infDist]
+  rfl
 
 /-- **Weyl's inequality for Frobenius tails**: `τ_{i+j}(A + B) ≤ τ_i(A) + τ_j(B)`. -/
 theorem tailNorm_add_le (A B : Matrix m n ℝ) (i j : ℕ) :
