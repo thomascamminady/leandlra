@@ -24,6 +24,7 @@ import LeanDLRA.Foundations.Projector
 import LeanDLRA.HighOrder.MidpointBUG
 import LeanDLRA.HighOrder.RungeKuttaBUG
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Integrators.BUGCore
 import LeanDLRA.Integrators.Defs
 import LeanDLRA.Integrators.EulerBUG
 import LeanDLRA.Integrators.Exactness
@@ -31,6 +32,9 @@ import LeanDLRA.Integrators.GlobalError
 import LeanDLRA.Integrators.InexactSubsteps
 import LeanDLRA.Integrators.KStep
 import LeanDLRA.Integrators.Matrix.BUG
+import LeanDLRA.Integrators.Matrix.BUGRun
+import LeanDLRA.Integrators.Matrix.BUGStep
+import LeanDLRA.Integrators.Matrix.BUGTube
 import LeanDLRA.Integrators.Matrix.Defs
 import LeanDLRA.Integrators.Matrix.ParallelBUG
 import LeanDLRA.Integrators.Matrix.ProjectorSplitting
@@ -39,6 +43,7 @@ import LeanDLRA.Integrators.ParallelBUG
 import LeanDLRA.Integrators.PerturbedField
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
+import LeanDLRA.Integrators.Tube
 import LeanDLRA.Integrators.TuckerBUG
 import LeanDLRA.Kinetic.Defs
 import LeanDLRA.LinearAlgebra.Factorization.Defs
