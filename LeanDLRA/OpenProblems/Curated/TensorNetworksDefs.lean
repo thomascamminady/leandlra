@@ -1,11 +1,14 @@
 import LeanDLRA.Integrators.TuckerBUG
 import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Classical.CommutingProjectorTelescoping
+import LeanDLRA.Tensor.Defs
 
 /-!
 # Definitions for TensorNetworks
 
-Local definitions used by the theorems of the corresponding modules.
+Local definitions used by the theorems of the corresponding modules. The frames `TTNFrame`, the
+bound `ttnErrBound` and the augmented recoverability `IsAugRecoverable`, `IsTTNAugRecoverable`
+are defined in `LeanDLRA/Tensor/Defs.lean`.
 -/
 
 open Set Finset
@@ -14,35 +17,6 @@ open scoped RealInnerProductSpace
 universe u
 
 namespace LeanDLRA
-
-/-- The **frame of a tree tensor network step**: a rooted tree whose inner nodes carry the data
-determined by the old approximation `Y₀`.  An inner node with `m` children carries, for each child
-`i : Fin m`, the old mode projector `P₀ i = U⁰ᵢU⁰ᵢᵀ` (onto the old basis of mode `i` of the
-connecting tensor), the co-range projector `Q₀ i` of the `i`-th matricization of `Y₀` (the
-`K`-step projector), a class `𝓛 i` of admissible mode-`i` operators (the operators acting on
-mode `i` only; used for exactness, see `Exactness.IsRecoverable`) and the frame of the subtree
-`i`.  A leaf is a physical mode whose basis matrix is integrated without approximation. -/
-inductive TTNFrame (E : Type u) [NormedAddCommGroup E] [InnerProductSpace ℝ E] : Type u
-  | leaf : TTNFrame E
-  | node (m : ℕ) (P₀ Q₀ : Fin m → E →L[ℝ] E) (𝓛 : Fin m → Set (E →L[ℝ] E))
-      (cs : Fin m → TTNFrame E) : TTNFrame E
-
-namespace TTNFrame
-
-variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-
-/-- The height of the tree (`0` for a leaf, `1` for a Tucker tensor, `d - 1` for a tensor train
-with `d` cores). -/
-def height : TTNFrame E → ℕ
-  | .leaf => 0
-  | .node _ _ _ _ cs => (Finset.univ.sup fun i => (cs i).height) + 1
-
-/-- The number of nodes of the tree (leaves included). -/
-def size : TTNFrame E → ℕ
-  | .leaf => 1
-  | .node _ _ _ _ cs => 1 + ∑ i, (cs i).size
-
-end TTNFrame
 
 variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
@@ -119,19 +93,6 @@ def IsParTTNBUGStep : TTNFrame E → (ℝ → E → E) → ℝ → ℝ → ℝ �
         ‖G t₀ Y₀ - modeProdLeOne P₀ (fun i => 1 - P₀ i) (G t₀ Y₀)‖ ≤ ε ∧
         ‖Y₁ - parTuckerBUG P₀ Pa (YC t₁) (t₁ - t₀) (G t₀ Y₀)‖ ≤ ϑ
 
-/-- The **recursive local error bound** of the TTN BUG integrator for a step of length `h`: `0` at
-a leaf; at an inner node, with the child bounds `ηᵢ`, the capture defects
-`θᵢ = h (4 L B h + L ηᵢ + ε) + ηᵢ` (capture with an inexact `K`-step, `kstep_capture_inexact`),
-`Θ = ∑ᵢ θᵢ` (telescoping) and the Galerkin bound `(e^{L h} - 1)(B h + Θ) + Θ`. -/
-noncomputable def ttnErrBound (L B ε h : ℝ) : TTNFrame E → ℝ
-  | .leaf => 0
-  | .node _ _ _ _ cs =>
-      (Real.exp (L * h) - 1) *
-          (B * h + ∑ i, (h * (4 * L * B * h + L * ttnErrBound L B ε h (cs i) + ε) +
-            ttnErrBound L B ε h (cs i))) +
-        ∑ i, (h * (4 * L * B * h + L * ttnErrBound L B ε h (cs i) + ε) +
-          ttnErrBound L B ε h (cs i))
-
 /-- **Recursive recoverability** of `x` along a frame: at every inner node, `x` is recoverable
 from its `K`-step projection `Q₀ i x` modulo the mode class `𝓛 i` (`Exactness.IsRecoverable`,
 the abstract form of the overlap condition `Uᵢ(t₁)ᵀUᵢ(t₀)` invertible), and recursively so for
@@ -140,22 +101,6 @@ def IsTTNRecoverable : TTNFrame E → E → Prop
   | .leaf, _ => True
   | .node _ _ Q₀ 𝓛 cs, x => ∀ i, Exactness.IsRecoverable (𝓛 i) (Q₀ i) x ∧
       IsTTNRecoverable (cs i) (Q₀ i x)
-
-/-- **Augmented recoverability** of `x` from `Q x` and the old basis `P₀` modulo the class `𝓛`:
-`x = T (Q x) + S (P₀ z)` for some `z` and maps `T`, `S` commuting with every operator of `𝓛`.
-For matrices (`𝓛` the left multiplications, `T`, `S` right multiplications) this says
-`col(A₁) ⊆ col(A₁ V₀) + col(U₀)`, which is implied by `Exactness.IsRecoverable` (`S = 0`) but
-also holds e.g. for `A(t) = e₂ v(t)ᵀ`, `v(t₁) ⊥ v(t₀)`, `U₀ = e₂` (the counterexample of
-OP-TN-05, where the non-augmented integrator fails). -/
-def IsAugRecoverable (𝓛 : Set (E →L[ℝ] E)) (P₀ Q : E →L[ℝ] E) (x : E) : Prop :=
-  ∃ T S : E →L[ℝ] E, (∀ L ∈ 𝓛, ∀ y, L (T y) = T (L y)) ∧ (∀ L ∈ 𝓛, ∀ y, L (S y) = S (L y)) ∧
-    ∃ z, x = T (Q x) + S (P₀ z)
-
-/-- Recursive augmented recoverability along a frame (see `IsAugRecoverable`). -/
-def IsTTNAugRecoverable : TTNFrame E → E → Prop
-  | .leaf, _ => True
-  | .node _ P₀ Q₀ 𝓛 cs, x => ∀ i, IsAugRecoverable (𝓛 i) (P₀ i) (Q₀ i) x ∧
-      IsTTNAugRecoverable (cs i) (Q₀ i x)
 
 /-- The **tangent projector of the Tucker manifold** at `Y₀ = C ×ᵢ U⁰ᵢ`:
 `T = ∏ᵢ P₀ i + ∑ᵢ (1 - P₀ i) Q₀ i`.  The first term is the core variation `δC ×ᵢ U⁰ᵢ`, the

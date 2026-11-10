@@ -54,6 +54,18 @@ Tucker tensors, tensor trains (matrix product states) and tree tensor networks.
 * `LeanDLRA.TTN ι τ r`: tree tensor networks on a dimension tree (leaf bases and connecting
   tensors), with the nested basis matrices `TTN.basis`, orthonormality `TTN.IsOrthonormal` and
   the represented tensor `TTN.toTensor`.
+* `LeanDLRA.modePrefix P k`: the ordered prefix product `P 0 * ⋯ * P (k - 1)` of mode operators on
+  an abstract normed space (the full product is `LeanDLRA.modeProd`, `Integrators/TuckerBUG.lean`).
+* `LeanDLRA.tuckerSqrtC₁`, `LeanDLRA.tuckerSqrtC₂`: the constants `√d (1 + L H e^{L H})` and
+  `L B (4 √d + e^{L H} (1 + 4 √d L H))` of the `√d` local error bound of the Tucker BUG integrator.
+* `LeanDLRA.TTNFrame E`: the abstract frame of one step of a tree tensor network integrator on a
+  real inner product space `E` (old mode projectors, `K`-step projectors and admissible operator
+  classes at every inner node), with `TTNFrame.height`, `TTNFrame.size`, the recursive local
+  error bound `ttnErrBound`, and the (recursive) augmented recoverability conditions
+  `IsAugRecoverable`, `IsTTNAugRecoverable`. The TTN step predicates on frames (`IsTTNBUGStep`,
+  `IsAugTTNBUGStep`, `IsParTTNBUGStep`, `IsTTNRecoverable`) and `tuckerTangentProj` are still in
+  `OpenProblems/Curated/TensorNetworksDefs.lean`: they use `modeProd`, `modeProdLeOne`,
+  `parTuckerBUG` and `Exactness.IsRecoverable`, which are not yet in a `Defs.lean`.
 -/
 
 open scoped Matrix RealInnerProductSpace
@@ -445,5 +457,98 @@ noncomputable def toTensor {τ : DimTree κ} (t : TTN ι τ 1) : Tensor ι :=
   WithLp.toLp 2 fun x => t.basis (fun k => x k.1) 0
 
 end TTN
+
+/-! ### Products of mode operators and constants of the Tucker BUG bounds -/
+
+section ModeOperators
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+
+/-- The prefix product `P 0 * P 1 * ⋯ * P (k - 1)` of the first `k` mode operators (the full
+product `LeanDLRA.modeProd P` when `d ≤ k`). -/
+def modePrefix {d : ℕ} (P : Fin d → E →L[ℝ] E) (k : ℕ) : E →L[ℝ] E :=
+  ((List.ofFn P).take k).prod
+
+end ModeOperators
+
+section TuckerConstants
+
+/-- The improved constant `c₁ = √d (1 + L H e^{L H})` in front of `ε` in the local error bound of
+the Tucker BUG integrator with `d` modes (step sizes `h ≤ H`). -/
+noncomputable def tuckerSqrtC₁ (d : ℕ) (L H : ℝ) : ℝ :=
+  √(d : ℝ) * (1 + L * H * Real.exp (L * H))
+
+/-- The improved constant `c₂ = L B (4 √d + e^{L H} (1 + 4 √d L H))` in front of `h` in the local
+error bound of the Tucker BUG integrator with `d` modes (step sizes `h ≤ H`). -/
+noncomputable def tuckerSqrtC₂ (d : ℕ) (L B H : ℝ) : ℝ :=
+  L * B * (4 * √(d : ℝ) + Real.exp (L * H) * (1 + 4 * √(d : ℝ) * L * H))
+
+end TuckerConstants
+
+/-! ### Frames of tree tensor network steps -/
+
+/-- The **frame of a tree tensor network step**: a rooted tree whose inner nodes carry the data
+determined by the old approximation `Y₀`.  An inner node with `m` children carries, for each child
+`i : Fin m`, the old mode projector `P₀ i = U⁰ᵢU⁰ᵢᵀ` (onto the old basis of mode `i` of the
+connecting tensor), the co-range projector `Q₀ i` of the `i`-th matricization of `Y₀` (the
+`K`-step projector), a class `𝓛 i` of admissible mode-`i` operators (the operators acting on
+mode `i` only; used for exactness, see `Exactness.IsRecoverable`) and the frame of the subtree
+`i`.  A leaf is a physical mode whose basis matrix is integrated without approximation. -/
+inductive TTNFrame (E : Type u) [NormedAddCommGroup E] [InnerProductSpace ℝ E] : Type u
+  | leaf : TTNFrame E
+  | node (m : ℕ) (P₀ Q₀ : Fin m → E →L[ℝ] E) (𝓛 : Fin m → Set (E →L[ℝ] E))
+      (cs : Fin m → TTNFrame E) : TTNFrame E
+
+namespace TTNFrame
+
+variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-- The height of the tree (`0` for a leaf, `1` for a Tucker tensor, `d - 1` for a tensor train
+with `d` cores). -/
+def height : TTNFrame E → ℕ
+  | .leaf => 0
+  | .node _ _ _ _ cs => (Finset.univ.sup fun i => (cs i).height) + 1
+
+/-- The number of nodes of the tree (leaves included). -/
+def size : TTNFrame E → ℕ
+  | .leaf => 1
+  | .node _ _ _ _ cs => 1 + ∑ i, (cs i).size
+
+end TTNFrame
+
+section Frame
+
+variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-- The **recursive local error bound** of the TTN BUG integrator for a step of length `h`: `0` at
+a leaf; at an inner node, with the child bounds `ηᵢ`, the capture defects
+`θᵢ = h (4 L B h + L ηᵢ + ε) + ηᵢ` (capture with an inexact `K`-step, `kstep_capture_inexact`),
+`Θ = ∑ᵢ θᵢ` (telescoping) and the Galerkin bound `(e^{L h} - 1)(B h + Θ) + Θ`. -/
+noncomputable def ttnErrBound (L B ε h : ℝ) : TTNFrame E → ℝ
+  | .leaf => 0
+  | .node _ _ _ _ cs =>
+      (Real.exp (L * h) - 1) *
+          (B * h + ∑ i, (h * (4 * L * B * h + L * ttnErrBound L B ε h (cs i) + ε) +
+            ttnErrBound L B ε h (cs i))) +
+        ∑ i, (h * (4 * L * B * h + L * ttnErrBound L B ε h (cs i) + ε) +
+          ttnErrBound L B ε h (cs i))
+
+/-- **Augmented recoverability** of `x` from `Q x` and the old basis `P₀` modulo the class `𝓛`:
+`x = T (Q x) + S (P₀ z)` for some `z` and maps `T`, `S` commuting with every operator of `𝓛`.
+For matrices (`𝓛` the left multiplications, `T`, `S` right multiplications) this says
+`col(A₁) ⊆ col(A₁ V₀) + col(U₀)`, which is implied by `Exactness.IsRecoverable` (`S = 0`) but
+also holds e.g. for `A(t) = e₂ v(t)ᵀ`, `v(t₁) ⊥ v(t₀)`, `U₀ = e₂` (the counterexample of
+OP-TN-05, where the non-augmented integrator fails). -/
+def IsAugRecoverable (𝓛 : Set (E →L[ℝ] E)) (P₀ Q : E →L[ℝ] E) (x : E) : Prop :=
+  ∃ T S : E →L[ℝ] E, (∀ L ∈ 𝓛, ∀ y, L (T y) = T (L y)) ∧ (∀ L ∈ 𝓛, ∀ y, L (S y) = S (L y)) ∧
+    ∃ z, x = T (Q x) + S (P₀ z)
+
+/-- Recursive augmented recoverability along a frame (see `IsAugRecoverable`). -/
+def IsTTNAugRecoverable : TTNFrame E → E → Prop
+  | .leaf, _ => True
+  | .node _ P₀ Q₀ 𝓛 cs, x => ∀ i, IsAugRecoverable (𝓛 i) (P₀ i) (Q₀ i) x ∧
+      IsTTNAugRecoverable (cs i) (Q₀ i x)
+
+end Frame
 
 end LeanDLRA

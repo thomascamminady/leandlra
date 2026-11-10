@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.TuckerBUG
+import LeanDLRA.Tensor.Defs
 
 /-!
 # Pythagorean telescoping for orthogonal mode projectors: `√d` instead of `d`
@@ -57,6 +58,9 @@ mode-`i` matricization this is the `√d` quasi-optimality of the higher-order S
   truncated by orthogonal mode projectors with per-mode truncation errors `≤ τ` (HOSVD
   truncation): the truncation contributes `√d τ`.
 
+The prefix products `modePrefix` and the constants `tuckerSqrtC₁`, `tuckerSqrtC₂` are defined in
+`LeanDLRA/Tensor/Defs.lean`.
+
 ## References
 
 * L. De Lathauwer, B. De Moor, J. Vandewalle, *A multilinear singular value decomposition*,
@@ -81,11 +85,6 @@ namespace LeanDLRA
 section Prefix
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-
-/-- The prefix product `P 0 * P 1 * ⋯ * P (k - 1)` of the first `k` mode operators (the full
-product `LeanDLRA.modeProd P` when `d ≤ k`). -/
-def modePrefix {d : ℕ} (P : Fin d → E →L[ℝ] E) (k : ℕ) : E →L[ℝ] E :=
-  ((List.ofFn P).take k).prod
 
 @[simp] lemma modePrefix_zero {d : ℕ} (P : Fin d → E →L[ℝ] E) : modePrefix P 0 = 1 := by
   simp [modePrefix]
@@ -229,16 +228,6 @@ end Telescoping
 /-! ### Constants of the improved local error bound -/
 
 section Constants
-
-/-- The improved constant `c₁ = √d (1 + L H e^{L H})` in front of `ε` in the local error bound of
-the Tucker BUG integrator with `d` modes (step sizes `h ≤ H`). -/
-noncomputable def tuckerSqrtC₁ (d : ℕ) (L H : ℝ) : ℝ :=
-  √(d : ℝ) * (1 + L * H * Real.exp (L * H))
-
-/-- The improved constant `c₂ = L B (4 √d + e^{L H} (1 + 4 √d L H))` in front of `h` in the local
-error bound of the Tucker BUG integrator with `d` modes (step sizes `h ≤ H`). -/
-noncomputable def tuckerSqrtC₂ (d : ℕ) (L B H : ℝ) : ℝ :=
-  L * B * (4 * √(d : ℝ) + Real.exp (L * H) * (1 + 4 * √(d : ℝ) * L * H))
 
 lemma tuckerSqrtC₁_le (d : ℕ) {L H : ℝ} (hL : 0 ≤ L) (hH : 0 ≤ H) :
     tuckerSqrtC₁ d L H ≤ tuckerC₁ d L H := by
