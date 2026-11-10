@@ -296,6 +296,16 @@ theorem gridFrobSq_eq {κ : Type*} [Fintype κ] (Δx : ℝ) (Y : Matrix (ZMod N)
     gridFrobSq Δx Y = Δx * ‖Y‖ ^ 2 := by
   rw [gridFrobSq, norm_sq_eq_sum]
 
+/-- **The weighted matrix space (decision Q5).** For `Δx > 0`, `‖Y‖²_{F,Δx}` is the squared norm of
+`Y` in the core weighted matrix space with row weights `Δx` and unit column weights
+(`WeightedMatrix`), so the abstract inner-product results of the library apply to it directly. -/
+theorem gridFrobSq_eq_norm_sq_weighted {κ : Type*} [Fintype κ] {Δx : ℝ}
+    [Fact (∀ _ : ZMod N, 0 < Δx)] [Fact (∀ _ : κ, (0 : ℝ) < 1)] (Y : Matrix (ZMod N) κ ℝ) :
+    gridFrobSq Δx Y = ‖(WeightedMatrix.toWeighted Y :
+      WeightedMatrix (fun _ : ZMod N => Δx) fun _ : κ => (1 : ℝ))‖ ^ 2 := by
+  rw [WeightedMatrix.norm_sq_eq, gridFrobSq, Finset.mul_sum]
+  simp [Finset.mul_sum]
+
 /-- The key estimate of Lemma 10, one velocity: `|⟨𝓑 D^{up} q, φ⟩|² ≤ ‖q‖² ‖D⁻ φ‖²`, by the
 commutation of `𝓑` with the differences, summation by parts and the contraction property. -/
 theorem sum_backtrack_dUp_mul_sq_le (c Δx v : ℝ) (q φ : ZMod N → ℝ) :

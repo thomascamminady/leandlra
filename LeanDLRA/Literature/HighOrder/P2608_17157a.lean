@@ -38,7 +38,7 @@ Main results:
   assumptions with the paper's constants (`IsKLStep.one_step_error_of_standing`,
   `klStep_global_error_of_standing`, `IsRKKLStep.one_step_error_of_standing`,
   `rkKL_global_error_of_standing`); the increment error of Theorem 6.1 is `rk_increment_error`
-  with the paper's constant `rkConst`.
+  with the paper's constant `klRKConst`.
 * Lemma 6.2 (`exists_norm_iteratedDerivWithin_rhs_le`; explicit constants for `p = 2`:
   `norm_iteratedDerivWithin_rhs_le_two`) and the corollaries of Section 6: the two-stage family
   of Remark 6.3 and the midpoint method (`IsRK2KLStep.one_step_error`, `rk2KL_global_error`,
@@ -82,7 +82,7 @@ Core definitions used: `ODESolution`, `IsLipschitzField`, `IsBoundedField`,
 `MatrixBUG.FactoredNormalBound`, `SVD.exists_svd`, and the singular-value-free derivative bounds
 of `OpenProblems.HighOrder`.  Local definitions: `IsKLStep` (bridged to
 `Exactness.IsKSLIncrementStep`), `HasComparisonCurve`, `IsRKKLStep`, `IsRK2KLStep`,
-`IsMidpointKLStep`, `IsHeun3KLStep`, `rkConst`.
+`IsMidpointKLStep`, `IsHeun3KLStep`, `klRKConst`.
 -/
 
 open Set Filter Topology Finset
@@ -1664,8 +1664,11 @@ theorem rk_increment_error_le {s q : ℕ} {F : ℝ → E → E} {L : ℝ} (hF : 
     _ = L * (|b i| * e i) := by ring
 
 /-- The constant of Theorem 6.1 of arXiv 2608.17157:
-`C = M_p/p! (1/(p+1) + ∑ |bᵢ| cᵢ^p) + L C_st ∑ |bᵢ|` (quadrature and stage contributions). -/
-noncomputable def rkConst {s : ℕ} (p : ℕ) (b c : Fin s → ℝ) (L M Cst : ℝ) : ℝ :=
+`C = M_p/p! (1/(p+1) + ∑ |bᵢ| cᵢ^p) + L C_st ∑ |bᵢ|` (quadrature and stage contributions). It
+is a different constant from the core `RungeKuttaBUG.rkConst` (the Lipschitz stage constant of the
+RK-BUG perturbation bound), hence the name; an earlier version of this file called it `rkConst`
+(unification batch C8). -/
+noncomputable def klRKConst {s : ℕ} (p : ℕ) (b c : Fin s → ℝ) (L M Cst : ℝ) : ℝ :=
   M / p ! * (1 / (p + 1) + ∑ i, |b i| * c i ^ p) + L * Cst * ∑ i, |b i|
 
 /-- **Theorem 6.1, increment error** (arXiv 2608.17157).  For an explicit tableau with nodes
@@ -1673,7 +1676,7 @@ noncomputable def rkConst {s : ℕ} (p : ℕ) (b c : Fin s → ℝ) (L M Cst : �
 `L`-Lipschitz field `F`, `g(τ) = F(τ, A(τ))` of class `C^p` on `[t, t + h]` with
 `‖g^{(p)}‖ ≤ M_p`, and stage bounds `‖Zᵢ - A(t + cᵢ h)‖ ≤ C_st (h^p + h ε)` for `bᵢ ≠ 0`, the
 increment error is `‖A(t) + h ∑ bᵢ F(t + cᵢ h, Zᵢ) - A(t + h)‖ ≤ C (h^{p+1} + h² ε)` with the
-explicit `C = rkConst p b c L M_p C_st`.  Stated on any real normed space. -/
+explicit `C = klRKConst p b c L M_p C_st`.  Stated on any real normed space. -/
 theorem rk_increment_error {s p : ℕ} (hp : 0 < p) {F : ℝ → E → E} {L : ℝ}
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (b c : Fin s → ℝ) (hc : ∀ i, 0 ≤ c i ∧ c i ≤ 1)
     (hord : ∀ k < p, ∑ i, b i * c i ^ k = 1 / (k + 1)) {t h M Cst ε : ℝ} (hh : 0 ≤ h)
@@ -1683,7 +1686,7 @@ theorem rk_increment_error {s p : ℕ} (hp : 0 < p) {F : ℝ → E → E} {L : �
       ‖iteratedDerivWithin p (fun τ => F τ (A τ)) (Icc t (t + h)) τ‖ ≤ M)
     {Z : Fin s → E} (hZ : ∀ i, b i ≠ 0 → ‖Z i - A (t + c i * h)‖ ≤ Cst * (h ^ p + h * ε)) :
     ‖A t + h • ∑ i, b i • F (t + c i * h) (Z i) - A (t + h)‖ ≤
-      rkConst p b c L M Cst * (h ^ (p + 1) + h ^ 2 * ε) := by
+      klRKConst p b c L M Cst * (h ^ (p + 1) + h ^ 2 * ε) := by
   obtain ⟨q, rfl⟩ : ∃ q, p = q + 1 := ⟨p - 1, by omega⟩
   have hg' : ContDiffOn ℝ (q + 1) (fun τ => F τ (A τ)) (Icc t (t + h)) := by exact_mod_cast hg
   have h1 := rk_increment_error_le hF hL b c hc (fun k hk => hord k (by omega)) hh hA hg' hM
@@ -1697,7 +1700,7 @@ theorem rk_increment_error {s p : ℕ} (hp : 0 < p) {F : ℝ → E → E} {L : �
       (∑ i, |b i|) * (Cst * (h ^ (q + 1) + h * ε)) := by rw [Finset.sum_mul]
   rw [h2] at h1
   refine h1.trans ?_
-  unfold rkConst
+  unfold klRKConst
   push_cast
   have h3 : (1 : ℝ) / (q + 2) = 1 / (q + 1 + 1) := by ring
   rw [h3] at hK ⊢
@@ -1876,7 +1879,7 @@ theorem IsRKKLStep.one_step_error {s p : ℕ} (hp : 0 < p) {F : ℝ → Matrix m
       ‖iteratedDerivWithin p (fun τ => F τ (A τ)) (Icc t (t + h)) τ‖ ≤ M)
     (hZ : ∀ i, b i ≠ 0 → ‖Z i - A (t + c i * h)‖ ≤ Cst * (h ^ p + h * ε))
     (hcmp : HasComparisonCurve Y₀ (A (t + h)) (h * η)) :
-    ‖Y₁ - A (t + h)‖ ≤ 4 * (rkConst p b c L M Cst * (h ^ (p + 1) + h ^ 2 * ε)) + 5 * (h * η) := by
+    ‖Y₁ - A (t + h)‖ ≤ 4 * (klRKConst p b c L M Cst * (h ^ (p + 1) + h ^ 2 * ε)) + 5 * (h * η) := by
   have h1 := hstep.2.one_step_error hV₀ hY₀ hcmp
   have h2 := rk_increment_error hp hF hL b c hc hord hh hε hA hg hM hZ
   rw [hA₀] at h2
@@ -1908,9 +1911,9 @@ theorem rkKL_global_error {s p : ℕ} (hp : 0 < p) {F : ℝ → Matrix m n ℝ �
     (hcmp : ∀ j < N, HasComparisonCurve (Y j) (Φ j (t₀ + j * h + h)) (h * η)) :
     ∀ j ≤ N, (j : ℝ) * h ≤ T →
       ‖Y j - A (t₀ + j * h)‖ ≤ Real.exp (L * T) *
-        (‖Y 0 - A t₀‖ + T * (4 * (rkConst p b c L M Cst * (h ^ p + h * ε)) + 5 * η)) := by
-  have hK : 0 ≤ rkConst p b c L M Cst := by
-    unfold rkConst
+        (‖Y 0 - A t₀‖ + T * (4 * (klRKConst p b c L M Cst * (h ^ p + h * ε)) + 5 * η)) := by
+  have hK : 0 ≤ klRKConst p b c L M Cst := by
+    unfold klRKConst
     have h1 : 0 ≤ ∑ i, |b i| * c i ^ p :=
       Finset.sum_nonneg fun i _ => mul_nonneg (abs_nonneg _) (pow_nonneg (hc i).1 _)
     have h2 : 0 ≤ ∑ i, |b i| := Finset.sum_nonneg fun i _ => abs_nonneg _
@@ -2573,7 +2576,7 @@ theorem IsRKKLStep.one_step_error_of_standing {s p : ℕ} (hp : 0 < p)
     (hM : ∀ τ ∈ Icc t (t + h),
       ‖iteratedDerivWithin p (fun τ => F τ (A τ)) (Icc t (t + h)) τ‖ ≤ M)
     (hZ : ∀ i, b i ≠ 0 → ‖Z i - A (t + c i * h)‖ ≤ Cst * (h ^ p + h * ε)) :
-    ‖Y₁ - A (t + h)‖ ≤ 4 * (rkConst p b c L M Cst * (h ^ (p + 1) + h ^ 2 * ε)) +
+    ‖Y₁ - A (t + h)‖ ≤ 4 * (klRKConst p b c L M Cst * (h ^ (p + 1) + h ^ 2 * ε)) +
       5 * (h * (√(Fintype.card m * Fintype.card n) * ε * Real.exp (L * h))) := by
   have hε0 : 0 ≤ ε :=
     nonneg_of_factoredNormalBound (factoredNormalBound_of_isUnit hF hε) hrm.le hrn.le
@@ -2616,12 +2619,12 @@ theorem rkKL_global_error_of_standing {s p : ℕ} (hp : 0 < p)
       ‖Z j i - Φ j (t₀ + j * h + c i * h)‖ ≤ Cst * (h ^ p + h * ε)) :
     ∀ j ≤ N, (j : ℝ) * h ≤ T →
       ‖Y j - A (t₀ + j * h)‖ ≤ Real.exp (L * T) *
-        (‖Y 0 - A t₀‖ + T * (4 * (rkConst p b c L M Cst * (h ^ p + h * ε)) +
+        (‖Y 0 - A t₀‖ + T * (4 * (klRKConst p b c L M Cst * (h ^ p + h * ε)) +
           5 * (√(Fintype.card m * Fintype.card n) * ε * Real.exp (L * h)))) := by
   have hε0 : 0 ≤ ε :=
     nonneg_of_factoredNormalBound (factoredNormalBound_of_isUnit hF hε) hrm.le hrn.le
-  have hK : 0 ≤ rkConst p b c L M Cst := by
-    unfold rkConst
+  have hK : 0 ≤ klRKConst p b c L M Cst := by
+    unfold klRKConst
     have h1 : 0 ≤ ∑ i, |b i| * c i ^ p :=
       Finset.sum_nonneg fun i _ => mul_nonneg (abs_nonneg _) (pow_nonneg (hc i).1 _)
     have h2 : 0 ≤ ∑ i, |b i| := Finset.sum_nonneg fun i _ => abs_nonneg _
@@ -2653,5 +2656,9 @@ example (r : ℕ) :
   ⟨fun _ _ _ => by simp, continuous_const, fun _ _ _ _ _ _ _ => by simp⟩
 
 end Standing
+
+/-- The constant of Theorem 6.1 under its earlier name; renamed `klRKConst` to keep it apart from
+the core `RungeKuttaBUG.rkConst`. -/
+@[deprecated (since := "2026-11-10")] alias rkConst := klRKConst
 
 end LeanDLRA.Literature.P2608_17157

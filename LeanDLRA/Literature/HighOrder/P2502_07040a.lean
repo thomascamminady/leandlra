@@ -212,6 +212,25 @@ lemma rkStage_eq {F : ℝ → E → E} {a : Fin s → Fin s → ℝ} (ha : ∀ i
     (fun j => a i j • F (t + c j * h) (rkStage F a c t h y j))
     (fun j hj => by rw [ha i j (not_lt.mp hj), zero_smul])]
 
+/-- **Bridge.** For an explicit tableau, the stages `rkStage` and the result `rkResult` of the full
+Runge–Kutta step form the core relational Runge–Kutta step `RungeKuttaBUG.IsGalerkinRKStep` with
+identity projectors, so the theorems about the core step apply to them. -/
+theorem isGalerkinRKStep_rkStage {F : ℝ → E → E} {a : Fin s → Fin s → ℝ}
+    (ha : ∀ i j, i ≤ j → a i j = 0) (b c : Fin s → ℝ) (t h : ℝ) (y : E) :
+    RungeKuttaBUG.IsGalerkinRKStep F a b c (fun _ => 1) 1 t h y (rkStage F a c t h y)
+      (rkResult F a b c t h y) :=
+  ⟨fun i => rkStage_eq ha c t h y i, rfl⟩
+
+/-- Conversely, for an explicit tableau the full Runge–Kutta step is unique: any stages `Z` and
+result `z₁` forming `RungeKuttaBUG.IsGalerkinRKStep` with identity projectors are `rkStage` and
+`rkResult`. -/
+theorem eq_rkStage_of_isGalerkinRKStep {F : ℝ → E → E} {a : Fin s → Fin s → ℝ}
+    (ha : ∀ i j, i ≤ j → a i j = 0) {b c : Fin s → ℝ} {t h : ℝ} {y : E} {Z : Fin s → E} {z₁ : E}
+    (hZ : RungeKuttaBUG.IsGalerkinRKStep F a b c (fun _ => 1) 1 t h y Z z₁) :
+    Z = rkStage F a c t h y ∧ z₁ = rkResult F a b c t h y :=
+  RungeKuttaBUG.galerkinRK_eq_rk ha hZ (isGalerkinRKStep_rkStage ha b c t h y) (fun _ => rfl) rfl
+    (fun _ _ _ => rfl) (fun _ _ => rfl)
+
 /-- The stage constants of arXiv 2502.07040, Lemma 4: `C₁ = 0` and, for `i ≥ 2`,
 `C_i = max {∑_{j<i} |a_{ij}| (1 + L C_j h₀), 1 + ∑_{j<i} |a_{ij}| L C_j h₀}`. -/
 noncomputable def stageConst (a : Fin s → Fin s → ℝ) (L h₀ : ℝ) (i : Fin s) : ℝ :=

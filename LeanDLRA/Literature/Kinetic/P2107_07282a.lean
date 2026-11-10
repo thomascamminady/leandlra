@@ -73,16 +73,13 @@ lemma inner_skew_symm {T : Matrix p p ℝ} (hT : Tᵀ = -T) {C : Matrix q q ℝ}
 
 /-- Right multiplication by a matrix with orthonormal columns is a contraction. -/
 lemma norm_mul_orthonormal_le [DecidableEq r] {W : Matrix q r ℝ} (hW : Wᵀ * W = 1)
-    (y : Matrix p q ℝ) : ‖y * W‖ ≤ ‖y‖ := by
-  have hP : ‖y * W * Wᵀ‖ ≤ ‖y‖ := (isOrthProj_rightProj hW).norm_le y |>.trans_eq' (by simp)
-  rwa [Frobenius.norm_mul_transpose_of_orthonormal hW] at hP
+    (y : Matrix p q ℝ) : ‖y * W‖ ≤ ‖y‖ :=
+  LeanDLRA.norm_mul_le_of_orthonormal hW y
 
 /-- Left multiplication by the transpose of a matrix with orthonormal columns is a contraction. -/
 lemma norm_transpose_mul_le [DecidableEq r] {X : Matrix p r ℝ} (hX : Xᵀ * X = 1)
-    (y : Matrix p q ℝ) : ‖Xᵀ * y‖ ≤ ‖y‖ := by
-  have := norm_mul_orthonormal_le hX yᵀ
-  rwa [← Frobenius.norm_transpose (yᵀ * X), Matrix.transpose_mul, Matrix.transpose_transpose,
-    Frobenius.norm_transpose] at this
+    (y : Matrix p q ℝ) : ‖Xᵀ * y‖ ≤ ‖y‖ :=
+  LeanDLRA.norm_transpose_mul_le hX y
 
 end Prelim
 

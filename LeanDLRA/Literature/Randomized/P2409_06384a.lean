@@ -1,3 +1,4 @@
+import LeanDLRA.Analysis.Defs
 import LeanDLRA.Foundations.Gronwall
 import LeanDLRA.Matrix.LowRankDistance
 import LeanDLRA.Matrix.Projectors
@@ -1976,6 +1977,17 @@ noncomputable def rk4a (j l : ℕ) : ℝ :=
 noncomputable def rk4b (j : ℕ) : ℝ :=
   if j = 0 then 1 / 6 else if j = 1 then 1 / 3 else if j = 2 then 1 / 3 else if j = 3 then 1 / 6
     else 0
+
+/-- **Bridge.** On the stage indices `< 4`, `rk4a` is the Runge–Kutta matrix of the core tableau
+`ButcherTableau.rk4`; its extension by `0` to all of `ℕ` is the convention of the stage maps `rkK`,
+`rkZ` of this file (an arbitrary choice, so the two are not replaced by each other). -/
+theorem rk4a_eq (i j : Fin 4) : rk4a i j = (ButcherTableau.rk4 : ButcherTableau ℝ 4).a i j := by
+  fin_cases i <;> fin_cases j <;> norm_num [rk4a, ButcherTableau.rk4]
+
+/-- **Bridge.** On the stage indices `< 4`, `rk4b` are the weights of the core tableau
+`ButcherTableau.rk4`. -/
+theorem rk4b_eq (i : Fin 4) : rk4b i = (ButcherTableau.rk4 : ButcherTableau ℝ 4).b i := by
+  fin_cases i <;> norm_num [rk4b, ButcherTableau.rk4]
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 

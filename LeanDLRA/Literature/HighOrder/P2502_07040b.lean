@@ -1,3 +1,4 @@
+import LeanDLRA.Analysis.Defs
 import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Foundations.Projector
@@ -54,6 +55,28 @@ structure ExplicitRK (s : ℕ) where
   c : Fin s → ℝ
   /-- Explicitness: `a_{ij} = 0` for `i ≤ j`. -/
   a_eq_zero : ∀ i j, i ≤ j → a i j = 0
+
+/-- The core Butcher tableau `(a, b, c)` of an explicit Runge–Kutta method. -/
+def ExplicitRK.toButcherTableau (tab : ExplicitRK s) : ButcherTableau ℝ s :=
+  ⟨tab.a, tab.b, tab.c⟩
+
+/-- **Bridge.** The tableau of an `ExplicitRK` is explicit in the sense of the core
+`ButcherTableau.IsExplicit`. -/
+theorem ExplicitRK.isExplicit_toButcherTableau (tab : ExplicitRK s) :
+    tab.toButcherTableau.IsExplicit :=
+  tab.a_eq_zero
+
+/-- An explicit core tableau as an `ExplicitRK`. -/
+def ExplicitRK.ofButcherTableau (T : ButcherTableau ℝ s) (hT : T.IsExplicit) : ExplicitRK s :=
+  ⟨T.a, T.b, T.c, hT⟩
+
+/-- **Bridge.** `ExplicitRK s` is the type of explicit core Butcher tableaux with real
+coefficients: `ExplicitRK s ≃ {T : ButcherTableau ℝ s // T.IsExplicit}`. -/
+def ExplicitRK.equivButcherTableau : ExplicitRK s ≃ {T : ButcherTableau ℝ s // T.IsExplicit} where
+  toFun tab := ⟨tab.toButcherTableau, tab.isExplicit_toButcherTableau⟩
+  invFun T := ExplicitRK.ofButcherTableau T.1 T.2
+  left_inv _ := rfl
+  right_inv _ := rfl
 
 /-- A low-rank matrix `U S Vᵀ` with `r × r` core and orthonormal `n × r` and `m × r` bases, eq. (2).
 As the algorithm can produce zero singular values, `S` need not be invertible. -/
