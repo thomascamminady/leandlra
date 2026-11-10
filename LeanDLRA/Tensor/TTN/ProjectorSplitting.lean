@@ -1,5 +1,5 @@
 import LeanDLRA.Tensor.TTN.Integrators
-import LeanDLRA.OpenProblems.TensorNetworks.Part1a
+import LeanDLRA.Tensor.TTN.Abstract.ProjectorSplitting
 import LeanDLRA.Foundations.Existence
 import LeanDLRA.Foundations.Galerkin
 
@@ -108,8 +108,6 @@ theorem odeSolution_restrict (π : F →L[ℝ] E) (hπ : ∀ y, π.adjoint (π y
 end Prolongation
 
 namespace DimTree
-
-open OpenProblems.TensorNetworks
 
 variable {κ : Type*} [Fintype κ] [DecidableEq κ] {ι : κ → Type*} [∀ k, Fintype (ι k)]
 

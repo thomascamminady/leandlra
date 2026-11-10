@@ -1,5 +1,5 @@
 import LeanDLRA.Tensor.TTN.ProjectorSplitting
-import LeanDLRA.OpenProblems.TensorNetworks.Part1b
+import LeanDLRA.Tensor.TTN.Abstract.ProjectorSplittingExactness
 
 /-!
 # Exactness of the recursive TTN projector-splitting integrator
@@ -10,7 +10,7 @@ networks exactly when it is applied to `F(t, Y) = Ȧ(t)` from `Y⁰ = A(t₀)`, 
 `A_τ(t₁)` keep full tree rank for every subtree `τ` (the non-degeneracy condition (5.2)). The
 proof is an induction over the height of the tree, with the exactness of the nested Tucker
 projector-splitting integrator (Lubich–Vandereycken–Walach, arXiv 1709.02594, Thm 3;
-`OpenProblems.TensorNetworks.tucker_ksl_exact`) at every node.
+`tucker_ksl_exact`) at every node.
 
 The full-rank condition enters only through the capture argument: the new basis of child `i`,
 which captures the `K`-value `Q₀ i A(t₁)`, must also capture `A(t₁)` itself. As in the matrix and
@@ -44,8 +44,6 @@ open scoped Matrix RealInnerProductSpace
 namespace LeanDLRA
 
 namespace DimTree
-
-open OpenProblems.TensorNetworks
 
 variable {κ : Type*} [Fintype κ] [DecidableEq κ] {ι : κ → Type*} [∀ k, Fintype (ι k)]
 

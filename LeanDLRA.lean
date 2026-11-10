@@ -116,6 +116,8 @@ import LeanDLRA.Tensor.TT.ProjectorSplitting
 import LeanDLRA.Tensor.TT.TangentProjector
 import LeanDLRA.Tensor.TTN.Abstract.BUG
 import LeanDLRA.Tensor.TTN.Abstract.ParallelBUG
+import LeanDLRA.Tensor.TTN.Abstract.ProjectorSplitting
+import LeanDLRA.Tensor.TTN.Abstract.ProjectorSplittingExactness
 import LeanDLRA.Tensor.TTN.Abstract.RankAdaptiveBUG
 import LeanDLRA.Tensor.TTN.Basic
 import LeanDLRA.Tensor.TTN.Integrators

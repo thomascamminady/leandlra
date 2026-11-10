@@ -136,5 +136,9 @@
   "LeanDLRA.Literature.P2309_06125.tangentSpace": "LeanDLRA.tangentSpaceAt",
   "LeanDLRA.Literature.P2306_00897.tangentSpaceAt": "LeanDLRA.tangentSpaceAt",
   "LeanDLRA.Literature.P2309_06125.rankSet": "LeanDLRA.fixedRankSet",
-  "LeanDLRA.KalmanBucy.riccatiField": "LeanDLRA.riccatiField"
+  "LeanDLRA.KalmanBucy.riccatiField": "LeanDLRA.riccatiField",
+  "LeanDLRA.OpenProblems.TensorNetworks.tucker_ksl_local_error_inexact": "LeanDLRA.tucker_ksl_local_error_inexact",
+  "LeanDLRA.OpenProblems.TensorNetworks.ttn_ksl_local_error": "LeanDLRA.ttn_ksl_local_error",
+  "LeanDLRA.OpenProblems.TensorNetworks.ttn_ksl_global_error": "LeanDLRA.ttn_ksl_global_error",
+  "LeanDLRA.OpenProblems.TensorNetworks.tucker_ksl_exact": "LeanDLRA.tucker_ksl_exact"
 }

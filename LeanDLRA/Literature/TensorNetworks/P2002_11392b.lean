@@ -31,7 +31,7 @@ results of the paper are in the library.
   modulo the operators acting on the modes of each subtree), imposed on the restricted targets.
 * **Theorem 6.1** (robust error bound): `DimTree.projectorSplitting_global_error` for concrete tree
   tensor networks, with constants depending only on the tree, `L`, `B` and `t*` (uniformly in the
-  mode dimensions and ranks); abstract form `OpenProblems.TensorNetworks.ttn_ksl_global_error`.
+  mode dimensions and ranks); abstract form `ttn_ksl_global_error`.
   **Conditional**: the paper's normal-component assumption (6.3) on the TTN manifold is replaced
   by the per-node doubly-normal bounds `‖(1 - P₁ i)(1 - Q₀ i) P₁ 0 ⋯ P₁ (i-1) F_τ(t, Kᵢ)‖ ≤ ε` of
   the nested Tucker steps (the consequence of Lemma 6.2 that the paper's Tucker analysis uses),
