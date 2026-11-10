@@ -1,4 +1,5 @@
 import LeanDLRA.Foundations.Galerkin
+import LeanDLRA.Training.Defs
 import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-!
@@ -92,6 +93,9 @@ through the Galerkin projector: `‖∇_S̃ ℒ(Ũ S̃ Ṽᵀ)‖ = ‖Ũᵀ ∇
 For FeDLRT the global loss is only required to have a `β`-Lipschitz gradient (it need not be the
 client average), and the learning rate restriction `λ ≤ 1/(12 L s⋆)` of the paper is relaxed to
 `λ β s⋆ ≤ 1` in the descent estimate.
+
+The step maps `projGradStep`, `geoLoRADir`, `geoLoRAStep`, `fedClientIter`, `fedRound`, `fedDrift`
+and the structure `IsGeoLoRABases` are defined in `LeanDLRA/Training/Defs.lean`.
 -/
 
 open Set Finset
@@ -245,11 +249,6 @@ end DescentLemma
 section ProjStep
 
 variable {ℒ : E → ℝ} {g : E → E} {β : ℝ} {P Q T : E →L[ℝ] E}
-
-/-- The projected (Galerkin) gradient step `x ↦ x - h Π ∇ℒ(x)` of dynamical low-rank training
-(the update before truncation, `Ŵ = W - λ P(W) ∇ℒ(W)` in arXiv 2410.18720, eq. (18), and
-`Ŷ₁ = Y₀ - h P_{Û₁} ∇ℓ(Y₀)` in arXiv 2502.03006, proof of Thm 5.8). -/
-def projGradStep (P : E →L[ℝ] E) (g : E → E) (h : ℝ) (x : E) : E := x - h • P (g x)
 
 lemma projGradStep_sub_self (P : E →L[ℝ] E) (g : E → E) (h : ℝ) (x : E) :
     projGradStep P g h x - x = -(h • P (g x)) := by
@@ -573,14 +572,6 @@ section GeoLoRA
 
 variable {ℒ : E → ℝ} {g : E → E} {β : ℝ}
 
-/-- The update direction of one GeoLoRA step (Schotthöfer–Zangrando–Ceruti–Tudisco–Kusch,
-arXiv 2410.18720, eqs. (6)–(8)): with the left/right projectors `P₀ = U₀U₀ᵀ(·)`,
-`Q₀ = (·)V₀V₀ᵀ` and the projectors `P̃ = ŨŨᵀ(·)`, `Q̃ = (·)ṼṼᵀ` onto the new basis directions,
-the assembled `2r × 2r` coefficient matrix `Ŝ = [[S^new, L^new,ᵀṼ], [Ũᵀ K^new, 0]]` changes the
-weights by `-λ (P₀ Q₀ ∇ℒ + P̃ Q₀ ∇ℒ + P₀ Q̃ ∇ℒ)` (the `S`-, `K`- and `L`-blocks; the lower
-right block is zero), see the proof of Thm 1 (Thm 4 in the appendix) there. -/
-def geoLoRADir (P₀ Q₀ Pt Qt : E →L[ℝ] E) (v : E) : E := P₀ (Q₀ v) + Pt (Q₀ v) + P₀ (Qt v)
-
 /-- **Basis augmentation captures the new directions** (eq. (7) of arXiv 2410.18720): if the
 augmented space `range (P₀ + P̃)`, `P̃ P₀ = 0`, contains `w ∈ range P₀` and the `K`-step update
 `w - λ Q₀ v` (`K^new V₀ᵀ = W₀ - λ ∇ℒ V₀ V₀ᵀ`) with `λ ≠ 0`, then `P̃` fixes the new directions
@@ -613,21 +604,6 @@ lemma geoLoRADir_eq_tangent {P₀ Q₀ Pt Qt : E →L[ℝ] E} (hc : ∀ x, P₀ 
   rw [geoLoRADir, tangent_apply, h1, h2, ← hc]
   abel
 
-/-- The bases of one GeoLoRA step for the gradient `v = ∇ℒ(W₀)` (arXiv 2410.18720, Algorithm 1):
-commuting orthogonal left/right projectors `P₀ = U₀U₀ᵀ(·)`, `Q₀ = (·)V₀V₀ᵀ`, new directions
-`P̃ = ŨŨᵀ(·)` with `ŨᵀU₀ = 0` and `Q̃ = (·)ṼṼᵀ` with `ṼᵀV₀ = 0` (left and right multiplications
-commute), and the augmented bases `[U₀, Ũ]`, `[V₀, Ṽ]` capture the gradient directions of the `K`-
-and `L`-steps.  Only these relations are used (`P̃`, `Q̃` need not be projectors here). -/
-structure IsGeoLoRABases (P₀ Q₀ Pt Qt : E →L[ℝ] E) (v : E) : Prop where
-  orthProj_left : IsOrthProj P₀
-  orthProj_right : IsOrthProj Q₀
-  comm : ∀ x, P₀ (Q₀ x) = Q₀ (P₀ x)
-  comm_aug : ∀ x, P₀ (Qt x) = Qt (P₀ x)
-  left_orth : ∀ x, Pt (P₀ x) = 0
-  right_orth : ∀ x, Qt (Q₀ x) = 0
-  left_capture : Pt (Q₀ v - P₀ (Q₀ v)) = Q₀ v - P₀ (Q₀ v)
-  right_capture : Qt (P₀ v - Q₀ (P₀ v)) = P₀ v - Q₀ (P₀ v)
-
 /-- **GeoLoRA bases from the augmentation `ortho([U₀, K^new])`, `ortho([V₀, L^new])`**
 (arXiv 2410.18720, eq. (7)): if `W₀ = U₀S₀V₀ᵀ` lies in the ranges of `P₀` and `Q₀`, the augmented
 left space contains `K^new V₀ᵀ = W₀ - λ Q₀ ∇ℒ` and the augmented right space contains
@@ -650,11 +626,6 @@ lemma IsGeoLoRABases.dir_eq {P₀ Q₀ Pt Qt : E →L[ℝ] E} {v : E}
 lemma IsGeoLoRABases.isOrthProj_tangent {P₀ Q₀ Pt Qt : E →L[ℝ] E} {v : E}
     (hb : IsGeoLoRABases P₀ Q₀ Pt Qt v) : IsOrthProj (tangent P₀ Q₀) :=
   hb.orthProj_left.tangent hb.orthProj_right hb.comm
-
-/-- The GeoLoRA iterate before truncation, `Ŵ = W₀ - λ (P₀ Q₀ + P̃ Q₀ + P₀ Q̃) ∇ℒ(W₀)`
-(arXiv 2410.18720, eq. (8)). -/
-def geoLoRAStep (P₀ Q₀ Pt Qt : E →L[ℝ] E) (g : E → E) (lr : ℝ) (w : E) : E :=
-  w - lr • geoLoRADir P₀ Q₀ Pt Qt (g w)
 
 /-- The GeoLoRA step is the explicit Euler step of the Riemannian gradient flow:
 `Ŵ = W₀ - λ P(W₀) ∇ℒ(W₀)` (arXiv 2410.18720, proof of Thm 1). -/
@@ -768,25 +739,6 @@ section Federated
 variable {ι : Type*} {ℒ : E → ℝ} {g : E → E} {gc : ι → E → E} {β lr : ℝ}
   {P : E →L[ℝ] E}
 
-/-- Variance-corrected local iterates of client `c` in FeDLRT (Schotthöfer–Laiu, arXiv 2406.17887,
-eq. (8)), written for the full weights `z = Ũ S̃ Ṽᵀ` in the shared augmented space with Galerkin
-projector `Π = Ũ Ũᵀ (·) Ṽ Ṽᵀ`:
-`z⁰ = x`, `z^{s+1} = z^s - λ Π (∇ℒ_c(z^s) - ∇ℒ_c(x) + ∇ℒ(x))`.
-(In coefficients, `S̃^{s+1} = S̃^s - λ (∇_S̃ ℒ_c(Ũ S̃^s Ṽᵀ) + G_S̃ - G_S̃,c)`, since
-`Ũ (∇_S̃ ℒ) Ṽᵀ = Π ∇ℒ`.) -/
-def fedClientIter (P : E →L[ℝ] E) (gc : ι → E → E) (g : E → E) (lr : ℝ) (x : E) (c : ι) :
-    ℕ → E
-  | 0 => x
-  | s + 1 => fedClientIter P gc g lr x c s -
-      lr • P (gc c (fedClientIter P gc g lr x c s) - gc c x + g x)
-
-/-- One FeDLRT round before truncation: `s⋆` variance-corrected local steps on every client,
-followed by averaging over the clients (the FedAvg aggregation `S̃⋆ = (1/C) ∑_c S̃_c^{s⋆}`,
-eq. (10) of arXiv 2406.17887). -/
-noncomputable def fedRound [Fintype ι] (P : E →L[ℝ] E) (gc : ι → E → E) (g : E → E) (lr : ℝ)
-    (sstar : ℕ) (x : E) : E :=
-  (Fintype.card ι : ℝ)⁻¹ • ∑ c, fedClientIter P gc g lr x c sstar
-
 lemma fedClientIter_succ (P : E →L[ℝ] E) (gc : ι → E → E) (g : E → E) (lr : ℝ) (x : E) (c : ι)
     (s : ℕ) : fedClientIter P gc g lr x c (s + 1) = fedClientIter P gc g lr x c s -
       lr • P (gc c (fedClientIter P gc g lr x c s) - gc c x + g x) := rfl
@@ -862,12 +814,6 @@ lemma norm_fedClientIter_sub_le_exp (hP : IsOrthProj P)
     _ = (1 + lr * β) ^ s * (s * lr * ‖P (g x)‖) := by ring
     _ ≤ Real.exp 1 * (s * lr * ‖P (g x)‖) := mul_le_mul_of_nonneg_right hq ha
     _ = _ := by ring
-
-/-- The client-averaged accumulated gradient difference
-`(1/C) ∑_c ∑_{j<s⋆} (∇ℒ_c(z_c^j) - ∇ℒ_c(x))` of one FeDLRT round. -/
-noncomputable def fedDrift [Fintype ι] (P : E →L[ℝ] E) (gc : ι → E → E) (g : E → E) (lr : ℝ)
-    (sstar : ℕ) (x : E) : E :=
-  (Fintype.card ι : ℝ)⁻¹ • ∑ c, ∑ j ∈ range sstar, (gc c (fedClientIter P gc g lr x c j) - gc c x)
 
 /-- The aggregated FeDLRT update is a projected gradient step of length `s⋆ λ` perturbed by the
 averaged drift: `x⋆ = x - s⋆ λ Π ∇ℒ(x) - λ Π w`. -/

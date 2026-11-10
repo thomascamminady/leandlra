@@ -1,4 +1,5 @@
 import LeanDLRA.Training.Descent
+import LeanDLRA.Training.Defs
 import LeanDLRA.Matrix.Projectors
 
 /-!
@@ -105,15 +106,6 @@ open LeanDLRA
 variable {k k' m n : Type*} [Fintype k] [Fintype k'] [Fintype m] [Fintype n]
 
 /-! ### The LoRA operator `P̂` (OP-TR-14) -/
-
-/-- The operator of factor-wise (LoRA-style) gradient descent on `W = U S Vᵀ`: simultaneous
-gradient flow in `(U, S, V)` induces `Ẇ = -P̂ ∇L(W)` with
-`P̂ Z = Z V SᵀS Vᵀ + U Uᵀ Z V Vᵀ + U S Sᵀ Uᵀ Z` (OP-TR-14; from `U̇ = -Z V Sᵀ`, `Ṡ = -Uᵀ Z V`,
-`V̇ = -Zᵀ U S` and the product rule; arXiv 2410.18720, Sec. 3, prints the middle term with a minus
-sign).  Unlike `tangentProj U V` it depends on the singular values in `S`. -/
-noncomputable def loraPrecond (U : Matrix m k ℝ) (S : Matrix k k' ℝ) (V : Matrix n k' ℝ)
-    (Z : Matrix m n ℝ) : Matrix m n ℝ :=
-  Z * V * (Sᵀ * S) * Vᵀ + U * Uᵀ * Z * V * Vᵀ + U * (S * Sᵀ) * Uᵀ * Z
 
 /-- Polarized form of the quadratic form of `P̂`. -/
 theorem inner_loraPrecond (U : Matrix m k ℝ) (S : Matrix k k' ℝ) (V : Matrix n k' ℝ)

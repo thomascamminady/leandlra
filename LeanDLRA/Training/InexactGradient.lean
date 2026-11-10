@@ -1,4 +1,5 @@
 import LeanDLRA.Research.SameMinibatchAugmentation
+import LeanDLRA.Training.Defs
 
 /-!
 # Low-rank training with inexact values and gradients
@@ -237,12 +238,6 @@ section Armijo
 
 variable {ℒ ℒt : E → ℝ} {g : E → E} {β : ℝ}
 
-/-- The inexact Armijo sufficient-decrease test `ℒ̃(x - s d) ≤ ℒ̃(x) - c s ‖d‖²` used by the
-backtracking line searches of arXiv 2506.21405 (Alg. 2) and arXiv 2409.14938 (Algs. 2–3),
-with inexact values `ℒ̃` and an inexact search direction `d = g̃`. -/
-def ArmijoTest (ℒt : E → ℝ) (c : ℝ) (x d : E) (s : ℝ) : Prop :=
-  ℒt (x - s • d) ≤ ℒt x - c * s * ‖d‖ ^ 2
-
 /-- The inexact test along the inexact direction: if `|ℒ̃ - ℒ| ≤ δ` at `x` and at `x - s d`,
 `‖d - ∇ℒ(x)‖ ≤ η` and `s ≥ 0`, then
 `ℒ̃(x - s d) ≤ ℒ̃(x) - s ‖d‖² + s η ‖d‖ + β s²/2 ‖d‖² + 2δ`. -/
@@ -445,11 +440,6 @@ theorem loss_truncated_implicitEuler_le (hℒ : ∀ x, HasFDerivAt ℒ (innerSL 
     (hG : ∀ w ∈ segment ℝ x₁ x₁', ‖g w‖ ≤ G) :
     ℒ x₁' ≤ ℒ x₀ - h * (1 - β * h / 2) * ‖P (g x₁)‖ ^ 2 + G * ϑ :=
   loss_truncated_le hℒ (loss_implicitEuler_le hℒ hg hP hx) htr hG
-
-/-- A **discrete gradient** of `ℒ` (Gonzalez, McLachlan–Quispel–Robidoux): a map `∇̄ℒ(x, y)`
-with `ℒ(y) - ℒ(x) = ⟪∇̄ℒ(x, y), y - x⟫` for all `x, y`. -/
-def IsDiscreteGradient (ℒ : E → ℝ) (gb : E → E → E) : Prop :=
-  ∀ x y, ℒ y - ℒ x = ⟪gb x y, y - x⟫
 
 /-- The midpoint discrete gradient `(x + y)/2` of the quadratic loss `‖x‖²/2`
 (a non-degenerate instance of `IsDiscreteGradient`). -/

@@ -85,6 +85,7 @@ import LeanDLRA.Tensor.TTN.Prolongation
 import LeanDLRA.Tensor.Tucker.Basic
 import LeanDLRA.Tensor.Tucker.Tangent
 import LeanDLRA.Tensor.Unfolding
+import LeanDLRA.Training.Defs
 import LeanDLRA.Training.Descent
 import LeanDLRA.Training.FactorizedDynamics
 import LeanDLRA.Training.GradientFlowConvergence
