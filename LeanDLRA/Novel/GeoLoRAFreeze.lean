@@ -113,6 +113,7 @@ open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius
 namespace LeanDLRA.Novel.GeoLoRAFreeze
 
 open LeanDLRA FactorizedDynamics BlindSpot BlindSpotII EckartYoung Curvature
+open LeanDLRA.WeylSingular (tailNorm)
 
 set_option linter.unusedSectionVars false
 set_option linter.unusedFintypeInType false
@@ -434,7 +435,7 @@ theorem mul_norm_schur_le {U : Matrix m k ℝ} {V : Matrix n k ℝ} (hU : Uᵀ *
 /-- **Upper bound for the tail**: `(∑_{i > r} σ_i²)^{1/2} ≤ ‖Z‖`. -/
 theorem svTail_asm_le (U : Matrix m k ℝ) (V : Matrix n k ℝ) {A : Matrix k k ℝ}
     (hA : IsUnit A.det) (a : Matrix m k ℝ) (b : Matrix k n ℝ) (X : Matrix m n ℝ) :
-    svTail (asm U V A a b X) (Fintype.card k) ≤ ‖schur A a b X‖ := by
+    tailNorm (asm U V A a b X) (Fintype.card k) ≤ ‖schur A a b X‖ := by
   have h := svTail_le_norm_sub (asm U V A a b X) _ (rank_asm_core_le U A a (A * Vᵀ + b))
   have e : asm U V A a b X - (U * A + a) * A⁻¹ * (A * Vᵀ + b) = schur A a b X := by
     rw [asm_eq_add_schur U V hA a b X, add_sub_cancel_left]
@@ -446,7 +447,7 @@ theorem mul_norm_schur_le_svTail {U : Matrix m k ℝ} {V : Matrix n k ℝ} (hU :
     {a : Matrix m k ℝ} {b : Matrix k n ℝ} {X : Matrix m n ℝ} (ha : Uᵀ * a = 0) (hb : b * V = 0)
     (hXl : Uᵀ * X = 0) (hXr : X * V = 0) {t : ℝ} (ht0 : 0 ≤ t) (ht1 : t ≤ 1)
     (htZ : t * specNorm (schur A a b X) ≤ s) :
-    t * ‖schur A a b X‖ ≤ kappa A a b * svTail (asm U V A a b X) (Fintype.card k) := by
+    t * ‖schur A a b X‖ ≤ kappa A a b * tailNorm (asm U V A a b X) (Fintype.card k) := by
   have h := mul_norm_schur_le hU hV hs hA ha hb hXl hXr ht0 ht1 htZ
     (rank_truncation_le (asm U V A a b X) (Fintype.card k))
   rwa [norm_sub_rev (asm U V A a b X), norm_sub_truncation_eq] at h
@@ -774,7 +775,7 @@ theorem norm_sq_tangentProj_eq (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (G : Matr
 
 /-- **Tail, upper bound**: `(∑_{i>r} σ_i(Ŵ)²)^{1/2} ≤ λ² ‖a A⁻¹ b‖`. -/
 theorem svTail_geoPre_le (hA : IsUnit (coreBlock U V S G lr).det) :
-    svTail (geoPre U V S G lr) (Fintype.card k) ≤
+    tailNorm (geoPre U V S G lr) (Fintype.card k) ≤
       lr ^ 2 * ‖leftBlock U V G * (coreBlock U V S G lr)⁻¹ * rightBlock U V G‖ := by
   rw [geoPre_eq_asm, ← norm_schur_geo]
   exact svTail_asm_le U V hA _ _ _
@@ -844,7 +845,7 @@ theorem rank_trunc_geoPre_le_of_tangent (hT : IsToleranceTruncation T ϑ) (hU : 
 theorem svTail_asm_sq_le_right {U : Matrix m k ℝ} {V : Matrix n k ℝ} (hU : Uᵀ * U = 1)
     {A : Matrix k k ℝ} (hA : IsUnit A.det) {a : Matrix m k ℝ} (ha : Uᵀ * a = 0)
     (b : Matrix k n ℝ) (t : ℝ) :
-    svTail (asm U V A a b 0) (Fintype.card k) ^ 2 ≤
+    tailNorm (asm U V A a b 0) (Fintype.card k) ^ 2 ≤
       (1 - t) ^ 2 * ‖b‖ ^ 2 + t ^ 2 * ‖a * A⁻¹ * b‖ ^ 2 := by
   set Y : Matrix m n ℝ := (U * A + a) * (Vᵀ + t • (A⁻¹ * b)) with hY
   have hj : A * A⁻¹ = 1 := Matrix.mul_nonsing_inv A hA
@@ -870,7 +871,7 @@ theorem svTail_asm_sq_le_right {U : Matrix m k ℝ} {V : Matrix n k ℝ} (hU : U
 theorem svTail_asm_sq_le_left {U : Matrix m k ℝ} {V : Matrix n k ℝ} (hV : Vᵀ * V = 1)
     {A : Matrix k k ℝ} (hA : IsUnit A.det) (a : Matrix m k ℝ) {b : Matrix k n ℝ} (hb : b * V = 0)
     (t : ℝ) :
-    svTail (asm U V A a b 0) (Fintype.card k) ^ 2 ≤
+    tailNorm (asm U V A a b 0) (Fintype.card k) ^ 2 ≤
       (1 - t) ^ 2 * ‖a‖ ^ 2 + t ^ 2 * ‖a * A⁻¹ * b‖ ^ 2 := by
   set Y : Matrix m n ℝ := (U + t • (a * A⁻¹)) * (A * Vᵀ + b) with hY
   have hi : A⁻¹ * A = 1 := Matrix.nonsing_inv_mul A hA
@@ -921,7 +922,7 @@ lemma crossover_bound {τ p q₀ s c : ℝ} (hτ : 0 ≤ τ) (hs : 0 < s) (hp : 
 `λ² ‖a‖ ‖b‖ / s`, for `s ≪ |λ| ‖a‖` it saturates at the first-order `|λ| ‖b‖`. -/
 theorem svTail_geoPre_le_interp_left (hU : Uᵀ * U = 1) {s : ℝ} (hs : 0 < s)
     (hA : LowerBd (coreBlock U V S G lr) s) :
-    svTail (geoPre U V S G lr) (Fintype.card k) ≤
+    tailNorm (geoPre U V S G lr) (Fintype.card k) ≤
       lr ^ 2 * ‖leftBlock U V G‖ * ‖rightBlock U V G‖ /
         √(s ^ 2 + (|lr| * ‖leftBlock U V G‖) ^ 2) := by
   set a := leftBlock U V G with ha
@@ -930,7 +931,7 @@ theorem svTail_geoPre_le_interp_left (hU : Uᵀ * U = 1) {s : ℝ} (hs : 0 < s)
   have hdet := hA.isUnit_det hs
   have hUa : Uᵀ * ((-lr) • a) = 0 := by
     rw [Matrix.mul_smul, ha, transpose_mul_leftBlock hU, smul_zero]
-  have key : ∀ t : ℝ, 0 ≤ t → svTail (geoPre U V S G lr) (Fintype.card k) ^ 2 ≤
+  have key : ∀ t : ℝ, 0 ≤ t → tailNorm (geoPre U V S G lr) (Fintype.card k) ^ 2 ≤
       (1 - t) ^ 2 * (|lr| * ‖b‖) ^ 2 + t ^ 2 * ((|lr| * ‖a‖) * (|lr| * ‖b‖) / s) ^ 2 := by
     intro t ht
     have h1 := svTail_asm_sq_le_right (V := V) hU hdet hUa ((-lr) • b) t
@@ -952,7 +953,7 @@ theorem svTail_geoPre_le_interp_left (hU : Uᵀ * U = 1) {s : ℝ} (hs : 0 < s)
 /-- Mirror of `svTail_geoPre_le_interp_left`, saturating at `|λ| ‖a‖`. -/
 theorem svTail_geoPre_le_interp_right (hV : Vᵀ * V = 1) {s : ℝ} (hs : 0 < s)
     (hA : LowerBd (coreBlock U V S G lr) s) :
-    svTail (geoPre U V S G lr) (Fintype.card k) ≤
+    tailNorm (geoPre U V S G lr) (Fintype.card k) ≤
       lr ^ 2 * ‖leftBlock U V G‖ * ‖rightBlock U V G‖ /
         √(s ^ 2 + (|lr| * ‖rightBlock U V G‖) ^ 2) := by
   set a := leftBlock U V G with ha
@@ -961,7 +962,7 @@ theorem svTail_geoPre_le_interp_right (hV : Vᵀ * V = 1) {s : ℝ} (hs : 0 < s)
   have hdet := hA.isUnit_det hs
   have hbV : ((-lr) • b) * V = 0 := by
     rw [Matrix.smul_mul, hb, rightBlock_mul hV, smul_zero]
-  have key : ∀ t : ℝ, 0 ≤ t → svTail (geoPre U V S G lr) (Fintype.card k) ^ 2 ≤
+  have key : ∀ t : ℝ, 0 ≤ t → tailNorm (geoPre U V S G lr) (Fintype.card k) ^ 2 ≤
       (1 - t) ^ 2 * (|lr| * ‖a‖) ^ 2 + t ^ 2 * ((|lr| * ‖b‖) * (|lr| * ‖a‖) / s) ^ 2 := by
     intro t ht
     have h1 := svTail_asm_sq_le_left (U := U) hV hdet ((-lr) • a) hbV t
@@ -1081,7 +1082,7 @@ direction of `S` (`norm_mul_diagonal_inv_mul_eq`).  This makes the heuristic `λ
 exact. -/
 theorem tendsto_svTail_geoPre_div_sq (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
     (hS : IsUnit S.det) (G : Matrix m n ℝ) :
-    Tendsto (fun lr : ℝ => svTail (geoPre U V S G lr) (Fintype.card k) / lr ^ 2) (𝓝[≠] 0)
+    Tendsto (fun lr : ℝ => tailNorm (geoPre U V S G lr) (Fintype.card k) / lr ^ 2) (𝓝[≠] 0)
       (𝓝 ‖leftBlock U V G * S⁻¹ * rightBlock U V G‖) := by
   set a := leftBlock U V G with ha
   set b := rightBlock U V G with hb
@@ -1150,7 +1151,7 @@ theorem tendsto_svTail_geoPre_div_sq (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
   have ev1' := nhdsWithin_le_nhds (s := {(0 : ℝ)}ᶜ) ev1
   have hAev' := nhdsWithin_le_nhds (s := {(0 : ℝ)}ᶜ) hAev
   have hupper : ∀ᶠ lr in 𝓝[≠] (0 : ℝ),
-      svTail (geoPre U V S G lr) (Fintype.card k) / lr ^ 2 ≤ φ lr := by
+      tailNorm (geoPre U V S G lr) (Fintype.card k) / lr ^ 2 ≤ φ lr := by
     filter_upwards [hAev', hmem] with lr hA hlr
     have h1 := svTail_geoPre_le (U := U) (V := V) (S := S) (G := G) (lr := lr)
       (hA.isUnit_det (by positivity))
@@ -1158,7 +1159,7 @@ theorem tendsto_svTail_geoPre_div_sq (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
     rw [div_le_iff₀ h2]
     linarith [h1, mul_comm (φ lr) (lr ^ 2)]
   have hlower : ∀ᶠ lr in 𝓝[≠] (0 : ℝ),
-      φ lr / κ lr ≤ svTail (geoPre U V S G lr) (Fintype.card k) / lr ^ 2 := by
+      φ lr / κ lr ≤ tailNorm (geoPre U V S G lr) (Fintype.card k) / lr ^ 2 := by
     filter_upwards [hAev', hmem, ev1'] with lr hA hlr hsmall
     have h2 : 0 < lr ^ 2 := by positivity
     have hk : 0 < κ lr := lt_of_lt_of_le one_pos (one_le_kappa _ _ _)
@@ -1991,7 +1992,7 @@ variable {l l' : Type*} [Fintype l] [Fintype l'] [DecidableEq l] [DecidableEq l'
 `(∑_{i ≥ 2} σ_i²)^{1/2} = |D₊ − D₋| / 2` for `P [[s, β], [α, t]] Qᵀ`. -/
 theorem svTail_frame_eq {P : Matrix m (Fin 2) ℝ} {Q : Matrix n (Fin 2) ℝ} (hP : Pᵀ * P = 1)
     (hQ : Qᵀ * Q = 1) (s β α t : ℝ) (hDp : 0 < radP s β α t) (hDm : 0 < radM s β α t) :
-    svTail (P * !![s, β; α, t] * Qᵀ) 1 = |radP s β α t - radM s β α t| / 2 := by
+    tailNorm (P * !![s, β; α, t] * Qᵀ) 1 = |radP s β α t - radM s β α t| / 2 := by
   set M := !![s, β; α, t] with hM
   set X := P * M * Qᵀ with hX
   refine le_antisymm ?_ ?_
@@ -2020,7 +2021,7 @@ theorem svTail_frame_eq {P : Matrix m (Fin 2) ℝ} {Q : Matrix n (Fin 2) ℝ} (h
     have h2 : ‖M - Z‖ ≤ ‖X - Y‖ := by
       rw [e2]
       exact (norm_mul_le_of_orthonormal hQ _).trans (norm_transpose_mul_le hP _)
-    have h3 : ‖X - Y‖ = svTail X 1 := by
+    have h3 : ‖X - Y‖ = tailNorm X 1 := by
       rw [norm_sub_rev, hY, norm_sub_truncation_eq]
     rw [h3] at h2
     linarith
@@ -2117,7 +2118,7 @@ and every `λ`, and contains the second-order law and the first-order saturation
 `geoThreshold_bounds`. -/
 theorem svTail_geoPre_rank_one (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (S : Matrix k k ℝ)
     (G : Matrix m n ℝ) (lr : ℝ) (hs : coreBlock U V S G lr default default ≠ 0) :
-    svTail (geoPre U V S G lr) 1 =
+    tailNorm (geoPre U V S G lr) 1 =
       geoThreshold (coreBlock U V S G lr default default)
         (|lr| * ‖leftBlock U V G‖) (|lr| * ‖rightBlock U V G‖) := by
   set e : k := default with he

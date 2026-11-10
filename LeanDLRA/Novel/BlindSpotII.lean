@@ -1,6 +1,7 @@
 import Mathlib
 import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Classical.SVD
+import LeanDLRA.Classical.WeylSingular
 import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.LowRankDistance
 import LeanDLRA.Matrix.Projectors
@@ -104,64 +105,68 @@ open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius ENNReal
 namespace LeanDLRA.Novel.BlindSpotII
 
 open LeanDLRA FactorizedDynamics BlindSpot EckartYoung
+open LeanDLRA.WeylSingular (tailNorm)
 open Matrix (rangeProj)
 
 section Truncation
 
 variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
 
-/-- The singular-value tail `(∑_{i ≥ r} σ_i(X)²)^{1/2}`, the Frobenius error of the rank-`r`
-truncated SVD. -/
-noncomputable def svTail (X : Matrix m n ℝ) (r : ℕ) : ℝ :=
-  √(∑ i ∈ Ico r (Fintype.card n), (Matrix.toEuclideanLin X).singularValues i ^ 2)
-
-/-- The **tolerance rank**: the smallest `r` whose tail is at most `ϑ` (arXiv 2104.05247 eq. (6),
-arXiv 2410.18720 Alg. 1). -/
-noncomputable def tolRank (ϑ : ℝ) (X : Matrix m n ℝ) : ℕ := sInf {r | svTail X r ≤ ϑ}
+/-! The singular-value tail `τ_r(X) = (∑_{i ≥ r} σ_i(X)²)^{1/2}`, the Frobenius error of the
+rank-`r` truncated SVD, is the core `WeylSingular.tailNorm`, and the **tolerance rank** (the
+smallest `r` whose tail is at most `ϑ`; arXiv 2104.05247 eq. (6), arXiv 2410.18720 Alg. 1) is the
+core `epsRank` (`WeylSingular.epsRank_eq_sInf_tailNorm`). The local `svTail` and `tolRank` of an
+earlier version of this file were these definitions (unification, follow-up of batch C3). -/
 
 /-- The **truncated SVD at the tolerance rank**: the library's `EckartYoung.truncation` at
-`tolRank ϑ X`.  This is the concrete map `T_ϑ` of rank-adaptive BUG, DLRT and GeoLoRA. -/
+`epsRank ϑ X`.  This is the concrete map `T_ϑ` of rank-adaptive BUG, DLRT and GeoLoRA. -/
 noncomputable def svdTrunc (ϑ : ℝ) (X : Matrix m n ℝ) : Matrix m n ℝ :=
-  truncation X (tolRank ϑ X)
+  truncation X (epsRank ϑ X)
 
-lemma svTail_nonneg (X : Matrix m n ℝ) (r : ℕ) : 0 ≤ svTail X r := Real.sqrt_nonneg _
+lemma svTail_nonneg (X : Matrix m n ℝ) (r : ℕ) : 0 ≤ tailNorm X r := Real.sqrt_nonneg _
 
 lemma svTail_sq (X : Matrix m n ℝ) (r : ℕ) :
-    svTail X r ^ 2 =
+    tailNorm X r ^ 2 =
       ∑ i ∈ Ico r (Fintype.card n), (Matrix.toEuclideanLin X).singularValues i ^ 2 :=
   Real.sq_sqrt (Finset.sum_nonneg fun _ _ => sq_nonneg _)
 
 lemma norm_sub_truncation_eq (X : Matrix m n ℝ) (r : ℕ) :
-    ‖truncation X r - X‖ = svTail X r := by
-  rw [norm_sub_rev, norm_sub_truncation, svTail]
+    ‖truncation X r - X‖ = tailNorm X r := by
+  rw [norm_sub_rev, norm_sub_truncation, WeylSingular.tailNorm]
 
 lemma svTail_le_norm_sub (X Y : Matrix m n ℝ) {r : ℕ} (hY : Y.rank ≤ r) :
-    svTail X r ≤ ‖X - Y‖ :=
+    tailNorm X r ≤ ‖X - Y‖ :=
   sqrt_sum_sq_singularValues_le_norm_sub X Y hY
 
-lemma svTail_eq_zero_of_rank_le {X : Matrix m n ℝ} {r : ℕ} (h : X.rank ≤ r) : svTail X r = 0 :=
+lemma svTail_eq_zero_of_rank_le {X : Matrix m n ℝ} {r : ℕ} (h : X.rank ≤ r) : tailNorm X r = 0 :=
   le_antisymm (by simpa using svTail_le_norm_sub X X h) (svTail_nonneg X r)
 
-lemma svTail_antitone (X : Matrix m n ℝ) {r s : ℕ} (h : r ≤ s) : svTail X s ≤ svTail X r := by
+lemma svTail_antitone (X : Matrix m n ℝ) {r s : ℕ} (h : r ≤ s) : tailNorm X s ≤ tailNorm X r := by
   refine Real.sqrt_le_sqrt (Finset.sum_le_sum_of_subset_of_nonneg ?_ fun _ _ _ => sq_nonneg _)
   exact Finset.Ico_subset_Ico_left h
 
 /-- The set defining the tolerance rank is nonempty for `ϑ ≥ 0`. -/
-lemma tolRank_mem {ϑ : ℝ} (hϑ : 0 ≤ ϑ) (X : Matrix m n ℝ) : svTail X (tolRank ϑ X) ≤ ϑ := by
-  have hne : {r | svTail X r ≤ ϑ}.Nonempty :=
-    ⟨Fintype.card n, show svTail X _ ≤ ϑ by simpa [svTail] using hϑ⟩
+lemma tolRank_mem {ϑ : ℝ} (hϑ : 0 ≤ ϑ) (X : Matrix m n ℝ) : tailNorm X (epsRank ϑ X) ≤ ϑ := by
+  have hne : {r | tailNorm X r ≤ ϑ}.Nonempty :=
+    ⟨Fintype.card n, show tailNorm X _ ≤ ϑ by simpa [WeylSingular.tailNorm] using hϑ⟩
+  rw [WeylSingular.epsRank_eq_sInf_tailNorm]
   exact Nat.sInf_mem hne
 
-lemma lt_svTail_of_lt_tolRank {ϑ : ℝ} {X : Matrix m n ℝ} {s : ℕ} (h : s < tolRank ϑ X) :
-    ϑ < svTail X s :=
-  not_le.mp (Nat.notMem_of_lt_sInf h)
+lemma lt_svTail_of_lt_tolRank {ϑ : ℝ} {X : Matrix m n ℝ} {s : ℕ} (h : s < epsRank ϑ X) :
+    ϑ < tailNorm X s := by
+  rw [WeylSingular.epsRank_eq_sInf_tailNorm] at h
+  exact not_le.mp (Nat.notMem_of_lt_sInf h)
 
-lemma tolRank_le_of_svTail_le {ϑ : ℝ} {X : Matrix m n ℝ} {r : ℕ} (h : svTail X r ≤ ϑ) :
-    tolRank ϑ X ≤ r := Nat.sInf_le h
+lemma tolRank_le_of_svTail_le {ϑ : ℝ} {X : Matrix m n ℝ} {r : ℕ} (h : tailNorm X r ≤ ϑ) :
+    epsRank ϑ X ≤ r := by
+  rw [WeylSingular.epsRank_eq_sInf_tailNorm]
+  exact Nat.sInf_le h
 
+omit [DecidableEq n] in
 lemma tolRank_le_rank_of_norm_sub_le {ϑ : ℝ} {X Y : Matrix m n ℝ} (h : ‖Y - X‖ ≤ ϑ) :
-    tolRank ϑ X ≤ Y.rank :=
-  tolRank_le_of_svTail_le ((svTail_le_norm_sub X Y le_rfl).trans (by rwa [norm_sub_rev]))
+    epsRank ϑ X ≤ Y.rank := by
+  classical
+  exact tolRank_le_of_svTail_le ((svTail_le_norm_sub X Y le_rfl).trans (by rwa [norm_sub_rev]))
 
 /-- The truncated SVD is within the tolerance. -/
 theorem norm_svdTrunc_sub_le {ϑ : ℝ} (hϑ : 0 ≤ ϑ) (X : Matrix m n ℝ) :
@@ -171,7 +176,7 @@ theorem norm_svdTrunc_sub_le {ϑ : ℝ} (hϑ : 0 ≤ ϑ) (X : Matrix m n ℝ) :
 
 /-- The truncated SVD has exactly the tolerance rank. -/
 theorem rank_svdTrunc {ϑ : ℝ} (hϑ : 0 ≤ ϑ) (X : Matrix m n ℝ) :
-    (svdTrunc ϑ X).rank = tolRank ϑ X :=
+    (svdTrunc ϑ X).rank = epsRank ϑ X :=
   le_antisymm (rank_truncation_le X _) (tolRank_le_rank_of_norm_sub_le (norm_svdTrunc_sub_le hϑ X))
 
 /-- **The library's truncated SVD is a tolerance truncation.**  This discharges
@@ -190,18 +195,18 @@ theorem isToleranceTruncation_svdTrunc {ϑ : ℝ} (hϑ : 0 ≤ ϑ) :
     exact norm_sub_truncation_le X hY
 
 lemma sq_singularValues_le_svTail_sq (X : Matrix m n ℝ) {i : ℕ} (hi : i < Fintype.card n) :
-    (Matrix.toEuclideanLin X).singularValues i ≤ svTail X i := by
+    (Matrix.toEuclideanLin X).singularValues i ≤ tailNorm X i := by
   refine Real.le_sqrt_of_sq_le ?_
   exact Finset.single_le_sum (f := fun j => (Matrix.toEuclideanLin X).singularValues j ^ 2)
     (fun _ _ => sq_nonneg _) (Finset.mem_Ico.2 ⟨le_rfl, hi⟩)
 
 /-- `σ_{r-1}` is the tail before the last nonzero singular value. -/
 lemma svTail_pred_rank {X : Matrix m n ℝ} {r : ℕ} (hr : X.rank = r + 1) :
-    svTail X r = (Matrix.toEuclideanLin X).singularValues r := by
+    tailNorm X r = (Matrix.toEuclideanLin X).singularValues r := by
   have hlt : r < Fintype.card n := by
     have := Matrix.rank_le_card_width X
     omega
-  have h0 : svTail X (r + 1) ^ 2 = 0 := by
+  have h0 : tailNorm X (r + 1) ^ 2 = 0 := by
     rw [svTail_eq_zero_of_rank_le hr.le]; simp
   have h1 := svTail_sq X r
   rw [Finset.sum_eq_sum_Ico_succ_bot hlt, ← svTail_sq, h0, add_zero] at h1
@@ -224,7 +229,7 @@ theorem svdTrunc_eq_self_iff {ϑ : ℝ} (hϑ : 0 ≤ ϑ) {W : Matrix m n ℝ} :
   constructor
   · intro h i hi
     obtain ⟨r, hr⟩ : ∃ r, W.rank = r + 1 := ⟨W.rank - 1, by omega⟩
-    have hrk : r < tolRank ϑ W := by
+    have hrk : r < epsRank ϑ W := by
       have := rank_svdTrunc hϑ W
       rw [h] at this
       omega
@@ -232,17 +237,18 @@ theorem svdTrunc_eq_self_iff {ϑ : ℝ} (hϑ : 0 ≤ ϑ) {W : Matrix m n ℝ} :
     rw [svTail_pred_rank hr] at h1
     exact h1.trans_le ((Matrix.toEuclideanLin W).singularValues_antitone (by omega))
   · intro h
-    have h1 : tolRank ϑ W = W.rank := by
+    have h1 : epsRank ϑ W = W.rank := by
       refine le_antisymm (tolRank_le_of_svTail_le ?_) ?_
       · rw [svTail_eq_zero_of_rank_le le_rfl]; exact hϑ
-      · refine le_csInf ⟨W.rank, ?_⟩ fun r hr => ?_
-        · change svTail W W.rank ≤ ϑ
+      · rw [WeylSingular.epsRank_eq_sInf_tailNorm]
+        refine le_csInf ⟨W.rank, ?_⟩ fun r hr => ?_
+        · change tailNorm W W.rank ≤ ϑ
           rw [svTail_eq_zero_of_rank_le le_rfl]; exact hϑ
         · by_contra hlt
           rw [not_le] at hlt
           have h2 := sq_singularValues_le_svTail_sq W
             (hlt.trans_le (Matrix.rank_le_card_width W))
-          exact absurd (hr : svTail W r ≤ ϑ) (not_le.2 ((h r hlt).trans_le h2))
+          exact absurd (hr : tailNorm W r ≤ ϑ) (not_le.2 ((h r hlt).trans_le h2))
     have h2 : ‖svdTrunc ϑ W - W‖ = 0 := by
       rw [svdTrunc, norm_sub_truncation_eq, h1, svTail_eq_zero_of_rank_le le_rfl]
     exact sub_eq_zero.1 (norm_eq_zero.1 h2)
@@ -1588,9 +1594,9 @@ theorem div_rank_le_integral_ratio {ν : Measure (EuclideanSpace ℝ n)} [IsProb
     have hsub : ∀ i ∈ I, (i : ℕ) < N.rank := fun i hi => by
       by_contra hcon
       rw [not_lt] at hcon
-      have h1 : (Matrix.toEuclideanLin N).singularValues i ≤ svTail N i := by
+      have h1 : (Matrix.toEuclideanLin N).singularValues i ≤ tailNorm N i := by
         exact sq_singularValues_le_svTail_sq N (lt_of_lt_of_eq i.2 hfr)
-      have h2 : svTail N i = 0 := svTail_eq_zero_of_rank_le hcon
+      have h2 : tailNorm N i = 0 := svTail_eq_zero_of_rank_le hcon
       have h3 := (Matrix.toEuclideanLin N).singularValues_nonneg i
       have h4 : (Matrix.toEuclideanLin N).singularValues i = 0 := le_antisymm (by linarith) h3
       exact (Finset.mem_filter.1 hi).2 (by simp [svSq, h4])
@@ -3581,12 +3587,8 @@ section Final
 variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
 
 /-- The tail is the Frobenius distance to the low-rank matrices. -/
-theorem svTail_eq_distLR (X : Matrix m n ℝ) (r : ℕ) : svTail X r = distLR r X :=
+theorem svTail_eq_distLR (X : Matrix m n ℝ) (r : ℕ) : tailNorm X r = distLR r X :=
   (infDist_setOf_rank_le X r).symm
-
-/-- The tolerance rank is the `ε`-rank of `Matrix/LowRankDistance`. -/
-theorem tolRank_eq_epsRank (ϑ : ℝ) (X : Matrix m n ℝ) : tolRank ϑ X = epsRank ϑ X := by
-  simp only [tolRank, epsRank, svTail_eq_distLR]
 
 /-- The truncated SVD at a tolerance never increases the rank. -/
 theorem rank_svdTrunc_le {ϑ : ℝ} (hϑ : 0 ≤ ϑ) (X : Matrix m n ℝ) :
@@ -4273,5 +4275,18 @@ end GaussianRank
 /-- The local column-space projector `orth K (orth K)ᵀ` of this file, replaced by the core
 `Matrix.rangeProj` (equal: `rangeProj_eq_orth_mul_transpose`). -/
 @[deprecated (since := "2026-11-09")] alias colProj := Matrix.rangeProj
+
+/-- The local singular-value tail of this file, replaced by the core `WeylSingular.tailNorm` (same
+definition). -/
+@[deprecated (since := "2026-11-10")] alias svTail := WeylSingular.tailNorm
+
+/-- The local tolerance rank `sInf {r | τ_r(X) ≤ ϑ}` of this file, replaced by the core `epsRank`
+(equal: `WeylSingular.epsRank_eq_sInf_tailNorm`). -/
+@[deprecated (since := "2026-11-10")] alias tolRank := epsRank
+
+/-- The bridge `tolRank ϑ X = epsRank ϑ X` of an earlier version; the core form is
+`WeylSingular.epsRank_eq_sInf_tailNorm`. -/
+@[deprecated (since := "2026-11-10")] alias tolRank_eq_epsRank :=
+  WeylSingular.epsRank_eq_sInf_tailNorm
 
 end LeanDLRA.Novel.BlindSpotII
