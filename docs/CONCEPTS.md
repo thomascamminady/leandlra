@@ -134,3 +134,22 @@ and types unchanged (hash 0).
 | Global Lipschitz field `IsLipschitzField F L` | `LeanDLRA.IsLipschitzOnTube F A a b ρ L` | implies: `IsLipschitzField.isLipschitzOnTube` (`Foundations/Localization.lean`) |
 | Field given on a tube | `LeanDLRA.tubeExt` (radial retraction `ballRetract`) | global extension with the same constants: `isLipschitzField_tubeExt`, `isBoundedField_tubeExt`, agrees on the tube (`tubeExt_eq`) |
 | Explicit Euler step of a frozen field, projected Euler step | `LeanDLRA.eulerStep F h x = x + h • F x`, `LeanDLRA.projEuler P F h t x = x + h • P (F t x)` | `projEuler P F h t = eulerStep (P ∘ F t) h` by definition (no lemma yet) |
+
+## Tangent and normal projectors of the fixed-rank manifold (UNIFY F7, batch B4, 2026-11-10)
+
+Core file: `LeanDLRA/FixedRank/Defs.lean` (moved, names and types unchanged). Lemmas in
+`FixedRank/Defs.lean`, `Matrix/Curvature.lean` and `Matrix/Interpolation.lean`.
+
+| Concept | Core | Relation (lemma) |
+|---|---|---|
+| Tangent projector from a left and a right projector, `L + R - L R`; normal projector `(1 - L)(1 - R)` | `LeanDLRA.tangent L R`, `LeanDLRA.normal L R` | defining; orthogonal for commuting orthogonal `L`, `R` (`IsOrthProj.tangent`, `Foundations/Projector.lean`) |
+| Tangent projector at `Y = U S Vᵀ`, `Z ↦ U Uᵀ Z + Z V Vᵀ - U Uᵀ Z V Vᵀ` | `LeanDLRA.tangentProj U V = tangent (leftProj U) (rightProj V)` | `tangentProj_apply` |
+| The same with projector matrices, `Pu B + B Pv - Pu B Pv` | `LeanDLRA.Curvature.tangentProjMat Pu Pv` | equal: `Curvature.tangentProjMat_eq_tangent` (`= tangent (leftMulCLM Pu) (rightMulCLM Pv)`), `tangentProjMat_eq_tangentProj` (`Pu = U Uᵀ`, `Pv = V Vᵀ`) |
+| Left/right multiplication by an orthogonal projector matrix | `Frobenius.leftMulCLM P`, `Frobenius.rightMulCLM P` | implies `IsOrthProj`: `Curvature.IsOrthProjMat.isOrthProj_leftMulCLM`, `…_rightMulCLM`, and `IsOrthProjMat.isOrthProj_tangent` for the tangent projector |
+| `ErrorOrder.isOrthProj_leftMulCLM`, `…_rightMulCLM` (`Research/IntegratorErrorOrder.lean`, hypotheses `M * M = M`, `Mᵀ = M`) | `Curvature.IsOrthProjMat.isOrthProj_leftMulCLM` | same statement unbundled; duplicate, F22/C13 |
+| Oblique (interpolatory) tangent projector, sketched tangent projector | `LeanDLRA.obliqueTangentProj U SU V SV = tangent (leftOblique U SU) (rightOblique V SV)`, `LeanDLRA.sketchTangentProj` (instance with `SU = Θᵀ Θ P`, `SV = Ωᵀ Ω W`) | `obliqueTangentProj_apply` |
+| Two-sided sketch `Z ↦ Θ Z Ωᵀ` (`sketchCLM`, `Matrix/Interpolation.lean`) | `Frobenius.sandwichCLM Θ Ωᵀ` | equal: `sketchCLM_eq_sandwichCLM` (`sketchCLM` itself: C13) |
+| `Novel.OpTR37.tanProj P Q Z = Z - (1 - P) Z (1 - Q)`, `tangentAt` (`Lit/Training/P2410_18720a`), `tanProj` (`Lit/Foundations/P2309_06125a`) | `tangentProjAt Y` (planned, a7) | not bridged yet: `tangentProjAt` needs `Matrix.rangeProj` (C2, now in `Factorization/Defs.lean`) |
+
+`filippov` (Filippov regularisation, `Analysis/Defs.lean`) moved in the same batch; its local
+form `filippovGradR` (`Lit/Training/P2505_08022a`) is not bridged yet.
