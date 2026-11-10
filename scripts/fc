@@ -31,7 +31,13 @@
 # installed `.olean` was compiled against the installed text): exit 6 names the first one that
 # is missing.
 #
-# One check at a time (a lock folder below $FC_STATE, default .lake/warm); further calls wait.
+# One check at a time; further calls wait. The lock is the folder $FC_STATE/slots/fc1 (default
+# of $FC_STATE: .lake/warm) with a file `owner` in it: process id, start of the process, time
+# and file. A `rmdir` by another script therefore fails, a waiting call can tell a running
+# check from a killed one, and no Lean process is started after the lock was taken away
+# (exit 3). Another script that must not run next to a check takes the same lock with
+# `mkdir` and removes only a lock it made; such an empty lock folder counts as left behind
+# after 30 minutes. Every event is written to $FC_STATE/lock.log.
 # Environment: FC_ROOT (repository, default: the folder with lakefile.toml above this script),
 # FC_STATE (lock and temporary files), FC_MIN_FREE (default of --min-free).
 #
@@ -188,13 +194,80 @@ fi
 free_percent() { memory_pressure 2>/dev/null | tail -n 1 | grep -o '[0-9]*%' | tr -d '%'; }
 hash_of() { if command -v shasum > /dev/null 2>&1; then shasum -a 256; else sha256sum; fi | cut -c1-32; }
 
+# The lock (see the head of this file). `$$` is the process of this script in subshells too.
+lock="$STATE/slots/fc1"
+lock_log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $$ $1 [$shown]" >> "$STATE/lock.log"; }
+lock_owner() { sed -n 1p "$lock/owner" 2>/dev/null; }
+# Does the process that wrote the owner file still run (same id and same start)?
+lock_alive() {
+  local started
+  started="$(ps -o lstart= -p "$1" 2>/dev/null)"
+  [ -n "$started" ] && [ "$started" = "$(sed -n 2p "$lock/owner" 2>/dev/null)" ]
+}
+# Remove the lock of the ended process $1; status 0 if it was removed. One caller at a time, and
+# the owner is read again under that second lock, so a lock taken in between is not touched.
+lock_break() {
+  local done_=1
+  find "$STATE/slots" -maxdepth 1 -name fc1.break -mmin +1 -exec rmdir {} + 2>/dev/null
+  mkdir "$lock.break" 2>/dev/null || return 1
+  if [ "$(lock_owner)" = "$1" ] && ! lock_alive "$1"; then
+    rm -f "$lock/owner"
+    if rmdir "$lock" 2>/dev/null; then
+      done_=0
+      lock_log "removed the lock of the ended process $1"
+    fi
+  fi
+  rmdir "$lock.break" 2>/dev/null
+  return $done_
+}
+lock_take() {
+  local holder
+  mkdir -p "$STATE/slots"
+  if [ -f "$STATE/lock.log" ] && [ "$(wc -c < "$STATE/lock.log")" -gt 200000 ]; then
+    tail -n 500 "$STATE/lock.log" > "$STATE/lock.log.$$"
+    mv "$STATE/lock.log.$$" "$STATE/lock.log"
+  fi
+  while true; do
+    if mkdir "$lock" 2>/dev/null; then
+      printf '%s\n%s\n%s %s\n' "$$" "$(ps -o lstart= -p $$)" "$(date '+%Y-%m-%d %H:%M:%S')" \
+        "$shown" > "$lock/owner"
+      slot="$lock"
+      lock_log taken
+      return 0
+    fi
+    holder="$(lock_owner)"
+    if [ -n "$holder" ]; then
+      if ! lock_alive "$holder" && lock_break "$holder"; then continue; fi
+    else
+      find "$STATE/slots" -maxdepth 1 -name fc1 -mmin +30 -exec rmdir {} + 2>/dev/null
+    fi
+    sleep 3
+  done
+}
+lock_lost() {
+  echo "LOCK LOST [$shown]: $lock no longer belongs to this check (process $$); another Lean" \
+    "process may have run at the same time. See $STATE/lock.log." >&2
+  lock_log "LOST, owner now: $(lock_owner)"
+  slot=""
+}
+lock_release() {
+  if [ "$(lock_owner)" = "$$" ]; then
+    rm -f "$lock/owner"
+    rmdir "$lock" 2>/dev/null
+    lock_log released
+    slot=""
+  else
+    lock_lost
+  fi
+}
+
 tmpdir=""
 slot=""
 part=""
 cleanup() {
   [ -n "$tmpdir" ] && rm -rf "$tmpdir"
   [ -n "$part" ] && rm -rf "$part"
-  [ -n "$slot" ] && rmdir "$slot" 2>/dev/null
+  [ -n "$slot" ] && lock_release
   return 0
 }
 trap cleanup EXIT
@@ -209,13 +282,8 @@ if [ "$axioms" = 1 ]; then
   { cat "$f"; echo; cat "$ROOT/scripts/axiom_check.lean"; } > "$target"
 fi
 
-# One check at a time; a lock older than 30 minutes belongs to a check that was killed.
-mkdir -p "$STATE/slots"
-while true; do
-  find "$STATE/slots" -maxdepth 1 -name 'fc?' -mmin +30 -exec rmdir {} + 2>/dev/null
-  if mkdir "$STATE/slots/fc1" 2>/dev/null; then slot="$STATE/slots/fc1"; break; fi
-  sleep 3
-done
+# One check at a time.
+lock_take
 
 # Before every Lean process: stop if too little memory is free.
 memory_test() {
@@ -281,6 +349,11 @@ view_add() { # $1: a module as a path, $2: the folder with its compiled files
 lean_run() {
   local shown_as="$1" file="$2" begin
   shift 2
+  if [ "$(lock_owner)" != "$$" ]; then
+    lock_lost
+    echo "NOT STARTED [$shown_as]: the lock of this check was taken away"
+    exit 3
+  fi
   memory_test
   begin=$(date +%s)
   if [ -z "$view" ]; then

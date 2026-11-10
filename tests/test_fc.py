@@ -699,3 +699,149 @@ def test_with_removes_folders_not_used_for_a_day(repo: Repo) -> None:
     # The stale one is gone; the old one of this slice was removed and compiled again.
     assert [p.name for p in base.iterdir()] == [used.name]
     assert len(repo.lean_calls()) == 4
+
+
+# `lean` stand-ins for the lock: the first tries what another script could do to the lock of a
+# running check, the second takes the lock away.
+LEAN_FOREIGN_RMDIR = """#!/usr/bin/env bash
+printf 'x\\n' >> "$FAKE_LOG"
+rmdir "$FC_TEST_LOCK" 2> /dev/null
+echo "rmdir=$?" > "$FAKE_LOG.lock"
+cat "$FC_TEST_LOCK/owner" >> "$FAKE_LOG.lock" 2> /dev/null
+olean=""; prev=""
+for a in "$@"; do [ "$prev" = "-o" ] && olean="$a"; prev="$a"; done
+[ -n "$olean" ] && echo olean > "$olean"
+exit 0
+"""
+LEAN_TAKES_THE_LOCK_AWAY = LEAN_FOREIGN_RMDIR.replace(
+    'rmdir "$FC_TEST_LOCK" 2> /dev/null', 'rm -rf "$FC_TEST_LOCK"'
+)
+
+
+def lock_of(repo: Repo) -> Path:
+    return repo.root / ".lake" / "warm" / "slots" / "fc1"
+
+
+def lock_log(repo: Repo) -> str:
+    log = repo.root / ".lake" / "warm" / "lock.log"
+    return log.read_text() if log.exists() else ""
+
+
+def start_of(pid: int) -> str:
+    res = subprocess.run(
+        ["ps", "-o", "lstart=", "-p", str(pid)],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return res.stdout.rstrip("\n")
+
+
+def hold_lock(repo: Repo, pid: int, started: str) -> None:
+    lock_of(repo).mkdir(parents=True)
+    (lock_of(repo) / "owner").write_text(f"{pid}\n{started}\n2026-01-01 00:00:00 X\n")
+
+
+def ended_process() -> int:
+    proc = subprocess.Popen(["true"])
+    proc.wait()
+    return proc.pid
+
+
+def test_lock_names_its_owner_and_a_foreign_rmdir_fails(repo: Repo) -> None:
+    (repo.root / "bin" / "lean").write_text(LEAN_FOREIGN_RMDIR)
+    repo.env["FC_TEST_LOCK"] = str(lock_of(repo))
+    res = repo.run("fc", "A.lean")
+    assert res.returncode == 0, res.stdout + res.stderr
+    seen = Path(f"{repo.log}.lock").read_text().splitlines()
+    assert seen[0] != "rmdir=0"
+    assert seen[1].isdigit() and seen[2] and seen[3].endswith(" A.lean")
+    assert "LOCK LOST" not in res.stderr
+    assert not lock_of(repo).exists()
+    events = [line.split(" ", 3)[3] for line in lock_log(repo).splitlines()]
+    assert events == ["taken [A.lean]", "released [A.lean]"]
+
+
+def test_lock_of_an_ended_process_is_taken_over(repo: Repo) -> None:
+    pid = ended_process()
+    hold_lock(repo, pid, "Thu Jan  1 00:00:00 2026")
+    res = repo.run("fc", "A.lean")
+    assert res.returncode == 0 and res.stdout.startswith("OK [A.lean]")
+    assert f"removed the lock of the ended process {pid}" in lock_log(repo)
+    assert not lock_of(repo).exists()
+
+
+def test_same_process_id_with_another_start_counts_as_ended(repo: Repo) -> None:
+    hold_lock(repo, os.getpid(), "Thu Jan  1 00:00:00 1970")
+    res = repo.run("fc", "A.lean")
+    assert res.returncode == 0 and res.stdout.startswith("OK [A.lean]")
+    assert not lock_of(repo).exists()
+
+
+def test_lock_of_a_running_process_is_respected(repo: Repo) -> None:
+    hold_lock(repo, os.getpid(), start_of(os.getpid()))
+    proc = subprocess.Popen(
+        ["bash", str(repo.root / "scripts" / "fc"), "A.lean"],
+        cwd=repo.root,
+        env=repo.env,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    with pytest.raises(subprocess.TimeoutExpired):
+        proc.wait(timeout=4)
+    # It waits: nothing was started and the lock is still the one of the other process.
+    assert not repo.log.exists()
+    assert (lock_of(repo) / "owner").read_text().startswith(f"{os.getpid()}\n")
+    assert "removed" not in lock_log(repo)
+    (lock_of(repo) / "owner").unlink()
+    lock_of(repo).rmdir()
+    out, _ = proc.communicate(timeout=30)
+    assert proc.returncode == 0 and out.startswith("OK [A.lean]")
+    assert not lock_of(repo).exists()
+
+
+def test_empty_lock_folder_is_respected_until_it_is_old(repo: Repo) -> None:
+    lock_of(repo).mkdir(parents=True)
+    proc = subprocess.Popen(
+        ["bash", str(repo.root / "scripts" / "fc"), "A.lean"],
+        cwd=repo.root,
+        env=repo.env,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    with pytest.raises(subprocess.TimeoutExpired):
+        proc.wait(timeout=4)
+    assert not repo.log.exists() and lock_of(repo).is_dir()
+    old = lock_of(repo).stat().st_mtime - 31 * 60
+    os.utime(lock_of(repo), (old, old))
+    out, _ = proc.communicate(timeout=30)
+    assert proc.returncode == 0 and out.startswith("OK [A.lean]")
+    assert not lock_of(repo).exists()
+
+
+def test_lock_taken_away_is_said_and_no_further_lean_starts(repo: Repo) -> None:
+    (repo.root / "bin" / "lean").write_text(LEAN_TAKES_THE_LOCK_AWAY)
+    repo.env["FC_TEST_LOCK"] = str(lock_of(repo))
+    # One Lean process: the verdict stands, and the loss is said and logged.
+    res = repo.run("fc", "A.lean")
+    assert res.returncode == 0 and res.stdout.startswith("OK [A.lean]")
+    assert "LOCK LOST [A.lean]" in res.stderr
+    assert "LOST, owner now:" in lock_log(repo)
+    # Two Lean processes: the second one is not started.
+    b = new_slice(repo, "SliceB", "LeanDLRA/New/B.lean", [])
+    repo.log.unlink()
+    res = repo.run("fc", "--with", b, "A.lean")
+    assert res.returncode == 3, res.stdout + res.stderr
+    assert "NOT STARTED [A.lean]: the lock of this check was taken away" in res.stdout
+    # One call of `lake` and one start of `lean`: the prerequisite only.
+    calls = repo.log.read_text().splitlines()
+    assert len(calls) == 2 and calls[0].endswith("/B.lean") and calls[1] == "x"
+    # A lock that is not ours any more is left alone.
+    (repo.root / "bin" / "lean").write_text(
+        LEAN_TAKES_THE_LOCK_AWAY.replace(
+            'rm -rf "$FC_TEST_LOCK"', 'echo 1 > "$FC_TEST_LOCK/owner"'
+        )
+    )
+    res = repo.run("fc", "A.lean")
+    assert "LOCK LOST [A.lean]" in res.stderr
+    assert (lock_of(repo) / "owner").read_text() == "1\n"
