@@ -192,6 +192,12 @@ def test_library_modules_and_unlisted_sources(tmp_path: Path) -> None:
     (tmp_path / "LeanDLRA" / "A" / "B.lean").write_text("")
     (tmp_path / "LeanDLRA" / "A" / "C.lean").write_text("")
     (tmp_path / "LeanDLRA.lean").write_text("-- generated\nimport LeanDLRA.A.B\n")
-    modules = hashdiff.library_modules(tmp_path)
-    assert modules == ["LeanDLRA.A.B"]
-    assert hashdiff.unlisted_sources(modules, tmp_path) == ["LeanDLRA.A.C"]
+    (tmp_path / "LeanDLRACatalogue.lean").write_text(
+        "-- generated\nimport LeanDLRA\nimport LeanDLRA.A.C\n"
+    )
+    core = hashdiff.library_modules(tmp_path, "LeanDLRA")
+    assert core == ["LeanDLRA.A.B"]
+    assert hashdiff.unlisted_sources(core, tmp_path) == ["LeanDLRA.A.C"]
+    everything = hashdiff.library_modules(tmp_path)
+    assert everything == ["LeanDLRA.A.B", "LeanDLRA.A.C"]
+    assert hashdiff.unlisted_sources(everything, tmp_path) == []

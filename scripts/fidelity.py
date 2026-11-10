@@ -5,9 +5,10 @@
 """Check that no recorded statement changed without anybody noticing.
 
 ``docs/statements.json`` maps theorems to the SHA-256 of their elaborated type, taken before any of
-them was proved.  This script dumps the kernel types of the theorems of the library (every module
-imported by ``LeanDLRA.lean``, so statements may move between files) and checks each recorded
-theorem in one of two ways:
+them was proved.  This script dumps the kernel types of the theorems of a library (by default
+everything: every module imported by ``LeanDLRACatalogue.lean``, the core and the catalogue of
+``docs/STRUCTURE.md``, so statements may move between files) and checks each recorded theorem in
+one of two ways:
 
 * **exactly**: the theorem of the same name has a type with the recorded hash;
 * **via the rename map** ``docs/renames.json`` (old constant name → new constant name, the audited
@@ -21,7 +22,9 @@ constant the same way at every occurrence (2^k candidates for k renamed constant
 if none matches, every occurrence is varied separately, up to ``cap`` candidates.  A new type that
 still mentions an old name of the map cannot be the renamed recorded type and fails.
 
-It fails if a recorded theorem is missing or has a different type.
+It fails if a recorded theorem is missing or has a different type.  The library must be built
+(``lake build LeanDLRACatalogue``); with ``--lib=LeanDLRA`` only the core is read, and recorded
+theorems of the catalogue are then reported as missing.
 """
 
 from __future__ import annotations
@@ -40,6 +43,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = ROOT / "docs" / "statements.json"
 RENAMES = "docs/renames.json"
+# The library of all modules (core and catalogue); the core library alone is ``LeanDLRA``.
+EVERYTHING = "LeanDLRACatalogue"
 
 # Constants in `Expr.dbgToString` output (as in scripts/hashdiff.py): maximal runs of characters
 # other than the delimiters, optionally followed by universe levels `.{u_1}`.
@@ -54,10 +59,21 @@ def sha256(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
 
-def library_modules(root: Path = ROOT) -> list[str]:
-    """The modules imported by the root file ``LeanDLRA.lean``."""
-    text = (root / "LeanDLRA.lean").read_text(encoding="utf-8")
-    return [m.group(1) for m in re.finditer(r"^import\s+(\S+)", text, re.MULTILINE)]
+def library_modules(root: Path = ROOT, lib: str = EVERYTHING) -> list[str]:
+    """The modules of a library: the imports of its root file ``<lib>.lean``.
+
+    An imported root file stands for its own imports: ``LeanDLRACatalogue.lean`` begins with
+    ``import LeanDLRA``, which stands for the modules of the core library.
+    """
+    text = (root / f"{lib}.lean").read_text(encoding="utf-8")
+    modules: list[str] = []
+    for m in re.finditer(r"^import\s+(\S+)", text, re.MULTILINE):
+        name = m.group(1)
+        if "." not in name and (root / f"{name}.lean").is_file():
+            modules += library_modules(root, name)
+        else:
+            modules.append(name)
+    return modules
 
 
 def load_renames(path: Path) -> dict[str, str]:
@@ -92,9 +108,9 @@ def load_renames(path: Path) -> dict[str, str]:
     return final
 
 
-def dump(names: set[str]) -> dict[str, str]:
-    """Name → printed type, for the theorems of the library with one of the given names."""
-    modules = library_modules()
+def dump(names: set[str], lib: str = EVERYTHING) -> dict[str, str]:
+    """Name → printed type, for the theorems of a library with one of the given names."""
+    modules = library_modules(lib=lib)
     cmd = ["nice", "-n", "10", "lake", "env", "lean", "--run", "scripts/DumpTypes.lean"]
     table: dict[str, str] = {}
     with subprocess.Popen(
@@ -170,12 +186,12 @@ def check(
     return exact, via, problems
 
 
-def main(renames: str = RENAMES, cap: int = 1 << 16) -> None:
-    """Compare the compiled statements with the recorded baseline."""
+def main(renames: str = RENAMES, cap: int = 1 << 16, lib: str = EVERYTHING) -> None:
+    """Compare the compiled statements of the library ``lib`` with the recorded baseline."""
     recorded: dict[str, str] = json.loads(BASELINE.read_text(encoding="utf-8"))
     renames_path = Path(renames) if Path(renames).is_absolute() else ROOT / renames
     rmap = load_renames(renames_path)
-    proved = dump(set(recorded) | {rmap[n] for n in recorded if n in rmap})
+    proved = dump(set(recorded) | {rmap[n] for n in recorded if n in rmap}, lib)
     exact, via, problems = check(recorded, proved, rmap, cap)
     print(
         f"{exact + via} of {len(recorded)} recorded statements proved verbatim "

@@ -1,4 +1,4 @@
-import LeanDLRA
+import LeanDLRACatalogue
 
 /-!
 Writes `website/decls.json`: every declaration of the library with its module, kind, source

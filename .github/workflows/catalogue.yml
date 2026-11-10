@@ -1,0 +1,58 @@
+name: Catalogue
+
+# Everything: the core library and the catalogue (docs/STRUCTURE.md), with the checks of the core
+# workflow and the statement check. The gate (scripts/gate.py) builds the core and the files of
+# its round only, so this workflow is where a catalogue module that a core change broke is found.
+# It can be red for a while after such a change, until the module is repaired; the core workflow
+# (Lean Action CI) has to be green on every commit.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+# One build at a time; a newer push waits (replacing any older pending run).
+concurrency:
+  group: catalogue
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Root files are generated and committed
+        run: |
+          scripts/gen_root.sh
+          git diff --exit-code -- LeanDLRA.lean LeanDLRACatalogue.lean
+      - uses: leanprover/lean-action@v1
+        with:
+          # Any warning (linters included) fails the build.
+          build-args: --wfail LeanDLRACatalogue
+      - name: Axiom audit of every constant of every module
+        run: scripts/audit.sh LeanDLRACatalogue
+      - uses: astral-sh/setup-uv@v6
+      - name: Statements are unchanged (kernel types against docs/statements.json)
+        run: uv run -q scripts/fidelity.py
+      # Replaying one module loads all of Mathlib, so they run one at a time. Everything is
+      # replayed by the nightly workflow kernel_replay.yml.
+      - name: Independent kernel replay of everything since the last green run
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          last() {
+            gh run list --workflow "$1" --branch main --status success --limit 1 \
+              --json headSha -q '.[0].headSha'
+          }
+          base=$(last catalogue.yml)
+          # Before the first green run of this workflow: the last green run of the core workflow,
+          # which checked everything until the library was split.
+          if [ -z "$base" ]; then base=$(last lean_action_ci.yml); fi
+          scripts/replay.sh "$base"

@@ -8,13 +8,21 @@ Agents drop finished slices into ``wip/ready/``.  This loop takes a few at a tim
 
 1. scans for forbidden tokens and builds the slices from cold oleans with ``lake build --wfail``, so
    any warning fails; the Lean kernel checks every declaration during this build;
-2. runs the whole-library audit (``scripts/audit.sh``): standard axioms only, for every constant;
-3. commits and pushes.
+2. regenerates the root files, checks that no core module imports a catalogue module
+   (``scripts/core.py check``) and builds the core library with ``lake build --wfail LeanDLRA``;
+3. runs the axiom audit (``scripts/audit.sh``) over the core library and the slices of the batch:
+   standard axioms only, for every constant;
+4. commits (the slices and the root files, nothing else) and pushes.
 
-A slice failing 1 moves to ``wip/rejected/`` with a log and never reaches git.  A failure in 2-3
-restores nothing and stops the loop, because it means something is wrong with the batch as a whole.
-Nothing is pushed unless every step passed.  CI then rebuilds everything and replays the changed
-modules through the kernel independently (``scripts/replay.sh``).
+The repository holds two libraries (``docs/STRUCTURE.md``): the core, which every round builds and
+audits, and the catalogue, of which a round builds only its own slices and their imports.  A change
+of a core definition can therefore break a catalogue module outside the batch; that is found by the
+catalogue workflow of CI and by ``scripts/catalogue.sh``, not here.
+
+A slice failing 1 or 2 moves to ``wip/rejected/`` with a log and never reaches git.  A failure in
+3-4 restores nothing and stops the loop, because it means something is wrong with the batch as a
+whole.  Nothing is pushed unless every step passed.  CI then rebuilds core and catalogue and
+replays the changed modules through the kernel independently (``scripts/replay.sh``).
 """
 
 from __future__ import annotations
@@ -34,7 +42,7 @@ ROOT = Path(__file__).resolve().parent.parent
 WIP = ROOT / "wip"
 READY, REJECTED, DONE = WIP / "ready", WIP / "rejected", WIP / "done"
 LOG = WIP / "gate.log"
-TRAILER = "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+TRAILER = "Co-Authored-By: Claude <noreply@anthropic.com>"
 FORBIDDEN = re.compile(
     r"\bsorry\b|\bsorryAx\b|\badmit\b|^\s*(@\[[^]]*\]\s*)?"
     r"((private|protected|noncomputable|scoped|local)\s+)*axiom\b|native_decide|implemented_by"
@@ -131,41 +139,62 @@ def process(batch: list[Path]) -> bool:
             accepted.remove(path)
     if not accepted:
         return True
-    code, out = run("lake", "build", "--wfail", *[modules[p.stem] for p in accepted])
-    if code != 0:
-        for path in list(accepted):
-            mod = re.escape(modules[path.stem])
-            if re.search(rf"(✖|⚠) \[\d+/\d+\] \w+ {mod}\b", out):
-                remove_target(targets[path.stem])
-                detail = "\n".join(
-                    line
-                    for line in out.splitlines()
-                    if "error" in line or "warning" in line
-                )
-                reject(path, f"lake build --wfail failed\n{detail[:6000]}\n")
-                accepted.remove(path)
+    # Repeated until the remaining slices build: a rejected slice is taken out of the tree, and a
+    # slice that imports it has to fail in the next pass.  A failure that names no slice lies in
+    # an import outside the batch (for example a catalogue module that a core change broke): no
+    # slice of the batch is then known to compile, so all are rejected.
+    while accepted:
+        code, out = run(
+            "lake", "build", "--wfail", *[modules[p.stem] for p in accepted]
+        )
+        if code == 0:
+            break
+        failed = [
+            p
+            for p in accepted
+            if re.search(
+                rf"(✖|⚠) \[\d+/\d+\] \w+ {re.escape(modules[p.stem])}(?![\w.])", out
+            )
+        ]
+        where = "" if failed else " in an import outside the batch"
+        detail = "\n".join(
+            line for line in out.splitlines() if "error" in line or "warning" in line
+        )
+        for path in failed or list(accepted):
+            remove_target(targets[path.stem])
+            reject(path, f"lake build --wfail failed{where}\n{detail[:6000]}\n")
+            accepted.remove(path)
     if not accepted:
         return True
 
     for path in accepted:
         run("git", "add", str(targets[path.stem]))
-    run("scripts/gen_root.sh")
-    code, out = run("lake", "build", "LeanDLRA")
+    # 2. Root files, the rule that the core imports no catalogue module, and the core build.
+    code, out = run("scripts/gen_root.sh")
+    reason = "root files could not be generated"
+    if code == 0:
+        code, out = run("uv", "run", "-q", "scripts/core.py", "check")
+        reason = "a core module imports a catalogue module"
+    if code == 0:
+        code, out = run("lake", "build", "--wfail", "LeanDLRA")
+        reason = "core build failed"
     if code != 0:
-        log(f"STOP: whole-library build failed\n{out[-3000:]}")
+        log(f"REJECT batch: {reason}\n{out[-3000:]}")
         for path in accepted:
             remove_target(targets[path.stem])
-            reject(path, f"whole-library build failed\n{out[-3000:]}\n")
+            reject(path, f"{reason}\n{out[-3000:]}\n")
         run("scripts/gen_root.sh")
         return True
 
-    # 2. Whole-library audit.
-    code, out = run("scripts/audit.sh")
+    # 3. Axiom audit of the core library and of the slices of this batch.
+    code, out = run(
+        "scripts/audit.sh", "LeanDLRA", *[modules[p.stem] for p in accepted]
+    )
     if code != 0:
         log(f"STOP: audit failed\n{out[-3000:]}")
         return False
 
-    # 3. Commit and push.
+    # 4. Commit and push: the slices and the root files, nothing else that may be staged.
     ops = sorted({op for p in accepted for op in table[p.stem]["ops"]})
     names = ", ".join(p.stem for p in accepted)
     updated = [
@@ -179,13 +208,14 @@ def process(batch: list[Path]) -> bool:
         f"{verb} {len(accepted)} {'slices' if len(accepted) > 1 else 'slice'} ({names})"
     )
     message = f"{title}\n\n{' '.join(ops)}\n\n{TRAILER}\n"
-    run(
-        "git",
-        "add",
+    paths = [
         "LeanDLRA.lean",
+        "LeanDLRACatalogue.lean",
+        "docs/promoted.txt",
         *[str(targets[p.stem]) for p in accepted],
-    )
-    code, out = run("git", "commit", "-q", "-m", message)
+    ]
+    run("git", "add", *paths)
+    code, out = run("git", "commit", "-q", "-m", message, "--", *paths)
     if code != 0:
         log(f"STOP: commit failed {out[-800:]}")
         return False

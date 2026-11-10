@@ -1,5 +1,9 @@
 name: Lean Action CI
 
+# The core library (docs/STRUCTURE.md): the modules listed in LeanDLRA.lean, which is what
+# `lake build` compiles. The catalogue is checked by the separate workflow catalogue.yml, so a
+# change of the core gets its result without waiting for the catalogue. This workflow has to be
+# green on every commit of main.
 on:
   push:
   pull_request:
@@ -22,31 +26,45 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
       - name: Root files are generated and committed
-        shell: bash
         run: |
           scripts/gen_root.sh
-          diff <(git show HEAD:LeanDLRA.lean | sort) <(sort LeanDLRA.lean)
+          git diff --exit-code -- LeanDLRA.lean LeanDLRACatalogue.lean
+      - name: The core imports no catalogue module
+        run: uv run -q scripts/core.py check
       - name: No dependency drift
         run: git diff --exit-code lake-manifest.json lean-toolchain
+      # The cache of lean-action has one entry per commit, shared by all workflows. The workflows
+      # that build everything (catalogue.yml, pages.yml, apidocs.yml) use it; the core build keeps
+      # its own entries, so that a core-only build never replaces a build of everything.
+      - name: Restore the core build
+        uses: actions/cache/restore@v4
+        with:
+          path: .lake
+          key: core-lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: core-lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
       - uses: leanprover/lean-action@v1
         with:
-          # Any warning (linters included) fails the build of the certified library.
+          # The default target is the core library. Any warning (linters included) fails the build.
           build-args: --wfail
+          use-github-cache: false
+      - name: Save the core build
+        uses: actions/cache/save@v4
+        with:
+          path: .lake
+          key: core-lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
       - name: Axiom audit (no placeholders, standard axioms only, private declarations included)
         run: scripts/audit.sh
-      - uses: astral-sh/setup-uv@v6
-      - name: Statements are unchanged (kernel types against docs/statements.json)
-        run: uv run -q scripts/fidelity.py
-      # Replaying one module loads all of Mathlib, so they run one at a time. The whole library is
+      # Replaying one module loads all of Mathlib, so they run one at a time. Everything is
       # replayed by the nightly workflow kernel_replay.yml.
-      - name: Independent kernel replay of everything since the last green run
+      - name: Independent kernel replay of the core modules changed since the last green run
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           base=$(gh run list --workflow lean_action_ci.yml --branch main --status success \
             --limit 1 --json headSha -q '.[0].headSha')
-          scripts/replay.sh "$base"
-      - name: Python scripts (ruff, ty)
-        run: make lint-py
+          scripts/replay.sh "$base" core
+      - name: Python scripts (ruff, ty, tests)
+        run: make lint-py test-py

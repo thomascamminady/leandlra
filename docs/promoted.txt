@@ -1,0 +1,19 @@
+# Catalogue modules that belong to the core library.
+#
+# One module name per line; `#` starts a comment. scripts/gen_root.sh adds these modules to
+# LeanDLRA.lean, so `lake build LeanDLRA` builds them and the gate blocks on them.
+# A module is listed here for one of two reasons (docs/STRUCTURE.md):
+#   * a core module imports it (scripts/core.py check enforces that the core never imports a
+#     module that is not core), or
+#   * it has been promoted: its definitions are bridged to the core definitions and its main
+#     theorems are stated in them.
+
+# Imported by LeanDLRA/Tensor/TTN/* and LeanDLRA/Tensor/TT/TangentProjector.lean. These hold the
+# tree tensor network definitions; they move to LeanDLRA/Tensor/ in the unification (wip/UNIFY.md).
+LeanDLRA.OpenProblems.Curated.TensorNetworksDefs
+LeanDLRA.OpenProblems.Curated.TensorNetworksHardParTTNglobalerrorle
+LeanDLRA.OpenProblems.TensorNetworks.Part1Defs
+LeanDLRA.OpenProblems.TensorNetworks.Part1a
+LeanDLRA.OpenProblems.TensorNetworks.Part1b
+LeanDLRA.OpenProblems.TensorNetworks.Part2Defs
+LeanDLRA.OpenProblems.TensorNetworks.Part2b

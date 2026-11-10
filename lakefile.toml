@@ -17,7 +17,16 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.36.0-rc2"
 
+# The core library: `LeanDLRA.lean` imports the connected theory (docs/STRUCTURE.md).
+# `lake build` and `lake build LeanDLRA` compile these modules and nothing else.
 [[lean_lib]]
 name = "LeanDLRA"
 # Library files are not (yet) module-system files; Mathlib is. Silence the mixing warning.
+allowNonModules = true
+
+# Everything: `LeanDLRACatalogue.lean` imports the core and the catalogue, the paper-by-paper
+# material below `LeanDLRA/` that is not (yet) stated in the core definitions.
+# `lake build LeanDLRACatalogue` compiles all modules of the repository.
+[[lean_lib]]
+name = "LeanDLRACatalogue"
 allowNonModules = true

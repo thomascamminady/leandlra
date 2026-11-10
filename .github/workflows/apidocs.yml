@@ -21,8 +21,13 @@ jobs:
     timeout-minutes: 340
     steps:
       - uses: actions/checkout@v7
-      - name: Import every library module in the root file
-        run: scripts/gen_root.sh
+      # doc-gen4 documents the modules that the root file of the default library imports. That is
+      # the core (docs/STRUCTURE.md); for this build only, the root file also imports the
+      # catalogue, so that the reference covers every module the website links to.
+      - name: Import every module in the root file
+        run: |
+          scripts/gen_root.sh
+          grep '^import LeanDLRA\.' LeanDLRACatalogue.lean >> LeanDLRA.lean
       - name: Install Lean and build the library
         uses: leanprover/lean-action@v1
       - name: Build API documentation (doc-gen4)

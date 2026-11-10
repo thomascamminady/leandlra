@@ -1,4 +1,4 @@
-import LeanDLRA
+import LeanDLRACatalogue
 
 /-!
 Writes `wip/index.json`, the declaration inventory of step 1 of `wip/PLAN.md`: every declaration of

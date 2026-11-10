@@ -38,7 +38,15 @@ def digest(path: Path) -> str:
 
 def main(checks: str, out: str = "certificate.json") -> None:
     """Write the certificate; `checks` is a comma-separated list of the checks that passed."""
-    files = [ROOT / p for p in git("ls-files", "LeanDLRA", "LeanDLRA.lean").split("\n")]
+    files = [
+        ROOT / p
+        for p in git(
+            "ls-files", "LeanDLRA", "LeanDLRA.lean", "LeanDLRACatalogue.lean"
+        ).split("\n")
+    ]
+    # The two root files are not modules of their own; the core is what `LeanDLRA.lean` imports.
+    root = (ROOT / "LeanDLRA.lean").read_text(encoding="utf-8")
+    core = len(re.findall(r"^import LeanDLRA\.", root, re.MULTILINE))
     manifest: dict[str, Any] = json.loads(
         (ROOT / "lake-manifest.json").read_text(encoding="utf-8")
     )
@@ -63,14 +71,16 @@ def main(checks: str, out: str = "certificate.json") -> None:
         "run": f"{os.environ.get('GITHUB_SERVER_URL', '')}/{os.environ.get('GITHUB_REPOSITORY', '')}"
         f"/actions/runs/{os.environ.get('GITHUB_RUN_ID', '')}",
         "checks_passed": [c.strip() for c in checks.split(",") if c.strip()],
-        "modules": len(files) - 1,
+        "modules": len(files) - 2,
+        "core_modules": core,
         "theorems_and_lemmas": theorems,
         "axioms_allowed": ["propext", "Classical.choice", "Quot.sound"],
         "sources_sha256": {str(p.relative_to(ROOT)): digest(p) for p in files},
     }
     (ROOT / out).write_text(json.dumps(certificate, indent=1) + "\n", encoding="utf-8")
     print(
-        f"{out}: {len(files) - 1} modules, {theorems} theorems, commit {certificate['commit']}"
+        f"{out}: {len(files) - 2} modules ({core} in the core), {theorems} theorems, "
+        f"commit {certificate['commit']}"
     )
 
 

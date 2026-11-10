@@ -26,10 +26,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Import every library module in the root file
+      - name: Generate the root files
         run: scripts/gen_root.sh
-      - name: Install Lean and build the library
+      # The site lists every module, so everything is built: the core and the catalogue
+      # (docs/STRUCTURE.md).
+      - name: Install Lean and build everything
         uses: leanprover/lean-action@v1
+        with:
+          build-args: LeanDLRACatalogue
       - name: Declaration index (names, modules, source lines)
         run: lake env lean scripts/DeclIndex.lean
       - uses: astral-sh/setup-uv@v6

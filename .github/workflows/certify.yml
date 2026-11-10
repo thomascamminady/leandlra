@@ -30,23 +30,24 @@ jobs:
 
       - name: Nothing unproved is left
         run: |
-          ! grep -rnE '\bsorry\b|\bsorryAx\b|\badmit\b|native_decide|implemented_by|\bextern\b|\bunsafe\b|debug\.skipKernelTC' LeanDLRA LeanDLRA.lean
+          ! grep -rnE '\bsorry\b|\bsorryAx\b|\badmit\b|native_decide|implemented_by|\bextern\b|\bunsafe\b|debug\.skipKernelTC' LeanDLRA LeanDLRA.lean LeanDLRACatalogue.lean
 
-      - name: Root file is generated and committed
-        shell: bash
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Root files are generated and committed, and the core imports no catalogue module
         run: |
           scripts/gen_root.sh
-          diff <(git show HEAD:LeanDLRA.lean | sort) <(sort LeanDLRA.lean)
+          git diff --exit-code -- LeanDLRA.lean LeanDLRACatalogue.lean
+          uv run -q scripts/core.py check
 
+      # Everything is certified: the core library and the catalogue (docs/STRUCTURE.md).
       - uses: leanprover/lean-action@v1
         with:
           use-github-cache: false
-          build-args: --wfail
+          build-args: --wfail LeanDLRACatalogue
 
       - name: Axiom audit of every constant
-        run: scripts/audit.sh
-
-      - uses: astral-sh/setup-uv@v6
+        run: scripts/audit.sh LeanDLRACatalogue
 
       - name: Statements are the recorded ones
         run: uv run -q scripts/fidelity.py

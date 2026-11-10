@@ -19,7 +19,9 @@ The same with explicit files::
     uv run scripts/hashdiff.py diff before.jsonl.gz after.jsonl.gz --move --report=hashdiff.md
 
 ``dump`` checks with ``lake build --no-build`` that the build is current, then runs
-``scripts/DumpTypes.lean --canonical`` on every module imported by ``LeanDLRA.lean`` and writes one
+``scripts/DumpTypes.lean --canonical`` on every module of a library (by default everything: the
+modules imported by ``LeanDLRACatalogue.lean``, the core and the catalogue of
+``docs/STRUCTURE.md``; ``--lib=LeanDLRA`` dumps the core library alone) and writes one
 JSON line per theorem, definition, inductive type and constructor: the fully elaborated type (and
 the body of a definition), printed with every argument and every constant by its full name,
 binder names erased, universe parameters numbered, private names without their module. Gzipped if
@@ -53,6 +55,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DUMPER = "scripts/DumpTypes.lean"
 FORMAT = "leandlra-hashdiff/1"
 RENAMES = "docs/renames.json"
+# The library of all modules (core and catalogue); the core library alone is ``LeanDLRA``.
+EVERYTHING = "LeanDLRACatalogue"
 
 # Characters that delimit constants in `Expr.dbgToString` output. A constant is a maximal run of
 # other characters, optionally followed by its universe levels `.{u0, 0}`.
@@ -64,14 +68,25 @@ IDENT = re.compile(r"[^" + DELIMS + r"]+")
 # Library and rename map
 
 
-def library_modules(root: Path = ROOT) -> list[str]:
-    """The modules imported by the root file ``LeanDLRA.lean`` (what ``make build`` compiles)."""
-    text = (root / "LeanDLRA.lean").read_text(encoding="utf-8")
-    return [m.group(1) for m in re.finditer(r"^import\s+(\S+)", text, re.MULTILINE)]
+def library_modules(root: Path = ROOT, lib: str = EVERYTHING) -> list[str]:
+    """The modules of a library: the imports of its root file ``<lib>.lean``.
+
+    An imported root file stands for its own imports: ``LeanDLRACatalogue.lean`` begins with
+    ``import LeanDLRA``, which stands for the modules of the core library.
+    """
+    text = (root / f"{lib}.lean").read_text(encoding="utf-8")
+    modules: list[str] = []
+    for m in re.finditer(r"^import\s+(\S+)", text, re.MULTILINE):
+        name = m.group(1)
+        if "." not in name and (root / f"{name}.lean").is_file():
+            modules += library_modules(root, name)
+        else:
+            modules.append(name)
+    return modules
 
 
 def unlisted_sources(modules: list[str], root: Path = ROOT) -> list[str]:
-    """Source files below ``LeanDLRA/`` whose module the root file does not import."""
+    """Source files below ``LeanDLRA/`` whose module is not among the given ones."""
     listed = set(modules)
     found = (
         ".".join(p.relative_to(root).with_suffix("").parts)
@@ -178,12 +193,12 @@ def git(*args: str) -> str:
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
-def dump(out: str, check: bool = True) -> None:
-    """Dump every declaration of the built library to ``out`` (``.gz`` for gzip)."""
-    modules = library_modules()
+def dump(out: str, check: bool = True, lib: str = EVERYTHING) -> None:
+    """Dump every declaration of the built library ``lib`` to ``out`` (``.gz`` for gzip)."""
+    modules = library_modules(lib=lib)
     if check:
         r = subprocess.run(
-            ["nice", "-n", "10", "lake", "build", "--no-build", "LeanDLRA"],
+            ["nice", "-n", "10", "lake", "build", "--no-build", lib],
             check=False,
             cwd=ROOT,
             capture_output=True,
@@ -192,11 +207,18 @@ def dump(out: str, check: bool = True) -> None:
         if r.returncode != 0:
             print((r.stdout + r.stderr)[-2000:], file=sys.stderr)
             raise SystemExit(
-                "the build is not current: run `make build` first (or --check=False)"
+                f"the build is not current: run `lake build {lib}` first (or --check=False)"
             )
-    for m in unlisted_sources(modules):
+    unlisted = unlisted_sources(modules)
+    if lib != EVERYTHING:
         print(
-            f"warning: {m} is not imported by LeanDLRA.lean (not dumped)",
+            f"note: {len(unlisted)} modules outside {lib} are not dumped",
+            file=sys.stderr,
+        )
+        unlisted = []
+    for m in unlisted:
+        print(
+            f"warning: {m} is not imported by {lib}.lean (not dumped)",
             file=sys.stderr,
         )
     target = Path(out)
@@ -208,8 +230,18 @@ def dump(out: str, check: bool = True) -> None:
         "format": FORMAT,
         "created": datetime.datetime.now().isoformat(timespec="seconds"),
         "commit": git("rev-parse", "--short", "HEAD"),
-        "dirty": bool(git("status", "--porcelain", "--", "LeanDLRA", "LeanDLRA.lean")),
+        "dirty": bool(
+            git(
+                "status",
+                "--porcelain",
+                "--",
+                "LeanDLRA",
+                "LeanDLRA.lean",
+                f"{EVERYTHING}.lean",
+            )
+        ),
         "modules": len(modules),
+        "lib": lib,
     }
     cmd = ["nice", "-n", "10", "lake", "env", "lean", "--run", DUMPER, "--canonical"]
     count = 0

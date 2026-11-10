@@ -18,6 +18,7 @@ The library contains no `sorry`. Every constant depends only on `propext`, `Clas
 
 <!-- status:end -->
 
+* [Core and catalogue: how the library is organized](docs/STRUCTURE.md)
 * [What is proven and where it comes from](docs/PROVEN.md)
 * [Novel results](docs/NOVEL.md)
 * [Corrections to published statements](docs/CORRECTIONS.md)
@@ -46,12 +47,15 @@ lake exe cache get
 import LeanDLRA.Integrators.BUG
 ```
 
-`import LeanDLRA` imports the whole library. Pin `rev` to a commit or tag for a reproducible build.
+`import LeanDLRA` imports the core, the connected theory. `import LeanDLRACatalogue` adds the
+catalogue, the results of single papers that are not yet stated in the core definitions
+([docs/STRUCTURE.md](docs/STRUCTURE.md)). Pin `rev` to a commit or tag for a reproducible build.
 
 ## Contributing
 
 Every file must build with `lake build --wfail`, contain no `sorry`, `admit`, `axiom` or
-`native_decide`, and pass `make verify`. CI runs the same checks on every push.
+`native_decide`, and pass `make verify`. CI runs the same checks on every push. A core module
+imports core modules only ([docs/STRUCTURE.md](docs/STRUCTURE.md)).
 
 ## Verifying
 
@@ -60,14 +64,16 @@ lake exe cache get
 make verify
 ```
 
-`make verify` builds the library and runs `scripts/audit.sh`, which rejects placeholders, custom axioms
-and `native_decide`, and checks the axioms of every constant, private ones included.
+`make verify` builds the core and runs `scripts/audit.sh`, which rejects placeholders, custom axioms
+and `native_decide`, and checks the axioms of every constant, private ones included. `make catalogue`
+does the same for everything, core and catalogue, and checks the recorded statements.
 
 | Workflow | Trigger | Checks |
 |---|---|---|
-| `lean_action_ci.yml` | every push | build with warnings as errors, audit, recorded statements unchanged (`scripts/fidelity.py`), kernel replay of new commits |
+| `lean_action_ci.yml` | every push | core: build with warnings as errors, import rule, audit, kernel replay of new commits |
+| `catalogue.yml` | push to `main` | everything: build with warnings as errors, audit, recorded statements unchanged (`scripts/fidelity.py`), kernel replay of new commits |
 | `kernel_replay.yml` | nightly | `leanchecker` replay of every module |
-| `certify.yml` | manual | clean build, audit, replay, external checkers (`lake check --paranoid`), signed `certificate.json` |
+| `certify.yml` | manual | everything: clean build, audit, replay, external checkers (`lake check --paranoid`), signed `certificate.json` |
 
 Verify a certificate with
 

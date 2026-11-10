@@ -1,6 +1,7 @@
 name: Kernel replay
 
-# Replay every declaration of the library through the kernel, independently of elaboration. It takes
+# Replay every declaration of the core and of the catalogue through the kernel, independently of
+# elaboration. It takes
 # about an hour because each module loads all of Mathlib, so it runs nightly and not on every push.
 on:
   schedule:
@@ -16,10 +17,10 @@ jobs:
     timeout-minutes: 350
     steps:
       - uses: actions/checkout@v7
-      - name: Import every library module in the root file
+      - name: Generate the root files
         run: scripts/gen_root.sh
       - uses: leanprover/lean-action@v1
         with:
-          build-args: --wfail
-      - name: Replay the whole library
+          build-args: --wfail LeanDLRACatalogue
+      - name: Replay every module
         run: scripts/replay.sh

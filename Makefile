@@ -4,7 +4,7 @@
 
 SHELL := /bin/bash
 PY_SCRIPTS := scripts/certificate.py scripts/fidelity.py scripts/gate.py scripts/build_site.py scripts/ledger.py scripts/corpus.py \
-              scripts/fetch_arxiv.py scripts/hashdiff.py scripts/connectivity.py
+              scripts/fetch_arxiv.py scripts/hashdiff.py scripts/connectivity.py scripts/core.py
 PYENV := .lake/check/pyenv
 # Statement dumps of `make dump`; `make hashdiff` compares the last two (scripts/hashdiff.py).
 HASHDIFF := .lake/hashdiff
@@ -12,7 +12,8 @@ BEFORE ?= $(HASHDIFF)/before.jsonl.gz
 AFTER ?= $(HASHDIFF)/after.jsonl.gz
 
 .DEFAULT_GOAL := help
-.PHONY: help deps build check audit verify index docs site dump hashdiff lint-py test-py ci papers clean
+.PHONY: help deps build catalogue check audit verify index docs site dump hashdiff lint-py test-py ci papers \
+        clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -20,21 +21,27 @@ help: ## Show this help
 deps: ## Download the Mathlib build cache
 	lake exe cache get
 
-build: ## Regenerate the root import files and build the library LeanDLRA
+build: ## Regenerate the root files and build the core library (docs/STRUCTURE.md)
 	scripts/gen_root.sh
+	uv run -q scripts/core.py check
 	lake build LeanDLRA
+
+catalogue: ## Build and check everything, core and catalogue (slow; needs an idle gate)
+	scripts/catalogue.sh
 
 check: ## Certify one file: make check FILE=LeanDLRA/Integrators/BUG.lean
 	@test -n "$(FILE)" || (echo "usage: make check FILE=<path>"; exit 1)
 	scripts/check.sh $(FILE)
 
-audit: ## Whole-library build + axiom audit + name-clash check (what CI runs)
+audit: ## Core build + axiom audit of the core (what the core workflow of CI runs)
 	scripts/gen_root.sh
 	scripts/audit.sh
 
-verify: build audit ## Full local verification before pushing (library, audit)
+verify: build audit ## Local verification of the core before pushing (build, audit)
 
-index: build ## Regenerate the Lean declaration index used by the website (website/decls.json)
+index: ## Regenerate the Lean declaration index used by the website (website/decls.json)
+	scripts/gen_root.sh
+	lake build LeanDLRACatalogue
 	lake env lean scripts/DeclIndex.lean
 
 docs: ## Regenerate docs/PROVEN.md and the README status block
@@ -43,7 +50,7 @@ docs: ## Regenerate docs/PROVEN.md and the README status block
 site: index docs ## Generate the website pages into website/ (as the Pages workflow does)
 	uv run -q scripts/build_site.py
 
-dump: ## Dump every declaration's type (build first); the previous dump becomes BEFORE
+dump: ## Dump every declaration's type (after `make catalogue`); the previous dump becomes BEFORE
 	@mkdir -p $(HASHDIFF)
 	uv run -q scripts/hashdiff.py dump $(HASHDIFF)/new.jsonl.gz
 	@if [ -f $(AFTER) ]; then mv $(AFTER) $(BEFORE); fi
@@ -62,7 +69,7 @@ lint-py: ## Ruff + ty on the Python scripts
 test-py: ## Pytest for the Python scripts (tests/)
 	uv run -q --with pytest pytest -q tests
 
-ci: verify lint-py ## Everything CI checks
+ci: verify lint-py test-py ## Everything the core workflow of CI checks
 
 papers: ## Fetch full texts of the surveyed papers into papers/pdf and papers/txt (local only, git-ignored)
 	uv run --script scripts/corpus.py fetch --everything
