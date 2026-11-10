@@ -4,6 +4,7 @@ import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Results of arXiv 2112.02695: Adaptive DLRA for the nonlinear Boltzmann equation
@@ -53,6 +54,8 @@ open Set Filter Topology Finset
 open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius
 
 namespace LeanDLRA.Literature.P2112_02695
+
+open Matrix (IsSVD svdTrunc)
 
 /-! ### Eqs. (2.11)-(2.13): the substeps close with `r²` collision evaluations -/
 
@@ -328,15 +331,12 @@ section Truncation
 
 variable {α β : Type*} [Fintype α] [Fintype β] {p r : ℕ}
 
-/-- `A = U diag(σ) Wᵀ` is a singular value decomposition with `p` components: orthonormal columns
-and nonnegative singular values in decreasing order. -/
-structure IsSVD (A : Matrix α β ℝ) (U : Matrix α (Fin p) ℝ) (σ : Fin p → ℝ)
-    (W : Matrix β (Fin p) ℝ) : Prop where
-  orthU : Uᵀ * U = 1
-  orthW : Wᵀ * W = 1
-  antitone : Antitone σ
-  nonneg : ∀ i, 0 ≤ σ i
-  eq : A = U * Matrix.diagonal σ * Wᵀ
+/-! A singular value decomposition `A = U diag(σ) Wᵀ` with `p` components (orthonormal columns and
+nonnegative singular values in decreasing order) is the core `Matrix.IsSVD A U σ W`; the SVD
+truncated to its first `r` components is the core `Matrix.svdTrunc U σ W r`, and the discarded
+weight `∑_{i ≥ r} σ_i²` is the core `tailSqSum σ r`. The local `IsSVD`, `truncSVD` and `tailSq`
+of an earlier version of this file were the same definitions (`truncSVD U σ W hr` with `hr : r ≤ p`
+is `svdTrunc U σ W r` by `Matrix.svdTrunc_eq_submatrix`; unification batch C3). -/
 
 /-- The first `r` columns `A(:, 1:r)` of `A`. -/
 def firstCols {γ : Type*} (A : Matrix γ (Fin p) ℝ) (hr : r ≤ p) : Matrix γ (Fin r) ℝ :=
@@ -345,14 +345,7 @@ def firstCols {γ : Type*} (A : Matrix γ (Fin p) ℝ) (hr : r ≤ p) : Matrix �
 /-- The first `r` singular values. -/
 def firstVals (σ : Fin p → ℝ) (hr : r ≤ p) : Fin r → ℝ := σ ∘ Fin.castLE hr
 
-/-- The SVD truncated to its first `r` components. -/
-def truncSVD (U : Matrix α (Fin p) ℝ) (σ : Fin p → ℝ) (W : Matrix β (Fin p) ℝ) (hr : r ≤ p) :
-    Matrix α β ℝ :=
-  firstCols U hr * Matrix.diagonal (firstVals σ hr) * (firstCols W hr)ᵀ
 
-/-- The squared Frobenius norm `∑_{i ≥ r} σ_i²` of the discarded singular values. -/
-def tailSq (σ : Fin p → ℝ) (r : ℕ) : ℝ :=
-  ∑ i : Fin p, if r ≤ (i : ℕ) then σ i ^ 2 else 0
 
 /-- Sums over the first `r` indices. -/
 private lemma sum_castLE (hr : r ≤ p) (g : Fin p → ℝ) :
@@ -382,36 +375,30 @@ theorem firstCols_orthonormal {γ : Type*} [Fintype γ] {U : Matrix γ (Fin p) �
   exact Matrix.submatrix_one _ (Fin.castLE_injective hr)
 
 omit [Fintype α] [Fintype β] in
-/-- The truncation as the SVD with the discarded singular values set to zero. -/
-private lemma truncSVD_eq (U : Matrix α (Fin p) ℝ) (σ : Fin p → ℝ) (W : Matrix β (Fin p) ℝ)
+/-- The truncated SVD in the leading-column form of the paper: `svdTrunc U σ W r` is
+`U(:, 1:r) diag(σ(1:r)) W(:, 1:r)ᵀ` (the core `Matrix.svdTrunc_eq_submatrix`). -/
+theorem svdTrunc_eq_firstCols (U : Matrix α (Fin p) ℝ) (σ : Fin p → ℝ) (W : Matrix β (Fin p) ℝ)
     (hr : r ≤ p) :
-    truncSVD U σ W hr =
-      U * Matrix.diagonal (fun i : Fin p => if (i : ℕ) < r then σ i else 0) * Wᵀ := by
-  ext a b
-  rw [truncSVD, Matrix.mul_apply, Matrix.mul_apply]
-  simp only [Matrix.mul_diagonal, Matrix.transpose_apply, firstCols, firstVals,
-    Matrix.submatrix_apply, id, Function.comp]
-  rw [sum_castLE hr (fun i => U a i * σ i * W b i)]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  split_ifs <;> simp
+    svdTrunc U σ W r = firstCols U hr * Matrix.diagonal (firstVals σ hr) * (firstCols W hr)ᵀ :=
+  Matrix.svdTrunc_eq_submatrix U σ W hr
 
 /-- **Truncation error of an SVD** (Secs. 3.1, 3.2 of arXiv 2112.02695), exactly:
 `‖A - A_r‖² = ∑_{i ≥ r} σ_i²`. -/
 theorem IsSVD.norm_sub_truncSVD_sq {A : Matrix α β ℝ} {U : Matrix α (Fin p) ℝ} {σ : Fin p → ℝ}
-    {W : Matrix β (Fin p) ℝ} (h : IsSVD A U σ W) (hr : r ≤ p) :
-    ‖A - truncSVD U σ W hr‖ ^ 2 = tailSq σ r := by
-  have hsub : A - truncSVD U σ W hr =
+    {W : Matrix β (Fin p) ℝ} (h : IsSVD A U σ W) (r : ℕ) :
+    ‖A - svdTrunc U σ W r‖ ^ 2 = tailSqSum σ r := by
+  have hsub : A - svdTrunc U σ W r =
       U * Matrix.diagonal (fun i : Fin p => if r ≤ (i : ℕ) then σ i else 0) * Wᵀ := by
     conv_lhs => rw [h.eq]
-    rw [truncSVD_eq, ← Matrix.sub_mul, ← Matrix.mul_sub, Matrix.diagonal_sub]
+    rw [Matrix.svdTrunc_def, ← Matrix.sub_mul, ← Matrix.mul_sub, Matrix.diagonal_sub]
     congr 3
     ext i
     by_cases hi : (i : ℕ) < r
     · simp [hi, not_le.mpr hi]
     · simp [hi, not_lt.mp hi]
-  rw [hsub, LeanDLRA.Frobenius.norm_mul_transpose_of_orthonormal h.orthW,
+  rw [hsub, LeanDLRA.Frobenius.norm_mul_transpose_of_orthonormal h.orthV,
     LeanDLRA.Frobenius.norm_mul_of_orthonormal h.orthU, LeanDLRA.Frobenius.norm_sq_eq_sum,
-    tailSq]
+    tailSqSum]
   refine Finset.sum_congr rfl fun i _ => ?_
   rw [Finset.sum_eq_single i]
   · by_cases hi : r ≤ (i : ℕ) <;> simp [hi]
@@ -436,8 +423,8 @@ private lemma sum_ite_le (hr : r ≤ p) :
 /-- **Sec. 3.2 of arXiv 2112.02695**: if all discarded singular values are below `tol` then
 `∑_{i ≥ r} σ_i² ≤ (p - r) tol²`. -/
 theorem tailSq_le {σ : Fin p → ℝ} (hσ : ∀ i, 0 ≤ σ i) (hr : r ≤ p) {tol : ℝ}
-    (htol : ∀ i : Fin p, r ≤ (i : ℕ) → σ i ≤ tol) : tailSq σ r ≤ ((p : ℝ) - r) * tol ^ 2 := by
-  rw [← sum_ite_le hr, Finset.sum_mul, tailSq]
+    (htol : ∀ i : Fin p, r ≤ (i : ℕ) → σ i ≤ tol) : tailSqSum σ r ≤ ((p : ℝ) - r) * tol ^ 2 := by
+  rw [← sum_ite_le hr, Finset.sum_mul, tailSqSum]
   refine Finset.sum_le_sum fun i _ => ?_
   by_cases hi : r ≤ (i : ℕ)
   · simpa [hi] using pow_le_pow_left₀ (hσ i) (htol i hi) 2
@@ -448,10 +435,10 @@ values are below `tol`. -/
 theorem IsSVD.norm_sub_truncSVD_le {A : Matrix α β ℝ} {U : Matrix α (Fin p) ℝ} {σ : Fin p → ℝ}
     {W : Matrix β (Fin p) ℝ} (h : IsSVD A U σ W) (hr : r ≤ p) {tol : ℝ} (h0 : 0 ≤ tol)
     (htol : ∀ i : Fin p, r ≤ (i : ℕ) → σ i ≤ tol) :
-    ‖A - truncSVD U σ W hr‖ ≤ √((p : ℝ) - r) * tol := by
+    ‖A - svdTrunc U σ W r‖ ≤ √((p : ℝ) - r) * tol := by
   have hp : (0 : ℝ) ≤ (p : ℝ) - r := sub_nonneg.mpr (by exact_mod_cast hr)
   refine le_of_sq_le_sq ?_ (by positivity)
-  rw [h.norm_sub_truncSVD_sq hr, mul_pow, Real.sq_sqrt hp]
+  rw [IsSVD.norm_sub_truncSVD_sq h r, mul_pow, Real.sq_sqrt hp]
   exact tailSq_le h.nonneg hr htol
 
 /-- **The rank kept by a threshold exists**: for decreasing `σ` and any `tol` there is `r ≤ p` such
@@ -493,9 +480,9 @@ theorem IsSVD.mul {X : Matrix m (Fin r) ℝ} {V : Matrix n (Fin r) ℝ} {S : Mat
   orthU := by
     rw [Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc Xᵀ, hX, Matrix.one_mul,
       hS.orthU]
-  orthW := by
+  orthV := by
     rw [Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc Vᵀ, hV, Matrix.one_mul,
-      hS.orthW]
+      hS.orthV]
   antitone := hS.antitone
   nonneg := hS.nonneg
   eq := by
@@ -513,8 +500,8 @@ omit [Fintype m] [Fintype n] in
 /-- `droppedState` is the truncation of the SVD of `f`. -/
 private lemma droppedState_eq (X : Matrix m (Fin r) ℝ) (U : Matrix (Fin r) (Fin r) ℝ)
     (σ : Fin r → ℝ) (W : Matrix (Fin r) (Fin r) ℝ) (V : Matrix n (Fin r) ℝ) (hr : r' ≤ r) :
-    droppedState X U σ W V hr = truncSVD (X * U) σ (V * W) hr := by
-  rw [droppedState, truncSVD, firstCols_mul, firstCols_mul]
+    droppedState X U σ W V hr = svdTrunc (X * U) σ (V * W) r' := by
+  rw [droppedState, svdTrunc_eq_firstCols _ _ _ hr, firstCols_mul, firstCols_mul]
 
 /-- **Sec. 3.2 of arXiv 2112.02695, step 3**: the rotated and truncated bases are orthonormal. -/
 theorem droppedBases_orthonormal {X : Matrix m (Fin r) ℝ} {V : Matrix n (Fin r) ℝ}
@@ -524,7 +511,7 @@ theorem droppedBases_orthonormal {X : Matrix m (Fin r) ℝ} {V : Matrix n (Fin r
       (V * firstCols W hr)ᵀ * (V * firstCols W hr) = 1 := by
   have h := IsSVD.mul hX hV hS
   rw [← firstCols_mul, ← firstCols_mul]
-  exact ⟨firstCols_orthonormal h.orthU hr, firstCols_orthonormal h.orthW hr⟩
+  exact ⟨firstCols_orthonormal h.orthU hr, firstCols_orthonormal h.orthV hr⟩
 
 /-- **Sec. 3.2 of arXiv 2112.02695, the error of dropping**: if `f = X S Vᵀ` has orthonormal bases,
 `S = U diag(σ) Wᵀ`, and the singular values kept are exactly those `≥ tol`, namely the first `r'`,
@@ -534,11 +521,12 @@ theorem norm_droppedState_sub_le {X : Matrix m (Fin r) ℝ} {V : Matrix n (Fin r
     {S U W : Matrix (Fin r) (Fin r) ℝ} {σ : Fin r → ℝ} (hX : Xᵀ * X = 1) (hV : Vᵀ * V = 1)
     (hS : IsSVD S U σ W) (hr : r' ≤ r) {tol : ℝ} (h0 : 0 ≤ tol)
     (hkeep : ∀ i : Fin r, (i : ℕ) < r' ↔ tol ≤ σ i) :
-    ‖droppedState X U σ W V hr - X * S * Vᵀ‖ ^ 2 = tailSq σ r' ∧
+    ‖droppedState X U σ W V hr - X * S * Vᵀ‖ ^ 2 = tailSqSum σ r' ∧
       ‖droppedState X U σ W V hr - X * S * Vᵀ‖ ≤ √((r : ℝ) - r') * tol := by
   have h := IsSVD.mul hX hV hS
   rw [droppedState_eq, norm_sub_rev]
-  refine ⟨h.norm_sub_truncSVD_sq hr, h.norm_sub_truncSVD_le hr h0 fun i hi => ?_⟩
+  refine ⟨IsSVD.norm_sub_truncSVD_sq h r',
+    IsSVD.norm_sub_truncSVD_le h hr h0 fun i hi => ?_⟩
   exact (not_le.mp fun hc => absurd ((hkeep i).mpr hc) (not_lt.mpr hi)).le
 
 /-- **Eq. (5.6) of arXiv 2112.02695**: with `err = ‖f¹ - f⁰‖`, `err_ada = ‖f̄¹ - f⁰‖`,
@@ -613,7 +601,7 @@ theorem eq5_7_satisfiable :
         (1 : Matrix (Fin 2) (Fin 2) ℝ) (by norm_num : 1 ≤ 2) =
         Matrix.diagonal fun i : Fin 2 =>
           if (i : ℕ) < 1 then (![1, 1 / 10] : Fin 2 → ℝ) i else 0 := by
-      rw [droppedState_eq, truncSVD_eq]
+      rw [droppedState_eq, Matrix.svdTrunc_def]
       simp
     rw [h, sub_zero, LeanDLRA.Frobenius.norm_def]
     simp [Matrix.diagonal_apply]
@@ -737,28 +725,28 @@ theorem boundary_capture {e : Type*} [Fintype e] {p rb : ℕ} {Fb : Matrix e n �
     {Ub : Matrix e (Fin p) ℝ} {σ : Fin p → ℝ} {Wb : Matrix n (Fin p) ℝ} (hF : IsSVD Fb Ub σ Wb)
     (hr : rb ≤ p) {V : Matrix n k ℝ} {Vq : Matrix n c' ℝ} {Sv : Matrix c' (k ⊕ Fin rb) ℝ}
     (hVq : Vqᵀ * Vq = 1) (hV : Matrix.fromCols V (firstCols Wb hr) = Vq * Sv) :
-    ‖Fb - Fb * Vq * Vqᵀ‖ ^ 2 ≤ tailSq σ rb ∧
+    ‖Fb - Fb * Vq * Vqᵀ‖ ^ 2 ≤ tailSqSum σ rb ∧
       ((∀ i : Fin p, rb ≤ (i : ℕ) → σ i = 0) → Fb * Vq * Vqᵀ = Fb) ∧
       ∀ tol : ℝ, 0 ≤ tol → (∀ i : Fin p, (i : ℕ) < rb ↔ tol ≤ σ i) →
         ‖Fb - Fb * Vq * Vqᵀ‖ ≤ √((p : ℝ) - rb) * tol := by
   have hQ : (firstCols Wb hr)ᵀ * Vq * Vqᵀ = (firstCols Wb hr)ᵀ := by
     simpa [Matrix.transpose_mul, Matrix.mul_assoc] using
       congrArg Matrix.transpose (augmentation_span hVq hV).2
-  have hT : truncSVD Ub σ Wb hr * Vq * Vqᵀ = truncSVD Ub σ Wb hr := by
-    rw [truncSVD, Matrix.mul_assoc _ _ Vqᵀ, Matrix.mul_assoc _ _ (Vq * Vqᵀ),
+  have hT : svdTrunc Ub σ Wb rb * Vq * Vqᵀ = svdTrunc Ub σ Wb rb := by
+    rw [svdTrunc_eq_firstCols _ _ _ hr, Matrix.mul_assoc _ _ Vqᵀ, Matrix.mul_assoc _ _ (Vq * Vqᵀ),
       ← Matrix.mul_assoc _ Vq, hQ]
-  have hE : Fb - Fb * Vq * Vqᵀ = (Fb - truncSVD Ub σ Wb hr) -
-      rightProj Vq (Fb - truncSVD Ub σ Wb hr) := by
+  have hE : Fb - Fb * Vq * Vqᵀ = (Fb - svdTrunc Ub σ Wb rb) -
+      rightProj Vq (Fb - svdTrunc Ub σ Wb rb) := by
     rw [rightProj_apply, Matrix.sub_mul, Matrix.sub_mul, hT]
     abel
-  have hle : ‖Fb - Fb * Vq * Vqᵀ‖ ≤ ‖Fb - truncSVD Ub σ Wb hr‖ := by
+  have hle : ‖Fb - Fb * Vq * Vqᵀ‖ ≤ ‖Fb - svdTrunc Ub σ Wb rb‖ := by
     rw [hE]
     exact (isOrthProj_rightProj hVq).norm_sub_le _
-  have hsq : ‖Fb - Fb * Vq * Vqᵀ‖ ^ 2 ≤ tailSq σ rb := by
-    rw [← hF.norm_sub_truncSVD_sq hr]
+  have hsq : ‖Fb - Fb * Vq * Vqᵀ‖ ^ 2 ≤ tailSqSum σ rb := by
+    rw [← IsSVD.norm_sub_truncSVD_sq hF rb]
     exact pow_le_pow_left₀ (norm_nonneg _) hle 2
   refine ⟨hsq, fun hzero => ?_, fun tol h0 hkeep => hle.trans ?_⟩
-  · have htail : tailSq σ rb = 0 := by
+  · have htail : tailSqSum σ rb = 0 := by
       refine Finset.sum_eq_zero fun i _ => ?_
       by_cases hi : rb ≤ (i : ℕ)
       · simp [hi, hzero i hi]
@@ -767,7 +755,7 @@ theorem boundary_capture {e : Type*} [Fintype e] {p rb : ℕ} {Fb : Matrix e n �
     have h0' : ‖Fb - Fb * Vq * Vqᵀ‖ = 0 :=
       pow_eq_zero_iff (two_ne_zero) |>.mp (le_antisymm hsq (by positivity))
     exact (sub_eq_zero.mp (norm_eq_zero.mp h0')).symm
-  · refine hF.norm_sub_truncSVD_le hr h0 fun i hi => ?_
+  · refine IsSVD.norm_sub_truncSVD_le hF hr h0 fun i hi => ?_
     exact (not_le.mp fun hc => absurd ((hkeep i).mpr hc) (not_lt.mpr hi)).le
 
 end Augmentation
@@ -1842,5 +1830,13 @@ theorem mottSmith_satisfiable [DecidableEq ι] {B : ℝ → ℝ → ℝ}
   · exact integrable_collisionIntegrand hB hC (mul_pos hRpos hTR) (mul_pos hRpos hTL) _ _ v i₀
 
 end Maxwellian
+
+/-- The local SVD predicate of this file, replaced by the core `Matrix.IsSVD` (same fields; `orthW`
+is the core `orthV`). -/
+@[deprecated (since := "2026-11-09")] alias IsSVD := Matrix.IsSVD
+
+/-- The local discarded weight of this file, replaced by the core `LeanDLRA.tailSqSum` (same
+definition). -/
+@[deprecated (since := "2026-11-09")] alias tailSq := LeanDLRA.tailSqSum
 
 end LeanDLRA.Literature.P2112_02695

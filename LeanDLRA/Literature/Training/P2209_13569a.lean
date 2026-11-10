@@ -5,6 +5,7 @@ import LeanDLRA.Matrix.Curvature
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Training.FactorizedDynamics
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 
 /-!
 # Results of arXiv 2209.13569: Exploring low-rank training of deep neural networks
@@ -192,16 +193,12 @@ section Spectral
 
 variable {p r : ℕ}
 
-/-- `A = Û diag(σ) V̂ᵀ` is a singular value decomposition of `A` with `p` columns: `Û`, `V̂` have
-orthonormal columns and `σ₀ ≥ σ₁ ≥ ⋯ ≥ 0`.  This covers the thin SVD (`p = rank A`) and the reduced
-SVD (`p = min(m, n)`) used in arXiv 2209.13569, see `exists_isSVD_of_le`. -/
-structure IsSVD (A : Matrix m n ℝ) (Uh : Matrix m (Fin p) ℝ) (σ : Fin p → ℝ)
-    (Vh : Matrix n (Fin p) ℝ) : Prop where
-  left_orth : Uhᵀ * Uh = 1
-  right_orth : Vhᵀ * Vh = 1
-  antitone : Antitone σ
-  nonneg : ∀ i, 0 ≤ σ i
-  eq_mul : A = Uh * Matrix.diagonal σ * Vhᵀ
+/-! A singular value decomposition `A = Û diag(σ) V̂ᵀ` with `p` columns (`Û`, `V̂` with orthonormal
+columns, `σ₀ ≥ σ₁ ≥ ⋯ ≥ 0`) is the core `Matrix.IsSVD A Û σ V̂`; it covers the thin SVD
+(`p = rank A`) and the reduced SVD (`p = min(m, n)`) used in arXiv 2209.13569, see
+`exists_isSVD_of_le`. The truncated SVD `SVD_r(W) = Û_{:r} Σ_r V̂_{:r}ᵀ` of eq. (3) is the core
+`Matrix.svdTrunc Û σ V̂ r` (`svdTrunc_eq_leadCols`). The local `IsSVD` and `svdTrunc hr Û σ V̂` of
+an earlier version of this file were the same objects (unification batch C3). -/
 
 /-- The leading `r` columns `X_{:r}` of a matrix with `p ≥ r` columns. -/
 def leadCols {ι : Type*} (hr : r ≤ p) (X : Matrix ι (Fin p) ℝ) : Matrix ι (Fin r) ℝ :=
@@ -209,11 +206,6 @@ def leadCols {ι : Type*} (hr : r ≤ p) (X : Matrix ι (Fin p) ℝ) : Matrix ι
 
 /-- The leading `r` values `σ_{:r}`, that is, the diagonal of `Σ_r`. -/
 def leadVals (hr : r ≤ p) (σ : Fin p → ℝ) : Fin r → ℝ := σ ∘ Fin.castLE hr
-
-/-- The truncated SVD `SVD_r(W) = Û_{:r} Σ_r V̂_{:r}ᵀ` of arXiv 2209.13569, eq. (3). -/
-def svdTrunc (hr : r ≤ p) (Uh : Matrix m (Fin p) ℝ) (σ : Fin p → ℝ)
-    (Vh : Matrix n (Fin p) ℝ) : Matrix m n ℝ :=
-  leadCols hr Uh * Matrix.diagonal (leadVals hr σ) * (leadCols hr Vh)ᵀ
 
 /-- The matrix `√Σ_r` of arXiv 2209.13569, eq. (3). -/
 noncomputable def sqrtSigma (hr : r ≤ p) (σ : Fin p → ℝ) : Matrix (Fin r) (Fin r) ℝ :=
@@ -233,18 +225,12 @@ private theorem transpose_leadCols_mul_self {ι : Type*} [Fintype ι] {X : Matri
   exact h
 
 omit [Fintype m] [Fintype n] in
-/-- `Û_{:r} Σ_r V̂_{:r}ᵀ` is `Û diag(σ₀, …, σ_{r-1}, 0, …, 0) V̂ᵀ`. -/
-private theorem svdTrunc_eq (hr : r ≤ p) (Uh : Matrix m (Fin p) ℝ) (σ : Fin p → ℝ)
+/-- The truncated SVD of eq. (3) in the leading-column form `Û_{:r} Σ_r V̂_{:r}ᵀ` of the paper (the
+core `Matrix.svdTrunc_eq_submatrix`). -/
+theorem svdTrunc_eq_leadCols (hr : r ≤ p) (Uh : Matrix m (Fin p) ℝ) (σ : Fin p → ℝ)
     (Vh : Matrix n (Fin p) ℝ) :
-    svdTrunc hr Uh σ Vh =
-      Uh * Matrix.diagonal (fun i : Fin p => if (i : ℕ) < r then σ i else 0) * Vhᵀ := by
-  ext a b
-  rw [svdTrunc, Matrix.mul_apply, Matrix.mul_apply]
-  simp only [leadCols, leadVals, Matrix.mul_diagonal, Matrix.transpose_apply,
-    Matrix.submatrix_apply, id, Function.comp]
-  rw [KyFan.sum_castLE_eq_sum_filter hr (fun i => Uh a i * σ i * Vh b i), Finset.sum_filter]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  split_ifs <;> simp
+    svdTrunc Uh σ Vh r = leadCols hr Uh * Matrix.diagonal (leadVals hr σ) * (leadCols hr Vh)ᵀ :=
+  Matrix.svdTrunc_eq_submatrix Uh σ Vh hr
 
 /-- `‖Û diag(d) V̂ᵀ‖_F² = ∑_i d_i²` for orthonormal columns. -/
 private theorem sq_norm_mul_diagonal_mul {Uh : Matrix m (Fin p) ℝ} {Vh : Matrix n (Fin p) ℝ}
@@ -291,27 +277,28 @@ variable {A : Matrix m n ℝ} {Uh : Matrix m (Fin p) ℝ} {σ : Fin p → ℝ} {
 
 /-- An SVD has at most `n` columns. -/
 theorem le_card_width (hs : IsSVD A Uh σ Vh) : p ≤ Fintype.card n := by
-  have h1 := rank_eq_card_of_transpose_mul_eq_one hs.right_orth
+  have h1 := rank_eq_card_of_transpose_mul_eq_one hs.orthV
   have h2 := Vh.rank_le_card_height
   rw [h1, Fintype.card_fin] at h2
   exact h2
 
 /-- A matrix with an SVD with `p` columns has rank `≤ p`. -/
 theorem rank_le (hs : IsSVD A Uh σ Vh) : A.rank ≤ p := by
-  rw [hs.eq_mul]
+  rw [hs.eq]
   exact rank_mul_mul_transpose_le _ _ _
 
 omit [Fintype m] in
 /-- The truncated SVD has rank `≤ r`. -/
-theorem rank_svdTrunc_le (hr : r ≤ p) : (svdTrunc hr Uh σ Vh).rank ≤ r :=
-  rank_mul_mul_transpose_le _ _ _
+theorem rank_svdTrunc_le (hr : r ≤ p) : (svdTrunc Uh σ Vh r).rank ≤ r := by
+  rw [svdTrunc_eq_leadCols hr]
+  exact rank_mul_mul_transpose_le _ _ _
 
 /-- The truncation error `A - Û_{:r} Σ_r V̂_{:r}ᵀ` is `Û diag(0, …, 0, σ_r, σ_{r+1}, …) V̂ᵀ`. -/
-theorem sub_svdTrunc (hs : IsSVD A Uh σ Vh) (hr : r ≤ p) :
-    A - svdTrunc hr Uh σ Vh =
+theorem sub_svdTrunc (hs : IsSVD A Uh σ Vh) (r : ℕ) :
+    A - svdTrunc Uh σ Vh r =
       Uh * Matrix.diagonal (fun i : Fin p => if (i : ℕ) < r then 0 else σ i) * Vhᵀ := by
-  conv_lhs => rw [hs.eq_mul]
-  rw [svdTrunc_eq, ← Matrix.sub_mul, ← Matrix.mul_sub, diagonal_sub]
+  conv_lhs => rw [hs.eq]
+  rw [Matrix.svdTrunc_def, ← Matrix.sub_mul, ← Matrix.mul_sub, diagonal_sub]
   congr 3
   ext i
   split_ifs <;> simp
@@ -321,10 +308,10 @@ private theorem singularValues_le [DecidableEq n] (hs : IsSVD A Uh σ Vh) (i : F
     (toEuclideanLin A).singularValues i ≤ σ i := by
   classical
   have hr : (i : ℕ) ≤ p := i.2.le
-  refine (singularValues_le_specNorm_sub A (svdTrunc hr Uh σ Vh)
+  refine (singularValues_le_specNorm_sub A (svdTrunc Uh σ Vh (i : ℕ))
     (rank_svdTrunc_le hr)).trans ?_
-  rw [hs.sub_svdTrunc hr]
-  refine specNorm_mul_diagonal_mul_le hs.left_orth hs.right_orth _ (hs.nonneg i) fun j => ?_
+  rw [IsSVD.sub_svdTrunc hs (i : ℕ)]
+  refine specNorm_mul_diagonal_mul_le hs.orthU hs.orthV _ (hs.nonneg i) fun j => ?_
   split_ifs with hj
   · simpa using hs.nonneg i
   · rw [abs_of_nonneg (hs.nonneg j)]
@@ -334,7 +321,7 @@ private theorem singularValues_le [DecidableEq n] (hs : IsSVD A Uh σ Vh) (i : F
 theorem singularValues_eq_zero [DecidableEq n] (hs : IsSVD A Uh σ Vh) {i : ℕ} (hi : p ≤ i) :
     (toEuclideanLin A).singularValues i = 0 := by
   classical
-  have h1 := singularValues_le_specNorm_sub A A (hs.rank_le.trans hi)
+  have h1 := singularValues_le_specNorm_sub A A ((IsSVD.rank_le hs).trans hi)
   rw [sub_self] at h1
   have h2 : specNorm (0 : Matrix m n ℝ) ≤ 0 := specNorm_le_of le_rfl fun x => by simp
   exact le_antisymm (h1.trans h2) ((toEuclideanLin A).singularValues_nonneg i)
@@ -344,51 +331,58 @@ values `σ_i(A)` of `A` (Mathlib's `LinearMap.singularValues`). -/
 theorem singularValues_eq [DecidableEq n] (hs : IsSVD A Uh σ Vh) (i : Fin p) :
     (toEuclideanLin A).singularValues i = σ i := by
   have hsum : ∑ i : Fin p, (toEuclideanLin A).singularValues i ^ 2 = ∑ i, σ i ^ 2 := by
-    rw [← sq_norm_mul_diagonal_mul hs.left_orth hs.right_orth σ, ← hs.eq_mul,
+    rw [← sq_norm_mul_diagonal_mul hs.orthU hs.orthV σ, ← hs.eq,
       sq_norm_eq_sum_sq_singularValues,
       Fin.sum_univ_eq_sum_range (fun i => (toEuclideanLin A).singularValues i ^ 2)]
-    refine Finset.sum_subset (Finset.range_subset_range.mpr hs.le_card_width) fun j _ hj => ?_
-    rw [hs.singularValues_eq_zero (by simpa using hj)]
+    refine Finset.sum_subset (Finset.range_subset_range.mpr (IsSVD.le_card_width hs))
+      fun j _ hj => ?_
+    rw [(IsSVD.singularValues_eq_zero hs) (by simpa using hj)]
     simp
   have hle : ∀ i ∈ (univ : Finset (Fin p)), (toEuclideanLin A).singularValues i ^ 2 ≤ σ i ^ 2 :=
     fun i _ => pow_le_pow_left₀ ((toEuclideanLin A).singularValues_nonneg _)
-      (hs.singularValues_le i) 2
+      ((IsSVD.singularValues_le hs) i) 2
   have h := (Finset.sum_eq_sum_iff_of_le hle).mp hsum i (Finset.mem_univ i)
   exact (pow_left_inj₀ ((toEuclideanLin A).singularValues_nonneg _) (hs.nonneg i)
     two_ne_zero).mp h
 
 /-- `‖A - Û_{:r} Σ_r V̂_{:r}ᵀ‖_F² = ∑_{i ≥ r} σ_i(A)²`. -/
-theorem sq_norm_sub_svdTrunc [DecidableEq n] (hs : IsSVD A Uh σ Vh) (hr : r ≤ p) :
-    ‖A - svdTrunc hr Uh σ Vh‖ ^ 2 =
+theorem sq_norm_sub_svdTrunc [DecidableEq n] (hs : IsSVD A Uh σ Vh) (r : ℕ) :
+    ‖A - svdTrunc Uh σ Vh r‖ ^ 2 =
       ∑ i ∈ Finset.Ico r (Fintype.card n), (toEuclideanLin A).singularValues i ^ 2 := by
   have hsub : Finset.Ico r p ⊆ Finset.Ico r (Fintype.card n) :=
-    Finset.Ico_subset_Ico_right hs.le_card_width
-  rw [hs.sub_svdTrunc hr, sq_norm_mul_diagonal_mul hs.left_orth hs.right_orth,
+    Finset.Ico_subset_Ico_right (IsSVD.le_card_width hs)
+  rw [IsSVD.sub_svdTrunc hs r, sq_norm_mul_diagonal_mul hs.orthU hs.orthV,
     ← Finset.sum_subset hsub fun j hj hj' => ?_, ← sum_fin_ite_eq_sum_Ico]
   · refine Finset.sum_congr rfl fun i _ => ?_
-    rw [hs.singularValues_eq i]
+    rw [(IsSVD.singularValues_eq hs) i]
     split_ifs <;> simp
   · have hj1 : p ≤ j := by
       simp only [Finset.mem_Ico, not_and, not_lt] at hj hj'
       exact hj' hj.1
-    rw [hs.singularValues_eq_zero hj1]
+    rw [(IsSVD.singularValues_eq_zero hs) hj1]
     simp
 
 /-- The truncated SVD is a best rank-`r` approximation in the Frobenius norm. -/
-theorem norm_sub_svdTrunc_le (hs : IsSVD A Uh σ Vh) (hr : r ≤ p) {B : Matrix m n ℝ}
-    (hB : B.rank ≤ r) : ‖A - svdTrunc hr Uh σ Vh‖ ≤ ‖A - B‖ := by
+theorem norm_sub_svdTrunc_le (hs : IsSVD A Uh σ Vh) {B : Matrix m n ℝ} (hB : B.rank ≤ r) :
+    ‖A - svdTrunc Uh σ Vh r‖ ≤ ‖A - B‖ := by
   classical
   have h := sum_sq_singularValues_le_sq_norm_sub A B hB
-  rw [← hs.sq_norm_sub_svdTrunc hr] at h
+  rw [← IsSVD.sq_norm_sub_svdTrunc hs r] at h
   exact (pow_le_pow_iff_left₀ (norm_nonneg _) (norm_nonneg _) two_ne_zero).mp h
+
+/-- **Bridge (Eckart–Young).** The truncated SVD is a best rank-`r` approximation in the sense of
+the core `IsBestLowRankApprox`. -/
+theorem isBestLowRankApprox_svdTrunc (hs : IsSVD A Uh σ Vh) (hr : r ≤ p) :
+    IsBestLowRankApprox r A (svdTrunc Uh σ Vh r) :=
+  ⟨rank_svdTrunc_le hr, fun _ hB => IsSVD.norm_sub_svdTrunc_le hs hB⟩
 
 /-- The truncated SVD is a best rank-`r` approximation in the spectral norm. -/
 theorem specNorm_sub_svdTrunc_le [DecidableEq n] (hs : IsSVD A Uh σ Vh) (hr : r ≤ p)
     {B : Matrix m n ℝ} (hB : B.rank ≤ r) :
-    specNorm (A - svdTrunc hr Uh σ Vh) ≤ specNorm (A - B) := by
-  rw [hs.sub_svdTrunc hr]
+    specNorm (A - svdTrunc Uh σ Vh r) ≤ specNorm (A - B) := by
+  rw [IsSVD.sub_svdTrunc hs r]
   rcases hr.lt_or_eq with hrp | rfl
-  · refine (specNorm_mul_diagonal_mul_le hs.left_orth hs.right_orth _ (hs.nonneg ⟨r, hrp⟩)
+  · refine (specNorm_mul_diagonal_mul_le hs.orthU hs.orthV _ (hs.nonneg ⟨r, hrp⟩)
       fun j => ?_).trans ?_
     · split_ifs with hj
       · simpa using hs.nonneg ⟨r, hrp⟩
@@ -396,8 +390,8 @@ theorem specNorm_sub_svdTrunc_le [DecidableEq n] (hs : IsSVD A Uh σ Vh) (hr : r
         exact hs.antitone (not_lt.mp hj)
     · have h := singularValues_le_specNorm_sub A B hB
       rwa [show (toEuclideanLin A).singularValues r = σ ⟨r, hrp⟩ from
-        hs.singularValues_eq ⟨r, hrp⟩] at h
-  · refine (specNorm_mul_diagonal_mul_le hs.left_orth hs.right_orth _ (specNorm_nonneg (A - B))
+        (IsSVD.singularValues_eq hs) ⟨r, hrp⟩] at h
+  · refine (specNorm_mul_diagonal_mul_le hs.orthU hs.orthV _ (specNorm_nonneg (A - B))
       fun j => ?_)
     simpa using specNorm_nonneg (A - B)
 
@@ -417,7 +411,7 @@ theorem spectral_initialization [DecidableEq n] {A : Matrix m n ℝ} {Uh : Matri
     {σ : Fin p → ℝ} {Vh : Matrix n (Fin p) ℝ} (hs : IsSVD A Uh σ Vh) (hr : r ≤ p) :
     (spectralFactor hr Uh σ)ᵀ * spectralFactor hr Uh σ = Matrix.diagonal (leadVals hr σ) ∧
     (spectralFactor hr Vh σ)ᵀ * spectralFactor hr Vh σ = Matrix.diagonal (leadVals hr σ) ∧
-    spectralFactor hr Uh σ * (spectralFactor hr Vh σ)ᵀ = svdTrunc hr Uh σ Vh ∧
+    spectralFactor hr Uh σ * (spectralFactor hr Vh σ)ᵀ = svdTrunc Uh σ Vh r ∧
     (spectralFactor hr Uh σ * (spectralFactor hr Vh σ)ᵀ).rank ≤ r ∧
     ‖A - spectralFactor hr Uh σ * (spectralFactor hr Vh σ)ᵀ‖ ^ 2 =
       ∑ i ∈ Finset.Ico r (Fintype.card n), (toEuclideanLin A).singularValues i ^ 2 ∧
@@ -431,13 +425,15 @@ theorem spectral_initialization [DecidableEq n] {A : Matrix m n ℝ} {Uh : Matri
     ext i
     exact Real.mul_self_sqrt (hs.nonneg _)
   obtain ⟨h1, h2, h3⟩ := spectralInit_balanced
-    (transpose_leadCols_mul_self hs.left_orth hr) (transpose_leadCols_mul_self hs.right_orth hr)
+    (transpose_leadCols_mul_self hs.orthU hr) (transpose_leadCols_mul_self hs.orthV hr)
     (R := sqrtSigma hr σ) (diagonal_transpose _)
   rw [hRR] at h1 h2 h3
-  have hprod : spectralFactor hr Uh σ * (spectralFactor hr Vh σ)ᵀ = svdTrunc hr Uh σ Vh := h3
+  have hprod : spectralFactor hr Uh σ * (spectralFactor hr Vh σ)ᵀ = svdTrunc Uh σ Vh r :=
+    h3.trans (svdTrunc_eq_leadCols hr Uh σ Vh).symm
   rw [hprod]
-  exact ⟨h1, h2, rfl, IsSVD.rank_svdTrunc_le hr, hs.sq_norm_sub_svdTrunc hr,
-    fun _ hB => hs.norm_sub_svdTrunc_le hr hB, fun _ hB => hs.specNorm_sub_svdTrunc_le hr hB⟩
+  exact ⟨h1, h2, rfl, IsSVD.rank_svdTrunc_le hr, IsSVD.sq_norm_sub_svdTrunc hs r,
+    fun _ hB => IsSVD.norm_sub_svdTrunc_le hs hB,
+    fun _ hB => IsSVD.specNorm_sub_svdTrunc_le hs hr hB⟩
 
 /-- Every matrix has an SVD with `rank A` columns (`LeanDLRA.SVD.exists_svd`). -/
 theorem exists_isSVD (A : Matrix m n ℝ) :
@@ -472,8 +468,8 @@ theorem exists_isSVD_of_le (A : Matrix m n ℝ) {p : ℕ} (hp : A.rank ≤ p)
     ∃ (Uh : Matrix m (Fin p) ℝ) (σ : Fin p → ℝ) (Vh : Matrix n (Fin p) ℝ), IsSVD A Uh σ Vh := by
   obtain ⟨t, rfl⟩ := Nat.exists_eq_add_of_le hp
   obtain ⟨U₀, σ₀, V₀, hs⟩ := exists_isSVD A
-  obtain ⟨Uh, hU, hU0⟩ := exists_extend_orthonormal (t := t) U₀ hs.left_orth hm
-  obtain ⟨Vh, hV, hV0⟩ := exists_extend_orthonormal (t := t) V₀ hs.right_orth hn
+  obtain ⟨Uh, hU, hU0⟩ := exists_extend_orthonormal (t := t) U₀ hs.orthU hm
+  obtain ⟨Vh, hV, hV0⟩ := exists_extend_orthonormal (t := t) V₀ hs.orthV hn
   have hle : A.rank ≤ A.rank + t := Nat.le_add_right _ _
   let σ : Fin (A.rank + t) → ℝ := fun i => if h : (i : ℕ) < A.rank then σ₀ ⟨i, h⟩ else 0
   have hσ0 : ∀ i, 0 ≤ σ i := fun i => by
@@ -494,11 +490,11 @@ theorem exists_isSVD_of_le (A : Matrix m n ℝ) {p : ℕ} (hp : A.rank ≤ p)
     · have ej : σ j = 0 := by simp [σ, hj]
       rw [ej]
       exact hσ0 i
-  · have h1 : A = svdTrunc hle Uh σ Vh := by
-      rw [svdTrunc, hU0, hV0, hlead]
-      exact hs.eq_mul
+  · have h1 : A = svdTrunc Uh σ Vh A.rank := by
+      rw [svdTrunc_eq_leadCols hle, hU0, hV0, hlead]
+      exact hs.eq
     refine h1.trans ?_
-    rw [svdTrunc_eq]
+    rw [Matrix.svdTrunc_def]
     congr 3
     ext i
     split_ifs with hi
@@ -539,10 +535,10 @@ variable {p : ℕ} {A : Matrix m n ℝ} {Uh : Matrix m (Fin p) ℝ} {σ : Fin p 
 /-- The nuclear norm is the sum of the diagonal of any SVD. -/
 theorem IsSVD.nuclearNorm_eq [DecidableEq n] (hs : IsSVD A Uh σ Vh) :
     nuclearNorm A = ∑ i, σ i := by
-  rw [nuclearNorm, ← Finset.sum_subset (Finset.range_subset_range.mpr hs.le_card_width)
-    fun j _ hj => hs.singularValues_eq_zero (by simpa using hj),
+  rw [nuclearNorm, ← Finset.sum_subset (Finset.range_subset_range.mpr (IsSVD.le_card_width hs))
+    fun j _ hj => (IsSVD.singularValues_eq_zero hs) (by simpa using hj),
     ← Fin.sum_univ_eq_sum_range (fun i => (toEuclideanLin A).singularValues i)]
-  exact Finset.sum_congr rfl fun i _ => hs.singularValues_eq i
+  exact Finset.sum_congr rfl fun i _ => (IsSVD.singularValues_eq hs) i
 
 /-- For `A = U Vᵀ`: `∑_i σ_i = tr(Ûᵀ U Vᵀ V̂) = ⟪Uᵀ Û, Vᵀ V̂⟫`. -/
 private theorem IsSVD.sum_eq_inner (hs : IsSVD A Uh σ Vh) {U : Matrix m k ℝ} {V : Matrix n k ℝ}
@@ -550,10 +546,10 @@ private theorem IsSVD.sum_eq_inner (hs : IsSVD A Uh σ Vh) {U : Matrix m k ℝ} 
   have h1 : Uhᵀ * A * Vh = Matrix.diagonal σ := by
     calc Uhᵀ * A * Vh
         = (Uhᵀ * Uh) * Matrix.diagonal σ * (Vhᵀ * Vh) := by
-          rw [hs.eq_mul]
+          rw [hs.eq]
           simp only [Matrix.mul_assoc]
       _ = Matrix.diagonal σ := by
-          rw [hs.left_orth, hs.right_orth, Matrix.one_mul, Matrix.mul_one]
+          rw [hs.orthU, hs.orthV, Matrix.one_mul, Matrix.mul_one]
   rw [Frobenius.inner_eq_trace, transpose_mul, transpose_transpose,
     show Uhᵀ * U * (Vᵀ * Vh) = Uhᵀ * A * Vh by rw [hA]; simp only [Matrix.mul_assoc], h1,
     trace_diagonal]
@@ -573,9 +569,9 @@ theorem nuclearNorm_mul_transpose_le_mul [DecidableEq n] (U : Matrix m k ℝ) (V
     nuclearNorm (U * Vᵀ) ≤ ‖U‖ * ‖V‖ := by
   classical
   obtain ⟨Uh, σ, Vh, hs⟩ := exists_isSVD (U * Vᵀ)
-  rw [hs.nuclearNorm_eq, hs.sum_eq_inner rfl]
-  exact (real_inner_le_norm _ _).trans (mul_le_mul (norm_transpose_mul_le U hs.left_orth)
-    (norm_transpose_mul_le V hs.right_orth) (norm_nonneg _) (norm_nonneg _))
+  rw [(IsSVD.nuclearNorm_eq hs), (IsSVD.sum_eq_inner hs) rfl]
+  exact (real_inner_le_norm _ _).trans (mul_le_mul (norm_transpose_mul_le U hs.orthU)
+    (norm_transpose_mul_le V hs.orthV) (norm_nonneg _) (norm_nonneg _))
 
 /-- **Lower bound of Srebro–Shraibman**: `‖U Vᵀ‖_* ≤ (‖U‖_F² + ‖V‖_F²) / 2` for all factors. -/
 theorem nuclearNorm_mul_transpose_le [DecidableEq n] (U : Matrix m k ℝ) (V : Matrix n k ℝ) :
@@ -610,17 +606,17 @@ private theorem IsSVD.exists_factor [DecidableEq n] (hs : IsSVD A Uh σ Vh)
     ext i
     exact Real.mul_self_sqrt (hs.nonneg i)
   have hsum : ∑ i, d i ^ 2 = nuclearNorm A := by
-    rw [hs.nuclearNorm_eq]
+    rw [(IsSVD.nuclearNorm_eq hs)]
     exact Finset.sum_congr rfl fun i _ => Real.sq_sqrt (hs.nonneg i)
   refine ⟨Uh * Matrix.diagonal d * Eᵀ, Vh * Matrix.diagonal d * Eᵀ, ?_,
-    (sq_norm_mul_diagonal_mul hs.left_orth hE d).trans hsum,
-    (sq_norm_mul_diagonal_mul hs.right_orth hE d).trans hsum, ?_⟩
+    (sq_norm_mul_diagonal_mul hs.orthU hE d).trans hsum,
+    (sq_norm_mul_diagonal_mul hs.orthV hE d).trans hsum, ?_⟩
   · have hexp : Uh * Matrix.diagonal d * Eᵀ * (Vh * Matrix.diagonal d * Eᵀ)ᵀ =
         Uh * (Matrix.diagonal d * ((Eᵀ * E) * Matrix.diagonal d)) * Vhᵀ := by
       simp only [transpose_mul, transpose_transpose, diagonal_transpose, Matrix.mul_assoc]
     rw [hexp, hE, Matrix.one_mul, hdd]
-    exact hs.eq_mul
-  · rw [transpose_factor_mul_self, transpose_factor_mul_self, hs.left_orth, hs.right_orth]
+    exact hs.eq
+  · rw [transpose_factor_mul_self, transpose_factor_mul_self, hs.orthU, hs.orthV]
 
 /-- **Attainment in Srebro–Shraibman**: every `A` of rank `≤ k` factors as `A = U Vᵀ` with
 `‖U‖_F² = ‖V‖_F² = ‖A‖_*` and `UᵀU = VᵀV`.  The factors are the spectral factors `Û √Σ`, `V̂ √Σ`,
@@ -630,7 +626,7 @@ theorem exists_factor_of_rank_le [DecidableEq n] (A : Matrix m n ℝ)
     ∃ (U : Matrix m k ℝ) (V : Matrix n k ℝ), A = U * Vᵀ ∧ ‖U‖ ^ 2 = nuclearNorm A ∧
       ‖V‖ ^ 2 = nuclearNorm A ∧ Uᵀ * U = Vᵀ * V := by
   obtain ⟨Uh, σ, Vh, hs⟩ := exists_isSVD A
-  exact hs.exists_factor hk
+  exact (IsSVD.exists_factor hs) hk
 
 /-- **Srebro–Shraibman (2005)**, as used in arXiv 2209.13569, Sec. 3.3:
 `‖W‖_* = min_{W = U Vᵀ} (‖U‖_F² + ‖V‖_F²) / 2`, the minimum over `U ∈ ℝ^{m×k}`, `V ∈ ℝ^{n×k}` for
@@ -663,11 +659,11 @@ theorem spectralFactor_attains_nuclearNorm [DecidableEq n] (hs : IsSVD A Uh σ V
       ‖spectralFactor hr Vh σ‖ ^ 2 =
         nuclearNorm (spectralFactor hr Uh σ * (spectralFactor hr Vh σ)ᵀ) := by
   obtain ⟨h1, h2, h3, -⟩ := spectral_initialization hs hr
-  have hs' : IsSVD (svdTrunc hr Uh σ Vh) (leadCols hr Uh) (leadVals hr σ) (leadCols hr Vh) :=
-    ⟨transpose_leadCols_mul_self hs.left_orth hr, transpose_leadCols_mul_self hs.right_orth hr,
+  have hs' : IsSVD (svdTrunc Uh σ Vh r) (leadCols hr Uh) (leadVals hr σ) (leadCols hr Vh) :=
+    ⟨transpose_leadCols_mul_self hs.orthU hr, transpose_leadCols_mul_self hs.orthV hr,
       fun i j hij => hs.antitone (show Fin.castLE hr i ≤ Fin.castLE hr j from hij),
-      fun _ => hs.nonneg _, rfl⟩
-  rw [h3, hs'.nuclearNorm_eq]
+      fun _ => hs.nonneg _, svdTrunc_eq_leadCols hr Uh σ Vh⟩
+  rw [h3, (IsSVD.nuclearNorm_eq hs')]
   exact ⟨sq_norm_eq_sum_of_transpose_mul_self h1, sq_norm_eq_sum_of_transpose_mul_self h2⟩
 
 /-- The factored objective `L(U Vᵀ) + (λ/2) (‖U‖_F² + ‖V‖_F²)` of arXiv 2209.13569, Sec. 3.3. -/
@@ -760,5 +756,9 @@ theorem isMinimizer_factorObjective_iff [DecidableEq n] (L : Matrix m n ℝ → 
       (nuclearObjective_le_factorObjective L hlam U V)
 
 end Nuclear
+
+/-- The local SVD predicate of this file, replaced by the core `Matrix.IsSVD` (same data; the fields
+`left_orth`, `right_orth`, `eq_mul` are the core `orthU`, `orthV`, `eq`). -/
+@[deprecated (since := "2026-11-09")] alias IsSVD := Matrix.IsSVD
 
 end LeanDLRA.Literature.P2209_13569

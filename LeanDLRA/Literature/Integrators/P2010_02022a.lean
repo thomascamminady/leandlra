@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Matrix.Projectors
 
@@ -26,6 +27,8 @@ open Set Filter Topology Finset
 open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius
 
 namespace LeanDLRA.Literature.P2010_02022
+
+open Matrix (IsQR)
 
 variable {d : ℕ} {m n p r : Fin d → ℕ}
 
@@ -214,13 +217,9 @@ theorem tuckerMul_eq_self_of_mode (P : ∀ i, Matrix (Fin (n i)) (Fin (n i)) ℝ
 
 /-! ### The integrator -/
 
-/-- A QR factorization `K = Q R`: `Q` has orthonormal columns and `R` is upper triangular.  If
-`K` has rank `< k`, the factor `Q` is not determined by `K`. -/
-structure IsQR {κ : Type*} [Fintype κ] {k : ℕ} (K Q : Matrix κ (Fin k) ℝ)
-    (R : Matrix (Fin k) (Fin k) ℝ) : Prop where
-  eq : K = Q * R
-  orth : Qᵀ * Q = 1
-  upper : R.BlockTriangular id
+/-! A QR factorization `K = Q R` (`Q` with orthonormal columns, `R` upper triangular) is the core
+`Matrix.IsQR K Q R`; the local `IsQR` of an earlier version of this file was the same structure
+(unification batch C4). If `K` has rank `< k`, the factor `Q` is not determined by `K`. -/
 
 /-- A QR factorization with invertible `R` has full column rank. -/
 lemma IsQR.rank_eq {κ : Type*} [Fintype κ] {k : ℕ} {K Q : Matrix κ (Fin k) ℝ}
@@ -1121,9 +1120,12 @@ theorem exact_of_hypotheses_applies {u : Fin 2 → ℝ} (hu : ∑ a, u a ^ 2 = 1
   have hρ : √2 * (1 - t₁) ≠ 0 := mul_ne_zero sqrt2_ne (sub_ne_zero.mpr h1.symm)
   have hs := isTuckerStep (u := u) hu hu (ρ := √2 * (1 - t₁)) (t₁ := t₁) fun _ => rfl
   have hK : ∀ i, (KK u i t₁).rank = rr i := fun i =>
-    (hs.qr₁ i).rank_eq (R1_isUnit hρ t₁ i)
+    IsQR.rank_eq (hs.qr₁ i) (R1_isUnit hρ t₁ i)
   exact ⟨hypotheses hu t₁, hK, hs.exact_of_hypotheses h0.le (hypotheses hu t₁) rfl hK⟩
 
 end Counterexample
+
+/-- The local QR predicate of this file, replaced by the core `Matrix.IsQR` (same fields). -/
+@[deprecated (since := "2026-11-09")] alias IsQR := Matrix.IsQR
 
 end LeanDLRA.Literature.P2010_02022

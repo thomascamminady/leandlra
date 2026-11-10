@@ -920,8 +920,8 @@ theorem exists_isBalanced (X : Matrix m n ℝ) (hX : X.rank ≤ k) (hkm : k ≤ 
     ∃ (L : Matrix m (Fin k) ℝ) (R : Matrix n (Fin k) ℝ), IsBalanced L R ∧ L * Rᵀ = X := by
   classical
   obtain ⟨U, σ, V, hs⟩ := P2209_13569.exists_isSVD_of_le X hX hkm hkn
-  refine ⟨_, _, ⟨U, V, σ, hs.left_orth, hs.right_orth, hs.nonneg, rfl, rfl⟩, ?_⟩
-  rw [hs.eq_mul, Matrix.transpose_mul V]
+  refine ⟨_, _, ⟨U, V, σ, hs.orthU, hs.orthV, hs.nonneg, rfl, rfl⟩, ?_⟩
+  rw [hs.eq, Matrix.transpose_mul V]
   calc U * Matrix.diagonal (fun i => √(σ i)) * ((Matrix.diagonal fun i => √(σ i))ᵀ * Vᵀ)
       = U * (Matrix.diagonal (fun i => √(σ i)) * (Matrix.diagonal fun i => √(σ i))ᵀ) * Vᵀ := by
         simp only [Matrix.mul_assoc]

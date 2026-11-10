@@ -1,4 +1,5 @@
 import LeanDLRA.Foundations.Galerkin
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Foundations.Gronwall
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Matrix.ParallelBUG
@@ -12,8 +13,9 @@ This module proves the robust error analysis of both second-order parallel BUG i
 the paper, first on a real inner product space with commuting orthogonal projectors (section
 `Abstract`), then for matrices at the level of the computed factors: `IsStep` (pre-augmented bases
 `Û₀ = orth([U₀, F₀V₀])`, `V̂₀ = orth([V₀, F₀ᵀU₀])` and the K-, L-, S-steps), `IsVariant1` (Sec.
-3.1, with `U⋆`, `V⋆`), `IsVariant2` (Sec. 3.3), `augSol` (`Ŷ₁ = Û₁ Ŝ₁ V̂₁ᵀ`) and `IsOrth`
-(`orth`). Proved, with explicit constants: Lemma 4.3 (`lemma_4_3_matrix`), Lemma 4.4
+3.1, with `U⋆`, `V⋆`), `IsVariant2` (Sec. 3.3), `augSol` (`Ŷ₁ = Û₁ Ŝ₁ V̂₁ᵀ`) and the core
+`Matrix.IsOrthBasisOf` (`orth`). Proved, with explicit constants: Lemma 4.3
+(`lemma_4_3_matrix`), Lemma 4.4
 (`lemma_4_4_variant1`, `lemma_4_4_variant2`), Theorem 4.5 (`theorem_4_5_variant1`,
 `theorem_4_5_variant2`), Theorem 4.1 (`theorem_4_1_variant1`, `theorem_4_1_variant2`, rank
 adaptive) and Theorem 5.1 (`theorem_5_1_variant1`, `theorem_5_1_variant2`,
@@ -1235,24 +1237,22 @@ end Abstract
 section Matrices
 
 open scoped LeanDLRA.Frobenius
-open Matrix (fromCols fromBlocks)
+open Matrix (fromCols fromBlocks IsOrthBasisOf)
 
 variable {m n r a b c d e f : Type*} [Fintype m] [Fintype n] [Fintype r] [Fintype a] [Fintype b]
   [Fintype c] [Fintype d] [Fintype e] [Fintype f] [DecidableEq m] [DecidableEq n] [DecidableEq r]
   [DecidableEq a] [DecidableEq b] [DecidableEq c] [DecidableEq d] [DecidableEq e] [DecidableEq f]
 
-/-- *arXiv 2403.02834, the map orth(·) of Sec. 3.*
-`W = orth(X)`: `W` has orthonormal columns and the same range as `X`. -/
-structure IsOrth {k l : Type*} [Fintype k] [Fintype l] [DecidableEq l] (W : Matrix m l ℝ)
-    (X : Matrix m k ℝ) : Prop where
-  orthonormal : Wᵀ * W = 1
-  capture : W * Wᵀ * X = X
-  span : ∃ C : Matrix k l ℝ, W = X * C
+/-! *arXiv 2403.02834, the map orth(·) of Sec. 3.* `W = orth(X)` (`W` has orthonormal columns and
+the same range as `X`) is the core `Matrix.IsOrthBasisOf W X`; the local `IsOrth` of an earlier
+version of this file was the same structure (field `orthonormal` is the core `orth`; unification
+batch C4). Then `W Wᵀ` is the core column-space projector `Matrix.rangeProj X`
+(`Matrix.IsOrthBasisOf.mul_transpose_eq_rangeProj`). -/
 
 /-- *arXiv 2403.02834, the map orth(·) of Sec. 3.* `orth([X₁, X₂])` captures `X₁`. -/
 theorem IsOrth.capture_left {k₁ k₂ l : Type*} [Fintype k₁] [Fintype k₂] [Fintype l]
     [DecidableEq l] {W : Matrix m l ℝ} {X₁ : Matrix m k₁ ℝ} {X₂ : Matrix m k₂ ℝ}
-    (hW : IsOrth W (fromCols X₁ X₂)) : W * Wᵀ * X₁ = X₁ := by
+    (hW : IsOrthBasisOf W (fromCols X₁ X₂)) : W * Wᵀ * X₁ = X₁ := by
   have h := hW.capture
   rw [Matrix.mul_fromCols] at h
   exact ((Matrix.fromCols_ext_iff _ _ _ _).1 h).1
@@ -1260,7 +1260,7 @@ theorem IsOrth.capture_left {k₁ k₂ l : Type*} [Fintype k₁] [Fintype k₂] 
 /-- *arXiv 2403.02834, the map orth(·) of Sec. 3.* `orth([X₁, X₂])` captures `X₂`. -/
 theorem IsOrth.capture_right {k₁ k₂ l : Type*} [Fintype k₁] [Fintype k₂] [Fintype l]
     [DecidableEq l] {W : Matrix m l ℝ} {X₁ : Matrix m k₁ ℝ} {X₂ : Matrix m k₂ ℝ}
-    (hW : IsOrth W (fromCols X₁ X₂)) : W * Wᵀ * X₂ = X₂ := by
+    (hW : IsOrthBasisOf W (fromCols X₁ X₂)) : W * Wᵀ * X₂ = X₂ := by
   have h := hW.capture
   rw [Matrix.mul_fromCols] at h
   exact ((Matrix.fromCols_ext_iff _ _ _ _).1 h).2
@@ -1268,7 +1268,7 @@ theorem IsOrth.capture_right {k₁ k₂ l : Type*} [Fintype k₁] [Fintype k₂]
 /-- *arXiv 2403.02834, the map orth(·) of Sec. 3.*
 If `range X ⊆ range W'`, then `range orth(X) ⊆ range W'`. -/
 theorem IsOrth.range_le {k l l' : Type*} [Fintype k] [Fintype l] [Fintype l'] [DecidableEq l]
-    {W : Matrix m l ℝ} {X : Matrix m k ℝ} (hW : IsOrth W X) {W' : Matrix m l' ℝ}
+    {W : Matrix m l ℝ} {X : Matrix m k ℝ} (hW : IsOrthBasisOf W X) {W' : Matrix m l' ℝ}
     (h : W' * W'ᵀ * X = X) : W' * W'ᵀ * W = W := by
   obtain ⟨C, hC⟩ := hW.span
   rw [hC, ← Matrix.mul_assoc, h]
@@ -1307,8 +1307,8 @@ structure IsStep (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t₀ t₁ : �
     (K : ℝ → Matrix m b ℝ) (Lf : ℝ → Matrix n a ℝ) (Sb : ℝ → Matrix a b ℝ) : Prop where
   orthU₀ : U₀ᵀ * U₀ = 1
   orthV₀ : V₀ᵀ * V₀ = 1
-  augU : IsOrth Uh (fromCols U₀ (F t₀ (U₀ * S₀ * V₀ᵀ) * V₀))
-  augV : IsOrth Vh (fromCols V₀ ((F t₀ (U₀ * S₀ * V₀ᵀ))ᵀ * U₀))
+  augU : IsOrthBasisOf Uh (fromCols U₀ (F t₀ (U₀ * S₀ * V₀ᵀ) * V₀))
+  augV : IsOrthBasisOf Vh (fromCols V₀ ((F t₀ (U₀ * S₀ * V₀ᵀ))ᵀ * U₀))
   kSol : ODESolution (MatrixKSL.kField Vh F) K t₀ t₁
   kStart : K t₀ = U₀ * S₀ * V₀ᵀ * Vh
   lSol : ODESolution (MatrixKSL.lField Uh F) Lf t₀ t₁
@@ -1362,18 +1362,18 @@ variable {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {t₀ t₁ : ℝ} {U₀
 theorem absU (hs : IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sb) {k : Type*} [Fintype k]
     (X : Matrix r k ℝ) :
     Uh * (Uhᵀ * (U₀ * X)) = U₀ * X := by
-  simp only [← Matrix.mul_assoc, hs.augU.capture_left]
+  simp only [← Matrix.mul_assoc, IsOrth.capture_left hs.augU]
 
 /-- *arXiv 2403.02834, Sec. 3.1, Step 1.* `V̂₀V̂₀ᵀ V₀ = V₀`, in right-associated form. -/
 theorem absVc (hs : IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sb) {k : Type*} [Fintype k]
     (X : Matrix r k ℝ) :
     Vh * (Vhᵀ * (V₀ * X)) = V₀ * X := by
-  simp only [← Matrix.mul_assoc, hs.augV.capture_left]
+  simp only [← Matrix.mul_assoc, IsOrth.capture_left hs.augV]
 
 /-- *arXiv 2403.02834, Sec. 3.1, Step 1.* `V₀ᵀ V̂₀V̂₀ᵀ = V₀ᵀ`. -/
 theorem absV (hs : IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sb) :
     V₀ᵀ * (Vh * Vhᵀ) = V₀ᵀ :=
-  transpose_capture hs.augV.capture_left
+  transpose_capture (IsOrth.capture_left hs.augV)
 
 /-- *arXiv 2403.02834, Sec. 3.1, Step 1.*
 **The matrix step is an abstract pre-augmented step.** -/
@@ -1385,13 +1385,13 @@ theorem isPreAugmented (hs : IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sb) :
   comm₀ := leftProj_rightProj_comm U₀ V₀
   fixP₀ := by rw [Matrix.mul_assoc]; exact leftProj_mul_left hs.orthU₀ _
   fixQ₀ := rightProj_mul_transpose hs.orthV₀ _
-  absP := leftProj_leftProj_of_mul hs.augU.capture_left
-  absQ := rightProj_rightProj_of_mul hs.augV.capture_left
+  absP := leftProj_leftProj_of_mul (IsOrth.capture_left hs.augU)
+  absQ := rightProj_rightProj_of_mul (IsOrth.capture_left hs.augV)
   capP := by
     simp only [leftProj_apply, rightProj_apply]
-    rw [← Matrix.mul_assoc, hs.augU.capture_right]
+    rw [← Matrix.mul_assoc, IsOrth.capture_right hs.augU]
   capQ := by
-    have h := transpose_capture hs.augV.capture_right
+    have h := transpose_capture (IsOrth.capture_right hs.augV)
     generalize F t₀ (U₀ * S₀ * V₀ᵀ) = F₀ at h ⊢
     simp only [Matrix.transpose_mul, Matrix.transpose_transpose] at h
     simp only [leftProj_apply, rightProj_apply, Matrix.mul_assoc] at h ⊢
@@ -1402,8 +1402,8 @@ theorem isPreAugmented (hs : IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sb) :
 theorem isParallelBUGStep (hs : IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sb) :
     IsParallelBUGStep F (leftProj Uh) (rightProj Vh) t₀ t₁ (U₀ * S₀ * V₀ᵀ)
       (fun t => K t * Vhᵀ) (fun t => Uh * (Lf t)ᵀ) (fun t => Uh * Sb t * Vhᵀ) where
-  orthP := isOrthProj_leftProj hs.augU.orthonormal
-  orthQ := isOrthProj_rightProj hs.augV.orthonormal
+  orthP := isOrthProj_leftProj hs.augU.orth
+  orthQ := isOrthProj_rightProj hs.augV.orth
   comm := leftProj_rightProj_comm Uh Vh
   fixP := by simp only [leftProj_apply, Matrix.mul_assoc, hs.absU]
   fixQ := by simp only [rightProj_apply, Matrix.mul_assoc, hs.absV]
@@ -1424,8 +1424,8 @@ structure IsVariant2 (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t₀ t₁ 
     (S₀ : Matrix r r ℝ) (V₀ : Matrix n r ℝ) (Uh : Matrix m a ℝ) (Vh : Matrix n b ℝ)
     (U₂ : Matrix m c ℝ) (V₂ : Matrix n d ℝ) (K : ℝ → Matrix m b ℝ) (Lf : ℝ → Matrix n a ℝ)
     (Sb : ℝ → Matrix a b ℝ) : Prop extends IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sb where
-  newU : IsOrth (fromCols Uh U₂) (fromCols Uh (K t₁))
-  newV : IsOrth (fromCols Vh V₂) (fromCols Vh (Lf t₁))
+  newU : IsOrthBasisOf (fromCols Uh U₂) (fromCols Uh (K t₁))
+  newV : IsOrthBasisOf (fromCols Vh V₂) (fromCols Vh (Lf t₁))
 
 /-- **Variant 1** (arXiv 2403.02834, Sec. 3.1): `U⋆ = orth(Y₀ V₀ + h/2 F(t₀, Y₀) V₀)`,
 `V⋆ = orth(Y₀ᵀ U₀ + h/2 F(t₀, Y₀)ᵀ U₀)`, `Û₁ = [Û₀, Ũ₂] = orth([Û₀, K(t₁) V̂₀ᵀ V⋆])` and
@@ -1435,10 +1435,10 @@ structure IsVariant1 (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t₀ h : �
     (Us : Matrix m e ℝ) (Vs : Matrix n f ℝ) (U₂ : Matrix m c ℝ) (V₂ : Matrix n d ℝ)
     (K : ℝ → Matrix m b ℝ) (Lf : ℝ → Matrix n a ℝ) (Sb : ℝ → Matrix a b ℝ) : Prop
     extends IsStep F t₀ (t₀ + h) U₀ S₀ V₀ Uh Vh K Lf Sb where
-  starU : IsOrth Us (U₀ * S₀ * V₀ᵀ * V₀ + (h / 2) • (F t₀ (U₀ * S₀ * V₀ᵀ) * V₀))
-  starV : IsOrth Vs ((U₀ * S₀ * V₀ᵀ)ᵀ * U₀ + (h / 2) • ((F t₀ (U₀ * S₀ * V₀ᵀ))ᵀ * U₀))
-  newU : IsOrth (fromCols Uh U₂) (fromCols Uh (K (t₀ + h) * Vhᵀ * Vs))
-  newV : IsOrth (fromCols Vh V₂) (fromCols Vh (Lf (t₀ + h) * Uhᵀ * Us))
+  starU : IsOrthBasisOf Us (U₀ * S₀ * V₀ᵀ * V₀ + (h / 2) • (F t₀ (U₀ * S₀ * V₀ᵀ) * V₀))
+  starV : IsOrthBasisOf Vs ((U₀ * S₀ * V₀ᵀ)ᵀ * U₀ + (h / 2) • ((F t₀ (U₀ * S₀ * V₀ᵀ))ᵀ * U₀))
+  newU : IsOrthBasisOf (fromCols Uh U₂) (fromCols Uh (K (t₀ + h) * Vhᵀ * Vs))
+  newV : IsOrthBasisOf (fromCols Vh V₂) (fromCols Vh (Lf (t₀ + h) * Uhᵀ * Us))
 
 /-- *arXiv 2403.02834, Step 2 of Secs. 3.1 and 3.3.*
 The projectors after the basis update of either variant form an abstract enlargement. -/
@@ -1468,8 +1468,8 @@ variable {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {t₀ t₁ : ℝ} {U₀
 theorem isNested (hv : IsVariant2 F t₀ t₁ U₀ S₀ V₀ Uh Vh U₂ V₂ K Lf Sb) :
     IsNested (leftProj Uh : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) (rightProj Vh)
       (leftProj (fromCols Uh U₂)) (rightProj (fromCols Vh V₂)) :=
-  isNested_of_capture hv.newU.orthonormal hv.newV.orthonormal hv.newU.capture_left
-    hv.newV.capture_left
+  isNested_of_capture hv.newU.orth hv.newV.orth (IsOrth.capture_left hv.newU)
+    (IsOrth.capture_left hv.newV)
 
 /-- *arXiv 2403.02834, Sec. 3.3.*
 In Variant 2, `Ŷ₁ = Û₁ Ŝ₁ V̂₁ᵀ` is the parallel BUG update with the pre-augmented bases:
@@ -1480,8 +1480,8 @@ theorem augSol_eq_parallelBUG (hv : IsVariant2 F t₀ t₁ U₀ S₀ V₀ Uh Vh 
         (Uh * Sb t₁ * Vhᵀ) := by
   rw [augSol_eq_update]
   apply update_eq_parallelBUG
-  · rw [leftProj_apply, ← Matrix.mul_assoc, hv.newU.capture_right]
-  · rw [rightProj_apply', Matrix.mul_assoc, transpose_capture hv.newV.capture_right]
+  · rw [leftProj_apply, ← Matrix.mul_assoc, IsOrth.capture_right hv.newU]
+  · rw [rightProj_apply', Matrix.mul_assoc, transpose_capture (IsOrth.capture_right hv.newV)]
 
 end IsVariant2
 
@@ -1512,15 +1512,15 @@ variable {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {t₀ h : ℝ} {U₀ : 
 theorem isNested (hv : IsVariant1 F t₀ h U₀ S₀ V₀ Uh Vh Us Vs U₂ V₂ K Lf Sb) :
     IsNested (leftProj Uh : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) (rightProj Vh)
       (leftProj (fromCols Uh U₂)) (rightProj (fromCols Vh V₂)) :=
-  isNested_of_capture hv.newU.orthonormal hv.newV.orthonormal hv.newU.capture_left
-    hv.newV.capture_left
+  isNested_of_capture hv.newU.orth hv.newV.orth (IsOrth.capture_left hv.newU)
+    (IsOrth.capture_left hv.newV)
 
 /-- *arXiv 2403.02834, Sec. 3.1, Step 2.* `U⋆`, `V⋆` give abstract half-step bases. -/
 theorem isHalfStepBasis (hv : IsVariant1 F t₀ h U₀ S₀ V₀ Uh Vh Us Vs U₂ V₂ K Lf Sb) :
     IsHalfStepBasis (F t₀ (U₀ * S₀ * V₀ᵀ)) (U₀ * S₀ * V₀ᵀ) h (leftProj U₀) (rightProj V₀)
       (leftProj Us) (rightProj Vs) where
-  orthPs := isOrthProj_leftProj hv.starU.orthonormal
-  orthQs := isOrthProj_rightProj hv.starV.orthonormal
+  orthPs := isOrthProj_leftProj hv.starU.orth
+  orthQs := isOrthProj_rightProj hv.starV.orth
   commP₀Qs := leftProj_rightProj_comm _ _
   fixK := by
     have hY : U₀ * S₀ * V₀ᵀ * V₀ * V₀ᵀ = U₀ * S₀ * V₀ᵀ := by
@@ -1544,13 +1544,13 @@ theorem isStarNested (hv : IsVariant1 F t₀ h U₀ S₀ V₀ Uh Vh Us Vs U₂ V
       (leftProj (fromCols Uh U₂)) (rightProj (fromCols Vh V₂)) (leftProj Us)
       (rightProj Vs) where
   absPs := by
-    refine leftProj_leftProj_of_mul (hv.starU.range_le ?_)
-    rw [Matrix.mul_add, Matrix.mul_smul, hv.augU.capture_right]
+    refine leftProj_leftProj_of_mul (IsOrth.range_le hv.starU ?_)
+    rw [Matrix.mul_add, Matrix.mul_smul, IsOrth.capture_right hv.augU]
     congr 1
     simp only [Matrix.mul_assoc, hv.toIsStep.absU]
   absQs := by
-    refine rightProj_rightProj_of_mul (hv.starV.range_le ?_)
-    rw [Matrix.mul_add, Matrix.mul_smul, hv.augV.capture_right]
+    refine rightProj_rightProj_of_mul (IsOrth.range_le hv.starV ?_)
+    rw [Matrix.mul_add, Matrix.mul_smul, IsOrth.capture_right hv.augV]
     congr 1
     simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc,
       hv.toIsStep.absVc]
@@ -1561,13 +1561,13 @@ theorem isStarNested (hv : IsVariant1 F t₀ h U₀ S₀ V₀ Uh Vh Us Vs U₂ V
 theorem capK (hv : IsVariant1 F t₀ h U₀ S₀ V₀ Uh Vh Us Vs U₂ V₂ K Lf Sb) :
     leftProj (fromCols Uh U₂) (rightProj Vs (K (t₀ + h) * Vhᵀ)) =
       rightProj Vs (K (t₀ + h) * Vhᵀ) := by
-  rw [rightProj_apply, leftProj_apply, ← Matrix.mul_assoc, hv.newU.capture_right]
+  rw [rightProj_apply, leftProj_apply, ← Matrix.mul_assoc, IsOrth.capture_right hv.newU]
 
 /-- *arXiv 2403.02834, Sec. 3.1, Step 2.* `V̂₁` captures `L(t₁) Û₀ᵀ U⋆`. -/
 theorem capL (hv : IsVariant1 F t₀ h U₀ S₀ V₀ Uh Vh Us Vs U₂ V₂ K Lf Sb) :
     rightProj (fromCols Vh V₂) (leftProj Us (Uh * (Lf (t₀ + h))ᵀ)) =
       leftProj Us (Uh * (Lf (t₀ + h))ᵀ) := by
-  have h1 := transpose_capture hv.newV.capture_right
+  have h1 := transpose_capture (IsOrth.capture_right hv.newV)
   simp only [Matrix.transpose_mul, Matrix.transpose_transpose] at h1
   rw [rightProj_apply', leftProj_apply]
   simp only [Matrix.mul_assoc] at h1 ⊢
@@ -2404,7 +2404,7 @@ example : IsVariant1 (fun _ _ => (0 : Matrix (Fin 1) (Fin 1) ℝ)) 0 1 oneMat on
     oneMat oneMat oneMat oneMat noCols noCols (fun _ => oneMat) (fun _ => oneMat)
     (fun _ => oneMat) := by
   have hcols : ∀ X : Matrix (Fin 1) (Fin 1) ℝ,
-      IsOrth (fromCols oneMat noCols) (fromCols oneMat X) := by
+      Matrix.IsOrthBasisOf (fromCols oneMat noCols) (fromCols oneMat X) := by
     intro X
     refine ⟨?_, ?_, ⟨fromBlocks 1 0 0 0, ?_⟩⟩
     · rw [Matrix.transpose_fromCols, Matrix.fromRows_mul_fromCols]
@@ -2414,10 +2414,10 @@ example : IsVariant1 (fun _ _ => (0 : Matrix (Fin 1) (Fin 1) ℝ)) 0 1 oneMat on
       exact Matrix.fromBlocks_one
     · rw [matrix_augmented_proj]; simp [noCols, oneMat_eq]
     · rw [Matrix.fromCols_mul_fromBlocks]; simp [noCols]
-  have hone : ∀ X : Matrix (Fin 1) (Fin 1) ℝ, X = oneMat → IsOrth oneMat X := by
+  have hone : ∀ X : Matrix (Fin 1) (Fin 1) ℝ, X = oneMat → Matrix.IsOrthBasisOf oneMat X := by
     rintro X rfl
     exact ⟨by simp [oneMat_eq], by simp [oneMat_eq], ⟨1, by simp⟩⟩
-  have hpair : IsOrth oneMat (fromCols oneMat (0 : Matrix (Fin 1) (Fin 1) ℝ)) :=
+  have hpair : Matrix.IsOrthBasisOf oneMat (fromCols oneMat (0 : Matrix (Fin 1) (Fin 1) ℝ)) :=
     ⟨by simp [oneMat_eq], by simp [oneMat_eq], ⟨fromRows 1 0, by
       rw [Matrix.fromCols_mul_fromRows]; simp⟩⟩
   have hsol : ∀ (c : Matrix (Fin 1) (Fin 1) ℝ)
@@ -2441,5 +2441,9 @@ example : IsVariant1 (fun _ _ => (0 : Matrix (Fin 1) (Fin 1) ℝ)) 0 1 oneMat on
       newV := hcols _ }
 
 end Counterexample
+
+/-- The local `orth(·)` predicate of this file, replaced by the core `Matrix.IsOrthBasisOf` (same
+fields; `orthonormal` is the core `orth`). -/
+@[deprecated (since := "2026-11-09")] alias IsOrth := Matrix.IsOrthBasisOf
 
 end LeanDLRA.Literature.P2403_02834

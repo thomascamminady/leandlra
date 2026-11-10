@@ -167,6 +167,15 @@ truncation rule of Sec. 4.3 of arXiv 2205.13571 keeps the indices `i < s`. -/
 noncomputable def svdTail (σ : Fin p → ℝ) (s : ℕ) : ℝ :=
   √(∑ i : Fin p, if (i : ℕ) < s then 0 else σ i ^ 2)
 
+/-- **Bridge.** `svdTail` is the square root of the core discarded weight `tailSqSum`. -/
+theorem svdTail_eq_sqrt_tailSqSum (σ : Fin p → ℝ) (s : ℕ) : svdTail σ s = √(tailSqSum σ s) := by
+  rw [svdTail, tailSqSum]
+  congr 1
+  refine Finset.sum_congr rfl fun i _ => ?_
+  by_cases h : (i : ℕ) < s
+  · simp [h, not_le.mpr h]
+  · simp [h, not_lt.mp h]
+
 /-- One step of the **fixed-rank** Algorithm 1 of arXiv 2205.13571 (`adaptive = False`, integrated
 exactly as in Theorem 1, bias not modelled), from `Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to `t₁`: the K-, L- and
 S-steps are gradient flows of `ℒ` with respect to the factors (lines 5, 7, 16), and `U₁`, `V₁` have
@@ -231,7 +240,7 @@ structure IsAdaptiveDLRTStep (ℒ : Matrix m n ℝ → ℝ) (ϑ t₀ t₁ : ℝ)
   /-- `Ŝ(t₀) = M S₀ Nᵀ` with `M = Ûᵀ U₀`, `N = V̂ᵀ V₀`. -/
   sStart : Sh t₀ = Uhᵀ * U₀ * S₀ * (V₀ᵀ * Vh)
   /-- `P, Σ, Q ← SVD(Ŝ(t₁))`. -/
-  svd : IsSVD (Sh t₁) P σ Q
+  svd : Matrix.IsSVD (Sh t₁) P σ Q
   rankLe : r₁ ≤ p
   /-- The discarded singular values are below the threshold. -/
   tail : svdTail σ r₁ ≤ ϑ
@@ -264,12 +273,12 @@ omit [DecidableEq k] [DecidableEq k'] in
 /-- The truncation error of an SVD is exactly the Frobenius norm of the discarded singular
 values. -/
 theorem norm_sub_svdTrunc_eq {A : Matrix k k' ℝ} {P : Matrix k (Fin p) ℝ} {σ : Fin p → ℝ}
-    {Q : Matrix k' (Fin p) ℝ} (hs : IsSVD A P σ Q) (hr : r₁ ≤ p) :
-    ‖A - svdTrunc hr P σ Q‖ = svdTail σ r₁ := by
-  have h := sq_norm_mul_diagonal_mul' hs.left_orth hs.right_orth
+    {Q : Matrix k' (Fin p) ℝ} (hs : Matrix.IsSVD A P σ Q) (r₁ : ℕ) :
+    ‖A - Matrix.svdTrunc P σ Q r₁‖ = svdTail σ r₁ := by
+  have h := sq_norm_mul_diagonal_mul' hs.orthU hs.orthV
     (fun i : Fin p => if (i : ℕ) < r₁ then 0 else σ i)
-  rw [← hs.sub_svdTrunc hr] at h
-  rw [svdTail, ← Real.sqrt_sq (norm_nonneg (A - svdTrunc hr P σ Q)), h]
+  rw [← IsSVD.sub_svdTrunc hs r₁] at h
+  rw [svdTail, ← Real.sqrt_sq (norm_nonneg (A - Matrix.svdTrunc P σ Q r₁)), h]
   congr 1
   refine Finset.sum_congr rfl fun i _ => ?_
   split_ifs <;> simp
@@ -285,7 +294,7 @@ variable {ℒ : Matrix m n ℝ → ℝ} {ϑ t₀ t₁ : ℝ} {U₀ : Matrix m (F
 /-- The truncated left basis of Algorithm 1 of arXiv 2205.13571 has orthonormal columns. -/
 theorem orthU₁ (hs : IsAdaptiveDLRTStep ℒ ϑ t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sh P σ Q U₁ S₁ V₁) :
     U₁ᵀ * U₁ = 1 := by
-  have h := transpose_leadCols_mul_self hs.svd.left_orth hs.rankLe
+  have h := transpose_leadCols_mul_self hs.svd.orthU hs.rankLe
   have h' : U₁ᵀ * U₁ = (Uh * leadCols hs.rankLe P)ᵀ * (Uh * leadCols hs.rankLe P) := by
     rw [← hs.eqU]
   rw [h', Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc Uhᵀ, hs.orthUh,
@@ -294,7 +303,7 @@ theorem orthU₁ (hs : IsAdaptiveDLRTStep ℒ ϑ t₀ t₁ U₀ S₀ V₀ Uh Vh 
 /-- The truncated right basis of Algorithm 1 of arXiv 2205.13571 has orthonormal columns. -/
 theorem orthV₁ (hs : IsAdaptiveDLRTStep ℒ ϑ t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sh P σ Q U₁ S₁ V₁) :
     V₁ᵀ * V₁ = 1 := by
-  have h := transpose_leadCols_mul_self hs.svd.right_orth hs.rankLe
+  have h := transpose_leadCols_mul_self hs.svd.orthV hs.rankLe
   have h' : V₁ᵀ * V₁ = (Vh * leadCols hs.rankLe Q)ᵀ * (Vh * leadCols hs.rankLe Q) := by
     rw [← hs.eqV]
   rw [h', Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc Vhᵀ, hs.orthVh,
@@ -303,10 +312,10 @@ theorem orthV₁ (hs : IsAdaptiveDLRTStep ℒ ϑ t₀ t₁ U₀ S₀ V₀ Uh Vh 
 /-- The new weight of Algorithm 1 of arXiv 2205.13571 is the truncated SVD of `Ŝ(t₁)` in the
 augmented bases. -/
 theorem eq_svdTrunc (hs : IsAdaptiveDLRTStep ℒ ϑ t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sh P σ Q U₁ S₁ V₁) :
-    U₁ * S₁ * V₁ᵀ = Uh * svdTrunc hs.rankLe P σ Q * Vhᵀ := by
+    U₁ * S₁ * V₁ᵀ = Uh * Matrix.svdTrunc P σ Q r₁ * Vhᵀ := by
   have h : U₁ * S₁ * V₁ᵀ = Uh * leadCols hs.rankLe P * Matrix.diagonal (leadVals hs.rankLe σ) *
       (Vh * leadCols hs.rankLe Q)ᵀ := by rw [← hs.eqU, ← hs.eqS, ← hs.eqV]
-  rw [h, svdTrunc, Matrix.transpose_mul]
+  rw [h, svdTrunc_eq_leadCols hs.rankLe, Matrix.transpose_mul]
   simp only [Matrix.mul_assoc]
 
 /-- **Eckart–Young for the truncation step** (arXiv 2205.13571, proof of Theorem 2,
@@ -317,7 +326,7 @@ theorem norm_sub_eq (hs : IsAdaptiveDLRTStep ℒ ϑ t₀ t₁ U₀ S₀ V₀ Uh 
   rw [hs.eq_svdTrunc, ← Matrix.sub_mul, ← Matrix.mul_sub,
     Frobenius.norm_mul_transpose_of_orthonormal hs.orthVh,
     Frobenius.norm_mul_of_orthonormal hs.orthUh, norm_sub_rev,
-    norm_sub_svdTrunc_eq hs.svd hs.rankLe]
+    norm_sub_svdTrunc_eq hs.svd r₁]
 
 /-- **Eckart–Young for the truncation step** (arXiv 2205.13571, Sec. 4, "Automatic rank
 adaptation"): `Y₁ = U₁ S₁ V₁ᵀ` is a best approximation of `Ŷ₁ = Û Ŝ(t₁) V̂ᵀ` among all matrices of
@@ -325,10 +334,10 @@ rank at most `r₁`. -/
 theorem norm_sub_le_of_rank_le
     (hs : IsAdaptiveDLRTStep ℒ ϑ t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sh P σ Q U₁ S₁ V₁) {Y : Matrix m n ℝ}
     (hY : Y.rank ≤ r₁) : ‖U₁ * S₁ * V₁ᵀ - Uh * Sh t₁ * Vhᵀ‖ ≤ ‖Y - Uh * Sh t₁ * Vhᵀ‖ := by
-  rw [hs.norm_sub_eq, ← norm_sub_svdTrunc_eq hs.svd hs.rankLe, norm_sub_rev Y]
+  rw [hs.norm_sub_eq, ← norm_sub_svdTrunc_eq hs.svd r₁, norm_sub_rev Y]
   have hrank : (Uhᵀ * Y * Vh).rank ≤ r₁ :=
     (Matrix.rank_mul_le_left _ _).trans ((Matrix.rank_mul_le_right _ _).trans hY)
-  exact (hs.svd.norm_sub_svdTrunc_le hs.rankLe hrank).trans
+  exact (IsSVD.norm_sub_svdTrunc_le hs.svd hrank).trans
     (norm_coeff_sub_le hs.orthUh hs.orthVh _ _)
 
 /-- The new weight has rank at most `r₁`, and `r₁` is at most the size `p` of the SVD (`p = 2 r` in
@@ -1287,11 +1296,11 @@ theorem traceLoss_step {a b : ℝ} (hb : 0 ≤ b) :
     (fun t x => by simp [traceLoss, sFlow_linLoss, unitCol_orth]) a b
   sStart := by simp [runS, unitCol_orth]
   svd :=
-    { left_orth := by simp
-      right_orth := by simp
+    { orthU := by simp
+      orthV := by simp
       antitone := fun _ _ _ => le_rfl
       nonneg := fun _ => by positivity
-      eq_mul := by
+      eq := by
         ext i j
         fin_cases i
         fin_cases j
@@ -1458,11 +1467,11 @@ theorem zeroLoss_step (a b : ℝ) :
   sSol := odeSolution_const_of_zero (fun t x => by simp [zeroLoss, sFlow_linLoss]) _ a b
   sStart := by simp [unitCol_orth]
   svd :=
-    { left_orth := by simp
-      right_orth := by simp
+    { orthU := by simp
+      orthV := by simp
       antitone := fun _ _ _ => le_rfl
       nonneg := fun _ => zero_le_one
-      eq_mul := by
+      eq := by
         ext i j
         fin_cases i
         fin_cases j
