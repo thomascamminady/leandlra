@@ -270,8 +270,6 @@ import LeanDLRA.OpenProblems.Curated.StiffAndStochasticb
 import LeanDLRA.OpenProblems.Curated.StiffAndStochasticc
 import LeanDLRA.OpenProblems.Curated.Structureb
 import LeanDLRA.OpenProblems.Curated.Structurec
-import LeanDLRA.OpenProblems.Curated.TensorNetworksa
-import LeanDLRA.OpenProblems.Curated.TensorNetworksb
 import LeanDLRA.OpenProblems.Curated.TensorNetworksc
 import LeanDLRA.OpenProblems.Curated.TrainingDefs
 import LeanDLRA.OpenProblems.HighOrder.Part1Defs
@@ -350,8 +348,13 @@ import LeanDLRA.OpenProblems.Stiff.Part3HardExpRungedefectlog
 import LeanDLRA.OpenProblems.Stiff.Part3a
 import LeanDLRA.OpenProblems.Stiff.Part3b
 import LeanDLRA.OpenProblems.Stiff.Part3c
+import LeanDLRA.OpenProblems.TensorNetworks.Part1Defs
+import LeanDLRA.OpenProblems.TensorNetworks.Part1a
+import LeanDLRA.OpenProblems.TensorNetworks.Part1b
 import LeanDLRA.OpenProblems.TensorNetworks.Part1c
+import LeanDLRA.OpenProblems.TensorNetworks.Part2Defs
 import LeanDLRA.OpenProblems.TensorNetworks.Part2a
+import LeanDLRA.OpenProblems.TensorNetworks.Part2b
 import LeanDLRA.OpenProblems.TensorNetworks.Part2c
 import LeanDLRA.OpenProblems.TensorNetworks.Part3Defs
 import LeanDLRA.OpenProblems.TensorNetworks.Part3a

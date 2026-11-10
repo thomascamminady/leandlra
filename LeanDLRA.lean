@@ -83,15 +83,8 @@ import LeanDLRA.OpenProblems.Curated.RankAdaptivityHardDistLRflowlesharp
 import LeanDLRA.OpenProblems.Curated.RankAdaptivitya
 import LeanDLRA.OpenProblems.Curated.RankAdaptivityb
 import LeanDLRA.OpenProblems.Curated.Structurea
-import LeanDLRA.OpenProblems.Curated.TensorNetworksDefs
-import LeanDLRA.OpenProblems.Curated.TensorNetworksHardParTTNglobalerrorle
 import LeanDLRA.OpenProblems.Curated.Traininga
 import LeanDLRA.OpenProblems.Curated.Trainingb
-import LeanDLRA.OpenProblems.TensorNetworks.Part1Defs
-import LeanDLRA.OpenProblems.TensorNetworks.Part1a
-import LeanDLRA.OpenProblems.TensorNetworks.Part1b
-import LeanDLRA.OpenProblems.TensorNetworks.Part2Defs
-import LeanDLRA.OpenProblems.TensorNetworks.Part2b
 import LeanDLRA.Randomized.ObliqueBUG
 import LeanDLRA.Randomized.RandomizedBUG
 import LeanDLRA.Research.AugmentationRank
