@@ -344,7 +344,7 @@ theorem exists_run_norm_sub_le
 
 end Error
 
-/-! ### Example: a nonlinear field without normal component -/
+/-! ### Examples: a nonlinear field without normal component, a linear field -/
 
 section Examples
 
@@ -380,6 +380,30 @@ example (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n) {A : ℝ → M
     (hcont.comp continuous_snd).continuousOn
     (fun t U V S hU hV _ => MatrixKSL.radial_normal_eq_zero t U S V hU hV) le_rfl hh hNT hrm
     hrn hY₀ hδ (lt_add_one _)
+
+/-- **Non-vacuity for a field that is not bounded.** The linear field
+`F(t, Y) = M Y + Y Nᵀ + G` with a stationary point `C` (`M C + C Nᵀ + G = 0`) is Lipschitz with
+constant `‖M‖ + ‖N‖` but not bounded. On the tube of radius `ρ` around the constant solution
+`A(t) = C` it is bounded by `(‖M‖ + ‖N‖) ρ`, and its normal component at the rank-`r` matrices
+is at most `‖G‖` (`dlraProblem_linear`, `factoredNormalBoundOn_linear`). Hence, under the
+smallness condition, the fixed-rank parallel BUG integrator can be run from every `Y₀` of rank
+at most `r` near `C`, and the run satisfies the error bound with `ε = ‖G‖`. The corresponding
+examples for the BUG integrator and the projector-splitting integrator treat the same
+problem. -/
+example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
+    (hC : M * C + C * Nᵀ + G = 0) (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n)
+    (t₀ : ℝ) {ρ T δ h : ℝ} {K : ℕ} (hρ : 0 ≤ ρ) (hh : 0 ≤ h) (hKT : K * h ≤ T)
+    {Y₀ : Matrix m n ℝ} (hY₀ : Y₀.rank ≤ r) (hδ : ‖Y₀ - C‖ ≤ δ)
+    (hsmall : Real.exp ((‖M‖ + ‖N‖) * T) * δ + T * Real.exp ((‖M‖ + ‖N‖) * T) *
+      (24 * (‖M‖ + ‖N‖) * ((‖M‖ + ‖N‖) * ρ) * h + 3 * ‖G‖) + 2 * ((‖M‖ + ‖N‖) * ρ) * h < ρ) :
+    ∃ Y : ℕ → Matrix m n ℝ, Y 0 = Y₀ ∧
+      IsRun (stepRel (fun _ Y => M * Y + Y * Nᵀ + G) r) (uniformGrid t₀ h) K Y ∧
+      ∀ j ≤ K, (Y j).rank ≤ r ∧ ‖Y j - C‖ ≤ Real.exp ((‖M‖ + ‖N‖) * T) * δ +
+        T * Real.exp ((‖M‖ + ‖N‖) * T) *
+          (24 * (‖M‖ + ‖N‖) * ((‖M‖ + ‖N‖) * ρ) * h + 3 * ‖G‖) :=
+  exists_run_norm_sub_le (A := fun _ => C) (dlraProblem_linear M N G C hC _ _ hρ)
+    (continuous_uncurry_linear M N G).continuousOn
+    (factoredNormalBoundOn_linear M N G _) (norm_nonneg G) hh hKT hrm hrn hY₀ hδ hsmall
 
 end Examples
 

@@ -27,12 +27,10 @@ not part of the step.
 
 ## Main results
 
-* `ODESolution.near_of_comp_proj`: one substep of a splitting method near a reference solution.
-  A solution of a projected field that starts close to the reference solution stays in the tube
-  and moves by at most `B (t - t₀)`.
 * `MatrixKSL.IsStep.norm_sub_lt_of_near`: if the start value satisfies
   `‖U₀ S₀ V₀ᵀ - A t₀‖ + 4 B (t₁ - t₀) < ρ`, the three substeps of a step stay in the tube of
-  radius `ρ` around the reference solution `A`.
+  radius `ρ` around the reference solution `A`. Each substep is an instance of
+  `ODESolution.near_of_comp_proj`, which holds for every splitting method.
 * `MatrixKSL.isStep_tubeExt_iff_of_near`, `MatrixKSL.stepRel_tubeExt_iff_of_near`: near the
   reference solution, a step for the tube extension `tubeExt F A a b ρ` is the same as a step
   for `F`.
@@ -67,32 +65,6 @@ open Set
 open scoped Matrix LeanDLRA.Frobenius
 
 namespace LeanDLRA
-
-/-! ### One substep near a reference solution -/
-
-section Substep
-
-variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] {G : ℝ → E → E}
-  {A y : ℝ → E} {a b ρ B t₀ t₁ : ℝ}
-
-/-- **One substep of a splitting method near a reference solution.** Let `G` be bounded by `B`
-on the tube of radius `ρ` around a solution `A` of `G` over `[a, b]`, and let `y` solve the
-projected equation `ẏ = Ψ (G t y)` on `[t₀, t₁] ⊆ [a, b]`, where the map `Ψ` does not increase
-norms. If the start value satisfies `‖y t₀ - A t₀‖ + 2 B (t₁ - t₀) < ρ`, then `y` stays strictly
-inside the tube and `‖y t - y t₀‖ ≤ B (t - t₀)` on `[t₀, t₁]`. -/
-theorem ODESolution.near_of_comp_proj {Ψ : E → E}
-    (hy : ODESolution (fun t x => Ψ (G t x)) y t₀ t₁) (hΨ : ∀ x, ‖Ψ x‖ ≤ ‖x‖)
-    (hGB : IsBoundedOnTube G A a b ρ B) (hB : 0 ≤ B) (ha : a ≤ t₀) (hb : t₁ ≤ b)
-    (hA : ODESolution G A t₀ t₁) (hsmall : ‖y t₀ - A t₀‖ + 2 * B * (t₁ - t₀) < ρ) :
-    ∀ t ∈ Icc t₀ t₁, ‖y t - A t‖ < ρ ∧ ‖y t - y t₀‖ ≤ B * (t - t₀) := by
-  intro t ht
-  have hBh : 0 ≤ B * (t₁ - t₀) := mul_nonneg hB (sub_nonneg.2 (ht.1.trans ht.2))
-  have hρ : 0 ≤ ρ := by linarith [norm_nonneg (y t₀ - A t₀)]
-  have hg := hGB.comp_proj ha hb Ψ hΨ
-  have hin := tube_trap hA hy hB hB (hGB.along hρ ha hb) hg (by linarith)
-  exact ⟨hin t ht, hy.norm_sub_start_le_of_tube hg hin t ht⟩
-
-end Substep
 
 namespace MatrixKSL
 

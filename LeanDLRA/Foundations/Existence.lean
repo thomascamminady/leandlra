@@ -31,6 +31,8 @@ This file discharges those existence hypotheses.
   `LeanDLRA.exists_ODESolution_neg_comp`: existence for the projected fields
   `t x ↦ G (F t x)` with `G` an arbitrary continuous linear map, in particular for all DLRA
   substeps (`G = Q₀`, `P₀`, `P₁ ∘ Q₁`, `-(P₁ ∘ Q₀)`, ...).
+* `LeanDLRA.ODESolution.of_hasDerivAt`: a function with derivative `f t (y t)` at every `t` is a
+  solution on every interval.
 * `LeanDLRA.exists_flowFamily`, `LeanDLRA.exists_exactFlowFamily`: existence of the family of
   exact flows `Φ n` started from arbitrary values `Y n` at the grid points `t₀ + n h` on
   `[t₀ + n h, t₀ + (n + 1) h]`, as used in Lady Windermere's fan
@@ -100,6 +102,11 @@ lemma ODESolution.of_hasDerivWithinAt_Icc {f : ℝ → E → E} {y : ℝ → E} 
   cont := HasDerivWithinAt.continuousOn h
   deriv t ht := (h t (Ico_subset_Icc_self ht)).mono_of_mem_nhdsWithin
     (Filter.mem_of_superset (Icc_mem_nhdsGE ht.2) (Icc_subset_Icc_left ht.1))
+
+/-- A function with derivative `f t (y t)` at every `t` is a solution on every interval. -/
+lemma ODESolution.of_hasDerivAt {f : ℝ → E → E} {y : ℝ → E}
+    (h : ∀ t, HasDerivAt y (f t (y t)) t) (a b : ℝ) : ODESolution f y a b :=
+  ⟨fun t _ => (h t).continuousAt.continuousWithinAt, fun t _ => (h t).hasDerivWithinAt⟩
 
 /-- Solutions are determined by their values on `[a, b]`: a function agreeing with a solution
 on `Icc a b` is again a solution on `[a, b]`. -/

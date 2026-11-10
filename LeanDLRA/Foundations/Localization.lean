@@ -30,6 +30,9 @@ remark.  This file provides the localisation machinery and addresses the open pr
 * `tube_trap`, `norm_sub_le_of_tube_trap`: **trapping lemma** (first-exit argument): a
   trajectory of a field bounded by `By` on the tube, started `d`-close to `A`, stays strictly
   inside as long as `d + (Ba + By)(t - s) < ρ`.
+* `ODESolution.near_of_comp_proj`: **one substep of a splitting method** near a reference
+  solution: a solution of a projected field `Ψ ∘ G` that starts close to the reference solution
+  stays in the tube and moves by at most `B (t - t₀)`.
 * `bootstrap_of_global`: the generic bootstrap pattern (reusable for KSL, parallel BUG, Tucker).
 * `IsBUGStep.tubeExt`, `bug_global_error_le_of_tube`: **OP-EX-01 for the BUG integrator**:
   if `c₀ δ + c₁ ε + c₂ h + 4 B h < ρ`, every iterate and substep stays in the tube and the
@@ -418,6 +421,23 @@ lemma IsBoundedOnTube.comp_proj {s s₁ : ℝ} (hFB : IsBoundedOnTube F A a b ρ
     (hb : s₁ ≤ b) (Ψ : E → E) (hΨ : ∀ x, ‖Ψ x‖ ≤ ‖x‖) :
     ∀ t ∈ Ico s s₁, ∀ x, ‖x - A t‖ ≤ ρ → ‖Ψ (F t x)‖ ≤ B := fun t ht x hx =>
   (hΨ _).trans (hFB t ⟨ha.trans ht.1, ht.2.le.trans hb⟩ x hx)
+
+/-- **One substep of a splitting method near a reference solution.** Let `G` be bounded by `B`
+on the tube of radius `ρ` around a solution `A` of `G` over `[a, b]`, and let `y` solve the
+projected equation `ẏ = Ψ (G t y)` on `[t₀, t₁] ⊆ [a, b]`, where the map `Ψ` does not increase
+norms. If the start value satisfies `‖y t₀ - A t₀‖ + 2 B (t₁ - t₀) < ρ`, then `y` stays strictly
+inside the tube and `‖y t - y t₀‖ ≤ B (t - t₀)` on `[t₀, t₁]`. -/
+theorem ODESolution.near_of_comp_proj {G : ℝ → E → E} {A y : ℝ → E} {a b ρ B t₀ t₁ : ℝ}
+    {Ψ : E → E} (hy : ODESolution (fun t x => Ψ (G t x)) y t₀ t₁) (hΨ : ∀ x, ‖Ψ x‖ ≤ ‖x‖)
+    (hGB : IsBoundedOnTube G A a b ρ B) (hB : 0 ≤ B) (ha : a ≤ t₀) (hb : t₁ ≤ b)
+    (hA : ODESolution G A t₀ t₁) (hsmall : ‖y t₀ - A t₀‖ + 2 * B * (t₁ - t₀) < ρ) :
+    ∀ t ∈ Icc t₀ t₁, ‖y t - A t‖ < ρ ∧ ‖y t - y t₀‖ ≤ B * (t - t₀) := by
+  intro t ht
+  have hBh : 0 ≤ B * (t₁ - t₀) := mul_nonneg hB (sub_nonneg.2 (ht.1.trans ht.2))
+  have hρ : 0 ≤ ρ := by linarith [norm_nonneg (y t₀ - A t₀)]
+  have hg := hGB.comp_proj ha hb Ψ hΨ
+  have hin := tube_trap hA hy hB hB (hGB.along hρ ha hb) hg (by linarith)
+  exact ⟨hin t ht, hy.norm_sub_start_le_of_tube hg hin t ht⟩
 
 /-- An exact flow `Φ` of the original problem started `ρ - 2 B h`-close to `A` stays in the tube
 and is a flow of the extended problem. -/

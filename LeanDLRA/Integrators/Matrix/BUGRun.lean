@@ -1,6 +1,7 @@
 import LeanDLRA.Integrators.Matrix.BUGTube
 import LeanDLRA.Integrators.Method
 import LeanDLRA.Matrix.LowRankDistance
+import LeanDLRA.Foundations.ConjugatedField
 
 /-!
 # Runs of the fixed-rank BUG integrator: existence and error bound
@@ -51,7 +52,9 @@ for the one constructed (`MatrixBUG.IsRun.norm_sub_le`).
 * `exists_bugGlobalBound_lt`: the smallness condition can be met.
 
 The examples at the end apply the results to the linear field `F(t, Y) = M Y + Y Nᵀ + G` near a
-stationary point. This field is not bounded, so it is covered only by the tube form.
+stationary point. This field is not bounded, so it is covered only by the tube form. That it
+satisfies the hypotheses is shown once for all matrix integrators (`dlraProblem_linear`,
+`continuous_uncurry_linear`, `factoredNormalBoundOn_linear`).
 
 ## Implementation notes
 
@@ -80,31 +83,6 @@ namespace LeanDLRA
 namespace MatrixBUG
 
 /-! ### Existence of one step -/
-
-section Lift
-
-variable {E E' : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [NormedAddCommGroup E']
-  [InnerProductSpace ℝ E'] [CompleteSpace E']
-
-/-- **Existence for conjugated Lipschitz fields.** If `F` is Lipschitz and continuous in time on
-`[a, b]`, every field of the form `f t x = Ψ (F t (Φ x))` with continuous linear maps `Φ`, `Ψ`
-(the fields of the K-, L- and S-step of the BUG integrator have this form) has a solution on
-`[a, b]` with arbitrary initial value. In contrast to `exists_odeSolution_conj` the field need
-not be bounded. -/
-theorem exists_odeSolution_conj_of_lipschitz {F : ℝ → E → E} {L : ℝ} (hF : IsLipschitzField F L)
-    {a b : ℝ} (hc : ∀ x, ContinuousOn (fun t => F t x) (Icc a b)) (Φ : E' →L[ℝ] E)
-    (Ψ : E →L[ℝ] E') {f : ℝ → E' → E'} (hf : ∀ t x, f t x = Ψ (F t (Φ x))) (hab : a ≤ b)
-    (y₀ : E') : ∃ y : ℝ → E', ODESolution f y a b ∧ y a = y₀ := by
-  obtain rfl : f = fun t x => Ψ (F t (Φ x)) := funext fun t => funext fun x => hf t x
-  have hF' : IsLipschitzField F (max L 0) := fun t x y =>
-    (hF t x y).trans (mul_le_mul_of_nonneg_right (le_max_left _ _) (norm_nonneg _))
-  have hcΨ : ∀ x, ContinuousOn (fun t => Ψ (F t (Φ x))) (Icc a b) := fun x =>
-    Ψ.continuous.comp_continuousOn (hc (Φ x))
-  obtain ⟨K, hK⟩ := (isCompact_Icc (a := a) (b := b)).exists_bound_of_continuousOn (hcΨ 0)
-  exact exists_ODESolution_of_linearGrowth (isLipschitzField_conj hF' (le_max_right _ _) Φ Ψ)
-    (mul_nonneg (mul_nonneg (norm_nonneg _) (le_max_right _ _)) (norm_nonneg _)) hK hcΨ hab y₀
-
-end Lift
 
 section Exists
 
@@ -374,49 +352,6 @@ section Examples
 
 variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ}
 
-/-- The linear field `Y ↦ M Y + Y Nᵀ + G` changes by at most `(‖M‖ + ‖N‖) ‖X - Y‖`. -/
-private theorem norm_linear_sub_le_aux (M : Matrix m m ℝ) (N : Matrix n n ℝ)
-    (G X Y : Matrix m n ℝ) :
-    ‖M * X + X * Nᵀ + G - (M * Y + Y * Nᵀ + G)‖ ≤ (‖M‖ + ‖N‖) * ‖X - Y‖ :=
-  calc ‖M * X + X * Nᵀ + G - (M * Y + Y * Nᵀ + G)‖ = ‖M * (X - Y) + (X - Y) * Nᵀ‖ := by
-        rw [Matrix.mul_sub, Matrix.sub_mul]
-        congr 1
-        abel
-    _ ≤ ‖M‖ * ‖X - Y‖ + ‖X - Y‖ * ‖N‖ :=
-        (norm_add_le _ _).trans (add_le_add (Frobenius.norm_mul_le _ _)
-          ((Frobenius.norm_mul_le _ _).trans_eq (by rw [Frobenius.norm_transpose])))
-    _ = (‖M‖ + ‖N‖) * ‖X - Y‖ := by ring
-
-/-- The linear field is globally Lipschitz with constant `‖M‖ + ‖N‖`. -/
-private theorem isLipschitzField_linear_aux (M : Matrix m m ℝ) (N : Matrix n n ℝ)
-    (G : Matrix m n ℝ) :
-    IsLipschitzField (fun _ (Y : Matrix m n ℝ) => M * Y + Y * Nᵀ + G) (‖M‖ + ‖N‖) :=
-  fun _ X Y => norm_linear_sub_le_aux M N G X Y
-
-/-- Around a stationary point `C` the linear field is a `DLRAProblem` on the tube of every radius
-`ρ ≥ 0`, with Lipschitz constant `‖M‖ + ‖N‖` and bound `(‖M‖ + ‖N‖) ρ`. -/
-private theorem dlraProblem_linear_aux (M : Matrix m m ℝ) (N : Matrix n n ℝ)
-    (G C : Matrix m n ℝ) (hC : M * C + C * Nᵀ + G = 0) (a b : ℝ) {ρ : ℝ} (hρ : 0 ≤ ρ) :
-    DLRAProblem (fun _ Y => M * Y + Y * Nᵀ + G) (fun _ => C) a b ρ (‖M‖ + ‖N‖)
-      ((‖M‖ + ‖N‖) * ρ) := by
-  have hL : 0 ≤ ‖M‖ + ‖N‖ := add_nonneg (norm_nonneg _) (norm_nonneg _)
-  refine ⟨⟨continuousOn_const, fun t _ => ?_⟩, hL, mul_nonneg hL hρ,
-    fun _ _ X Y _ _ => norm_linear_sub_le_aux M N G X Y, fun _ _ X hX => ?_⟩
-  · exact (hasDerivWithinAt_const t (Ici t) C).congr_deriv hC.symm
-  · calc ‖M * X + X * Nᵀ + G‖ = ‖M * X + X * Nᵀ + G - (M * C + C * Nᵀ + G)‖ := by
-          rw [hC, sub_zero]
-      _ ≤ (‖M‖ + ‖N‖) * ‖X - C‖ := norm_linear_sub_le_aux M N G X C
-      _ ≤ (‖M‖ + ‖N‖) * ρ := mul_le_mul_of_nonneg_left hX hL
-
-/-- The linear field is jointly continuous. -/
-private theorem continuous_uncurry_linear_aux (M : Matrix m m ℝ) (N : Matrix n n ℝ)
-    (G : Matrix m n ℝ) :
-    Continuous (Function.uncurry fun (_ : ℝ) (Y : Matrix m n ℝ) => M * Y + Y * Nᵀ + G) := by
-  change Continuous fun p : ℝ × Matrix m n ℝ =>
-    Frobenius.leftMulCLM M p.2 + Frobenius.rightMulCLM Nᵀ p.2 + G
-  exact (((Frobenius.leftMulCLM M).continuous.comp continuous_snd).add
-    ((Frobenius.rightMulCLM Nᵀ).continuous.comp continuous_snd)).add continuous_const
-
 /-- **Non-vacuity of `exists_run`.** The linear field `F(t, Y) = M Y + Y Nᵀ + G` is globally
 Lipschitz but not bounded (so `exists_isStep` does not apply to it). On every grid it has a run
 of the fixed-rank BUG integrator from every start value of rank at most `r`. -/
@@ -425,31 +360,9 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G : Matrix m n ℝ) (hrm : r 
     (hY₀ : Y₀.rank ≤ r) :
     ∃ Y : ℕ → Matrix m n ℝ, Y 0 = Y₀ ∧
       IsRun (stepRel (fun _ Y => M * Y + Y * Nᵀ + G) r) τ K Y :=
-  exists_run (isLipschitzField_linear_aux M N G) hτ (fun _ => continuousOn_const) hrm hrn hY₀
+  exists_run (isLipschitzField_linear M N G) hτ (fun _ => continuousOn_const) hrm hrn hY₀
 
 variable [DecidableEq m] [DecidableEq n]
-
-/-- The linear part `M Y + Y Nᵀ` has no normal component at `Y = U S Vᵀ`, so the linear field
-satisfies the factored normal bound on every region with `ε = ‖G‖`. -/
-private theorem factoredNormalBoundOn_linear_aux (M : Matrix m m ℝ) (N : Matrix n n ℝ)
-    (G : Matrix m n ℝ) (D : Set (ℝ × Matrix m n ℝ)) :
-    FactoredNormalBoundOn (fun _ (Y : Matrix m n ℝ) => M * Y + Y * Nᵀ + G) r D ‖G‖ := by
-  intro t U V S hU hV _
-  have hU' : (1 - U * Uᵀ) * U = 0 := by
-    rw [Matrix.sub_mul, Matrix.one_mul, Matrix.mul_assoc, hU, Matrix.mul_one, sub_self]
-  have hV' : Vᵀ * (1 - V * Vᵀ) = 0 := by
-    rw [Matrix.mul_sub, Matrix.mul_one, ← Matrix.mul_assoc, hV, Matrix.one_mul, sub_self]
-  have h1 : (1 - U * Uᵀ) * (M * (U * S * Vᵀ)) * (1 - V * Vᵀ) = 0 := by
-    rw [show (1 - U * Uᵀ) * (M * (U * S * Vᵀ)) * (1 - V * Vᵀ) =
-        (1 - U * Uᵀ) * (M * U * S) * (Vᵀ * (1 - V * Vᵀ)) by simp only [Matrix.mul_assoc],
-      hV', Matrix.mul_zero]
-  have h2 : (1 - U * Uᵀ) * (U * S * Vᵀ * Nᵀ) * (1 - V * Vᵀ) = 0 := by
-    rw [show (1 - U * Uᵀ) * (U * S * Vᵀ * Nᵀ) * (1 - V * Vᵀ) =
-        (1 - U * Uᵀ) * U * (S * Vᵀ * Nᵀ * (1 - V * Vᵀ)) by simp only [Matrix.mul_assoc],
-      hU', Matrix.zero_mul]
-  change ‖(1 - U * Uᵀ) * (M * (U * S * Vᵀ) + U * S * Vᵀ * Nᵀ + G) * (1 - V * Vᵀ)‖ ≤ ‖G‖
-  rw [Matrix.mul_add, Matrix.mul_add, Matrix.add_mul, Matrix.add_mul, h1, h2, zero_add, zero_add]
-  exact norm_normal_le hU hV G
 
 /-- The stationary-point hypothesis `M C + C Nᵀ + G = 0` of the examples below can be met with
 any source term `G`, in particular a nonzero one: take `M = -1`, `N = 0` and `C = G`. -/
@@ -474,9 +387,9 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
       IsRun (stepRel (fun _ Y => M * Y + Y * Nᵀ + G) r) (uniformGrid t₀ h) K Y ∧
       ∀ j ≤ K, (Y j).rank ≤ r ∧
         ‖Y j - C‖ ≤ bugGlobalBound (‖M‖ + ‖N‖) ((‖M‖ + ‖N‖) * ρ) H T δ ‖G‖ h :=
-  exists_run_norm_sub_le (A := fun _ => C) (dlraProblem_linear_aux M N G C hC _ _ hρ)
-    (continuous_uncurry_linear_aux M N G).continuousOn
-    (factoredNormalBoundOn_linear_aux M N G _) (norm_nonneg G) hh hhH hKT hrm hrn hY₀ hδ hsmall
+  exists_run_norm_sub_le (A := fun _ => C) (dlraProblem_linear M N G C hC _ _ hρ)
+    (continuous_uncurry_linear M N G).continuousOn
+    (factoredNormalBoundOn_linear M N G _) (norm_nonneg G) hh hhH hKT hrm hrn hY₀ hδ hsmall
 
 /-- **Non-vacuity, closed form.** For the linear field of the previous example, if the
 contribution of the source term to the error bound is smaller than the tube radius,
@@ -499,9 +412,9 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
   obtain ⟨δ, hδ, h, hh, hhH, hsmall⟩ :=
     exists_bugGlobalBound_lt (B := (‖M‖ + ‖N‖) * ρ) hH hG
   exact ⟨δ, hδ, h, hh, fun K hK Y₀ hY₀ hY₀δ =>
-    exists_run_norm_sub_le (A := fun _ => C) (dlraProblem_linear_aux M N G C hC _ _ hρ)
-      (continuous_uncurry_linear_aux M N G).continuousOn
-      (factoredNormalBoundOn_linear_aux M N G _) (norm_nonneg G) hh.le hhH hK hrm hrn hY₀ hY₀δ
+    exists_run_norm_sub_le (A := fun _ => C) (dlraProblem_linear M N G C hC _ _ hρ)
+      (continuous_uncurry_linear M N G).continuousOn
+      (factoredNormalBoundOn_linear M N G _) (norm_nonneg G) hh.le hhH hK hrm hrn hY₀ hY₀δ
       hsmall⟩
 
 /-- **Non-vacuity of `MatrixBUG.IsRun.norm_sub_le`.** Every run of the fixed-rank BUG integrator
@@ -514,9 +427,9 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
     (hsmall : bugGlobalBound (‖M‖ + ‖N‖) ((‖M‖ + ‖N‖) * ρ) H T δ ‖G‖ h +
       4 * ((‖M‖ + ‖N‖) * ρ) * h < ρ) :
     ∀ j ≤ K, ‖Y j - C‖ ≤ bugGlobalBound (‖M‖ + ‖N‖) ((‖M‖ + ‖N‖) * ρ) H T δ ‖G‖ h :=
-  IsRun.norm_sub_le (A := fun _ => C) (dlraProblem_linear_aux M N G C hC _ _ hρ)
-    (continuous_uncurry_linear_aux M N G).continuousOn
-    (factoredNormalBoundOn_linear_aux M N G _) (norm_nonneg G) hh hhH hKT hsmall hY hδ
+  IsRun.norm_sub_le (A := fun _ => C) (dlraProblem_linear M N G C hC _ _ hρ)
+    (continuous_uncurry_linear M N G).continuousOn
+    (factoredNormalBoundOn_linear M N G _) (norm_nonneg G) hh hhH hKT hsmall hY hδ
 
 end Examples
 

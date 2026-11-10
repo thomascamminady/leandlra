@@ -36,6 +36,11 @@ flow).
   localized bound are `FactoredNormalBoundOn` on `univ` and on `Icc t₀ t₁ ×ˢ closedBall Y ρ`.
 * `LeanDLRA.factoredNormalBoundOn_iff_normalBoundOn`: `FactoredNormalBoundOn` is the abstract
   `NormalBoundOn` for the triples `(X ↦ U Uᵀ X, X ↦ X V Vᵀ, U S Vᵀ)`.
+* `LeanDLRA.isLipschitzField_linear`, `LeanDLRA.dlraProblem_linear`,
+  `LeanDLRA.continuous_uncurry_linear`, `LeanDLRA.factoredNormalBoundOn_linear`: the linear field
+  `F(t, Y) = M Y + Y Nᵀ + G` is Lipschitz with constant `‖M‖ + ‖N‖`, bounded by `(‖M‖ + ‖N‖) ρ`
+  on the tube of radius `ρ` around a stationary point, continuous, and its normal component is
+  at most `‖G‖`. It is the test problem of the non-vacuity examples of the matrix integrators.
 
 ## References
 
@@ -258,7 +263,7 @@ private theorem normal_mul_add_mul_transpose_add_eq {U : Matrix m (Fin r) ℝ}
 
 /-- The linear field `M Y + Y Nᵀ + G` satisfies the factored bound on every region with
 `ε = ‖G‖`. -/
-private theorem factoredNormalBoundOn_linear (M : Matrix m m ℝ) (N : Matrix n n ℝ)
+theorem factoredNormalBoundOn_linear (M : Matrix m m ℝ) (N : Matrix n n ℝ)
     (G : Matrix m n ℝ) (D : Set (ℝ × Matrix m n ℝ)) :
     FactoredNormalBoundOn (fun _ (Y : Matrix m n ℝ) => M * Y + Y * Nᵀ + G) r D ‖G‖ := by
   intro t U V S hU hV _
@@ -300,5 +305,62 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G : Matrix m n ℝ) :
   factoredNormalBoundOn_iff_normalBoundOn.1 (factoredNormalBoundOn_linear M N G univ)
 
 end NormalBoundOnExamples
+
+/-! ### The linear field as a test problem
+
+The lemmas of this section and `factoredNormalBoundOn_linear` show that the linear field
+`F(t, Y) = M Y + Y Nᵀ + G` satisfies the hypotheses of the existence and error theorems of the
+matrix integrators near a stationary point `C`. The field is Lipschitz but not bounded, so only
+the tube form of the theorems applies to it. The non-vacuity examples of the integrators use
+these lemmas, so that the integrators can be compared on one problem. -/
+
+section LinearField
+
+variable {m n : Type*} [Fintype m] [Fintype n]
+
+/-- The linear field `Y ↦ M Y + Y Nᵀ + G` changes by at most `(‖M‖ + ‖N‖) ‖X - Y‖`. -/
+theorem norm_linear_sub_le (M : Matrix m m ℝ) (N : Matrix n n ℝ)
+    (G X Y : Matrix m n ℝ) :
+    ‖M * X + X * Nᵀ + G - (M * Y + Y * Nᵀ + G)‖ ≤ (‖M‖ + ‖N‖) * ‖X - Y‖ :=
+  calc ‖M * X + X * Nᵀ + G - (M * Y + Y * Nᵀ + G)‖ = ‖M * (X - Y) + (X - Y) * Nᵀ‖ := by
+        rw [Matrix.mul_sub, Matrix.sub_mul]
+        congr 1
+        abel
+    _ ≤ ‖M‖ * ‖X - Y‖ + ‖X - Y‖ * ‖N‖ :=
+        (norm_add_le _ _).trans (add_le_add (Frobenius.norm_mul_le _ _)
+          ((Frobenius.norm_mul_le _ _).trans_eq (by rw [Frobenius.norm_transpose])))
+    _ = (‖M‖ + ‖N‖) * ‖X - Y‖ := by ring
+
+/-- The linear field is globally Lipschitz with constant `‖M‖ + ‖N‖`. -/
+theorem isLipschitzField_linear (M : Matrix m m ℝ) (N : Matrix n n ℝ)
+    (G : Matrix m n ℝ) :
+    IsLipschitzField (fun _ (Y : Matrix m n ℝ) => M * Y + Y * Nᵀ + G) (‖M‖ + ‖N‖) :=
+  fun _ X Y => norm_linear_sub_le M N G X Y
+
+/-- Around a stationary point `C` the linear field is a `DLRAProblem` on the tube of every radius
+`ρ ≥ 0`, with Lipschitz constant `‖M‖ + ‖N‖` and bound `(‖M‖ + ‖N‖) ρ`. -/
+theorem dlraProblem_linear (M : Matrix m m ℝ) (N : Matrix n n ℝ)
+    (G C : Matrix m n ℝ) (hC : M * C + C * Nᵀ + G = 0) (a b : ℝ) {ρ : ℝ} (hρ : 0 ≤ ρ) :
+    DLRAProblem (fun _ Y => M * Y + Y * Nᵀ + G) (fun _ => C) a b ρ (‖M‖ + ‖N‖)
+      ((‖M‖ + ‖N‖) * ρ) := by
+  have hL : 0 ≤ ‖M‖ + ‖N‖ := add_nonneg (norm_nonneg _) (norm_nonneg _)
+  refine ⟨⟨continuousOn_const, fun t _ => ?_⟩, hL, mul_nonneg hL hρ,
+    fun _ _ X Y _ _ => norm_linear_sub_le M N G X Y, fun _ _ X hX => ?_⟩
+  · exact (hasDerivWithinAt_const t (Ici t) C).congr_deriv hC.symm
+  · calc ‖M * X + X * Nᵀ + G‖ = ‖M * X + X * Nᵀ + G - (M * C + C * Nᵀ + G)‖ := by
+          rw [hC, sub_zero]
+      _ ≤ (‖M‖ + ‖N‖) * ‖X - C‖ := norm_linear_sub_le M N G X C
+      _ ≤ (‖M‖ + ‖N‖) * ρ := mul_le_mul_of_nonneg_left hX hL
+
+/-- The linear field is jointly continuous. -/
+theorem continuous_uncurry_linear (M : Matrix m m ℝ) (N : Matrix n n ℝ)
+    (G : Matrix m n ℝ) :
+    Continuous (Function.uncurry fun (_ : ℝ) (Y : Matrix m n ℝ) => M * Y + Y * Nᵀ + G) := by
+  change Continuous fun p : ℝ × Matrix m n ℝ =>
+    Frobenius.leftMulCLM M p.2 + Frobenius.rightMulCLM Nᵀ p.2 + G
+  exact (((Frobenius.leftMulCLM M).continuous.comp continuous_snd).add
+    ((Frobenius.rightMulCLM Nᵀ).continuous.comp continuous_snd)).add continuous_const
+
+end LinearField
 
 end LeanDLRA

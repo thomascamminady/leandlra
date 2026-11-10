@@ -88,5 +88,10 @@
   "LeanDLRA.Novel.EpsRank.Quadrature.mk.noConfusion": "LeanDLRA.Kinetic.Quadrature.mk.noConfusion",
   "LeanDLRA.Novel.EpsRank.Quadrature.ctorIdx": "LeanDLRA.Kinetic.Quadrature.ctorIdx",
   "LeanDLRA.Literature.P1804_04561.density": "LeanDLRA.Kinetic.density",
-  "LeanDLRA.Literature.P2412_05912.HasRankLEOver": "LeanDLRA.HasSepRankLE"
+  "LeanDLRA.Literature.P2412_05912.HasRankLEOver": "LeanDLRA.HasSepRankLE",
+  "_priv.LeanDLRA.MatrixBUG.norm_linear_sub_le_aux": "LeanDLRA.norm_linear_sub_le",
+  "_priv.LeanDLRA.MatrixBUG.isLipschitzField_linear_aux": "LeanDLRA.isLipschitzField_linear",
+  "_priv.LeanDLRA.MatrixBUG.dlraProblem_linear_aux": "LeanDLRA.dlraProblem_linear",
+  "_priv.LeanDLRA.MatrixBUG.continuous_uncurry_linear_aux": "LeanDLRA.continuous_uncurry_linear",
+  "_priv.LeanDLRA.factoredNormalBoundOn_linear": "LeanDLRA.factoredNormalBoundOn_linear"
 }

@@ -14,6 +14,7 @@ import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.Filtering.Defs
 import LeanDLRA.FixedRank.Defs
 import LeanDLRA.FixedRank.TangentSpace
+import LeanDLRA.Foundations.ConjugatedField
 import LeanDLRA.Foundations.Existence
 import LeanDLRA.Foundations.Galerkin
 import LeanDLRA.Foundations.Gronwall

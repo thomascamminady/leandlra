@@ -3,6 +3,7 @@ import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Foundations.Existence
+import LeanDLRA.Foundations.ConjugatedField
 import LeanDLRA.Integrators.Matrix.Defs
 
 /-!
@@ -37,7 +38,8 @@ same K- and L-steps, augmented bases `Û`, `V̂` (`2r` columns) capturing `(K(t�
 
 * (a) **Derivative transfer**: `odeSolution_kField`, `odeSolution_lField`, `odeSolution_sField`
   lift the factor trajectories along the continuous linear maps `K ↦ K V₀ᵀ`, `L ↦ U₀ Lᵀ`,
-  `S ↦ U₁ S V₁ᵀ` (`odeSolution_comp_clm`) to solutions of the projected full-space fields
+  `S ↦ U₁ S V₁ᵀ` (`odeSolution_comp_clm` of `Foundations/ConjugatedField.lean`) to solutions of
+  the projected full-space fields
   `YK' = Q₀ F(t, YK)`, `YL' = P₀ F(t, YL)`, `YS' = P₁ Q₁ F(t, YS)` of the abstract theory, with
   `P = leftProj U = (X ↦ U Uᵀ X)` and `Q = rightProj V = (X ↦ X V Vᵀ)`.
 * (b) **Normal components**: the factored normal-component assumption
@@ -68,7 +70,7 @@ same K- and L-steps, augmented bases `Û`, `V̂` (`2r` columns) capturing `(K(t�
 * (e) **Well-posedness**: `exists_qr`, `exists_aug_qr` (the QR captures exist, from
   `Matrix/Orthonormal.lean`), and `exists_isStep`, `exists_isRankAdaptiveStep`: for `F`
   Lipschitz, bounded and continuous in time, complete steps exist (substep ODEs solved by
-  `Foundations/Existence.lean`, `exists_odeSolution_conj`).
+  `exists_odeSolution_conj` of `Foundations/ConjugatedField.lean`).
 * Satisfiability: `isStep_example` and `isRankAdaptiveStep_example` (`F ≡ I` on `2 × 2`
   matrices, rank `1`, non-tangential: `normal_unitCol_ne_zero`; the rank-adaptive example has a
   genuine truncation `diag(2, 1) ↦ diag(2, 0)` with `ϑ = 1`), with `example`s instantiating the
@@ -98,73 +100,20 @@ namespace LeanDLRA
 
 namespace MatrixBUG
 
-/-! ### Lifting factor trajectories along continuous linear maps -/
+/-! ### Affine solutions of constant fields -/
 
-section Lift
+section Affine
 
-variable {E E' : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [NormedAddCommGroup E']
-  [NormedSpace ℝ E']
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
-/-- **Lifting a solution.**  If a continuous linear map `Φ` intertwines two vector fields,
-`g t (Φ x) = Φ (f t x)`, then it maps solutions of `y' = f(t, y)` to solutions of
-`z' = g(t, z)` (derivative transfer through `Φ`).  With `Φ K = K V₀ᵀ`, `Φ L = U₀ Lᵀ` and
-`Φ S = U₁ S V₁ᵀ` this lifts the factor ODEs of the BUG integrator to the full-space trajectories
-of the abstract theory. -/
-theorem odeSolution_comp_clm {f : ℝ → E → E} {g : ℝ → E' → E'} {y : ℝ → E} {a b : ℝ}
-    (hy : ODESolution f y a b) (Φ : E →L[ℝ] E') (h : ∀ t x, g t (Φ x) = Φ (f t x)) :
-    ODESolution g (fun t => Φ (y t)) a b where
-  cont := Φ.continuous.comp_continuousOn hy.cont
-  deriv t ht := by
-    rw [h]
-    exact Φ.hasFDerivAt.comp_hasDerivWithinAt t (hy.deriv t ht)
-
-/-- Conjugating an `L`-Lipschitz field (`L ≥ 0`) by continuous linear maps,
-`x ↦ Ψ (F t (Φ x))`, gives a field with Lipschitz constant `‖Ψ‖ L ‖Φ‖`. -/
-theorem isLipschitzField_conj {F : ℝ → E → E} {L : ℝ} (hF : IsLipschitzField F L) (hL : 0 ≤ L)
-    (Φ : E' →L[ℝ] E) (Ψ : E →L[ℝ] E') :
-    IsLipschitzField (fun t x => Ψ (F t (Φ x))) (‖Ψ‖ * L * ‖Φ‖) := fun t x y => by
-  calc ‖Ψ (F t (Φ x)) - Ψ (F t (Φ y))‖ = ‖Ψ (F t (Φ x) - F t (Φ y))‖ := by rw [map_sub]
-    _ ≤ ‖Ψ‖ * ‖F t (Φ x) - F t (Φ y)‖ := Ψ.le_opNorm _
-    _ ≤ ‖Ψ‖ * (L * ‖Φ (x - y)‖) := by
-        rw [map_sub]
-        exact mul_le_mul_of_nonneg_left (hF t _ _) (norm_nonneg _)
-    _ ≤ ‖Ψ‖ * (L * (‖Φ‖ * ‖x - y‖)) := by
-        gcongr
-        exact Φ.le_opNorm _
-    _ = ‖Ψ‖ * L * ‖Φ‖ * ‖x - y‖ := by ring
-
-/-- Conjugating a field bounded by `B` gives a field bounded by `‖Ψ‖ B`. -/
-theorem isBoundedField_conj {F : ℝ → E → E} {B : ℝ} (hB : IsBoundedField F B)
-    (Φ : E' →L[ℝ] E) (Ψ : E →L[ℝ] E') :
-    IsBoundedField (fun t x => Ψ (F t (Φ x))) (‖Ψ‖ * B) := fun t _ =>
-  (Ψ.le_opNorm _).trans (mul_le_mul_of_nonneg_left (hB t _) (norm_nonneg _))
-
-/-- **Existence for conjugated fields.**  If `F` is Lipschitz, bounded and continuous in time,
-every field of the form `f t x = Ψ (F t (Φ x))` (the K-, L- and S-step factor fields) has a
-solution on `[a, b]` with arbitrary initial value. -/
-theorem exists_odeSolution_conj [CompleteSpace E'] {F : ℝ → E → E} {L B : ℝ}
-    (hF : IsLipschitzField F L) (hB : IsBoundedField F B) (hc : ∀ x, Continuous fun t => F t x)
-    (Φ : E' →L[ℝ] E) (Ψ : E →L[ℝ] E') {f : ℝ → E' → E'} (hf : ∀ t x, f t x = Ψ (F t (Φ x)))
-    {a b : ℝ} (hab : a ≤ b) (y₀ : E') : ∃ y : ℝ → E', ODESolution f y a b ∧ y a = y₀ := by
-  have hfe : f = fun t x => Ψ (F t (Φ x)) := funext fun t => funext fun x => hf t x
-  subst hfe
-  have hF' : IsLipschitzField F (max L 0) := fun t x y =>
-    (hF t x y).trans (mul_le_mul_of_nonneg_right (le_max_left _ _) (norm_nonneg _))
-  exact exists_ODESolution (isLipschitzField_conj hF' (le_max_right _ _) Φ Ψ)
-    (isBoundedField_conj hB Φ Ψ) (fun x => Ψ.continuous.comp (hc (Φ x))) hab y₀
-
-omit [NormedAddCommGroup E'] [NormedSpace ℝ E'] in
 /-- The affine function `t ↦ y₀ + (t - a) c` solves the ODE with the constant field `c` (used in
 the satisfiability examples, where `F` is constant and all substeps are explicit). -/
 theorem odeSolution_affine (y₀ c : E) (a b : ℝ) :
-    ODESolution (fun _ _ => c) (fun t => y₀ + (t - a) • c) a b where
-  cont := by fun_prop
-  deriv t _ := by
-    have h : HasDerivAt (fun t : ℝ => y₀ + (t - a) • c) c t := by
-      simpa using (((hasDerivAt_id t).sub_const a).smul_const c).const_add y₀
-    exact h.hasDerivWithinAt
+    ODESolution (fun _ _ => c) (fun t => y₀ + (t - a) • c) a b :=
+  .of_hasDerivAt (fun t => by
+    simpa using (((hasDerivAt_id t).sub_const a).smul_const c).const_add y₀) a b
 
-end Lift
+end Affine
 
 /-! ### The factor fields of the BUG integrator -/
 
@@ -944,8 +893,8 @@ section WellPosed
 variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
   {L B : ℝ}
 
-/-- **The QR step exists** (arXiv 2010.02022, §3.1): for `r ≤ m` every `K₁ ∈ ℝ^{m×r}` (also
-rank-deficient) admits `U₁ ∈ ℝ^{m×r}` with `U₁ᵀ U₁ = I` and `U₁ U₁ᵀ K₁ = K₁`. -/
+/-- **The QR step exists** (arXiv 2010.02022, §3.1): for `r ≤ m` and every `K₁ ∈ ℝ^{m×r}`
+(also rank-deficient) there is `U₁ ∈ ℝ^{m×r}` with `U₁ᵀ U₁ = I` and `U₁ U₁ᵀ K₁ = K₁`. -/
 theorem exists_qr (hr : r ≤ Fintype.card m) (K₁ : Matrix m (Fin r) ℝ) :
     ∃ U₁ : Matrix m (Fin r) ℝ, U₁ᵀ * U₁ = 1 ∧ U₁ * U₁ᵀ * K₁ = K₁ :=
   exists_orthonormal_capture_of_le_card K₁ hr
