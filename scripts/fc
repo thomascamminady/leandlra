@@ -8,10 +8,28 @@
 #   scripts/fc --axioms FILE.lean        also fail on any axiom beyond the three standard ones
 #   scripts/fc --min-free=N FILE.lean    start only if N % of the memory is free (default 35;
 #                                        0 switches the test off)
+#   scripts/fc --with SLICE.lean[=Module.Name] … FILE.lean
+#                                        FILE imports a module that is not installed yet (another
+#                                        new slice), or a newer text of an installed one
 #
 # Exit codes: 0 clean; 1 errors or warnings; 2 usage; 3 not started, too little free memory;
 # 4 an import has no installed `.olean` (the core is rebuilt during a gate round: look once at
-# `tail -n 3 wip/gate.log` and try again later).
+# `tail -n 3 wip/gate.log` and try again later); 5 a prerequisite of `--with` has errors (FILE was
+# not checked); 6 the prerequisites would mix two texts of one module (nothing was started).
+#
+# `--with` (repeatable, in the order of the imports): the prerequisite is compiled as the module
+# Module.Name into a private folder below $FC_STATE/overlay, never into `.lake/build`. The later
+# prerequisites and FILE see a view first on the search path: a temporary folder of links to the
+# installed library in which the compiled prerequisites stand in place of the installed files
+# (Lean takes a whole package from the first folder that has it, so the prerequisites cannot lie
+# in a folder of their own). Without `=Module.Name` the module is the target of the slice in
+# wip/manifest.json, or the path of the file if it is a module of the library; a module of
+# another package (Mathlib, the toolchain) cannot be replaced. A compiled prerequisite is used
+# again as long as its text, the toolchain, the options and the `.olean` files it imports are
+# the same; folders not used for a day are removed. If a prerequisite replaces an installed
+# module, every installed module between it and FILE must be given with `--with` too (its
+# installed `.olean` was compiled against the installed text): exit 6 names the first one that
+# is missing.
 #
 # One check at a time (a lock folder below $FC_STATE, default .lake/warm); further calls wait.
 # Environment: FC_ROOT (repository, default: the folder with lakefile.toml above this script),
@@ -23,7 +41,7 @@
 # such a snapshot is invalid as soon as one `.olean` below it is rebuilt, which every gate round
 # does, and it cannot hold a file that is itself a module of the library.
 set -uo pipefail
-usage="usage: scripts/fc [--axioms] [--min-free=N] FILE.lean"
+usage="usage: scripts/fc [--axioms] [--min-free=N] [--with SLICE.lean[=Module.Name]]... FILE.lean"
 here="$(cd "$(dirname "$0")" && pwd)"
 ROOT="${FC_ROOT:-}"
 if [ -z "$ROOT" ]; then
@@ -34,11 +52,16 @@ fi
 STATE="${FC_STATE:-$ROOT/.lake/warm}"
 min_free="${FC_MIN_FREE:-35}"
 axioms=0
+withs=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --axioms) axioms=1 ;;
     --min-free=*) min_free="${1#--min-free=}" ;;
-    -h | --help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --with=*) withs+=("${1#--with=}") ;;
+    --with)
+      [ $# -ge 2 ] || { echo "fc: --with needs a file"; echo "$usage"; exit 2; }
+      shift; withs+=("$1") ;;
+    -h | --help) sed -n '2,36p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     -*) echo "fc: unknown option $1"; echo "$usage"; exit 2 ;;
     *) break ;;
   esac
@@ -59,22 +82,129 @@ while IFS= read -r opt; do options+=("$opt"); done < <(awk '
     gsub(/[ \t"]/, "", val); gsub(/[ \t]/, "", key); if (key != "") print "-D" key "=" val
   }' "$ROOT/lakefile.toml")
 
+# The prerequisites of --with: file, name as given, module.
+LIB="$(cd "$ROOT" && pwd)/.lake/build/lib/lean"
+imports_of() {
+  sed -n -E 's/^(public |private |meta )*import +(all +)?([^ ]+).*$/\3/p' "$1"
+}
+root_real="$(cd "$ROOT" && pwd -P)"
+module_of() { # $1: path of a prerequisite without a given module name
+  local name rel target real
+  name="$(basename "$1" .lean)"
+  real="$(cd "$(dirname "$1")" && pwd -P)/$(basename "$1")"
+  if [ "$(dirname "$real")" = "$root_real/wip" ]; then
+    [ -f "$ROOT/wip/manifest.json" ] || return 1
+    target="$(tr -d '\n' < "$ROOT/wip/manifest.json" \
+      | grep -o "\"$name\": *{[^}]*}" | grep -o '"target": *"[^"]*"' | head -n 1 \
+      | sed -E 's/.*: *"([^"]*)"/\1/')"
+    [ -n "$target" ] || return 1
+    rel="$target"
+  else
+    rel="${real#"$root_real"/}"
+    [ "$rel" != "$real" ] || return 1
+    # Only below a root of the library (`LeanDLRA/…` next to `LeanDLRA.lean`) or beside it.
+    case "$rel" in */*) [ -f "$root_real/${rel%%/*}.lean" ] || return 1 ;; esac
+  fi
+  printf '%s\n' "${rel%.lean}" | tr / .
+}
+with_files=()
+with_shown=()
+with_mods=()
+for spec in ${withs[@]+"${withs[@]}"}; do
+  path="${spec%%=*}"
+  given=""
+  [ "$path" != "$spec" ] && given="${spec#*=}"
+  [ -f "$path" ] || { echo "no such file: $path"; exit 2; }
+  abs="$(cd "$(dirname "$path")" && pwd)/$(basename "$path")"
+  mod="$given"
+  if [ -z "$mod" ]; then
+    mod="$(module_of "$abs")" || {
+      echo "fc: no module name for $path (not in wip/manifest.json, no module of the library):" \
+        "give it as $path=Module.Name"
+      exit 2
+    }
+  fi
+  if ! printf '%s\n' "$mod" | grep -qE "^[A-Za-z_][A-Za-z0-9_']*(\.[A-Za-z_][A-Za-z0-9_']*)*$"; then
+    echo "fc: not a module name: '$mod' (for $path)"; exit 2
+  fi
+  for m in ${with_mods[@]+"${with_mods[@]}"}; do
+    [ "$m" != "$mod" ] || { echo "fc: module $mod is given twice with --with"; exit 2; }
+  done
+  # The view replaces the package of the module on the search path; it holds the library only.
+  pkg="${mod%%.*}"
+  foreign=""
+  case "$pkg" in Init | Std | Lean | Lake) foreign="the toolchain" ;; esac
+  for d in "$ROOT"/.lake/packages/*/.lake/build/lib/lean; do
+    if [ -d "$d/$pkg" ] || [ -f "$d/$pkg.olean" ]; then foreign="a package of the workspace"; fi
+  done
+  if [ -n "$foreign" ]; then
+    echo "fc: --with cannot replace $mod: $pkg belongs to $foreign (for $path)"; exit 2
+  fi
+  with_files+=("$abs"); with_shown+=("$path"); with_mods+=("$mod")
+done
+
+# Two texts of one module must not meet: an installed module that FILE or a prerequisite imports
+# and that reaches, through installed modules, a module that --with replaces, was compiled
+# against the installed text. The sources below $ROOT say who imports whom.
+if [ ${#with_mods[@]} -gt 0 ]; then
+  start=""
+  for src in "$f" "${with_files[@]}"; do
+    for d in $(imports_of "$src"); do
+      case " ${with_mods[*]} " in *" $d "*) ;; *) start="$start $d" ;; esac
+    done
+  done
+  mixed="$(awk -v root="$ROOT" -v overlay="${with_mods[*]}" -v start="$start" '
+    function imports(m, arr,    file, line, n) {
+      file = m; gsub(/\./, "/", file); file = root "/" file ".lean"; n = 0
+      while ((getline line < file) > 0)
+        if (line ~ /^(public |private |meta )*import /) {
+          sub(/^(public |private |meta )*import +(all +)?/, "", line); sub(/[ \t].*$/, "", line)
+          arr[++n] = line
+        }
+      close(file); return n
+    }
+    BEGIN {
+      split(overlay, o, " "); for (i in o) over[o[i]] = 1
+      n = split(start, queue, " ")
+      for (i = 1; i <= n; i++) seen[queue[i]] = 1
+      for (head = 1; head <= n; head++) {
+        m = queue[head]; k = imports(m, imp)
+        for (j = 1; j <= k; j++) {
+          d = imp[j]
+          if (d in over) { print m " " d; exit 0 }
+          if (!(d in seen)) { seen[d] = 1; queue[++n] = d }
+        }
+      }
+    }')"
+  if [ -n "$mixed" ]; then
+    echo "MIXED [$shown]: the installed ${mixed% *} imports ${mixed#* }, which --with replaces;" \
+      "its .olean was compiled against the installed text. Give it with --with too (after" \
+      "${mixed#* }), or check after the gate has installed the prerequisite."
+    exit 6
+  fi
+fi
+
 # The memory rule of the project: the last line of `memory_pressure` gives the free percentage.
 free_percent() { memory_pressure 2>/dev/null | tail -n 1 | grep -o '[0-9]*%' | tr -d '%'; }
+hash_of() { if command -v shasum > /dev/null 2>&1; then shasum -a 256; else sha256sum; fi | cut -c1-32; }
 
 tmpdir=""
 slot=""
+part=""
 cleanup() {
   [ -n "$tmpdir" ] && rm -rf "$tmpdir"
+  [ -n "$part" ] && rm -rf "$part"
   [ -n "$slot" ] && rmdir "$slot" 2>/dev/null
   return 0
 }
 trap cleanup EXIT
 target="$f"
-if [ "$axioms" = 1 ]; then
-  # A copy with the axiom check appended; the line numbers of FILE stay as they are.
+if [ "$axioms" = 1 ] || [ ${#with_mods[@]} -gt 0 ]; then
   mkdir -p "$STATE/tmp"
   tmpdir="$(mktemp -d "$STATE/tmp/fc.XXXXXX")"
+fi
+if [ "$axioms" = 1 ]; then
+  # A copy with the axiom check appended; the line numbers of FILE stay as they are.
   target="$tmpdir/$(basename "$f")"
   { cat "$f"; echo; cat "$ROOT/scripts/axiom_check.lean"; } > "$target"
 fi
@@ -87,7 +217,9 @@ while true; do
   sleep 3
 done
 
-if [ "$min_free" -gt 0 ]; then
+# Before every Lean process: stop if too little memory is free.
+memory_test() {
+  [ "$min_free" -gt 0 ] || return 0
   free="$(free_percent)"
   if [ -z "$free" ]; then
     echo "NOT STARTED [$shown]: memory_pressure gives no free percentage (--min-free=0 to skip)"
@@ -97,22 +229,136 @@ if [ "$min_free" -gt 0 ]; then
     echo "NOT STARTED [$shown]: $free % of the memory free, $min_free % needed"
     exit 3
   fi
+}
+
+# The view of the prerequisites: links to the installed library, real folders only along the
+# paths of the prerequisites, their compiled files in place of the installed ones. It lies in the
+# temporary folder of this call, so it is as new as the library; removing it removes links only.
+view=""
+view_owned=" " # the modules that the view replaces, as paths
+view_open() { # $1: a folder of modules relative to the view, e.g. LeanDLRA/Integrators
+  local rel="$1" parent e
+  if [ -d "$view/$rel" ] && [ ! -L "$view/$rel" ]; then return 0; fi
+  parent="$(dirname "$rel")"
+  [ "$parent" = "." ] || view_open "$parent"
+  rm -f "$view/$rel"
+  mkdir "$view/$rel"
+  if [ -d "$LIB/$rel" ]; then
+    for e in "$LIB/$rel"/*; do
+      [ -e "$e" ] && ln -s "$e" "$view/$rel/$(basename "$e")"
+    done
+  fi
+  if [ "$parent" = "." ]; then
+    # The root module of the package (`LeanDLRA.olean` next to `LeanDLRA/`), unless replaced.
+    case "$view_owned" in
+      *" $rel "*) ;;
+      *) for e in "$LIB/$rel".*; do [ -e "$e" ] && ln -s "$e" "$view/$(basename "$e")"; done ;;
+    esac
+  fi
+  return 0
+}
+view_add() { # $1: a module as a path, $2: the folder with its compiled files
+  local rel="$1" from dir e
+  from="$(cd "$2" && pwd)"
+  if [ -z "$view" ]; then view="$(cd "$tmpdir" && pwd)/view"; mkdir "$view"; fi
+  dir="$(dirname "$rel")"
+  if [ "$dir" != "." ]; then
+    view_open "$dir"
+  elif [ -d "$LIB/$rel" ] && [ ! -e "$view/$rel" ]; then
+    ln -s "$LIB/$rel" "$view/$rel" # the root module of a package: its other modules stay
+  fi
+  # No installed file of the module stays, whatever its kind; a folder of submodules does.
+  for e in "$view/$rel".*; do [ -L "$e" ] && rm -f "$e"; done
+  view_owned="$view_owned$rel "
+  for e in "$from/$rel".*; do
+    [ -e "$e" ] && ln -s "$e" "$view/$dir/$(basename "$e")"
+  done
+  return 0
+}
+
+# One Lean process: `lean_run SHOWN FILE [ARGS…]` sets $out, $code and $took and prints the
+# messages under the name SHOWN. With prerequisites the view comes first on the search path.
+lean_run() {
+  local shown_as="$1" file="$2" begin
+  shift 2
+  memory_test
+  begin=$(date +%s)
+  if [ -z "$view" ]; then
+    out=$(cd "$ROOT" && LEAN_IMPORT_WORKERS=2 nice -n 15 lake env lean -j2 ${options[@]+"${options[@]}"} "$@" "$file" 2>&1)
+  else
+    out=$(cd "$ROOT" && FC_OVERLAY="$view" LEAN_IMPORT_WORKERS=2 nice -n 15 lake env \
+      sh -c 'LEAN_PATH="$FC_OVERLAY:$LEAN_PATH" exec lean "$@"' fc \
+      -j2 ${options[@]+"${options[@]}"} "$@" "$file" 2>&1)
+  fi
+  code=$?
+  took="$(($(date +%s) - begin)) s"
+  if [ -n "$out" ]; then
+    echo "$out" | awk -v tmp="$file" -v orig="$shown_as" '
+      index($0, tmp ":") == 1 { print orig substr($0, length(tmp) + 1); next } { print }'
+  fi
+  if echo "$out" | grep -qE 'object file .* does not exist|unknown module prefix|unknown package'; then
+    echo "NO OLEAN [$shown_as] ($took): an import is not installed; nothing was built." \
+      "During a gate round: tail -n 3 wip/gate.log, then try again later."
+    exit 4
+  fi
+}
+
+# The prerequisites, in the given order. The key of a compiled prerequisite: toolchain, packages,
+# options, module, text, and for every import the key of an earlier prerequisite or the installed
+# `.olean` of the library with its Lake trace (packages change only with lake-manifest.json).
+if [ ${#with_mods[@]} -gt 0 ]; then
+  mkdir -p "$STATE/overlay"
+  find "$STATE/overlay" -mindepth 1 -maxdepth 1 -mmin +1440 -exec rm -rf {} + 2>/dev/null
+  with_keys=()
+  i=0
+  while [ $i -lt ${#with_mods[@]} ]; do
+    mod="${with_mods[$i]}"; src="${with_files[$i]}"; name="${with_shown[$i]}"
+    rel="$(printf '%s' "$mod" | tr . /)"
+    key="$({
+      cat "$ROOT/lean-toolchain" "$ROOT/lake-manifest.json" 2>/dev/null
+      printf '%s\n' ${options[@]+"${options[@]}"} "$mod"
+      cat "$src"
+      for d in $(imports_of "$src"); do
+        j=0; found=""
+        while [ $j -lt $i ]; do
+          [ "${with_mods[$j]}" = "$d" ] && found="${with_keys[$j]}"
+          j=$((j + 1))
+        done
+        dfile="$LIB/$(printf '%s' "$d" | tr . /)"
+        if [ -n "$found" ]; then echo "$d $found"
+        elif [ -f "$dfile.olean" ]; then
+          # The trace of Lake changes with everything below the import.
+          echo "$d $(hash_of < "$dfile.olean") $(cat "$dfile.trace" 2>/dev/null | hash_of)"
+        fi
+      done
+    } | hash_of)"
+    with_keys+=("$key")
+    if [ -f "$STATE/overlay/$key/$rel.olean" ]; then
+      touch "$STATE/overlay/$key"
+      echo "PREREQUISITE [$name] as $mod: compiled before, used again"
+    else
+      part="$STATE/overlay/$key.part$$"
+      rm -rf "$part"
+      mkdir -p "$(dirname "$part/$rel")" "$(dirname "$tmpdir/src/$rel")"
+      cp "$src" "$tmpdir/src/$rel.lean"
+      lean_run "$name" "$tmpdir/src/$rel.lean" "--root=$tmpdir/src" -o "$part/$rel.olean"
+      if [ "$code" != 0 ] || echo "$out" | grep -qE '(^|: )error[:(]' || [ ! -f "$part/$rel.olean" ]; then
+        echo "PREREQUISITE FAILED [$name] as $mod ($took); $shown was not checked"
+        exit 5
+      fi
+      rm -rf "$STATE/overlay/$key"
+      mv "$part" "$STATE/overlay/$key"
+      part=""
+      note=""
+      echo "$out" | grep -qE '(^|: )warning[:(]|declaration uses' && note=", with warnings"
+      echo "PREREQUISITE [$name] as $mod ($took$note)"
+    fi
+    view_add "$rel" "$STATE/overlay/$key"
+    i=$((i + 1))
+  done
 fi
 
-start=$(date +%s)
-out=$(cd "$ROOT" && LEAN_IMPORT_WORKERS=2 nice -n 15 lake env lean -j2 ${options[@]+"${options[@]}"} "$target" 2>&1)
-code=$?
-end=$(date +%s)
-if [ -n "$out" ]; then
-  echo "$out" | awk -v tmp="$target" -v orig="$shown" '
-    index($0, tmp ":") == 1 { print orig substr($0, length(tmp) + 1); next } { print }'
-fi
-took="$((end - start)) s"
-if echo "$out" | grep -qE 'object file .* does not exist|unknown module prefix|unknown package'; then
-  echo "NO OLEAN [$shown] ($took): an import is not installed; nothing was built." \
-    "During a gate round: tail -n 3 wip/gate.log, then try again later."
-  exit 4
-fi
+lean_run "$shown" "$target"
 # Lean exits with 1 on any error; the test of the text is a second line of defence. It looks for
 # the message head (`FILE:L:C: error:`), not for the bare word, which a file name may contain.
 if [ "$code" = 0 ] && ! echo "$out" | grep -qE '(^|: )error[:(]|AXIOM-CHECK FAIL'; then
