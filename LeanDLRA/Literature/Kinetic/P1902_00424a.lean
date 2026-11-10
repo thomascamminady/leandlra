@@ -1149,25 +1149,17 @@ theorem unexcited_modes_vanish {ι : Type*} {μ : Measure (Fin 3 → ℝ)}
   rw [hE0 i hk]
   simp [hf0 i hi]
 
-/-- `u` has rank at most `r` in the sense of (10) of arXiv 1902.00424: it is a sum of `r` products
-of a function of the first variable and a function of the second. -/
-def HasSepRankLE {X Y : Type*} (u : X → Y → ℂ) (r : ℕ) : Prop :=
-  ∃ (a : Fin r → X → ℂ) (b : Fin r → Y → ℂ), ∀ x y, u x y = ∑ i, a i x * b i y
+/-! `u` has rank at most `r` in the sense of (10) of arXiv 1902.00424 if it is a sum of `r` products
+of a function of the first variable and a function of the second. This is the core
+`HasSepRankLE ℂ u r`. -/
 
 /-- Auxiliary for arXiv 1902.00424, Sec. 3.  Separation rank bounds the rank of every matrix of
-samples: the discretized `f` on any grid. -/
+samples: the discretized `f` on any grid.  This is the core lemma `LeanDLRA.HasSepRankLE.rank_le`
+over `ℂ`. -/
 theorem HasSepRankLE.rank_le {X Y p q : Type*} [Finite p] [Fintype q] {u : X → Y → ℂ} {r : ℕ}
-    (h : HasSepRankLE u r) (xs : p → X) (ys : q → Y) :
-    (Matrix.of fun i j => u (xs i) (ys j)).rank ≤ r := by
-  classical
-  have := Fintype.ofFinite p
-  obtain ⟨a, b, hu⟩ := h
-  have h1 : (Matrix.of fun i j => u (xs i) (ys j)) =
-      (Matrix.of fun i l => a l (xs i)) * (Matrix.of fun l j => b l (ys j)) := by
-    ext i j
-    simp [Matrix.mul_apply, hu]
-  rw [h1]
-  exact (Matrix.rank_mul_le_left _ _).trans ((Matrix.rank_le_card_width _).trans (by simp))
+    (h : HasSepRankLE ℂ u r) (xs : p → X) (ys : q → Y) :
+    (Matrix.of fun i j => u (xs i) (ys j)).rank ≤ r :=
+  LeanDLRA.HasSepRankLE.rank_le h xs ys
 
 /-- The plane wave `e^{i k · x}`. -/
 noncomputable def planeWave (k x : Fin 3 → ℝ) : ℂ := Complex.exp (I * ((k ⬝ᵥ x : ℝ) : ℂ))
@@ -1177,7 +1169,7 @@ the second variable, has separation rank at most the number of terms. -/
 private theorem hasSepRankLE_of_sum {ι X Y : Type*} [DecidableEq ι] {S : Finset ι} {i₀ : ι}
     (hi₀ : i₀ ∈ S) (e : ι → X → ℂ) (he : ∀ x, e i₀ x = 1) (c : ι → Y → ℂ) (f0 : Y → ℂ)
     {u : X → Y → ℂ} (hu : ∀ x y, u x y = f0 y + ∑ i ∈ S, c i y * e i x) :
-    HasSepRankLE u S.card := by
+    HasSepRankLE ℂ u S.card := by
   let σ := S.equivFin
   refine ⟨fun l x => e (σ.symm l) x,
     fun l y => (if (σ.symm l : ι) = i₀ then f0 y else 0) + c (σ.symm l) y, fun x y => ?_⟩
@@ -1211,7 +1203,7 @@ theorem linear_regime_rank {ι : Type*} {μ : Measure (Fin 3 → ℝ)}
     (hF : ∀ t x v, HasSum (fun i => f i t v * planeWave (κ i) x) (F t x v)) :
     ∀ t ∈ Icc (0 : ℝ) T,
       (∀ x v, F t x v = ∑ i ∈ S, f i t v * planeWave (κ i) x) ∧
-        HasSepRankLE (fun x v => f0 v + F t x v) S.card := by
+        HasSepRankLE ℂ (fun x v => f0 v + F t x v) S.card := by
   classical
   intro t ht
   have hvan := unexcited_modes_vanish hsol hμ hS hf0 hB0 hE0
@@ -2866,7 +2858,7 @@ theorem spectral_linear_regime_rank {μ : Measure (Fin 3 → ℝ)} {g : (Fin 3 �
     ∀ t ∈ Icc (0 : ℝ) T,
       (∀ x v, (f t x v : ℂ) =
         ∑ k ∈ S, gridCoeff k (fun y => f t y v) * ZMod.stdAddChar (k * x)) ∧
-      HasSepRankLE (fun x v => f0 v + (f t x v : ℂ)) S.card := by
+      HasSepRankLE ℂ (fun x v => f0 v + (f t x v : ℂ)) S.card := by
   classical
   intro t ht
   have hzero : ∀ k, waveVec κ k = 0 → k = 0 := fun k h1 => by
@@ -2927,20 +2919,18 @@ theorem exists_isSpectralSolution {κ : ZMod N → ℝ} (hκ : ∀ k, κ (-k) = 
 
 end SpectralLinear
 
-/-! ### The separation rank in the core vocabulary -/
+/-! ### The separation rank over `ℂ` at nonzero data -/
 
 section KineticCore
 
-/-- **The separation rank through the core**: `HasSepRankLE u r` of this file is the core
-`LeanDLRA.HasSepRankLE` over the ring `ℂ`. -/
-theorem hasSepRankLE_iff_core {X Y : Type*} (u : X → Y → ℂ) (r : ℕ) :
-    HasSepRankLE u r ↔ LeanDLRA.HasSepRankLE ℂ u r := Iff.rfl
-
-/-- The bridge at nonzero data: `x y + 1` has separation rank at most `2` over `ℂ`. -/
-example : HasSepRankLE (fun x y : ℂ => x * y + 1) 2 :=
-  (hasSepRankLE_iff_core _ 2).2
-    (LeanDLRA.HasSepRankLE.of_sum ![fun x => x, fun _ => 1] ![fun y => y, fun _ => 1]
-      (fun x y => by simp [Fin.sum_univ_two]) (by simp))
+/-- `x y + 1` has separation rank at most `2` over `ℂ`, so by `HasSepRankLE.rank_le` of this file
+its samples on a `4 × 5` grid form a matrix of rank at most `2`. -/
+example (xs : Fin 4 → ℂ) (ys : Fin 5 → ℂ) :
+    (Matrix.of fun i j => xs i * ys j + 1).rank ≤ 2 := by
+  have h : HasSepRankLE ℂ (fun x y : ℂ => x * y + 1) 2 :=
+    LeanDLRA.HasSepRankLE.of_sum ![fun x => x, fun _ => 1] ![fun y => y, fun _ => 1]
+      (fun x y => by simp [Fin.sum_univ_two]) (by simp)
+  exact HasSepRankLE.rank_le h xs ys
 
 end KineticCore
 

@@ -420,17 +420,15 @@ theorem integral_smul_maxwellian {d : ℕ} (ρ : ℝ) (u : Vel d) :
   congr 1
   field_simp
 
-/-! #### Separation rank -/
+/-! #### Separation rank
 
-/-- `f (x, v)` has separation rank at most `r`:
-`f (x, v) = ∑_{k < r} a_k (x) b_k (v)` (the sense of "low rank" in Eq. (12) of arXiv 1804.04561). -/
-def HasSepRankLE {X Y : Type*} (f : X → Y → ℝ) (r : ℕ) : Prop :=
-  ∃ (a : Fin r → X → ℝ) (b : Fin r → Y → ℝ), ∀ x y, f x y = ∑ k, a k x * b k y
+`f (x, v)` has separation rank at most `r` if `f (x, v) = ∑_{k < r} a_k (x) b_k (v)`: the sense
+of "low rank" in Eq. (12) of arXiv 1804.04561. This is the core `HasSepRankLE ℝ f r`. -/
 
 /-- If all slices `f x` lie in the span of `r` functions, the separation rank is at most `r`
 (arXiv 1804.04561, Eq. (8), the rank). -/
 theorem HasSepRankLE.of_mem_span {X Y ι : Type*} [Fintype ι] {f : X → Y → ℝ} (b : ι → Y → ℝ)
-    (h : ∀ x, f x ∈ Submodule.span ℝ (Set.range b)) : HasSepRankLE f (Fintype.card ι) := by
+    (h : ∀ x, f x ∈ Submodule.span ℝ (Set.range b)) : HasSepRankLE ℝ f (Fintype.card ι) := by
   classical
   choose c hc using fun x => (Submodule.mem_span_range_iff_exists_fun ℝ).1 (h x)
   let e := Fintype.equivFin ι
@@ -443,7 +441,7 @@ theorem HasSepRankLE.of_mem_span {X Y ι : Type*} [Fintype ι] {f : X → Y → 
 /-- Linearly independent functions in the span of the slices bound the separation rank from
 below (arXiv 1804.04561, Eq. (8), the rank). -/
 theorem HasSepRankLE.card_le {X Y ι : Type*} [Fintype ι] {f : X → Y → ℝ} {r : ℕ}
-    (hf : HasSepRankLE f r) {g : ι → Y → ℝ} (hg : LinearIndependent ℝ g)
+    (hf : HasSepRankLE ℝ f r) {g : ι → Y → ℝ} (hg : LinearIndependent ℝ g)
     (hs : ∀ i, g i ∈ Submodule.span ℝ (Set.range f)) : Fintype.card ι ≤ r := by
   obtain ⟨a, b, hab⟩ := hf
   let W := Submodule.span ℝ (Set.range b)
@@ -586,7 +584,7 @@ private lemma inner_eq_sum {d : ℕ} (v u : Vel d) : ⟪v, u⟫ = ∑ i, u i * v
 arbitrary `ρ (x)`, `u (x)` on an arbitrary set `X`, the truncated Maxwellian has separation rank at
 most `(d + 1) (d + 2) / 2 = C(d + 2, 2)`, the dimension of `span {e^{-v²/2} v^α : |α| ≤ 2}`. -/
 theorem eq8_rank_le {d : ℕ} {X : Type*} (ρ : X → ℝ) (u : X → Vel d) :
-    HasSepRankLE (fun x v => maxwellianTrunc (ρ x) (u x) v) (Nat.choose (d + 2) 2) := by
+    HasSepRankLE ℝ (fun x v => maxwellianTrunc (ρ x) (u x) v) (Nat.choose (d + 2) 2) := by
   classical
   have hcard : Fintype.card (Sym2 (Option (Fin d))) = Nat.choose (d + 2) 2 := by
     rw [Sym2.card, Fintype.card_option, Fintype.card_fin]
@@ -626,12 +624,12 @@ theorem eq8_rank_le {d : ℕ} {X : Type*} (ρ : X → ℝ) (u : X → Vel d) :
 
 /-- **Eq. (8), rank 6 in two dimensions** (arXiv 1804.04561). -/
 theorem eq8_rank_le_two {X : Type*} (ρ : X → ℝ) (u : X → Vel 2) :
-    HasSepRankLE (fun x v => maxwellianTrunc (ρ x) (u x) v) 6 :=
+    HasSepRankLE ℝ (fun x v => maxwellianTrunc (ρ x) (u x) v) 6 :=
   eq8_rank_le ρ u
 
 /-- **Eq. (8), rank 10 in three dimensions** (arXiv 1804.04561). -/
 theorem eq8_rank_le_three {X : Type*} (ρ : X → ℝ) (u : X → Vel 3) :
-    HasSepRankLE (fun x v => maxwellianTrunc (ρ x) (u x) v) 10 :=
+    HasSepRankLE ℝ (fun x v => maxwellianTrunc (ρ x) (u x) v) 10 :=
   eq8_rank_le ρ u
 
 private lemma inner_smul_single {d : ℕ} (v : Vel d) (t : ℝ) (i : Fin d) :
@@ -757,25 +755,27 @@ private lemma quadMon_mem_span {d : ℕ} {ρ₀ δ : ℝ} (hρ : ρ₀ ≠ 0) (h
 prove this): already for constant `ρ₀ ≠ 0` and `u (x) = x` on an arbitrarily small ball, the
 separation rank of the truncated Maxwellian is not smaller than `C(d + 2, 2)`. -/
 theorem eq8_rank_sharp {d : ℕ} {ρ₀ δ : ℝ} (hρ : ρ₀ ≠ 0) (hδ : 0 < δ) {r : ℕ}
-    (h : HasSepRankLE
+    (h : HasSepRankLE ℝ
       (fun (x : Metric.ball (0 : Vel d) δ) v => maxwellianTrunc ρ₀ (x : Vel d) v) r) :
     Nat.choose (d + 2) 2 ≤ r := by
   classical
   have hcard : Fintype.card (Sym2 (Option (Fin d))) = Nat.choose (d + 2) 2 := by
     rw [Sym2.card, Fintype.card_option, Fintype.card_fin]
   rw [← hcard]
-  exact h.card_le (linearIndependent_quadMon d) (quadMon_mem_span hρ hδ)
+  exact HasSepRankLE.card_le h (linearIndependent_quadMon d) (quadMon_mem_span hρ hδ)
 
 /-- The rank of the truncated Maxwellian in two dimensions is exactly `6` in general.
 (arXiv 1804.04561, Eq. (8).) -/
 theorem eq8_rank_sharp_two {ρ₀ δ : ℝ} (hρ : ρ₀ ≠ 0) (hδ : 0 < δ) :
-    ¬ HasSepRankLE (fun (x : Metric.ball (0 : Vel 2) δ) v => maxwellianTrunc ρ₀ (x : Vel 2) v) 5 :=
+    ¬ HasSepRankLE ℝ
+      (fun (x : Metric.ball (0 : Vel 2) δ) v => maxwellianTrunc ρ₀ (x : Vel 2) v) 5 :=
   fun h => absurd (eq8_rank_sharp hρ hδ h) (by decide)
 
 /-- The rank of the truncated Maxwellian in three dimensions is exactly `10` in general.
 (arXiv 1804.04561, Eq. (8).) -/
 theorem eq8_rank_sharp_three {ρ₀ δ : ℝ} (hρ : ρ₀ ≠ 0) (hδ : 0 < δ) :
-    ¬ HasSepRankLE (fun (x : Metric.ball (0 : Vel 3) δ) v => maxwellianTrunc ρ₀ (x : Vel 3) v) 9 :=
+    ¬ HasSepRankLE ℝ
+      (fun (x : Metric.ball (0 : Vel 3) δ) v => maxwellianTrunc ρ₀ (x : Vel 3) v) 9 :=
   fun h => absurd (eq8_rank_sharp hρ hδ h) (by decide)
 
 /-- **The Maxwellian is not low rank** (arXiv 1804.04561, Section 2, before Eq. (8): "this is not a
@@ -784,7 +784,8 @@ the exponential").  For `d ≥ 1`, `ρ₀ ≠ 0` and `u (x) = x` on an arbitrari
 Maxwellian has no finite separation rank: this is why the truncation (8) is needed. -/
 theorem maxwellian_not_low_rank {d : ℕ} (hd : 0 < d) {ρ₀ δ : ℝ} (hρ : ρ₀ ≠ 0) (hδ : 0 < δ)
     (r : ℕ) :
-    ¬ HasSepRankLE (fun (x : Metric.ball (0 : Vel d) δ) v => maxwellian ρ₀ (x : Vel d) v) r := by
+    ¬ HasSepRankLE ℝ
+      (fun (x : Metric.ball (0 : Vel d) δ) v => maxwellian ρ₀ (x : Vel d) v) r := by
   classical
   intro h
   set e : Vel d := EuclideanSpace.single (⟨0, hd⟩ : Fin d) (1 : ℝ) with he
@@ -844,7 +845,7 @@ theorem maxwellian_not_low_rank {d : ℕ} (hd : 0 < d) {ρ₀ δ : ℝ} (hρ : �
     have := congrFun hzero k
     simp only [hc', Pi.zero_apply] at this
     exact (mul_eq_zero.1 this).resolve_right (Real.exp_pos _).ne'
-  have hc := h.card_le hLI hmem
+  have hc := HasSepRankLE.card_le h hLI hmem
   simp at hc
 
 end Maxwellian
@@ -3057,20 +3058,13 @@ example :
   simp [Kinetic.quadMoment_apply]
   norm_num
 
-/-- **The separation rank through the core**: `HasSepRankLE f r` of this file is the core
-`LeanDLRA.HasSepRankLE` over the ring `ℝ`. -/
-theorem hasSepRankLE_iff_core {X Y : Type*} (f : X → Y → ℝ) (r : ℕ) :
-    HasSepRankLE f r ↔ LeanDLRA.HasSepRankLE ℝ f r := Iff.rfl
-
-/-- The bridge at nonzero data: `x y + 1` has separation rank at most `2`, and its samples on a
-`4 × 5` grid form a matrix of rank at most `2`. -/
-example (xs : Fin 4 → ℝ) (ys : Fin 5 → ℝ) :
-    HasSepRankLE (fun x y : ℝ => x * y + 1) 2 ∧
-      (Matrix.of fun i j => xs i * ys j + 1).rank ≤ 2 := by
-  have h : LeanDLRA.HasSepRankLE ℝ (fun x y : ℝ => x * y + 1) 2 :=
-    LeanDLRA.HasSepRankLE.of_sum ![fun x => x, fun _ => 1] ![fun y => y, fun _ => 1]
-      (fun x y => by simp [Fin.sum_univ_two]) (by simp)
-  exact ⟨(hasSepRankLE_iff_core _ 2).2 h, h.rank_le xs ys⟩
+/-- **Eq. (8) on a grid**: by the core lemma `HasSepRankLE.rank_le`, the samples of the truncated
+Maxwellian in two dimensions on every grid of positions and velocities form a matrix of rank at
+most `6`. -/
+example {X p q : Type*} [Finite p] [Fintype q] (ρ : X → ℝ) (u : X → Vel 2) (xs : p → X)
+    (vs : q → Vel 2) :
+    (Matrix.of fun i j => maxwellianTrunc (ρ (xs i)) (u (xs i)) (vs j)).rank ≤ 6 :=
+  (eq8_rank_le_two ρ u).rank_le xs vs
 
 end KineticCore
 

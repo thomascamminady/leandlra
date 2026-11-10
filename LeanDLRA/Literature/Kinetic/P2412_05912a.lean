@@ -89,9 +89,10 @@ second-order bound is not in the library, and it is left out here, since it is t
   is not available, with constant cross section and no source (a constant `σ` is a rescaling). The
   constants are discrete `H⁴` norms of the data, uniform in the mesh when those are.
 * "Rank" is the core separation rank `HasSepRankLE` over a semiring, Eq. (2) with `S` absorbed
-  (`hasRankLEOver_of_core`). Over `ℝ` it is `HasSepRankLE` of `P1804_04561a`, and it bounds the
-  matrix rank on every grid (`HasRankLEOver.rank_sample_le`). The two false claims stay false over
-  `ℂ` (`full_not_complex_rank_le_three`, `landauFull_not_complex_rank_le_two`).
+  (`hasRankLEOver_of_core`). `P1804_04561a` and `P1801_01103a` use it over `ℝ`, `P1902_00424a`
+  over `ℂ`, and it bounds the matrix rank on every grid (`HasRankLEOver.rank_sample_le`). The two
+  false claims stay false over `ℂ` (`full_not_complex_rank_le_three`,
+  `landauFull_not_complex_rank_le_two`).
 * Eq. (31) and the displays after it print `exp ((v - u)²/2)`; `exp (-(v - u)²/2)` is meant, as in
   Sec. 2, and the normalization `(2π)^{-d/2}` of the expansion is dropped there.
 * The Fokker–Planck operator is taken in the form `∇ᵥ · (v f + ∇ᵥ f)`, temperature one and no drift;

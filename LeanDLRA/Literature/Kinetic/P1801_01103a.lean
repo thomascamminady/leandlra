@@ -91,13 +91,12 @@ set_option linter.unusedFintypeInType false
 
 namespace LeanDLRA.Literature.P1801_01103
 
-/-! ### Eq. (1.2): free streaming has rank two -/
+/-! ### Eq. (1.2): free streaming has rank two
+
+Rank at most `r` means that `f(x, v)` is a sum of at most `r` separated terms `A_i(x) B_i(v)`: the
+core `HasSepRankLE ℝ f r`. -/
 
 section FreeStreaming
-
-/-- `f(x, v)` is a sum of at most `r` separated terms `A_i(x) B_i(v)`. -/
-def HasRankLE {α β : Type*} (f : α → β → ℝ) (r : ℕ) : Prop :=
-  ∃ (A : Fin r → α → ℝ) (B : Fin r → β → ℝ), ∀ x v, f x v = ∑ i, A i x * B i v
 
 /-- The exact solution (1.2), `f(t, x, v) = cos(k (x - v t)) e^{-v²/2}`, written as a function of
 `k, t, x, v`. -/
@@ -146,7 +145,7 @@ theorem freeStream_eq (k t x v : ℝ) :
 /-- **(1.2), rank at most two** (arXiv 1801.01103): "the linear part of the equation can be
 represented exactly with rank two", for all `k` and `t`, although the `v`-wave number `k t` grows
 without bound (filamentation). -/
-theorem freeStream_hasRankLE_two (k t : ℝ) : HasRankLE (freeStream k t) 2 := by
+theorem freeStream_hasRankLE_two (k t : ℝ) : HasSepRankLE ℝ (freeStream k t) 2 := by
   refine ⟨![fun x => Real.cos (k * x), fun x => Real.sin (k * x)],
     ![fun v => Real.cos (k * v * t) * Real.exp (-v ^ 2 / 2),
       fun v => Real.sin (k * v * t) * Real.exp (-v ^ 2 / 2)], fun x v => ?_⟩
@@ -157,7 +156,7 @@ theorem freeStream_hasRankLE_two (k t : ℝ) : HasRankLE (freeStream k t) 2 := b
 /-- **(1.2), the rank is exactly two as soon as `k t ≠ 0`** (arXiv 1801.01103): `f(t, ·, ·)` is not
 a single product `A(x) B(v)`. -/
 theorem freeStream_not_hasRankLE_one {k t : ℝ} (hk : k ≠ 0) (ht : t ≠ 0) :
-    ¬ HasRankLE (freeStream k t) 1 := by
+    ¬ HasSepRankLE ℝ (freeStream k t) 1 := by
   rintro ⟨A, B, h⟩
   simp only [Fin.sum_univ_one] at h
   have hk' : (2 * k) ≠ 0 := mul_ne_zero two_ne_zero hk
@@ -188,7 +187,7 @@ theorem freeStream_not_hasRankLE_one {k t : ℝ} (hk : k ≠ 0) (ht : t ≠ 0) :
 rank one.  So "rank exactly two" holds if and only if `k t ≠ 0`, not for all `t`: the paper only
 claims that rank two suffices. -/
 theorem freeStream_hasRankLE_one_iff (k t : ℝ) :
-    HasRankLE (freeStream k t) 1 ↔ k = 0 ∨ t = 0 := by
+    HasSepRankLE ℝ (freeStream k t) 1 ↔ k = 0 ∨ t = 0 := by
   constructor
   · intro h
     by_contra hc
@@ -2278,16 +2277,17 @@ theorem ksl_cancel_of_identity {E : Type*} [NormedAddCommGroup E] [InnerProductS
 
 end TuckerStep
 
-/-! ### The rank, the ansatz, the charge and orthonormality in the core vocabulary -/
+/-! ### The ansatz, the charge and orthonormality in the core vocabulary -/
 
 section KineticCore
 
 variable {d r : ℕ}
 
-/-- **The separation rank through the core**: `HasRankLE f k` of this file is the core
-`LeanDLRA.HasSepRankLE` over the ring `ℝ`. -/
-theorem hasRankLE_iff_hasSepRankLE {α β : Type*} (f : α → β → ℝ) (k : ℕ) :
-    HasRankLE f k ↔ HasSepRankLE ℝ f k := Iff.rfl
+/-- **(1.2) on a grid**: by the core lemma `HasSepRankLE.rank_le`, the samples of the free streaming
+solution on every grid of positions and velocities form a matrix of rank at most two. -/
+example {p q : Type*} [Finite p] [Fintype q] (k t : ℝ) (xs : p → ℝ) (vs : q → ℝ) :
+    (Matrix.of fun i j => freeStream k t (xs i) (vs j)).rank ≤ 2 :=
+  (freeStream_hasRankLE_two k t).rank_le xs vs
 
 /-- **The ansatz through the core**: the separated function `∑_j A_j(x) B_j(v)` is the core
 `Kinetic.lowRankAnsatz` with the weight `1` and the identity as coefficient matrix. -/
@@ -2297,7 +2297,7 @@ theorem lowRank_eq_lowRankAnsatz (A B : Fin r → PS d → ℝ) :
   exact (Kinetic.lowRankAnsatz_one_one A B x v).symm
 
 /-- The separated function with `r` terms has rank at most `r`. -/
-theorem hasRankLE_lowRank (A B : Fin r → PS d → ℝ) : HasRankLE (lowRank A B) r :=
+theorem hasRankLE_lowRank (A B : Fin r → PS d → ℝ) : HasSepRankLE ℝ (lowRank A B) r :=
   ⟨A, B, fun _ _ => rfl⟩
 
 /-- **The charge through the core**: the charge density is minus the core
@@ -2320,7 +2320,7 @@ example :
       HasSepRankLE ℝ (lowRank (d := 1) (fun (_ : Fin 1) _ => 2) (fun _ _ => 3)) 1 ∧
       charge (d := 1) (Measure.dirac 0) (fun _ _ => 2) 0 = -2 ∧
       IsOrthonormalL2 (Measure.dirac (0 : ℝ)) (fun (_ : Fin 1) (_ : ℝ) => (1 : ℝ)) := by
-  refine ⟨?_, (hasRankLE_iff_hasSepRankLE _ 1).1 (hasRankLE_lowRank _ _), ?_, ?_⟩
+  refine ⟨?_, hasRankLE_lowRank _ _, ?_, ?_⟩
   · rw [lowRank_eq_lowRankAnsatz, Kinetic.lowRankAnsatz_one_one]
     norm_num
   · rw [charge_eq_neg_velocityMoment, Kinetic.velocityMoment_apply]
@@ -2329,5 +2329,10 @@ example :
     exact ⟨fun _ => memLp_const 1, fun i j => by simp [Subsingleton.elim i j]⟩
 
 end KineticCore
+
+/-- The local rank predicate of this file, replaced by the core `HasSepRankLE` over `ℝ` (the same
+definition: `f(x, v)` is a sum of at most `r` separated terms `A_i(x) B_i(v)`). -/
+@[deprecated HasSepRankLE +typeChanged (since := "2026-11-10")]
+abbrev HasRankLE {α β : Type*} (f : α → β → ℝ) (r : ℕ) : Prop := HasSepRankLE ℝ f r
 
 end LeanDLRA.Literature.P1801_01103

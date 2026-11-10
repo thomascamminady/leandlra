@@ -1,5 +1,6 @@
 import LeanDLRA.Matrix.Interpolation
 import LeanDLRA.HighOrder.RungeKuttaBUG
+import LeanDLRA.LinearAlgebra.LowRank.SepRank
 
 /-!
 # Results of arXiv 2510.19518: interpolatory DLRA (DLRA-DEIM), Lemma 7, Lemma 13, Theorem 14
@@ -83,7 +84,7 @@ Runge–Kutta step `RungeKuttaBUG.IsGalerkinRKStep` and of the core ODE / Grönw
   structure of the Filippov set under QDEIM), Theorem 8 (existence for (17)), Section 5 (Tucker
   format, Lemmas 15–16, Algorithm 2) and the appendix lemmas.
 
-Core definitions used: `IsObliqueProj`, `IsOrthProj`, `filippov`, `obliqueProj`,
+Core definitions used: `IsObliqueProj`, `IsOrthProj`, `filippov`, `fixedRankSet`, `obliqueProj`,
 `obliqueTangentProj`, `ODESolution`, `IsLipschitzField`, `IsOneSidedLipschitzField`,
 `RungeKuttaBUG.IsGalerkinRKStep`, `RungeKuttaBUG.tabWeight`.  Local definitions: `IsPRKDEIMStep`
 (bridged by `isPRKDEIMStep_id_iff`; the core RK step has linear projectors applied to the whole
@@ -1002,7 +1003,8 @@ theorem lemma7_uniqueness_counterexample :
         IsUnit ((sel j)ᵀ * (e₁ * R')).det ∧
         Pob (Y t) = obliqueTangentProj (e₁ * R) (sel i) (e₁ * R') (sel j)) →
       ∀ t ∈ Icc (0 : ℝ) 2, (Y t).rank = 1 ∧ HasDerivAt Y ((t / 2) • A₀) t ∧
-        (t / 2) • A₀ ∈ filippov (fun z => Pob z (F z)) {X | X.rank = 1} (Y t) := by
+        (t / 2) • A₀ ∈
+          filippov (fun z => Pob z (F z)) (fixedRankSet (Fin 2) (Fin 2) 1) (Y t) := by
   refine ⟨continuous_F, norm_F_le, odeSolution_A₀, fun T X hX h0 => full_unique hX h0, rank_A₀,
     Y_zero, Y_two_ne, fun Pob hPob t ht => ⟨rank_Y t, hasDerivAt_Y t, ?_⟩⟩
   obtain ⟨R, R', i, j, hR, hR', hi, hj, hP⟩ := hPob t ht
