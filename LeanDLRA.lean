@@ -94,8 +94,10 @@ import LeanDLRA.Research.AugmentationRank
 import LeanDLRA.Research.DataDrivenErrorRecursion
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.SameMinibatchAugmentation
+import LeanDLRA.Research.StiffOrderReduction
 import LeanDLRA.Stability.Conservation
 import LeanDLRA.Stability.Energy
+import LeanDLRA.Stiff.CouplingLocalError
 import LeanDLRA.Stiff.DualWeightedResidual
 import LeanDLRA.Stiff.ImplicitBUG
 import LeanDLRA.Stiff.ImplicitSolvability
