@@ -335,29 +335,56 @@ def reduce(
     )
 
 
+def same_content(a: Decl, b: Decl) -> bool:
+    """Whether two reduced declarations agree in kind, type and body (the module may differ)."""
+    return (a.kind, a.type_hash, a.value_hash) == (b.kind, b.type_hash, b.value_hash)
+
+
 def compare(
     before: Iterator[dict[str, Any]],
     after: Iterator[dict[str, Any]],
     renames: dict[str, str],
 ) -> Result:
-    """Compare two dumps under a (normalized) rename map."""
+    """Compare two dumps under a (normalized) rename map.
+
+    An entry ``old → new`` of the map is applied to an old declaration ``old`` only while the
+    rename is being carried out. Once it is settled, that is, ``new`` exists in the old dump too
+    and ``old`` is the same declaration in both dumps (what an earlier rename left behind: a
+    deprecated alias, or a specialization of ``new``), ``old`` is compared under its own name.
+    Otherwise a leftover of another kind or type than its target (a ``def`` that abbreviates a
+    structure) would be reported as a changed type in every later comparison.
+    """
     rename = make_renamer(renames)
     res = Result()
     new: dict[str, list[Decl]] = defaultdict(list)
     for rec in after:
         new[rec["name"]].append(reduce(rec, rename, rec["name"], None))
         res.after_count += 1
-    old: dict[str, list[Decl]] = defaultdict(list)
+    old_names: set[str] = set()
+    read: list[tuple[str, str | None, Decl, Decl | None]] = []
     for rec in before:
         name: str = rec["name"]
         res.before_count += 1
+        old_names.add(name)
         target = renames.get(name)
         if target is not None and target not in new:
             res.unapplied.append((name, target))
             target = None
-        if target is not None:
+        own = reduce(rec, rename, name, None)
+        mapped = None if target is None else reduce(rec, rename, name, target)
+        read.append((name, target, own, mapped))
+    old: dict[str, list[Decl]] = defaultdict(list)
+    for name, target, own, mapped in read:
+        if target is None or mapped is None:
+            old[name].append(own)
+        elif target in old_names and any(
+            same_content(own, d) for d in new.get(name, [])
+        ):
+            old[name].append(own)
+            res.aliases.append((name, own.module))
+        else:
             res.renamed.append((name, target))
-        old[target or name].append(reduce(rec, rename, name, target))
+            old[target].append(mapped)
     for key, olds in old.items():
         news = new.get(key)
         if not news:

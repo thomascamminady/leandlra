@@ -4,7 +4,7 @@
 
 SHELL := /bin/bash
 PY_SCRIPTS := scripts/certificate.py scripts/fidelity.py scripts/gate.py scripts/build_site.py scripts/ledger.py scripts/corpus.py \
-              scripts/fetch_arxiv.py scripts/hashdiff.py scripts/connectivity.py scripts/core.py
+              scripts/fetch_arxiv.py scripts/hashdiff.py scripts/connectivity.py scripts/rolling.py scripts/core.py
 PYENV := .lake/check/pyenv
 # Statement dumps of `make dump`; `make hashdiff` compares the last two (scripts/hashdiff.py).
 HASHDIFF := .lake/hashdiff
@@ -64,7 +64,7 @@ lint-py: ## Ruff + ty on the Python scripts
 	uvx ruff check scripts/ tests/
 	uvx ruff format --check scripts/ tests/
 	@test -d $(PYENV) || (uv venv -q $(PYENV) && uv pip install -q --python $(PYENV) fire polars)
-	uvx ty check --python $(PYENV) $(PY_SCRIPTS)
+	uvx ty check --python $(PYENV) --extra-search-path scripts $(PY_SCRIPTS)
 
 test-py: ## Pytest for the Python scripts (tests/)
 	uv run -q --with pytest pytest -q tests

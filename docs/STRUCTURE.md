@@ -42,13 +42,19 @@ import LeanDLRA.Literature.Lit2010_05249a    -- one module, core or catalogue
 |---|---|
 | `make build` | writes the root files, checks the import rule, builds the core |
 | `make verify` | `make build` and the axiom audit of the core (`scripts/audit.sh`) |
-| `make catalogue` | builds everything with warnings as errors, audits the axioms of every constant, checks the recorded statements (`scripts/fidelity.py`) |
+| `make catalogue` | builds everything with warnings as errors, audits the axioms of every constant, checks the recorded statements (`scripts/fidelity.py`), compares all statements with the gate's record (`scripts/rolling.py`) |
 
 The gate (`scripts/gate.py`), through which every change of a Lean file reaches `main`, builds the
 changed files and the core and audits both. It does not build the catalogue. A change of a core file
 can therefore leave a catalogue module that no longer compiles; this cannot make a false statement
 pass, because a module that does not compile proves nothing. The `Catalogue` workflow reports such
 modules, and they are repaired or removed.
+
+The gate keeps a record of the statement of every declaration (`scripts/rolling.py`). In every round
+it compares the statements of the core and of the changed files with this record under the rename
+map `docs/renames.json` (`scripts/hashdiff.py`) and checks the recorded statements. A change can be
+queued with the number of statements it may change or remove; the round is rejected if it changes
+more.
 
 | Workflow | Trigger | Scope | Must be green |
 |---|---|---|---|

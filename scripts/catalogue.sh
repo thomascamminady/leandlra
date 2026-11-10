@@ -8,8 +8,15 @@
 # push (.github/workflows/catalogue.yml); run this script locally when a current build of everything
 # is needed, for example before `make dump`.
 #
+# Last comes the sweep. The gate keeps a rolling dump of all statements (scripts/rolling.py) and
+# refreshes, in a round, only the modules of that round. A core change can alter the elaborated
+# statement of a catalogue theorem that no round touched; a fresh dump of everything, compared
+# with the rolling dump, shows it. Read the report before seeding again
+# (`uv run -q scripts/rolling.py seed`): seeding absorbs whatever changed.
+#
 # It needs an idle gate and holds wip/enqueue.lock while it runs, so no group is queued meanwhile.
-# Exit status: 0 everything is fine, 1 a module or a check fails, 3 the gate is busy.
+# Exit status: 0 everything is fine, 1 a module or a check fails, 3 the gate is busy, 4 the sweep
+# found statements that differ from the rolling dump of the gate (.lake/hashdiff/sweep.md).
 set -uo pipefail
 cd "$(dirname "$0")/.."
 lock=wip/enqueue.lock
@@ -38,4 +45,15 @@ fi
 echo "catalogue: build of everything is current (${minutes} min)"
 scripts/audit.sh LeanDLRACatalogue || { echo "CATALOGUE BROKEN $sha: axiom audit"; exit 1; }
 uv run -q scripts/fidelity.py || { echo "CATALOGUE BROKEN $sha: statement check"; exit 1; }
-echo "CATALOGUE OK $sha: build, axiom audit and statement check of everything"
+rolling=.lake/hashdiff/rolling.jsonl.gz
+if [ -f "$rolling" ]; then
+  full=.lake/hashdiff/full.jsonl.gz
+  uv run -q scripts/hashdiff.py dump "$full" --lib=LeanDLRACatalogue \
+    || { echo "CATALOGUE BROKEN $sha: dump of everything"; exit 1; }
+  if ! uv run -q scripts/hashdiff.py diff "$rolling" "$full" --move \
+      --report=.lake/hashdiff/sweep.md; then
+    echo "CATALOGUE SWEEP $sha: statements differ from the rolling dump (.lake/hashdiff/sweep.md)"
+    exit 4
+  fi
+fi
+echo "CATALOGUE OK $sha: build, axiom audit, statement check and sweep of everything"

@@ -137,6 +137,70 @@ def test_alias_carried_over_from_an_earlier_rename() -> None:
     assert res.aliases == [(A, "LeanDLRA.M")]
 
 
+def test_settled_alias_of_another_kind_is_not_a_change() -> None:
+    # A structure B and a definition A that abbreviates it, the same in both dumps.
+    both = [
+        rec(B, "0 ⊢ Nat -> Prop", "inductive"),
+        rec(A, "0 ⊢ Nat -> Prop", "def", value=B),
+        rec("LeanDLRA.uses", f"0 ⊢ {A} 0"),
+    ]
+    res = run(both, list(both), {A: B})
+    assert res.failures() == 0
+    assert res.renamed == []
+    assert res.aliases == [(A, "LeanDLRA.M")]
+    assert res.unchanged == 3
+
+
+def test_settled_specialization_is_not_a_change() -> None:
+    # A is B at equal arguments: another type than B, kept from an earlier merge.
+    both = [
+        rec(B, "0 ⊢ Nat -> Nat -> Prop", "def", value="fun (x x_1 : Nat) => True"),
+        rec(A, "0 ⊢ Nat -> Prop", "def", value=f"fun (x : Nat) => {B} x x"),
+    ]
+    res = run(both, list(both), {A: B})
+    assert res.failures() == 0
+    assert res.unchanged == 2
+
+
+def test_settled_alias_that_moves_is_a_move() -> None:
+    before = [
+        rec(B, "0 ⊢ Prop", "inductive"),
+        rec(A, "0 ⊢ Prop", "def", value=B, module="LeanDLRA.Old"),
+    ]
+    after = [
+        rec(B, "0 ⊢ Prop", "inductive"),
+        rec(A, "0 ⊢ Prop", "def", value=B, module="LeanDLRA.Defs"),
+    ]
+    res = run(before, after, {A: B})
+    assert res.failures() == 0
+    assert res.moved == [(A, "LeanDLRA.Old", "LeanDLRA.Defs")]
+
+
+def test_definition_replaced_by_an_alias_of_another_kind_is_flagged() -> None:
+    # The round that merges A into the structure B is still reported (once).
+    before = [
+        rec(B, "0 ⊢ Nat -> Prop", "inductive"),
+        rec(A, "0 ⊢ Nat -> Prop", "def", value="fun (x : Nat) => True"),
+    ]
+    after = [
+        rec(B, "0 ⊢ Nat -> Prop", "inductive"),
+        rec(A, "0 ⊢ Nat -> Prop", "def", value=B),
+    ]
+    res = run(before, after, {A: B})
+    assert res.type_changed == [B]
+    assert res.renamed == [(A, B)]
+
+
+def test_settled_alias_whose_statement_changes_is_flagged() -> None:
+    before = [rec(B, "0 ⊢ Prop", "inductive"), rec(A, "0 ⊢ Prop", "def", value=B)]
+    after = [
+        rec(B, "0 ⊢ Nat -> Prop", "inductive"),
+        rec(A, "0 ⊢ Nat -> Prop", "def", value=B),
+    ]
+    res = run(before, after, {A: B})
+    assert res.type_changed == [B]
+
+
 def test_rename_target_missing_is_reported() -> None:
     before = [rec(A, "0 ⊢ True")]
     res = run(before, list(before), {A: B})
