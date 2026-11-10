@@ -2,12 +2,14 @@ import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Novel.KineticAP
 import LeanDLRA.Kinetic.Defs
+import LeanDLRA.Kinetic.Stencils
 
 /-!
 # Results of arXiv 2212.12012: Asymptotic-preserving, energy-stable DLRA (Einkemmer-Hu-Kusch)
 
 This module formalizes §3 to §5 of the paper for its actual scheme, not an abstract core: the modal
-micro-macro `P_N` discretisation on a periodic grid (`Dp`, `Dm`, `transport`, `IsFullStep`), with
+micro-macro `P_N` discretisation on a periodic grid (the core stencils `fwdDiff`, `bwdDiff`, and
+`transport`, `IsFullStep`), with
 the splitting `A^± = ½ T (M ± |M|) Tᵀ` built from the genuine Gauss-Legendre rule (`IsGaussRule`,
 which exists for every `N` by `exists_isGaussRule`), and the fully discrete fixed-rank BUG step of
 §5.2, which is `KineticAP.IsMicroMacroBUGStep` for `𝒯 = transport`, `d = D⁺ρⁿ`, with the macro
@@ -60,13 +62,19 @@ printed proof is `KineticAP.sLimit_eq_diffFlux_iff`, not repeated here.
 
 Core vocabulary: a Gauss rule gives a core quadrature `Kinetic.Quadrature` of
 `LeanDLRA/Kinetic/Defs.lean` with the halved weights `w_k / 2` (`IsGaussRule.toQuadrature`; the
-weights of a Gauss rule have sum two, `IsGaussRule.sum_weight_eq_two`).
+weights of a Gauss rule have sum two, `IsGaussRule.sum_weight_eq_two`). The periodic stencils `D⁺`,
+`D⁻` of (3.4) are the core `Kinetic.fwdDiff`, `Kinetic.bwdDiff`, and the advection operators
+`transport`, `downwind` are instances of the core `Kinetic.streaming` (`transport_eq_streaming`,
+`downwind_eq_streaming`).
 -/
 
 open Set Filter Topology Finset
 open scoped RealInnerProductSpace Matrix
 
 namespace LeanDLRA.Literature.P2212_12012
+
+open LeanDLRA.Kinetic (fwdDiff bwdDiff fwdDiff_mul_apply bwdDiff_mul_apply fwdDiff_transpose
+  bwdDiff_transpose)
 
 section Legendre
 
@@ -473,62 +481,13 @@ end Quadrature
 
 section Grid
 
-variable (Nx : ℕ) [NeZero Nx]
+/-! The stencils `(D⁺ u)_j = (u_{j+1} - u_j) / Δx` and `(D⁻ u)_j = (u_j - u_{j-1}) / Δx` of
+(3.4), periodic, are the core matrices `Kinetic.fwdDiff Nx Δx` and `Kinetic.bwdDiff Nx Δx`.
+Their action on a matrix (`fwdDiff_mul_apply`, `bwdDiff_mul_apply`) and their transposes
+(`bwdDiff_transpose`, `fwdDiff_transpose`: the periodic stencils are skew-adjoint to each
+other, Lemma 3.3 in matrix form) are core lemmas of `LeanDLRA/Kinetic/Stencils.lean`. -/
 
-/-- The stencil `(D⁺ u)_j = (u_{j+1} - u_j) / Δx` of (3.4), periodic, as a matrix. -/
-noncomputable def Dp (Δx : ℝ) : Matrix (ZMod Nx) (ZMod Nx) ℝ :=
-  Matrix.of fun i j => ((if j = i + 1 then 1 else 0) - (if j = i then 1 else 0)) / Δx
-
-/-- The stencil `(D⁻ u)_j = (u_j - u_{j-1}) / Δx` of (3.4), periodic, as a matrix. -/
-noncomputable def Dm (Δx : ℝ) : Matrix (ZMod Nx) (ZMod Nx) ℝ :=
-  Matrix.of fun i j => ((if j = i then 1 else 0) - (if j = i - 1 then 1 else 0)) / Δx
-
-variable {Nx} {n : Type*} {Δx : ℝ}
-
-theorem Dp_mul_apply (g : Matrix (ZMod Nx) n ℝ) (j : ZMod Nx) (l : n) :
-    (Dp Nx Δx * g) j l = (g (j + 1) l - g j l) / Δx := by
-  have h : ∀ b, Dp Nx Δx j b * g b l =
-      ((if b = j + 1 then g b l else 0) - (if b = j then g b l else 0)) / Δx := by
-    intro b
-    simp only [Dp, Matrix.of_apply]
-    split_ifs <;> ring
-  rw [Matrix.mul_apply, Finset.sum_congr rfl fun b _ => h b, ← Finset.sum_div,
-    Finset.sum_sub_distrib]
-  simp
-
-theorem Dm_mul_apply (g : Matrix (ZMod Nx) n ℝ) (j : ZMod Nx) (l : n) :
-    (Dm Nx Δx * g) j l = (g j l - g (j - 1) l) / Δx := by
-  have h : ∀ b, Dm Nx Δx j b * g b l =
-      ((if b = j then g b l else 0) - (if b = j - 1 then g b l else 0)) / Δx := by
-    intro b
-    simp only [Dm, Matrix.of_apply]
-    split_ifs <;> ring
-  rw [Matrix.mul_apply, Finset.sum_congr rfl fun b _ => h b, ← Finset.sum_div,
-    Finset.sum_sub_distrib]
-  simp
-
-omit [NeZero Nx] in
-/-- The periodic stencils are skew-adjoint to each other: Lemma 3.3 in matrix form. -/
-theorem Dm_transpose : (Dm Nx Δx)ᵀ = -Dp Nx Δx := by
-  ext i j
-  have h : i = j - 1 ↔ j = i + 1 := by
-    constructor
-    · rintro rfl
-      simp
-    · rintro rfl
-      simp
-  simp only [Dm, Dp, Matrix.transpose_apply, Matrix.of_apply, Matrix.neg_apply, h]
-  by_cases h2 : i = j
-  · subst h2
-    simp only [ite_true]
-    ring
-  · have h3 : ¬ j = i := fun h4 => h2 h4.symm
-    simp only [h2, h3, ite_false]
-    ring
-
-omit [NeZero Nx] in
-theorem Dp_transpose : (Dp Nx Δx)ᵀ = -Dm Nx Δx := by
-  rw [← neg_eq_iff_eq_neg, ← Matrix.transpose_neg, ← Dm_transpose, Matrix.transpose_transpose]
+variable {Nx : ℕ} [NeZero Nx] {n : Type*} {Δx : ℝ}
 
 theorem sum_add_one (f : ZMod Nx → ℝ) : ∑ j, f (j + 1) = ∑ j, f j :=
   Equiv.sum_comp (Equiv.addRight (1 : ZMod Nx)) f
@@ -537,34 +496,34 @@ theorem sum_sub_one (f : ZMod Nx → ℝ) : ∑ j, f (j - 1) = ∑ j, f j :=
   Equiv.sum_comp (Equiv.subRight (1 : ZMod Nx)) f
 
 theorem Dm_mul_apply_eq (g : Matrix (ZMod Nx) n ℝ) (j : ZMod Nx) (l : n) :
-    (Dm Nx Δx * g) j l = (Dp Nx Δx * g) (j - 1) l := by
-  rw [Dm_mul_apply, Dp_mul_apply, sub_add_cancel]
+    (bwdDiff Nx Δx * g) j l = (fwdDiff Nx Δx * g) (j - 1) l := by
+  rw [bwdDiff_mul_apply, fwdDiff_mul_apply, sub_add_cancel]
 
 variable [Fintype n]
 
-theorem norm_Dm_mul (g : Matrix (ZMod Nx) n ℝ) : ‖Dm Nx Δx * g‖ = ‖Dp Nx Δx * g‖ := by
-  have h : ‖Dm Nx Δx * g‖ ^ 2 = ‖Dp Nx Δx * g‖ ^ 2 := by
+theorem norm_Dm_mul (g : Matrix (ZMod Nx) n ℝ) : ‖bwdDiff Nx Δx * g‖ = ‖fwdDiff Nx Δx * g‖ := by
+  have h : ‖bwdDiff Nx Δx * g‖ ^ 2 = ‖fwdDiff Nx Δx * g‖ ^ 2 := by
     rw [Frobenius.norm_sq_eq_sum, Frobenius.norm_sq_eq_sum]
     simp only [Dm_mul_apply_eq]
-    exact sum_sub_one fun j => ∑ l, (Dp Nx Δx * g) j l ^ 2
+    exact sum_sub_one fun j => ∑ l, (fwdDiff Nx Δx * g) j l ^ 2
   exact (sq_eq_sq₀ (norm_nonneg _) (norm_nonneg _)).1 h
 
 omit [Fintype n] in
 /-- `D⁺ - D⁻ = Δx D⁻ D⁺`. -/
 theorem Dp_sub_Dm (hΔx : Δx ≠ 0) (g : Matrix (ZMod Nx) n ℝ) :
-    Dp Nx Δx * g - Dm Nx Δx * g = Δx • (Dm Nx Δx * (Dp Nx Δx * g)) := by
+    fwdDiff Nx Δx * g - bwdDiff Nx Δx * g = Δx • (bwdDiff Nx Δx * (fwdDiff Nx Δx * g)) := by
   ext j l
-  simp only [Matrix.sub_apply, Matrix.smul_apply, smul_eq_mul, Dp_mul_apply, Dm_mul_apply,
+  simp only [Matrix.sub_apply, Matrix.smul_apply, smul_eq_mul, fwdDiff_mul_apply, bwdDiff_mul_apply,
     sub_add_cancel]
   field_simp
 
 omit [Fintype n] in
 /-- `‖D⁺ u‖² ≤ 4 ‖u‖² / Δx²`, column by column; the last inequality of the proof of Theorem 3.2. -/
 theorem sum_Dp_sq_le (g : Matrix (ZMod Nx) n ℝ) (l : n) :
-    ∑ j, (Dp Nx Δx * g) j l ^ 2 ≤ 4 / Δx ^ 2 * ∑ j, g j l ^ 2 := by
-  have h : ∀ j, (Dp Nx Δx * g) j l ^ 2 ≤ 2 / Δx ^ 2 * (g (j + 1) l ^ 2 + g j l ^ 2) := by
+    ∑ j, (fwdDiff Nx Δx * g) j l ^ 2 ≤ 4 / Δx ^ 2 * ∑ j, g j l ^ 2 := by
+  have h : ∀ j, (fwdDiff Nx Δx * g) j l ^ 2 ≤ 2 / Δx ^ 2 * (g (j + 1) l ^ 2 + g j l ^ 2) := by
     intro j
-    rw [Dp_mul_apply, div_pow, div_mul_eq_mul_div]
+    rw [fwdDiff_mul_apply, div_pow, div_mul_eq_mul_div]
     gcongr
     nlinarith [sq_nonneg (g (j + 1) l + g j l)]
   refine (Finset.sum_le_sum fun j _ => h j).trans_eq ?_
@@ -574,12 +533,12 @@ theorem sum_Dp_sq_le (g : Matrix (ZMod Nx) n ℝ) (l : n) :
 /-- **Lemma 3.3 (summation by parts)**, arXiv 2212.12012, for `D⁺`, on a periodic grid (the "index
 shift" of the printed proof needs periodicity):
 `∑_j k_jᵀ D⁺ g_j = -∑_j (D⁻ k_j)ᵀ g_j`.  The Frobenius inner product is `∑_j k_jᵀ g_j`. -/
-theorem sbp_Dp (k g : Matrix (ZMod Nx) n ℝ) : ⟪k, Dp Nx Δx * g⟫ = -⟪Dm Nx Δx * k, g⟫ := by
-  rw [Frobenius.inner_mul_left, Dm_transpose, Matrix.neg_mul, inner_neg_right, neg_neg]
+theorem sbp_Dp (k g : Matrix (ZMod Nx) n ℝ) : ⟪k, fwdDiff Nx Δx * g⟫ = -⟪bwdDiff Nx Δx * k, g⟫ := by
+  rw [Frobenius.inner_mul_left, bwdDiff_transpose, Matrix.neg_mul, inner_neg_right, neg_neg]
 
 /-- **Lemma 3.3 (summation by parts)**, arXiv 2212.12012, for `D⁻`: see `sbp_Dp`. -/
-theorem sbp_Dm (k g : Matrix (ZMod Nx) n ℝ) : ⟪k, Dm Nx Δx * g⟫ = -⟪Dp Nx Δx * k, g⟫ := by
-  rw [Frobenius.inner_mul_left, Dp_transpose, Matrix.neg_mul, inner_neg_right, neg_neg]
+theorem sbp_Dm (k g : Matrix (ZMod Nx) n ℝ) : ⟪k, bwdDiff Nx Δx * g⟫ = -⟪fwdDiff Nx Δx * k, g⟫ := by
+  rw [Frobenius.inner_mul_left, fwdDiff_transpose, Matrix.neg_mul, inner_neg_right, neg_neg]
 
 end Grid
 
@@ -591,18 +550,18 @@ variable {N Nx : ℕ} [NeZero Nx] {μ w : Fin (N + 1) → ℝ} {Δx : ℝ}
 the `g_{j+1/2}`; see `transport_row`. -/
 noncomputable def transport (μ w : Fin (N + 1) → ℝ) (Δx : ℝ) (g : Matrix (ZMod Nx) (Fin N) ℝ) :
     Matrix (ZMod Nx) (Fin N) ℝ :=
-  Dm Nx Δx * g * plusA μ w + Dp Nx Δx * g * minusA μ w
+  bwdDiff Nx Δx * g * plusA μ w + fwdDiff Nx Δx * g * minusA μ w
 
 /-- `(A⁺ D⁺ + A⁻ D⁻) g`, which is minus the adjoint of `𝓛`.  The last display of the proof of
 Lemma 3.5 arrives at this operator, and (3.11) then misnames it `𝓛`. -/
 noncomputable def downwind (μ w : Fin (N + 1) → ℝ) (Δx : ℝ) (g : Matrix (ZMod Nx) (Fin N) ℝ) :
     Matrix (ZMod Nx) (Fin N) ℝ :=
-  Dp Nx Δx * g * plusA μ w + Dm Nx Δx * g * minusA μ w
+  fwdDiff Nx Δx * g * plusA μ w + bwdDiff Nx Δx * g * minusA μ w
 
 /-- The rows of `transport` are the formula (3.3). -/
 theorem transport_row (g : Matrix (ZMod Nx) (Fin N) ℝ) (j : ZMod Nx) :
     transport μ w Δx g j =
-      plusA μ w *ᵥ (Dm Nx Δx * g) j + minusA μ w *ᵥ (Dp Nx Δx * g) j := by
+      plusA μ w *ᵥ (bwdDiff Nx Δx * g) j + minusA μ w *ᵥ (fwdDiff Nx Δx * g) j := by
   ext l
   have hp := fun i => congrFun (congrFun (plusA_transpose μ w) i) l
   have hm := fun i => congrFun (congrFun (minusA_transpose μ w) i) l
@@ -627,7 +586,7 @@ theorem inner_transport (G δ : Matrix (ZMod Nx) (Fin N) ℝ) :
 No Gauss quadrature is needed, only the symmetry of `A` and `|A|`. -/
 theorem inner_transport_self (hΔx : Δx ≠ 0) (g : Matrix (ZMod Nx) (Fin N) ℝ) :
     ⟪g, transport μ w Δx g⟫ =
-      Δx / 2 * ⟪Dp Nx Δx * g, Dp Nx Δx * g * absA μ w⟫ := by
+      Δx / 2 * ⟪fwdDiff Nx Δx * g, fwdDiff Nx Δx * g * absA μ w⟫ := by
   have hp : plusA μ w = (1 / 2 : ℝ) • (fluxA μ w + absA μ w) := by
     rw [← plusA_add_minusA, ← plusA_sub_minusA]
     ext i j
@@ -641,15 +600,15 @@ theorem inner_transport_self (hΔx : Δx ≠ 0) (g : Matrix (ZMod Nx) (Fin N) �
   set A := fluxA μ w
   set B := absA μ w
   have hA : Aᵀ = A := fluxA_transpose μ w
-  have h1 : ⟪g, Dp Nx Δx * g * A⟫ = -⟪g, Dm Nx Δx * g * A⟫ := by
+  have h1 : ⟪g, fwdDiff Nx Δx * g * A⟫ = -⟪g, bwdDiff Nx Δx * g * A⟫ := by
     rw [inner_mul_sym hA, sbp_Dp, ← Matrix.mul_assoc, real_inner_comm]
-  have h2 : ⟪g, Dp Nx Δx * g * B⟫ - ⟪g, Dm Nx Δx * g * B⟫ =
-      -(Δx * ⟪Dp Nx Δx * g, Dp Nx Δx * g * B⟫) := by
+  have h2 : ⟪g, fwdDiff Nx Δx * g * B⟫ - ⟪g, bwdDiff Nx Δx * g * B⟫ =
+      -(Δx * ⟪fwdDiff Nx Δx * g, fwdDiff Nx Δx * g * B⟫) := by
     have h3 := Dp_sub_Dm hΔx (g * B)
-    have h4 : ⟪g, Dp Nx Δx * (g * B)⟫ - ⟪g, Dm Nx Δx * (g * B)⟫ =
-        Δx * ⟪g, Dm Nx Δx * (Dp Nx Δx * (g * B))⟫ := by
+    have h4 : ⟪g, fwdDiff Nx Δx * (g * B)⟫ - ⟪g, bwdDiff Nx Δx * (g * B)⟫ =
+        Δx * ⟪g, bwdDiff Nx Δx * (fwdDiff Nx Δx * (g * B))⟫ := by
       rw [← inner_sub_right, h3, inner_smul_right]
-    rw [sbp_Dm g (Dp Nx Δx * (g * B))] at h4
+    rw [sbp_Dm g (fwdDiff Nx Δx * (g * B))] at h4
     simp only [Matrix.mul_assoc]
     rw [h4]
     ring
@@ -673,7 +632,7 @@ The sum of squares is the `P_N` form `∑ |μ_k| (Tᵀ D⁺ g_j)_k²`. -/
 theorem inner_transport_self_nonneg (hΔx : 0 < Δx) (g : Matrix (ZMod Nx) (Fin N) ℝ) :
     0 ≤ ⟪g, transport μ w Δx g⟫ := by
   rw [inner_transport_self hΔx.ne', absA, absM, inner_mul_T_diag]
-  have : 0 ≤ ∑ j, ∑ k, |μ k| * (Dp Nx Δx * g * T μ w) j k ^ 2 :=
+  have : 0 ≤ ∑ j, ∑ k, |μ k| * (fwdDiff Nx Δx * g * T μ w) j k ^ 2 :=
     Finset.sum_nonneg fun j _ => Finset.sum_nonneg fun k _ => by positivity
   positivity
 
@@ -683,7 +642,7 @@ The paper writes `𝓛 gⁿ⁺¹` in the last term; that printed version is fals
 `lemma_3_5_printed_false`, and the printed proof does derive the operator used here. -/
 theorem inner_transport_step (hΔx : Δx ≠ 0) (G H : Matrix (ZMod Nx) (Fin N) ℝ) :
     ⟪G, transport μ w Δx H⟫ =
-      Δx / 2 * ⟪Dp Nx Δx * G, Dp Nx Δx * G * absA μ w⟫ + ⟪G - H, downwind μ w Δx G⟫ := by
+      Δx / 2 * ⟪fwdDiff Nx Δx * G, fwdDiff Nx Δx * G * absA μ w⟫ + ⟪G - H, downwind μ w Δx G⟫ := by
   have h : transport μ w Δx H = transport μ w Δx G - transport μ w Δx (G - H) := by
     simp only [transport, Matrix.mul_sub, Matrix.sub_mul]
     abel
@@ -780,31 +739,31 @@ theorem norm_mul_aVec_sq_le (Z : Matrix (ZMod Nx) (Fin N) ℝ) :
 
 /-- `‖(A⁺ D⁺ + A⁻ D⁻) G‖² ≤ 2 ∑_{j,k} μ_k² (D⁺G T)_{jk}²`. -/
 theorem norm_downwind_sq_le (G : Matrix (ZMod Nx) (Fin N) ℝ) :
-    ‖downwind μ w Δx G‖ ^ 2 ≤ 2 * ∑ j, ∑ k, μ k ^ 2 * (Dp Nx Δx * G * T μ w) j k ^ 2 := by
-  have h1 : ‖Dm Nx Δx * G * minusA μ w‖ = ‖Dp Nx Δx * G * minusA μ w‖ := by
+    ‖downwind μ w Δx G‖ ^ 2 ≤ 2 * ∑ j, ∑ k, μ k ^ 2 * (fwdDiff Nx Δx * G * T μ w) j k ^ 2 := by
+  have h1 : ‖bwdDiff Nx Δx * G * minusA μ w‖ = ‖fwdDiff Nx Δx * G * minusA μ w‖ := by
     rw [Matrix.mul_assoc, Matrix.mul_assoc, norm_Dm_mul]
-  have h2 := hG.norm_plus_minus_le (Dp Nx Δx * G)
-  have h3 := norm_add_le (Dp Nx Δx * G * plusA μ w) (Dm Nx Δx * G * minusA μ w)
+  have h2 := hG.norm_plus_minus_le (fwdDiff Nx Δx * G)
+  have h3 := norm_add_le (fwdDiff Nx Δx * G * plusA μ w) (bwdDiff Nx Δx * G * minusA μ w)
   rw [h1] at h3
   have h4 : ‖downwind μ w Δx G‖ ^ 2 ≤
-      (‖Dp Nx Δx * G * plusA μ w‖ + ‖Dp Nx Δx * G * minusA μ w‖) ^ 2 := by
+      (‖fwdDiff Nx Δx * G * plusA μ w‖ + ‖fwdDiff Nx Δx * G * minusA μ w‖) ^ 2 := by
     rw [downwind]
     gcongr
-  nlinarith [sq_nonneg (‖Dp Nx Δx * G * plusA μ w‖ - ‖Dp Nx Δx * G * minusA μ w‖)]
+  nlinarith [sq_nonneg (‖fwdDiff Nx Δx * G * plusA μ w‖ - ‖fwdDiff Nx Δx * G * minusA μ w‖)]
 
 /-- `‖(A⁺ D⁻ + A⁻ D⁺) G‖² ≤ 2 ∑_{j,k} μ_k² (D⁺G T)_{jk}²`. -/
 theorem norm_transport_sq_le (G : Matrix (ZMod Nx) (Fin N) ℝ) :
-    ‖transport μ w Δx G‖ ^ 2 ≤ 2 * ∑ j, ∑ k, μ k ^ 2 * (Dp Nx Δx * G * T μ w) j k ^ 2 := by
-  have h1 : ‖Dm Nx Δx * G * plusA μ w‖ = ‖Dp Nx Δx * G * plusA μ w‖ := by
+    ‖transport μ w Δx G‖ ^ 2 ≤ 2 * ∑ j, ∑ k, μ k ^ 2 * (fwdDiff Nx Δx * G * T μ w) j k ^ 2 := by
+  have h1 : ‖bwdDiff Nx Δx * G * plusA μ w‖ = ‖fwdDiff Nx Δx * G * plusA μ w‖ := by
     rw [Matrix.mul_assoc, Matrix.mul_assoc, norm_Dm_mul]
-  have h2 := hG.norm_plus_minus_le (Dp Nx Δx * G)
-  have h3 := norm_add_le (Dm Nx Δx * G * plusA μ w) (Dp Nx Δx * G * minusA μ w)
+  have h2 := hG.norm_plus_minus_le (fwdDiff Nx Δx * G)
+  have h3 := norm_add_le (bwdDiff Nx Δx * G * plusA μ w) (fwdDiff Nx Δx * G * minusA μ w)
   rw [h1] at h3
   have h4 : ‖transport μ w Δx G‖ ^ 2 ≤
-      (‖Dp Nx Δx * G * plusA μ w‖ + ‖Dp Nx Δx * G * minusA μ w‖) ^ 2 := by
+      (‖fwdDiff Nx Δx * G * plusA μ w‖ + ‖fwdDiff Nx Δx * G * minusA μ w‖) ^ 2 := by
     rw [transport]
     gcongr
-  nlinarith [sq_nonneg (‖Dp Nx Δx * G * plusA μ w‖ - ‖Dp Nx Δx * G * minusA μ w‖)]
+  nlinarith [sq_nonneg (‖fwdDiff Nx Δx * G * plusA μ w‖ - ‖fwdDiff Nx Δx * G * minusA μ w‖)]
 
 end IsGaussRule
 
@@ -867,11 +826,11 @@ theorem energy_core (hG : IsGaussRule N μ w) (hΔx : 0 < Δx) (hΔt : 0 < Δt) 
     (hcfl : ∀ k, Δt * ((2 + ((N : ℝ) + 1) * w k) * μ k ^ 2) ≤
       ε * Δx * |μ k| + σ₀ * Δx ^ 2 / 2)
     {ρ ρ₁ : Matrix (ZMod Nx) Unit ℝ} {G H : Matrix (ZMod Nx) (Fin N) ℝ}
-    (hmacro : ρ₁ = ρ - Δt • (Dm Nx Δx * (G * aVec N)))
+    (hmacro : ρ₁ = ρ - Δt • (bwdDiff Nx Δx * (G * aVec N)))
     (hmicro : ⟪G, (G - H) + (Δt / ε) • transport μ w Δx H +
-      (Δt / ε ^ 2) • (Dp Nx Δx * ρ * (aVec N)ᵀ + Matrix.diagonal σ * G)⟫ = 0) :
+      (Δt / ε ^ 2) • (fwdDiff Nx Δx * ρ * (aVec N)ᵀ + Matrix.diagonal σ * G)⟫ = 0) :
     ‖ρ₁‖ ^ 2 + ε ^ 2 * ‖G‖ ^ 2 ≤ ‖ρ‖ ^ 2 + ε ^ 2 * ‖H‖ ^ 2 := by
-  set u := Dm Nx Δx * (G * aVec N) with hu
+  set u := bwdDiff Nx Δx * (G * aVec N) with hu
   set δ := G - H with hδ
   set δρ := ρ₁ - ρ with hδρ
   have hδρ' : δρ = -(Δt • u) := by rw [hδρ, hmacro]; abel
@@ -882,25 +841,25 @@ theorem energy_core (hG : IsGaussRule N μ w) (hΔx : 0 < Δx) (hΔt : 0 < Δt) 
   rw [← hδ] at e2
   have e3 : ⟪ρ₁, δρ⟫ = -(Δt * ⟪ρ₁, u⟫) := by
     rw [hδρ', inner_neg_right, inner_smul_right]
-  have e4 : ⟪G, Dp Nx Δx * ρ * (aVec N)ᵀ⟫ = -⟪ρ, u⟫ := by
+  have e4 : ⟪G, fwdDiff Nx Δx * ρ * (aVec N)ᵀ⟫ = -⟪ρ, u⟫ := by
     rw [← Frobenius.inner_mul_right, hu, real_inner_comm, sbp_Dm, neg_neg]
   have e5 : ⟪δρ, u⟫ = ⟪ρ₁, u⟫ - ⟪ρ, u⟫ := by rw [hδρ, inner_sub_left]
   have e6 := inner_transport_step (μ := μ) (w := w) hΔx.ne' G H
   rw [← hδ] at e6
   have hmicro' : ε ^ 2 * ⟪G, δ⟫ + ε * Δt * ⟪G, transport μ w Δx H⟫ +
-      Δt * (⟪G, Dp Nx Δx * ρ * (aVec N)ᵀ⟫ + ⟪G, Matrix.diagonal σ * G⟫) = 0 := by
+      Δt * (⟪G, fwdDiff Nx Δx * ρ * (aVec N)ᵀ⟫ + ⟪G, Matrix.diagonal σ * G⟫) = 0 := by
     rw [inner_add_right, inner_add_right, inner_smul_right, inner_smul_right, inner_add_right]
       at hmicro
     have h := congrArg (fun x => ε ^ 2 * x) hmicro
     simp only [mul_zero] at h
     rw [← h]
     field_simp
-  set D := ⟪Dp Nx Δx * G, Dp Nx Δx * G * absA μ w⟫ with hD
+  set D := ⟪fwdDiff Nx Δx * G, fwdDiff Nx Δx * G * absA μ w⟫ with hD
   -- Young
   have y1 := young δρ u 1 Δt
   have y2 := young δ (downwind μ w Δx G) ε Δt
   -- coordinates
-  set Y := Dp Nx Δx * G * T μ w with hY
+  set Y := fwdDiff Nx Δx * G * T μ w with hY
   set Ĝ := G * T μ w with hĜ
   set P : Fin (N + 1) → ℝ := fun k => ∑ j, Y j k ^ 2 with hP
   set Q : Fin (N + 1) → ℝ := fun k => ∑ j, Ĝ j k ^ 2 with hQ
@@ -909,7 +868,7 @@ theorem energy_core (hG : IsGaussRule N μ w) (hΔx : 0 < Δx) (hΔt : 0 < Δt) 
   have hPQ : ∀ k, P k ≤ 4 / Δx ^ 2 * Q k := by
     intro k
     have h := sum_Dp_sq_le (Nx := Nx) (Δx := Δx) Ĝ k
-    have h2 : Dp Nx Δx * Ĝ = Y := by rw [hĜ, hY, Matrix.mul_assoc]
+    have h2 : fwdDiff Nx Δx * Ĝ = Y := by rw [hĜ, hY, Matrix.mul_assoc]
     rwa [h2] at h
   have hGQ : ‖G‖ ^ 2 = ∑ k, Q k := by
     rw [← hG.norm_mul_T G, Frobenius.norm_sq_eq_sum, Finset.sum_comm]
@@ -917,7 +876,7 @@ theorem energy_core (hG : IsGaussRule N μ w) (hΔx : 0 < Δx) (hΔt : 0 < Δt) 
     rw [hD, absA, absM, inner_mul_T_diag]
     exact sum_weight _ _
   have hU : ‖u‖ ^ 2 ≤ ((N : ℝ) + 1) / 2 * ∑ k, w k * μ k ^ 2 * P k := by
-    have h1 : ‖u‖ = ‖Dp Nx Δx * G * aVec N‖ := by
+    have h1 : ‖u‖ = ‖fwdDiff Nx Δx * G * aVec N‖ := by
       rw [hu, norm_Dm_mul, Matrix.mul_assoc]
     rw [h1]
     refine (hG.norm_mul_aVec_sq_le _).trans_eq ?_
@@ -1090,15 +1049,16 @@ variable {N Nx : ℕ} [NeZero Nx] {μ w : Fin (N + 1) → ℝ} {Δx Δt ε σ₀
 `D⁻ (g a)`, which is the same as `a = a₀ e₁`. -/
 structure IsFullStep (μ w : Fin (N + 1) → ℝ) (Δx Δt ε : ℝ) (σ : ZMod Nx → ℝ)
     (ρ ρ₁ : Matrix (ZMod Nx) Unit ℝ) (g g₁ : Matrix (ZMod Nx) (Fin N) ℝ) : Prop where
-  macroEq : Δt⁻¹ • (ρ₁ - ρ) + Dm Nx Δx * (g₁ * aVec N) = 0
+  macroEq : Δt⁻¹ • (ρ₁ - ρ) + bwdDiff Nx Δx * (g₁ * aVec N) = 0
   microEq : Δt⁻¹ • (g₁ - g) + ε⁻¹ • transport μ w Δx g =
-    -((ε ^ 2)⁻¹ • (Dp Nx Δx * ρ * (aVec N)ᵀ)) - (ε ^ 2)⁻¹ • (Matrix.diagonal σ * g₁)
+    -((ε ^ 2)⁻¹ • (fwdDiff Nx Δx * ρ * (aVec N)ᵀ)) - (ε ^ 2)⁻¹ • (Matrix.diagonal σ * g₁)
 
 /-- The scheme (3.5) is uniquely solvable step by step for `σ > 0`: `IsFullStep` is not vacuous. -/
 theorem exists_isFullStep (hΔt : 0 < Δt) (hε : 0 < ε) (hσ : ∀ j, 0 < σ j)
     (ρ : Matrix (ZMod Nx) Unit ℝ) (g : Matrix (ZMod Nx) (Fin N) ℝ) :
     ∃ ρ₁ g₁, IsFullStep μ w Δx Δt ε σ ρ ρ₁ g g₁ := by
-  set R := g - (Δt / ε) • transport μ w Δx g - (Δt / ε ^ 2) • (Dp Nx Δx * ρ * (aVec N)ᵀ) with hR
+  set R := g - (Δt / ε) • transport μ w Δx g -
+    (Δt / ε ^ 2) • (fwdDiff Nx Δx * ρ * (aVec N)ᵀ) with hR
   set g₁ : Matrix (ZMod Nx) (Fin N) ℝ :=
     Matrix.of fun j l => R j l / (1 + Δt / ε ^ 2 * σ j) with hg₁
   have hg : ∀ j l, g₁ j l * (1 + Δt / ε ^ 2 * σ j) = R j l := by
@@ -1106,7 +1066,7 @@ theorem exists_isFullStep (hΔt : 0 < Δt) (hε : 0 < ε) (hσ : ∀ j, 0 < σ j
     have h : 0 < 1 + Δt / ε ^ 2 * σ j := by have := hσ j; positivity
     simp only [hg₁, Matrix.of_apply]
     exact div_mul_cancel₀ _ h.ne'
-  refine ⟨ρ - Δt • (Dm Nx Δx * (g₁ * aVec N)), g₁, ?_, ?_⟩
+  refine ⟨ρ - Δt • (bwdDiff Nx Δx * (g₁ * aVec N)), g₁, ?_, ?_⟩
   · rw [sub_sub_cancel_left, smul_neg, smul_smul, inv_mul_cancel₀ hΔt.ne', one_smul,
       neg_add_cancel]
   · ext j l
@@ -1119,7 +1079,7 @@ theorem exists_isFullStep (hΔt : 0 < Δt) (hε : 0 < ε) (hσ : ∀ j, 0 < σ j
 
 private theorem IsFullStep.eq_macro (hΔt : 0 < Δt) {ρ ρ₁ : Matrix (ZMod Nx) Unit ℝ}
     {g g₁ : Matrix (ZMod Nx) (Fin N) ℝ} (h : IsFullStep μ w Δx Δt ε σ ρ ρ₁ g g₁) :
-    ρ₁ = ρ - Δt • (Dm Nx Δx * (g₁ * aVec N)) := by
+    ρ₁ = ρ - Δt • (bwdDiff Nx Δx * (g₁ * aVec N)) := by
   have h1 := congrArg (fun Z => Δt • Z) h.macroEq
   simp only [smul_add, smul_smul, mul_inv_cancel₀ hΔt.ne', one_smul, smul_zero] at h1
   ext j u
@@ -1131,7 +1091,7 @@ private theorem IsFullStep.eq_macro (hΔt : 0 < Δt) {ρ ρ₁ : Matrix (ZMod Nx
 private theorem IsFullStep.eq_micro (hΔt : 0 < Δt) (hε : 0 < ε) {ρ ρ₁ : Matrix (ZMod Nx) Unit ℝ}
     {g g₁ : Matrix (ZMod Nx) (Fin N) ℝ} (h : IsFullStep μ w Δx Δt ε σ ρ ρ₁ g g₁) :
     (g₁ - g) + (Δt / ε) • transport μ w Δx g +
-      (Δt / ε ^ 2) • (Dp Nx Δx * ρ * (aVec N)ᵀ + Matrix.diagonal σ * g₁) = 0 := by
+      (Δt / ε ^ 2) • (fwdDiff Nx Δx * ρ * (aVec N)ᵀ + Matrix.diagonal σ * g₁) = 0 := by
   ext j l
   have h1 := congrFun (congrFun h.microEq j) l
   simp only [Matrix.add_apply, Matrix.sub_apply, Matrix.smul_apply, smul_eq_mul,
@@ -1336,8 +1296,8 @@ private theorem transport_gEx {μ w : Fin (1 + 1) → ℝ} (hΔx : Δx ≠ 0) :
   ext j l
   obtain rfl : l = 0 := Subsingleton.elim _ _
   rw [transport, Matrix.add_apply, Matrix.mul_apply, Matrix.mul_apply]
-  simp only [Finset.univ_unique, Finset.sum_singleton, Fin.default_eq_zero, Dp_mul_apply,
-    Dm_mul_apply, gEx_succ, gEx_pred, Matrix.smul_apply, smul_eq_mul, h1]
+  simp only [Finset.univ_unique, Finset.sum_singleton, Fin.default_eq_zero, fwdDiff_mul_apply,
+    bwdDiff_mul_apply, gEx_succ, gEx_pred, Matrix.smul_apply, smul_eq_mul, h1]
   field_simp
   ring
 
@@ -1351,7 +1311,7 @@ identity fails for `P₁` on two cells, already for `gⁿ = 0`.  The operator in
 be `A⁺ D⁺ + A⁻ D⁻`, which is what the proof of the lemma derives: see `inner_transport_step`. -/
 theorem lemma_3_5_printed_false {μ w : Fin (1 + 1) → ℝ} (hG : IsGaussRule 1 μ w) (hΔx : 0 < Δx) :
     ∃ G H : Matrix (ZMod 2) (Fin 1) ℝ, ⟪G, transport μ w Δx H⟫ ≠
-      Δx / 2 * ⟪Dp 2 Δx * G, Dp 2 Δx * G * absA μ w⟫ + ⟪G - H, transport μ w Δx G⟫ := by
+      Δx / 2 * ⟪fwdDiff 2 Δx * G, fwdDiff 2 Δx * G * absA μ w⟫ + ⟪G - H, transport μ w Δx G⟫ := by
   refine ⟨gEx, 0, fun h => ?_⟩
   have h0 : transport μ w Δx (0 : Matrix (ZMod 2) (Fin 1) ℝ) = 0 := by simp [transport]
   rw [h0, inner_zero_right, sub_zero, ← inner_transport_self hΔx.ne', transport_gEx hΔx.ne',
@@ -1369,11 +1329,13 @@ printed statement has `A²` and is false, see `lemma_3_6_printed_false`.  Its pr
 theorem lemma_3_6 {Nx : ℕ} [NeZero Nx] (hG : IsGaussRule N μ w)
     (g : Matrix (ZMod Nx) (Fin N) ℝ) :
     ‖transport μ w Δx g‖ ^ 2 ≤
-        2 * ⟪Dp Nx Δx * g, Dp Nx Δx * g * (fluxA μ w * fluxA μ w + aVec N * (aVec N)ᵀ)⟫ ∧
+        2 * ⟪fwdDiff Nx Δx * g,
+          fwdDiff Nx Δx * g * (fluxA μ w * fluxA μ w + aVec N * (aVec N)ᵀ)⟫ ∧
       ‖downwind μ w Δx g‖ ^ 2 ≤
-        2 * ⟪Dp Nx Δx * g, Dp Nx Δx * g * (fluxA μ w * fluxA μ w + aVec N * (aVec N)ᵀ)⟫ := by
-  have h : ⟪Dp Nx Δx * g, Dp Nx Δx * g * (fluxA μ w * fluxA μ w + aVec N * (aVec N)ᵀ)⟫ =
-      ∑ j, ∑ k, μ k ^ 2 * (Dp Nx Δx * g * T μ w) j k ^ 2 := by
+        2 * ⟪fwdDiff Nx Δx * g,
+          fwdDiff Nx Δx * g * (fluxA μ w * fluxA μ w + aVec N * (aVec N)ᵀ)⟫ := by
+  have h : ⟪fwdDiff Nx Δx * g, fwdDiff Nx Δx * g * (fluxA μ w * fluxA μ w + aVec N * (aVec N)ᵀ)⟫ =
+      ∑ j, ∑ k, μ k ^ 2 * (fwdDiff Nx Δx * g * T μ w) j k ^ 2 := by
     rw [← hG.T_sq_T, nodeM, Matrix.diagonal_mul_diagonal, ← inner_mul_T_diag]
     simp only [sq]
   rw [h]
@@ -1384,7 +1346,7 @@ vanishes, `A = 0`, so the printed bound `∑_j |𝓛 g_j|² ≤ 2 ∑_j (D⁺g_j
 `𝓛 = 0`, but `𝓛 = |A| (D⁻ - D⁺) / 2` does not vanish.  See `lemma_3_6` for the correct bound. -/
 theorem lemma_3_6_printed_false {μ w : Fin (1 + 1) → ℝ} (hG : IsGaussRule 1 μ w) (hΔx : 0 < Δx) :
     ∃ g : Matrix (ZMod 2) (Fin 1) ℝ, ¬ ‖transport μ w Δx g‖ ^ 2 ≤
-      2 * ⟪Dp 2 Δx * g, Dp 2 Δx * g * (fluxA μ w * fluxA μ w)⟫ := by
+      2 * ⟪fwdDiff 2 Δx * g, fwdDiff 2 Δx * g * (fluxA μ w * fluxA μ w)⟫ := by
   have hA : fluxA μ w = 0 := by
     ext i j
     rw [hG.fluxA_apply]
@@ -1413,7 +1375,8 @@ variable {N Nx : ℕ} [NeZero Nx] {μ w : Fin (N + 1) → ℝ} {Δx Δt ε σ₀
 theorem transport_kStep (X : Matrix (ZMod Nx) r ℝ) (S : Matrix r r ℝ)
     (V : Matrix (Fin N) r ℝ) :
     transport μ w Δx (X * S * Vᵀ) * V =
-      Dm Nx Δx * (X * S) * (Vᵀ * plusA μ w * V) + Dp Nx Δx * (X * S) * (Vᵀ * minusA μ w * V) := by
+      bwdDiff Nx Δx * (X * S) * (Vᵀ * plusA μ w * V) +
+        fwdDiff Nx Δx * (X * S) * (Vᵀ * minusA μ w * V) := by
   simp only [transport, Matrix.add_mul, Matrix.mul_assoc]
 
 /-- The transport term of the library's `L`-step, for `𝒯 = transport`, is the operator
@@ -1421,8 +1384,8 @@ theorem transport_kStep (X : Matrix (ZMod Nx) r ℝ) (S : Matrix r r ℝ)
 theorem transport_lStep (X : Matrix (ZMod Nx) r ℝ) (S : Matrix r r ℝ)
     (V : Matrix (Fin N) r ℝ) :
     (transport μ w Δx (X * S * Vᵀ))ᵀ * X =
-      plusA μ w * (V * Sᵀ) * ((Dm Nx Δx * X)ᵀ * X) +
-        minusA μ w * (V * Sᵀ) * ((Dp Nx Δx * X)ᵀ * X) := by
+      plusA μ w * (V * Sᵀ) * ((bwdDiff Nx Δx * X)ᵀ * X) +
+        minusA μ w * (V * Sᵀ) * ((fwdDiff Nx Δx * X)ᵀ * X) := by
   simp only [transport, Matrix.transpose_add, Matrix.transpose_mul, Matrix.transpose_transpose,
     plusA_transpose, minusA_transpose, Matrix.add_mul, Matrix.mul_assoc]
 
@@ -1431,8 +1394,8 @@ theorem transport_lStep (X : Matrix (ZMod Nx) r ℝ) (S : Matrix r r ℝ)
 theorem transport_sStep (X₁ : Matrix (ZMod Nx) p ℝ) (S : Matrix p q ℝ)
     (V₁ : Matrix (Fin N) q ℝ) :
     X₁ᵀ * transport μ w Δx (X₁ * S * V₁ᵀ) * V₁ =
-      (X₁ᵀ * (Dm Nx Δx * X₁)) * S * (V₁ᵀ * plusA μ w * V₁) +
-        (X₁ᵀ * (Dp Nx Δx * X₁)) * S * (V₁ᵀ * minusA μ w * V₁) := by
+      (X₁ᵀ * (bwdDiff Nx Δx * X₁)) * S * (V₁ᵀ * plusA μ w * V₁) +
+        (X₁ᵀ * (fwdDiff Nx Δx * X₁)) * S * (V₁ᵀ * minusA μ w * V₁) := by
   simp only [transport, Matrix.add_mul, Matrix.mul_add, Matrix.mul_assoc]
 
 private theorem inner_core (S : Matrix p q ℝ) (X₁ : Matrix (ZMod Nx) p ℝ)
@@ -1458,9 +1421,9 @@ theorem energy_stable_dlra_of_cfl (hG : IsGaussRule N μ w) (hΔx : 0 < Δx) (h�
     {ρ ρ₁ : Matrix (ZMod Nx) Unit ℝ} {X : Matrix (ZMod Nx) r ℝ} {S : Matrix r r ℝ}
     {V : Matrix (Fin N) r ℝ} {K₁ : Matrix (ZMod Nx) r ℝ} {L₁ : Matrix (Fin N) r ℝ}
     {X₁ : Matrix (ZMod Nx) p ℝ} {V₁ : Matrix (Fin N) q ℝ} {S₁ : Matrix p q ℝ}
-    (h : IsMicroMacroBUGStep σ (transport μ w Δx) (Dp Nx Δx * ρ) (aVec N) Δt ε
+    (h : IsMicroMacroBUGStep σ (transport μ w Δx) (fwdDiff Nx Δx * ρ) (aVec N) Δt ε
       X S V K₁ L₁ X₁ V₁ S₁)
-    (hρ : Δt⁻¹ • (ρ₁ - ρ) + Dm Nx Δx * (X₁ * S₁ * V₁ᵀ * aVec N) = 0) :
+    (hρ : Δt⁻¹ • (ρ₁ - ρ) + bwdDiff Nx Δx * (X₁ * S₁ * V₁ᵀ * aVec N) = 0) :
     energy Δx ε ρ₁ (X₁ * S₁ * V₁ᵀ) ≤ energy Δx ε ρ (X * S * Vᵀ) := by
   have hP := isOrthProj_galerkinProj (n := Fin N) h.hX₁ h.hV₁
   set G := X₁ * S₁ * V₁ᵀ with hG'
@@ -1469,7 +1432,7 @@ theorem energy_stable_dlra_of_cfl (hG : IsGaussRule N μ w) (hΔx : 0 < Δx) (h�
   have hL := h.sLift
   rw [← hG', ← hg₀, ← hH] at hL
   set z := (H - (Δt / ε) • transport μ w Δx H) +
-    (Δt / ε ^ 2) • (scatter σ G + -(Dp Nx Δx * ρ * (aVec N)ᵀ)) with hz
+    (Δt / ε ^ 2) • (scatter σ G + -(fwdDiff Nx Δx * ρ * (aVec N)ᵀ)) with hz
   have hGz : ⟪G, G - z⟫ = 0 := by
     have h1 : ⟪G, G⟫ = ⟪G, z⟫ := by
       calc ⟪G, G⟫ = ⟪galerkinProj X₁ V₁ z, G⟫ := by rw [← hL]
@@ -1478,12 +1441,12 @@ theorem energy_stable_dlra_of_cfl (hG : IsGaussRule N μ w) (hΔx : 0 < Δx) (h�
         _ = ⟪G, z⟫ := real_inner_comm _ _
     rw [inner_sub_right, h1, sub_self]
   have hmicro : ⟪G, (G - H) + (Δt / ε) • transport μ w Δx H +
-      (Δt / ε ^ 2) • (Dp Nx Δx * ρ * (aVec N)ᵀ + Matrix.diagonal σ * G)⟫ = 0 := by
+      (Δt / ε ^ 2) • (fwdDiff Nx Δx * ρ * (aVec N)ᵀ + Matrix.diagonal σ * G)⟫ = 0 := by
     rw [← hGz, hz, scatter_apply]
     congr 1
     simp only [smul_add, smul_neg]
     abel
-  have hmacro : ρ₁ = ρ - Δt • (Dm Nx Δx * (G * aVec N)) := by
+  have hmacro : ρ₁ = ρ - Δt • (bwdDiff Nx Δx * (G * aVec N)) := by
     have h1 := congrArg (fun Z => Δt • Z) hρ
     simp only [smul_add, smul_smul, mul_inv_cancel₀ hΔt.ne', one_smul, smul_zero] at h1
     ext j u
@@ -1508,9 +1471,9 @@ theorem energy_stable_dlra (hG : IsGaussRule N μ w) (hΔx : 0 < Δx) (hΔt : 0 
     {ρ ρ₁ : Matrix (ZMod Nx) Unit ℝ} {X : Matrix (ZMod Nx) r ℝ} {S : Matrix r r ℝ}
     {V : Matrix (Fin N) r ℝ} {K₁ : Matrix (ZMod Nx) r ℝ} {L₁ : Matrix (Fin N) r ℝ}
     {X₁ : Matrix (ZMod Nx) p ℝ} {V₁ : Matrix (Fin N) q ℝ} {S₁ : Matrix p q ℝ}
-    (h : IsMicroMacroBUGStep σ (transport μ w Δx) (Dp Nx Δx * ρ) (aVec N) Δt ε
+    (h : IsMicroMacroBUGStep σ (transport μ w Δx) (fwdDiff Nx Δx * ρ) (aVec N) Δt ε
       X S V K₁ L₁ X₁ V₁ S₁)
-    (hρ : Δt⁻¹ • (ρ₁ - ρ) + Dm Nx Δx * (X₁ * S₁ * V₁ᵀ * aVec N) = 0) :
+    (hρ : Δt⁻¹ • (ρ₁ - ρ) + bwdDiff Nx Δx * (X₁ * S₁ * V₁ᵀ * aVec N) = 0) :
     energy Δx ε ρ₁ (X₁ * S₁ * V₁ᵀ) ≤ energy Δx ε ρ (X * S * Vᵀ) :=
   energy_stable_dlra_of_cfl hG hΔx hΔt hε hσ₀ hσ (cfl_of_le hG hΔx hΔt hε hσ₀ hcfl) h hρ
 
@@ -1526,15 +1489,15 @@ theorem energy_identity (hΔx : 0 < Δx) (hε : 0 < ε) {X₁ : Matrix (ZMod Nx)
     {V₁ : Matrix (Fin N) q ℝ} (hX₁ : X₁ᵀ * X₁ = 1) (hV₁ : V₁ᵀ * V₁ = 1) {S : ℝ → Matrix p q ℝ}
     {ρ : ℝ → Matrix (ZMod Nx) Unit ℝ}
     (hS : ∀ t, HasDerivAt S (-(ε⁻¹ • (X₁ᵀ * transport μ w Δx (X₁ * S t * V₁ᵀ) * V₁)) -
-      (ε ^ 2)⁻¹ • (X₁ᵀ * (Dp Nx Δx * ρ t) * ((aVec N)ᵀ * V₁) + stiffness σ X₁ * S t)) t)
-    (hρ : ∀ t, HasDerivAt ρ (-(Dm Nx Δx * (X₁ * S t * V₁ᵀ * aVec N))) t) (t : ℝ) :
+      (ε ^ 2)⁻¹ • (X₁ᵀ * (fwdDiff Nx Δx * ρ t) * ((aVec N)ᵀ * V₁) + stiffness σ X₁ * S t)) t)
+    (hρ : ∀ t, HasDerivAt ρ (-(bwdDiff Nx Δx * (X₁ * S t * V₁ᵀ * aVec N))) t) (t : ℝ) :
     HasDerivAt (fun s => (1 / 2 : ℝ) * (‖ρ s‖ ^ 2 + ε ^ 2 * ‖X₁ * S s * V₁ᵀ‖ ^ 2))
-      (-(ε * (Δx / 2 * ⟪Dp Nx Δx * (X₁ * S t * V₁ᵀ),
-          Dp Nx Δx * (X₁ * S t * V₁ᵀ) * absA μ w⟫)) -
+      (-(ε * (Δx / 2 * ⟪fwdDiff Nx Δx * (X₁ * S t * V₁ᵀ),
+          fwdDiff Nx Δx * (X₁ * S t * V₁ᵀ) * absA μ w⟫)) -
         ⟪X₁ * S t * V₁ᵀ, Matrix.diagonal σ * (X₁ * S t * V₁ᵀ)⟫) t := by
   set g := X₁ * S t * V₁ᵀ with hg
   set Sd := -(ε⁻¹ • (X₁ᵀ * transport μ w Δx g * V₁)) -
-      (ε ^ 2)⁻¹ • (X₁ᵀ * (Dp Nx Δx * ρ t) * ((aVec N)ᵀ * V₁) + stiffness σ X₁ * S t) with hSd
+      (ε ^ 2)⁻¹ • (X₁ᵀ * (fwdDiff Nx Δx * ρ t) * ((aVec N)ᵀ * V₁) + stiffness σ X₁ * S t) with hSd
   have hgd : HasDerivAt (fun s => X₁ * S s * V₁ᵀ) (X₁ * Sd * V₁ᵀ) t :=
     Frobenius.hasDerivAt_mul_const V₁ᵀ (Frobenius.hasDerivAt_const_mul X₁ (hS t))
   have h1 := (hρ t).norm_sq
@@ -1551,13 +1514,13 @@ theorem energy_identity (hΔx : 0 < Δx) (hε : 0 < ε) {X₁ : Matrix (ZMod Nx)
   have hstiff : stiffness σ X₁ * S t = X₁ᵀ * (Matrix.diagonal σ * g) * V₁ := by
     rw [stiffness, hg]
     simp only [Matrix.mul_assoc, hV₁, Matrix.mul_one]
-  have hd : X₁ᵀ * (Dp Nx Δx * ρ t) * ((aVec N)ᵀ * V₁) =
-      X₁ᵀ * (Dp Nx Δx * ρ t * (aVec N)ᵀ) * V₁ := by
+  have hd : X₁ᵀ * (fwdDiff Nx Δx * ρ t) * ((aVec N)ᵀ * V₁) =
+      X₁ᵀ * (fwdDiff Nx Δx * ρ t * (aVec N)ᵀ) * V₁ := by
     simp only [Matrix.mul_assoc]
-  have e4 : ⟪g, Dp Nx Δx * ρ t * (aVec N)ᵀ⟫ = -⟪ρ t, Dm Nx Δx * (g * aVec N)⟫ := by
+  have e4 : ⟪g, fwdDiff Nx Δx * ρ t * (aVec N)ᵀ⟫ = -⟪ρ t, bwdDiff Nx Δx * (g * aVec N)⟫ := by
     rw [← Frobenius.inner_mul_right, real_inner_comm, sbp_Dm, neg_neg]
   have hSS : ⟪S t, Sd⟫ = -(ε⁻¹ * ⟪g, transport μ w Δx g⟫) -
-      (ε ^ 2)⁻¹ * (⟪g, Dp Nx Δx * ρ t * (aVec N)ᵀ⟫ + ⟪g, Matrix.diagonal σ * g⟫) := by
+      (ε ^ 2)⁻¹ * (⟪g, fwdDiff Nx Δx * ρ t * (aVec N)ᵀ⟫ + ⟪g, Matrix.diagonal σ * g⟫) := by
     rw [hSd, hstiff, hd, inner_sub_right, inner_neg_right, inner_smul_right, inner_smul_right,
       inner_add_right, inner_core, inner_core, inner_core]
   rw [hgg, hSS, e4, inner_neg_right, inner_transport_self hΔx.ne']
@@ -1569,13 +1532,13 @@ theorem energy_identity (hΔx : 0 < Δx) (hε : 0 < ε) {X₁ : Matrix (ZMod Nx)
 semidefinite. -/
 theorem dissipation_le (hΔx : 0 < Δx) (hε : 0 < ε) (hσ : ∀ j, σ₀ ≤ σ j)
     (g : Matrix (ZMod Nx) (Fin N) ℝ) :
-    -(ε * (Δx / 2 * ⟪Dp Nx Δx * g, Dp Nx Δx * g * absA μ w⟫)) -
+    -(ε * (Δx / 2 * ⟪fwdDiff Nx Δx * g, fwdDiff Nx Δx * g * absA μ w⟫)) -
       ⟪g, Matrix.diagonal σ * g⟫ ≤ -(σ₀ * ‖g‖ ^ 2) := by
   have h1 := le_inner_diagonal hσ g
-  have h2 : 0 ≤ ⟪Dp Nx Δx * g, Dp Nx Δx * g * absA μ w⟫ := by
+  have h2 : 0 ≤ ⟪fwdDiff Nx Δx * g, fwdDiff Nx Δx * g * absA μ w⟫ := by
     rw [absA, absM, inner_mul_T_diag]
     exact Finset.sum_nonneg fun j _ => Finset.sum_nonneg fun k _ => by positivity
-  have h3 : 0 ≤ ε * (Δx / 2 * ⟪Dp Nx Δx * g, Dp Nx Δx * g * absA μ w⟫) := by positivity
+  have h3 : 0 ≤ ε * (Δx / 2 * ⟪fwdDiff Nx Δx * g, fwdDiff Nx Δx * g * absA μ w⟫) := by positivity
   linarith
 
 /-- **Theorem 5.1 (time-continuous `S`-step), corrected**, arXiv 2212.12012: the solution of the
@@ -1589,8 +1552,8 @@ theorem energy_dissipation (hΔx : 0 < Δx) (hε : 0 < ε) (hσ : ∀ j, σ₀ �
     {X₁ : Matrix (ZMod Nx) p ℝ} {V₁ : Matrix (Fin N) q ℝ} (hX₁ : X₁ᵀ * X₁ = 1)
     (hV₁ : V₁ᵀ * V₁ = 1) {S : ℝ → Matrix p q ℝ} {ρ : ℝ → Matrix (ZMod Nx) Unit ℝ}
     (hS : ∀ t, HasDerivAt S (-(ε⁻¹ • (X₁ᵀ * transport μ w Δx (X₁ * S t * V₁ᵀ) * V₁)) -
-      (ε ^ 2)⁻¹ • (X₁ᵀ * (Dp Nx Δx * ρ t) * ((aVec N)ᵀ * V₁) + stiffness σ X₁ * S t)) t)
-    (hρ : ∀ t, HasDerivAt ρ (-(Dm Nx Δx * (X₁ * S t * V₁ᵀ * aVec N))) t) (t : ℝ) :
+      (ε ^ 2)⁻¹ • (X₁ᵀ * (fwdDiff Nx Δx * ρ t) * ((aVec N)ᵀ * V₁) + stiffness σ X₁ * S t)) t)
+    (hρ : ∀ t, HasDerivAt ρ (-(bwdDiff Nx Δx * (X₁ * S t * V₁ᵀ * aVec N))) t) (t : ℝ) :
     ∃ D, HasDerivAt (fun s => (1 / 2 : ℝ) * (‖ρ s‖ ^ 2 + ε ^ 2 * ‖X₁ * S s * V₁ᵀ‖ ^ 2)) D t ∧
       D ≤ -(σ₀ * ‖X₁ * S t * V₁ᵀ‖ ^ 2) :=
   ⟨_, energy_identity hΔx hε hX₁ hV₁ hS hρ t, dissipation_le hΔx hε hσ _⟩
@@ -1633,13 +1596,13 @@ private theorem XConst_orth : XConstᵀ * XConst = 1 := by
     Matrix.one_apply_eq]
   norm_num
 
-private theorem Dp_XConst {Δx : ℝ} : Dp 2 Δx * XConst = 0 := by
+private theorem Dp_XConst {Δx : ℝ} : fwdDiff 2 Δx * XConst = 0 := by
   ext j l
-  simp [Dp_mul_apply, XConst]
+  simp [fwdDiff_mul_apply, XConst]
 
-private theorem Dm_XConst {Δx : ℝ} : Dm 2 Δx * XConst = 0 := by
+private theorem Dm_XConst {Δx : ℝ} : bwdDiff 2 Δx * XConst = 0 := by
   ext j l
-  simp [Dm_mul_apply, XConst]
+  simp [bwdDiff_mul_apply, XConst]
 
 /-- **Theorem 5.1 is false as printed**, arXiv 2212.12012: the printed rate
 `½ d/dt (‖ρ‖² + ε² ‖gˢ‖²) ≤ -σ₀ ε⁻² ‖gˢ‖²` fails for every `ε < 1`.  On two cells with `σ = σ₀ = 1`,
@@ -1651,9 +1614,9 @@ theorem theorem_5_1_printed_false {μ w : Fin (N + 1) → ℝ} {Δx ε : ℝ} (h
       (S : ℝ → Matrix (Fin 1) (Fin 1) ℝ) (ρ : ℝ → Matrix (ZMod 2) Unit ℝ) (E : ℝ → ℝ),
       X₁ᵀ * X₁ = 1 ∧ V₁ᵀ * V₁ = 1 ∧
       (∀ t, HasDerivAt S (-(ε⁻¹ • (X₁ᵀ * transport μ w Δx (X₁ * S t * V₁ᵀ) * V₁)) -
-        (ε ^ 2)⁻¹ • (X₁ᵀ * (Dp 2 Δx * ρ t) * ((aVec N)ᵀ * V₁) +
+        (ε ^ 2)⁻¹ • (X₁ᵀ * (fwdDiff 2 Δx * ρ t) * ((aVec N)ᵀ * V₁) +
           stiffness (fun _ => 1) X₁ * S t)) t) ∧
-      (∀ t, HasDerivAt ρ (-(Dm 2 Δx * (X₁ * S t * V₁ᵀ * aVec N))) t) ∧
+      (∀ t, HasDerivAt ρ (-(bwdDiff 2 Δx * (X₁ * S t * V₁ᵀ * aVec N))) t) ∧
       (∀ t, HasDerivAt (fun s => (1 / 2 : ℝ) * (‖ρ s‖ ^ 2 + ε ^ 2 * ‖X₁ * S s * V₁ᵀ‖ ^ 2))
         (E t) t) ∧
       ∀ t, -(1 / ε ^ 2 * ‖X₁ * S t * V₁ᵀ‖ ^ 2) < E t := by
@@ -1661,14 +1624,14 @@ theorem theorem_5_1_printed_false {μ w : Fin (N + 1) → ℝ} {Δx ε : ℝ} (h
   set V₁ := basisCol i₀ with hV₁
   set c : ℝ := -(ε ^ 2)⁻¹ with hc
   set S : ℝ → Matrix (Fin 1) (Fin 1) ℝ := fun t => Real.exp (c * t) • 1 with hS
-  have hDm : ∀ t, Dm 2 Δx * (XConst * S t * V₁ᵀ) = 0 := fun t => by
+  have hDm : ∀ t, bwdDiff 2 Δx * (XConst * S t * V₁ᵀ) = 0 := fun t => by
     rw [← Matrix.mul_assoc, ← Matrix.mul_assoc, Dm_XConst, Matrix.zero_mul, Matrix.zero_mul]
-  have hDp : ∀ t, Dp 2 Δx * (XConst * S t * V₁ᵀ) = 0 := fun t => by
+  have hDp : ∀ t, fwdDiff 2 Δx * (XConst * S t * V₁ᵀ) = 0 := fun t => by
     rw [← Matrix.mul_assoc, ← Matrix.mul_assoc, Dp_XConst, Matrix.zero_mul, Matrix.zero_mul]
   have hstiff : stiffness (fun _ : ZMod 2 => (1 : ℝ)) XConst = 1 := by
     rw [stiffness, Matrix.diagonal_one, Matrix.mul_one, XConst_orth]
   have hdS : ∀ t, HasDerivAt S (-(ε⁻¹ • (XConstᵀ * transport μ w Δx (XConst * S t * V₁ᵀ) * V₁)) -
-      (ε ^ 2)⁻¹ • (XConstᵀ * (Dp 2 Δx * (0 : Matrix (ZMod 2) Unit ℝ)) * ((aVec N)ᵀ * V₁) +
+      (ε ^ 2)⁻¹ • (XConstᵀ * (fwdDiff 2 Δx * (0 : Matrix (ZMod 2) Unit ℝ)) * ((aVec N)ᵀ * V₁) +
         stiffness (fun _ => 1) XConst * S t)) t := by
     intro t
     have h1 : HasDerivAt S ((Real.exp (c * t) * (c * 1)) • (1 : Matrix (Fin 1) (Fin 1) ℝ)) t :=
@@ -1684,9 +1647,9 @@ theorem theorem_5_1_printed_false {μ w : Fin (N + 1) → ℝ} {Δx ε : ℝ} (h
     rw [hc]
     ring
   have hdρ : ∀ t, HasDerivAt (fun _ : ℝ => (0 : Matrix (ZMod 2) Unit ℝ))
-      (-(Dm 2 Δx * (XConst * S t * V₁ᵀ * aVec N))) t := by
+      (-(bwdDiff 2 Δx * (XConst * S t * V₁ᵀ * aVec N))) t := by
     intro t
-    have h1 : Dm 2 Δx * (XConst * S t * V₁ᵀ * aVec N) = 0 := by
+    have h1 : bwdDiff 2 Δx * (XConst * S t * V₁ᵀ * aVec N) = 0 := by
       rw [← Matrix.mul_assoc, hDm, Matrix.zero_mul]
     rw [h1, neg_zero]
     exact hasDerivAt_const t _
@@ -1729,10 +1692,10 @@ theorem norm_aVec_sq (hN : 0 < N) : ‖aVec N‖ ^ 2 = 1 / 3 := by
 
 theorem norm_transport_le (x : Matrix (ZMod Nx) (Fin N) ℝ) :
     ‖transport μ w Δx x‖ ≤
-      (‖Dm Nx Δx‖ * ‖plusA μ w‖ + ‖Dp Nx Δx‖ * ‖minusA μ w‖) * ‖x‖ := by
-  have h1 : ‖Dm Nx Δx * x * plusA μ w‖ ≤ ‖Dm Nx Δx‖ * ‖x‖ * ‖plusA μ w‖ :=
+      (‖bwdDiff Nx Δx‖ * ‖plusA μ w‖ + ‖fwdDiff Nx Δx‖ * ‖minusA μ w‖) * ‖x‖ := by
+  have h1 : ‖bwdDiff Nx Δx * x * plusA μ w‖ ≤ ‖bwdDiff Nx Δx‖ * ‖x‖ * ‖plusA μ w‖ :=
     (Frobenius.norm_mul_le _ _).trans (by gcongr; exact Frobenius.norm_mul_le _ _)
-  have h2 : ‖Dp Nx Δx * x * minusA μ w‖ ≤ ‖Dp Nx Δx‖ * ‖x‖ * ‖minusA μ w‖ :=
+  have h2 : ‖fwdDiff Nx Δx * x * minusA μ w‖ ≤ ‖fwdDiff Nx Δx‖ * ‖x‖ * ‖minusA μ w‖ :=
     (Frobenius.norm_mul_le _ _).trans (by gcongr; exact Frobenius.norm_mul_le _ _)
   calc _ ≤ _ := norm_add_le _ _
     _ ≤ _ := add_le_add h1 h2
@@ -1740,8 +1703,8 @@ theorem norm_transport_le (x : Matrix (ZMod Nx) (Fin N) ℝ) :
 
 /-- `‖D⁻ x‖ = ‖D⁺ x‖ ≤ (2/Δx) ‖x‖`. -/
 theorem norm_Dp_mul_le (hΔx : 0 < Δx) {n : Type*} [Fintype n] (x : Matrix (ZMod Nx) n ℝ) :
-    ‖Dp Nx Δx * x‖ ≤ 2 / Δx * ‖x‖ := by
-  have h : ‖Dp Nx Δx * x‖ ^ 2 ≤ (2 / Δx * ‖x‖) ^ 2 := by
+    ‖fwdDiff Nx Δx * x‖ ≤ 2 / Δx * ‖x‖ := by
+  have h : ‖fwdDiff Nx Δx * x‖ ^ 2 ≤ (2 / Δx * ‖x‖) ^ 2 := by
     rw [mul_pow, div_pow, Frobenius.norm_sq_eq_sum, Frobenius.norm_sq_eq_sum, Finset.sum_comm,
       Finset.sum_comm (f := fun j l => x j l ^ 2), Finset.mul_sum]
     refine Finset.sum_le_sum fun l _ => (sum_Dp_sq_le x l).trans_eq ?_
@@ -1767,32 +1730,36 @@ which is (4.9).  The printed theorem has no hypothesis at all and is false witho
 proof is `KineticAP.sLimit_eq_diffFlux_iff`. -/
 theorem theorem_4_1 (hN : 0 < N) (hΔt : 0 < Δt) (hσ : IsCrossSection σ σ₀ σ₁)
     {ρ : Matrix (ZMod Nx) Unit ℝ} {X : Matrix (ZMod Nx) r ℝ} {S : Matrix r r ℝ}
-    {V : Matrix (Fin N) r ℝ} (hb : Vᵀ * aVec N ≠ 0) (hc : Xᵀ * (Dp Nx Δx * ρ) ≠ 0)
+    {V : Matrix (Fin N) r ℝ} (hb : Vᵀ * aVec N ≠ 0) (hc : Xᵀ * (fwdDiff Nx Δx * ρ) ≠ 0)
     {K₁ : ℝ → Matrix (ZMod Nx) r ℝ} {L₁ : ℝ → Matrix (Fin N) r ℝ}
     {X₁ : ℝ → Matrix (ZMod Nx) p ℝ} {V₁ : ℝ → Matrix (Fin N) q ℝ} {S₁ : ℝ → Matrix p q ℝ}
     {ρ₁ : ℝ → Matrix (ZMod Nx) Unit ℝ}
-    (h : ∀ ε > 0, IsMicroMacroBUGStep σ (transport μ w Δx) (Dp Nx Δx * ρ) (aVec N) Δt ε
+    (h : ∀ ε > 0, IsMicroMacroBUGStep σ (transport μ w Δx) (fwdDiff Nx Δx * ρ) (aVec N) Δt ε
       X S V (K₁ ε) (L₁ ε) (X₁ ε) (V₁ ε) (S₁ ε))
-    (hρ : ∀ ε > 0, Δt⁻¹ • (ρ₁ ε - ρ) + Dm Nx Δx * (X₁ ε * S₁ ε * (V₁ ε)ᵀ * aVec N) = 0) :
-    Tendsto (fun ε => ‖Δt⁻¹ • (ρ₁ ε - ρ) - (1 / 3 : ℝ) • (Dm Nx Δx * ceDir σ (Dp Nx Δx * ρ))‖)
+    (hρ : ∀ ε > 0, Δt⁻¹ • (ρ₁ ε - ρ) + bwdDiff Nx Δx * (X₁ ε * S₁ ε * (V₁ ε)ᵀ * aVec N) = 0) :
+    Tendsto (fun ε =>
+        ‖Δt⁻¹ • (ρ₁ ε - ρ) - (1 / 3 : ℝ) • (bwdDiff Nx Δx * ceDir σ (fwdDiff Nx Δx * ρ))‖)
       (𝓝[>] 0) (𝓝 0) := by
-  have hτ0 : 0 ≤ ‖Dm Nx Δx‖ * ‖plusA μ w‖ + ‖Dp Nx Δx‖ * ‖minusA μ w‖ := by positivity
+  have hτ0 : 0 ≤ ‖bwdDiff Nx Δx‖ * ‖plusA μ w‖ + ‖fwdDiff Nx Δx‖ * ‖minusA μ w‖ := by positivity
   have hlim := (tendsto_diffFlux hσ hτ0 norm_transport_le hΔt hb hc h).const_mul
-    (‖Dm Nx Δx‖ * ‖aVec N‖)
+    (‖bwdDiff Nx Δx‖ * ‖aVec N‖)
   rw [mul_zero] at hlim
   refine squeeze_zero' (Eventually.of_forall fun _ => norm_nonneg _) ?_ hlim
   filter_upwards [self_mem_nhdsWithin] with ε hε
-  have hflux := diffFlux_mul σ (Dp Nx Δx * ρ) (aVec N)
+  have hflux := diffFlux_mul σ (fwdDiff Nx Δx * ρ) (aVec N)
   rw [norm_aVec_sq hN] at hflux
-  have h1 : Δt⁻¹ • (ρ₁ ε - ρ) - (1 / 3 : ℝ) • (Dm Nx Δx * ceDir σ (Dp Nx Δx * ρ)) =
-      -(Dm Nx Δx * ((X₁ ε * S₁ ε * (V₁ ε)ᵀ - diffFlux σ (Dp Nx Δx * ρ) (aVec N)) * aVec N)) := by
+  have h1 : Δt⁻¹ • (ρ₁ ε - ρ) - (1 / 3 : ℝ) • (bwdDiff Nx Δx * ceDir σ (fwdDiff Nx Δx * ρ)) =
+      -(bwdDiff Nx Δx *
+          ((X₁ ε * S₁ ε * (V₁ ε)ᵀ - diffFlux σ (fwdDiff Nx Δx * ρ) (aVec N)) * aVec N)) := by
     have h2 := eq_neg_of_add_eq_zero_left (hρ ε hε)
     rw [h2, Matrix.sub_mul, hflux, Matrix.mul_sub, Matrix.mul_neg, Matrix.mul_smul]
     abel
   rw [h1, norm_neg]
-  calc _ ≤ ‖Dm Nx Δx‖ * ‖(X₁ ε * S₁ ε * (V₁ ε)ᵀ - diffFlux σ (Dp Nx Δx * ρ) (aVec N)) * aVec N‖ :=
+  calc _ ≤ ‖bwdDiff Nx Δx‖ *
+          ‖(X₁ ε * S₁ ε * (V₁ ε)ᵀ - diffFlux σ (fwdDiff Nx Δx * ρ) (aVec N)) * aVec N‖ :=
         Frobenius.norm_mul_le _ _
-    _ ≤ ‖Dm Nx Δx‖ * (‖X₁ ε * S₁ ε * (V₁ ε)ᵀ - diffFlux σ (Dp Nx Δx * ρ) (aVec N)‖ * ‖aVec N‖) := by
+    _ ≤ ‖bwdDiff Nx Δx‖ *
+        (‖X₁ ε * S₁ ε * (V₁ ε)ᵀ - diffFlux σ (fwdDiff Nx Δx * ρ) (aVec N)‖ * ‖aVec N‖) := by
         gcongr
         exact Frobenius.norm_mul_le _ _
     _ = _ := by ring
@@ -1807,19 +1774,20 @@ theorem theorem_4_1_run (hN : 0 < N) (hΔx : 0 < Δx) (hΔt : 0 < Δt) (hσ : Is
     {S₀ : Matrix r r ℝ} {V₀ : Matrix (Fin N) r ℝ} {ρ : ℝ → ℕ → Matrix (ZMod Nx) Unit ℝ}
     {X : ℝ → ℕ → Matrix (ZMod Nx) r ℝ} {S : ℝ → ℕ → Matrix r r ℝ}
     {V : ℝ → ℕ → Matrix (Fin N) r ℝ}
-    (hrun : ∀ ε > 0, IsMicroMacroRun σ (transport μ w Δx) (Dp Nx Δx) (aVec N) Δt ε
+    (hrun : ∀ ε > 0, IsMicroMacroRun σ (transport μ w Δx) (fwdDiff Nx Δx) (aVec N) Δt ε
       (ρ ε) (X ε) (S ε) (V ε))
     (h0 : ∀ ε > 0, ρ ε 0 = ρ₀ ∧ X ε 0 = X₀ ∧ S ε 0 = S₀ ∧ V ε 0 = V₀)
-    (hb : V₀ᵀ * aVec N ≠ 0) (hc : X₀ᵀ * (Dp Nx Δx * ρ₀) ≠ 0) (k : ℕ) :
+    (hb : V₀ᵀ * aVec N ≠ 0) (hc : X₀ᵀ * (fwdDiff Nx Δx * ρ₀) ≠ 0) (k : ℕ) :
     (∃ C : ℝ, ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      ‖ρ ε k - diffIter (Dp Nx Δx) σ (aVec N) Δt ρ₀ k‖ ≤ C * ε) ∧
+      ‖ρ ε k - diffIter (fwdDiff Nx Δx) σ (aVec N) Δt ρ₀ k‖ ≤ C * ε) ∧
     (∃ C : ℝ, ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       ‖X ε (k + 1) * S ε (k + 1) * (V ε (k + 1))ᵀ -
-        diffFlux σ (Dp Nx Δx * diffIter (Dp Nx Δx) σ (aVec N) Δt ρ₀ k) (aVec N)‖ ≤ C * ε) := by
-  have hτ0 : 0 ≤ ‖Dm Nx Δx‖ * ‖plusA μ w‖ + ‖Dp Nx Δx‖ * ‖minusA μ w‖ := by positivity
-  have hΓ : ∀ x : Matrix (ZMod Nx) Unit ℝ, ‖(Dp Nx Δx)ᵀ * x‖ ≤ 2 / Δx * ‖x‖ := by
+          diffFlux σ (fwdDiff Nx Δx * diffIter (fwdDiff Nx Δx) σ (aVec N) Δt ρ₀ k) (aVec N)‖ ≤
+        C * ε) := by
+  have hτ0 : 0 ≤ ‖bwdDiff Nx Δx‖ * ‖plusA μ w‖ + ‖fwdDiff Nx Δx‖ * ‖minusA μ w‖ := by positivity
+  have hΓ : ∀ x : Matrix (ZMod Nx) Unit ℝ, ‖(fwdDiff Nx Δx)ᵀ * x‖ ≤ 2 / Δx * ‖x‖ := by
     intro x
-    rw [Dp_transpose, Matrix.neg_mul, norm_neg, norm_Dm_mul]
+    rw [fwdDiff_transpose, Matrix.neg_mul, norm_neg, norm_Dm_mul]
     exact norm_Dp_mul_le hΔx x
   have hcfl' : Δt * ‖aVec N‖ ^ 2 * (2 / Δx) ^ 2 < σ₀ := by
     rw [norm_aVec_sq hN, div_pow]
@@ -1963,7 +1931,7 @@ private theorem cex_transport (hG : IsGaussRule N μ w) (i : Fin N) (hΔx : Δx 
   obtain rfl : l = 0 := Subsingleton.elim _ _
   rw [Matrix.add_apply, Matrix.mul_apply, Matrix.mul_apply]
   simp only [Finset.univ_unique, Finset.sum_singleton, Fin.default_eq_zero, Matrix.of_apply,
-    Matrix.smul_apply, smul_eq_mul, Dp_mul_apply, Dm_mul_apply]
+    Matrix.smul_apply, smul_eq_mul, fwdDiff_mul_apply, bwdDiff_mul_apply]
   have h3 := cexX_mean j 0
   have hm : minusA μ w i i = -plusA μ w i i := by linarith
   rw [h2, hm]
@@ -1990,37 +1958,37 @@ theorem theorem_4_1_printed_false (hG : IsGaussRule N μ w) (hN : 2 ≤ N) (hΔx
       (V : Matrix (Fin N) (Fin 1) ℝ) (ε₀ : ℝ),
       (aVec N)ᵀ * V = 0 ∧
       (∃ (Q : Matrix (Fin N) (Fin 1) ℝ) (SL : Matrix (Fin 1) (Fin 1) ℝ), Qᵀ * Q = 1 ∧
-        lLimit (fun _ : ZMod 3 => (1 : ℝ)) (Dp 3 Δx * ρ) (aVec N) X = Q * SL ∧
+        lLimit (fun _ : ZMod 3 => (1 : ℝ)) (fwdDiff 3 Δx * ρ) (aVec N) X = Q * SL ∧
         IsUnit (SL * stiffness (fun _ : ZMod 3 => (1 : ℝ)) X)) ∧
       (∀ ε > 0, ∃ (K₁ : Matrix (ZMod 3) (Fin 1) ℝ) (L₁ : Matrix (Fin N) (Fin 1) ℝ)
         (X₁ : Matrix (ZMod 3) (Fin 1) ℝ) (V₁ : Matrix (Fin N) (Fin 1) ℝ)
         (S₁ : Matrix (Fin 1) (Fin 1) ℝ),
-        IsMicroMacroBUGStep (fun _ : ZMod 3 => (1 : ℝ)) (transport μ w Δx) (Dp 3 Δx * ρ) (aVec N)
-          Δt ε X 1 V K₁ L₁ X₁ V₁ S₁) ∧
+        IsMicroMacroBUGStep (fun _ : ZMod 3 => (1 : ℝ)) (transport μ w Δx) (fwdDiff 3 Δx * ρ)
+          (aVec N) Δt ε X 1 V K₁ L₁ X₁ V₁ S₁) ∧
       ∀ ε > 0, ε ≠ ε₀ → ∀ (K₁ : Matrix (ZMod 3) (Fin 1) ℝ) (L₁ : Matrix (Fin N) (Fin 1) ℝ)
         (X₁ : Matrix (ZMod 3) (Fin 1) ℝ) (V₁ : Matrix (Fin N) (Fin 1) ℝ)
         (S₁ : Matrix (Fin 1) (Fin 1) ℝ) (ρ₁ : Matrix (ZMod 3) Unit ℝ),
-        IsMicroMacroBUGStep (fun _ : ZMod 3 => (1 : ℝ)) (transport μ w Δx) (Dp 3 Δx * ρ) (aVec N)
-          Δt ε X 1 V K₁ L₁ X₁ V₁ S₁ →
-        Δt⁻¹ • (ρ₁ - ρ) + Dm 3 Δx * (X₁ * S₁ * V₁ᵀ * aVec N) = 0 →
+        IsMicroMacroBUGStep (fun _ : ZMod 3 => (1 : ℝ)) (transport μ w Δx) (fwdDiff 3 Δx * ρ)
+          (aVec N) Δt ε X 1 V K₁ L₁ X₁ V₁ S₁ →
+        Δt⁻¹ • (ρ₁ - ρ) + bwdDiff 3 Δx * (X₁ * S₁ * V₁ᵀ * aVec N) = 0 →
         1 / (2 * Δx ^ 2) ≤ ‖Δt⁻¹ • (ρ₁ - ρ) -
-          (1 / 3 : ℝ) • (Dm 3 Δx * ceDir (fun _ : ZMod 3 => (1 : ℝ)) (Dp 3 Δx * ρ))‖ := by
+          (1 / 3 : ℝ) • (bwdDiff 3 Δx * ceDir (fun _ : ZMod 3 => (1 : ℝ)) (fwdDiff 3 Δx * ρ))‖ := by
   set i : Fin N := ⟨1, by omega⟩ with hi
   set i₀ : Fin N := ⟨0, by omega⟩ with hi₀
   set V := basisCol i with hV
-  set d := Dp 3 Δx * cexρ with hd
+  set d := fwdDiff 3 Δx * cexρ with hd
   have hx := hΔx.ne'
   have hd0 : ∀ u, d 0 u = 1 / Δx := fun u => by
     have e1 : (0 + 1 : ZMod 3) = 1 := by decide
-    simp [hd, Dp_mul_apply, cexρ, e1]
+    simp [hd, fwdDiff_mul_apply, cexρ, e1]
   have hd1 : ∀ u, d 1 u = 0 := fun u => by
     have e1 : (1 + 1 : ZMod 3) = 2 := by decide
     have e2 : (2 : ZMod 3) ≠ 0 := by decide
-    simp [hd, Dp_mul_apply, cexρ, e1, e2]
+    simp [hd, fwdDiff_mul_apply, cexρ, e1, e2]
   have hd2 : ∀ u, d 2 u = -(1 / Δx) := fun u => by
     have e1 : (2 + 1 : ZMod 3) = 0 := by decide
     have e2 : (2 : ZMod 3) ≠ 0 := by decide
-    simp [hd, Dp_mul_apply, cexρ, e1, e2, neg_div]
+    simp [hd, fwdDiff_mul_apply, cexρ, e1, e2, neg_div]
   have haV : (aVec N)ᵀ * V = 0 := by
     ext a b
     have h1 : ¬ ((i : ℕ) = 0) := by simp [hi]
@@ -2098,7 +2066,7 @@ theorem theorem_4_1_printed_false (hG : IsGaussRule N μ w) (hN : 2 ≤ N) (hΔx
           _ = _ := by rw [h.hX₁, Matrix.mul_one]
       rw [hy, ← Matrix.mul_assoc, hP, h1]
     set E := Δt⁻¹ • (ρ₁ - cexρ) -
-      (1 / 3 : ℝ) • (Dm 3 Δx * ceDir (fun _ : ZMod 3 => (1 : ℝ)) d) with hE
+      (1 / 3 : ℝ) • (bwdDiff 3 Δx * ceDir (fun _ : ZMod 3 => (1 : ℝ)) d) with hE
     have hce : ceDir (fun _ : ZMod 3 => (1 : ℝ)) d = d := by
       rw [ceDir_const, inv_one, one_smul]
     have hG1 : ∀ j u, G j u = cexX j 0 * y 0 u := fun j u => by
@@ -2108,9 +2076,9 @@ theorem theorem_4_1_printed_false (hG : IsGaussRule N μ w) (hN : 2 ≤ N) (hΔx
         1 / 3 * ((d j u - d (j - 1) u) / Δx) := by
       intro j u
       have h1 := congrFun (congrFun hρ j) u
-      simp only [Matrix.add_apply, Matrix.smul_apply, Matrix.sub_apply, smul_eq_mul, Dm_mul_apply,
-        Matrix.zero_apply] at h1
-      simp only [hE, hce, Matrix.sub_apply, Matrix.smul_apply, smul_eq_mul, Dm_mul_apply]
+      simp only [Matrix.add_apply, Matrix.smul_apply, Matrix.sub_apply, smul_eq_mul,
+        bwdDiff_mul_apply, Matrix.zero_apply] at h1
+      simp only [hE, hce, Matrix.sub_apply, Matrix.smul_apply, smul_eq_mul, bwdDiff_mul_apply]
       linarith
     have e0 : (0 - 1 : ZMod 3) = 2 := by decide
     have e2 : (2 - 1 : ZMod 3) = 1 := by decide
@@ -2173,6 +2141,43 @@ example : ∃ (μ w : Fin 2 → ℝ) (hG : IsGaussRule 1 μ w),
     hG.toQuadrature.μ = μ ∧ ∑ k, hG.toQuadrature.w k = 1 := by
   obtain ⟨μ, w, hG⟩ := exists_isGaussRule 1
   exact ⟨μ, w, hG, rfl, hG.toQuadrature.sum_w⟩
+
+/-! #### The advection operator as a core streaming operator -/
+
+section Streaming
+
+variable {Nx : ℕ} [NeZero Nx]
+
+/-- **The advection operator through the core**: `𝓛 g = D⁻ g A⁺ + D⁺ g A⁻` of (3.3) is the core
+streaming operator `Y ↦ ∑ₖ Dₖ Y Mₖ` with the two terms `(D⁻, A⁺)` and `(D⁺, A⁻)`. -/
+theorem transport_eq_streaming (μ w : Fin (N + 1) → ℝ) (Δx : ℝ)
+    (g : Matrix (ZMod Nx) (Fin N) ℝ) :
+    transport μ w Δx g =
+      Kinetic.streaming ![bwdDiff Nx Δx, fwdDiff Nx Δx] ![plusA μ w, minusA μ w] g := by
+  rw [Kinetic.streaming_apply, Fin.sum_univ_two]
+  rfl
+
+/-- The operator `downwind` (minus the adjoint of `𝓛`) is the core streaming operator with the
+two stencils exchanged. -/
+theorem downwind_eq_streaming (μ w : Fin (N + 1) → ℝ) (Δx : ℝ)
+    (g : Matrix (ZMod Nx) (Fin N) ℝ) :
+    downwind μ w Δx g =
+      Kinetic.streaming ![fwdDiff Nx Δx, bwdDiff Nx Δx] ![plusA μ w, minusA μ w] g := by
+  rw [Kinetic.streaming_apply, Fin.sum_univ_two]
+  rfl
+
+/-- The bridge at nonzero data: on three cells with `Δx = 1/2` and for every Gauss rule with two
+nodes, the advection operator is the streaming operator, a continuous linear map; and the
+backward stencil in it is not zero (its entry `(0, 0)` is `2`). -/
+example (μ w : Fin 2 → ℝ) (g g' : Matrix (ZMod 3) (Fin 1) ℝ) :
+    transport μ w (1 / 2) (g + g') = transport μ w (1 / 2) g + transport μ w (1 / 2) g' ∧
+      bwdDiff 3 (1 / 2) 0 0 = 2 := by
+  refine ⟨?_, ?_⟩
+  · simp only [transport_eq_streaming, map_add]
+  · rw [bwdDiff, Matrix.of_apply, ite_eq_left rfl, ite_eq_right (by decide)]
+    norm_num
+
+end Streaming
 
 end KineticCore
 

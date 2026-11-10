@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Defs
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Orthonormal
 
@@ -1969,5 +1970,61 @@ theorem rob_mass_change (h : robGrid.IsStep robD 1 robU robX (robS (16 / 25)) ro
   norm_num
 
 end Robust
+
+/-! ### The moments and the Vlasov right-hand side in the core vocabulary
+
+The moment `∫ ζ f dv` of the grid is the core quadrature moment for the velocity weights `q.wv`,
+and the discrete Vlasov right-hand side with a frozen field value is an instance of the core
+operator `Kinetic.streaming`. The local definitions stay: they are the core notions at the
+fields of the structure `Grid`. -/
+
+section KineticCore
+
+open scoped LeanDLRA.Frobenius
+
+/-- The moment `∫ ζ f dv` of the grid is the core quadrature moment for the velocity weights
+`q.wv`. -/
+theorem Grid.density_eq_quadMoment {Mx Mv : Type*} [Fintype Mv] (q : Grid Mx Mv) (ζ : Mv → ℝ)
+    (f : Matrix Mx Mv ℝ) : q.density ζ f = Kinetic.quadMoment q.wv ζ f :=
+  rfl
+
+/-- For `ζ = 1` the moment of the grid is the core density. -/
+theorem Grid.density_one_eq_density {Mx Mv : Type*} [Fintype Mv] (q : Grid Mx Mv)
+    (f : Matrix Mx Mv ℝ) : q.density 1 f = Kinetic.density q.wv f :=
+  rfl
+
+/-- **The Vlasov right-hand side through the core**: at a given `f`, with the field value `E[f]`,
+`D[f] = -v ∂ₓ f + E[f] ∂ᵥ f` is the core streaming operator `Y ↦ ∑ₖ Dₖ Y Mₖ` applied to `f`, with
+the two terms `(-dx, diag v)` and `(diag E[f], dvᵀ)`. The field depends on `f`, so this is a
+statement about the value at `f`, not about linearity of `f ↦ D[f]`. -/
+theorem vlasovRHS_eq_streaming {Mx Mv : Type*} [Fintype Mx] [Fintype Mv] [DecidableEq Mx]
+    [DecidableEq Mv] (vel : Mv → ℝ) (dx : Matrix Mx Mx ℝ) (dv : Matrix Mv Mv ℝ)
+    (E : Matrix Mx Mv ℝ → Mx → ℝ) (f : Matrix Mx Mv ℝ) :
+    vlasovRHS vel dx dv E f
+      = Kinetic.streaming ![-dx, diagonal (E f)] ![diagonal vel, dvᵀ] f := by
+  rw [Kinetic.streaming_apply, Fin.sum_univ_two]
+  ext x v
+  change -(vel v * (dx * f) x v) + E f x * (f * dvᵀ) x v
+    = (-dx * f * diagonal vel + diagonal (E f) * f * dvᵀ) x v
+  rw [Matrix.add_apply, Matrix.mul_diagonal, Matrix.neg_mul, Matrix.neg_apply,
+    Matrix.mul_assoc (diagonal (E f)), Matrix.diagonal_mul]
+  ring
+
+/-- The moment bridges at nonzero data: on `vpGrid` (velocity weights `1/2`) the profile `(0, 1)`
+has the core moment `1` against the velocities `v = ∓2` and the core density `1/2`. -/
+example :
+    Kinetic.quadMoment vpGrid.wv vpVel (Matrix.of fun _ : Fin 4 => ![0, 1]) 0 = 1 ∧
+      Kinetic.density vpGrid.wv (Matrix.of fun _ : Fin 4 => ![0, 1]) 0 = 1 / 2 := by
+  rw [← Grid.density_eq_quadMoment, ← Grid.density_one_eq_density]
+  norm_num [Grid.density, vpGrid, vpVel, Fin.sum_univ_two, Matrix.of_apply]
+
+/-- The streaming bridge at nonzero data: the discrete Vlasov-Poisson right-hand side `vpD` at
+`f` is the core streaming operator with the centred difference `vpDx`, the velocities `∓2`, the
+field value `vpE f` and the velocity derivative `vpDv`. -/
+example (f : Matrix (Fin 4) (Fin 2) ℝ) :
+    vpD f = Kinetic.streaming ![-vpDx, diagonal (vpE f)] ![diagonal vpVel, vpDvᵀ] f :=
+  vlasovRHS_eq_streaming vpVel vpDx vpDv vpE f
+
+end KineticCore
 
 end LeanDLRA.Literature.P2101_12571

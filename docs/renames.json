@@ -140,5 +140,11 @@
   "LeanDLRA.OpenProblems.TensorNetworks.tucker_ksl_local_error_inexact": "LeanDLRA.tucker_ksl_local_error_inexact",
   "LeanDLRA.OpenProblems.TensorNetworks.ttn_ksl_local_error": "LeanDLRA.ttn_ksl_local_error",
   "LeanDLRA.OpenProblems.TensorNetworks.ttn_ksl_global_error": "LeanDLRA.ttn_ksl_global_error",
-  "LeanDLRA.OpenProblems.TensorNetworks.tucker_ksl_exact": "LeanDLRA.tucker_ksl_exact"
+  "LeanDLRA.OpenProblems.TensorNetworks.tucker_ksl_exact": "LeanDLRA.tucker_ksl_exact",
+  "LeanDLRA.Literature.P2212_12012.Dp": "LeanDLRA.Kinetic.fwdDiff",
+  "LeanDLRA.Literature.P2212_12012.Dm": "LeanDLRA.Kinetic.bwdDiff",
+  "LeanDLRA.Literature.P2212_12012.Dp_mul_apply": "LeanDLRA.Kinetic.fwdDiff_mul_apply",
+  "LeanDLRA.Literature.P2212_12012.Dm_mul_apply": "LeanDLRA.Kinetic.bwdDiff_mul_apply",
+  "LeanDLRA.Literature.P2212_12012.Dm_transpose": "LeanDLRA.Kinetic.bwdDiff_transpose",
+  "LeanDLRA.Literature.P2212_12012.Dp_transpose": "LeanDLRA.Kinetic.fwdDiff_transpose"
 }

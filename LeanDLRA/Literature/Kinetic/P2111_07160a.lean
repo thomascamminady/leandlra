@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Stencils
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Classical.EckartYoung
@@ -1208,5 +1209,148 @@ example : ({ cexScheme with ρ := fun _ => 2 } : PNScheme (Fin 2) (Fin 2)).CFL 2
   cfly k := by fin_cases k <;> simp [cexScheme]
 
 end Counterexample
+
+/-! ### The streaming scheme in the core vocabulary
+
+On the periodic one-dimensional grid `ZMod N` with the neighbour map `i ↦ i + 1`, the stencil
+`T^{(2)}` is the core central difference and `T^{(1)}` is a multiple of the core second
+difference. The flux `F` is an instance of the core operator `Kinetic.streaming`, the explicit
+Euler update is the core `eulerStep`, the fixed-rank S-step (34c) is the core Galerkin Euler step
+`galerkinEulerStep` with the projection `P_X ∘ P_W`, and the augmented S-step is the projected
+core Euler step. -/
+
+section KineticCore
+
+open scoped LeanDLRA.Frobenius
+
+/-- The inverse of the neighbour map `i ↦ i + 1` on `ZMod N` is `i ↦ i - 1`. -/
+private theorem inv_addRight_one_apply {N : ℕ} (i : ZMod N) :
+    (Equiv.addRight (1 : ZMod N) : Equiv.Perm (ZMod N))⁻¹ i = i - 1 :=
+  Equiv.Perm.inv_eq_iff_eq.mpr (sub_add_cancel i 1).symm
+
+/-- On the periodic grid `ZMod N` with the neighbour map `i ↦ i + 1`, the stencil `T^{(2)}` is
+the core central difference. -/
+theorem T2_addRight_eq_centralDiff (N : ℕ) [NeZero N] (Δ : ℝ) :
+    T2 (Equiv.addRight (1 : ZMod N)) Δ = Kinetic.centralDiff N Δ := by
+  have key : ∀ M : Matrix (ZMod N) (ZMod N) ℝ,
+      T2 (Equiv.addRight (1 : ZMod N)) Δ * M = Kinetic.centralDiff N Δ * M := fun M => by
+    ext i k
+    rw [T2_mul_apply, Kinetic.centralDiff_mul_apply, inv_addRight_one_apply]
+    simp only [Equiv.coe_addRight]
+  have h := key 1
+  rwa [Matrix.mul_one, Matrix.mul_one] at h
+
+/-- On the periodic grid `ZMod N` with the neighbour map `i ↦ i + 1`, the stencil `T^{(1)}`
+(the numerical diffusion of the Roe flux) is the core second difference times `-Δ / 2`: the
+paper divides `2 vᵢ - vᵢ₊₁ - vᵢ₋₁` by `2 Δ`, the core stencil has the opposite sign and divides
+by `Δ ^ 2`. -/
+theorem T1_addRight_eq_smul_secondDiff (N : ℕ) [NeZero N] (Δ : ℝ) :
+    T1 (Equiv.addRight (1 : ZMod N)) Δ = -(Δ / 2) • Kinetic.secondDiff N Δ := by
+  have scale : ∀ x : ℝ, -(Δ / 2) * (x / Δ ^ 2) = -x / (2 * Δ) := fun x => by
+    rcases eq_or_ne Δ 0 with rfl | h
+    · simp
+    · rw [neg_mul, div_mul_div_comm, pow_two, ← mul_assoc (2 : ℝ), mul_comm Δ x,
+        mul_div_mul_right _ _ h, neg_div]
+  have key : ∀ M : Matrix (ZMod N) (ZMod N) ℝ,
+      T1 (Equiv.addRight (1 : ZMod N)) Δ * M = (-(Δ / 2) • Kinetic.secondDiff N Δ) * M :=
+    fun M => by
+      ext i k
+      rw [T1_mul_apply, Matrix.smul_mul, Matrix.smul_apply, Kinetic.secondDiff_mul_apply,
+        inv_addRight_one_apply, smul_eq_mul, scale]
+      simp only [Equiv.coe_addRight]
+      congr 1
+      ring
+  have h := key 1
+  rwa [Matrix.mul_one, Matrix.mul_one] at h
+
+/-- On three cells with `Δ = 1/2`, read off through the core stencils: `T^{(2)}(0, 1) = 1` and
+`T^{(1)}(0, 1) = -1`. -/
+example : T2 (Equiv.addRight (1 : ZMod 3)) (1 / 2) 0 1 = 1 ∧
+    T1 (Equiv.addRight (1 : ZMod 3)) (1 / 2) 0 1 = -1 := by
+  rw [T2_addRight_eq_centralDiff, T1_addRight_eq_smul_secondDiff, Matrix.smul_apply,
+    Kinetic.centralDiff, Kinetic.secondDiff, Matrix.of_apply, Matrix.of_apply,
+    ite_eq_left (by decide), ite_eq_right (by decide), ite_eq_right (by decide)]
+  norm_num
+
+variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
+
+/-- **The flux through the core**: the flux `F(u)` of Sec. 2.4 is the core streaming operator
+`Y ↦ ∑ₖ Dₖ Y Mₖ` with the four terms `(L⁽²⁾ₓ, Aₓᵀ)`, `(L⁽²⁾ᵧ, Aᵧᵀ)`, `(L⁽¹⁾ₓ, |Aₓ|ᵀ)`,
+`(L⁽¹⁾ᵧ, |Aᵧ|ᵀ)`. -/
+theorem PNScheme.flux_eq_streaming (S : PNScheme ι κ) (u : Matrix ι κ ℝ) :
+    S.flux u = Kinetic.streaming ![S.L2x, S.L2y, S.L1x, S.L1y]
+      ![S.Axᵀ, S.Ayᵀ, S.absAxᵀ, S.absAyᵀ] u := by
+  rw [Kinetic.streaming_apply, Fin.sum_univ_four]
+  rfl
+
+/-- The explicit Euler update `u - Δt F(u)` is the core Euler step of the field `-F`. -/
+theorem PNScheme.euler_eq_eulerStep (S : PNScheme ι κ) (Δt : ℝ) (u : Matrix ι κ ℝ) :
+    S.euler Δt u = eulerStep (fun u => -S.flux u) Δt u := by
+  simp [eulerStep, PNScheme.euler, sub_eq_add_neg]
+
+/-- **The fixed-rank S-step (34c) as one core step**: for new bases with orthonormal columns,
+`X^{1/2} S^{1/2} W^{1/2,T}` is the core Galerkin Euler step `P (ū - Δt F(ū))`, `ū = P u⁰`, with
+the projection `P = P_X ∘ P_W` and the old value `u⁰ = X⁰ S⁰ W⁰ᵀ`. -/
+theorem bugStreamS_eq_galerkinEulerStep (S : PNScheme ι κ) (Δt : ℝ) {r₀ r : Type*}
+    [Fintype r₀] [Fintype r] [DecidableEq r] (X₀ : Matrix ι r₀ ℝ) (S₀ : Matrix r₀ r₀ ℝ)
+    (W₀ : Matrix κ r₀ ℝ) {X : Matrix ι r ℝ} {W : Matrix κ r ℝ} (hX : Xᵀ * X = 1)
+    (hW : Wᵀ * W = 1) :
+    X * bugStreamS S Δt X₀ S₀ W₀ X W * Wᵀ
+      = galerkinEulerStep ((leftProj (n := κ) X).comp (rightProj (m := ι) W))
+          (fun u => -S.flux u) Δt (X₀ * S₀ * W₀ᵀ) := by
+  set St := galerkinStart X₀ S₀ W₀ X W with hSt
+  set Y := X * St * Wᵀ with hY
+  have hXY : Xᵀ * Y * W = St := by
+    rw [hY, ← Matrix.mul_assoc, ← Matrix.mul_assoc, hX, Matrix.one_mul, Matrix.mul_assoc,
+      hW, Matrix.mul_one]
+  have e : bugStreamS S Δt X₀ S₀ W₀ X W = Xᵀ * S.euler Δt Y * W := by
+    rw [bugStreamS, ← hSt, ← hY, PNScheme.euler, Matrix.mul_sub, Matrix.sub_mul, hXY,
+      Matrix.mul_smul, Matrix.smul_mul]
+  have hstep : X * bugStreamS S Δt X₀ S₀ W₀ X W * Wᵀ = leftProj X (rightProj W
+      (eulerStep (fun u => -S.flux u) Δt (leftProj X (rightProj W (X₀ * S₀ * W₀ᵀ))))) := by
+    rw [leftProj_rightProj_apply, leftProj_rightProj_apply, ← galerkinStart, ← hSt, ← hY,
+      ← PNScheme.euler_eq_eulerStep, e]
+  exact hstep
+
+/-- The augmented S-step is the core Euler step of `-F` from `u⁰ = X⁰ S⁰ W⁰ᵀ`, read in the
+augmented bases. -/
+theorem augStreamS_eq_eulerStep (S : PNScheme ι κ) (Δt : ℝ) {r₀ r : Type*} [Fintype r₀]
+    [Fintype r] (X₀ : Matrix ι r₀ ℝ) (S₀ : Matrix r₀ r₀ ℝ) (W₀ : Matrix κ r₀ ℝ)
+    (Xa : Matrix ι r ℝ) (Wa : Matrix κ r ℝ) :
+    augStreamS S Δt X₀ S₀ W₀ Xa Wa
+      = Xaᵀ * eulerStep (fun u => -S.flux u) Δt (X₀ * S₀ * W₀ᵀ) * Wa := by
+  rw [← PNScheme.euler_eq_eulerStep, augStreamS, PNScheme.euler, Matrix.mul_sub, Matrix.sub_mul,
+    Matrix.mul_smul, Matrix.smul_mul]
+
+/-- **The augmented step before truncation as a projected core step**:
+`X̂ Ŝ^{1/2} Ŵᵀ = P_X̂ P_Ŵ (u⁰ - Δt F(u⁰))`, the projection of one core Euler step. No
+orthonormality is needed. -/
+theorem mul_augStreamS_mul_eq_proj_eulerStep (S : PNScheme ι κ) (Δt : ℝ) {r₀ r : Type*}
+    [Fintype r₀] [Fintype r] (X₀ : Matrix ι r₀ ℝ) (S₀ : Matrix r₀ r₀ ℝ) (W₀ : Matrix κ r₀ ℝ)
+    (Xa : Matrix ι r ℝ) (Wa : Matrix κ r ℝ) :
+    Xa * augStreamS S Δt X₀ S₀ W₀ Xa Wa * Waᵀ
+      = leftProj Xa (rightProj Wa (eulerStep (fun u => -S.flux u) Δt (X₀ * S₀ * W₀ᵀ))) := by
+  rw [leftProj_rightProj_apply, augStreamS_eq_eulerStep]
+
+/-- The flux bridge in use: for every scheme on three cells and two moments the flux is additive,
+because it is an instance of a continuous linear map. -/
+example (S : PNScheme (ZMod 3) (Fin 2)) (u v : Matrix (ZMod 3) (Fin 2) ℝ) :
+    S.flux (u + v) = S.flux u + S.flux v := by
+  simp only [PNScheme.flux_eq_streaming, map_add]
+
+/-- The step bridges at nonzero data: with the full bases `X = W = 1` and the start value
+`u⁰ = S⁰ = 2 I`, the fixed-rank S-step is one core Galerkin Euler step and the
+augmented S-step is the projected core Euler step. -/
+example (S : PNScheme (Fin 2) (Fin 2)) (I : Matrix (Fin 2) (Fin 2) ℝ) (hI : I = 1) :
+    I * bugStreamS S (1 / 2) I (I + I) I I I * Iᵀ
+        = galerkinEulerStep ((leftProj (n := Fin 2) I).comp (rightProj (m := Fin 2) I))
+            (fun u => -S.flux u) (1 / 2) (I * (I + I) * Iᵀ) ∧
+      I * augStreamS S (1 / 2) I (I + I) I I I * Iᵀ
+        = leftProj I (rightProj I
+            (eulerStep (fun u => -S.flux u) (1 / 2) (I * (I + I) * Iᵀ))) :=
+  ⟨bugStreamS_eq_galerkinEulerStep S _ _ _ _ (by simp [hI]) (by simp [hI]),
+    mul_augStreamS_mul_eq_proj_eulerStep S _ _ _ _ _ _⟩
+
+end KineticCore
 
 end LeanDLRA.Literature.P2111_07160

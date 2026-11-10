@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Defs
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.OpenProblems.Conservation.Part3c
 
@@ -2151,5 +2152,100 @@ theorem sample_nonvacuous {K : ℕ} (σ : Fin K → Fin 1 → Fin 3 → ℝ) (τ
       fun _ => sample_firstIds _, fun _ => sample_firstIds _⟩, hst _⟩⟩
 
 end Instance
+
+/-! ### The moments and the transport operator in the core vocabulary
+
+The moments of the grid are the core quadrature moments for the velocity weights `G.wv`, and the
+transport operator with a frozen field is minus an instance of the core operator
+`Kinetic.streaming`. The local definitions stay: they are the core notions at the fields of the
+structure `Grid`. -/
+
+section KineticCore
+
+open scoped LeanDLRA.Frobenius
+
+/-- The pairing `(p, f(x, ·))_v` is the core quadrature moment of `p` at `x`, for the velocity
+weights `G.wv`. -/
+theorem Grid.pair_eq_quadMoment {X V : Type*} {d : ℕ} [Fintype V] (G : Grid X V d) (p : V → ℝ)
+    (f : Matrix X V ℝ) (x : X) : G.pair p (f x) = Kinetic.quadMoment G.wv p f x :=
+  rfl
+
+/-- The density of the grid is the core density for the velocity weights `G.wv`. -/
+theorem Grid.dens_eq_density {X V : Type*} {d : ℕ} [Fintype V] (G : Grid X V d)
+    (f : Matrix X V ℝ) : G.dens f = Kinetic.density G.wv f :=
+  rfl
+
+/-- The current `Jᵢ` is the core quadrature moment of the velocity component `vᵢ`. -/
+theorem Grid.cur_eq_quadMoment {X V : Type*} {d : ℕ} [Fintype V] (G : Grid X V d)
+    (f : Matrix X V ℝ) (i : Fin d) : G.cur f i = Kinetic.quadMoment G.wv (G.node i) f :=
+  rfl
+
+/-- The stress `Πᵢⱼ` is the core quadrature moment of `vᵢ vⱼ`. -/
+theorem Grid.stress_eq_quadMoment {X V : Type*} {d : ℕ} [Fintype V] (G : Grid X V d)
+    (f : Matrix X V ℝ) (i j : Fin d) :
+    G.stress f i j = Kinetic.quadMoment G.wv (G.node i * G.node j) f :=
+  rfl
+
+/-- The kinetic energy density is half the core quadrature moment of `|v|²`. -/
+theorem Grid.kin_eq_quadMoment {X V : Type*} {d : ℕ} [Fintype V] (G : Grid X V d)
+    (f : Matrix X V ℝ) (x : X) : G.kin f x = 1 / 2 * Kinetic.quadMoment G.wv G.speed2 f x :=
+  rfl
+
+/-- The energy flux `Qⱼ` is half the core quadrature moment of `vⱼ |v|²`. -/
+theorem Grid.heat_eq_quadMoment {X V : Type*} {d : ℕ} [Fintype V] (G : Grid X V d)
+    (f : Matrix X V ℝ) (j : Fin d) (x : X) :
+    G.heat f j x = 1 / 2 * Kinetic.quadMoment G.wv (G.node j * G.speed2) f x :=
+  rfl
+
+/-- **The transport operator through the core**: `D(f) = -v·∇ₓ f - E·∇ᵥ f` with a frozen field
+`E` is minus the core streaming operator `Y ↦ ∑ₖ Dₖ Y Mₖ` with the `2 d` terms `(∂ₓᵢ, diag vᵢ)`
+and `(diag Eᵢ, ∂ᵥᵢᵀ)`, the discrete derivatives written as matrices. -/
+theorem Grid.transport_eq_neg_streaming {X V : Type*} {d : ℕ} [Fintype X] [Fintype V]
+    [DecidableEq X] [DecidableEq V] (G : Grid X V d) (E : Fin d → X → ℝ) (f : Matrix X V ℝ) :
+    G.transport E f = -Kinetic.streaming
+      (Sum.elim (fun i => LinearMap.toMatrix' (G.Dx i)) fun i => diagonal (E i))
+      (Sum.elim (fun i => diagonal (G.node i)) fun i => (LinearMap.toMatrix' (G.Dv i))ᵀ) f := by
+  have hx : ∀ (i : Fin d) (x : X) (v : V),
+      (LinearMap.toMatrix' (G.Dx i) * f * diagonal (G.node i)) x v
+        = G.node i v * G.Dx i (fun y => f y v) x := fun i x v => by
+    have h : (LinearMap.toMatrix' (G.Dx i) * f) x v = G.Dx i (fun y => f y v) x :=
+      congrFun (LinearMap.toMatrix'_mulVec (G.Dx i) fun y => f y v) x
+    rw [Matrix.mul_diagonal, h]
+    exact mul_comm _ _
+  have hv : ∀ (i : Fin d) (x : X) (v : V),
+      (diagonal (E i) * f * (LinearMap.toMatrix' (G.Dv i))ᵀ) x v
+        = E i x * G.Dv i (f x) v := fun i x v => by
+    have h1 : (diagonal (E i) * f) x = E i x • f x :=
+      funext fun v' => Matrix.diagonal_mul (E i) f x v'
+    have h2 : (diagonal (E i) * f * (LinearMap.toMatrix' (G.Dv i))ᵀ) x v
+        = (LinearMap.toMatrix' (G.Dv i) *ᵥ (diagonal (E i) * f) x) v :=
+      congrFun (Matrix.vecMul_transpose (LinearMap.toMatrix' (G.Dv i))
+        ((diagonal (E i) * f) x)) v
+    rw [h2, h1, LinearMap.toMatrix'_mulVec, map_smul, Pi.smul_apply, smul_eq_mul]
+  ext x v
+  simp only [Kinetic.streaming_apply, Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr,
+    Matrix.neg_apply, Matrix.add_apply, Matrix.sum_apply, hx, hv, Grid.transport]
+  ring
+
+/-- The moment bridges at nonzero data: on `sampleGrid` (nodes `-1, 0, 1`, unit weights) the
+profile `(1, 2, 4)` has the core density `7`, the core current `3` and the core stress `5`. -/
+example :
+    Kinetic.density sampleGrid.wv (Matrix.of fun _ : Fin 3 => ![1, 2, 4]) 0 = 7 ∧
+      Kinetic.quadMoment sampleGrid.wv (sampleGrid.node 0)
+        (Matrix.of fun _ : Fin 3 => ![1, 2, 4]) 0 = 3 ∧
+      Kinetic.quadMoment sampleGrid.wv (sampleGrid.node 0 * sampleGrid.node 0)
+        (Matrix.of fun _ : Fin 3 => ![1, 2, 4]) 0 = 5 := by
+  rw [← Grid.dens_eq_density, ← Grid.cur_eq_quadMoment, ← Grid.stress_eq_quadMoment]
+  norm_num [Grid.dens, Grid.cur, Grid.stress, Grid.pair, sampleGrid, Fin.sum_univ_three,
+    Matrix.of_apply]
+
+/-- The transport bridge in use: on `sampleGrid` (nodes `-1, 0, 1`, the centred difference in
+`x`) the transport operator with a frozen field is additive, because it is minus a continuous
+linear map. -/
+example (E : Fin 1 → Fin 3 → ℝ) (f g : Matrix (Fin 3) (Fin 3) ℝ) :
+    sampleGrid.transport E (f + g) = sampleGrid.transport E f + sampleGrid.transport E g := by
+  simp only [Grid.transport_eq_neg_streaming, map_add, neg_add]
+
+end KineticCore
 
 end LeanDLRA.Literature.P2608_00397

@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Stencils
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Stability.Conservation
 
@@ -67,6 +68,20 @@ one full step of the coupled implicit scheme (16) with conservative truncation (
 * The paper describes `⟨·⟩_μ` only in words, as integration over `μ ∈ [-1, 1]` (Section 2.1), and
   calls the `P_n` normalized Legendre polynomials, so the weight `w` is a parameter.  Checked
   against the arXiv v2 PDF.
+
+## Core vocabulary
+
+* The central difference `Dˣ` is the core matrix `Kinetic.centralDiff n Δx`; the lemmas
+  `Dx_mul_apply` and `Dx_transpose` keep their names and are the core lemmas
+  `Kinetic.centralDiff_mul_apply` and `Kinetic.centralDiff_transpose` at this grid.
+* `Dxx` and `Dplus` carry the paper's scalings `1 / (2 Δx)` and `1 / √(2 Δx)`, so they are
+  multiples of the core stencils: `Dxx_eq_smul_secondDiff`, `Dplus_eq_smul_fwdDiff`.
+* `transport` and `flux` are instances of the core operator `Kinetic.streaming`:
+  `transport_eq_streaming`, `flux_eq_streaming`.
+* The Galerkin form of `u★` is one core step `galerkinEulerStep` with the projection
+  `P_X ∘ P_V` (`IsCoupledStep.uStar_eq_galerkinEulerStep`), the explicit K-step (16a) is the core
+  step `kslK` (`kStar_mul_transpose_eq_kslK`), and the conservative truncation is the core map
+  `consTrunc` (`IsConservativeTruncation.eq_consTrunc`).
 -/
 
 open Set Filter Topology Finset
@@ -74,11 +89,12 @@ open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius
 
 namespace LeanDLRA.Literature.P2307_07538
 
+open LeanDLRA.Kinetic (centralDiff)
+
 /-! ### Periodic stencils and summation by parts -/
 
-/-- The central first difference `(Dˣ y)ₚ = (yₚ₊₁ - yₚ₋₁) / (2 Δx)` on a periodic grid. -/
-noncomputable def Dx (n : ℕ) [NeZero n] (Δx : ℝ) : Matrix (ZMod n) (ZMod n) ℝ :=
-  Matrix.of fun p q => ((if q = p + 1 then 1 else 0) - (if q = p - 1 then 1 else 0)) / (2 * Δx)
+/-! The central first difference `(Dˣ y)ₚ = (yₚ₊₁ - yₚ₋₁) / (2 Δx)` on a periodic grid is the
+core matrix `Kinetic.centralDiff n Δx`. -/
 
 /-- The stabilizing second difference `(Dˣˣ y)ₚ = (yₚ₊₁ - 2 yₚ + yₚ₋₁) / (2 Δx)`. -/
 noncomputable def Dxx (n : ℕ) [NeZero n] (Δx : ℝ) : Matrix (ZMod n) (ZMod n) ℝ :=
@@ -106,10 +122,8 @@ variable {κ : Type*}
 
 /-- The stencil of `Dˣ` (arXiv 2307.07538, Section 3), acting on the columns of `u`. -/
 theorem Dx_mul_apply (Δx : ℝ) (u : Matrix (ZMod n) κ ℝ) (p : ZMod n) (k : κ) :
-    (Dx n Δx * u) p k = (u (p + 1) k - u (p - 1) k) / (2 * Δx) := by
-  simp only [Matrix.mul_apply, Dx, Matrix.of_apply, div_mul_eq_mul_div, ← Finset.sum_div,
-    sub_mul, Finset.sum_sub_distrib, ite_mul, one_mul, zero_mul, Finset.sum_ite_eq',
-    Finset.mem_univ, ite_true]
+    (centralDiff n Δx * u) p k = (u (p + 1) k - u (p - 1) k) / (2 * Δx) :=
+  Kinetic.centralDiff_mul_apply u p k
 
 /-- The stencil of `Dˣˣ` (arXiv 2307.07538, Section 3), acting on the columns of `u`. -/
 theorem Dxx_mul_apply (Δx : ℝ) (u : Matrix (ZMod n) κ ℝ) (p : ZMod n) (k : κ) :
@@ -134,13 +148,10 @@ theorem Dplus_transpose_mul_apply (Δx : ℝ) (u : Matrix (ZMod n) κ ℝ) (p : 
 
 end Stencil
 
+omit [NeZero n] in
 /-- **Lemma 1** (arXiv 2307.07538, first part): `Dˣ` is skew. -/
-theorem Dx_transpose (Δx : ℝ) : (Dx n Δx)ᵀ = -Dx n Δx := by
-  ext p q
-  have h1 := iff_add_one p q
-  have h2 := iff_sub_one p q
-  simp only [Matrix.transpose_apply, Dx, Matrix.of_apply, Matrix.neg_apply, h1, h2]
-  ring
+theorem Dx_transpose (Δx : ℝ) : (centralDiff n Δx)ᵀ = -centralDiff n Δx :=
+  Kinetic.centralDiff_transpose
 
 /-- **Lemma 1** (arXiv 2307.07538, second part): `Dˣˣ` is symmetric. -/
 theorem Dxx_transpose (Δx : ℝ) : (Dxx n Δx)ᵀ = Dxx n Δx := by
@@ -168,13 +179,13 @@ theorem Dxx_eq {Δx : ℝ} (hΔx : 0 < Δx) : Dxx n Δx = -((Dplus n Δx)ᵀ * D
 
 /-- **Lemma 1** (arXiv 2307.07538), bilinear form of skewness: `y ⬝ Dˣ z = -z ⬝ Dˣ y`. -/
 theorem Dx_bilinear (Δx : ℝ) (y z : ZMod n → ℝ) :
-    y ⬝ᵥ (Dx n Δx *ᵥ z) = -(z ⬝ᵥ (Dx n Δx *ᵥ y)) := by
-  have h : y ᵥ* Dx n Δx = -(Dx n Δx *ᵥ y) := by
+    y ⬝ᵥ (centralDiff n Δx *ᵥ z) = -(z ⬝ᵥ (centralDiff n Δx *ᵥ y)) := by
+  have h : y ᵥ* centralDiff n Δx = -(centralDiff n Δx *ᵥ y) := by
     rw [← Matrix.mulVec_transpose, Dx_transpose, Matrix.neg_mulVec]
   rw [Matrix.dotProduct_mulVec, h, neg_dotProduct, dotProduct_comm]
 
 /-- **Lemma 1** (arXiv 2307.07538): `z ⬝ Dˣ z = 0`. -/
-theorem Dx_quadratic (Δx : ℝ) (z : ZMod n → ℝ) : z ⬝ᵥ (Dx n Δx *ᵥ z) = 0 := by
+theorem Dx_quadratic (Δx : ℝ) (z : ZMod n → ℝ) : z ⬝ᵥ (centralDiff n Δx *ᵥ z) = 0 := by
   have := Dx_bilinear Δx z z
   linarith
 
@@ -407,7 +418,7 @@ variable {A Q : Matrix (Fin N) (Fin N) ℝ} {s : Fin N → ℝ} {κ : Type*} [Fi
 /-- The flux of Lemma 2, in the paper's index form `(Dˣ)ᵀ u A - (Dˣˣ)ᵀ u |A|`. -/
 noncomputable def flux (Δx : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
     (u : Matrix (ZMod n) (Fin N) ℝ) : Matrix (ZMod n) (Fin N) ℝ :=
-  (Dx n Δx)ᵀ * u * A - (Dxx n Δx)ᵀ * u * Aa
+  (centralDiff n Δx)ᵀ * u * A - (Dxx n Δx)ᵀ * u * Aa
 
 /-- The squared flux in the eigenbasis of `A`: with `ũ = u Q` and the forward differences
 `δ = ũ_{p+1,k} - ũ_{p,k}`, `‖flux‖² = ∑ σ_k² δ² / Δx²`. -/
@@ -420,7 +431,7 @@ theorem norm_flux_sq (d : IsEigenDecomp A Q s) {Δx : ℝ} (hΔx : Δx ≠ 0)
       (by rw [Matrix.transpose_transpose]; exact d.orth') (flux Δx A (absA Q s) u)
     rwa [Matrix.transpose_transpose] at this
   have hM : flux Δx A (absA Q s) u * Q
-      = -(Dx n Δx * (u * Q) * Matrix.diagonal s)
+      = -(centralDiff n Δx * (u * Q) * Matrix.diagonal s)
         - Dxx n Δx * (u * Q) * Matrix.diagonal fun k => |s k| := by
     have h1 : A * Q = Q * Matrix.diagonal s := by rw [d.eq, specFn_mul_Q d.orth]
     have h2 : absA Q s * Q = Q * Matrix.diagonal (fun k => |s k|) := specFn_mul_Q d.orth _
@@ -505,7 +516,7 @@ theorem lemma2 {w : ℝ} {P : Fin N → ℝ → ℝ} (hP : IsOrthonormalFamily w
 `(Dˣ)ᵀ u A - (Dˣˣ)ᵀ u |A|`.  It follows by applying `lemma2_sharp` to `-A`. -/
 theorem lemma2_sharp' (d : IsEigenDecomp A Q s) {Δx Δt : ℝ} (hΔx : 0 < Δx)
     (hcfl : ∀ k, Δt * |s k| ≤ Δx) (u : Matrix (ZMod n) (Fin N) ℝ) :
-    Δt / 2 * ‖Dx n Δx * u * A - Dxx n Δx * u * absA Q s‖ ^ 2
+    Δt / 2 * ‖centralDiff n Δx * u * A - Dxx n Δx * u * absA Q s‖ ^ 2
       - ‖Dplus n Δx * u * sqrtAbsA Q s‖ ^ 2 ≤ 0 := by
   have d' : IsEigenDecomp (-A) Q (fun k => -s k) := ⟨d.orth, by
     rw [d.eq, specFn, specFn, ← Matrix.diagonal_neg, Matrix.mul_neg, Matrix.neg_mul]⟩
@@ -513,8 +524,8 @@ theorem lemma2_sharp' (d : IsEigenDecomp A Q s) {Δx Δt : ℝ} (hΔx : 0 < Δx)
   have hsq : sqrtAbsA Q (fun k => -s k) = sqrtAbsA Q s := by simp [sqrtAbsA]
   have := lemma2_sharp d' hΔx (by simpa using hcfl) u
   rw [hab, hsq, flux, Dx_transpose, Dxx_transpose] at this
-  have e : -Dx n Δx * u * -A - Dxx n Δx * u * absA Q s
-      = Dx n Δx * u * A - Dxx n Δx * u * absA Q s := by
+  have e : -centralDiff n Δx * u * -A - Dxx n Δx * u * absA Q s
+      = centralDiff n Δx * u * A - Dxx n Δx * u * absA Q s := by
     simp [Matrix.neg_mul, Matrix.mul_neg]
   rwa [e] at this
 
@@ -522,7 +533,7 @@ theorem lemma2_sharp' (d : IsEigenDecomp A Q s) {Δx Δt : ℝ} (hΔx : 0 < Δx)
 theorem lemma2' {w : ℝ} {P : Fin N → ℝ → ℝ} (hP : IsOrthonormalFamily w P)
     (d : IsEigenDecomp (momentMatrix w P) Q s) {Δx Δt : ℝ} (hΔx : 0 < Δx) (hΔt : 0 ≤ Δt)
     (hcfl : Δt ≤ Δx) (u : Matrix (ZMod n) (Fin N) ℝ) :
-    Δt / 2 * ‖Dx n Δx * u * momentMatrix w P - Dxx n Δx * u * absA Q s‖ ^ 2
+    Δt / 2 * ‖centralDiff n Δx * u * momentMatrix w P - Dxx n Δx * u * absA Q s‖ ^ 2
       - ‖Dplus n Δx * u * sqrtAbsA Q s‖ ^ 2 ≤ 0 :=
   lemma2_sharp' d hΔx (fun k => by
     nlinarith [d.abs_le_one hP k, abs_nonneg (s k)]) u
@@ -622,20 +633,21 @@ variable {A Q : Matrix (Fin N) (Fin N) ℝ} {s : Fin N → ℝ}
 /-- The transport operator `G u = -Dˣ u A + Dˣˣ u |A|`. -/
 noncomputable def transport (Δx : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
     (u : Matrix (ZMod n) (Fin N) ℝ) : Matrix (ZMod n) (Fin N) ℝ :=
-  -(Dx n Δx * u * A) + Dxx n Δx * u * Aa
+  -(centralDiff n Δx * u * A) + Dxx n Δx * u * Aa
 
 /-- Testing the transport operator with `u`: advection drops out and the stabilization gives
 `⟪G u, u⟫ = -‖D⁺ u |A|^{1/2}‖²`.  This is steps 2-4 of the proof of Theorem 1 of the paper. -/
 theorem inner_transport_self (d : IsEigenDecomp A Q s) {Δx : ℝ} (hΔx : 0 < Δx)
     (u : Matrix (ZMod n) (Fin N) ℝ) :
     ⟪transport Δx A (absA Q s) u, u⟫ = -‖Dplus n Δx * u * sqrtAbsA Q s‖ ^ 2 := by
-  have h1 : ⟪Dx n Δx * u * A, u⟫ = 0 := by
-    have e : ⟪Dx n Δx * u * A, u⟫ = -⟪Dx n Δx * u * A, u⟫ := by
-      calc ⟪Dx n Δx * u * A, u⟫ = ⟪Dx n Δx * u, u * Aᵀ⟫ := Frobenius.inner_mul_right _ _ _
-        _ = ⟪u, (Dx n Δx)ᵀ * (u * Aᵀ)⟫ := Frobenius.inner_mul_left _ _ _
-        _ = -⟪u, Dx n Δx * (u * A)⟫ := by
+  have h1 : ⟪centralDiff n Δx * u * A, u⟫ = 0 := by
+    have e : ⟪centralDiff n Δx * u * A, u⟫ = -⟪centralDiff n Δx * u * A, u⟫ := by
+      calc ⟪centralDiff n Δx * u * A, u⟫ = ⟪centralDiff n Δx * u, u * Aᵀ⟫ :=
+        Frobenius.inner_mul_right _ _ _
+        _ = ⟪u, (centralDiff n Δx)ᵀ * (u * Aᵀ)⟫ := Frobenius.inner_mul_left _ _ _
+        _ = -⟪u, centralDiff n Δx * (u * A)⟫ := by
             rw [Dx_transpose, d.symm, Matrix.neg_mul, inner_neg_right]
-        _ = -⟪Dx n Δx * u * A, u⟫ := by
+        _ = -⟪centralDiff n Δx * u * A, u⟫ := by
             rw [Matrix.mul_assoc, real_inner_comm]
     linarith
   have hR : (sqrtAbsA Q s)ᵀ = sqrtAbsA Q s := specFn_transpose _ _
@@ -663,7 +675,7 @@ theorem inner_transport_adjoint (d : IsEigenDecomp A Q s) (Δx : ℝ)
     (z w : Matrix (ZMod n) (Fin N) ℝ) :
     ⟪transport Δx A (absA Q s) z, w⟫ = -⟪z, flux Δx A (absA Q s) w⟫ := by
   have hAa : (absA Q s)ᵀ = absA Q s := specFn_transpose _ _
-  have h1 : ⟪Dx n Δx * z * A, w⟫ = ⟪z, (Dx n Δx)ᵀ * w * A⟫ := by
+  have h1 : ⟪centralDiff n Δx * z * A, w⟫ = ⟪z, (centralDiff n Δx)ᵀ * w * A⟫ := by
     rw [Frobenius.inner_mul_right, Frobenius.inner_mul_left, d.symm, Matrix.mul_assoc]
   have h2 : ⟪Dxx n Δx * z * absA Q s, w⟫ = ⟪z, (Dxx n Δx)ᵀ * w * absA Q s⟫ := by
     rw [Frobenius.inner_mul_right, Frobenius.inner_mul_left, hAa, Matrix.mul_assoc]
@@ -684,7 +696,7 @@ variable [NeZero N] {A Q : Matrix (Fin N) (Fin N) ℝ} {s : Fin N → ℝ}
 noncomputable def sStepField (Δx σ : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
     (X : Matrix (ZMod n) r ℝ) (V : Matrix (Fin N) r' ℝ) (S : Matrix r r' ℝ) (B : ZMod n → ℝ) :
     Matrix r r' ℝ :=
-  -(Xᵀ * Dx n Δx * X * S * Vᵀ * A * V) + Xᵀ * Dxx n Δx * X * S * Vᵀ * Aa * V
+  -(Xᵀ * centralDiff n Δx * X * S * Vᵀ * A * V) + Xᵀ * Dxx n Δx * X * S * Vᵀ * Aa * V
     + σ • (Xᵀ * zeroCol N B * V - S)
 
 /-- The S-step field (9c) of arXiv 2307.07538 is a Galerkin projection of the full field. -/
@@ -807,7 +819,7 @@ variable [NeZero N] {r r' a a' c b b' ρ t t' : Type*}
 noncomputable def kStar (Δx Δt : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
     (X₀ : Matrix (ZMod n) r ℝ) (S₀ : Matrix r r' ℝ) (V₀ : Matrix (Fin N) r' ℝ) :
     Matrix (ZMod n) r' ℝ :=
-  X₀ * S₀ - Δt • (Dx n Δx * (X₀ * S₀) * V₀ᵀ * A * V₀)
+  X₀ * S₀ - Δt • (centralDiff n Δx * (X₀ * S₀) * V₀ᵀ * A * V₀)
     + Δt • (Dxx n Δx * (X₀ * S₀) * V₀ᵀ * Aa * V₀)
 
 /-- The explicit L-step (16b):
@@ -815,7 +827,7 @@ noncomputable def kStar (Δx Δt : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
 noncomputable def lStar (Δx Δt : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
     (X₀ : Matrix (ZMod n) r ℝ) (S₀ : Matrix r r' ℝ) (V₀ : Matrix (Fin N) r' ℝ) :
     Matrix (Fin N) r ℝ :=
-  V₀ * S₀ᵀ - Δt • (A * (V₀ * S₀ᵀ) * (X₀ᵀ * Dx n Δx * X₀)ᵀ)
+  V₀ * S₀ᵀ - Δt • (A * (V₀ * S₀ᵀ) * (X₀ᵀ * centralDiff n Δx * X₀)ᵀ)
     + Δt • (Aa * (V₀ * S₀ᵀ) * (X₀ᵀ * Dxx n Δx * X₀)ᵀ)
 
 /-- The projected initial value `S̃⁰ = X★ᵀ X⁰ S⁰ V⁰ᵀ V★` of the S-step. -/
@@ -827,7 +839,7 @@ noncomputable def sTilde (X₀ : Matrix (ZMod n) r ℝ) (S₀ : Matrix r r' ℝ)
 /-- The explicit Galerkin S-step (16c). -/
 noncomputable def sStar (Δx Δt : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
     (Xs : Matrix (ZMod n) a ℝ) (Vs : Matrix (Fin N) a' ℝ) (St : Matrix a a' ℝ) : Matrix a a' ℝ :=
-  St - Δt • (Xsᵀ * Dx n Δx * Xs * St * Vsᵀ * A * Vs)
+  St - Δt • (Xsᵀ * centralDiff n Δx * Xs * St * Vsᵀ * A * Vs)
     + Δt • (Xsᵀ * Dxx n Δx * Xs * St * Vsᵀ * Aa * Vs)
 
 /-- The explicit part `R` of (16d): the zeroth moment of the *full* transport update, without the
@@ -835,7 +847,7 @@ Galerkin projection. -/
 noncomputable def rhsR (Δx Δt : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
     (X₀ : Matrix (ZMod n) r ℝ) (S₀ : Matrix r r' ℝ) (V₀ : Matrix (Fin N) r' ℝ)
     (Xs : Matrix (ZMod n) a ℝ) (Vs : Matrix (Fin N) a' ℝ) (St : Matrix a a' ℝ) (j : ZMod n) : ℝ :=
-  (X₀ * S₀ * V₀ᵀ) j 0 - Δt * (Dx n Δx * Xs * St * Vsᵀ * A) j 0
+  (X₀ * S₀ * V₀ᵀ) j 0 - Δt * (centralDiff n Δx * Xs * St * Vsᵀ * A) j 0
     + Δt * (Dxx n Δx * Xs * St * Vsᵀ * Aa) j 0
 
 /-- The opacity correction (16f): the non-zeroth moments of `L` are divided by `1 + Δt σ`.  See the
@@ -1414,7 +1426,7 @@ theorem naive_not_energy_stable (Δx : ℝ) {Δt σ : ℝ} (hΔt : 0 < Δt) (hσ
   let S₀ : Matrix Unit Unit ℝ := Matrix.of fun _ _ => c₀ * ν
   let V₀ : Matrix (Fin N) Unit ℝ := Matrix.of fun m _ => if m = 0 then 1 else 0
   let Sh : Matrix Unit Unit ℝ := Matrix.of fun _ _ => ν
-  have hD1 : Dx n Δx * X₀ = 0 := by
+  have hD1 : centralDiff n Δx * X₀ = 0 := by
     ext p k
     simp [Dx_mul_apply, X₀]
   have hD2 : Dxx n Δx * X₀ = 0 := by
@@ -1436,7 +1448,7 @@ theorem naive_not_energy_stable (Δx : ℝ) {Δt σ : ℝ} (hΔt : 0 < Δt) (hσ
   have hk : kStar Δx Δt A Aa X₀ S₀ V₀ = X₀ * S₀ := by
     simp only [kStar, ← Matrix.mul_assoc, hD1, hD2, Matrix.zero_mul, smul_zero, sub_zero, add_zero]
   have hl : lStar Δx Δt A Aa X₀ S₀ V₀ = V₀ * S₀ᵀ := by
-    have e1 : X₀ᵀ * Dx n Δx * X₀ = 0 := by rw [Matrix.mul_assoc, hD1, Matrix.mul_zero]
+    have e1 : X₀ᵀ * centralDiff n Δx * X₀ = 0 := by rw [Matrix.mul_assoc, hD1, Matrix.mul_zero]
     have e2 : X₀ᵀ * Dxx n Δx * X₀ = 0 := by rw [Matrix.mul_assoc, hD2, Matrix.mul_zero]
     simp only [lStar, e1, e2, Matrix.transpose_zero, Matrix.mul_zero, smul_zero, sub_zero, add_zero]
   have hst : sTilde X₀ S₀ V₀ X₀ V₀ = S₀ := by
@@ -1444,7 +1456,7 @@ theorem naive_not_energy_stable (Δx : ℝ) {Δt σ : ℝ} (hΔt : 0 < Δt) (hσ
       simp only [Matrix.mul_assoc]
     rw [sTilde, e, hX, hV, Matrix.one_mul, Matrix.mul_one]
   have hss : sStar Δx Δt A Aa X₀ V₀ S₀ = S₀ := by
-    have e1 : X₀ᵀ * Dx n Δx * X₀ = 0 := by rw [Matrix.mul_assoc, hD1, Matrix.mul_zero]
+    have e1 : X₀ᵀ * centralDiff n Δx * X₀ = 0 := by rw [Matrix.mul_assoc, hD1, Matrix.mul_zero]
     have e2 : X₀ᵀ * Dxx n Δx * X₀ = 0 := by rw [Matrix.mul_assoc, hD2, Matrix.mul_zero]
     simp only [sStar, e1, e2, Matrix.zero_mul, smul_zero, sub_zero, add_zero]
   have hcc : (1 + τ) * 1 = c₀ + τ * b₀ := by rw [hc₀, hb₀]; ring
@@ -2037,5 +2049,168 @@ theorem legendreTwo_not_energy_stable {Δx σ : ℝ} (hΔx : 0 < Δx) (hσ : 0 �
   field_simp
 
 end Legendre
+
+/-! ### The core vocabulary: stencils, streaming operator, Galerkin step, truncation -/
+
+section KineticCore
+
+/-- The stabilizing second difference is the core second difference times `Δx / 2`: the paper
+divides by `2 Δx`, the core stencil by `Δx ^ 2`. -/
+theorem Dxx_eq_smul_secondDiff (Δx : ℝ) : Dxx n Δx = (Δx / 2) • Kinetic.secondDiff n Δx := by
+  have key : ∀ x : ℝ, x / (2 * Δx) = Δx / 2 * (x / Δx ^ 2) := fun x => by
+    rcases eq_or_ne Δx 0 with rfl | h
+    · simp
+    · rw [div_mul_div_comm, pow_two, ← mul_assoc (2 : ℝ), mul_comm Δx x, mul_div_mul_right _ _ h]
+  ext p q
+  simp only [Dxx, Kinetic.secondDiff, Matrix.smul_apply, Matrix.of_apply, smul_eq_mul]
+  exact key _
+
+/-- The forward difference `D⁺` of the paper is the core forward difference times
+`Δx / √(2 Δx)`: the paper divides by `√(2 Δx)`, the core stencil by `Δx`. -/
+theorem Dplus_eq_smul_fwdDiff (Δx : ℝ) :
+    Dplus n Δx = (Δx / √(2 * Δx)) • Kinetic.fwdDiff n Δx := by
+  have key : ∀ x : ℝ, x / √(2 * Δx) = Δx / √(2 * Δx) * (x / Δx) := fun x => by
+    rcases eq_or_ne Δx 0 with rfl | h
+    · simp
+    · rw [div_mul_div_comm, mul_comm Δx x, mul_div_mul_right _ _ h]
+  ext p q
+  simp only [Dplus, Kinetic.fwdDiff, Matrix.smul_apply, Matrix.of_apply, smul_eq_mul]
+  exact key _
+
+/-- On three cells with `Δx = 1/2`, read off through the core stencils: `Dˣˣ(0, 1) = 1` and
+`D⁺(0, 1) = 1`. -/
+example : Dxx 3 (1 / 2) 0 1 = 1 ∧ Dplus 3 (1 / 2) 0 1 = 1 := by
+  rw [Dxx_eq_smul_secondDiff, Dplus_eq_smul_fwdDiff, Matrix.smul_apply, Matrix.smul_apply,
+    Kinetic.secondDiff, Kinetic.fwdDiff, Matrix.of_apply, Matrix.of_apply,
+    ite_eq_left (by decide), ite_eq_right (by decide), ite_eq_right (by decide)]
+  norm_num
+
+/-- **The transport operator through the core**: `G u = -Dˣ u A + Dˣˣ u |A|` is the core
+streaming operator `Y ↦ ∑ₖ Dₖ Y Mₖ` with the two terms `(-Dˣ, A)` and `(Dˣˣ, |A|)`. -/
+theorem transport_eq_streaming (Δx : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
+    (u : Matrix (ZMod n) (Fin N) ℝ) :
+    transport Δx A Aa u = Kinetic.streaming ![-centralDiff n Δx, Dxx n Δx] ![A, Aa] u := by
+  rw [Kinetic.streaming_apply, Fin.sum_univ_two, transport]
+  change -(centralDiff n Δx * u * A) + Dxx n Δx * u * Aa
+    = -centralDiff n Δx * u * A + Dxx n Δx * u * Aa
+  rw [Matrix.neg_mul, Matrix.neg_mul]
+
+/-- The flux of Lemma 2 is the core streaming operator with the two terms `((Dˣ)ᵀ, A)` and
+`(-(Dˣˣ)ᵀ, |A|)`. -/
+theorem flux_eq_streaming (Δx : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
+    (u : Matrix (ZMod n) (Fin N) ℝ) :
+    flux Δx A Aa u
+      = Kinetic.streaming ![(centralDiff n Δx)ᵀ, -(Dxx n Δx)ᵀ] ![A, Aa] u := by
+  rw [Kinetic.streaming_apply, Fin.sum_univ_two, flux]
+  change (centralDiff n Δx)ᵀ * u * A - (Dxx n Δx)ᵀ * u * Aa
+    = (centralDiff n Δx)ᵀ * u * A + -(Dxx n Δx)ᵀ * u * Aa
+  rw [Matrix.neg_mul, Matrix.neg_mul, sub_eq_add_neg]
+
+/-- The two bridges at nonzero data: on three cells and two moments with `Δx = 1/2`, the transport
+operator and the flux are additive, as instances of a continuous linear map; and the advection
+stencil in them is not zero (its entry `(0, 1)` is `1`). -/
+example (A Aa : Matrix (Fin 2) (Fin 2) ℝ) (u v : Matrix (ZMod 3) (Fin 2) ℝ) :
+    transport (1 / 2) A Aa (u + v) = transport (1 / 2) A Aa u + transport (1 / 2) A Aa v ∧
+      flux (1 / 2) A Aa (u + v) = flux (1 / 2) A Aa u + flux (1 / 2) A Aa v ∧
+      centralDiff 3 (1 / 2) 0 1 = 1 := by
+  refine ⟨?_, ?_, ?_⟩
+  · simp only [transport_eq_streaming, map_add]
+  · simp only [flux_eq_streaming, map_add]
+  · rw [Kinetic.centralDiff, Matrix.of_apply, ite_eq_left (by decide),
+      ite_eq_right (by decide)]
+    norm_num
+
+section Step
+
+variable [NeZero N] {r r' a a' c b b' ρ t t' : Type*}
+  [Fintype r] [Fintype r'] [Fintype a] [Fintype a'] [Fintype c] [Fintype b] [Fintype b']
+  [Fintype ρ] [Fintype t] [Fintype t']
+  [DecidableEq a] [DecidableEq a'] [DecidableEq c] [DecidableEq b] [DecidableEq b']
+  [DecidableEq ρ] [DecidableEq t] [DecidableEq t']
+  {Δx Δt σ : ℝ} {A Aa : Matrix (Fin N) (Fin N) ℝ}
+  {X₀ : Matrix (ZMod n) r ℝ} {S₀ : Matrix r r' ℝ} {V₀ : Matrix (Fin N) r' ℝ} {B₀ : ZMod n → ℝ}
+  {Xs : Matrix (ZMod n) a ℝ} {Vs : Matrix (Fin N) a' ℝ} {Ss : Matrix a a' ℝ}
+  {uh B₁ : ZMod n → ℝ} {Vc : Matrix (Fin N) c ℝ} {Sc : Matrix a c ℝ}
+  {Xt : Matrix (ZMod n) b ℝ} {Vt : Matrix (Fin N) b' ℝ} {St : Matrix b b' ℝ}
+
+/-- **`u★` of scheme (16) as one core step**: `u★ = X★ S★ V★ᵀ` is the core Galerkin Euler step
+`P (u⁰ + Δt G (P u⁰))` with the projection `P = P_X ∘ P_V` onto the augmented bases, the
+transport operator `G` and the old value `u⁰ = X⁰ S⁰ V⁰ᵀ`.  The inner projection is the identity
+on `u⁰`, since the augmented bases contain the old ones. -/
+theorem IsCoupledStep.uStar_eq_galerkinEulerStep
+    (h : IsCoupledStep Δx Δt σ A Aa X₀ S₀ V₀ B₀ Xs Vs Ss uh B₁ Vc Sc Xt Vt St) :
+    Xs * Ss * Vsᵀ
+      = galerkinEulerStep ((leftProj (n := Fin N) Xs).comp (rightProj (m := ZMod n) Vs))
+          (transport Δx A Aa) Δt (X₀ * S₀ * V₀ᵀ) := by
+  have hP : ∀ Z : Matrix (ZMod n) (Fin N) ℝ,
+      (leftProj (n := Fin N) Xs).comp (rightProj (m := ZMod n) Vs) Z
+        = Xs * Xsᵀ * Z * (Vs * Vsᵀ) := fun Z => by
+    rw [ContinuousLinearMap.comp_apply, rightProj_apply', leftProj_apply, ← Matrix.mul_assoc]
+  have h0 : Xs * Xsᵀ * (X₀ * S₀ * V₀ᵀ) * (Vs * Vsᵀ) = X₀ * S₀ * V₀ᵀ := by
+    calc Xs * Xsᵀ * (X₀ * S₀ * V₀ᵀ) * (Vs * Vsᵀ)
+        = Xs * Xsᵀ * X₀ * S₀ * (Vs * Vsᵀ * V₀)ᵀ := by
+          simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
+      _ = X₀ * S₀ * V₀ᵀ := by rw [h.Xs_X₀, h.Vs_V₀]
+  rw [galerkinEulerStep, hP, hP, h0, eulerStep]
+  exact h.uStar_eq
+
+omit [NeZero N] in
+/-- **The explicit K-step (16a) as a core step**: with `u⁰ = X⁰ S⁰ V⁰ᵀ`, the update `K★ V⁰ᵀ` is
+the core K-substep `u⁰ + Δt (G u⁰) V⁰ V⁰ᵀ`, the Euler step of the transport operator projected
+onto the old velocity basis.  No orthonormality is needed. -/
+theorem kStar_mul_transpose_eq_kslK (Δx Δt : ℝ) (A Aa : Matrix (Fin N) (Fin N) ℝ)
+    (X₀ : Matrix (ZMod n) r ℝ) (S₀ : Matrix r r' ℝ) (V₀ : Matrix (Fin N) r' ℝ) :
+    kStar Δx Δt A Aa X₀ S₀ V₀ * V₀ᵀ
+      = kslK (rightProj (m := ZMod n) V₀) (transport Δx A Aa) Δt (X₀ * S₀ * V₀ᵀ) := by
+  rw [kslK, rightProj_apply, kStar, transport]
+  simp only [Matrix.add_mul, Matrix.sub_mul, Matrix.neg_mul, Matrix.smul_mul, Matrix.mul_assoc,
+    smul_add, smul_neg]
+  abel
+
+/-- **The conservative truncation as the core map**: the truncated value is
+`consTrunc C T Y = C Y + T (Y - C Y)` with `C` the projection onto the zeroth moment (right
+multiplication by `e₀ e₀ᵀ`) and `T` the left projection `U Uᵀ`. -/
+theorem IsConservativeTruncation.eq_consTrunc {U : Matrix (ZMod n) ρ ℝ}
+    {Y : Matrix (ZMod n) (Fin N) ℝ} {X₁ : Matrix (ZMod n) t ℝ} {S₁ : Matrix t t' ℝ}
+    {V₁ : Matrix (Fin N) t' ℝ} (h : IsConservativeTruncation U Y X₁ S₁ V₁) :
+    X₁ * S₁ * V₁ᵀ
+      = consTrunc (Frobenius.rightMulCLM (m := ZMod n) (E0 N)) (leftProj (n := Fin N) U) Y := by
+  rw [h.eq, consTrunc, Frobenius.rightMulCLM_apply, leftProj_apply, Matrix.mul_sub,
+    Matrix.mul_one]
+
+end Step
+
+/-- The step bridges are not vacuous.  On three cells and two moments, with `Δx = 1`,
+`Δt = 1/2`, `σ = 1`, `A = |A| = 1` and the nonzero value `u⁰ = S⁰` (all entries `1`), the
+full-basis step of `exists_isCoupledStep` exists, and its `u★` is one core Galerkin Euler step. -/
+example : ∃ Ss : Matrix (ZMod 3) (Fin 2) ℝ,
+    (1 : Matrix (ZMod 3) (ZMod 3) ℝ) * Ss * (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ
+      = galerkinEulerStep
+          ((leftProj (n := Fin 2) (1 : Matrix (ZMod 3) (ZMod 3) ℝ)).comp
+            (rightProj (m := ZMod 3) (1 : Matrix (Fin 2) (Fin 2) ℝ)))
+          (transport (n := 3) (N := 2) 1 1 1) (1 / 2)
+          ((1 : Matrix (ZMod 3) (ZMod 3) ℝ) * (Matrix.of fun _ _ => 1 : Matrix (ZMod 3) (Fin 2) ℝ)
+            * (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ) := by
+  obtain ⟨Ss, uh, B₁, Sc, St, h⟩ := exists_isCoupledStep (n := 3) (N := 2) 1 (1 / 2) 1 1 1
+    (1 : Matrix (ZMod 3) (ZMod 3) ℝ) (Matrix.of fun _ _ => 1 : Matrix (ZMod 3) (Fin 2) ℝ)
+    (1 : Matrix (Fin 2) (Fin 2) ℝ) (fun _ => 1) (by norm_num)
+  exact ⟨Ss, h.uStar_eq_galerkinEulerStep⟩
+
+/-- The K-step bridge and the truncation bridge at the same data: `K★ V⁰ᵀ` is the core K-substep,
+and for every `Y` the truncation without loss (`U = 1`) is the core map `consTrunc`. -/
+example (Y : Matrix (ZMod 3) (Fin 2) ℝ) :
+    kStar (n := 3) (N := 2) 1 (1 / 2) 1 1 (1 : Matrix (ZMod 3) (ZMod 3) ℝ)
+        (Matrix.of fun _ _ => 1 : Matrix (ZMod 3) (Fin 2) ℝ) (1 : Matrix (Fin 2) (Fin 2) ℝ)
+        * (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ
+      = kslK (rightProj (m := ZMod 3) (1 : Matrix (Fin 2) (Fin 2) ℝ))
+          (transport (n := 3) (N := 2) 1 1 1) (1 / 2)
+          ((1 : Matrix (ZMod 3) (ZMod 3) ℝ) * (Matrix.of fun _ _ => 1 : Matrix (ZMod 3) (Fin 2) ℝ)
+            * (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ) ∧
+      (1 : Matrix (ZMod 3) (ZMod 3) ℝ) * Y * (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ
+        = consTrunc (Frobenius.rightMulCLM (m := ZMod 3) (E0 2))
+            (leftProj (n := Fin 2) (1 : Matrix (ZMod 3) (ZMod 3) ℝ)) Y :=
+  ⟨kStar_mul_transpose_eq_kslK _ _ _ _ _ _ _, (exists_isConservativeTruncation Y).eq_consTrunc⟩
+
+end KineticCore
 
 end LeanDLRA.Literature.P2307_07538

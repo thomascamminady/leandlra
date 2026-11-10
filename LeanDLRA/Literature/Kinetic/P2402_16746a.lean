@@ -1,5 +1,6 @@
 import LeanDLRA.Classical.SVD
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Stencils
 import LeanDLRA.Literature.Kinetic.P1906_09940a
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
@@ -3332,5 +3333,78 @@ theorem theorem_6_tendsto {ρ q q' τ ρs ρ₁ : Type*} [Fintype ρ] [Fintype q
 end Params
 
 end Limit
+
+/-! ### The grid operators and the flux in the core vocabulary
+
+`Dp`, `Dm` act on grid functions and `DpM`, `DmM` on the columns of a matrix; they are the
+actions of the core periodic stencils `Kinetic.fwdDiff`, `Kinetic.bwdDiff`. The flux `𝓛` is an
+instance of the core operator `Kinetic.streaming`. -/
+
+section KineticCore
+
+variable {Nx : ℕ} [NeZero Nx]
+
+/-- `D⁺` on grid functions is the action of the core forward difference matrix. -/
+theorem Dp_eq_fwdDiff_mulVec (Δx : ℝ) (φ : ZMod Nx → ℝ) :
+    Dp Δx φ = Kinetic.fwdDiff Nx Δx *ᵥ φ :=
+  (Kinetic.fwdDiff_mulVec φ).symm
+
+/-- `D⁻` on grid functions is the action of the core backward difference matrix. -/
+theorem Dm_eq_bwdDiff_mulVec (Δx : ℝ) (φ : ZMod Nx → ℝ) :
+    Dm Δx φ = Kinetic.bwdDiff Nx Δx *ᵥ φ :=
+  (Kinetic.bwdDiff_mulVec φ).symm
+
+/-- `D⁺` on the columns of a matrix is the product with the core forward difference matrix. -/
+theorem DpM_eq_fwdDiff_mul {ι : Type*} (Δx : ℝ) (Y : Matrix (ZMod Nx) ι ℝ) :
+    DpM Δx Y = Kinetic.fwdDiff Nx Δx * Y := by
+  ext j k
+  exact (Kinetic.fwdDiff_mul_apply Y j k).symm
+
+/-- `D⁻` on the columns of a matrix is the product with the core backward difference matrix. -/
+theorem DmM_eq_bwdDiff_mul {ι : Type*} (Δx : ℝ) (Y : Matrix (ZMod Nx) ι ℝ) :
+    DmM Δx Y = Kinetic.bwdDiff Nx Δx * Y := by
+  ext j k
+  exact (Kinetic.bwdDiff_mul_apply Y j k).symm
+
+/-- **The flux through the core**: `𝓛 g = D⁻ g A⁺ + D⁺ g A⁻` is the core streaming operator
+`Y ↦ ∑ₖ Dₖ Y Mₖ` with the two terms `(D⁻, A⁺)` and `(D⁺, A⁻)`. -/
+theorem Params.flux_eq_streaming {N : ℕ} (P : Params Nx N) (Y : Matrix (ZMod Nx) (Fin N) ℝ) :
+    P.flux Y =
+      Kinetic.streaming ![Kinetic.bwdDiff Nx P.Δx, Kinetic.fwdDiff Nx P.Δx] ![P.Apl, P.Ami] Y := by
+  rw [Kinetic.streaming_apply, Fin.sum_univ_two]
+  change P.flux Y = Kinetic.bwdDiff Nx P.Δx * Y * P.Apl + Kinetic.fwdDiff Nx P.Δx * Y * P.Ami
+  rw [Params.flux, DmM_eq_bwdDiff_mul, DpM_eq_fwdDiff_mul]
+
+/-- The bridges at nonzero data, on three cells with `Δx = 1/2`: the core forward difference of
+the indicator of cell `1`, at cell `0`, is `2`, read off through `Dp`; the matrix form gives the
+same value; and the flux of the parameters `cx` is additive, as an instance of a continuous
+linear map. -/
+example (Y Z : Matrix (ZMod 3) (Fin 1) ℝ) :
+    (Kinetic.fwdDiff 3 (1 / 2) *ᵥ fun i : ZMod 3 => if i = 1 then (1 : ℝ) else 0) 0 = 2 ∧
+      (Kinetic.fwdDiff 3 (1 / 2) *
+        Matrix.of fun (i : ZMod 3) (_ : Unit) => if i = 1 then (1 : ℝ) else 0) 0 () = 2 ∧
+      cx.flux (Y + Z) = cx.flux Y + cx.flux Z := by
+  refine ⟨?_, ?_, ?_⟩
+  · rw [← Dp_eq_fwdDiff_mulVec, Dp, ite_eq_left (by decide), ite_eq_right (by decide)]
+    norm_num
+  · rw [← DpM_eq_fwdDiff_mul, DpM, Matrix.of_apply, Dp, Matrix.of_apply, Matrix.of_apply,
+      ite_eq_left (by decide), ite_eq_right (by decide)]
+    norm_num
+  · simp only [Params.flux_eq_streaming, map_add]
+
+/-- The backward forms at the same data: at cell `1` the backward difference of the indicator of
+cell `1` is `2`. -/
+example :
+    (Kinetic.bwdDiff 3 (1 / 2) *ᵥ fun i : ZMod 3 => if i = 1 then (1 : ℝ) else 0) 1 = 2 ∧
+      (Kinetic.bwdDiff 3 (1 / 2) *
+        Matrix.of fun (i : ZMod 3) (_ : Unit) => if i = 1 then (1 : ℝ) else 0) 1 () = 2 := by
+  refine ⟨?_, ?_⟩
+  · rw [← Dm_eq_bwdDiff_mulVec, Dm, ite_eq_left rfl, ite_eq_right (by decide)]
+    norm_num
+  · rw [← DmM_eq_bwdDiff_mul, DmM, Matrix.of_apply, Dm, Matrix.of_apply, Matrix.of_apply,
+      ite_eq_left rfl, ite_eq_right (by decide)]
+    norm_num
+
+end KineticCore
 
 end LeanDLRA.Literature.P2402_16746
