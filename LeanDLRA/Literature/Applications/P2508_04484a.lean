@@ -31,10 +31,8 @@ so the paper's `D_i = w_i S⁻¹` and `C_i = Σ_{t;i} I + G_i` are special cases
 Core definitions used: `IsLipschitzField` (`LeanDLRA.Foundations.ODE`) and the Frobenius norm and
 submultiplicativity `LeanDLRA.Frobenius.norm_mul_le`. No new definitions are introduced.
 
-Sign note: eq. (25) writes `+ Σ_i w_i S⁻¹ u Σ_{t;i}` for the total-cross-section term, whereas
-eq. (24), eq. (8) and the L-step of eq. (26b) carry `− Σ_{t;i}`. The results here are stated for
-arbitrary coefficient matrices `C_i`, so they hold for either sign. We did not check the paper's
-intended sign beyond these equations.
+The results are stated for arbitrary coefficient matrices `C_i`, so they do not depend on the
+sign convention of the total-cross-section term.
 
 ## Left out
 

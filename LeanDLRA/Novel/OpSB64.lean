@@ -4,49 +4,64 @@ import LeanDLRA.Foundations.Projector
 import LeanDLRA.Matrix.Projectors
 
 /-!
-# Loss descent of the explicit Euler projector-splitting (PSI) training step
+# Loss descent of the explicit Euler projector-splitting training step
 
-Open problem OP-SB-64 (and OP-TR-07) of `docs/survey/open-problems.json` asks for a *robust
-non-descent counterexample* for the projector-splitting integrator (PSI) used as a low-rank
-training step, to explain the training failures of PSI and backward-corrected PSI reported in
-arXiv 2502.03006 (Sec. 6.1).  This module proves that, for the explicit Euler PSI step with
-exact gradients (`kslEulerStep P₁ Q₀ (fun y => -∇ℒ y) h`, the training algorithm of
-arXiv 2502.03006, Sec. 3.2 with one Euler step per substep), no such counterexample exists:
+The projector-splitting integrator with one explicit Euler step per substep, applied to the
+gradient flow of a loss `ℒ` with gradient `g`, is the step
+`kslEulerStep P₁ Q₀ (fun y => -g y) h` of `LeanDLRA/Stability/Energy.lean`: K-step, backward
+S-step and L-step, where `P₁` projects onto the new left basis and `Q₀` onto the old right
+basis (the training step of arXiv 2502.03006, Sec. 3.2). This module bounds the loss after one
+such step, for the quadratic loss `½ ‖x - a‖²` and for losses with a `β`-Lipschitz gradient,
+and after one step of the backward-corrected variant (arXiv 2502.03006, Sec. 3.3), in which
+the S-step is replaced by the projection onto the new left basis.
 
-* `kslEulerStep_frobenius_sq_identity`: for the quadratic loss `½‖W - A‖²` one PSI step
-  satisfies the exact identity
-  `‖W₁ - A‖² - ‖W₀ - A‖² = -h(2 - h)‖T₁ E‖² - h²(1 - h)²(2 - h²)‖P₁ Q₀ E‖²`,
-  `E = W₀ - A`, `T₁ = P₁ + Q₀ - P₁Q₀` the tangent projector of the new left and old right basis.
-  No singular value of `W₀` appears; the "curvature term" `1/σ_r` of the basis rotation cancels
-  from the loss.
-* `loss_kslEulerStep_quadratic_le`: hence `ℒ(W₁) ≤ ℒ(W₀) - (h/2)(1 + h - h²)‖T₁ ∇ℒ(W₀)‖²`
-  for every `0 ≤ h ≤ φ = (1 + √5)/2`: PSI descends on the Frobenius quadratic for every step
-  size up to the golden ratio, while projected gradient descent descends up to `2`.
-* `loss_kslEulerStep_gt_of_goldenRatio_lt`: the threshold `φ` is sharp.  For every
-  `h ∈ (φ, 2)` the pure core mode (`P₁ x = x`, `Q₀ x = x`) is amplified by
-  `(1 - h)²(1 + h) > 1` and the loss increases, while the full gradient step with the same `h`
-  still decreases it.
-* `loss_kslEulerStep_le_of_smooth`, `loss_kslEulerStep_le_of_smooth_quarter`: for every
-  `β`-smooth loss and `βh ≤ 1/4`, `ℒ(W₁) ≤ ℒ(W₀) - (h/8)‖T₁ ∇ℒ(W₀)‖²`.  The constants are
-  absolute: descent is robust with respect to small singular values (OP-TR-07, first
-  alternative).  The mechanism is that the anti-dissipative S-step only undoes the core part of
-  the K-step, and all remainders are controlled by `‖T₁ ∇ℒ‖` itself.
-* `exists_tangentGrad_sq_le_of_psi`: along the PSI iteration
-  `min_{k<n} ‖T_k ∇ℒ(x_k)‖² ≤ 8(ℒ(x₀) - ℒinf)/(n h)`.
-* `loss_bcPsiStep_le`: for the backward-corrected PSI (arXiv 2502.03006, Sec. 3.3, S-step
-  replaced by the projection onto the new basis) the term `B‖(I - U₁U₁ᵀ)Y₀‖` of its Lemma 5.4,
-  which blocked the descent proof, is in fact a *descent* term:
-  `ℒ(Y₁) ≤ ℒ(Y₀) - h(1 - βh/2)(‖(1 - P₁)Q₀∇ℒ(Y₀)‖² + ‖P₁∇ℒ(P₁Y₀)‖²)` for all `βh ≤ 2`.
-* `psiTrainStep_eq_kslEulerStep`, `bcPsiTrainStep_eq`, `loss_psiTrainStep_le`,
-  `loss_bcPsiTrainStep_le`: the factored training steps (K-step, QR, S-step, L-step on
-  `U S Vᵀ`) are instances of the abstract steps, and inherit the descent bounds.
+Unless stated otherwise, `P₁` and `Q₀` are commuting orthogonal projectors, the state `x` lies
+in the range of `Q₀`, the new basis captures the K-step, `P₁ (x - h Q₀ g(x)) = x - h Q₀ g(x)`
+(the property that a QR factorisation of the K-step result provides), `y` is the result of the
+step, `T₁ = tangent P₁ Q₀ = P₁ + Q₀ - P₁ Q₀`, and gradients are exact.
 
-Consequence for OP-SB-64: the empirical failures of PSI and
-bc-PSI at learning rate `0.01` cannot be a descent failure of the deterministic step at any
-smoothness level where `0.01 β ≤ 1/4` (resp. `≤ 2` for bc-PSI); they must come from a different
-mechanism (stochastic gradients, truncation, or a learning rate beyond the stability window,
-which for PSI is at most `φ/2 ≈ 0.81` times that of the augmented step).  The rank-collapse
-half of OP-SB-64 (coupling gaps `σᵢ² - σ_{r+j}²`) is not addressed here.
+## Main definitions
+
+* `bcPsiStep P₁ g h x`: the backward-corrected step `P₁ x - h P₁ g(P₁ x)`. It equals
+  `projGradStep P₁ g h (P₁ x)` (`bcPsiStep_eq_projGradStep`).
+* `psiTrainStep g h U₀ S₀ V₀ U₁`, `bcPsiTrainStep g h U₀ S₀ V₀ U₁`: the two steps on the factors
+  of `U₀ S₀ V₀ᵀ` with a new left basis `U₁`. With `P₁ = leftProj U₁` and `Q₀ = rightProj V₀`
+  they equal `kslEulerStep` (`psiTrainStep_eq_kslEulerStep`, if `U₁ U₁ᵀ K₁ = K₁` for the K-step
+  result `K₁`) and `bcPsiStep` (`bcPsiTrainStep_eq`).
+
+## Main results
+
+* `kslEulerStep_frobenius_sq_identity`: for the quadratic loss and `e = x - a`,
+  `‖y - a‖² - ‖x - a‖² = -h (2 - h) ‖T₁ e‖² - h² (1 - h)² (2 - h²) ‖P₁ Q₀ e‖²`.
+  No singular value of the state appears.
+* `loss_kslEulerStep_quadratic_le`: for the quadratic loss and `0 ≤ h ≤ φ`, the golden ratio
+  `φ = (1 + √5) / 2`, `ℒ(y) ≤ ℒ(x) - (h / 2) (1 + h - h²) ‖T₁ g(x)‖²`.
+* `loss_kslEulerStep_gt_of_goldenRatio_lt`: the condition `h ≤ φ` cannot be relaxed. For
+  `ℒ(x) = ½ ‖x‖²`, a nonzero `x` with `P₁ x = x` and `Q₀ x = x`, and every `h > φ`, the loss
+  after the step is larger than before, while for `h < 2` the gradient step `x - h g(x)`
+  decreases it.
+* `loss_kslEulerStep_le_of_smooth`: for a `β`-Lipschitz gradient and `0 ≤ h`,
+  `ℒ(y) ≤ ℒ(x) - h (1 - β h (2 + β h) - (β h / 2) (1 + β h)⁴) ‖T₁ g(x)‖²`.
+* `loss_kslEulerStep_le_of_smooth_quarter`: for `β h ≤ 1/4` this is
+  `ℒ(y) ≤ ℒ(x) - (h / 8) ‖T₁ g(x)‖²`. The constants do not depend on the state.
+* `exists_tangentGrad_sq_le_of_psi`: along an iteration of such steps with `0 < h`,
+  `β h ≤ 1/4` and `ℒinf ≤ ℒ(x_k)` for all `k`, some `k < n` satisfies
+  `‖T_k g(x_k)‖² ≤ 8 (ℒ(x₀) - ℒinf) / (n h)`.
+* `loss_bcPsiStep_le`: for the backward-corrected step, a `β`-Lipschitz gradient, every `h`
+  and every `x`, `ℒ(y) ≤ ℒ(x) - h (1 - β h / 2) (‖(1 - P₁) Q₀ g(x)‖² + ‖P₁ g(P₁ x)‖²)`.
+* `loss_psiTrainStep_le`, `loss_bcPsiTrainStep_le`: the bounds of
+  `loss_kslEulerStep_le_of_smooth_quarter` and of `loss_bcPsiStep_le` for the steps on the
+  factors, for `U₁ᵀ U₁ = 1`, `V₀ᵀ V₀ = 1` and with `tangentProj U₁ V₀` in the place of `T₁`.
+
+## Implementation notes
+
+Every theorem is about one deterministic step with exact gradients, a gradient that is
+Lipschitz on the whole space and a new basis that captures the K-step. Stochastic gradients,
+truncation of the rank and the loss of rank during training are not treated.
+
+## References
+
+* arXiv 2502.03006, Sec. 3.2 and 3.3 (the two training steps), Sec. 5 (Lemmas 5.1 and 5.4).
 -/
 
 open Set Filter Topology Finset
@@ -117,8 +132,8 @@ lemma norm_components_le_tangent (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q
   have h2 : ‖P₁ v‖ ≤ ‖tangent P₁ Q₀ v‖ := by rw [← hPT]; exact hP₁.norm_le _
   exact ⟨h1, h2, (hP₁.norm_le _).trans h1, (hP₁.norm_sub_le _).trans h1⟩
 
-/-- **Robust loss descent of the explicit Euler PSI training step** (answers OP-TR-07 for the
-training algorithm of arXiv 2502.03006, Sec. 3.2).  Let `ℒ` be `β`-smooth, let
+/-- **Robust loss descent of the explicit Euler PSI training step** (the training algorithm of
+arXiv 2502.03006, Sec. 3.2).  Let `ℒ` be `β`-smooth, let
 `P₁, Q₀` be commuting orthogonal projectors (new left basis, old right basis), `x ∈ range Q₀`,
 and let the new basis capture the K-step result.  Then, with `T₁ = P₁ + Q₀ - P₁ Q₀`,
 
@@ -303,8 +318,7 @@ lemma tangent_apply_mul (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀)
 The first term is the gain of a projected gradient step with projector `T₁`; the second is the
 net effect of the backward S-step on the core, negative for `h ≤ √2`.  The basis rotation
 `U₀ → U₁` (which carries the factor `1/σ_r`) enters only through `T₁` and does not produce a
-term of indefinite sign: the counterexample route "ill-conditioned `S₀`, `ℒ = ½‖Y - A‖²`" of
-OP-TR-07 cannot work. -/
+term of indefinite sign: no singular value of the state enters the identity. -/
 theorem kslEulerStep_frobenius_sq_identity (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀)
     (hc : ∀ x, P₁ (Q₀ x) = Q₀ (P₁ x)) (a : E) {x : E} (hx : Q₀ x = x)
     (hcap : P₁ (x - h • Q₀ (x - a)) = x - h • Q₀ (x - a)) :

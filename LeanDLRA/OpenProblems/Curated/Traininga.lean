@@ -1,10 +1,46 @@
-import LeanDLRA.OpenProblems.Curated.TrainingDefs
+import LeanDLRA.Training.Defs
 import LeanDLRA.Training.Descent
 import LeanDLRA.Matrix.Projectors
 
 /-!
-# Open problems OP-HO-14, OP-RS-28, OP-TR-02, OP-TR-05, OP-TR-11,
-OP-TR-18, OP-TR-29, OP-TR-30
+# Convergence of low-rank training: PL rates, lazy projectors, random subspaces, federated rounds
+
+Convergence statements for training by projected gradient steps
+`projGradStep Π g h x = x - h Π g(x)` with an orthogonal projector `Π`, on top of the descent
+lemmas of `LeanDLRA/Training/Descent.lean`. The loss `ℒ` has the gradient `g`
+(`HasFDerivAt ℒ (innerSL ℝ (g x)) x`), and `g` is `β`-Lipschitz where a step size condition
+appears. The projector is the tangent or the augmented projector of dynamical low-rank training,
+a projector that is refreshed only every `T` steps, a random projector, or the projector of a
+federated round.
+
+## Main results
+
+* `loss_sub_le_exp_of_projGradFlow_PL`: along the projected gradient flow `ẏ = -Π(t) g(y)`, if
+  `2 μ (ℒ(y) - ℒ⋆) ≤ ‖Π g(y)‖²`, then `ℒ(y t) - ℒ⋆ ≤ e^{-2 μ (t - a)} (ℒ(y a) - ℒ⋆)`.
+* `loss_sub_le_of_riemannianPL_truncated`: steps with an augmented projector `Q k` that fixes the
+  tangent gradient `T k g(x k)`, followed by a truncation of size `ϑ`, satisfy under
+  `2 μ (ℒ(x k) - ℒ⋆) ≤ ‖T k g(x k)‖²` the bound
+  `ℒ(xₙ) - ℒ⋆ ≤ (1 - 2 μ c)ⁿ (ℒ(x₀) - ℒ⋆) + G ϑ / (2 μ c)`, `c = h (1 - β h / 2)`, where `G`
+  bounds the gradient on the truncation segments.
+* `exists_grad_sq_le_of_lazyRefresh`: if the projector `R j` is kept for the `T` steps after the
+  refresh iterate `x (j T)`, captures the fraction `γ` of the gradient energy there, and
+  `2 T β h ≤ 1`, then `γ ‖g(x (j T))‖² ≤ 8 (ℒ(x₀) - ℒ_inf) / (n T h)` for some `j < n`.
+* `sum_loss_projGradStep_le_of_isotropic`: for a random projector `Π_ξ` with law `p` and
+  `∑ p_ξ Π_ξ = γ · 1`, the expected loss after one step is at most
+  `ℒ(x) - h (1 - β h / 2) γ ‖g(x)‖²`.
+* `exists_leftProj_energy_ge`: for every `G ∈ ℝ^{m×n}` and `r ≤ m` there is `U` with `r`
+  orthonormal columns and `r ‖G‖² ≤ m ‖leftProj U G‖²`.
+* `loss_fedAvgRound_le`: for the federated round without variance correction (`fedAvgRound`),
+  client gradients within `ζ` of their average `g` and `λ β s⋆ ≤ 1`, with `A = s⋆ λ`,
+  `ℒ(x⁺) ≤ ℒ(x) - A (1 - 20 A β) ‖Π g(x)‖² + 17 β A² ζ²`. The round with variance correction
+  has no `ζ` term (`loss_fedRound_le`).
+
+## References
+
+* arXiv 2307.05695 (ReLoRA) and arXiv 2403.03507 (GaLore): projectors refreshed every `T` steps;
+  arXiv 2607.05872: their analysis.
+* arXiv 2401.03748 (CoLR): random subspaces.
+* arXiv 2406.17887 (FeDLRT): federated dynamical low-rank training, Sec. 3.1.
 -/
 
 open Set Finset

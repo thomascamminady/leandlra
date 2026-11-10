@@ -17,3 +17,16 @@ LeanDLRA.OpenProblems.TensorNetworks.Part1a
 LeanDLRA.OpenProblems.TensorNetworks.Part1b
 LeanDLRA.OpenProblems.TensorNetworks.Part2Defs
 LeanDLRA.OpenProblems.TensorNetworks.Part2b
+LeanDLRA.OpenProblems.Curated.RankAdaptivityb
+LeanDLRA.OpenProblems.Curated.Structurea
+LeanDLRA.OpenProblems.Curated.Traininga
+LeanDLRA.OpenProblems.Curated.RankAdaptivitya
+LeanDLRA.OpenProblems.Curated.Trainingb
+LeanDLRA.OpenProblems.Curated.Classicald
+LeanDLRA.OpenProblems.Curated.RankAdaptivityHardDistLRflowlesharp
+LeanDLRA.Novel.OpSB64
+LeanDLRA.Literature.Applications.P2508_04484a
+LeanDLRA.Literature.Randomized.P2402_18721a
+LeanDLRA.Literature.Stochastic.P2601_21428a
+LeanDLRA.Literature.Applications.P2503_18271a
+LeanDLRA.Literature.TensorNetworks.P2002_11392b

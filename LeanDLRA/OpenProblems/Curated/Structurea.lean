@@ -6,7 +6,40 @@ import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Matrix.Curvature
 
 /-!
-# Open problems OP-CO-07, OP-SB-03, OP-SB-05, OP-SB-65
+# Norm and energy balance of the BUG, projector-splitting and parallel BUG steps
+
+For a field with `⟪F(t, x), x⟫ = 0` the exact flow conserves the norm. This file states what the
+three basic integrators do with the norm in one step, on the core step structures `IsBUGStep`,
+`IsKSLStep` and `IsParallelBUGStep`: the fixed-rank BUG step loses exactly the projection defect
+of its starting value, the projector-splitting (KSL) step conserves norm and energy exactly, and
+the untruncated parallel BUG step can only gain norm.
+
+## Main results
+
+* `IsBUGStep.norm_sq_add_defect`: for a norm-conserving field bounded by `B`, the result
+  `Y₁ = YS t₁` satisfies `‖Y₁‖² + ‖Y₀ - P₁ Q₁ Y₀‖² = ‖Y₀‖²`, and
+  `‖Y₀ - P₁ Q₁ Y₀‖ ≤ 2 B (t₁ - t₀)`.
+* `IsKSLStep.norm_eq`: if the projectors commute, `Q₀ Y₀ = Y₀` and the field conserves the norm,
+  the result `Y₁ = YL t₁` of one KSL step satisfies `‖Y₁‖ = ‖Y₀‖`, the backward S-step
+  included.
+* `IsKSLStep.energy_eq_of_skew`: for `F(t, x) = J ∇ℰ(x)` with `J` skew and commuting with both
+  projectors, and commuting projectors, one KSL step gives `ℰ(Y₁) = ℰ(Y₀)`.
+* `IsParallelBUGStep.norm_sq_eq`: for a norm-conserving field the untruncated parallel BUG output
+  `Ŷ₁` satisfies `‖Ŷ₁‖² = ‖Y₀‖² + ‖(1 - P₀) YK(t₁)‖² + ‖(1 - Q₀) YL(t₁)‖²`.
+* `IsParallelBUGStep.norm_sq_sub_le`: if the field is also bounded by `B` and the step has
+  length `h`, `0 ≤ ‖Ŷ₁‖² - ‖Y₀‖² ≤ 2 (B h)²`.
+* `parallelBUG_norm_drift`: with orthogonal truncations of tolerance `ϑ` and step sizes at most
+  `h`, `-n ϑ² ≤ ‖Yₙ‖² - ‖Y₀‖² ≤ 2 n (B h)²`.
+
+## References
+
+* C. Lubich, I. V. Oseledets, *A projector-splitting integrator for dynamical low-rank
+  approximation*, arXiv 1301.1058.
+* G. Ceruti, J. Kusch, C. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
+  approximation*, arXiv 2104.05247 (Theorems 6 and 7: norm and energy for the BUG integrator).
+* arXiv 2306.17526, Sec. 6 (observed norm defect of the fixed-rank BUG integrator).
+* G. Ceruti, J. Kusch, C. Lubich, *A parallel rank-adaptive integrator for dynamical low-rank
+  approximation*, arXiv 2403.02834 (Remark 5.2).
 -/
 
 open Set

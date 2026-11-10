@@ -5,7 +5,27 @@ import LeanDLRA.Classical.BestApproximation
 import LeanDLRA.Dynamics.ContinuousDLRA
 
 /-!
-# Open problems OP-RA-07, OP-RA-27, OP-RA-29, OP-RA-45
+# Rank selection: retained singular values, basis enrichment, ties, and Galerkin quasi-optimality
+
+Statements behind the rank decisions of rank-adaptive integrators: what the tolerance rule
+`epsRank` keeps, how much one new basis vector can gain, why the truncated SVD `truncation` is
+not continuous at equal singular values, and a quasi-optimality bound for the Galerkin flow in a
+fixed subspace.
+
+## Main results
+
+* `singularValues_pred_epsRank_gt`: if `r₁ = epsRank θ A > 0` for `A ∈ ℝ^{m×n}`, the smallest
+  retained singular value satisfies `σ_{r₁-1}(A) > θ / √(n - r₁ + 1)` (singular values counted
+  from `σ₀`).
+* `norm_sq_enrich_ge`: enlarging an orthonormal basis `U` by a unit vector `w ⊥ U` lowers
+  `‖(1 - U Uᵀ) G‖²` (Frobenius norm) by at most the squared spectral norm of `(1 - U Uᵀ) G`.
+* `exists_enrich_top_singular`: if `(1 - U Uᵀ) G ≠ 0`, some unit vector `w ⊥ U` attains this
+  bound with equality.
+* `not_continuousAt_truncation_tie`: the rank-one truncation of `2 × 2` matrices is not
+  continuous at the identity matrix.
+* `galerkin_quasiOptimal`: the Galerkin flow `YS' = R F(t, YS)`, `YS t₀ = R (A t₀)`, satisfies
+  `‖YS t - A t‖ ≤ ‖A t - R (A t)‖ + (e^{L (t - t₀)} - 1) d` on `[t₀, t₁]`, where `d` bounds
+  `‖A s - R (A s)‖` on the interval.
 -/
 
 open Set Finset Matrix

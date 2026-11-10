@@ -4,8 +4,44 @@ import LeanDLRA.Classical.BestApproximation
 import LeanDLRA.Dynamics.ContinuousDLRA
 
 /-!
-# Open problems OP-OT-19, OP-RA-04, OP-RA-14, OP-RA-17,
-OP-RA-24, OP-RA-26
+# Rank-adaptive BUG: a-posteriori bounds and tolerance schedules
+
+Error bounds for the rank-adaptive BUG integrator (`IsRankAdaptiveBUGStep`) that extend the core
+theorem `rankAdaptiveBUG_global_error`: a bound through a computable residual of the Galerkin
+step, and bounds for a truncation tolerance that changes from step to step. Two statements on
+Galerkin flows `Z' = R F(t, Z)` in the range of an orthogonal projector `R` come first: a larger
+Galerkin space loses at most the stability factor, and for a linear field a Galerkin space that
+contains Krylov vectors of the initial value gives an error of high order.
+
+Throughout, `F` is `L`-Lipschitz (`IsLipschitzField`), `A` is an exact solution
+(`ODESolution F A`) and the grid is `tₙ = t₀ + n h`.
+
+## Main results
+
+* `galerkin_quasiMonotone_of_le`: for orthogonal projectors with `R' (R x) = R x` (the range of
+  `R` lies in the range of `R'`): if the Galerkin flow in `range R` from `R (A t₀)` stays within
+  `d` of `A` on `[t₀, t₁]`, the Galerkin flow in `range R'` from `R' (A t₀)` stays within
+  `e^{L (t - t₀)} d`.
+* `galerkin_krylov_error`: for the linear field `y' = 𝒜 y` and `R` with `R (𝒜ʲ y₀) = 𝒜ʲ y₀` for
+  `j ≤ k`, the Galerkin flow from `y₀` has error at most
+  `2 e^{h ‖𝒜‖} (h ‖𝒜‖)^{k+1} ‖y₀‖ / (k+1)!` at time `h`.
+* `IsRankAdaptiveBUGStep.aposteriori_local_error`: if
+  `‖F(t, YS t) - P₁ Q₁ F(t, YS t)‖ ≤ η` along the Galerkin step `YS`, then
+  `‖Y₁ - A t₁‖ ≤ ϑ + e^{L h} (‖Y₀ - A t₀‖ + h η)`. Neither the normal bound `ε` nor a bound of
+  the field enters.
+* `rankAdaptiveBUG_aposteriori_global_error`: along a run with tolerances `ϑ k` and residual
+  bounds `η k`, `‖Yₙ - A tₙ‖ ≤ e^{L n h} (‖Y₀ - A t₀‖ + ∑_{k<n} (ϑ k + h η k))`.
+* `rankAdaptiveBUG_global_error_sum`: with tolerance `ϑ k` at step `k` and a field bounded by
+  `B`, `‖Yₙ - A tₙ‖ ≤ e^{L n h} (‖Y₀ - A t₀‖ + ∑_{k<n} (h (c₁ ε + c₂ h) + ϑ k))`, with
+  `c₁ = bugC₁ L H` and `c₂ = bugC₂ L B H` for `h ≤ H`.
+* `rankAdaptiveBUG_global_error_of_tol`: if `ϑ k ≤ τ h²` and `‖Y₀ - A t₀‖ ≤ δ`, then for
+  `n h ≤ T`, `‖Yₙ - A tₙ‖ ≤ e^{L T} (δ + T (c₁ ε + (c₂ + τ) h))`.
+
+## References
+
+* G. Ceruti, J. Kusch, C. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
+  approximation*, arXiv 2104.05247 (Theorem 2: the bound for a fixed tolerance, in the core as
+  `rankAdaptiveBUG_global_error`).
 -/
 
 open Set Finset Matrix

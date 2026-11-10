@@ -1,9 +1,26 @@
-import LeanDLRA.OpenProblems.Curated.TrainingDefs
 import LeanDLRA.Training.Descent
 import LeanDLRA.Matrix.Projectors
 
 /-!
-# Open problems OP-TR-11
+# Fixed points of federated low-rank training with and without variance correction
+
+Two statements on the federated rounds `fedRound` (with variance correction) and `fedAvgRound`
+(without) of `LeanDLRA/Training/Defs.lean`. A fixed point of the corrected round is a stationary
+point of the projected gradient; the round without the correction can have a fixed point where
+the sum of the client gradients does not vanish (client drift).
+
+## Main results
+
+* `apply_grad_eq_zero_of_fedRound_eq_self`: if the client gradients are `β`-Lipschitz,
+  `e λ β s⋆ < 1` and `s⋆ > 0`, then `fedRound x = x` implies `Π g(x) = 0` for the correction
+  field `g` of the round.
+* `exists_fedAvgRound_fixed_ne_stationary`: for every number `s⋆ ≥ 2` of local steps there are
+  two quadratic clients on `ℝ` for which `fedAvgRound` has a fixed point `x` with
+  `∑ c, gc c x ≠ 0`.
+
+## References
+
+* arXiv 2406.17887 (FeDLRT), Sec. 3.2: variance correction.
 -/
 
 open Set Finset

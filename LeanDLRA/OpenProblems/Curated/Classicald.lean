@@ -3,7 +3,23 @@ import LeanDLRA.Classical.SVD
 import LeanDLRA.Classical.BestApproximation
 
 /-!
-# Open problems OP-RA-30
+# Truncating a tangent step: the distance to rank `r` is of second order
+
+Let `X = U S Vᵀ` with orthonormal `U`, `V` and smallest singular value of `S` at least `ρ > 0`,
+and let `Z` be a tangent matrix at `X`, `(1 - U Uᵀ) Z (1 - V Vᵀ) = 0`. An explicit step `X + Z`
+leaves the matrices of rank at most `r`, but only by a term of second order in `Z`. The distance
+is measured by `WeylSingular.tailNorm (X + Z) r`, the Frobenius norm of the singular values of
+`X + Z` beyond the first `r`; it is the Frobenius distance to the matrices of rank at most `r`
+(`WeylSingular.tailNorm_eq_infDist`).
+
+## Main results
+
+* `tailNorm_add_tangent_le`: if `‖Z‖ ≤ ρ / 2` (Frobenius norm), then
+  `tailNorm (U S Vᵀ + Z) r ≤ ‖Z‖² / ρ`.
+
+## References
+
+* arXiv 2111.14540, Sec. 6 and 7 (retraction of a tangent step by the truncated SVD).
 -/
 
 open Matrix WithLp Module Finset

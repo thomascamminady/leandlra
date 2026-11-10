@@ -16,16 +16,14 @@ interpolation matrices `S_U`, `S_V` are selection matrices of index sets `I`, `J
   The proof uses only the interpolation identities `Sᵀ 𝒫 X = Sᵀ X` and `X 𝒫ᵀ S = X S`.
   Differences from the paper: the orthonormality of `U`, `V` is not assumed, since the result
   holds for every `U`, `V` with nonsingular interpolation matrices (a stronger statement).
-  `example_obliqueTangentProj_cross` shows that the hypotheses are satisfiable for a nontrivial
+  The `example` after the theorem shows that the hypotheses are satisfiable for a nontrivial
   instance (`2 × 1` bases with `I = {0}`, `J = {0}`).
 
-Elsewhere in the library:
+Related results of the library:
 
-* Prop. 4.1, Lemma 4.1 and Theorem 4.1 (oblique TT tangent projector, cross interpolation) are in
-  the companion module `P2402_18721b`, as corollaries of the core files
-  `Tensor/TT/ObliqueProjector.lean` and `Tensor/TT/TangentProjector.lean`.
-* Eq. (7) (CUR reconstruction of a rank-`r` matrix) is `P2408_16591.cur_eq_self_of_rank_le`; the
-  QR-stabilized form (8) follows with `P2408_16591.qr_cur_eq`.
+* The general theorems behind Prop. 4.1, Lemma 4.1 and Theorem 4.1 (oblique tangent projector of
+  tensor trains, cross interpolation) are in `LeanDLRA/Tensor/TT/ObliqueProjector.lean` and
+  `LeanDLRA/Tensor/TT/TangentProjector.lean`.
 
 Not formalized from arXiv 2402.18721 (left out, not claimed):
 
