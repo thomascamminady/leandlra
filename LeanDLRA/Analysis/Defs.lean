@@ -235,4 +235,83 @@ def filippov (f : E → E) (M : Set E) (y : E) : Set E :=
 
 end Filippov
 
+/-! ### Runge–Kutta tableaux -/
+
+section RungeKutta
+
+/-- A **Butcher tableau** with `s` stages and coefficients in `R`: the Runge–Kutta matrix `a`, the
+weights `b` and the nodes `c`. The Runge–Kutta step structures of the library take the three
+arrays as separate arguments (`RungeKuttaBUG.IsGalerkinRKStep F T.a T.b T.c …`); the order
+conditions of a tableau are statements about `T.a`, `T.b`, `T.c`. -/
+structure ButcherTableau (R : Type*) (s : ℕ) where
+  /-- The Runge–Kutta matrix `(aᵢⱼ)`. -/
+  a : Fin s → Fin s → R
+  /-- The weights `bᵢ`. -/
+  b : Fin s → R
+  /-- The nodes `cᵢ`. -/
+  c : Fin s → R
+
+namespace ButcherTableau
+
+variable {R : Type*} {s : ℕ}
+
+/-- The tableau is **explicit**: `aᵢⱼ = 0` for `i ≤ j`, so every stage uses only the earlier
+ones. -/
+def IsExplicit [Zero R] (T : ButcherTableau R s) : Prop :=
+  ∀ i j, i ≤ j → T.a i j = 0
+
+/-- The nodes are the row sums of the Runge–Kutta matrix, `cᵢ = ∑ⱼ aᵢⱼ`. -/
+def IsRowSum [AddCommMonoid R] (T : ButcherTableau R s) : Prop :=
+  ∀ i, T.c i = ∑ j, T.a i j
+
+/-- The explicit Euler method `y₁ = y + h F(t, y)`. -/
+def euler [Zero R] [One R] : ButcherTableau R 1 :=
+  ⟨fun _ _ => 0, fun _ => 1, fun _ => 0⟩
+
+/-- The classical fourth-order Runge–Kutta method: `a₂₁ = a₃₂ = 1/2`, `a₄₃ = 1`,
+`b = (1/6, 1/3, 1/3, 1/6)`, `c = (0, 1/2, 1/2, 1)`. -/
+def rk4 [DivisionRing R] : ButcherTableau R 4 :=
+  ⟨![![0, 0, 0, 0], ![1 / 2, 0, 0, 0], ![0, 1 / 2, 0, 0], ![0, 0, 1, 0]],
+    ![1 / 6, 1 / 3, 1 / 3, 1 / 6], ![0, 1 / 2, 1 / 2, 1]⟩
+
+/-- **Ketcheson's SSPRK(10,4)** in Butcher form (0-based indices): `aᵢⱼ = 1/6` for `j < i < 5`,
+`aᵢⱼ = 1/15` for `j < 5 ≤ i`, `aᵢⱼ = 1/6` for `5 ≤ j < i`, all weights `1/10`, and the nodes the
+row sums. -/
+def ssprk104 [DivisionRing R] : ButcherTableau R 10 where
+  a i j := if j < i then (if i.val < 5 then 1 / 6 else if j.val < 5 then 1 / 15 else 1 / 6) else 0
+  b _ := 1 / 10
+  c i := ∑ j, if j < i then (if i.val < 5 then 1 / 6 else if j.val < 5 then 1 / 15 else 1 / 6)
+    else 0
+
+theorem euler_isExplicit [Zero R] [One R] : (euler : ButcherTableau R 1).IsExplicit :=
+  fun _ _ _ => rfl
+
+theorem rk4_isExplicit [DivisionRing R] : (rk4 : ButcherTableau R 4).IsExplicit := by
+  intro i j hij
+  fin_cases i <;> fin_cases j <;> first | rfl | exact absurd hij (by decide)
+
+theorem rk4_isRowSum [DivisionRing R] : (rk4 : ButcherTableau R 4).IsRowSum := by
+  intro i
+  fin_cases i <;> simp [rk4, Fin.sum_univ_four]
+
+theorem ssprk104_isExplicit [DivisionRing R] : (ssprk104 : ButcherTableau R 10).IsExplicit :=
+  fun _ _ hij => by simp [ssprk104, not_lt.2 hij]
+
+theorem ssprk104_isRowSum [DivisionRing R] : (ssprk104 : ButcherTableau R 10).IsRowSum :=
+  fun _ => rfl
+
+end ButcherTableau
+
+end RungeKutta
+
+/-! ### The functions `φ₁`, `φ₂` of exponential integrators -/
+
+/-- `φ₁(z) = (eᶻ - 1)/z`, `φ₁(0) = 1`, the first `φ`-function of exponential integrators
+(`eᶻ = 1 + z φ₁(z)`). -/
+noncomputable def phi1 (z : ℝ) : ℝ := if z = 0 then 1 else (Real.exp z - 1) / z
+
+/-- `φ₂(z) = (eᶻ - 1 - z)/z²`, `φ₂(0) = 1/2`, the second `φ`-function of exponential
+integrators. -/
+noncomputable def phi2 (z : ℝ) : ℝ := if z = 0 then 1 / 2 else (Real.exp z - 1 - z) / z ^ 2
+
 end LeanDLRA

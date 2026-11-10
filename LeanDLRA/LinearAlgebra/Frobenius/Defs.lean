@@ -326,3 +326,197 @@ namespace LeanDLRA
   Frobenius.transposeCLM_apply
 
 end LeanDLRA
+
+/-! ### The weighted matrix space (decision Q5) -/
+
+namespace LeanDLRA
+
+open Matrix
+
+variable {m n : Type*}
+
+/-- **The weighted matrix space**: `Matrix m n ℝ` with the weighted (quadrature) inner product
+`Frobenius.weightedInner wx wv`, `⟪X, Y⟫ = ∑ᵢ ∑ⱼ wxᵢ wvⱼ Xᵢⱼ Yᵢⱼ`, as a type synonym. For positive
+weights (instances `Fact (∀ i, 0 < wx i)` and `Fact (∀ j, 0 < wv j)`) it is a real inner product
+space whose norm is the discrete weighted `L²` norm of kinetic discretizations, so every abstract
+inner-product theorem of the library applies to weighted norms directly.
+`WeightedMatrix.toFrobenius` is the isometry `X ↦ diag(√wx) X diag(√wv)` onto the Frobenius space.
+Matrices are converted with `WeightedMatrix.toWeighted` and `WeightedMatrix.ofWeighted` (both the
+identity). -/
+def WeightedMatrix (_wx : m → ℝ) (_wv : n → ℝ) : Type _ := Matrix m n ℝ
+
+namespace WeightedMatrix
+
+variable {wx : m → ℝ} {wv : n → ℝ}
+
+instance : AddCommGroup (WeightedMatrix wx wv) := inferInstanceAs (AddCommGroup (Matrix m n ℝ))
+
+instance : Module ℝ (WeightedMatrix wx wv) := inferInstanceAs (Module ℝ (Matrix m n ℝ))
+
+/-- A matrix as an element of the weighted space (the identity map). -/
+def toWeighted : Matrix m n ℝ ≃ₗ[ℝ] WeightedMatrix wx wv := LinearEquiv.refl ℝ _
+
+/-- The matrix underlying an element of the weighted space (the identity map). -/
+def ofWeighted : WeightedMatrix wx wv ≃ₗ[ℝ] Matrix m n ℝ := LinearEquiv.refl ℝ _
+
+@[simp]
+theorem ofWeighted_toWeighted (X : Matrix m n ℝ) :
+    ofWeighted (toWeighted (wx := wx) (wv := wv) X) = X := rfl
+
+@[simp]
+theorem toWeighted_ofWeighted (X : WeightedMatrix wx wv) : toWeighted (ofWeighted X) = X := rfl
+
+variable [Fintype m] [Fintype n]
+
+/-- The weighted inner product `⟪X, Y⟫ = ∑ᵢ ∑ⱼ wxᵢ wvⱼ Xᵢⱼ Yᵢⱼ` (defined for all weights; an inner
+product for positive ones). -/
+noncomputable instance : Inner ℝ (WeightedMatrix wx wv) :=
+  ⟨fun X Y => Frobenius.weightedInner wx wv (ofWeighted X) (ofWeighted Y)⟩
+
+/-- The inner product of the weighted space is `Frobenius.weightedInner`. -/
+theorem inner_def (X Y : WeightedMatrix wx wv) :
+    ⟪X, Y⟫ = Frobenius.weightedInner wx wv (ofWeighted X) (ofWeighted Y) := rfl
+
+variable [hx : Fact (∀ i, 0 < wx i)] [hv : Fact (∀ j, 0 < wv j)]
+
+omit [Fintype m] [Fintype n] in
+private theorem weight_mul_self_nonneg (X : WeightedMatrix wx wv) (i : m) (j : n) :
+    0 ≤ wx i * wv j * ofWeighted X i j * ofWeighted X i j := by
+  have h1 := (hx.out i).le
+  have h2 := (hv.out j).le
+  have e : wx i * wv j * ofWeighted X i j * ofWeighted X i j =
+      wx i * wv j * (ofWeighted X i j * ofWeighted X i j) := by ring
+  rw [e]
+  exact mul_nonneg (mul_nonneg h1 h2) (mul_self_nonneg _)
+
+/-- For positive weights the weighted space is a normed group, with the norm of the weighted inner
+product. -/
+noncomputable instance : NormedAddCommGroup (WeightedMatrix wx wv) :=
+  @InnerProductSpace.Core.toNormedAddCommGroup ℝ (WeightedMatrix wx wv) _ _ _
+    { toInner := inferInstance
+      conj_inner_symm := fun X Y => by
+        simp only [conj_trivial, inner_def]
+        exact Frobenius.weightedInner_comm wx wv _ _
+      re_inner_nonneg := fun X => by
+        simp only [RCLike.re_to_real, inner_def, Frobenius.weightedInner]
+        exact Finset.sum_nonneg fun i _ => Finset.sum_nonneg fun j _ =>
+          weight_mul_self_nonneg X i j
+      definite := fun X h => by
+        change Frobenius.weightedInner wx wv (ofWeighted X) (ofWeighted X) = 0 at h
+        have h0 : ∀ i j, wx i * wv j * ofWeighted X i j * ofWeighted X i j = 0 := by
+          intro i j
+          have hi := (Finset.sum_eq_zero_iff_of_nonneg fun i _ => Finset.sum_nonneg fun j _ =>
+            weight_mul_self_nonneg X i j).1 h i (Finset.mem_univ i)
+          exact (Finset.sum_eq_zero_iff_of_nonneg fun j _ =>
+            weight_mul_self_nonneg X i j).1 hi j (Finset.mem_univ j)
+        apply ofWeighted.injective
+        ext i j
+        have hw : wx i * wv j ≠ 0 := mul_ne_zero (hx.out i).ne' (hv.out j).ne'
+        have e : wx i * wv j * (ofWeighted X i j * ofWeighted X i j) = 0 := by
+          rw [← h0 i j]; ring
+        simpa using (mul_eq_zero.1 e).resolve_left hw
+      add_left := fun X Y Z => by
+        simp only [inner_def, Frobenius.weightedInner, map_add, Matrix.add_apply, mul_add,
+          add_mul, Finset.sum_add_distrib]
+      smul_left := fun X Y r => by
+        simp only [inner_def, Frobenius.weightedInner, map_smul, Matrix.smul_apply, smul_eq_mul,
+          conj_trivial, Finset.mul_sum]
+        exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by ring }
+
+/-- For positive weights the weighted space is a real inner product space. -/
+noncomputable instance : InnerProductSpace ℝ (WeightedMatrix wx wv) :=
+  InnerProductSpace.ofCore _
+
+/-- The squared norm of the weighted space is the weighted sum of squares. -/
+theorem norm_sq_eq (X : WeightedMatrix wx wv) :
+    ‖X‖ ^ 2 = ∑ i, ∑ j, wx i * wv j * ofWeighted X i j ^ 2 := by
+  rw [← real_inner_self_eq_norm_sq, inner_def, Frobenius.weightedInner]
+  exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by ring
+
+variable [DecidableEq m] [DecidableEq n]
+
+open scoped Frobenius in
+/-- **Isometry to the Frobenius space** (decision Q5): for positive weights,
+`X ↦ diag(√wx) X diag(√wv)` is a linear isometric equivalence of the weighted space onto
+`Matrix m n ℝ` with the Frobenius inner product (`Frobenius.weightedInner_eq_inner`). -/
+noncomputable def toFrobenius : WeightedMatrix wx wv ≃ₗᵢ[ℝ] Matrix m n ℝ :=
+  LinearEquiv.isometryOfInner
+    { toFun := fun X => diagonal (fun i => √(wx i)) * ofWeighted X * diagonal (fun j => √(wv j))
+      map_add' := fun X Y => by
+        simp only [map_add, Matrix.mul_add, Matrix.add_mul]
+      map_smul' := fun r X => by
+        simp only [map_smul, Matrix.mul_smul, Matrix.smul_mul, RingHom.id_apply]
+      invFun := fun Y => toWeighted
+        (diagonal (fun i => (√(wx i))⁻¹) * Y * diagonal (fun j => (√(wv j))⁻¹))
+      left_inv := fun X => by
+        have h1 : diagonal (fun i => (√(wx i))⁻¹) * diagonal (fun i => √(wx i)) = 1 := by
+          rw [diagonal_mul_diagonal, ← diagonal_one]
+          congr 1; funext i
+          exact inv_mul_cancel₀ (Real.sqrt_pos.2 (hx.out i)).ne'
+        have h2 : diagonal (fun j => √(wv j)) * diagonal (fun j => (√(wv j))⁻¹) = 1 := by
+          rw [diagonal_mul_diagonal, ← diagonal_one]
+          congr 1; funext j
+          exact mul_inv_cancel₀ (Real.sqrt_pos.2 (hv.out j)).ne'
+        change toWeighted (diagonal (fun i => (√(wx i))⁻¹) *
+          (diagonal (fun i => √(wx i)) * ofWeighted X * diagonal (fun j => √(wv j))) *
+            diagonal (fun j => (√(wv j))⁻¹)) = X
+        calc _ = toWeighted (diagonal (fun i => (√(wx i))⁻¹) * diagonal (fun i => √(wx i)) *
+              ofWeighted X * (diagonal (fun j => √(wv j)) * diagonal (fun j => (√(wv j))⁻¹))) := by
+              simp only [Matrix.mul_assoc]
+          _ = X := by rw [h1, h2, Matrix.one_mul, Matrix.mul_one, toWeighted_ofWeighted]
+      right_inv := fun Y => by
+        have h1 : diagonal (fun i => √(wx i)) * diagonal (fun i => (√(wx i))⁻¹) = 1 := by
+          rw [diagonal_mul_diagonal, ← diagonal_one]
+          congr 1; funext i
+          exact mul_inv_cancel₀ (Real.sqrt_pos.2 (hx.out i)).ne'
+        have h2 : diagonal (fun j => (√(wv j))⁻¹) * diagonal (fun j => √(wv j)) = 1 := by
+          rw [diagonal_mul_diagonal, ← diagonal_one]
+          congr 1; funext j
+          exact inv_mul_cancel₀ (Real.sqrt_pos.2 (hv.out j)).ne'
+        change diagonal (fun i => √(wx i)) * ofWeighted (toWeighted (diagonal
+          (fun i => (√(wx i))⁻¹) * Y * diagonal (fun j => (√(wv j))⁻¹))) *
+            diagonal (fun j => √(wv j)) = Y
+        rw [ofWeighted_toWeighted]
+        calc _ = diagonal (fun i => √(wx i)) * diagonal (fun i => (√(wx i))⁻¹) * Y *
+              (diagonal (fun j => (√(wv j))⁻¹) * diagonal (fun j => √(wv j))) := by
+              simp only [Matrix.mul_assoc]
+          _ = Y := by rw [h1, h2, Matrix.one_mul, Matrix.mul_one] }
+    fun X Y => (Frobenius.weightedInner_eq_inner (fun i => (hx.out i).le)
+      (fun j => (hv.out j).le) (ofWeighted X) (ofWeighted Y)).symm
+
+open scoped Frobenius in
+/-- `toFrobenius X = diag(√wx) X diag(√wv)`. -/
+theorem toFrobenius_apply (X : WeightedMatrix wx wv) :
+    toFrobenius X = diagonal (fun i => √(wx i)) * ofWeighted X * diagonal (fun j => √(wv j)) :=
+  rfl
+
+open scoped Frobenius in
+/-- The weighted inner product is the Frobenius inner product of the scaled matrices. -/
+theorem inner_toFrobenius (X Y : WeightedMatrix wx wv) :
+    ⟪toFrobenius X, toFrobenius Y⟫ = ⟪X, Y⟫ :=
+  toFrobenius.inner_map_map X Y
+
+open scoped Frobenius in
+/-- The weighted norm is the Frobenius norm of the scaled matrix. -/
+theorem norm_toFrobenius (X : WeightedMatrix wx wv) : ‖toFrobenius X‖ = ‖X‖ :=
+  toFrobenius.norm_map X
+
+end WeightedMatrix
+
+section Example
+
+private theorem fact_two_pos : Fact (∀ _ : Fin 1, (0 : ℝ) < 2) := ⟨fun _ => two_pos⟩
+
+private theorem fact_one_pos : Fact (∀ _ : Fin 1, (0 : ℝ) < 1) := ⟨fun _ => one_pos⟩
+
+attribute [local instance] fact_two_pos fact_one_pos
+
+/-- Non-vacuity: with weights `wx = 2`, `wv = 1` on `1 × 1` matrices, `‖1‖² = 2`. -/
+example : ‖(WeightedMatrix.toWeighted 1 :
+    WeightedMatrix (fun _ : Fin 1 => (2 : ℝ)) fun _ : Fin 1 => (1 : ℝ))‖ ^ 2 = 2 := by
+  rw [WeightedMatrix.norm_sq_eq]
+  simp
+
+end Example
+
+end LeanDLRA

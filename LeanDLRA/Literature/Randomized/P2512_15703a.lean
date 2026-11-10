@@ -1,3 +1,4 @@
+import LeanDLRA.Analysis.Defs
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Interpolation
@@ -525,15 +526,9 @@ theorem galerkinRK_eq_of_fix_derivs {s : ℕ} {F : ℝ → E → E} {a : Fin s �
   rw [hZi]
   exact proj_comb_eq (hy i) (hk i) h
 
-/-- Butcher tableau of the classical fourth-order Runge–Kutta method. -/
-noncomputable def rk4A : Fin 4 → Fin 4 → ℝ :=
-  ![![0, 0, 0, 0], ![1 / 2, 0, 0, 0], ![0, 1 / 2, 0, 0], ![0, 0, 1, 0]]
-
-/-- Weights of classical RK4. -/
-noncomputable def rk4B : Fin 4 → ℝ := ![1 / 6, 1 / 3, 1 / 3, 1 / 6]
-
-/-- Nodes of classical RK4. -/
-noncomputable def rk4C : Fin 4 → ℝ := ![0, 1 / 2, 1 / 2, 1]
+/-! The classical fourth-order Runge–Kutta method is the core tableau `ButcherTableau.rk4`; the
+arrays `rk4A`, `rk4B`, `rk4C` of an earlier version of this file were its arrays over `ℝ` (same
+definitions; unification batch C8). -/
 
 /-- **AP-RK4 with the target `[M(t) k₁ k₂ k₃ M(t+Δt)]` reproduces RK4** (arXiv 2512.15703,
 Sec. 3.3).  If the range of the projector `P` (`P² = P`, orthogonal or interpolative) contains
@@ -546,15 +541,16 @@ observed orders (4 for AP-RK4, 2 for AP-CN, 2 for projector splitting) are numer
 formalized. -/
 theorem apRK4_eq_rk4 {F : ℝ → E → E} {P : E →L[ℝ] E} (hP : IsIdempotentElem P) {t h : ℝ}
     {y : E} {Y Z : Fin 4 → E} {y₁ z₁ : E}
-    (hZ : IsGalerkinRKStep F rk4A rk4B rk4C (fun _ => 1) 1 t h y Z z₁)
-    (hG : IsGalerkinRKStep F rk4A rk4B rk4C (fun _ => P) P t h y Y y₁) (hy : y ∈ Set.range P)
-    (hk : ∀ j : Fin 4, j ≠ 3 → F (t + rk4C j * h) (Z j) ∈ Set.range P)
+    (hZ : IsGalerkinRKStep F ButcherTableau.rk4.a ButcherTableau.rk4.b ButcherTableau.rk4.c
+      (fun _ => 1) 1 t h y Z z₁)
+    (hG : IsGalerkinRKStep F ButcherTableau.rk4.a ButcherTableau.rk4.b ButcherTableau.rk4.c
+      (fun _ => P) P t h y Y y₁) (hy : y ∈ Set.range P)
+    (hk : ∀ j : Fin 4, j ≠ 3 → F (t + ButcherTableau.rk4.c j * h) (Z j) ∈ Set.range P)
     (hz : z₁ ∈ Set.range P) : Y = Z ∧ y₁ = z₁ := by
-  have ha : ∀ i j : Fin 4, i ≤ j → rk4A i j = 0 := by
-    intro i j hij
-    fin_cases i <;> fin_cases j <;> simp_all [rk4A]
-  have h3 : ∀ i : Fin 4, rk4A i 3 = 0 := by
-    intro i; fin_cases i <;> simp [rk4A]
+  have ha : ∀ i j : Fin 4, i ≤ j → (ButcherTableau.rk4 : ButcherTableau ℝ 4).a i j = 0 :=
+    ButcherTableau.rk4_isExplicit
+  have h3 : ∀ i : Fin 4, (ButcherTableau.rk4 : ButcherTableau ℝ 4).a i 3 = 0 := fun i =>
+    ButcherTableau.rk4_isExplicit i 3 (Fin.le_last i)
   refine galerkinRK_eq_of_fix_derivs ha hG hZ (fun _ => fix_of_mem_range hP hy)
     (fun i j hij => fix_of_mem_range hP (hk j fun hj => hij (hj ▸ h3 i))) (fix_of_mem_range hP hz)
 
@@ -708,5 +704,17 @@ theorem sel_mul_transpose {N : Type*} [Fintype N] [DecidableEq N] {ι : K → N}
   simp [sel, Matrix.mul_apply, Matrix.one_apply, hι.eq_iff]
 
 end Upwind
+
+/-- The Runge–Kutta matrix of classical RK4, replaced by the core `ButcherTableau.rk4.a`. -/
+@[deprecated "use `ButcherTableau.rk4.a`" (since := "2026-11-10")]
+noncomputable def rk4A : Fin 4 → Fin 4 → ℝ := ButcherTableau.rk4.a
+
+/-- The weights of classical RK4, replaced by the core `ButcherTableau.rk4.b`. -/
+@[deprecated "use `ButcherTableau.rk4.b`" (since := "2026-11-10")]
+noncomputable def rk4B : Fin 4 → ℝ := ButcherTableau.rk4.b
+
+/-- The nodes of classical RK4, replaced by the core `ButcherTableau.rk4.c`. -/
+@[deprecated "use `ButcherTableau.rk4.c`" (since := "2026-11-10")]
+noncomputable def rk4C : Fin 4 → ℝ := ButcherTableau.rk4.c
 
 end LeanDLRA.Literature.P2512_15703

@@ -1,3 +1,4 @@
+import LeanDLRA.Analysis.Defs
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Curvature
@@ -55,6 +56,17 @@ def ssprk104b : Fin 10 → ℚ := fun _ => 1 / 10
 
 /-- Nodes of SSPRK(10,4): `cᵢ = ∑ⱼ aᵢⱼ`. -/
 def ssprk104c : Fin 10 → ℚ := fun i => ∑ j, ssprk104A i j
+
+/-- **Bridge.** `ssprk104A`, `ssprk104b`, `ssprk104c` are the arrays of the core tableau
+`ButcherTableau.ssprk104` over `ℚ` (same definitions). They are kept under their names because the
+catalogue statements of OP-HO-12 are phrased with them. -/
+theorem ssprk104A_eq : ssprk104A = (ButcherTableau.ssprk104 : ButcherTableau ℚ 10).a := rfl
+
+/-- The weights of SSPRK(10,4) are those of the core tableau `ButcherTableau.ssprk104`. -/
+theorem ssprk104b_eq : ssprk104b = (ButcherTableau.ssprk104 : ButcherTableau ℚ 10).b := rfl
+
+/-- The nodes of SSPRK(10,4) are those of the core tableau `ButcherTableau.ssprk104`. -/
+theorem ssprk104c_eq : ssprk104c = (ButcherTableau.ssprk104 : ButcherTableau ℚ 10).c := rfl
 
 /-- The first unit vector of `ℝ³` as a `3 × 1` orthonormal basis. -/
 def e₁₃ : Matrix (Fin 3) (Fin 1) ℝ := fun i _ => if i = 0 then 1 else 0

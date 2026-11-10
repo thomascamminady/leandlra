@@ -1,3 +1,4 @@
+import LeanDLRA.Analysis.Defs
 import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Foundations.OneSided
 import LeanDLRA.Matrix.Frobenius
@@ -10,7 +11,7 @@ This module formalizes two results of arXiv 2312.00172 for real matrices with th
 truncation `T_r`, the best rank-`r` approximation), `EckartYoung.norm_sub_truncation_le`,
 `ODESolution`, `IsOneSidedLipschitzField`, `isOneSidedLipschitzField_linear_iff`,
 `ODESolution.norm_sub_le_exp_of_oneSided` and `norm_sub_le_gronwallBound_of_oneSided`.
-The local definition added is `phi1`, the scalar `φ₁` of the paper's eq. (4).
+The scalar `φ₁` of the paper's eq. (4) is the core `LeanDLRA.phi1` (`Analysis/Defs.lean`).
 
 * **Lemma 8 (truncation inequality)**, `truncation_add_sub_le`:
   `‖T_r(A + E) - A‖ ≤ ‖T_r(A) - A‖ + 2‖E‖`, stated exactly as in the paper. Its immediate
@@ -48,9 +49,9 @@ namespace LeanDLRA.Literature.P2312_00172
 
 variable {m n : Type*} [Fintype m] [Fintype n]
 
-/-- The scalar `φ₁` of the paper's eq. (4), `φ₁(z) = (e^z - p₀(z))/z` with `p₀ = 1`, and
-`φ₁(0) = 1` by continuity. -/
-noncomputable def phi1 (z : ℝ) : ℝ := if z = 0 then 1 else (Real.exp z - 1) / z
+/-! The scalar `φ₁` of the paper's eq. (4), `φ₁(z) = (e^z - p₀(z))/z` with `p₀ = 1` and
+`φ₁(0) = 1` by continuity, is the core `LeanDLRA.phi1`; the local copy of an earlier version of
+this file was the same definition (unification batch C13, F21). -/
 
 /-- **arXiv 2312.00172, Lemma 8 (truncation inequality).** For the truncation `T_r` to rank `r`
 (the Frobenius best rank-`r` approximation, `EckartYoung.truncation`) and any matrices `A, E`,
@@ -150,5 +151,8 @@ example : ∀ X : Matrix (Fin 2) (Fin 2) ℝ,
     ⟪(-(ContinuousLinearMap.id ℝ (Matrix (Fin 2) (Fin 2) ℝ))) X, X⟫ ≤ (-1) * ‖X‖ ^ 2 := by
   intro X
   simp [inner_neg_left]
+
+/-- The local `φ₁` of an earlier version of this file, replaced by the core `LeanDLRA.phi1`. -/
+@[deprecated (since := "2026-11-10")] alias phi1 := LeanDLRA.phi1
 
 end LeanDLRA.Literature.P2312_00172

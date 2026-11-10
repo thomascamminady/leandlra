@@ -81,4 +81,11 @@ noncomputable def phi1 (z : ℝ) : ℝ := if z = 0 then 1 else (Real.exp z - 1) 
 /-- `φ₂(z) = (eᶻ - 1 - z)/z²`, `φ₂(0) = 1/2` (local definition for OP-ST-32). -/
 noncomputable def phi2 (z : ℝ) : ℝ := if z = 0 then 1 / 2 else (Real.exp z - 1 - z) / z ^ 2
 
+/-- **Bridge.** The local `φ₁` is the core `LeanDLRA.phi1` (same definition); it is kept under its
+name because a catalogue statement of OP-ST-32 is phrased with it. -/
+theorem phi1_eq : phi1 = LeanDLRA.phi1 := rfl
+
+/-- **Bridge.** The local `φ₂` is the core `LeanDLRA.phi2` (same definition). -/
+theorem phi2_eq : phi2 = LeanDLRA.phi2 := rfl
+
 end LeanDLRA.OpenProblems.Stiff
