@@ -39,6 +39,8 @@ import LeanDLRA.Integrators.Matrix.Defs
 import LeanDLRA.Integrators.Matrix.KSLRun
 import LeanDLRA.Integrators.Matrix.KSLStep
 import LeanDLRA.Integrators.Matrix.ParallelBUG
+import LeanDLRA.Integrators.Matrix.ParallelBUGRun
+import LeanDLRA.Integrators.Matrix.ParallelBUGStep
 import LeanDLRA.Integrators.Matrix.ProjectorSplitting
 import LeanDLRA.Integrators.Matrix.Symmetry
 import LeanDLRA.Integrators.Method
