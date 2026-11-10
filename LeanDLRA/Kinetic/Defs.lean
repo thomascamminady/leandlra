@@ -1,6 +1,7 @@
 import LeanDLRA.LinearAlgebra.Frobenius.Defs
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 
 /-!
@@ -13,8 +14,10 @@ phase space it is a function `f : 𝒳 → 𝒱 → ℝ`. Dynamical low-rank app
 
 ## Main definitions
 
+* `Kinetic.Quadrature V`: a velocity quadrature, nodes `μ` and positive weights `w` of total
+  mass one.
 * `Kinetic.PhaseGrid X V`: positive quadrature weights `wx`, `wv` on the space and velocity
-  nodes.
+  nodes; `Kinetic.Quadrature.toPhaseGrid`: a quadrature and spatial weights form a grid.
 * `Kinetic.quadMoment w ζ f`, `Kinetic.density w f`: the discrete velocity moments
   `x ↦ ∑ᵥ w v * ζ v * f x v` and the density (`ζ = 1`); `Kinetic.velocityMoment ν ζ f`: the
   continuous moment `x ↦ ∫ ζ(v) f(x, v) dν(v)`.
@@ -25,9 +28,6 @@ phase space it is a function `f : 𝒳 → 𝒱 → ℝ`. Dynamical low-rank app
   difference matrices on `ZMod N`, with their action `*ᵥ` on grid functions.
 * `Kinetic.maxwellian R ρ T u v`: the Maxwellian on `ℝ^ι`.
 
-`LeanDLRA.Novel.EpsRank.Quadrature` (velocity nodes and positive weights of total mass one) is
-defined here as well and keeps the name of the file in which it was first stated.
-
 ## Main results
 
 * `Kinetic.quadMoment_eq_mulVec`, `Kinetic.density_eq_mulVec`: a quadrature moment is the
@@ -35,19 +35,23 @@ defined here as well and keeps the name of the file in which it was first stated
 * `Kinetic.velocityMoment_sum_smul_dirac`: for the discrete measure `∑ᵥ w v • δᵥ` the continuous
   moment is the quadrature moment.
 * `Kinetic.lowRankAnsatz_one_eq_mul`: without weight the ansatz is the matrix product `Xᵀ S V`.
+* `Kinetic.isOrthonormalWrt_iff_orthonormal_toLp`: `IsOrthonormalWrt ν V` says that every `V i`
+  is in `L²(ν)` and that the classes of the `V i` are orthonormal in Mathlib's `Lp ℝ 2 ν`.
 * `Kinetic.centralDiff_eq`, `Kinetic.secondDiff_eq`: `D⁰ = (D⁺ + D⁻) / 2` and
   `D² = (D⁺ - D⁻) / h`.
 -/
 
+namespace LeanDLRA.Kinetic
+
+open MeasureTheory
+open scoped Matrix
+
 /-! ### Velocity quadratures -/
 
-namespace LeanDLRA.Novel.EpsRank
-
-open Set Filter Topology Finset
-open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius
-
-/-- A velocity quadrature: nodes `μ_v` and positive weights `w_v` of total mass one, so that
-`⟨g⟩ = ∑_v w_v g_v` is the normalised velocity average. -/
+/-- A **velocity quadrature**: nodes `μ_v` and positive weights `w_v` of total mass one, so that
+`⟨g⟩ = ∑_v w_v g_v` is the normalised velocity average. A rule whose weights have another total
+mass (`2` for a Gauss rule on `[-1, 1]`, `2π` for a rule on the circle) gives a `Quadrature`
+after division of the weights by that mass. -/
 structure Quadrature (V : Type*) [Fintype V] where
   /-- the nodes -/
   μ : V → ℝ
@@ -56,20 +60,17 @@ structure Quadrature (V : Type*) [Fintype V] where
   w_pos : ∀ v, 0 < w v
   sum_w : ∑ v, w v = 1
 
-end LeanDLRA.Novel.EpsRank
+/-- The two-point rule with the nodes `-1`, `1` and the weights `1/2`. -/
+example : Nonempty (Quadrature (Fin 2)) :=
+  ⟨⟨![-1, 1], fun _ => 1 / 2, fun _ => by norm_num, by norm_num [Fin.sum_univ_two]⟩⟩
 
 /-! ### Phase-space grids -/
-
-namespace LeanDLRA.Kinetic
-
-open MeasureTheory
-open scoped Matrix
 
 /-- A **phase-space grid**: quadrature weights `wx` on the spatial nodes `X` and `wv` on the
 velocity nodes `V`, both positive, so that `∫ u dx ≈ ∑ₓ wx x * u x` and
 `∫ g dv ≈ ∑ᵥ wv v * g v`. The weighted inner product of two phase-space matrices is
-`Frobenius.weightedInner wx wv`. Unlike `Novel.EpsRank.Quadrature` the velocity weights need not
-sum to one and no velocity nodes are stored. -/
+`Frobenius.weightedInner wx wv`. Unlike `Quadrature` the velocity weights need not sum to one and
+no velocity nodes are stored. -/
 structure PhaseGrid (X V : Type*) where
   /-- The spatial quadrature weights. -/
   wx : X → ℝ
@@ -83,6 +84,28 @@ structure PhaseGrid (X V : Type*) where
 /-- A grid with two cells of width `1/2` and three velocities of weight `1/3`. -/
 example : Nonempty (PhaseGrid (Fin 2) (Fin 3)) :=
   ⟨⟨fun _ => 1 / 2, fun _ => 1 / 3, fun _ => by norm_num, fun _ => by norm_num⟩⟩
+
+/-- A velocity quadrature and positive spatial weights form a **phase-space grid**. The grid
+keeps the velocity weights; it forgets the nodes and the normalisation `∑ᵥ w v = 1`. -/
+def Quadrature.toPhaseGrid {X V : Type*} [Fintype V] (q : Quadrature V) (wx : X → ℝ)
+    (hwx : ∀ x, 0 < wx x) : PhaseGrid X V :=
+  ⟨wx, q.w, hwx, q.w_pos⟩
+
+@[simp]
+theorem Quadrature.toPhaseGrid_wx {X V : Type*} [Fintype V] (q : Quadrature V) (wx : X → ℝ)
+    (hwx : ∀ x, 0 < wx x) : (q.toPhaseGrid wx hwx).wx = wx := rfl
+
+@[simp]
+theorem Quadrature.toPhaseGrid_wv {X V : Type*} [Fintype V] (q : Quadrature V) (wx : X → ℝ)
+    (hwx : ∀ x, 0 < wx x) : (q.toPhaseGrid wx hwx).wv = q.w := rfl
+
+/-- The two-point rule on three cells of width `1/3`: the velocity weights of the grid are the
+weights `1/2` of the rule. -/
+example :
+    ((⟨![-1, 1], fun _ => 1 / 2, fun _ => by norm_num, by norm_num [Fin.sum_univ_two]⟩ :
+      Quadrature (Fin 2)).toPhaseGrid (fun _ : Fin 3 => (1 : ℝ) / 3) fun _ => by norm_num).wv 0 =
+      1 / 2 := by
+  simp
 
 /-! ### Velocity moments -/
 
@@ -247,6 +270,43 @@ structure IsOrthonormalWrt (ν : Measure 𝒱) (V : ι → 𝒱 → ℝ) : Prop 
 example : IsOrthonormalWrt (Measure.dirac (0 : ℝ)) (fun (_ : Fin 1) (_ : ℝ) => (1 : ℝ)) where
   memLp _ := memLp_const 1
   inner_eq i j := by simp [Subsingleton.elim i j]
+
+/-- **Bridge to Mathlib.** `IsOrthonormalWrt ν V` holds if and only if every `V i` is in `L²(ν)`
+and the classes of the `V i` in the Hilbert space `Lp ℝ 2 ν` form an `Orthonormal` family. The
+membership `MemLp (V i) 2 ν` is part of both sides: without it the class `toLp` is not
+defined. -/
+theorem isOrthonormalWrt_iff_orthonormal_toLp {ν : Measure 𝒱} {V : ι → 𝒱 → ℝ} :
+    IsOrthonormalWrt ν V ↔
+      ∃ h : ∀ i, MemLp (V i) 2 ν, Orthonormal ℝ fun i => (h i).toLp (V i) := by
+  have key : ∀ (h : ∀ i, MemLp (V i) 2 ν) (i j : ι),
+      inner ℝ ((h i).toLp (V i)) ((h j).toLp (V j)) = ∫ v, V i v * V j v ∂ν := by
+    intro h i j
+    rw [MeasureTheory.L2.inner_def]
+    refine integral_congr_ae ?_
+    filter_upwards [(h i).coeFn_toLp, (h j).coeFn_toLp] with v hi hj
+    rw [hi, hj, RCLike.inner_apply', conj_trivial]
+  constructor
+  · intro h
+    refine ⟨h.memLp, ?_⟩
+    rw [orthonormal_iff_ite]
+    intro i j
+    rw [key, h.inner_eq]
+  · rintro ⟨h, ho⟩
+    refine ⟨h, fun i j => ?_⟩
+    rw [← key h, orthonormal_iff_ite.mp ho]
+
+/-- An orthonormal family in the sense of `IsOrthonormalWrt` is orthonormal in `Lp ℝ 2 ν`. -/
+theorem IsOrthonormalWrt.orthonormal_toLp {ν : Measure 𝒱} {V : ι → 𝒱 → ℝ}
+    (h : IsOrthonormalWrt ν V) : Orthonormal ℝ fun i => (h.memLp i).toLp (V i) := by
+  obtain ⟨_, ho⟩ := isOrthonormalWrt_iff_orthonormal_toLp.mp h
+  exact ho
+
+/-- The constant function `1` for a Dirac mass: its class is an orthonormal family of one element
+in `Lp ℝ 2 (Measure.dirac 0)`. -/
+example : ∃ h : ∀ _ : Fin 1, MemLp (fun _ : ℝ => (1 : ℝ)) 2 (Measure.dirac (0 : ℝ)),
+    Orthonormal ℝ fun i => (h i).toLp fun _ : ℝ => (1 : ℝ) :=
+  isOrthonormalWrt_iff_orthonormal_toLp.mp
+    ⟨fun _ => memLp_const 1, fun i j => by simp [Subsingleton.elim i j]⟩
 
 end Orthonormal
 

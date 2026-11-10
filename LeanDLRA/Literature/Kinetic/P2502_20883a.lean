@@ -1,6 +1,7 @@
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.ParallelBUG
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Kinetic.Defs
 
 /-!
 # Results of arXiv 2502.20883: a parallel, energy-stable low-rank integrator for radiative transfer
@@ -59,6 +60,10 @@ and it refutes Lemma 7 of the paper (`lemma_7_iff`, `lemma_7_counterexample`).
 Non-vacuity: `theorem_3_nonvacuous` (also for Theorem 2, with a step size independent of `ε`),
 `theorem_5_nonvacuous`, and the solvability results `exists_isMacroStep`, `exists_isStep`,
 `exists_isParallelStep`.
+
+Core vocabulary: a rule with `IsQuadrature` and positive weights gives core quadratures
+`Kinetic.Quadrature` of `LeanDLRA/Kinetic/Defs.lean` with the weights `w_ℓ / (2π)`
+(`Setup.IsQuadrature.toQuadratureX`, `Setup.IsQuadrature.toQuadratureY`).
 -/
 
 open Set Filter Topology Finset
@@ -2370,6 +2375,64 @@ theorem theorem_5_nonvacuous :
     positivity
 
 end NonVacuous
+
+/-! ### The quadrature in the core kinetic vocabulary -/
+
+section KineticCore
+
+namespace Setup
+
+variable {P : Setup C F ι} [Fintype ι]
+
+/-- **The quadrature as a core quadrature**: a rule with `IsQuadrature` and positive weights gives
+a core `Kinetic.Quadrature` for the first components of its points: nodes `Ω_x`, weights
+`w_ℓ / (2π)`.  The rule of this file has total mass `2π`, the core one has total mass one; the core
+asks for positive weights and `IsQuadrature` for nonnegative ones, hence the hypothesis `hw`. -/
+def IsQuadrature.toQuadratureX (hQ : P.IsQuadrature) (hw : ∀ ℓ, 0 < P.w ℓ) :
+    Kinetic.Quadrature ι where
+  μ := P.Ωx
+  w := fun ℓ => P.w ℓ / (2 * π)
+  w_pos := fun ℓ => div_pos (hw ℓ) (by positivity)
+  sum_w := by rw [← Finset.sum_div, hQ.sum_w, div_self (by positivity)]
+
+/-- The same for the second components `Ω_y` of the points. -/
+def IsQuadrature.toQuadratureY (hQ : P.IsQuadrature) (hw : ∀ ℓ, 0 < P.w ℓ) :
+    Kinetic.Quadrature ι where
+  μ := P.Ωy
+  w := fun ℓ => P.w ℓ / (2 * π)
+  w_pos := fun ℓ => div_pos (hw ℓ) (by positivity)
+  sum_w := by rw [← Finset.sum_div, hQ.sum_w, div_self (by positivity)]
+
+@[simp]
+theorem IsQuadrature.toQuadratureX_μ (hQ : P.IsQuadrature) (hw : ∀ ℓ, 0 < P.w ℓ) :
+    (hQ.toQuadratureX hw).μ = P.Ωx := rfl
+
+@[simp]
+theorem IsQuadrature.toQuadratureY_μ (hQ : P.IsQuadrature) (hw : ∀ ℓ, 0 < P.w ℓ) :
+    (hQ.toQuadratureY hw).μ = P.Ωy := rfl
+
+@[simp]
+theorem IsQuadrature.toQuadratureX_w (hQ : P.IsQuadrature) (hw : ∀ ℓ, 0 < P.w ℓ) :
+    (hQ.toQuadratureX hw).w = fun ℓ => P.w ℓ / (2 * π) := rfl
+
+@[simp]
+theorem IsQuadrature.toQuadratureY_w (hQ : P.IsQuadrature) (hw : ∀ ℓ, 0 < P.w ℓ) :
+    (hQ.toQuadratureY hw).w = fun ℓ => P.w ℓ / (2 * π) := rfl
+
+end Setup
+
+/-- The weights `π / 2` of the order-two product rule are positive. -/
+theorem s2Setup_w_pos (Nx Ny : ℕ) (ℓ : Bool × Bool) : 0 < (s2Setup Nx Ny).w ℓ := by
+  simp only [s2Setup, s2w]
+  positivity
+
+/-- The bridge at the order-two product rule of the first example. -/
+example : ((s2Setup_isQuadrature 3 3).toQuadratureX (s2Setup_w_pos 3 3)).μ = s2x ∧
+    ((s2Setup_isQuadrature 3 3).toQuadratureY (s2Setup_w_pos 3 3)).μ = s2y :=
+  ⟨rfl, rfl⟩
+
+end KineticCore
+
 end
 
 end LeanDLRA.Literature.P2502_20883

@@ -53,13 +53,18 @@ it needs is not used for the implicit scheme, and is used for IMEX Euler.  The f
 `⌈log tol / log ε⌉ + 1` holds only under a condition (`epsRank_ideas_formula`);
 the parameter is `ε ‖D‖ / σ`, not `ε`.
 
-The velocity quadratures `Quadrature` are defined in `LeanDLRA/Kinetic/Defs.lean`.
+The velocity quadratures are the core structure `LeanDLRA.Kinetic.Quadrature`. The last section
+states the scheme in the core kinetic vocabulary of `LeanDLRA/Kinetic/Defs.lean`: `avg_eq_density`
+(the velocity average is `Kinetic.density`), `transport_eq_streaming` (the transport term is
+`Kinetic.streaming` with one direction) and `centralDiff_eq_kinetic`.
 -/
 
 open Set Filter Topology Finset
 open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius
 
 namespace LeanDLRA.Novel.EpsRank
+
+open LeanDLRA.Kinetic (Quadrature)
 
 /-! ### The discrete low-pass filter -/
 
@@ -1956,5 +1961,48 @@ theorem distLR_flow_le {D : Matrix X X ℝ} {q : Quadrature V} {ε σ m : ℝ} {
     linarith
 
 end Flow
+
+/-! ### The scheme in the core kinetic vocabulary -/
+
+section KineticCore
+
+variable {X V : Type*} [Fintype V]
+
+/-- The velocity average `avg q f` is the core discrete density `Kinetic.density` with the weights
+of the quadrature. -/
+theorem avg_eq_density (q : Quadrature V) (f : Matrix X V ℝ) :
+    avg q f = Kinetic.density q.w f := by
+  funext i
+  rw [Kinetic.density_apply]
+  rfl
+
+/-- The transport term `transport D q f = D f diag(μ)` is the core streaming operator
+`Kinetic.streaming` with one direction: the stencil `D` and the diagonal matrix of the nodes. -/
+theorem transport_eq_streaming [Fintype X] [DecidableEq V] (D : Matrix X X ℝ) (q : Quadrature V)
+    (f : Matrix X V ℝ) :
+    transport D q f =
+      Kinetic.streaming (fun _ : Unit => D) (fun _ => Matrix.diagonal q.μ) f := by
+  ext i v
+  simp [transport, Kinetic.streaming_apply, Matrix.mul_diagonal, mul_comm]
+
+/-- The periodic central differences of this file are the core `Kinetic.centralDiff`, which is
+defined without the hypothesis `NeZero N`. -/
+theorem centralDiff_eq_kinetic (N : ℕ) [NeZero N] (h : ℝ) :
+    centralDiff N h = Kinetic.centralDiff N h := rfl
+
+/-- The three bridges at the telegraph model with central differences on three points. -/
+example :
+    avg telegraph (mon telegraph 1 fun _ : ZMod 3 => 1) =
+        Kinetic.density telegraph.w (mon telegraph 1 fun _ : ZMod 3 => 1) ∧
+      transport (centralDiff 3 1) telegraph (mon telegraph 1 fun _ : ZMod 3 => 1) =
+        Kinetic.streaming (fun _ : Unit => Kinetic.centralDiff 3 1)
+          (fun _ => Matrix.diagonal telegraph.μ) (mon telegraph 1 fun _ : ZMod 3 => 1) :=
+  ⟨avg_eq_density _ _, by rw [transport_eq_streaming, centralDiff_eq_kinetic]⟩
+
+end KineticCore
+
+/-- The velocity quadratures of this file, now the core structure `Kinetic.Quadrature` (the same
+structure under its core name). -/
+@[deprecated (since := "2026-11-10")] alias Quadrature := LeanDLRA.Kinetic.Quadrature
 
 end LeanDLRA.Novel.EpsRank

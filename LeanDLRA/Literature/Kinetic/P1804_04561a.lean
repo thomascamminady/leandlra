@@ -3,6 +3,7 @@ import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Integrators.Matrix.ProjectorSplitting
 import LeanDLRA.Foundations.Galerkin
 import LeanDLRA.Foundations.OneSided
+import LeanDLRA.Kinetic.Defs
 
 /-!
 # Low-rank BGK for weakly compressible flow (arXiv 1804.04561)
@@ -109,6 +110,13 @@ The paper takes `ε → 0` formally in each substep.  The theorems here say when
 * Not formalized: the Chapman–Enskog derivation (9)-(10) of the Navier–Stokes equations, the moment
   computation `∫ v_i v_j f^eq dv`, the Strang variant, the discretizations and costs of Sections
   3.1-3.3, and the numerics of Section 5.
+
+## Core vocabulary
+
+The discrete density `ρ (f)_i = ∑_j w_j f_{ij}` is the core `Kinetic.density` of
+`LeanDLRA/Kinetic/Defs.lean`. The discrete momentum `momentum` is vector valued and stays a
+definition of this file; `momentum_eq_quadMoment` writes each of its components as a core
+quadrature moment `Kinetic.quadMoment`.
 -/
 
 open Set Filter Topology Finset
@@ -119,6 +127,8 @@ set_option linter.unusedDecidableInType false
 set_option linter.unusedFintypeInType false
 
 namespace LeanDLRA.Literature.P1804_04561
+
+open LeanDLRA.Kinetic (density)
 
 /-! ### Section 2: the Maxwellian and its expansion -/
 
@@ -1873,10 +1883,10 @@ theorem bgkField_isLipschitzField {LM : ℝ} (hM : ∀ f g, ‖M f - M g‖ ≤ 
   calc _ ≤ ‖-transport D ξ (f - g)‖ + ‖ε⁻¹ • ((M f - M g) - (f - g))‖ := norm_add_le _ _
     _ ≤ _ := by rw [norm_neg]; nlinarith
 
-/-! #### The discrete Maxwellian -/
+/-! #### The discrete Maxwellian
 
-/-- The discrete density `ρ (f) = ∑_j w_j f_{ij}`, the velocity quadrature with weights `w`. -/
-noncomputable def density (w : n → ℝ) (f : Matrix m n ℝ) (i : m) : ℝ := ∑ j, w j * f i j
+The discrete density `ρ (f)_i = ∑_j w_j f_{ij}`, the velocity quadrature with weights `w`, is
+the core `Kinetic.density w f`. -/
 
 /-- The discrete momentum `(ρ u) (f) = ∑_j w_j f_{ij} ξ_j`. -/
 noncomputable def momentum (w : n → ℝ) (ξ : n → Vel d) (f : Matrix m n ℝ) (i : m) : Vel d :=
@@ -1912,8 +1922,9 @@ theorem continuousAt_discreteMaxwellian (w : n → ℝ) (ξ : n → Vel d)
     ContinuousAt (discreteMaxwellian w ξ) f := by
   have hco : ∀ i j, Continuous fun g : Matrix m n ℝ => g i j := fun i j =>
     (continuous_apply j).comp (continuous_apply i)
-  have hden : ∀ i, Continuous fun g : Matrix m n ℝ => density w g i := fun i =>
-    continuous_finsetSum _ fun j _ => continuous_const.mul (hco i j)
+  have hden : ∀ i, Continuous fun g : Matrix m n ℝ => density w g i := fun i => by
+    simp only [Kinetic.density_apply]
+    exact continuous_finsetSum _ fun j _ => continuous_const.mul (hco i j)
   have hmom : ∀ i, Continuous fun g : Matrix m n ℝ => momentum w ξ g i := fun i =>
     continuous_finsetSum _ fun j _ => (continuous_const.mul (hco i j)).smul continuous_const
   have hbulk : ∀ i, ContinuousAt (fun g : Matrix m n ℝ => bulk w ξ g i) f := fun i =>
@@ -2798,7 +2809,7 @@ private lemma exM_one : exM 1 = gaussConst 1 • 1 := by
   ext i j
   fin_cases i
   fin_cases j
-  simp [exM, discreteMaxwellian, density, momentum, bulk, maxwellian]
+  simp [exM, discreteMaxwellian, Kinetic.density_apply, momentum, bulk, maxwellian]
 
 /-- **Eq. (23) as printed is false** (arXiv 1804.04561), already for the true discrete Maxwellian
 on one cell and one velocity: see `eq23_printed_iff`. -/
@@ -2846,7 +2857,7 @@ private lemma discreteMaxwellian_exact (f : Matrix (Fin 1) (Fin 1) ℝ) :
   ext i j
   fin_cases i
   fin_cases j
-  simp [discreteMaxwellian, density, momentum, bulk, maxwellian]
+  simp [discreteMaxwellian, Kinetic.density_apply, momentum, bulk, maxwellian]
   field_simp
 
 /-- **The formula for `L_i` printed in Section 4 fails** (arXiv 1804.04561), unconditionally: with
@@ -3019,5 +3030,36 @@ example :
     simp [Φ, Ψ, Matrix.mul_apply, Fin.sum_univ_succ]
 
 end Examples
+
+/-! ### The moments in the core kinetic vocabulary -/
+
+section KineticCore
+
+variable {d : ℕ} {m n : Type*} [Fintype n]
+
+/-- **The discrete momentum through the core moments**: the component `a` of the discrete momentum
+`(ρ u) (f)_i = ∑_j w_j f_{ij} ξ_j` is the core quadrature moment `Kinetic.quadMoment` of `f` with
+the weights `w` and the function `j ↦ (ξ_j)_a`. -/
+theorem momentum_eq_quadMoment (w : n → ℝ) (ξ : n → Vel d) (f : Matrix m n ℝ) (i : m)
+    (a : Fin d) :
+    momentum w ξ f i a = Kinetic.quadMoment w (fun j => ξ j a) f i := by
+  rw [Kinetic.quadMoment_apply, momentum, WithLp.ofLp_sum, Finset.sum_apply]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  simp only [WithLp.ofLp_smul, Pi.smul_apply, smul_eq_mul]
+  ring
+
+/-- One velocity `ξ = 3` with weight `2` and `f = 1`: the momentum is `6`. -/
+example :
+    momentum (d := 1) (fun _ : Fin 1 => (2 : ℝ)) (fun _ => EuclideanSpace.single 0 3)
+      (1 : Matrix (Fin 1) (Fin 1) ℝ) 0 0 = 6 := by
+  rw [momentum_eq_quadMoment]
+  simp [Kinetic.quadMoment_apply]
+  norm_num
+
+end KineticCore
+
+/-- The local `density` of this file, replaced by the core `Kinetic.density` (the same definition:
+`ρ (f)_i = ∑_j w_j f_{ij}`). -/
+@[deprecated (since := "2026-11-10")] alias density := LeanDLRA.Kinetic.density
 
 end LeanDLRA.Literature.P1804_04561

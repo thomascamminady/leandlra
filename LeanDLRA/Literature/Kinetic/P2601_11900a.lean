@@ -1,6 +1,7 @@
 import LeanDLRA.Foundations.Projector
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Kinetic.Defs
 
 /-!
 # Results of arXiv 2601.11900: Separable AP DLR method for Vlasov–Poisson–Fokker–Planck
@@ -51,6 +52,13 @@ explicit S-step (`IsIMEXStep.stiff_cancel`).  Further: the separable projections
 Non-vacuity: `exists_isIMEXStep` for Algorithm 1 and `header_constant_false`, which contains an
 instance of all hypotheses of Thm 5.3 with a nonconstant field.  The library contained no earlier
 proof of a listed result; it has abstract statements citing this paper only.
+
+## Core vocabulary
+
+`Grid.toPhaseGrid` is the grid as a core `Kinetic.PhaseGrid` of `LeanDLRA/Kinetic/Defs.lean` (the
+cell sizes `Δx`, `Δv` as weights; the velocity weights have total mass `L_v`, not one), and
+`density_eq_kinetic` writes the density of this file as the core `Kinetic.density` with the
+weights `Δv`. The weighted inner products `ipX`, `ipV`, `ipXV` are definitions of this file.
 -/
 
 open Set Filter Topology Finset
@@ -2140,5 +2148,39 @@ theorem Lh_not_dissipative :
   norm_num
 
 end Counterexample
+
+/-! ### The grid in the core kinetic vocabulary -/
+
+section KineticCore
+
+variable {Nx Nv : ℕ} (G : Grid Nx Nv)
+
+/-- **The grid as a core phase grid**: the cell sizes `Δx` and `Δv` as weights of a
+`Kinetic.PhaseGrid`. The velocity weights have total mass `L_v` (`Lv_eq`), not one, so they are
+not a `Kinetic.Quadrature` without dividing by `L_v`. -/
+noncomputable def Grid.toPhaseGrid : Kinetic.PhaseGrid (Fin Nx) (Fin Nv) where
+  wx := fun _ => G.dx
+  wv := fun _ => G.dv
+  wx_pos := fun p => dx_pos G p.pos
+  wv_pos := fun q => dv_pos G q.pos
+
+/-- The density `ρ = ⟨f, 1⟩ᵥʰ = ∑_q f_{pq} Δv` is the core `Kinetic.density` with the velocity
+weights `Δv` of the grid. -/
+theorem density_eq_kinetic (f : Phase Nx Nv) :
+    density G f = Kinetic.density G.toPhaseGrid.wv f := by
+  funext p
+  simp [density, ipV, Kinetic.density_apply, Grid.toPhaseGrid, mul_comm]
+
+@[simp] lemma Grid.toPhaseGrid_wx (p : Fin Nx) : G.toPhaseGrid.wx p = G.dx := rfl
+
+@[simp] lemma Grid.toPhaseGrid_wv (q : Fin Nv) : G.toPhaseGrid.wv q = G.dv := rfl
+
+/-- The bridge at the grid of the counterexample, with `Δv = 1 / 3200`. -/
+example (f : Phase 2 2) :
+    cxGrid.toPhaseGrid.wv 0 = 1 / 3200 ∧
+      density cxGrid f = Kinetic.density cxGrid.toPhaseGrid.wv f :=
+  ⟨cx_dv, density_eq_kinetic cxGrid f⟩
+
+end KineticCore
 
 end LeanDLRA.Literature.P2601_11900

@@ -80,7 +80,9 @@ projector `A A⁺` onto the column space, and the Gram formula `A (Aᵀ A)⁻¹ 
   `LeanDLRA.Novel.BGKEntropy.isOrthProjMat_iff_isOrthProjOnto`: the symmetric idempotent matrices
   are the projectors onto their column space;
   `LeanDLRA.Novel.BGKEntropy.colSpan_eq_map_colSpace`: `colSpan A` is `colSpace A` seen in
-  `EuclideanSpace ℝ m`.
+  `EuclideanSpace ℝ m`;
+  `LeanDLRA.Novel.BGKEntropy.hyperProj_eq_one_sub_rangeProj`: `hyperProj u` is `1 - rangeProj` of
+  the one-column matrix `u`.
 
 ## Implementation notes
 
@@ -1203,6 +1205,32 @@ example : IsOrthProjOnto (!![1, 0; 0, 0] : Matrix (Fin 2) (Fin 2) ℝ) (colSpace
   isOrthProjOnto_colSpace_self
     ⟨by ext i j; fin_cases i <;> fin_cases j <;> rfl,
       by ext i j; fin_cases i <;> fin_cases j <;> simp⟩
+
+/-- **The hyperplane projector through `rangeProj`**: `hyperProj u = I - P_u`, where
+`P_u = rangeProj` of the one-column matrix `u` is the orthogonal projector onto the span of `u`.
+No hypothesis `u ≠ 0` is needed: for `u = 0` both sides are the identity. -/
+theorem hyperProj_eq_one_sub_rangeProj [DecidableEq m] (u : m → ℝ) :
+    hyperProj u = 1 - (Matrix.replicateCol Unit u).rangeProj := by
+  have h : (u ⬝ᵥ u)⁻¹ • vecMulVec u u = (Matrix.replicateCol Unit u).rangeProj := by
+    refine Matrix.eq_rangeProj_of_mul_self (C := (u ⬝ᵥ u)⁻¹ • Matrix.replicateRow Unit u)
+      ?_ ?_ ?_
+    · rw [Matrix.transpose_smul, Matrix.transpose_vecMulVec]
+    · by_cases hu : u ⬝ᵥ u = 0
+      · have h0 : u = 0 := dotProduct_self_eq_zero.mp hu
+        simp [h0]
+      · ext i j
+        have hsum : ∑ x, u i * u x * u x = u i * (u ⬝ᵥ u) := by
+          rw [dotProduct, Finset.mul_sum]
+          exact Finset.sum_congr rfl fun x _ => mul_assoc _ _ _
+        rw [Matrix.smul_mul, Matrix.smul_apply, Matrix.mul_apply]
+        simp only [Matrix.vecMulVec_apply, Matrix.replicateCol_apply]
+        rw [hsum, smul_eq_mul, mul_comm (u i), ← mul_assoc, inv_mul_cancel₀ hu, one_mul]
+    · rw [Matrix.mul_smul, Matrix.vecMulVec_eq Unit]
+  rw [hyperProj, h]
+
+/-- The projector onto the hyperplane orthogonal to `(1, 2)`. -/
+example : hyperProj ![(1 : ℝ), 2] = 1 - (Matrix.replicateCol Unit ![(1 : ℝ), 2]).rangeProj :=
+  hyperProj_eq_one_sub_rangeProj _
 
 end Bridges
 

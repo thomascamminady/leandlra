@@ -4,6 +4,7 @@ import LeanDLRA.Foundations.OneSided
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Kinetic.Defs
 
 /-!
 # arXiv 2505.19929: Galerkin alternating projection for kinetic equations in the diffusive limit
@@ -45,6 +46,11 @@ omitted (on a uniform grid it only rescales `X`). In `gap_ap_run` the independen
 at every step; that it propagates from step to step is not proved. Not treated: the PDE itself,
 the time discretisation of the substeps in Section 5.2 and Remark 5.1, and the factor forms (5.3),
 (5.4), which are equivalent to the projected forms used here by invariance (`relaxField_stay`).
+
+Core vocabulary: an angular quadrature gives a core quadrature `Kinetic.Quadrature` with the
+halved weights `w k / 2` (`IsAngularQuad.toQuadrature`; `IsAngularQuad` has weights of sum two), and
+the density of this file is the core `Kinetic.density` of `LeanDLRA/Kinetic/Defs.lean` with these
+weights (`density_eq_kinetic`, `IsAngularQuad.density_eq`).
 -/
 
 open Set Filter Topology Finset
@@ -2570,5 +2576,43 @@ theorem gap_ap_nonvacuous {h : ℝ} (hh : 0 < h) :
 end Instance
 
 end Concrete
+
+/-! ### The angular quadrature in the core kinetic vocabulary -/
+
+section KineticCore
+
+variable {m n : Type*} [Fintype n]
+
+/-- **An angular quadrature as a core quadrature**: the nodes `μ` with the halved weights `w k / 2`
+are a core quadrature `Kinetic.Quadrature`. The weights of `IsAngularQuad` have sum two (the
+length of `[-1, 1]`), the core weights have sum one. -/
+noncomputable def IsAngularQuad.toQuadrature {μ w : n → ℝ} (hq : IsAngularQuad μ w) :
+    Kinetic.Quadrature n where
+  μ := μ
+  w := fun k => w k / 2
+  w_pos := fun k => half_pos (hq.pos k)
+  sum_w := by rw [← Finset.sum_div, hq.mass, div_self two_ne_zero]
+
+/-- The density `ρ = ½ ∑ₖ wₖ F(·, k)` is the core `Kinetic.density` with the halved weights. No
+quadrature condition is needed. -/
+theorem density_eq_kinetic (w : n → ℝ) (F : Matrix m n ℝ) :
+    density w F = Kinetic.density (fun k => w k / 2) F := by
+  funext i
+  rw [Kinetic.density_apply]
+  rfl
+
+/-- The density is the core density with the weights of the core quadrature
+`IsAngularQuad.toQuadrature`. -/
+theorem IsAngularQuad.density_eq {μ w : n → ℝ} (hq : IsAngularQuad μ w) (F : Matrix m n ℝ) :
+    density w F = Kinetic.density hq.toQuadrature.w F :=
+  density_eq_kinetic w F
+
+/-- The bridges at the three-point Gauss rule `cexw = (5/9, 8/9, 5/9)`. -/
+example (F : Matrix (Fin 2) (Fin 3) ℝ) :
+    cex_quad.toQuadrature.w = (fun k => cexw k / 2) ∧
+      density cexw F = Kinetic.density cex_quad.toQuadrature.w F :=
+  ⟨rfl, cex_quad.density_eq F⟩
+
+end KineticCore
 
 end LeanDLRA.Literature.P2505_19929

@@ -3,6 +3,7 @@ import LeanDLRA.Foundations.Projector
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Projectors
+import LeanDLRA.Kinetic.Defs
 
 /-!
 # Results of arXiv 2412.05912: a review of low-rank methods for kinetic simulations
@@ -96,6 +97,14 @@ second-order bound is not in the library, and it is left out here, since it is t
   the paper names no specific operator.
 * The sign of the current in eq. (7) of [61] does not match its Gauss law. The witness of
   `linearized_rank_claim_false` has no charge and no current, so this does not matter.
+
+## Core vocabulary
+
+A `VelocityRule` gives a core quadrature `Kinetic.Quadrature` for every velocity component
+(`VelocityRule.toQuadrature`: the same weights, of sum one, with the nodes `node l`). Its density
+and its streaming operator are the core `Kinetic.density` and `Kinetic.streaming` of
+`LeanDLRA/Kinetic/Defs.lean`: `VelocityRule.density_eq_kinetic`,
+`VelocityRule.streaming_eq_kinetic`.
 -/
 
 open Set Filter Topology Finset
@@ -2929,5 +2938,50 @@ theorem linearized_example_rank_eq_three {k α : ℝ} (hk : 0 < k) (hα : α ≠
       landauFull_not_complex_rank_le_two hk hα ht⟩⟩
 
 end Lorentzian
+
+/-! ### The velocity rule in the core kinetic vocabulary -/
+
+section KineticCore
+
+variable {X V : Type*} [Fintype V] {d : ℕ}
+
+namespace VelocityRule
+
+/-- **A velocity rule as core quadratures**: for every velocity component `l`, the weights of the
+rule and the nodes `node l` are a core quadrature `Kinetic.Quadrature`. The normalization is the
+same (weights of sum one); the mean-zero condition of the rule is not part of the core
+structure. -/
+def toQuadrature (q : VelocityRule V d) (l : Fin d) : Kinetic.Quadrature V :=
+  ⟨q.node l, q.w, q.w_pos, q.sum_w⟩
+
+@[simp] lemma toQuadrature_μ (q : VelocityRule V d) (l : Fin d) :
+    (q.toQuadrature l).μ = q.node l := rfl
+
+@[simp] lemma toQuadrature_w (q : VelocityRule V d) (l : Fin d) : (q.toQuadrature l).w = q.w := rfl
+
+/-- The density `F w` of a velocity rule is the core `Kinetic.density` with the weights of the
+rule. -/
+theorem density_eq_kinetic (q : VelocityRule V d) (F : Matrix X V ℝ) :
+    q.density F = Kinetic.density q.w F :=
+  (Kinetic.density_eq_mulVec q.w F).symm
+
+/-- The streaming operator `∑_l D_l F diag(node l)` of a velocity rule is the core
+`Kinetic.streaming` with the stencils `D` and the diagonal matrices of the nodes. -/
+theorem streaming_eq_kinetic [Fintype X] [DecidableEq V] (q : VelocityRule V d)
+    (D : Fin d → Matrix X X ℝ) (F : Matrix X V ℝ) :
+    q.streaming D F = Kinetic.streaming D (fun l => Matrix.diagonal (q.node l)) F :=
+  (Kinetic.streaming_apply _ _ _).symm
+
+end VelocityRule
+
+/-- The bridges at the six-point rule in three dimensions. -/
+example (D : Fin 3 → Matrix (Fin 2) (Fin 2) ℝ) (F : Matrix (Fin 2) (Fin 3 × Bool) ℝ) :
+    (sixPointRule.toQuadrature 0).w = sixPointRule.w ∧
+      sixPointRule.density F = Kinetic.density sixPointRule.w F ∧
+      sixPointRule.streaming D F =
+        Kinetic.streaming D (fun l => Matrix.diagonal (sixPointRule.node l)) F :=
+  ⟨rfl, sixPointRule.density_eq_kinetic F, sixPointRule.streaming_eq_kinetic D F⟩
+
+end KineticCore
 
 end LeanDLRA.Literature.P2412_05912

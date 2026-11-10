@@ -1,6 +1,7 @@
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Novel.KineticAP
+import LeanDLRA.Kinetic.Defs
 
 /-!
 # Results of arXiv 2212.12012: Asymptotic-preserving, energy-stable DLRA (Einkemmer-Hu-Kusch)
@@ -56,6 +57,10 @@ constant `C = 1 / (4 (N + 2))` of (3.7) depends on `N`; the paper's remark that 
 bounded, which would remove that, is not formalized. The counterexample to Theorem 4.1 has `r = 1`,
 where the printed hypothesis can hold; one with `r ≥ 2` is not formalized. The algebra of the
 printed proof is `KineticAP.sLimit_eq_diffFlux_iff`, not repeated here.
+
+Core vocabulary: a Gauss rule gives a core quadrature `Kinetic.Quadrature` of
+`LeanDLRA/Kinetic/Defs.lean` with the halved weights `w_k / 2` (`IsGaussRule.toQuadrature`; the
+weights of a Gauss rule have sum two, `IsGaussRule.sum_weight_eq_two`).
 -/
 
 open Set Filter Topology Finset
@@ -2127,5 +2132,48 @@ theorem theorem_4_1_printed_false (hG : IsGaussRule N μ w) (hN : 2 ≤ N) (hΔx
     linarith
 
 end Printed41
+
+/-! ### The Gauss rule in the core kinetic vocabulary -/
+
+section KineticCore
+
+variable {N : ℕ} {μ w : Fin (N + 1) → ℝ}
+
+/-- The weights of a Gauss rule add up to `2`, the length of `[-1, 1]`. -/
+theorem IsGaussRule.sum_weight_eq_two (hG : IsGaussRule N μ w) : ∑ k, w k = 2 := by
+  have h := hG.orthonormal 0 0
+  simp only [ite_true, Fin.val_zero, legendre_zero] at h
+  have hs : (1 / √2 : ℝ) * (1 / √2) = 1 / 2 := by
+    rw [div_mul_div_comm, Real.mul_self_sqrt (by norm_num)]
+    norm_num
+  have h3 : ∀ k, w k * (1 / √2) * (1 / √2) = w k * (1 / 2) := fun k => by
+    rw [mul_assoc, hs]
+  simp only [h3, ← Finset.sum_mul] at h
+  linarith
+
+/-- **A Gauss rule as a core quadrature**: the same nodes with the halved weights `w_k / 2` are a
+core `Kinetic.Quadrature`.  The rule of this file has total mass `2`, the core one has total mass
+one.  The exactness on the Legendre products is not part of the core structure. -/
+noncomputable def IsGaussRule.toQuadrature (hG : IsGaussRule N μ w) :
+    Kinetic.Quadrature (Fin (N + 1)) where
+  μ := μ
+  w := fun k => w k / 2
+  w_pos := fun k => div_pos (hG.weight_pos k) two_pos
+  sum_w := by rw [← Finset.sum_div, hG.sum_weight_eq_two, div_self two_ne_zero]
+
+@[simp]
+theorem IsGaussRule.toQuadrature_μ (hG : IsGaussRule N μ w) : hG.toQuadrature.μ = μ := rfl
+
+@[simp]
+theorem IsGaussRule.toQuadrature_w (hG : IsGaussRule N μ w) :
+    hG.toQuadrature.w = fun k => w k / 2 := rfl
+
+/-- The bridge at a Gauss rule with two nodes, which exists by `exists_isGaussRule`. -/
+example : ∃ (μ w : Fin 2 → ℝ) (hG : IsGaussRule 1 μ w),
+    hG.toQuadrature.μ = μ ∧ ∑ k, hG.toQuadrature.w k = 1 := by
+  obtain ⟨μ, w, hG⟩ := exists_isGaussRule 1
+  exact ⟨μ, w, hG, rfl, hG.toQuadrature.sum_w⟩
+
+end KineticCore
 
 end LeanDLRA.Literature.P2212_12012

@@ -2,6 +2,7 @@ import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Matrix.BUG
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Stiff.ImplicitSolvability
+import LeanDLRA.Kinetic.Defs
 
 /-!
 # Results of arXiv 2607.27736: AP low-rank semi-Lagrangian kinetic
@@ -47,6 +48,10 @@ Differences from the paper, which the docstrings repeat where they matter:
 The abstract cores `densitySolve_invertible`, `densitySolve_perturbation` and
 `grid_l2_le_sqrt_mul` of `Stiff/ImplicitSolvability.lean` are the starting point here; the first
 and the last are used directly.
+
+The velocity nodes and weights of an admissible discretization are a core quadrature
+(`Disc.Admissible.toQuadrature`, weights of sum one), and `Disc.density` is the core
+`Kinetic.density` of `LeanDLRA/Kinetic/Defs.lean` (`Disc.density_eq_kinetic`).
 -/
 
 open Set Filter Topology Finset
@@ -3448,6 +3453,38 @@ theorem norm_density_sub_le (hP : P.Admissible) (Y : Matrix (ZMod N) κ ℝ) (ρ
   rw [h2]
   have h3 := Frobenius.norm_mul_le (Y - Matrix.vecMulVec ρ0 P.m) (cv P.m)
   rwa [hP.norm_cv_m, mul_one] at h3
+
+end Disc
+
+/-! ### The velocity discretization in the core kinetic vocabulary -/
+
+namespace Disc
+
+variable {N : ℕ} {κ : Type*} [Fintype κ] {P : Disc N κ}
+
+/-- **An admissible discretization as a core quadrature**: the velocity nodes `v` and the weights
+`w` of an admissible discretization are a core quadrature `Kinetic.Quadrature`, with the same
+normalization (positive weights of sum one). -/
+def Admissible.toQuadrature (hP : P.Admissible) : Kinetic.Quadrature κ :=
+  ⟨P.v, P.w, hP.w_pos, hP.w_sum⟩
+
+@[simp] lemma Admissible.toQuadrature_μ (hP : P.Admissible) : hP.toQuadrature.μ = P.v := rfl
+
+@[simp] lemma Admissible.toQuadrature_w (hP : P.Admissible) : hP.toQuadrature.w = P.w := rfl
+
+variable (P) in
+/-- The density `∑_j F_{ij} w_j` of a discretization is the core `Kinetic.density` with its
+weights. No admissibility is needed. -/
+theorem density_eq_kinetic (F : Matrix (ZMod N) κ ℝ) : P.density F = Kinetic.density P.w F := by
+  funext i
+  rw [Kinetic.density_apply]
+  exact Finset.sum_congr rfl fun j _ => mul_comm _ _
+
+/-- The bridges at the two-velocity discretization `ceP` on four cells. -/
+example (F : Matrix (ZMod 4) (Fin 2) ℝ) :
+    ceP_admissible.toQuadrature.μ = ![1, -1] ∧
+      ceP.density F = Kinetic.density ceP_admissible.toQuadrature.w F :=
+  ⟨rfl, ceP.density_eq_kinetic F⟩
 
 end Disc
 

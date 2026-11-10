@@ -3,6 +3,7 @@ import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Classical.SVD
+import LeanDLRA.Kinetic.Defs
 
 /-!
 # Results of arXiv 1907.04247: DLRA for linear Boltzmann in the diffusion limit
@@ -27,6 +28,11 @@ grid points, a skew `D` with `D² = -1`, `Δt = 1`, where `I + (Δt / d) 𝓛 = 
 data are not needed in Theorem 3.3; the proof of Lemma B.1 replaces the one of the paper, which
 treats only the first column of `A*_{∂_m}` after (B.15).  `exists_IEStep`, `exists_CNIEStep`,
 `exists_IELimit` and `lemma_B1_hypotheses` show that the hypotheses can be met.
+
+Core vocabulary: a rule with `IsQuadrature v` gives, for every coordinate, a core quadrature
+`Kinetic.Quadrature` of `LeanDLRA/Kinetic/Defs.lean` with the equal weights `1 / N_v`
+(`IsQuadrature.toQuadrature`), and the density of this file is the core `Kinetic.density` with
+these weights, written as a column (`density_eq_kinetic`, `IsQuadrature.density_eq`).
 -/
 
 open Set Filter Topology Finset
@@ -4301,5 +4307,67 @@ theorem lemma_B1_hypotheses {Δt ε : ℝ} (hΔt : 0 < Δt) (hε : 0 < ε) (hε1
     rwa [h3, h4] at h
 
 end Counterexample
+
+/-! ### The quadrature and the density in the core kinetic vocabulary -/
+
+section KineticCore
+
+variable {Nv d : ℕ}
+
+/-- **The rectangle rule as core quadratures**: a rule with `IsQuadrature v` gives, for every
+coordinate `k`, a core `Kinetic.Quadrature`: the nodes are the `k`-th coordinates `v k` of the
+velocities and all weights are `1 / N_v`, so the total mass is one as in the core.  The moment
+identities `mean` and `cov` are not part of the core structure. -/
+noncomputable def IsQuadrature.toQuadrature {v : Fin d → Fin Nv → ℝ} (hv : IsQuadrature v)
+    (k : Fin d) : Kinetic.Quadrature (Fin Nv) where
+  μ := v k
+  w := fun _ => (Nv : ℝ)⁻¹
+  w_pos := fun _ => inv_pos.2 (Nat.cast_pos.2 hv.pos)
+  sum_w := by
+    rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    exact mul_inv_cancel₀ (Nat.cast_ne_zero.2 hv.pos.ne')
+
+@[simp]
+theorem IsQuadrature.toQuadrature_μ {v : Fin d → Fin Nv → ℝ} (hv : IsQuadrature v) (k : Fin d) :
+    (hv.toQuadrature k).μ = v k := rfl
+
+@[simp]
+theorem IsQuadrature.toQuadrature_w {v : Fin d → Fin Nv → ℝ} (hv : IsQuadrature v) (k : Fin d) :
+    (hv.toQuadrature k).w = fun _ => (Nv : ℝ)⁻¹ := rfl
+
+/-- The bridge at the two velocities `±1` of the counterexample. -/
+example : (cxv_quadrature.toQuadrature 0).μ = ![1, -1] ∧
+    (cxv_quadrature.toQuadrature 0).w = fun _ => ((2 : ℕ) : ℝ)⁻¹ :=
+  ⟨rfl, rfl⟩
+
+/-- **The density in the core vocabulary**: the density `ρ = u e / N_v` of this file, a column
+matrix, is the core `Kinetic.density` with the equal weights `1 / N_v`, written as a column.  No
+hypothesis on `N_v` is needed. -/
+theorem density_eq_kinetic {Nx : ℕ} (u : Matrix (Fin Nx) (Fin Nv) ℝ) :
+    density u = Matrix.replicateCol Unit (Kinetic.density (fun _ => (Nv : ℝ)⁻¹) u) := by
+  ext i ⟨⟩
+  have h : (√(Nv : ℝ))⁻¹ * (√(Nv : ℝ))⁻¹ = (Nv : ℝ)⁻¹ := by
+    rw [← mul_inv, Real.mul_self_sqrt (Nat.cast_nonneg Nv)]
+  simp only [density, eNorm, eOne, Matrix.replicateCol_apply, Kinetic.density_apply,
+    Matrix.smul_apply, Matrix.mul_apply, Matrix.of_apply, smul_eq_mul, mul_one]
+  rw [← Finset.sum_mul, ← Finset.mul_sum, mul_comm (∑ j, u i j), ← mul_assoc, h]
+
+/-- The same with the weights of the core quadrature of a rule `IsQuadrature v`. -/
+theorem IsQuadrature.density_eq {Nx : ℕ} {v : Fin d → Fin Nv → ℝ} (hv : IsQuadrature v)
+    (k : Fin d) (u : Matrix (Fin Nx) (Fin Nv) ℝ) :
+    density u = Matrix.replicateCol Unit (Kinetic.density (hv.toQuadrature k).w u) :=
+  density_eq_kinetic u
+
+/-- The density bridge at nonzero data: the mean of `1` and `3` is `2`. -/
+example : density (!![1, 3] : Matrix (Fin 1) (Fin 2) ℝ) 0 () = 2 := by
+  rw [density_eq_kinetic, Matrix.replicateCol_apply, Kinetic.density_apply]
+  norm_num [Fin.sum_univ_two]
+
+/-- The same data with the weights of the two velocities `±1` of the counterexample. -/
+example : density (!![1, 3] : Matrix (Fin 1) (Fin 2) ℝ) =
+    Matrix.replicateCol Unit (Kinetic.density (cxv_quadrature.toQuadrature 0).w !![1, 3]) :=
+  cxv_quadrature.density_eq 0 _
+
+end KineticCore
 
 end LeanDLRA.Literature.P1907_04247

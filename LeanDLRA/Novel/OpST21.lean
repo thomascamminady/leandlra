@@ -57,7 +57,9 @@ open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius
 
 namespace LeanDLRA.Novel.OpST21
 
-open LeanDLRA LeanDLRA.Novel.EpsRank
+open LeanDLRA
+open LeanDLRA.Novel.EpsRank hiding Quadrature
+open LeanDLRA.Kinetic (Quadrature)
 
 section Weighted
 
