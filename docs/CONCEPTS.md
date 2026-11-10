@@ -157,3 +157,20 @@ Core file: `LeanDLRA/FixedRank/Defs.lean` (moved, names and types unchanged). Le
 
 `filippov` (Filippov regularisation, `Analysis/Defs.lean`) moved in the same batch; its local
 form `filippovGradR` (`Lit/Training/P2505_08022a`) is not bridged yet.
+
+## Low-rank and SVD vocabulary, normal-component bounds (UNIFY B5, B6, 2026-11-10)
+
+Core files: `LeanDLRA/LinearAlgebra/LowRank/Defs.lean` (`lowRankSet`, `distLR`, `epsRank`,
+`colSpan`, `ofCols`, `WeylSingular.tailNorm`), `LeanDLRA/LinearAlgebra/SVD/Defs.lean`
+(`LinearMap.rightSingularBasis`, `rightSingularVectors`, `leftSingularVectors`,
+`EckartYoung.rightSingularVectors`, `topRightSingularVectors`, `truncation`),
+`LeanDLRA/LinearAlgebra/Factorization/Defs.lean` (`KyFan.podBasis`),
+`LeanDLRA/Integrators/Matrix/Defs.lean` (`MatrixBUG.FactoredNormalBound`, `NearNormalBound`). All
+moved with names and types unchanged.
+
+| Concept | Core | Relation (lemma) |
+|---|---|---|
+| Singular-value tail `τ_r(A) = (∑_{l ≥ r} σ_l²)^{1/2}` | `WeylSingular.tailNorm A r` | equal to the distance to the rank-`≤ r` matrices, `distLR r A` by definition of `distLR`: `WeylSingular.tailNorm_eq_infDist` (Eckart–Young) |
+| Tolerance rank of the singular values `min {r : τ_r(X) ≤ ε}` | `epsRank ε X` (distance form) | equal: `WeylSingular.epsRank_eq_sInf_tailNorm`; the copy `P2602_14854.epsRank_eq_sInf_tailNorm` (`Lit/RankAdaptive/P2602_14854a`) is a duplicate (F22) |
+| Global factored normal-component bound | `MatrixBUG.FactoredNormalBound F r ε` | implies the localized one: `nearNormalBound_of_factored`; satisfied with `ε = 0` by the identity field (`example`, `Integrators/Matrix/Defs.lean`) |
+| Localized bound near `Y` on `[t₀, t₁]` | `NearNormalBound F r ε t₀ t₁ Y ρ` | defining; a region-indexed form `FactoredNormalBoundOn` with both bounds as instances is planned (batch D0a) |
