@@ -13,6 +13,7 @@ import LeanDLRA.Corrections.NormalLowerRank
 import LeanDLRA.Corrections.PPCAResidual
 import LeanDLRA.Corrections.StrangNotRobust
 import LeanDLRA.Dynamics.ContinuousDLRA
+import LeanDLRA.FixedRank.Defs
 import LeanDLRA.Foundations.Existence
 import LeanDLRA.Foundations.Galerkin
 import LeanDLRA.Foundations.Gronwall

@@ -3,6 +3,8 @@ import LeanDLRA.Foundations.Gronwall
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Curvature
 import LeanDLRA.LinearAlgebra.Projection.Defs
+import LeanDLRA.FixedRank.Defs
+import LeanDLRA.Analysis.Defs
 
 /-!
 # Oblique (interpolatory / sketched) projectors in dynamical low-rank approximation
@@ -21,7 +23,8 @@ tangent-space projector `P(Y) Z = U Uᵀ Z + Z V Vᵀ - U Uᵀ Z V Vᵀ` by the 
 projector `P^∠(Y) Z = 𝒫_U Z + Z 𝒫_Vᵀ - 𝒫_U Z 𝒫_Vᵀ` (arXiv 2510.19518, eqs. (12)–(13)).
 
 `IsObliqueProj`, `obliqueProj`, `leftOblique` and `rightOblique` are defined in
-`LeanDLRA/LinearAlgebra/Projection/Defs.lean`.
+`LeanDLRA/LinearAlgebra/Projection/Defs.lean`, and `obliqueTangentProj`, `sketchTangentProj` in
+`LeanDLRA/FixedRank/Defs.lean`.
 
 ## Abstract theory (any real inner product space)
 
@@ -595,11 +598,7 @@ end Sketch
 
 section Filippov
 
-/-- The Filippov set-valued regularisation of a (possibly discontinuous) vector field `f`
-restricted to a set `ℳ` (arXiv 2510.19518, eq. (16)):
-`𝓕(y) = ⋂_{δ > 0} cl conv f(B(y, δ) ∩ ℳ)`. -/
-def filippov (f : E → E) (M : Set E) (y : E) : Set E :=
-  ⋂ δ > 0, closure (convexHull ℝ (f '' (ball y δ ∩ M)))
+/- `filippov` is defined in `LeanDLRA/Analysis/Defs.lean`. -/
 
 /-- **Corollary 9 of arXiv 2510.19518.**  If `‖f z - F z‖ ≤ c` for all `z ∈ ℳ` and `F` is
 continuous at `y`, then every element `v` of the Filippov set `𝓕(y)` satisfies
@@ -1272,18 +1271,8 @@ section Tangent
 variable [Fintype k] [DecidableEq k] [Fintype l] [DecidableEq l] [Fintype m] [Fintype n]
   {U SU : Matrix m k ℝ} {V SV : Matrix n l ℝ}
 
-/-- The **oblique (interpolatory) tangent-space projector** at `Y = U Σ Vᵀ`
-(arXiv 2510.19518, eq. (13)): `P^∠(Y) Z = 𝒫_U Z + Z 𝒫_Vᵀ - 𝒫_U Z 𝒫_Vᵀ`. -/
-noncomputable def obliqueTangentProj (U SU : Matrix m k ℝ) (V SV : Matrix n l ℝ) :
-    Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  LeanDLRA.tangent (leftOblique U SU) (rightOblique V SV)
-
-/-- Explicit formula for the oblique tangent-space projector. -/
-theorem obliqueTangentProj_apply (U SU : Matrix m k ℝ) (V SV : Matrix n l ℝ)
-    (Z : Matrix m n ℝ) :
-    obliqueTangentProj U SU V SV Z = obliqueProj U SU * Z + Z * (obliqueProj V SV)ᵀ -
-      obliqueProj U SU * Z * (obliqueProj V SV)ᵀ := by
-  simp [obliqueTangentProj, Matrix.mul_assoc]
+/- `obliqueTangentProj`, `obliqueTangentProj_apply` and `sketchTangentProj` are defined in
+`LeanDLRA/FixedRank/Defs.lean`. -/
 
 /-- `P^∠(Y)` is an oblique projector onto the orthogonal tangent projector `P(Y)`:
 `P^∠(Y) P(Y) = P(Y)`, `P(Y) P^∠(Y) = P^∠(Y)` (arXiv 2510.19518, §3.1; Lemma 15 for Tucker). -/
@@ -1438,21 +1427,19 @@ theorem isUnit_det_of_sketch_orthonormal {p : Type*} [Fintype p] {Θ : Matrix p 
   rw [Matrix.det_mul, Matrix.det_one] at hd
   exact ⟨IsUnit.of_mul_eq_one_right _ hd, IsUnit.of_mul_eq_one _ hd⟩
 
-/-- The oblique sketch tangent projector `P^{Θ,Ω}_Y Z = P^Θ_{Im Y} Z + Z (P^Ω_{Im Yᵀ})ᵀ - …` of
-arXiv 2607.03402, Lemma 4.2, for bases `P`, `W` of `Y = P S Wᵀ`, written with the oblique
-projectors `obliqueProj P (Θᵀ Θ P)` (which equal `P (ΘP)⁺ Θ` for sketch-orthonormal `P`,
-`obliqueProj_sketch_eq`). -/
-noncomputable abbrev sketchTangentProj {p q : Type*} [Fintype p] [Fintype q] (Θ : Matrix p m ℝ)
-    (Ω : Matrix q n ℝ) (P : Matrix m k ℝ) (W : Matrix n l ℝ) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  obliqueTangentProj P (Θᵀ * Θ * P) W (Ωᵀ * Ω * W)
-
 /-- The two-sided sketch `Z ↦ Θ Z Ωᵀ` as a continuous linear map (Frobenius norms). -/
 noncomputable def sketchCLM {p q : Type*} [Fintype p] [Fintype q] (Θ : Matrix p m ℝ)
     (Ω : Matrix q n ℝ) : Matrix m n ℝ →L[ℝ] Matrix p q ℝ :=
   (Frobenius.rightMulCLM Ωᵀ).comp (Frobenius.leftMulCLM Θ)
 
+/-- `sketchCLM Θ Ω Z = Θ Z Ωᵀ`. -/
 @[simp] lemma sketchCLM_apply {p q : Type*} [Fintype p] [Fintype q] (Θ : Matrix p m ℝ)
     (Ω : Matrix q n ℝ) (Z : Matrix m n ℝ) : sketchCLM Θ Ω Z = Θ * Z * Ωᵀ := rfl
+
+/-- The two-sided sketch is the sandwich map `Z ↦ Θ Z Ωᵀ` of the Frobenius layer. -/
+theorem sketchCLM_eq_sandwichCLM {p q : Type*} [Fintype p] [Fintype q] (Θ : Matrix p m ℝ)
+    (Ω : Matrix q n ℝ) : sketchCLM Θ Ω = Frobenius.sandwichCLM Θ Ωᵀ :=
+  ContinuousLinearMap.ext fun _ => rfl
 
 /-- **Setting of Lemma 4.2 and Proposition 4.4 of arXiv 2607.03402.**  Let `U`, `V` be
 orthonormal and `P = U R`, `W = V R'` sketch-orthonormal bases of the same ranges

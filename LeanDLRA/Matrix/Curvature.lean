@@ -3,6 +3,7 @@ import LeanDLRA.Foundations.Projector
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.LinearAlgebra.Frobenius.Defs
 import LeanDLRA.LinearAlgebra.Projection.Defs
+import LeanDLRA.FixedRank.Defs
 
 /-!
 # Curvature bounds for the manifold of fixed-rank matrices
@@ -870,12 +871,7 @@ end ProjectorPerturbation
 
 /-! #### The tangent-space projector -/
 
-/-- The tangent-space projector `P(Y) B = Pu B + B Pv - Pu B Pv` at a matrix `Y` whose column
-(row) space is the range of the orthogonal projector `Pu` (`Pv`); for `Y = U S Vᵀ`,
-`Pu = U Uᵀ` and `Pv = V Vᵀ`, and then it is `LeanDLRA.tangentProj U V`
-(`tangentProjMat_eq_tangentProj`). -/
-def tangentProjMat (Pu : Matrix m m ℝ) (Pv : Matrix n n ℝ) (B : Matrix m n ℝ) : Matrix m n ℝ :=
-  Pu * B + B * Pv - Pu * B * Pv
+/- `tangentProjMat` is defined in `LeanDLRA/FixedRank/Defs.lean`. -/
 
 omit [DecidableEq k] [DecidableEq m] [DecidableEq n] in
 /-- `tangentProjMat (U Uᵀ) (V Vᵀ)` is the tangent-space projector `LeanDLRA.tangentProj U V` of
@@ -1229,6 +1225,45 @@ example :
     norm_num at h00
 
 end Frobenius
+
+/-! ### Projector matrices as orthogonal projectors of the Frobenius space -/
+
+section FrobeniusProjectors
+
+open scoped LeanDLRA.Frobenius RealInnerProductSpace
+
+variable {P Pu : Matrix m m ℝ} {Pv : Matrix n n ℝ}
+
+/-- Left multiplication by an orthogonal projector matrix is an orthogonal projector on the
+Frobenius space of `m × l` matrices. -/
+theorem IsOrthProjMat.isOrthProj_leftMulCLM {l : Type*} [Fintype l] (hP : IsOrthProjMat P) :
+    IsOrthProj (Frobenius.leftMulCLM P : Matrix m l ℝ →L[ℝ] Matrix m l ℝ) where
+  idem X := by
+    simp only [Frobenius.leftMulCLM_apply, ← Matrix.mul_assoc, hP.idem]
+  symm X Y := by
+    simp only [Frobenius.leftMulCLM_apply]
+    rw [Frobenius.inner_mul_left, hP.symm]
+
+/-- Right multiplication by an orthogonal projector matrix is an orthogonal projector on the
+Frobenius space of `l × n` matrices. -/
+theorem IsOrthProjMat.isOrthProj_rightMulCLM {l : Type*} [Fintype l] (hP : IsOrthProjMat Pv) :
+    IsOrthProj (Frobenius.rightMulCLM Pv : Matrix l n ℝ →L[ℝ] Matrix l n ℝ) where
+  idem X := by
+    simp only [Frobenius.rightMulCLM_apply, Matrix.mul_assoc, hP.idem]
+  symm X Y := by
+    simp only [Frobenius.rightMulCLM_apply]
+    rw [Frobenius.inner_mul_right, hP.symm]
+
+/-- For orthogonal projector matrices `Pu`, `Pv`, the tangent-space projector
+`B ↦ tangentProjMat Pu Pv B` is an orthogonal projector of the Frobenius space
+(`tangentProjMat_eq_tangent`). -/
+theorem IsOrthProjMat.isOrthProj_tangent (hPu : IsOrthProjMat Pu) (hPv : IsOrthProjMat Pv) :
+    IsOrthProj (tangent (Frobenius.leftMulCLM Pu) (Frobenius.rightMulCLM Pv) :
+      Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
+  hPu.isOrthProj_leftMulCLM.tangent hPv.isOrthProj_rightMulCLM fun X =>
+    (Matrix.mul_assoc Pu X Pv).symm
+
+end FrobeniusProjectors
 
 end Curvature
 

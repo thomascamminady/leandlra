@@ -1,5 +1,6 @@
 import Mathlib
 import LeanDLRA.LinearAlgebra.Projection.Defs
+import LeanDLRA.FixedRank.Defs
 
 /-!
 # Orthogonal projectors and the tangent-space operator calculus
@@ -15,7 +16,8 @@ The central objects are
 * `tangent L R = L + R - L * R`, abstracting `P(Y) G = U Uᵀ G - U Uᵀ G V Vᵀ + G V Vᵀ`;
 * `normal L R = (1 - L) * (1 - R)`, abstracting `(I - U Uᵀ) G (I - V Vᵀ)`.
 
-The predicate `IsOrthProj` is defined in `LeanDLRA/LinearAlgebra/Projection/Defs.lean`.
+The predicate `IsOrthProj` is defined in `LeanDLRA/LinearAlgebra/Projection/Defs.lean`, and
+`tangent`, `normal` with their `_apply` lemmas in `LeanDLRA/FixedRank/Defs.lean`.
 -/
 
 open scoped RealInnerProductSpace
@@ -23,22 +25,6 @@ open scoped RealInnerProductSpace
 namespace LeanDLRA
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-
-/-- The tangent-space projector built from a left and a right projector. -/
-def tangent (L R : E →L[ℝ] E) : E →L[ℝ] E := L + R - L * R
-
-/-- The normal-space projector built from a left and a right projector. -/
-def normal (L R : E →L[ℝ] E) : E →L[ℝ] E := (1 - L) * (1 - R)
-
-/-- `tangent L R x = L x + R x - L (R x)`. -/
-@[simp] lemma tangent_apply (L R : E →L[ℝ] E) (x : E) :
-    tangent L R x = L x + R x - L (R x) := by
-  simp [tangent]
-
-/-- `normal L R x = (x - R x) - L (x - R x)`. -/
-@[simp] lemma normal_apply (L R : E →L[ℝ] E) (x : E) :
-    normal L R x = (x - R x) - L (x - R x) := by
-  simp [normal]
 
 /-- The tangent and normal projectors always add up to the identity. -/
 lemma tangent_add_normal (L R : E →L[ℝ] E) : tangent L R + normal L R = 1 := by

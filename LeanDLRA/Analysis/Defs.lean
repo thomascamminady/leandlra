@@ -3,6 +3,7 @@ import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.LocallyConvex.AbsConvexOpen
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+import Mathlib.Analysis.Convex.Hull
 
 /-!
 # Definitions: ODE solutions and conditions on vector fields
@@ -14,7 +15,8 @@ right-hand side `F`. The theorems about these objects are in `LeanDLRA/Foundatio
 calculus), `LeanDLRA/Integrators/Exactness.lean` (state-independent right-hand sides),
 `LeanDLRA/Foundations/Localization.lean` (localization in tubes),
 `LeanDLRA/Foundations/Galerkin.lean` and `LeanDLRA/Stability/Energy.lean` (Euler steps) and
-`LeanDLRA/Dynamics/ContinuousDLRA.lean` (Grönwall with a time-dependent source).
+`LeanDLRA/Dynamics/ContinuousDLRA.lean` (Grönwall with a time-dependent source) and
+`LeanDLRA/Matrix/Interpolation.lean` (Filippov sets).
 
 ## Main definitions
 
@@ -35,6 +37,8 @@ calculus), `LeanDLRA/Integrators/Exactness.lean` (state-independent right-hand s
 * `LeanDLRA.gronwallIntegralBound`: the solution of `u' = K u + η(t)`, `u(a) = δ`.
 * `LeanDLRA.gramMatrix`, `LeanDLRA.crossGram`: Gram matrices `(⟪Zʲ, Zˡ⟫)` of tuples of vectors.
 * `LeanDLRA.entrywiseCubic`: the entrywise cubic nonlinearity `Xᵢⱼ ↦ Xᵢⱼ³` on matrices.
+* `LeanDLRA.filippov f M y`: the Filippov regularisation `⋂_{δ > 0} cl conv f(B(y, δ) ∩ M)` of a
+  possibly discontinuous vector field.
 
 ## Implementation notes
 
@@ -50,6 +54,7 @@ from those of the files that use them.
 
 * [CarrelVandereycken2023, Def. 1] (one-sided Lipschitz fields)
 * [ZhaoOstermannGu2021, Property 1(b)] (tube conditions)
+* [CarrelEtAl2025, eq. (16)] (Filippov regularisation)
 -/
 
 open Set
@@ -213,5 +218,21 @@ variable {m n : Type*} [Fintype m] [Fintype n]
 def entrywiseCubic (X : Matrix m n ℝ) : Matrix m n ℝ := fun i j => X i j ^ 3
 
 end Cubic
+
+/-! ### Filippov regularisation -/
+
+section Filippov
+
+open Metric
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-- The Filippov set-valued regularisation of a (possibly discontinuous) vector field `f`
+restricted to a set `ℳ` [CarrelEtAl2025, eq. (16)]:
+`𝓕(y) = ⋂_{δ > 0} cl conv f(B(y, δ) ∩ ℳ)`. -/
+def filippov (f : E → E) (M : Set E) (y : E) : Set E :=
+  ⋂ δ > 0, closure (convexHull ℝ (f '' (ball y δ ∩ M)))
+
+end Filippov
 
 end LeanDLRA

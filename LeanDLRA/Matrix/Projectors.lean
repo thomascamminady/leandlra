@@ -1,6 +1,7 @@
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Foundations.Projector
 import LeanDLRA.LinearAlgebra.Projection.Defs
+import LeanDLRA.FixedRank.Defs
 
 /-!
 # Left, right and tangent-space projectors on matrices
@@ -167,16 +168,7 @@ theorem transpose_rightProj (V : Matrix n k ℝ) (X : Matrix m n ℝ) :
 
 /-! ### The tangent-space projector -/
 
-/-- The orthogonal projector onto the tangent space at `Y = U S Vᵀ` of the manifold of rank-`r`
-matrices: `P(Y) Z = U Uᵀ Z + Z V Vᵀ - U Uᵀ Z V Vᵀ`. -/
-noncomputable def tangentProj (U : Matrix m k ℝ) (V : Matrix n k' ℝ) :
-    Matrix m n ℝ →L[ℝ] Matrix m n ℝ :=
-  tangent (leftProj U) (rightProj V)
-
-/-- Explicit formula for the tangent-space projector. -/
-theorem tangentProj_apply (U : Matrix m k ℝ) (V : Matrix n k' ℝ) (Z : Matrix m n ℝ) :
-    tangentProj U V Z = U * Uᵀ * Z + Z * V * Vᵀ - U * Uᵀ * Z * V * Vᵀ := by
-  simp [tangentProj, Matrix.mul_assoc]
+/- `tangentProj` and `tangentProj_apply` are defined in `LeanDLRA/FixedRank/Defs.lean`. -/
 
 /-- The normal part of the tangent-space splitting: `(I - U Uᵀ) Z (I - V Vᵀ)`. -/
 theorem normal_leftProj_rightProj_apply [DecidableEq m] [DecidableEq n] (U : Matrix m k ℝ)
