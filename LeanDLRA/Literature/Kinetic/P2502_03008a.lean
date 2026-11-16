@@ -1,6 +1,7 @@
 import LeanDLRA.Classical.SVD
 import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Stencils
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
 
@@ -47,6 +48,13 @@ of the full scheme (11).
 * In (19h) the symbol `K*` means `X̂̂* Ŝ̂*`, not the `K*` of (19a); this reading is forced by the
   rank of (19j).
 
+## Core vocabulary
+
+* `D^x` is the core matrix `Kinetic.centralDiff N Δx`; `Dx_mulVec` and `Dx_transpose` keep their
+  names and are the core lemmas `Kinetic.centralDiff_mulVec` and `Kinetic.centralDiff_transpose`.
+* `Dxx` and `Dplus` carry the paper's scalings `1 / (2 Δx)` and `1 / √(2 Δx)`, so they are
+  multiples of the core stencils: `Dxx_eq_smul_secondDiff`, `Dplus_eq_smul_fwdDiff`.
+
 Non-vacuity: `exists_isConservativeStep`, `exists_isAdvectionStep`, `exists_isDLRAStep`,
 `exists_isSVDTruncation`, `exists_isConservativeTruncation`. Theorem 4 of the paper is the sibling
 slice. No claim of the paper was found to be false.
@@ -58,6 +66,7 @@ open scoped RealInnerProductSpace Matrix LeanDLRA.Frobenius
 namespace LeanDLRA.Literature.P2502_03008
 
 open Matrix
+open LeanDLRA.Kinetic (centralDiff)
 
 set_option linter.unusedSectionVars false
 set_option linter.unusedDecidableInType false
@@ -69,11 +78,10 @@ section Stencils
 
 variable {N : ℕ} [NeZero N]
 
-/-- The periodic centred stencil `D^x` of arXiv 2502.03008, Section 3.2: `D^x_{j,j±1} = ±1/(2Δx)`,
-indices being taken modulo `N_x`. The two contributions are added, which only matters for
-`N_x ≤ 2`, where `j + 1 = j - 1`. -/
-noncomputable def Dx (Δx : ℝ) : Matrix (ZMod N) (ZMod N) ℝ :=
-  Matrix.of fun j i => ((if i = j + 1 then 1 else 0) - (if i = j - 1 then 1 else 0)) / (2 * Δx)
+/-! The periodic centred stencil `D^x` of arXiv 2502.03008, Section 3.2,
+`D^x_{j,j±1} = ±1/(2Δx)` with indices modulo `N_x`, is the core matrix
+`Kinetic.centralDiff N Δx`. The two contributions are added, which only matters for `N_x ≤ 2`,
+where `j + 1 = j - 1`. -/
 
 /-- The periodic stabilisation stencil `D^xx` of arXiv 2502.03008, Section 3.2:
 `D^xx_{jj} = -1/Δx`, `D^xx_{j,j±1} = 1/(2Δx)`. -/
@@ -87,11 +95,10 @@ noncomputable def Dxx (Δx : ℝ) : Matrix (ZMod N) (ZMod N) ℝ :=
 noncomputable def Dplus (Δx : ℝ) : Matrix (ZMod N) (ZMod N) ℝ :=
   Matrix.of fun j i => ((if i = j + 1 then 1 else 0) - (if i = j then 1 else 0)) / √(2 * Δx)
 
+/-- The stencil of `D^x`, the core lemma `Kinetic.centralDiff_mulVec` at one cell. -/
 lemma Dx_mulVec (Δx : ℝ) (z : ZMod N → ℝ) (j : ZMod N) :
-    (Dx Δx *ᵥ z) j = (z (j + 1) - z (j - 1)) / (2 * Δx) := by
-  simp [Dx, mulVec, dotProduct, sub_div, sub_mul, ite_div, Finset.sum_sub_distrib,
-    ite_mul, Finset.sum_ite_eq']
-  ring
+    (centralDiff N Δx *ᵥ z) j = (z (j + 1) - z (j - 1)) / (2 * Δx) :=
+  congrFun (Kinetic.centralDiff_mulVec z) j
 
 lemma Dxx_mulVec (Δx : ℝ) (z : ZMod N → ℝ) (j : ZMod N) :
     (Dxx Δx *ᵥ z) j = (z (j + 1) - 2 * z j + z (j - 1)) / (2 * Δx) := by
@@ -106,17 +113,9 @@ lemma Dplus_mulVec (Δx : ℝ) (z : ZMod N → ℝ) (j : ZMod N) :
   ring
 
 omit [NeZero N] in
-lemma Dx_transpose (Δx : ℝ) : (Dx Δx : Matrix (ZMod N) (ZMod N) ℝ)ᵀ = -Dx Δx := by
-  ext j i
-  simp only [transpose_apply, Dx, Matrix.of_apply, Matrix.neg_apply]
-  have h1 : (j = i + 1) = (i = j - 1) := by
-    simp only [eq_iff_iff]
-    constructor <;> intro h <;> simp [h]
-  have h2 : (j = i - 1) = (i = j + 1) := by
-    simp only [eq_iff_iff]
-    constructor <;> intro h <;> simp [h]
-  simp only [h1, h2]
-  ring
+/-- `D^x` is skew, the core lemma `Kinetic.centralDiff_transpose`. -/
+lemma Dx_transpose (Δx : ℝ) : (centralDiff N Δx)ᵀ = -centralDiff N Δx :=
+  Kinetic.centralDiff_transpose
 
 omit [NeZero N] in
 lemma Dxx_transpose (Δx : ℝ) : (Dxx Δx : Matrix (ZMod N) (ZMod N) ℝ)ᵀ = Dxx Δx := by
@@ -169,8 +168,9 @@ lemma Dxx_eq_neg_Dplus_mul (Δx : ℝ) (hΔx : 0 < Δx) :
 /-- **Lemma 1, skew-symmetry of `D^x`** (arXiv 2502.03008, Lemma 1):
 `∑ y_j D^x_{ji} z_i = -∑ z_j D^x_{ji} y_i`. -/
 theorem lemma_1_skew (Δx : ℝ) (y z : ZMod N → ℝ) :
-    ∑ i, ∑ j, y j * Dx Δx j i * z i = -∑ i, ∑ j, z j * Dx Δx j i * y i := by
-  have h (a b : ZMod N → ℝ) : ∑ i, ∑ j, a j * Dx Δx j i * b i = a ⬝ᵥ (Dx Δx *ᵥ b) := by
+    ∑ i, ∑ j, y j * centralDiff N Δx j i * z i = -∑ i, ∑ j, z j * centralDiff N Δx j i * y i := by
+  have h (a b : ZMod N → ℝ) :
+      ∑ i, ∑ j, a j * centralDiff N Δx j i * b i = a ⬝ᵥ (centralDiff N Δx *ᵥ b) := by
     simp only [dotProduct, mulVec, Finset.mul_sum, mul_assoc]
     exact Finset.sum_comm
   rw [h, h, Matrix.dotProduct_mulVec, dotProduct_comm, ← Matrix.mulVec_transpose, Dx_transpose,
@@ -179,7 +179,7 @@ theorem lemma_1_skew (Δx : ℝ) (y z : ZMod N → ℝ) :
 /-- **Lemma 1, `D^x` has vanishing quadratic form** (arXiv 2502.03008, Lemma 1):
 `∑ z_j D^x_{ji} z_i = 0`. -/
 theorem lemma_1_skew_self (Δx : ℝ) (z : ZMod N → ℝ) :
-    ∑ i, ∑ j, z j * Dx Δx j i * z i = 0 := by
+    ∑ i, ∑ j, z j * centralDiff N Δx j i * z i = 0 := by
   have := lemma_1_skew Δx z z
   linarith
 
@@ -231,6 +231,39 @@ theorem lemma_1_neg_sq (Δx : ℝ) (hΔx : 0 < Δx) (z : ZMod N → ℝ) :
     exact Finset.sum_congr rfl fun j _ => mul_comm _ _
   rw [e3]
   ring
+
+/-- The stabilisation stencil is the core second difference times `Δx / 2`: the paper divides by
+`2 Δx`, the core stencil by `Δx ^ 2`. -/
+theorem Dxx_eq_smul_secondDiff (Δx : ℝ) : Dxx Δx = (Δx / 2) • Kinetic.secondDiff N Δx := by
+  have key : ∀ x : ℝ, x / (2 * Δx) = Δx / 2 * (x / Δx ^ 2) := fun x => by
+    rcases eq_or_ne Δx 0 with rfl | h
+    · simp
+    · rw [div_mul_div_comm, pow_two, ← mul_assoc (2 : ℝ), mul_comm Δx x, mul_div_mul_right _ _ h]
+  ext j i
+  simp only [Dxx, Kinetic.secondDiff, Matrix.smul_apply, Matrix.of_apply, smul_eq_mul]
+  exact key _
+
+/-- The one-sided stencil `D⁺` is the core forward difference times `Δx / √(2 Δx)`: the paper
+divides by `√(2 Δx)`, the core stencil by `Δx`. -/
+theorem Dplus_eq_smul_fwdDiff (Δx : ℝ) :
+    Dplus Δx = (Δx / √(2 * Δx)) • Kinetic.fwdDiff N Δx := by
+  have key : ∀ x : ℝ, x / √(2 * Δx) = Δx / √(2 * Δx) * (x / Δx) := fun x => by
+    rcases eq_or_ne Δx 0 with rfl | h
+    · simp
+    · rw [div_mul_div_comm, mul_comm Δx x, mul_div_mul_right _ _ h]
+  ext j i
+  simp only [Dplus, Kinetic.fwdDiff, Matrix.smul_apply, Matrix.of_apply, smul_eq_mul]
+  exact key _
+
+/-- On three cells with `Δx = 1/2`, read off through the core stencils: `D^xx(0, 1) = 1`,
+`D⁺(0, 1) = 1` and `D^x(0, 1) = 1`. -/
+example : Dxx (N := 3) (1 / 2) 0 1 = 1 ∧ Dplus (N := 3) (1 / 2) 0 1 = 1 ∧
+    centralDiff 3 (1 / 2) 0 1 = 1 := by
+  rw [Dxx_eq_smul_secondDiff, Dplus_eq_smul_fwdDiff, Matrix.smul_apply, Matrix.smul_apply,
+    Kinetic.secondDiff, Kinetic.fwdDiff, Kinetic.centralDiff, Matrix.of_apply, Matrix.of_apply,
+    Matrix.of_apply]
+  norm_num [show ((1 : ZMod 3) = 0 + 1) from rfl, show ¬((1 : ZMod 3) = 0) by decide,
+    show ¬((1 : ZMod 3) = 0 - 1) by decide, show ¬((1 : ZMod 3) = -1) by decide]
 
 end Stencils
 
@@ -677,7 +710,7 @@ variable {N : ℕ} [NeZero N] {K : ℕ}
 of `D^x` and `D^xx` is controlled by `D⁺`. -/
 lemma column_cfl {Δx Δt : ℝ} (hΔx : 0 < Δx) (hCFL : Δt ≤ Δx) {a : ℝ}
     (ha : |a| ≤ 1) (z : ZMod N → ℝ) :
-    Δt / 2 * ∑ i, (((Dx Δx)ᵀ *ᵥ z) i * a - ((Dxx Δx)ᵀ *ᵥ z) i * |a|) ^ 2 ≤
+    Δt / 2 * ∑ i, (((centralDiff N Δx)ᵀ *ᵥ z) i * a - ((Dxx Δx)ᵀ *ᵥ z) i * |a|) ^ 2 ≤
       ∑ i, (((Dplus Δx)ᵀ *ᵥ z) i * √|a|) ^ 2 := by
   set D := ∑ i, (z (i + 1) - z i) ^ 2 with hD
   have hD0 : 0 ≤ D := Finset.sum_nonneg fun i _ => sq_nonneg _
@@ -692,7 +725,8 @@ lemma column_cfl {Δx Δt : ℝ} (hΔx : 0 < Δx) (hCFL : Δt ≤ Δx) {a : ℝ}
     rw [Dplus_transpose_mulVec, mul_pow, div_pow, hsq, Real.sq_sqrt (abs_nonneg a)]
     field_simp
     ring
-  have hl : ∑ i, (((Dx Δx)ᵀ *ᵥ z) i * a - ((Dxx Δx)ᵀ *ᵥ z) i * |a|) ^ 2 = a ^ 2 / Δx ^ 2 * D := by
+  have hl : ∑ i, (((centralDiff N Δx)ᵀ *ᵥ z) i * a - ((Dxx Δx)ᵀ *ᵥ z) i * |a|) ^ 2 =
+      a ^ 2 / Δx ^ 2 * D := by
     rw [Dx_transpose, Dxx_transpose]
     rcases le_or_gt 0 a with h | h
     · rw [abs_of_nonneg h, Finset.mul_sum]
@@ -723,11 +757,11 @@ lemma column_cfl {Δx Δt : ℝ} (hΔx : 0 < Δx) (hCFL : Δt ≤ Δx) {a : ℝ}
 theorem lemma_2_matrix {Δx Δt : ℝ} (hΔx : 0 < Δx) (hCFL : Δt ≤ Δx)
     {A Q : Matrix (Fin K) (Fin K) ℝ} {M : Fin K → ℝ} (hd : IsDiagonalization A Q M)
     (hM : ∀ m, |M m| ≤ 1) (u : Matrix (ZMod N) (Fin K) ℝ) :
-    Δt / 2 * ‖(Dx (N := N) Δx)ᵀ * u * A - (Dxx (N := N) Δx)ᵀ * u * absMat Q M‖ ^ 2 ≤
+    Δt / 2 * ‖(centralDiff N Δx)ᵀ * u * A - (Dxx (N := N) Δx)ᵀ * u * absMat Q M‖ ^ 2 ≤
       ‖(Dplus (N := N) Δx)ᵀ * u * sqrtAbsMat Q M‖ ^ 2 := by
   set w := u * Q with hw
-  have h1 : (Dx (N := N) Δx)ᵀ * u * A - (Dxx (N := N) Δx)ᵀ * u * absMat Q M =
-      ((Dx (N := N) Δx)ᵀ * w * diagonal M -
+  have h1 : (centralDiff N Δx)ᵀ * u * A - (Dxx (N := N) Δx)ᵀ * u * absMat Q M =
+      ((centralDiff N Δx)ᵀ * w * diagonal M -
         (Dxx (N := N) Δx)ᵀ * w * diagonal fun m => |M m|) * Qᵀ := by
     rw [hd.eq, hw, absMat, Matrix.sub_mul]
     simp only [Matrix.mul_assoc]
@@ -765,7 +799,8 @@ theorem lemma_2 {Δx Δt : ℝ} (hΔx : 0 < Δx) (hCFL : Δt ≤ Δx)
     {P : Fin K → ℝ → ℝ} (hP : IsL2Orthonormal P) {Q : Matrix (Fin K) (Fin K) ℝ} {M : Fin K → ℝ}
     (hd : IsDiagonalization (momentMatrix P) Q M) (u : Matrix (ZMod N) (Fin K) ℝ) :
     Δt / 2 * ∑ i, ∑ l, (∑ j, ∑ k,
-        (Dx Δx j i * u j k * momentMatrix P k l - Dxx Δx j i * u j k * absMat Q M k l)) ^ 2 -
+        (centralDiff N Δx j i * u j k * momentMatrix P k l -
+          Dxx Δx j i * u j k * absMat Q M k l)) ^ 2 -
       ∑ i, ∑ l, (∑ j, ∑ k, Dplus Δx j i * u j k * sqrtAbsMat Q M k l) ^ 2 ≤ 0 := by
   have h := lemma_2_matrix hΔx hCFL hd (abs_eigenvalue_le hP hd) u
   rw [LeanDLRA.Frobenius.norm_sq_eq_sum, LeanDLRA.Frobenius.norm_sq_eq_sum] at h
@@ -794,7 +829,7 @@ structure IsConservativeStep (Δx Δt σ : ℝ) (A absA : Matrix (Fin K) (Fin K)
     (B₀ B₁ : ZMod N → ℝ) (v₀ v₁ : Matrix (ZMod N) (Fin K) ℝ) : Prop where
   /-- Equation (11a). -/
   v_eq : ∀ j k, v₁ j k = v₀ j k
-    - Δt * ∑ i, ∑ l, 1 / B₀ j * Dx Δx j i * B₀ i * v₀ i l * A k l
+    - Δt * ∑ i, ∑ l, 1 / B₀ j * centralDiff N Δx j i * B₀ i * v₀ i l * A k l
     + Δt * ∑ i, ∑ l, 1 / B₀ j * Dxx Δx j i * B₀ i * v₀ i l * absA k l
     + σ * Δt * (B₁ j / B₀ j) * (√2 * delta0 k - v₁ j k)
     - Δt * (1 / B₀ j) * ((B₁ j - B₀ j) / Δt) * v₁ j k
@@ -824,9 +859,9 @@ lemma energy_eq (B : ZMod N → ℝ) (v : Matrix (ZMod N) (Fin K) ℝ) :
 omit [NeZero K] in
 lemma inner_skew_self {A : Matrix (Fin K) (Fin K) ℝ} (hA : Aᵀ = A) (Δx : ℝ)
     (u : Matrix (ZMod N) (Fin K) ℝ) :
-    ⟪u, (Dx (N := N) Δx * u * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫ = 0 := by
-  have h : ⟪u, (Dx (N := N) Δx * u * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫ =
-      -⟪u, (Dx (N := N) Δx * u * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫ := by
+    ⟪u, (centralDiff N Δx * u * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫ = 0 := by
+  have h : ⟪u, (centralDiff N Δx * u * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫ =
+      -⟪u, (centralDiff N Δx * u * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫ := by
     conv_lhs => rw [Matrix.mul_assoc, LeanDLRA.Frobenius.inner_mul_left', Dx_transpose,
       Matrix.neg_mul, inner_neg_left, ← LeanDLRA.Frobenius.inner_mul_right, real_inner_comm]
     rw [hA]
@@ -895,7 +930,7 @@ theorem energy_le_of_isConservativeStep {Δx Δt σ : ℝ} (hΔx : 0 < Δx) (hΔ
   have hRT : absAᵀ = absA := absMat_transpose Q M
   set u₀ : Matrix (ZMod N) (Fin K) ℝ := diagonal B₀ * v₀ with hu₀
   set u₁ : Matrix (ZMod N) (Fin K) ℝ := diagonal B₁ * v₁ with hu₁
-  set T : Matrix (ZMod N) (Fin K) ℝ := Dx (N := N) Δx * u₀ * Aᵀ with hT
+  set T : Matrix (ZMod N) (Fin K) ℝ := centralDiff N Δx * u₀ * Aᵀ with hT
   set S : Matrix (ZMod N) (Fin K) ℝ := Dxx (N := N) Δx * u₀ * absAᵀ with hS
   set C : ℝ := ∑ j, ∑ k, B₁ j ^ 2 * v₁ j k * (√2 * delta0 k - v₁ j k) with hC
   have hu₀a (j : ZMod N) (k : Fin K) : u₀ j k = B₀ j * v₀ j k := by
@@ -917,14 +952,14 @@ theorem energy_le_of_isConservativeStep {Δx Δt σ : ℝ} (hΔx : 0 < Δx) (hΔ
     exact Finset.sum_congr rfl fun j _ => Finset.sum_congr rfl fun k _ => hpt j k
   set w : Matrix (ZMod N) (Fin K) ℝ := u₀ - u₁ with hw
   set Y : Matrix (ZMod N) (Fin K) ℝ :=
-    (Dx (N := N) Δx)ᵀ * u₁ * A - (Dxx (N := N) Δx)ᵀ * u₁ * absA with hY
+    (centralDiff N Δx)ᵀ * u₁ * A - (Dxx (N := N) Δx)ᵀ * u₁ * absA with hY
   set G : Matrix (ZMod N) (Fin K) ℝ := (Dplus (N := N) Δx)ᵀ * u₁ * R with hG
   have hL2 : Δt / 2 * ‖Y‖ ^ 2 ≤ ‖G‖ ^ 2 := lemma_2_matrix hΔx hCFL hd hM u₁
   have hskew := inner_skew_self hA Δx u₁
   have hneg : ⟪u₁, (Dxx (N := N) Δx * u₁ * absAᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫ = -‖G‖ ^ 2 := by
     rw [hRR]
     exact inner_Dxx_self hΔx u₁
-  have hTs : T = Dx (N := N) Δx * w * Aᵀ + Dx (N := N) Δx * u₁ * Aᵀ := by
+  have hTs : T = centralDiff N Δx * w * Aᵀ + centralDiff N Δx * u₁ * Aᵀ := by
     rw [hT, hw, ← Matrix.add_mul, ← Matrix.mul_add, sub_add_cancel]
   have hSs : S = Dxx (N := N) Δx * w * absAᵀ + Dxx (N := N) Δx * u₁ * absAᵀ := by
     rw [hS, hw, ← Matrix.add_mul, ← Matrix.mul_add, sub_add_cancel]
@@ -934,7 +969,7 @@ theorem energy_le_of_isConservativeStep {Δx Δt σ : ℝ} (hΔx : 0 < Δx) (hΔ
     rw [LeanDLRA.Frobenius.inner_mul_right', Matrix.transpose_transpose,
       LeanDLRA.Frobenius.inner_mul_left']
     exact congrArg (fun X => ⟪X, w⟫) (Matrix.mul_assoc Dᵀ u₁ Z).symm
-  have hYw : ⟪u₁, (Dx (N := N) Δx * w * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫
+  have hYw : ⟪u₁, (centralDiff N Δx * w * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫
       - ⟪u₁, (Dxx (N := N) Δx * w * absAᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫ = ⟪Y, w⟫ := by
     rw [hadj, hadj, hY, inner_sub_left]
   have hyoung : 0 ≤ Δt ^ 2 * ‖Y‖ ^ 2 + 2 * Δt * ⟪Y, w⟫ + ‖w‖ ^ 2 := by
@@ -946,7 +981,7 @@ theorem energy_le_of_isConservativeStep {Δx Δt σ : ℝ} (hΔx : 0 < Δx) (hΔ
   have hL2' : Δt * (Δt / 2 * ‖Y‖ ^ 2) ≤ Δt * ‖G‖ ^ 2 := mul_le_mul_of_nonneg_left hL2 hΔt.le
   have h15 : 1 / 2 * ‖u₁‖ ^ 2 ≤ 1 / 2 * ‖u₀‖ ^ 2 + σ * Δt * C := by
     rw [hTs, hSs, inner_add_right, inner_add_right, hskew, hneg] at h14
-    have : Δt * ⟪Y, w⟫ = Δt * ⟪u₁, (Dx (N := N) Δx * w * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫
+    have : Δt * ⟪Y, w⟫ = Δt * ⟪u₁, (centralDiff N Δx * w * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫
         - Δt * ⟪u₁, (Dxx (N := N) Δx * w * absAᵀ : Matrix (ZMod N) (Fin K) ℝ)⟫ := by
       rw [← hYw]
       ring
@@ -1002,7 +1037,7 @@ A_{kℓ} + Δt ∑∑ (1/B⁰_j) D^xx_{ji} B⁰_i v⁰_{iℓ} |A|_{kℓ}`. -/
 noncomputable def explicitPart (Δx Δt : ℝ) (A absA : Matrix (Fin K) (Fin K) ℝ) (B₀ : ZMod N → ℝ)
     (v₀ : Matrix (ZMod N) (Fin K) ℝ) : Matrix (ZMod N) (Fin K) ℝ :=
   Matrix.of fun j k => v₀ j k
-    - Δt * ∑ i, ∑ l, 1 / B₀ j * Dx Δx j i * B₀ i * v₀ i l * A k l
+    - Δt * ∑ i, ∑ l, 1 / B₀ j * centralDiff N Δx j i * B₀ i * v₀ i l * A k l
     + Δt * ∑ i, ∑ l, 1 / B₀ j * Dxx Δx j i * B₀ i * v₀ i l * absA k l
 
 /-- The form (18) of the scheme, which is what the DLRA scheme discretizes. If the two equations
@@ -1095,11 +1130,11 @@ structure IsAdvectionStep (Δx Δt σ : ℝ) (A absA : Matrix (Fin K) (Fin K) �
     (B₀ B₁ : ZMod N → ℝ) (v₀ v₁ : Matrix (ZMod N) (Fin K) ℝ) : Prop where
   /-- Equation (10a). -/
   v_eq : ∀ j k, v₁ j k = v₀ j k
-    - Δt * ∑ i, ∑ l, Dx Δx j i * v₀ i l * A k l
+    - Δt * ∑ i, ∑ l, centralDiff N Δx j i * v₀ i l * A k l
     + Δt * ∑ i, ∑ l, Dxx Δx j i * v₀ i l * absA k l
     + σ * Δt * (√2 * delta0 k - v₁ j k)
     - Δt * (1 / B₀ j) * ((B₁ j - B₀ j) / Δt) * v₁ j k
-    - Δt * ∑ i, ∑ l, v₀ j l / B₀ j * Dx Δx j i * B₀ i * A k l
+    - Δt * ∑ i, ∑ l, v₀ j l / B₀ j * centralDiff N Δx j i * B₀ i * A k l
   /-- Equation (10b). -/
   B_eq : ∀ j, B₁ j = B₀ j + σ * Δt * B₁ j * (√2 * v₁ j 0 - 2)
 
@@ -1114,10 +1149,10 @@ lemma mul_mul_transpose_apply (D : Matrix (ZMod N) (ZMod N) ℝ) (u : Matrix (ZM
 `u¹_{jk} = u⁰_{jk} - Δt ∑∑ D^x_{ji} u⁰_{iℓ} A_{kℓ}`. -/
 noncomputable def ftcs (Δx Δt : ℝ) (A : Matrix (Fin K) (Fin K) ℝ)
     (u : Matrix (ZMod N) (Fin K) ℝ) : Matrix (ZMod N) (Fin K) ℝ :=
-  Matrix.of fun j k => u j k - Δt * ∑ i, ∑ l, Dx Δx j i * u i l * A k l
+  Matrix.of fun j k => u j k - Δt * ∑ i, ∑ l, centralDiff N Δx j i * u i l * A k l
 
 omit [NeZero K] in
-lemma sum_Dx_apply (Δx : ℝ) (j : ZMod N) : ∑ i, Dx (N := N) Δx j i = 0 := by
+lemma sum_Dx_apply (Δx : ℝ) (j : ZMod N) : ∑ i, centralDiff N Δx j i = 0 := by
   have := Dx_mulVec (N := N) Δx (fun _ => 1) j
   simp only [mulVec, dotProduct, mul_one] at this
   rw [this]
@@ -1168,8 +1203,8 @@ theorem advection_reduces_to_ftcs {Δx Δt : ℝ} {A absA : Matrix (Fin K) (Fin 
     sum_mul_const _ (sum_Dxx_apply Δx) c absA j k] at e
   simp only [ftcs, Matrix.of_apply, Matrix.diagonal_mul, constInSpace_apply]
   have hb := hB₀ j
-  have e2 : ∑ i, ∑ l, c l / B₁ j * Dx Δx j i * B₁ i * A k l =
-      1 / B₁ j * ∑ i, ∑ l, Dx Δx j i * (B₁ i * c l) * A k l := by
+  have e2 : ∑ i, ∑ l, c l / B₁ j * centralDiff N Δx j i * B₁ i * A k l =
+      1 / B₁ j * ∑ i, ∑ l, centralDiff N Δx j i * (B₁ i * c l) * A k l := by
     simp only [Finset.mul_sum]
     refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun l _ => ?_
     field_simp
@@ -1184,8 +1219,8 @@ omit [NeZero K] in
 theorem norm_sq_ftcs {Δx Δt : ℝ} {A : Matrix (Fin K) (Fin K) ℝ} (hA : Aᵀ = A)
     (u : Matrix (ZMod N) (Fin K) ℝ) :
     ‖ftcs Δx Δt A u‖ ^ 2 = ‖u‖ ^ 2 + Δt ^ 2 *
-      ‖(Dx (N := N) Δx * u * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)‖ ^ 2 := by
-  have h : ftcs Δx Δt A u = u - Δt • (Dx (N := N) Δx * u * Aᵀ) := by
+      ‖(centralDiff N Δx * u * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)‖ ^ 2 := by
+  have h : ftcs Δx Δt A u = u - Δt • (centralDiff N Δx * u * Aᵀ) := by
     ext j k
     simp only [ftcs, Matrix.of_apply, Matrix.sub_apply, Matrix.smul_apply, smul_eq_mul,
       mul_mul_transpose_apply]
@@ -1201,7 +1236,7 @@ noncomputable def amplification (Δx Δt a : ℝ) (m : ZMod N) : ℂ :=
 /-- The complex version of `ftcs`, on which the von Neumann analysis is done. -/
 noncomputable def ftcsC (Δx Δt : ℝ) (A : Matrix (Fin K) (Fin K) ℝ)
     (u : Matrix (ZMod N) (Fin K) ℂ) : Matrix (ZMod N) (Fin K) ℂ :=
-  Matrix.of fun j k => u j k - Δt * ∑ i, ∑ l, (Dx Δx j i : ℂ) * u i l * (A k l : ℂ)
+  Matrix.of fun j k => u j k - Δt * ∑ i, ∑ l, (centralDiff N Δx j i : ℂ) * u i l * (A k l : ℂ)
 
 omit [NeZero K] in
 /-- `ftcsC` is the complexification of `ftcs`. -/
@@ -1223,15 +1258,15 @@ theorem ftcsC_mode {Δx : ℝ} (hΔx : Δx ≠ 0) (Δt : ℝ) {A : Matrix (Fin K
     ftcsC Δx Δt A (Matrix.of fun j k => fourierMode m j * (w k : ℂ)) =
       amplification Δx Δt a m • (Matrix.of fun j k => fourierMode m j * (w k : ℂ) :
         Matrix (ZMod N) (Fin K) ℂ) := by
-  have hrow (j : ZMod N) : ∑ i, (Dx Δx j i : ℂ) * fourierMode m i =
+  have hrow (j : ZMod N) : ∑ i, (centralDiff N Δx j i : ℂ) * fourierMode m i =
       fourierMode m j * (Complex.I * ((Real.sin (2 * Real.pi * m.val / N) / Δx : ℝ) : ℂ)) := by
-    have hD (f : ZMod N → ℂ) : ∑ i, (Dx Δx j i : ℂ) * f i =
+    have hD (f : ZMod N → ℂ) : ∑ i, (centralDiff N Δx j i : ℂ) * f i =
         (f (j + 1) - f (j - 1)) / (2 * Δx) := by
-      have hDa (i : ZMod N) : (Dx Δx j i : ℂ) =
+      have hDa (i : ZMod N) : (centralDiff N Δx j i : ℂ) =
           ((if i = j + 1 then (1 : ℂ) else 0) - (if i = j - 1 then 1 else 0)) / (2 * Δx) := by
-        simp only [Dx, Matrix.of_apply]
+        simp only [Kinetic.centralDiff, Matrix.of_apply]
         split_ifs <;> simp
-      calc ∑ i, (Dx Δx j i : ℂ) * f i
+      calc ∑ i, (centralDiff N Δx j i : ℂ) * f i
           = ∑ i, ((if i = j + 1 then f i else 0) - (if i = j - 1 then f i else 0)) / (2 * Δx) := by
             refine Finset.sum_congr rfl fun i _ => ?_
             rw [hDa]
@@ -1268,8 +1303,8 @@ theorem ftcsC_mode {Δx : ℝ} (hΔx : Δx ≠ 0) (Δt : ℝ) {A : Matrix (Fin K
     exact Finset.sum_congr rfl fun l _ => mul_comm _ _
   ext j k
   simp only [ftcsC, Matrix.of_apply, Matrix.smul_apply, smul_eq_mul, amplification]
-  have hsum : ∑ i, ∑ l, (Dx Δx j i : ℂ) * (fourierMode m i * (w l : ℂ)) * (A k l : ℂ) =
-      (∑ i, (Dx Δx j i : ℂ) * fourierMode m i) * ∑ l, (w l : ℂ) * (A k l : ℂ) := by
+  have hsum : ∑ i, ∑ l, (centralDiff N Δx j i : ℂ) * (fourierMode m i * (w l : ℂ)) * (A k l : ℂ) =
+      (∑ i, (centralDiff N Δx j i : ℂ) * fourierMode m i) * ∑ l, (w l : ℂ) * (A k l : ℂ) := by
     rw [Finset.sum_mul]
     refine Finset.sum_congr rfl fun i _ => ?_
     rw [Finset.mul_sum]
@@ -1344,8 +1379,8 @@ theorem not_isVonNeumannStable {a ν : ℝ} (ha : a ≠ 0) (hν : 0 < ν) :
 omit [NeZero K] in
 lemma transport_constInSpace_apply (Δx : ℝ) (B : ZMod N → ℝ) (c : Fin K → ℝ)
     (A : Matrix (Fin K) (Fin K) ℝ) (j : ZMod N) (k : Fin K) :
-    (Dx (N := N) Δx * (diagonal B * constInSpace (N := N) c) * Aᵀ) j k =
-      (Dx Δx *ᵥ B) j * (A *ᵥ c) k := by
+    (centralDiff N Δx * (diagonal B * constInSpace (N := N) c) * Aᵀ) j k =
+      (centralDiff N Δx *ᵥ B) j * (A *ᵥ c) k := by
   rw [mul_mul_transpose_apply]
   simp only [Matrix.diagonal_mul, constInSpace_apply, mulVec, dotProduct]
   rw [Finset.sum_mul]
@@ -1358,7 +1393,8 @@ space-constant data. -/
 theorem exists_isAdvectionStep (Δx Δt : ℝ) (A absA : Matrix (Fin K) (Fin K) ℝ)
     (B₀ : ZMod N → ℝ) (c : Fin K → ℝ) :
     ∃ v₁ : Matrix (ZMod N) (Fin K) ℝ, IsAdvectionStep Δx Δt 0 A absA B₀ B₀ (constInSpace c) v₁ := by
-  refine ⟨Matrix.of fun j k => c k - Δt * ∑ i, ∑ l, c l / B₀ j * Dx Δx j i * B₀ i * A k l,
+  refine ⟨Matrix.of fun j k =>
+      c k - Δt * ∑ i, ∑ l, c l / B₀ j * centralDiff N Δx j i * B₀ i * A k l,
     ⟨fun j k => ?_, fun j => by simp⟩⟩
   simp only [constInSpace_apply, Matrix.of_apply, sum_mul_const _ (sum_Dx_apply Δx) c A j k,
     sum_mul_const _ (sum_Dxx_apply Δx) c absA j k]
@@ -1372,7 +1408,7 @@ theorem advection_energy_eq {Δx Δt : ℝ} {A absA : Matrix (Fin K) (Fin K) ℝ
     {v₁ : Matrix (ZMod N) (Fin K) ℝ}
     (h : IsAdvectionStep Δx Δt 0 A absA B₀ B₁ (constInSpace c) v₁) :
     energy B₁ v₁ = energy B₀ (constInSpace c) + Δt ^ 2 / 2 *
-      ‖(Dx (N := N) Δx * (diagonal B₀ * constInSpace (N := N) c) * Aᵀ :
+      ‖(centralDiff N Δx * (diagonal B₀ * constInSpace (N := N) c) * Aᵀ :
         Matrix (ZMod N) (Fin K) ℝ)‖ ^ 2 := by
   obtain ⟨rfl, hu⟩ := advection_reduces_to_ftcs hB₀ c h
   rw [energy_eq, energy_eq, hu, norm_sq_ftcs hA]
@@ -1488,7 +1524,7 @@ theorem theorem_1 (hN : 3 ≤ N) (hK : 2 ≤ K) {Δx Δt : ℝ} (hΔx : 0 < Δx)
   have hB₀ (j : ZMod N) : 0 < B₀ j := by
     simp only [hB]
     split_ifs <;> norm_num
-  have hD : (Dx Δx *ᵥ B₀) 1 ≠ 0 := by
+  have hD : (centralDiff N Δx *ᵥ B₀) 1 ≠ 0 := by
     rw [Dx_mulVec]
     have : (2 * Δx) ≠ 0 := by positivity
     simp only [hB, sub_self, ite_true, hN2, ite_false]
@@ -1499,15 +1535,15 @@ theorem theorem_1 (hN : 3 ≤ N) (hK : 2 ≤ K) {Δx Δt : ℝ} (hΔx : 0 < Δx)
     refine ⟨hred.1, hred.2, ?_⟩
     rw [advection_energy_eq hA (fun j => (hB₀ j).ne') _ h]
     obtain ⟨k, hk⟩ := Function.ne_iff.1 hne
-    have hnz : (Dx (N := N) Δx * (diagonal B₀ * constInSpace (N := N) (K := K) fun _ => 1) * Aᵀ :
+    have hnz : (centralDiff N Δx * (diagonal B₀ * constInSpace (N := N) (K := K) fun _ => 1) * Aᵀ :
         Matrix (ZMod N) (Fin K) ℝ) ≠ 0 := by
       intro h0
       have := congrFun (congrFun h0 1) k
       rw [transport_constInSpace_apply] at this
       exact (mul_ne_zero hD hk) this
-    have : 0 < ‖(Dx (N := N) Δx * (diagonal B₀ * constInSpace (N := N) (K := K) fun _ => 1) * Aᵀ :
+    have : 0 < ‖(centralDiff N Δx * (diagonal B₀ * constInSpace (N := N) (K := K) fun _ => 1) * Aᵀ :
         Matrix (ZMod N) (Fin K) ℝ)‖ := norm_pos_iff.2 hnz
-    have h2 : 0 < Δt ^ 2 / 2 * ‖(Dx (N := N) Δx * (diagonal B₀ * constInSpace (N := N) (K := K)
+    have h2 : 0 < Δt ^ 2 / 2 * ‖(centralDiff N Δx * (diagonal B₀ * constInSpace (N := N) (K := K)
       fun _ => 1) * Aᵀ : Matrix (ZMod N) (Fin K) ℝ)‖ ^ 2 := by positivity
     linarith
   · obtain ⟨a, w, ha, hw, hAw⟩ := exists_eigenpair hA hne0
@@ -1648,7 +1684,7 @@ lemma weighted_mul_mul_apply (B : ZMod N → ℝ) (D : Matrix (ZMod N) (ZMod N) 
 omit [NeZero K] in
 lemma explicitPart_eq (Δx Δt : ℝ) (A absA : Matrix (Fin K) (Fin K) ℝ) (B₀ : ZMod N → ℝ)
     (v₀ : Matrix (ZMod N) (Fin K) ℝ) :
-    explicitPart Δx Δt A absA B₀ v₀ = v₀ - Δt • (weighted B₀ (Dx Δx) * v₀ * Aᵀ)
+    explicitPart Δx Δt A absA B₀ v₀ = v₀ - Δt • (weighted B₀ (centralDiff N Δx) * v₀ * Aᵀ)
       + Δt • (weighted B₀ (Dxx Δx) * v₀ * absAᵀ) := by
   ext j k
   simp only [explicitPart, Matrix.of_apply, sum_weighted, Matrix.add_apply, Matrix.sub_apply,
@@ -1714,20 +1750,21 @@ structure IsAugmentedUpdate (Δx Δt σ : ℝ) (A absA : Matrix (Fin K) (Fin K) 
   /-- `X̂* = qr([K*, X⁰])`. -/
   qr_Xh : IsOrthCapture d.Xh (Matrix.fromCols d.Kstar X₀)
   /-- (19b). -/
-  qr_Xs : IsOrthCapture d.Xs (Matrix.fromCols (Matrix.fromCols d.Xh (weighted B₀ (Dx Δx) * X₀))
-    (weighted B₀ (Dxx Δx) * X₀))
+  qr_Xs : IsOrthCapture d.Xs
+    (Matrix.fromCols (Matrix.fromCols d.Xh (weighted B₀ (centralDiff N Δx) * X₀))
+      (weighted B₀ (Dxx Δx) * X₀))
   /-- `V̂* = qr([L*, V⁰])`. -/
   qr_Vh : IsOrthCapture d.Vh (Matrix.fromCols d.Lstar V₀)
   /-- (19d). -/
   qr_Vs : IsOrthCapture d.Vs (Matrix.fromCols (Matrix.fromCols d.Vh (Aᵀ * V₀)) (absAᵀ * V₀))
   /-- (19e). -/
   S_eq : d.Ss = (1 / (1 + σ * Δt)) • (d.Stilde X₀ S₀ V₀
-    - Δt • (d.Xsᵀ * weighted B₀ (Dx Δx) * d.Xs * d.Stilde X₀ S₀ V₀ * (d.Vsᵀ * Aᵀ * d.Vs))
+    - Δt • (d.Xsᵀ * weighted B₀ (centralDiff N Δx) * d.Xs * d.Stilde X₀ S₀ V₀ * (d.Vsᵀ * Aᵀ * d.Vs))
     + Δt • (d.Xsᵀ * weighted B₀ (Dxx Δx) * d.Xs * d.Stilde X₀ S₀ V₀ * (d.Vsᵀ * absAᵀ * d.Vs)))
   /-- (19f). -/
   moment_eq : ∀ j, d.B₁ j / B₀ j * d.φ j = 1 / (1 + σ * Δt) * (X₀ * S₀ * V₀ᵀ) j 0
     - Δt / (1 + σ * Δt) *
-      (weighted B₀ (Dx Δx) * (d.Xs * d.Stilde X₀ S₀ V₀ * d.Vsᵀ) * Aᵀ) j 0
+      (weighted B₀ (centralDiff N Δx) * (d.Xs * d.Stilde X₀ S₀ V₀ * d.Vsᵀ) * Aᵀ) j 0
     + Δt / (1 + σ * Δt) *
       (weighted B₀ (Dxx Δx) * (d.Xs * d.Stilde X₀ S₀ V₀ * d.Vsᵀ) * absAᵀ) j 0
     + √2 * σ * Δt / (1 + σ * Δt) * (d.B₁ j / B₀ j)
@@ -1788,7 +1825,7 @@ theorem IsAugmentedUpdate.isConservativeStep {Δx Δt σ : ℝ} {A absA : Matrix
   have hPV : (d.Vs * d.Vsᵀ)ᵀ = d.Vs * d.Vsᵀ := mul_transpose_transpose d.Vs
   have hVA : V₀ᵀ * Aᵀ * (d.Vs * d.Vsᵀ) = V₀ᵀ * Aᵀ := right_capture hPV hA hcA
   have hVabs : V₀ᵀ * absAᵀ * (d.Vs * d.Vsᵀ) = V₀ᵀ * absAᵀ := right_capture hPV habs hcabs
-  set C1 := weighted B₀ (Dx (N := N) Δx) with hC1
+  set C1 := weighted B₀ (centralDiff N Δx) with hC1
   set C2 := weighted B₀ (Dxx (N := N) Δx) with hC2
   set St0 := d.Stilde X₀ S₀ V₀ with hSt0
   set F := explicitPart Δx Δt A absA B₀ (X₀ * S₀ * V₀ᵀ) with hF
@@ -1966,8 +2003,9 @@ theorem exists_isQR_e₁ {w : Type*} [Fintype w] (Vs : Matrix (Fin K) w ℝ) :
 noncomputable def kStep (Δx Δt σ : ℝ) (A absA : Matrix (Fin K) (Fin K) ℝ) (B₀ : ZMod N → ℝ)
     (X₀ : Matrix (ZMod N) r ℝ) (S₀ : Matrix r r ℝ) (V₀ : Matrix (Fin K) r ℝ) :
     Matrix (ZMod N) r ℝ :=
-  (1 / (1 + σ * Δt)) • (X₀ * S₀ - Δt • (weighted B₀ (Dx Δx) * (X₀ * S₀) * (V₀ᵀ * Aᵀ * V₀))
-    + Δt • (weighted B₀ (Dxx Δx) * (X₀ * S₀) * (V₀ᵀ * absAᵀ * V₀)))
+  (1 / (1 + σ * Δt)) •
+    (X₀ * S₀ - Δt • (weighted B₀ (centralDiff N Δx) * (X₀ * S₀) * (V₀ᵀ * Aᵀ * V₀))
+      + Δt • (weighted B₀ (Dxx Δx) * (X₀ * S₀) * (V₀ᵀ * absAᵀ * V₀)))
 
 /-- The L-step (19c) of arXiv 2502.03008 in matrix form, with `L⁰ = V⁰ S⁰ᵀ`, as printed there, with
 `D^x_{ij}` in place of the `D^x_{ji}` that the Galerkin condition would give. This makes no
@@ -1977,7 +2015,7 @@ noncomputable def lStep (Δx Δt σ : ℝ) (A absA : Matrix (Fin K) (Fin K) ℝ)
     Matrix (Fin K) r ℝ :=
   (1 / (1 + σ * Δt)) • (V₀ * S₀ᵀ
     - Δt • (Aᵀ * (V₀ * S₀ᵀ) *
-      (X₀ᵀ * diagonal B₀ * Dx (N := N) Δx * diagonal (fun j => 1 / B₀ j) * X₀))
+      (X₀ᵀ * diagonal B₀ * centralDiff N Δx * diagonal (fun j => 1 / B₀ j) * X₀))
     + Δt • (absAᵀ * (V₀ * S₀ᵀ) *
       (X₀ᵀ * diagonal B₀ * Dxx (N := N) Δx * diagonal (fun j => 1 / B₀ j) * X₀)))
 
@@ -2265,12 +2303,12 @@ theorem exists_isDLRAStep {Δx Δt σ : ℝ} (hΔt : 0 < Δt) (hσ : 0 ≤ σ)
   obtain ⟨n₁, Xh, qXh⟩ := exists_isQR (Matrix.fromCols (kStep Δx Δt σ A absA B₀ X₀ S₀ V₀) X₀)
   obtain ⟨n₂, Vh, qVh⟩ := exists_isQR (Matrix.fromCols (lStep Δx Δt σ A absA B₀ X₀ S₀ V₀) V₀)
   obtain ⟨n₃, Xs, qXs⟩ := exists_isQR (Matrix.fromCols (Matrix.fromCols Xh
-    (weighted B₀ (Dx Δx) * X₀)) (weighted B₀ (Dxx Δx) * X₀))
+    (weighted B₀ (centralDiff N Δx) * X₀)) (weighted B₀ (Dxx Δx) * X₀))
   obtain ⟨n₄, Vs, qVs⟩ := exists_isQR (Matrix.fromCols (Matrix.fromCols Vh (Aᵀ * V₀)) (absAᵀ * V₀))
   choose ρ φ hρ0 hρ1 hρ2 using fun j => solve_zeroth hs0 (hr j)
   set St0 : Matrix (Fin n₃) (Fin n₄) ℝ := Xsᵀ * X₀ * S₀ * (Vsᵀ * V₀)ᵀ with hSt0
   set Ss : Matrix (Fin n₃) (Fin n₄) ℝ := (1 / (1 + σ * Δt)) • (St0
-    - Δt • (Xsᵀ * weighted B₀ (Dx Δx) * Xs * St0 * (Vsᵀ * Aᵀ * Vs))
+    - Δt • (Xsᵀ * weighted B₀ (centralDiff N Δx) * Xs * St0 * (Vsᵀ * Aᵀ * Vs))
     + Δt • (Xsᵀ * weighted B₀ (Dxx Δx) * Xs * St0 * (Vsᵀ * absAᵀ * Vs))) with hSs
   set B₁ : ZMod N → ℝ := fun j => B₀ j * ρ j with hB₁
   obtain ⟨n₅, Xt, qXt⟩ := exists_isQR (diagonal (fun j => B₀ j / B₁ j) * (Xs * Ss))
@@ -2301,7 +2339,7 @@ theorem exists_isDLRAStep {Δx Δt σ : ℝ} (hΔt : 0 < Δt) (hσ : 0 ≤ σ)
   refine ⟨⟨qXh, qXs, qVh, qVs, rfl, fun j => ?_, fun j => ?_, hXt, hSt.symm, qXo, qVo, rfl⟩,
     rfl, rfl⟩
   · change B₁ j / B₀ j * φ j = 1 / (1 + σ * Δt) * (X₀ * S₀ * V₀ᵀ) j 0
-      - Δt / (1 + σ * Δt) * (weighted B₀ (Dx Δx) * (Xs * St0 * Vsᵀ) * Aᵀ) j 0
+      - Δt / (1 + σ * Δt) * (weighted B₀ (centralDiff N Δx) * (Xs * St0 * Vsᵀ) * Aᵀ) j 0
       + Δt / (1 + σ * Δt) * (weighted B₀ (Dxx Δx) * (Xs * St0 * Vsᵀ) * absAᵀ) j 0
       + √2 * σ * Δt / (1 + σ * Δt) * (B₁ j / B₀ j)
     rw [hratio, hZ]

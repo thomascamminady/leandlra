@@ -147,5 +147,14 @@
   "LeanDLRA.Literature.P2212_12012.Dm_mul_apply": "LeanDLRA.Kinetic.bwdDiff_mul_apply",
   "LeanDLRA.Literature.P2212_12012.Dm_transpose": "LeanDLRA.Kinetic.bwdDiff_transpose",
   "LeanDLRA.Literature.P2212_12012.Dp_transpose": "LeanDLRA.Kinetic.fwdDiff_transpose",
-  "LeanDLRA.tuckerTangentProj": "LeanDLRA.modeTangentProj"
+  "LeanDLRA.tuckerTangentProj": "LeanDLRA.modeTangentProj",
+  "LeanDLRA.Literature.P2411_06844.colSpace": "LeanDLRA.Novel.BGKEntropy.colSpace",
+  "LeanDLRA.Literature.P2411_06844.IsOrthProjOnto": "LeanDLRA.Novel.BGKEntropy.IsOrthProjOnto",
+  "LeanDLRA.Literature.P2411_06844.IsOrthProjOnto.mk": "LeanDLRA.Novel.BGKEntropy.IsOrthProjOnto.mk",
+  "LeanDLRA.Literature.P2411_06844.IsOrthProjOnto.symm": "LeanDLRA.Novel.BGKEntropy.IsOrthProjOnto.symm",
+  "LeanDLRA.Literature.P2411_06844.IsOrthProjOnto.mem": "LeanDLRA.Novel.BGKEntropy.IsOrthProjOnto.mem",
+  "LeanDLRA.Literature.P2411_06844.IsOrthProjOnto.fix": "LeanDLRA.Novel.BGKEntropy.IsOrthProjOnto.fix",
+  "LeanDLRA.Literature.P2411_06844.hyperplane": "LeanDLRA.Novel.BGKEntropy.hyperplane",
+  "LeanDLRA.Literature.P2411_06844.hyperProj": "LeanDLRA.Novel.BGKEntropy.hyperProj",
+  "LeanDLRA.Literature.P2502_03008.Dx": "LeanDLRA.Kinetic.centralDiff"
 }

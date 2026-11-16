@@ -1,5 +1,6 @@
 import LeanDLRA.Classical.SVD
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Stencils
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
 
@@ -51,6 +52,13 @@ S-step is tested with the untruncated one.
   contain the required vectors, and any selection of singular triples is allowed.
 * The result is for one step, as in the paper. The K- and L-steps are part of `APBUGStep`, but the
   energy bound does not use them, so it holds for all `K(t_{n+1})`, `L(t_{n+1})`.
+
+## Core vocabulary
+
+`dPlus`, `dMinus`, `DP`, `DM` are the actions of the core periodic stencils `Kinetic.fwdDiff`,
+`Kinetic.bwdDiff` (`dPlus_eq_fwdDiff_mulVec`, `DP_eq_fwdDiff_mul` and the two backward forms), and
+`flux`, `fluxAdj` are instances of the core operator `Kinetic.streaming` (`flux_eq_streaming`,
+`fluxAdj_eq_streaming`).
 
 Non-vacuity: `exists_isGaussLegendre`, `exists_APBUGStep`, `bPN_ne_zero`. Theorems 1–6 of the paper
 are the sibling slice; the case `gh = g1` of `energy_le_core` is the estimate of Theorem 2.
@@ -252,6 +260,71 @@ lemma inner_flux_split (Δx : ℝ) {Ap Am : Matrix ν ν ℝ} (hp : Apᵀ = Ap) 
   rw [e, inner_add_left, inner_flux Δx hp hm (g - g₁), ← neg_sub g g₁, inner_neg_left]
 
 end Flux
+
+/-! ### The grid operators and the flux in the core vocabulary
+
+`dPlus`, `dMinus` act on grid functions and `DP`, `DM` on the columns of a matrix; they are the
+actions of the core periodic stencils `Kinetic.fwdDiff`, `Kinetic.bwdDiff`. The flux `ℒ` and minus
+its adjoint are instances of the core operator `Kinetic.streaming`. -/
+
+section KineticCore
+
+variable {n : ℕ} [NeZero n] {ν : Type*} [Fintype ν]
+
+/-- `𝒟⁺` on grid functions is the action of the core forward difference matrix. -/
+theorem dPlus_eq_fwdDiff_mulVec (Δx : ℝ) (φ : ZMod n → ℝ) :
+    dPlus Δx φ = Kinetic.fwdDiff n Δx *ᵥ φ :=
+  (Kinetic.fwdDiff_mulVec φ).symm
+
+/-- `𝒟⁻` on grid functions is the action of the core backward difference matrix. -/
+theorem dMinus_eq_bwdDiff_mulVec (Δx : ℝ) (φ : ZMod n → ℝ) :
+    dMinus Δx φ = Kinetic.bwdDiff n Δx *ᵥ φ :=
+  (Kinetic.bwdDiff_mulVec φ).symm
+
+/-- `𝒟⁺` on the columns of a matrix is the product with the core forward difference matrix. -/
+theorem DP_eq_fwdDiff_mul (Δx : ℝ) (G : Matrix (ZMod n) ν ℝ) :
+    DP Δx G = Kinetic.fwdDiff n Δx * G := by
+  ext i k
+  exact (Kinetic.fwdDiff_mul_apply G i k).symm
+
+/-- `𝒟⁻` on the columns of a matrix is the product with the core backward difference matrix. -/
+theorem DM_eq_bwdDiff_mul (Δx : ℝ) (G : Matrix (ZMod n) ν ℝ) :
+    DM Δx G = Kinetic.bwdDiff n Δx * G := by
+  ext i k
+  exact (Kinetic.bwdDiff_mul_apply G i k).symm
+
+/-- **The flux through the core**: `ℒ g = 𝒟⁻ g A⁺ + 𝒟⁺ g A⁻` is the core streaming operator
+`Y ↦ ∑ₖ Dₖ Y Mₖ` with the two terms `(D⁻, A⁺)` and `(D⁺, A⁻)`. -/
+theorem flux_eq_streaming (Δx : ℝ) (Ap Am : Matrix ν ν ℝ) (g : Matrix (ZMod n) ν ℝ) :
+    flux Δx Ap Am g =
+      Kinetic.streaming ![Kinetic.bwdDiff n Δx, Kinetic.fwdDiff n Δx] ![Ap, Am] g := by
+  rw [Kinetic.streaming_apply, Fin.sum_univ_two, flux, DM_eq_bwdDiff_mul, DP_eq_fwdDiff_mul]
+  rfl
+
+/-- Minus the adjoint of the flux, `𝒟⁺ g A⁺ + 𝒟⁻ g A⁻`, is the core streaming operator with the
+two terms `(D⁺, A⁺)` and `(D⁻, A⁻)`. -/
+theorem fluxAdj_eq_streaming (Δx : ℝ) (Ap Am : Matrix ν ν ℝ) (g : Matrix (ZMod n) ν ℝ) :
+    fluxAdj Δx Ap Am g =
+      Kinetic.streaming ![Kinetic.fwdDiff n Δx, Kinetic.bwdDiff n Δx] ![Ap, Am] g := by
+  rw [Kinetic.streaming_apply, Fin.sum_univ_two, fluxAdj, DP_eq_fwdDiff_mul, DM_eq_bwdDiff_mul]
+  rfl
+
+/-- The bridges at nonzero data, on three cells with `Δx = 1/2`: the forward and the backward
+difference of the indicator of cell `1` are `2` at cells `0` and `1`, read off through `dPlus`
+and `dMinus`; the flux is additive, as an instance of a continuous linear map. -/
+example (Ap Am : Matrix (Fin 2) (Fin 2) ℝ) (F G : Matrix (ZMod 3) (Fin 2) ℝ) :
+    (Kinetic.fwdDiff 3 (1 / 2) *ᵥ fun i : ZMod 3 => if i = 1 then (1 : ℝ) else 0) 0 = 2 ∧
+      (Kinetic.bwdDiff 3 (1 / 2) *ᵥ fun i : ZMod 3 => if i = 1 then (1 : ℝ) else 0) 1 = 2 ∧
+      flux (1 / 2) Ap Am (F + G) = flux (1 / 2) Ap Am F + flux (1 / 2) Ap Am G := by
+  refine ⟨?_, ?_, ?_⟩
+  · rw [← dPlus_eq_fwdDiff_mulVec, dPlus]
+    norm_num [show (0 : ZMod 3) + 1 = 1 from rfl, show ¬((0 : ZMod 3) = 1) by decide]
+  · rw [← dMinus_eq_bwdDiff_mulVec, dMinus]
+    norm_num [show (1 : ZMod 3) - 1 = 0 from rfl, show ¬((0 : ZMod 3) = 1) by decide]
+  · simp only [flux_eq_streaming, map_add]
+
+end KineticCore
+
 
 /-! ### Eigen-coordinates: Lemmas 4, 5 and 6 of the paper -/
 

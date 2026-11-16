@@ -1,5 +1,7 @@
 import Mathlib
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Stencils
+import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Projectors
 
 /-!
@@ -36,12 +38,24 @@ stability of an `ℋ`-orthogonal Galerkin step (`hGalerkin_stable`). For `ϑ > 0
 truncation is only used through `IsMassTruncation`, and its `ℋ`-norm behaviour is a hypothesis.
 Not treated: the two-dimensional setting, and the simplified rank-`2r` scheme of Section 6.1, for
 which the paper claims no theorem.
+
+## Core vocabulary
+
+* The stencils `Dx`, `Dxx`, `Dp` act on grid functions; they are the actions of the core periodic
+  difference matrices (`Dx_eq_centralDiff_mulVec`, `Dxx_eq_secondDiff_mulVec`,
+  `Dp_eq_fwdDiff_mulVec`), and the upwind combination `upw` is the action of
+  `a • D⁰ - (Δx |a| / 2) • D²` (`upw_eq_mulVec`).
+* The column space, the orthogonal projector onto a subspace, the hyperplane `u^⊥` and its
+  projector are the core definitions `Novel.BGKEntropy.colSpace`, `IsOrthProjOnto`, `hyperplane`
+  and `hyperProj`.
 -/
 
 open Set Filter Topology Finset
 open scoped RealInnerProductSpace Matrix
 
 namespace LeanDLRA.Literature.P2411_06844
+
+open LeanDLRA.Novel.BGKEntropy (colSpace IsOrthProjOnto hyperplane hyperProj)
 
 /-! ### Periodic stencils and Lemma 1 -/
 
@@ -244,6 +258,59 @@ lemma upw_const_mul (dx a c : ℝ) (z : ZMod N → ℝ) (j : ZMod N) :
   ring
 
 end Stencils
+
+/-! ### The stencils in the core vocabulary
+
+`Dx`, `Dxx` and `Dp` act on grid functions; they are the actions of the core periodic difference
+matrices `Kinetic.centralDiff`, `Kinetic.secondDiff` and `Kinetic.fwdDiff`. -/
+
+section KineticCore
+
+variable {N : ℕ} [NeZero N]
+
+/-- `D^x` is the action of the core central difference matrix. -/
+theorem Dx_eq_centralDiff_mulVec (dx : ℝ) (z : ZMod N → ℝ) :
+    Dx dx z = Kinetic.centralDiff N dx *ᵥ z :=
+  (Kinetic.centralDiff_mulVec z).symm
+
+/-- `D^{xx}` is the action of the core second difference matrix (both divide by `Δx²`). -/
+theorem Dxx_eq_secondDiff_mulVec (dx : ℝ) (z : ZMod N → ℝ) :
+    Dxx dx z = Kinetic.secondDiff N dx *ᵥ z :=
+  (Kinetic.secondDiff_mulVec z).symm
+
+/-- `D^+` is the action of the core forward difference matrix. -/
+theorem Dp_eq_fwdDiff_mulVec (dx : ℝ) (z : ZMod N → ℝ) :
+    Dp dx z = Kinetic.fwdDiff N dx *ᵥ z :=
+  (Kinetic.fwdDiff_mulVec z).symm
+
+/-- The upwind combination `upw` is the action of `a D⁰ - (Δx |a| / 2) D²`, the central
+difference with numerical viscosity. -/
+theorem upw_eq_mulVec (dx a : ℝ) (z : ZMod N → ℝ) :
+    upw dx a z =
+      (a • Kinetic.centralDiff N dx - (dx / 2 * |a|) • Kinetic.secondDiff N dx) *ᵥ z := by
+  ext j
+  rw [Matrix.sub_mulVec, Matrix.smul_mulVec, Matrix.smul_mulVec, ← Dx_eq_centralDiff_mulVec,
+    ← Dxx_eq_secondDiff_mulVec]
+  simp only [upw, Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
+  ring
+
+/-- The bridges at nonzero data, on five cells with `Δx = 1/2` and the indicator `z` of cell `1`:
+`(D^x z)₀ = 1`, `(D^{xx} z)₁ = -8` and `(D^+ z)₀ = 2`, read off through the core matrices; and
+for `a = 1` the upwind combination at cell `1` is the backward difference `2`. -/
+example (z : ZMod 5 → ℝ) (hz : z = fun i => if i = 1 then 1 else 0) :
+    (Kinetic.centralDiff 5 (1 / 2) *ᵥ z) 0 = 1 ∧ (Kinetic.secondDiff 5 (1 / 2) *ᵥ z) 1 = -8 ∧
+      (Kinetic.fwdDiff 5 (1 / 2) *ᵥ z) 0 = 2 ∧
+      (((1 : ℝ) • Kinetic.centralDiff 5 (1 / 2) -
+        (1 / 2 / 2 * |(1 : ℝ)|) • Kinetic.secondDiff 5 (1 / 2)) *ᵥ z) 1 = 2 := by
+  rw [← Dx_eq_centralDiff_mulVec, ← Dxx_eq_secondDiff_mulVec, ← Dp_eq_fwdDiff_mulVec,
+    ← upw_eq_mulVec, hz]
+  simp only [upw, Dx, Dxx, Dp]
+  norm_num [show (0 : ZMod 5) + 1 = 1 from rfl, show (0 : ZMod 5) - 1 = 4 from rfl,
+    show (1 : ZMod 5) + 1 = 2 from rfl, show (1 : ZMod 5) - 1 = 0 from rfl,
+    show ¬((2 : ZMod 5) = 1) by decide, show ¬((0 : ZMod 5) = 1) by decide,
+    show ¬((-1 : ZMod 5) = 1) by decide]
+
+end KineticCore
 
 /-! ### Quadrature, `ℋ`-norm, the two fully discrete schemes -/
 
@@ -1191,37 +1258,9 @@ section DLRA
 
 variable {N : ℕ} [NeZero N] {K r : Type*} [Fintype K] [DecidableEq K] [Fintype r]
 
-/-- The column space of a matrix. -/
-def colSpace {m n : Type*} [Fintype n] (A : Matrix m n ℝ) : Submodule ℝ (m → ℝ) :=
-  LinearMap.range A.mulVecLin
-
-/-- `Q` is the matrix of the orthogonal projector onto `W`. -/
-structure IsOrthProjOnto {ι : Type*} [Fintype ι] (Q : Matrix ι ι ℝ)
-    (W : Submodule ℝ (ι → ℝ)) : Prop where
-  symm : Qᵀ = Q
-  mem : ∀ x, Q *ᵥ x ∈ W
-  fix : ∀ x ∈ W, Q *ᵥ x = x
-
-/-- The hyperplane `u^⊥`. -/
-def hyperplane {ι : Type*} [Fintype ι] (u : ι → ℝ) : Submodule ℝ (ι → ℝ) where
-  carrier := {x | u ⬝ᵥ x = 0}
-  add_mem' := by
-    intro a b (ha : u ⬝ᵥ a = 0) (hb : u ⬝ᵥ b = 0)
-    change u ⬝ᵥ (a + b) = 0
-    rw [dotProduct_add, ha, hb, add_zero]
-  zero_mem' := dotProduct_zero u
-  smul_mem' := by
-    intro c x (hx : u ⬝ᵥ x = 0)
-    change u ⬝ᵥ (c • x) = 0
-    rw [dotProduct_smul, hx, smul_zero]
-
 omit [Fintype K] [DecidableEq K] [Fintype r] in
 lemma mem_hyperplane {ι : Type*} [Fintype ι] {u x : ι → ℝ} :
     x ∈ hyperplane u ↔ u ⬝ᵥ x = 0 := Iff.rfl
-
-/-- The orthogonal projector onto `u^⊥`, `I - u uᵀ / ‖u‖²`. -/
-noncomputable def hyperProj {ι : Type*} [Fintype ι] [DecidableEq ι] (u : ι → ℝ) : Matrix ι ι ℝ :=
-  1 - (u ⬝ᵥ u)⁻¹ • Matrix.vecMulVec u u
 
 omit [Fintype K] [DecidableEq K] [Fintype r] in
 lemma hyperProj_mulVec {ι : Type*} [Fintype ι] [DecidableEq ι] (u x : ι → ℝ) :
@@ -1500,15 +1539,6 @@ theorem IsDLRAStep.normalized (h : IsDLRAStep σ dt dx ϑ v ω ρ X S V ρ' PX P
   exact fun j => congrFun key j
 
 omit [Fintype K] [Fintype r] in
-/-- An orthogonal projector is idempotent. -/
-private lemma IsOrthProjOnto.idem {ι : Type*} [Fintype ι] {Q : Matrix ι ι ℝ}
-    {W : Submodule ℝ (ι → ℝ)} (h : IsOrthProjOnto Q W) : Q * Q = Q := by
-  classical
-  apply Matrix.mulVec_injective
-  funext x
-  rw [← Matrix.mulVec_mulVec, h.fix _ (h.mem x)]
-
-omit [Fintype K] [Fintype r] in
 /-- If the range of `P` is invariant under `diag(d)`, then `diag(d)` preserves `P`-fixed
 matrices. -/
 private lemma proj_diag_fix {ι c : Type*} [Fintype ι] [DecidableEq ι] {P : Matrix ι ι ℝ}
@@ -1606,9 +1636,10 @@ theorem dlra_stable_of_invariant (h : IsDLRAStep σ dt dx ϑ v ω ρ X S V ρ' P
     hNormSq v ω (fOf v ρ' g') ≤ hNormSq v ω (fOf v ρ (X * S * Vᵀ)) := by
   have hnorm := h.normalized hσ hdt hρ' hm hg hZ
   have hX1 : PX * ghat = ghat := by
-    rw [h.sStep, Matrix.mul_smul, ← Matrix.mul_assoc, ← Matrix.mul_assoc, h.projX.idem]
+    rw [h.sStep, Matrix.mul_smul, ← Matrix.mul_assoc, ← Matrix.mul_assoc,
+      h.projX.isOrthProjMat.idem]
   have hV1 : ghat * PV = ghat := by
-    rw [h.sStep, Matrix.smul_mul, Matrix.mul_assoc, h.projV.idem]
+    rw [h.sStep, Matrix.smul_mul, Matrix.mul_assoc, h.projV.isOrthProjMat.idem]
   have hV2 : PV * ghatᵀ = ghatᵀ := by
     have := congrArg Matrix.transpose hV1
     rwa [Matrix.transpose_mul, h.projV.symm] at this
