@@ -34,25 +34,30 @@ become small.
   flow form `exists_flow_distLR_le`, quasi-best truncation `norm_quasiBest_flow_le`.
   Proof: one BUG step from `A(t₀)` exists (`MatrixBUG.exists_isStep`), `bug_capture`
   (arXiv 2010.02022, Lemma 3) and `rank_mul_mul_transpose_le`.
-* **`h²`-free robust bound** (new).  `distLR_flow_le_exp`: under the global factored
-  normal-component bound, `dist(A(t₁), M_{≤ r}) ≤ 2 h ε e^{L h}` (`distLR_flow_step`: one-step
-  recursion from almost-nearest points and flow stability `norm_sub_le_exp_of_odeSolution`;
-  `distLR_flow_le_grid`: discrete Grönwall; then `N → ∞` substeps).  Two-sided sharpness
-  `h/3 ≤ dist(A(h), M_{≤ 1}) ≤ 2 h ‖F‖` in an explicit example.
+* **Growth along the exact flow and the `h²`-free robust bound.**  Under the global factored
+  normal-component bound, `distLR_flow_le_exp_mul_add`: along every exact solution, from any
+  start, `dist(A(t), M_{≤ r}) ≤ e^{L (t - t₀)} dist(A(t₀), M_{≤ r}) + ε (t - t₀) e^{L (t - t₀)}`
+  (comparison of right Dini derivatives: at a point of positive distance a nearest point has rank
+  exactly `r`, and a curve through it inside `M_{≤ r}` follows the tangential part of `F`);
+  `distLR_flow_le_exp`: from a start of rank `≤ r`, `dist(A(t₁), M_{≤ r}) ≤ h ε e^{L h}`.
+  Neither needs continuity of `F` in time.  Two-sided bound `h/3 ≤ dist(A(h), M_{≤ 1}) ≤ h ‖F‖`
+  in an explicit example.  For fields continuous in time, `distLR_flow_step` (one step from
+  almost-nearest points and flow stability `norm_sub_le_exp_of_odeSolution`) and
+  `distLR_flow_le_grid` (discrete Grönwall) give the bound with an `h²` term on a grid.
 * **OP-RA-07 / rank-`r` truncation** (arXiv 2402.08607, Remark 4; arXiv 2608.27749, Remark 2).
   `norm_trunc_sub_le`: `‖T - A₁‖ ≤ κ dist(A₁, M_{≤ r}) + (1 + κ) ‖Ŷ - A₁‖` for every
   `κ`-quasi-best rank-`r` approximation `T` of `Ŷ`; `norm_trunc_flow_le`,
   `fixedRank_trunc_local_error_le`: the augmented BUG step truncated back to rank `r` has local
   error `O(h (h + ε_r))` without a tolerance term and without a rank-`r` DLRA solution;
-  `norm_trunc_flow_le_exp`: `‖T - A(t₁)‖ ≤ 2 κ h ε_r e^{L h} + (1 + κ) ‖Ŷ - A(t₁)‖`, the papers'
-  bound `h ε_r + 2 ‖Ŷ - A(t₁)‖` up to the constant `2 e^{L h}`.
+  `norm_trunc_flow_le_exp`: `‖T - A(t₁)‖ ≤ κ h ε_r e^{L h} + (1 + κ) ‖Ŷ - A(t₁)‖`, the papers'
+  bound `h ε_r + 2 ‖Ŷ - A(t₁)‖` up to the factor `e^{L h}`.
   Counterexample `trunc_bound_fails_of_normal_at_start`: with `ε` measured only at `(t₀, Y₀)`
   the claimed bound fails (`F = [[0,1],[1,0]]`, `Y₀ = diag(δ, 0)`).
 * **Closedness and best approximation.** `isClosed_lowRankSet` (via compactness of the Stiefel
-  set, `isCompact_stiefel`), `distLR_eq_zero_iff`, `exists_best_approx` (existence part of
-  Eckart–Young without SVD), `epsRank_le_iff_exists` (`rank_ε(X)` is the smallest rank within
-  distance `ε`), `exists_epsRank_approx`, `epsRank_zero`.
-* **Fixed-rank truncated augmented BUG** (new).  `fixedRank_global_error_le`,
+  set, `isCompact_stiefel`), `distLR_eq_zero_iff`, `distLR_pos_iff`, `exists_best_approx`
+  (existence part of Eckart–Young without SVD), `epsRank_le_iff_exists` (`rank_ε(X)` is the
+  smallest rank within distance `ε`), `exists_epsRank_approx`, `epsRank_zero`.
+* **Fixed-rank truncated augmented BUG.**  `fixedRank_global_error_le`,
   `fixedRank_global_error_le'`: augment, Galerkin step, truncate back to rank `r` with any
   `κ`-quasi-best truncation; the global error is `O(δ + ε + h)` with no tolerance term and no
   rank-`r` DLRA solution (truncation defect `fixedRankDefect = O(h (h + ε))` from
@@ -77,12 +82,18 @@ become small.
 * OP-EX-02: the robust capture statement is proved as stated (local `ε`, any rank `≤ r`).
   Re-deriving each cited paper's convergence theorem from it is not done here.
 * OP-RA-07: the gap-free truncation inequality, the robust bound
-  `dist(A(t₁), M_{≤ r}) ≤ 2 h ε_r e^{L h}` (no `h²` term, so the high-order claims
+  `dist(A(t₁), M_{≤ r}) ≤ h ε_r e^{L h}` (no `h²` term, so the high-order claims
   `O(h (h² + ε_r))` of arXiv 2402.08607 hold robustly) and the counterexample for `ε` measured
-  only at `(t₀, Y₀)` are formalised.  Open: the constant `ε_r (e^{L h} - 1) / L` of the
-  conjectured Dini-derivative bound (ours is at most `2 e^{L h}` times larger), and the version
-  with `ε_r` assumed only near the exact solution (the `h²`-free bound uses the global factored
-  assumption; the `O(h (h + ε))` bound `distLR_flow_le` is local).
+  only at `(t₀, Y₀)` are formalised.  For `0 < L` and a start of rank `≤ r` the catalogue theorem
+  `LeanDLRA.OpenProblems.RankAdaptivity.distLR_flow_le_dini_local` proves the smaller bound
+  `ε_r (e^{L h} - 1) / L` of the Dini-derivative argument, with `ε_r` assumed only near the exact
+  solution and without a bound on `F`.  Not proved: the case `L = 0` with `ε_r` assumed only near
+  the exact solution (under the global assumption it is the bound `h ε_r` of
+  `distLR_flow_le_exp`), a start of rank above `r` with the expression `ε_r (e^{L h} - 1) / L`,
+  and that either bound is optimal.  The example at the end of this file gives the lower bound
+  `h / 3` for `L = 0`; for the field of `LeanDLRA.Literature.P2402_08607.remark4_constant_false`
+  (`L = 1`, normal components at most `1` on rank-one matrices) the distance is `e^t - 1` for
+  `0 ≤ t ≤ 1` (`LeanDLRA.Literature.P2402_08607.distLR_cxA`), the Dini expression.
 * OP-RA-16: the structural rank bound, the step count and the error lower bound are proved.
   Open: whether `r*` is reached in about `log₂` steps for generic gradient fields.
 * OP-OT-19: monotonicity of all robust bounds under enrichment and in the rank is proved.  Open:
@@ -382,6 +393,11 @@ variable {r k : ℕ} {ε : ℝ} {X : Matrix m n ℝ}
 /-- `dist(X, M_{≤ r}) = 0` iff `rank X ≤ r`. -/
 theorem distLR_eq_zero_iff : distLR r X = 0 ↔ X.rank ≤ r :=
   ((isClosed_lowRankSet r).mem_iff_infDist_zero (lowRankSet_nonempty r)).symm
+
+/-- A matrix of rank `> r` has positive distance to `M_{≤ r}`. -/
+theorem distLR_pos_iff : 0 < distLR r X ↔ r < X.rank := by
+  rw [lt_iff_le_and_ne, ← not_le, ← distLR_eq_zero_iff]
+  exact ⟨fun h => h.2 ∘ Eq.symm, fun h => ⟨distLR_nonneg, fun h' => h h'.symm⟩⟩
 
 /-- **Existence of a best rank-`r` approximation** (the existence part of Eckart–Young, without
 SVD): there is `Z` with `rank Z ≤ r` and `‖X - Z‖ = dist(X, M_{≤ r})`.  So the quasi-best
@@ -973,9 +989,9 @@ theorem distLR_flow_le_of_le (hrr' : r ≤ r') (hF : IsLipschitzField F L) (hL :
 
 end MonotoneRank
 
-/-! ### The `h²`-free robust bound `dist(A(t₁), M_{≤ r}) ≤ 2 h ε e^{L h}` (OP-RA-07, OP-EX-02) -/
+/-! ### Substeps from nearest points: the bound with an `h²` term on a grid -/
 
-section Sharp
+section Substeps
 
 /-- **Stability of exact flows** (Grönwall): two solutions of `y' = F(t, y)` on `[a, b]` with
 `L`-Lipschitz `F` satisfy `‖y(b) - z(b)‖ ≤ e^{L (b - a)} ‖y(a) - z(a)‖`. -/
@@ -1063,69 +1079,312 @@ theorem distLR_flow_le_grid (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsB
           + c * Real.exp (L * (((j + 1 : ℕ) : ℝ) * τ)) := by linarith
       _ = ((j + 1 : ℕ) : ℝ) * c * Real.exp (L * (((j + 1 : ℕ) : ℝ) * τ)) := by push_cast; ring
 
-/-- **The `h²`-free robust distance bound** (OP-RA-07, robust replacement of the rank-`r` DLRA
-solution; sharpens OP-EX-02).  Let `F` be `L`-Lipschitz (`L ≥ 0`), bounded by `B`, continuous in
-time, with the factored normal-component bound `ε` at rank `r`.  For every exact solution `A` on
-`[t₀, t₁]`, `t₁ = t₀ + h`, `h ≥ 0`, starting at a matrix of rank `≤ r`,
+end Substeps
 
-    dist(A(t₁), M_{≤ r}) ≤ 2 h ε e^{L h}.
+/-! ### Growth of the distance along the exact flow (OP-RA-07, OP-EX-02) -/
 
-The open-problem catalogue conjectures `ε (e^{L h} - 1) / L` (`≤ h ε e^{L h}`) via a
-Dini-derivative argument; here the constant is `2 e^{L h}` instead, and the proof avoids Dini
-derivatives: split the step into `N` substeps, apply `distLR_flow_step` on each (local
-`O(τ (τ + ε))` capture from nearest points plus stability of the flow), and let `N → ∞`, which
-removes the `O(h²)` term of `distLR_flow_le`.  No singular value enters. -/
-theorem distLR_flow_le_exp (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
-    (hc : ∀ Y, Continuous fun t => F t Y) (hε0 : 0 ≤ ε)
-    (hε : MatrixBUG.FactoredNormalBound F r ε) {t₀ t₁ h : ℝ} (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
-    (hA : ODESolution F A t₀ t₁) (hrank : (A t₀).rank ≤ r) :
-    distLR r (A t₁) ≤ 2 * h * ε * Real.exp (L * h) := by
-  have hB0 := hB.nonneg
-  have hN : ∀ N : ℕ, 0 < N → distLR r (A t₁) ≤
-      2 * h * ε * Real.exp (L * h) + 8 * L * B * h ^ 2 * Real.exp (L * h) / N := by
-    intro N hN
-    have hNr : (0 : ℝ) < N := by exact_mod_cast hN
-    have hτ : 0 ≤ h / N := by positivity
-    have hNτ : (N : ℝ) * (h / N) = h := by field_simp
-    have hA' : ODESolution F A t₀ (t₀ + N * (h / N)) := by rw [hNτ, ← ht₁]; exact hA
-    have hg := distLR_flow_le_grid hF hL hB hc hε0 hε hτ hA' hrank N le_rfl
-    rw [hNτ, ← ht₁] at hg
-    have e : (N : ℝ) * (2 * (h / N * (4 * L * B * (h / N) + ε))) =
-        2 * h * ε + 8 * L * B * h ^ 2 / N := by
-      field_simp; ring
-    rw [e] at hg
-    calc distLR r (A t₁) ≤ (2 * h * ε + 8 * L * B * h ^ 2 / N) * Real.exp (L * h) := hg
-      _ = _ := by ring
+section Growth
+
+variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] {r : ℕ}
+  {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {L B ε t₀ t₁ : ℝ} {A : ℝ → Matrix m n ℝ}
+
+omit [DecidableEq m] [DecidableEq n] in
+/-- A nearest point at positive distance has full rank: otherwise adding one entry of the residual
+would give a strictly better approximation of rank `≤ r`. -/
+private theorem le_rank_of_best {X Z : Matrix m n ℝ} (hXZ : ‖X - Z‖ = distLR r X)
+    (hpos : 0 < distLR r X) : r ≤ Z.rank := by
+  classical
+  by_contra hlt
+  have hlt' : Z.rank + 1 ≤ r := by omega
+  have hW : X - Z ≠ 0 := by
+    intro h0
+    rw [h0, norm_zero] at hXZ
+    linarith
+  obtain ⟨i, j, hij⟩ : ∃ i j, (X - Z) i j ≠ 0 := by
+    by_contra hall
+    exact hW (Matrix.ext fun i j => by
+      by_contra hij
+      exact hall ⟨i, j, hij⟩)
+  set c := (X - Z) i j with hcdef
+  set E : Matrix m n ℝ := Matrix.vecMulVec (Pi.single i c) (Pi.single j 1) with hE
+  have hEapply : ∀ k l, E k l = if k = i then (if l = j then c else 0) else 0 := by
+    intro k l
+    by_cases hk : k = i <;> by_cases hl : l = j <;>
+      simp [hE, Matrix.vecMulVec_apply, hk, hl]
+  have hErank : E.rank ≤ 1 := Matrix.rank_vecMulVec_le _ _
+  have hZ' : (Z + E).rank ≤ r := (EckartYoung.rank_add_le _ _).trans (by omega)
+  have h1 := distLR_le_norm_sub (X := X) hZ'
+  have h2 : ‖X - (Z + E)‖ ^ 2 = ‖X - Z‖ ^ 2 - c ^ 2 := by
+    rw [Frobenius.norm_sq_eq_sum, Frobenius.norm_sq_eq_sum]
+    have hpt : ∀ k l, (X - (Z + E)) k l ^ 2 =
+        (X - Z) k l ^ 2 - (if k = i then (if l = j then c ^ 2 else 0) else 0) := by
+      intro k l
+      have : (X - (Z + E)) k l = (X - Z) k l - E k l := by
+        simp only [Matrix.sub_apply, Matrix.add_apply]; ring
+      rw [this, hEapply]
+      by_cases hk : k = i
+      · by_cases hl : l = j
+        · subst hk hl
+          simp only [ite_true, ← hcdef]
+          ring
+        · simp [hk, hl]
+      · simp [hk]
+    simp only [hpt, Finset.sum_sub_distrib]
+    simp
+  have hc2 : 0 < c ^ 2 := by positivity
+  have h3 : ‖X - (Z + E)‖ ^ 2 < ‖X - Z‖ ^ 2 := by linarith
+  have h4 : ‖X - (Z + E)‖ < ‖X - Z‖ := lt_of_pow_lt_pow_left₀ 2 (norm_nonneg _) h3
+  linarith
+
+omit [DecidableEq m] [DecidableEq n] in
+/-- A matrix of rank exactly `r` is `U S Vᵀ` with orthonormal `U`, `V` and invertible `S`. -/
+private theorem exists_factor_of_rank_eq {Z : Matrix m n ℝ} (hZ : Z.rank = r)
+    (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n) :
+    ∃ (U : Matrix m (Fin r) ℝ) (S T : Matrix (Fin r) (Fin r) ℝ) (V : Matrix n (Fin r) ℝ),
+      Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ Z = U * S * Vᵀ ∧ S * T = 1 ∧ T * S = 1 := by
+  obtain ⟨U, S, V, hU, hV, hZf⟩ := exists_factor_of_rank_le hZ.le hrm hrn
+  have hrS : r ≤ S.rank := by
+    have h : Z.rank ≤ S.rank := by
+      rw [hZf]
+      exact (Matrix.rank_mul_le_left _ _).trans (Matrix.rank_mul_le_right _ _)
+    omega
+  have hcard : S.rank = Fintype.card (Fin r) := by
+    rw [Fintype.card_fin]
+    exact le_antisymm (by simpa using S.rank_le_card_width) hrS
+  have hunit : IsUnit S :=
+    Matrix.mulVec_surjective_iff_isUnit.1 (Matrix.mulVec_surjective_iff_rank_eq_card.2 hcard)
+  refine ⟨U, S, S⁻¹, V, hU, hV, hZf, ?_, ?_⟩
+  · exact Matrix.mul_nonsing_inv S ((Matrix.isUnit_iff_isUnit_det S).1 hunit)
+  · exact Matrix.nonsing_inv_mul S ((Matrix.isUnit_iff_isUnit_det S).1 hunit)
+
+omit [Fintype m] [DecidableEq m] [DecidableEq n] in
+/-- A product through `Fin r` has rank at most `r`. -/
+private theorem rank_mul_fin_le (X : Matrix m (Fin r) ℝ) (Y : Matrix (Fin r) n ℝ) :
+    (X * Y).rank ≤ r := by
+  have h := (Matrix.rank_mul_le_left X Y).trans X.rank_le_card_width
+  rwa [Fintype.card_fin] at h
+
+/-- Expansion of the rank-`≤ r` curve `(U S + τ G V) T (S Vᵀ + τ Uᵀ G (1 - V Vᵀ))`, `T = S⁻¹`, whose
+velocity at `τ = 0` is the tangential part `G - (1 - U Uᵀ) G (1 - V Vᵀ)` of `G`. -/
+private theorem curve_expand (U : Matrix m (Fin r) ℝ) (V : Matrix n (Fin r) ℝ)
+    (S T : Matrix (Fin r) (Fin r) ℝ) (G : Matrix m n ℝ) (hST : S * T = 1) (hTS : T * S = 1)
+    (τ : ℝ) :
+    (U * S + τ • (G * V)) * T * (S * Vᵀ + τ • (Uᵀ * G * (1 - V * Vᵀ))) =
+      U * S * Vᵀ + τ • (G - (1 - U * Uᵀ) * G * (1 - V * Vᵀ)) +
+        τ ^ 2 • (G * V * T * (Uᵀ * G * (1 - V * Vᵀ))) := by
+  set R := Uᵀ * G * (1 - V * Vᵀ) with hR
+  have h1 : (U * S + τ • (G * V)) * T = U + τ • (G * V * T) := by
+    rw [Matrix.add_mul, Matrix.smul_mul, Matrix.mul_assoc U S T, hST, Matrix.mul_one]
+  have h2 : G * V * T * (S * Vᵀ) = G * V * Vᵀ := by
+    rw [Matrix.mul_assoc (G * V) T, ← Matrix.mul_assoc T S, hTS, Matrix.one_mul]
+  have h3 : G - (1 - U * Uᵀ) * G * (1 - V * Vᵀ) = U * R + G * V * Vᵀ := by
+    rw [hR, Matrix.sub_mul, Matrix.one_mul, Matrix.sub_mul, Matrix.mul_sub, Matrix.mul_sub,
+      Matrix.mul_one, Matrix.mul_one, Matrix.mul_sub, Matrix.mul_sub, Matrix.mul_one]
+    simp only [Matrix.mul_assoc]
+    abel
+  rw [h1, h3, Matrix.add_mul, Matrix.mul_add, Matrix.mul_add, Matrix.smul_mul, Matrix.smul_mul,
+    Matrix.mul_smul, Matrix.mul_smul, h2, Matrix.mul_assoc U S, sq, mul_smul, smul_add]
+  abel
+
+/-- **Right Dini bound at a point of positive distance**: if `0 < d(a) = dist(A(a), M_{≤ r})`, a
+nearest point has rank exactly `r`, and comparing `A` with a curve through it inside `M_{≤ r}`
+whose velocity is the tangential part of `F` there gives `D₊ d(a) ≤ L d(a) + ε`. -/
+private theorem frequently_slope_distLR_lt (hF : IsLipschitzField F L)
+    (hε : MatrixBUG.FactoredNormalBound F r ε) (hA : ODESolution F A t₀ t₁) {a ρ : ℝ}
+    (ha : a ∈ Ico t₀ t₁) (hpos : 0 < distLR r (A a)) (hρ : L * distLR r (A a) + ε < ρ) :
+    ∃ᶠ z in nhdsWithin a (Ioi a), slope (fun t => distLR r (A t)) a z < ρ := by
+  obtain ⟨Z, hZ, hXZ⟩ := exists_best_approx r (A a)
+  have hZr : Z.rank = r := le_antisymm hZ (le_rank_of_best hXZ hpos)
+  have hr : r < (A a).rank := distLR_pos_iff.1 hpos
+  obtain ⟨U, S, T, V, hU, hV, hZf, hST, hTS⟩ := exists_factor_of_rank_eq hZr
+    (hr.le.trans (A a).rank_le_card_height) (hr.le.trans (A a).rank_le_card_width)
+  set G := F a Z with hG
+  set N := (1 - U * Uᵀ) * G * (1 - V * Vᵀ) with hN
+  set R := Uᵀ * G * (1 - V * Vᵀ) with hR
+  set Q := G * V * T * R with hQ
+  have hNε : ‖N‖ ≤ ε := by
+    rw [hN, hG, hZf]
+    exact hε a U V S hU hV
+  set c : ℝ → Matrix m n ℝ := fun z => A z - (Z + (z - a) • (G - N) + (z - a) ^ 2 • Q) with hc
+  have hca : c a = A a - Z := by simp [hc]
+  have hcurve : HasDerivAt (fun z : ℝ => Z + (z - a) • (G - N) + (z - a) ^ 2 • Q) (G - N) a := by
+    have h1 : HasDerivAt (fun z : ℝ => z - a) 1 a := (hasDerivAt_id a).sub_const a
+    have h2 : HasDerivAt (fun z : ℝ => (z - a) • (G - N)) ((1 : ℝ) • (G - N)) a :=
+      h1.smul_const _
+    have h3 : HasDerivAt (fun z : ℝ => (z - a) ^ 2) (((2 : ℕ) : ℝ) * (a - a) ^ (2 - 1) * 1) a :=
+      h1.pow 2
+    have h4 := (h2.const_add Z).fun_add (h3.smul_const Q)
+    have e : (1 : ℝ) • (G - N) + (((2 : ℕ) : ℝ) * (a - a) ^ (2 - 1) * 1) • Q = G - N := by simp
+    rwa [e] at h4
+  have hderiv : HasDerivWithinAt c (F a (A a) - (G - N)) (Ici a) a :=
+    (hA.deriv a ha).sub hcurve.hasDerivWithinAt
+  have hnorm : ‖F a (A a) - (G - N)‖ < ρ := by
+    have e : F a (A a) - (G - N) = (F a (A a) - G) + N := by abel
+    rw [e]
+    refine lt_of_le_of_lt ((norm_add_le _ _).trans (add_le_add (hF a _ _) hNε)) ?_
+    rwa [hXZ]
+  refine (hderiv.liminf_right_slope_norm_le hnorm).mp ?_
+  filter_upwards [self_mem_nhdsWithin] with z hz hslope
+  have hz0 : 0 < z - a := sub_pos.2 hz
+  have hrank : (Z + (z - a) • (G - N) + (z - a) ^ 2 • Q).rank ≤ r := by
+    have e := curve_expand U V S T G hST hTS (z - a)
+    rw [← hZf, ← hN, ← hR, ← hQ] at e
+    rw [← e]
+    exact rank_mul_fin_le _ _
+  have hle : distLR r (A z) ≤ ‖c z‖ := distLR_le_norm_sub hrank
+  rw [hca, hXZ] at hslope
+  rw [slope_def_field]
+  have hinv : 0 < (z - a)⁻¹ := inv_pos.2 hz0
+  calc (distLR r (A z) - distLR r (A a)) / (z - a)
+      = (z - a)⁻¹ * (distLR r (A z) - distLR r (A a)) := by rw [div_eq_inv_mul]
+    _ ≤ (z - a)⁻¹ * (‖c z‖ - distLR r (A a)) :=
+        mul_le_mul_of_nonneg_left (by linarith) hinv.le
+    _ < ρ := hslope
+
+omit [DecidableEq m] [DecidableEq n] in
+/-- The distance is `B`-Lipschitz along the flow, in the form of a right Dini bound. -/
+private theorem frequently_slope_distLR_lt_of_bounded (hB : IsBoundedField F B)
+    (hA : ODESolution F A t₀ t₁) {a ρ : ℝ} (ha : a ∈ Ico t₀ t₁) (hρ : B < ρ) :
+    ∃ᶠ z in nhdsWithin a (Ioi a), slope (fun t => distLR r (A t)) a z < ρ := by
+  have hderiv : HasDerivWithinAt (fun z => A z - A a) (F a (A a)) (Ici a) a :=
+    (hA.deriv a ha).sub_const _
+  refine (hderiv.liminf_right_slope_norm_le ((hB a _).trans_lt hρ)).mp ?_
+  filter_upwards [self_mem_nhdsWithin] with z hz hslope
+  have hz0 : 0 < z - a := sub_pos.2 hz
+  have hle := distLR_le_add (r := r) (A z) (A a)
+  simp only [sub_self, norm_zero, sub_zero] at hslope
+  rw [slope_def_field]
+  have hinv : 0 < (z - a)⁻¹ := inv_pos.2 hz0
+  calc (distLR r (A z) - distLR r (A a)) / (z - a)
+      = (z - a)⁻¹ * (distLR r (A z) - distLR r (A a)) := by rw [div_eq_inv_mul]
+    _ ≤ (z - a)⁻¹ * ‖A z - A a‖ := mul_le_mul_of_nonneg_left (by linarith) hinv.le
+    _ < ρ := hslope
+
+/-- **Growth of the distance to `M_{≤ r}` along the exact flow** (OP-RA-07, OP-EX-02).  For an
+`L`-Lipschitz field bounded by `B` with the factored normal-component bound `ε` at rank `r`, along
+every exact solution, starting anywhere,
+
+    dist(A(t), M_{≤ r}) ≤ e^{L (t - t₀)} dist(A(t₀), M_{≤ r}) + ε (t - t₀) e^{L (t - t₀)}.
+
+The right Dini derivative of `d(t) = dist(A(t), M_{≤ r})` is at most `L d + ε` where `d > 0` (a
+nearest point has rank exactly `r`; compare `A` with a curve through it inside `M_{≤ r}` whose
+velocity is the tangential part of `F`) and at most `B` where `d = 0`; a comparison with the
+solution of `u' = L u + ε` (`image_le_of_liminf_slope_right_lt_deriv_boundary'`) concludes.
+Continuity of `F` in time is not used; `distLR_flow_le_sharp` is the recorded form of this
+statement, with that hypothesis.  This is an upper bound; that the constant in front of `ε` is
+optimal is not proved. -/
+theorem distLR_flow_le_exp_mul_add (hF : IsLipschitzField F L) (hL : 0 ≤ L)
+    (hB : IsBoundedField F B) (hε0 : 0 ≤ ε) (hε : MatrixBUG.FactoredNormalBound F r ε)
+    (hA : ODESolution F A t₀ t₁) :
+    ∀ t ∈ Icc t₀ t₁, distLR r (A t) ≤
+      Real.exp (L * (t - t₀)) * distLR r (A t₀) + ε * (t - t₀) * Real.exp (L * (t - t₀)) := by
+  intro t ht
+  set d : ℝ → ℝ := fun s => distLR r (A s) with hd
+  have hcont : ContinuousOn d (Icc t₀ t₁) :=
+    (lipschitzWith_distLR r).continuous.comp_continuousOn hA.cont
+  have hd0 : 0 ≤ d t₀ := distLR_nonneg
+  have key : ∀ δ : ℝ, 0 < δ →
+      d t ≤ Real.exp (L * (t - t₀)) * (d t₀ + δ + (ε + δ) * (t - t₀)) := by
+    intro δ hδ
+    set u : ℝ → ℝ := fun s => Real.exp (L * (s - t₀)) * (d t₀ + δ + (ε + δ) * (s - t₀)) with hu
+    set u' : ℝ → ℝ := fun s => L * u s + Real.exp (L * (s - t₀)) * (ε + δ) with hu'
+    set f' : ℝ → ℝ := fun s => if 0 < d s then L * d s + ε else B with hf'
+    have hderiv : ∀ s, HasDerivAt u (u' s) s := by
+      intro s
+      have h1 : HasDerivAt (fun x : ℝ => L * (x - t₀)) L s := by
+        simpa using ((hasDerivAt_id s).sub_const t₀).const_mul L
+      have h2 : HasDerivAt (fun x : ℝ => d t₀ + δ + (ε + δ) * (x - t₀)) (ε + δ) s := by
+        simpa using (((hasDerivAt_id s).sub_const t₀).const_mul (ε + δ)).const_add (d t₀ + δ)
+      have h3 := h1.exp.mul h2
+      convert h3 using 1
+      simp only [hu', hu]
+      ring
+    refine image_le_of_liminf_slope_right_lt_deriv_boundary' (f := d) (f' := f') (B := u)
+      (B' := u') hcont ?_ ?_ ?_ (fun s _ => (hderiv s).hasDerivWithinAt) ?_ ht
+    · intro x hx ρ hρ
+      by_cases hx0 : 0 < d x
+      · have hρ' : L * d x + ε < ρ := by simpa only [hf', hx0, ↓reduceIte] using hρ
+        exact frequently_slope_distLR_lt hF hε hA hx hx0 hρ'
+      · have hρ' : B < ρ := by simpa only [hf', hx0, ↓reduceIte] using hρ
+        exact frequently_slope_distLR_lt_of_bounded hB hA hx hρ'
+    · simp only [hu, sub_self, mul_zero, Real.exp_zero, one_mul, add_zero]
+      linarith
+    · exact fun s _ => (hderiv s).continuousAt.continuousWithinAt
+    · intro x hx hdx
+      have hx0 : 0 ≤ x - t₀ := sub_nonneg.2 hx.1
+      have hexp : 1 ≤ Real.exp (L * (x - t₀)) := Real.one_le_exp (mul_nonneg hL hx0)
+      have hu0 : 0 < u x := by
+        have : 0 < d t₀ + δ + (ε + δ) * (x - t₀) := by positivity
+        exact mul_pos (Real.exp_pos _) this
+      have hfx : f' x = L * u x + ε := by simp only [hf', hdx, hu0, ↓reduceIte]
+      have : ε < Real.exp (L * (x - t₀)) * (ε + δ) := by nlinarith
+      simp only [hfx, hu']
+      linarith
+  have ht0 : 0 ≤ t - t₀ := sub_nonneg.2 ht.1
   apply le_of_forall_pos_le_add
   intro η hη
-  obtain ⟨N, hN'⟩ := exists_nat_gt (8 * L * B * h ^ 2 * Real.exp (L * h) / η)
-  have hq : 0 ≤ 8 * L * B * h ^ 2 * Real.exp (L * h) / η := by positivity
-  have hNr : (0 : ℝ) < N := lt_of_le_of_lt hq hN'
-  have hlt : 8 * L * B * h ^ 2 * Real.exp (L * h) / N ≤ η := by
-    rw [div_le_iff₀ hNr]
-    rw [div_lt_iff₀ hη] at hN'
-    linarith [mul_comm η (N : ℝ)]
-  linarith [hN N (by exact_mod_cast hNr)]
+  set K := Real.exp (L * (t - t₀)) * (1 + (t - t₀)) with hK
+  have hKpos : 0 < K := mul_pos (Real.exp_pos _) (by linarith)
+  have h := key (η / K) (by positivity)
+  have e : Real.exp (L * (t - t₀)) * (d t₀ + η / K + (ε + η / K) * (t - t₀)) =
+      Real.exp (L * (t - t₀)) * d t₀ + ε * (t - t₀) * Real.exp (L * (t - t₀)) + η := by
+    have e' : η = K * (η / K) := by field_simp
+    calc Real.exp (L * (t - t₀)) * (d t₀ + η / K + (ε + η / K) * (t - t₀))
+        = Real.exp (L * (t - t₀)) * d t₀ + ε * (t - t₀) * Real.exp (L * (t - t₀)) +
+            K * (η / K) := by rw [hK]; ring
+      _ = _ := by rw [← e']
+  rw [e] at h
+  exact h
+
+end Growth
+
+/-! ### The `h²`-free robust bound `dist(A(t₁), M_{≤ r}) ≤ h ε e^{L h}` (OP-RA-07, OP-EX-02) -/
+
+section Sharp
+
+variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] {r : ℕ}
+  {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {L B ε : ℝ} {A : ℝ → Matrix m n ℝ}
+
+/-- **The `h²`-free robust distance bound** (OP-RA-07, robust replacement of the rank-`r` DLRA
+solution; sharpens OP-EX-02).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B`, with the
+factored normal-component bound `ε` at rank `r`.  For every exact solution `A` on `[t₀, t₁]`,
+`t₁ = t₀ + h`, `h ≥ 0`, starting at a matrix of rank `≤ r`,
+
+    dist(A(t₁), M_{≤ r}) ≤ h ε e^{L h}.
+
+This is `distLR_flow_le_exp_mul_add` at `t₁`, where `dist(A(t₀), M_{≤ r}) = 0`; continuity of `F`
+in time is not needed and no singular value enters.  For `0 < L` the catalogue theorem
+`LeanDLRA.OpenProblems.RankAdaptivity.distLR_flow_le_dini_local` gives the smaller bound
+`ε (e^{L h} - 1) / L`, with `ε` assumed only near the exact solution. -/
+theorem distLR_flow_le_exp (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
+    (hε0 : 0 ≤ ε)
+    (hε : MatrixBUG.FactoredNormalBound F r ε) {t₀ t₁ h : ℝ} (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
+    (hA : ODESolution F A t₀ t₁) (hrank : (A t₀).rank ≤ r) :
+    distLR r (A t₁) ≤ h * ε * Real.exp (L * h) := by
+  subst ht₁
+  have key := distLR_flow_le_exp_mul_add hF hL hB hε0 hε hA (t₀ + h) ⟨by linarith, le_rfl⟩
+  rw [distLR_eq_zero_of_rank_le hrank, add_sub_cancel_left] at key
+  linarith
 
 /-- **Robust rank-`r` truncation with the `h ε_r` term of the papers** (OP-RA-07;
 arXiv 2402.08607, Remark 4; arXiv 2608.27749, Remark 2, robust form).  For every approximation
 `Ŷ` of `A(t₁)` and every `κ`-quasi-best rank-`r` approximation `T` of `Ŷ`,
 
-    ‖T - A(t₁)‖ ≤ 2 κ h ε_r e^{L h} + (1 + κ) ‖Ŷ - A(t₁)‖,
+    ‖T - A(t₁)‖ ≤ κ h ε_r e^{L h} + (1 + κ) ‖Ŷ - A(t₁)‖,
 
-the bound `h ε_r + 2 ‖Ŷ - A(t₁)‖` of the papers (`κ = 1`) with the constant `2 e^{L h}` in front of
+the bound `h ε_r + 2 ‖Ŷ - A(t₁)‖` of the papers (`κ = 1`) with the factor `e^{L h}` in front of
 `h ε_r`, and **without** assuming that a rank-`r` DLRA solution exists over the step.  Combined
 with a local error `‖Ŷ - A(t₁)‖ = O(h (h² + ε_r))` (midpoint BUG, arXiv 2402.08607 Thm. 1) this
 gives the `O(h (h² + ε_r))` truncated bound of Remark 4. -/
 theorem norm_trunc_flow_le_exp (hF : IsLipschitzField F L) (hL : 0 ≤ L)
-    (hB : IsBoundedField F B) (hc : ∀ Y, Continuous fun t => F t Y) (hε0 : 0 ≤ ε)
+    (hB : IsBoundedField F B) (hε0 : 0 ≤ ε)
     (hε : MatrixBUG.FactoredNormalBound F r ε) {t₀ t₁ h : ℝ} (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
     (hA : ODESolution F A t₀ t₁) (hrank : (A t₀).rank ≤ r) {κ : ℝ} (hκ : 0 ≤ κ)
     {Yh T : Matrix m n ℝ} (hT : ‖T - Yh‖ ≤ κ * distLR r Yh) :
-    ‖T - A t₁‖ ≤ κ * (2 * h * ε * Real.exp (L * h)) + (1 + κ) * ‖Yh - A t₁‖ := by
+    ‖T - A t₁‖ ≤ κ * (h * ε * Real.exp (L * h)) + (1 + κ) * ‖Yh - A t₁‖ := by
   have h1 := norm_trunc_sub_le (A₁ := A t₁) hκ hT
   have h2 := mul_le_mul_of_nonneg_left
-    (distLR_flow_le_exp hF hL hB hc hε0 hε ht₁ hh hA hrank) hκ
+    (distLR_flow_le_exp hF hL hB hε0 hε ht₁ hh hA hrank) hκ
   linarith
 
 end Sharp
@@ -1139,39 +1398,39 @@ variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] {
 
 /-- **Best rank-`r` truncation along the exact flow** (OP-RA-07, non-vacuous form): for every
 approximation `Ŷ` of `A(t₁)` there is a best rank-`r` approximation `T` of `Ŷ` (exists by
-`exists_best_approx`), and it satisfies `‖T - A(t₁)‖ ≤ 2 h ε e^{L h} + 2 ‖Ŷ - A(t₁)‖`. -/
+`exists_best_approx`), and it satisfies `‖T - A(t₁)‖ ≤ h ε e^{L h} + 2 ‖Ŷ - A(t₁)‖`. -/
 theorem exists_bestTrunc_flow_le (hF : IsLipschitzField F L) (hL : 0 ≤ L)
-    (hB : IsBoundedField F B) (hc : ∀ Y, Continuous fun t => F t Y) (hε0 : 0 ≤ ε)
+    (hB : IsBoundedField F B) (hε0 : 0 ≤ ε)
     (hε : MatrixBUG.FactoredNormalBound F r ε) {t₀ t₁ h : ℝ} (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
     (hA : ODESolution F A t₀ t₁) (hrank : (A t₀).rank ≤ r) (Yh : Matrix m n ℝ) :
     ∃ T : Matrix m n ℝ, T.rank ≤ r ∧ ‖T - Yh‖ = distLR r Yh ∧
-      ‖T - A t₁‖ ≤ 2 * h * ε * Real.exp (L * h) + 2 * ‖Yh - A t₁‖ := by
+      ‖T - A t₁‖ ≤ h * ε * Real.exp (L * h) + 2 * ‖Yh - A t₁‖ := by
   obtain ⟨T, hT, hTY⟩ := exists_best_approx r Yh
   refine ⟨T, hT, by rw [norm_sub_rev]; exact hTY, ?_⟩
-  have := norm_trunc_flow_le_exp hF hL hB hc hε0 hε ht₁ hh hA hrank zero_le_one
+  have := norm_trunc_flow_le_exp hF hL hB hε0 hε ht₁ hh hA hrank zero_le_one
     (T := T) (Yh := Yh) (by rw [norm_sub_rev, hTY, one_mul])
   linarith
 
 /-- The truncation defect of one fixed-rank truncated augmented BUG step:
-`κ (2 h ε e^{L h} + h (c₁ ε + c₂ h))`. -/
+`κ (h ε e^{L h} + h (c₁ ε + c₂ h))`. -/
 noncomputable def fixedRankDefect (κ L B ε h H : ℝ) : ℝ :=
-  κ * (2 * h * ε * Real.exp (L * h) + h * (bugC₁ L H * ε + bugC₂ L B H * h))
+  κ * (h * ε * Real.exp (L * h) + h * (bugC₁ L H * ε + bugC₂ L B H * h))
 
-/-- **Robust global error of the fixed-rank truncated augmented BUG integrator** (new; the
+/-- **Robust global error of the fixed-rank truncated augmented BUG integrator** (the
 fixed-rank variant "augment, Galerkin, truncate back to rank `r`" of the rank-adaptive BUG
-integrator of arXiv 2104.05247, cf. arXiv 2402.08607, Remark 4).  Let `F` be `L`-Lipschitz,
-bounded by `B`, continuous in time, with the factored normal-component bound `ε` at rank `r`.
+integrator of arXiv 2104.05247, cf. arXiv 2402.08607, Remark 4).  Let `F` be `L`-Lipschitz and
+bounded by `B`, with the factored normal-component bound `ε` at rank `r`.
 Each step `j < N` is a rank-adaptive step (`IsRankAdaptiveStep`, any tolerance `θ`) from
 `Yⱼ = Uⱼ Sⱼ Vⱼᵀ` (rank `r`) whose result `Yⱼ₊₁` is a `κ`-quasi-best rank-`r` approximation of
 the augmented result `Ŷⱼ₊₁ = Ûⱼ Ŝⱼ(tⱼ₊₁) V̂ⱼᵀ`.  Then for `j ≤ N`, `j h ≤ T`, `0 ≤ h ≤ H`,
 
     ‖Yⱼ - A(tⱼ)‖ ≤ e^{L T} δ + T e^{L T} c₁ ε + T e^{L T} c₂ h + e^{L T} j ϑ⋆,
 
-with `ϑ⋆ = fixedRankDefect κ L B ε h H = κ (2 h ε e^{L h} + h (c₁ ε + c₂ h)) = O(h (h + ε))`, hence
+with `ϑ⋆ = fixedRankDefect κ L B ε h H = κ (h ε e^{L h} + h (c₁ ε + c₂ h)) = O(h (h + ε))`, hence
 `‖Yⱼ - A(tⱼ)‖ = O(δ + ε + h)` (`fixedRank_global_error_le'`): the rank stays `r`, there is no
 tolerance term, and neither a rank-`r` DLRA solution nor a singular-value gap is assumed. -/
 theorem fixedRank_global_error_le (hF : IsLipschitzField F L) (hL : 0 ≤ L)
-    (hB : IsBoundedField F B) (hc : ∀ Y, Continuous fun t => F t Y) (hε₀ : 0 ≤ ε)
+    (hB : IsBoundedField F B) (hε₀ : 0 ≤ ε)
     (hε : MatrixBUG.FactoredNormalBound F r ε) {t₀ h H : ℝ} (hh : 0 ≤ h) (hhH : h ≤ H)
     {N : ℕ} (hA : ODESolution F A t₀ (t₀ + N * h)) {ka kb : ℕ → ℕ}
     {U : ℕ → Matrix m (Fin r) ℝ} {Sm : ℕ → Matrix (Fin r) (Fin r) ℝ}
@@ -1204,7 +1463,7 @@ theorem fixedRank_global_error_le (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     rw [add_zero] at hloc
     have hrank : (Φ j (t₀ + j * h)).rank ≤ r := by
       rw [hΦ₀ j hj]; exact rank_mul_mul_transpose_le _ _ _
-    have hdist := distLR_flow_le_exp hF hL hB hc hε₀ hε ht hh (hΦ j hj) hrank
+    have hdist := distLR_flow_le_exp hF hL hB hε₀ hε ht hh (hΦ j hj) hrank
     have h3 := distLR_le_add (r := r) (Ua j * Sa j (t₀ + (j + 1) * h) * (Va j)ᵀ)
       (Φ j (t₀ + (j + 1) * h))
     refine { hs with trunc := (htrunc j hj).trans ?_ }
@@ -1216,9 +1475,9 @@ theorem fixedRank_global_error_le (hF : IsLipschitzField F L) (hL : 0 ≤ L)
 /-- **Fixed-rank truncated augmented BUG, `O(δ + ε + h)` form**: under the hypotheses of
 `fixedRank_global_error_le`, for `j ≤ N`, `j h ≤ T`,
 
-    ‖Yⱼ - A(tⱼ)‖ ≤ e^{L T} δ + T e^{L T} ((1 + κ) c₁ + 2 κ e^{L H}) ε + T e^{L T} (1 + κ) c₂ h. -/
+    ‖Yⱼ - A(tⱼ)‖ ≤ e^{L T} δ + T e^{L T} ((1 + κ) c₁ + κ e^{L H}) ε + T e^{L T} (1 + κ) c₂ h. -/
 theorem fixedRank_global_error_le' (hF : IsLipschitzField F L) (hL : 0 ≤ L)
-    (hB : IsBoundedField F B) (hc : ∀ Y, Continuous fun t => F t Y) (hε₀ : 0 ≤ ε)
+    (hB : IsBoundedField F B) (hε₀ : 0 ≤ ε)
     (hε : MatrixBUG.FactoredNormalBound F r ε) {t₀ h H : ℝ} (hh : 0 ≤ h) (hhH : h ≤ H)
     {N : ℕ} (hA : ODESolution F A t₀ (t₀ + N * h)) {ka kb : ℕ → ℕ}
     {U : ℕ → Matrix m (Fin r) ℝ} {Sm : ℕ → Matrix (Fin r) (Fin r) ℝ}
@@ -1236,10 +1495,10 @@ theorem fixedRank_global_error_le' (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hδ : ‖U 0 * Sm 0 * (V 0)ᵀ - A t₀‖ ≤ δ) :
     ∀ j ≤ N, (j : ℝ) * h ≤ T →
       ‖U j * Sm j * (V j)ᵀ - A (t₀ + j * h)‖ ≤ Real.exp (L * T) * δ
-        + T * Real.exp (L * T) * ((1 + κ) * bugC₁ L H + 2 * κ * Real.exp (L * H)) * ε
+        + T * Real.exp (L * T) * ((1 + κ) * bugC₁ L H + κ * Real.exp (L * H)) * ε
         + T * Real.exp (L * T) * ((1 + κ) * bugC₂ L B H) * h := by
   intro j hj hjT
-  have hmain := fixedRank_global_error_le hF hL hB hc hε₀ hε hh hhH hA hκ hstep htrunc hΦ hΦ₀ hδ
+  have hmain := fixedRank_global_error_le hF hL hB hε₀ hε hh hhH hA hκ hstep htrunc hΦ hΦ₀ hδ
     j hj hjT
   have hB0 := hB.nonneg
   have hT0 : 0 ≤ T := le_trans (by positivity) hjT
@@ -1248,20 +1507,20 @@ theorem fixedRank_global_error_le' (hF : IsLipschitzField F L) (hL : 0 ≤ L)
   have hc₁ := bugC₁_nonneg hL (hh.trans hhH)
   have hc₂ := bugC₂_nonneg hL hB0 (hh.trans hhH)
   have heT : 0 ≤ Real.exp (L * T) := (Real.exp_pos _).le
-  -- `j ϑ⋆ ≤ T κ (2 ε e^{L H} + c₁ ε + c₂ h)`
+  -- `j ϑ⋆ ≤ T κ (ε e^{L H} + c₁ ε + c₂ h)`
   have hdef : (j : ℝ) * fixedRankDefect κ L B ε h H ≤
-      T * (κ * (2 * ε * Real.exp (L * H) + bugC₁ L H * ε + bugC₂ L B H * h)) := by
+      T * (κ * (ε * Real.exp (L * H) + bugC₁ L H * ε + bugC₂ L B H * h)) := by
     unfold fixedRankDefect
-    have hX : 0 ≤ κ * (2 * ε * Real.exp (L * H) + bugC₁ L H * ε + bugC₂ L B H * h) := by
+    have hX : 0 ≤ κ * (ε * Real.exp (L * H) + bugC₁ L H * ε + bugC₂ L B H * h) := by
       positivity
-    have h1 : 2 * h * ε * Real.exp (L * h) ≤ 2 * h * ε * Real.exp (L * H) :=
+    have h1 : h * ε * Real.exp (L * h) ≤ h * ε * Real.exp (L * H) :=
       mul_le_mul_of_nonneg_left hexpH (by positivity)
-    calc (j : ℝ) * (κ * (2 * h * ε * Real.exp (L * h) + h * (bugC₁ L H * ε + bugC₂ L B H * h)))
-        ≤ (j : ℝ) * (κ * (2 * h * ε * Real.exp (L * H) + h * (bugC₁ L H * ε
+    calc (j : ℝ) * (κ * (h * ε * Real.exp (L * h) + h * (bugC₁ L H * ε + bugC₂ L B H * h)))
+        ≤ (j : ℝ) * (κ * (h * ε * Real.exp (L * H) + h * (bugC₁ L H * ε
             + bugC₂ L B H * h))) := by gcongr
-      _ = ((j : ℝ) * h) * (κ * (2 * ε * Real.exp (L * H) + bugC₁ L H * ε
+      _ = ((j : ℝ) * h) * (κ * (ε * Real.exp (L * H) + bugC₁ L H * ε
             + bugC₂ L B H * h)) := by ring
-      _ ≤ T * (κ * (2 * ε * Real.exp (L * H) + bugC₁ L H * ε + bugC₂ L B H * h)) :=
+      _ ≤ T * (κ * (ε * Real.exp (L * H) + bugC₁ L H * ε + bugC₂ L B H * h)) :=
           mul_le_mul_of_nonneg_right hjT hX
   have h2 := mul_le_mul_of_nonneg_left hdef heT
   calc ‖U j * Sm j * (V j)ᵀ - A (t₀ + j * h)‖
@@ -1282,11 +1541,11 @@ open MatrixBUG
 /-- **Two-sided bound in the counterexample setting** (non-vacuity and sharpness of
 `distLR_flow_le_exp`).  For `F ≡ [[0, 1], [1, 0]]` (`L = 0`, `B = ε = ‖F‖`, the factored
 normal-component bound of a constant field) and `Y₀ = diag(δ, 0)`, `0 ≤ δ ≤ h`, the exact
-solution satisfies `h / 3 ≤ dist(A(h), M_{≤ 1}) ≤ 2 h ‖F‖`: the robust bound is attained up to a
+solution satisfies `h / 3 ≤ dist(A(h), M_{≤ 1}) ≤ h ‖F‖`: the robust bound is attained up to a
 constant factor, so the order `h ε` cannot be improved. -/
 example {δ h : ℝ} (hδ : 0 ≤ δ) (hδh : δ ≤ h) :
     h / 3 ≤ distLR 1 (cxY₀ δ + (h - 0) • swapMat) ∧
-    distLR 1 (cxY₀ δ + (h - 0) • swapMat) ≤ 2 * h * ‖swapMat‖ * Real.exp (0 * h) := by
+    distLR 1 (cxY₀ δ + (h - 0) • swapMat) ≤ h * ‖swapMat‖ * Real.exp (0 * h) := by
   refine ⟨le_distLR_cx hδ hδh, ?_⟩
   have hA : ODESolution (fun _ _ => swapMat) (fun t => cxY₀ δ + (t - 0) • swapMat) 0 h :=
     odeSolution_affine (cxY₀ δ) swapMat 0 h
@@ -1299,7 +1558,7 @@ example {δ h : ℝ} (hδ : 0 ≤ δ) (hδh : δ ≤ h) :
     exact rank_mul_mul_transpose_le _ _ _
   have hε : FactoredNormalBound (fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => swapMat) 1
       ‖swapMat‖ := factoredNormalBound_const swapMat 1
-  have key := distLR_flow_le_exp hFL le_rfl hFB (fun _ => continuous_const) (norm_nonneg _) hε
+  have key := distLR_flow_le_exp hFL le_rfl hFB (norm_nonneg _) hε
     (zero_add h).symm (hδ.trans hδh) hA hrank
   exact key
 
@@ -1349,7 +1608,7 @@ example : ‖unitCol * exSm 1 * unitColᵀ - exA (0 + ((1 : ℕ) : ℝ) * 1)‖ 
     (ka := fun _ => 2) (kb := fun _ => 2) (U := fun _ => unitCol) (Sm := exSm)
     (V := fun _ => unitCol) (Ua := fun _ => 1) (Va := fun _ => 1) (K := fun _ => exK)
     (Lf := fun _ => exK) (Sa := fun _ => exSa) (Φ := fun _ => exA) (θ := 1) (κ := 1)
-    (fun _ _ _ => by simp) le_rfl (fun _ _ => le_rfl) (fun _ => continuous_const)
+    (fun _ _ _ => by simp) le_rfl (fun _ _ => le_rfl)
     (norm_nonneg _) (factoredNormalBound_const _ 1) zero_le_one le_rfl
     hA' zero_le_one ?_ ?_ ?_ ?_ (by simp [exA, exSm]) 1 le_rfl (by norm_num)
   · intro j hj

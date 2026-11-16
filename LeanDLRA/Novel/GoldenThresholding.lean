@@ -642,15 +642,16 @@ theorem norm_trunc_flow_le_gold (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB :
   linarith
 
 /-- The variant of `norm_trunc_flow_le_gold` without the `h²` term, as in
-`LeanDLRA.norm_trunc_flow_le_exp`: `‖T - A(t₁)‖ ≤ 2 h ε e^{L h} + φ ‖Ŷ - A(t₁)‖`. -/
+`LeanDLRA.norm_trunc_flow_le_exp`: `‖T - A(t₁)‖ ≤ h ε e^{L h} + φ ‖Ŷ - A(t₁)‖`, under the global
+factored normal-component bound and without continuity of `F` in time. -/
 theorem norm_trunc_flow_le_exp_gold (hF : IsLipschitzField F L) (hL : 0 ≤ L)
-    (hB : IsBoundedField F B) (hc : ∀ Y, Continuous fun t => F t Y) (hε0 : 0 ≤ ε)
+    (hB : IsBoundedField F B) (hε0 : 0 ≤ ε)
     (hε : MatrixBUG.FactoredNormalBound F r ε) (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
     (hA : ODESolution F A t₀ t₁) (hrank : (A t₀).rank ≤ r) {Yh T : Matrix m n ℝ}
     (hT : ‖Yh - T‖ ≤ distLR r Yh) (hTr : T.rank ≤ r) :
-    ‖T - A t₁‖ ≤ 2 * h * ε * Real.exp (L * h) + φ * ‖Yh - A t₁‖ := by
+    ‖T - A t₁‖ ≤ h * ε * Real.exp (L * h) + φ * ‖Yh - A t₁‖ := by
   have h1 := norm_sub_le_distLR_add_gold hT hTr (A t₁)
-  have h2 := distLR_flow_le_exp hF hL hB hc hε0 hε ht₁ hh hA hrank
+  have h2 := distLR_flow_le_exp hF hL hB hε0 hε ht₁ hh hA hrank
   linarith
 
 /-- **The augmented BUG step truncated back to rank `r`, with `φ`** (the actual step of
@@ -681,14 +682,14 @@ theorem fixedRank_trunc_local_error_le_gold {k k' : Type*} [Fintype k] [Fintype 
 of `LeanDLRA.fixedRank_global_error_le'` with `κ = 1`: each step is an augmented BUG step, truncated
 back to rank `r` by a best approximation.  Then for `j ≤ N`, `j h ≤ T`,
 
-    ‖Yⱼ - A(tⱼ)‖ ≤ e^{L T} (δ + T (2 ε e^{L H} + φ (c₁ ε + c₂ h))),
+    ‖Yⱼ - A(tⱼ)‖ ≤ e^{L T} (δ + T (ε e^{L H} + φ (c₁ ε + c₂ h))),
 
 where the library has `2` in place of `φ`.  The truncated local error is what enters the Lady
 Windermere fan, so the improvement survives to the global bound.  It concerns the fixed-rank
 truncation only: a tolerance truncation `‖Y₁ - Ŷ‖ ≤ ϑ` costs `‖Ŷ - A‖ + ϑ` and has no factor to
 improve. -/
 theorem fixedRank_global_error_le_gold (hF : IsLipschitzField F L) (hL : 0 ≤ L)
-    (hB : IsBoundedField F B) (hc : ∀ Y, Continuous fun t => F t Y) (hε₀ : 0 ≤ ε)
+    (hB : IsBoundedField F B) (hε₀ : 0 ≤ ε)
     (hε : MatrixBUG.FactoredNormalBound F r ε) {t₀ h H : ℝ} (hh : 0 ≤ h) (hhH : h ≤ H)
     {N : ℕ} (hA : ODESolution F A t₀ (t₀ + N * h)) {ka kb : ℕ → ℕ}
     {U : ℕ → Matrix m (Fin r) ℝ} {Sm : ℕ → Matrix (Fin r) (Fin r) ℝ}
@@ -706,16 +707,16 @@ theorem fixedRank_global_error_le_gold (hF : IsLipschitzField F L) (hL : 0 ≤ L
     (hδ : ‖U 0 * Sm 0 * (V 0)ᵀ - A t₀‖ ≤ δ) :
     ∀ j ≤ N, (j : ℝ) * h ≤ T →
       ‖U j * Sm j * (V j)ᵀ - A (t₀ + j * h)‖ ≤ Real.exp (L * T) * (δ
-        + T * (2 * ε * Real.exp (L * H) + φ * (bugC₁ L H * ε + bugC₂ L B H * h))) := by
+        + T * (ε * Real.exp (L * H) + φ * (bugC₁ L H * ε + bugC₂ L B H * h))) := by
   have hφ0 : 0 ≤ φ := Real.goldenRatio_pos.le
   have hc₁ := bugC₁_nonneg hL (hh.trans hhH)
   have hc₂ := bugC₂_nonneg hL hB.nonneg (hh.trans hhH)
   have hexpH : Real.exp (L * h) ≤ Real.exp (L * H) :=
     Real.exp_le_exp.2 (mul_le_mul_of_nonneg_left hhH hL)
-  have hg : 0 ≤ 2 * ε * Real.exp (L * H) + φ * (bugC₁ L H * ε + bugC₂ L B H * h) := by
+  have hg : 0 ≤ ε * Real.exp (L * H) + φ * (bugC₁ L H * ε + bugC₂ L B H * h) := by
     positivity
   have hloc : ∀ j < N, ‖U (j + 1) * Sm (j + 1) * (V (j + 1))ᵀ - Φ j (t₀ + (j + 1) * h)‖ ≤
-      h * (2 * ε * Real.exp (L * H) + φ * (bugC₁ L H * ε + bugC₂ L B H * h)) + 0 := by
+      h * (ε * Real.exp (L * H) + φ * (bugC₁ L H * ε + bugC₂ L B H * h)) + 0 := by
     intro j hj
     have hs := hstep j hj
     have hs0 : MatrixBUG.IsRankAdaptiveStep F 0 (t₀ + j * h) (t₀ + (j + 1) * h) (U j) (Sm j)
@@ -726,12 +727,12 @@ theorem fixedRank_global_error_le_gold (hF : IsLipschitzField F L) (hL : 0 ≤ L
     rw [add_zero] at hloc0
     have hrank : (Φ j (t₀ + j * h)).rank ≤ r := by
       rw [hΦ₀ j hj]; exact rank_mul_mul_transpose_le _ _ _
-    have h1 := norm_trunc_flow_le_exp_gold hF hL hB hc hε₀ hε ht hh (hΦ j hj) hrank (htrunc j hj)
+    have h1 := norm_trunc_flow_le_exp_gold hF hL hB hε₀ hε ht hh (hΦ j hj) hrank (htrunc j hj)
       (rank_mul_mul_transpose_le _ _ _)
     have h2 := mul_le_mul_of_nonneg_left hloc0 hφ0
-    have h3 : 2 * h * ε * Real.exp (L * h) ≤ 2 * h * ε * Real.exp (L * H) :=
+    have h3 : h * ε * Real.exp (L * h) ≤ h * ε * Real.exp (L * H) :=
       mul_le_mul_of_nonneg_left hexpH (by positivity)
-    calc _ ≤ 2 * h * ε * Real.exp (L * h) + φ *
+    calc _ ≤ h * ε * Real.exp (L * h) + φ *
           ‖Ua j * Sa j (t₀ + (j + 1) * h) * (Va j)ᵀ - Φ j (t₀ + (j + 1) * h)‖ := h1
       _ ≤ _ := by nlinarith
   intro j hj hjT

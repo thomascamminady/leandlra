@@ -157,14 +157,6 @@ lemma finrank_ker_add_rank [Finite m] (B : Matrix m n ℝ) :
   rw [rank_eq_finrank_range, add_comm, LinearMap.finrank_range_add_finrank_ker,
     finrank_euclideanSpace]
 
-omit [Fintype m] [DecidableEq n] in
-/-- Subadditivity of the rank. -/
-lemma rank_add_le (B C : Matrix m n ℝ) : (B + C).rank ≤ B.rank + C.rank := by
-  unfold Matrix.rank
-  rw [Matrix.mulVecLin_add]
-  exact (Submodule.finrank_mono (LinearMap.range_add_le _ _)).trans
-    (Submodule.finrank_add_le_finrank_add_finrank _ _)
-
 omit [Fintype m] in
 /-- The entries of `A x` are inner products with the rows of `A`. -/
 lemma toEuclideanLin_apply_eq_inner (M : Matrix m n ℝ) (x : EuclideanSpace ℝ n) (i : m) :

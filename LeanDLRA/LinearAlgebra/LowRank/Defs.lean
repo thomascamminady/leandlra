@@ -40,6 +40,10 @@ in `LeanDLRA/LinearAlgebra/SVD/Defs.lean` because a definition body abstracts it
 into auxiliary theorems that are shared within a module: next to
 `EckartYoung.rightSingularVectors` (or `KyFan.podBasis`) it would reuse their auxiliary proofs and
 the body would change.
+
+The subadditivity of the rank is proved here under the name `EckartYoung.rank_add_le`: both
+`LeanDLRA/Classical/EckartYoung.lean` and `LeanDLRA/Matrix/LowRankDistance.lean` use it, and this
+file lies below both.
 -/
 
 open scoped Matrix LeanDLRA.Frobenius
@@ -120,6 +124,21 @@ noncomputable def tailNorm (A : Matrix m n ℝ) (r : ℕ) : ℝ :=
 end LeanDLRA.WeylSingular
 
 end Tail
+
+/-! ### Subadditivity of the rank -/
+
+namespace LeanDLRA.EckartYoung
+
+variable {m n : Type*} [Fintype n]
+
+/-- Subadditivity of the rank. -/
+lemma rank_add_le (B C : Matrix m n ℝ) : (B + C).rank ≤ B.rank + C.rank := by
+  unfold Matrix.rank
+  rw [Matrix.mulVecLin_add]
+  exact (Submodule.finrank_mono (LinearMap.range_add_le _ _)).trans
+    (Submodule.finrank_add_le_finrank_add_finrank _ _)
+
+end LeanDLRA.EckartYoung
 
 /-! ### Non-vacuity -/
 

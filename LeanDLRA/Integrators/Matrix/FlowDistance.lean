@@ -28,8 +28,8 @@ Theorem 2) with `ℓ = L`, there obtained from the solution of the projected equ
 ## Implementation notes
 
 The library has bounds of the same form for fields that are Lipschitz and bounded everywhere and
-whose normal part is small at every factored rank-`r` matrix (`distLR_flow_le_exp`, with the
-constant `2`, and a form with the constant `1` in the catalogue). They cannot be applied to the
+whose normal part is small at every factored rank-`r` matrix (`distLR_flow_le_exp` and
+`distLR_flow_le_exp_mul_add`, with the constant `1`). They cannot be applied to the
 tube extension `tubeExt F A a b ρ` of the field: the extension evaluates `F` at the point
 retracted to the ball around `A t`, which is not of the form `U S Vᵀ` for the factors of the
 original point, so the normal bound of the extension is not controlled outside the tube. The
@@ -135,7 +135,7 @@ satisfies `‖Φ t₀ - A t₀‖ + 3 B (t₁ - t₀) < ρ`. Then
   `dist(Φ t₁, M_{≤ r}) ≤ (t₁ - t₀) ε e^{L (t₁ - t₀)}`.
 
 No singular value of `Φ t₀` enters. This is the tube form of the global bound
-`distLR_flow_le_exp` (constant `2` there, `1` here); the global statements need the normal bound
+`distLR_flow_le_exp`, with the same constant `1`; the global statements need the normal bound
 at every factored matrix and cannot be applied to the tube extension of `F`, so the proof repeats
 the substep argument inside the tube (`distLR_flow_step_of_tube`) and lets the number of
 substeps tend to infinity. -/

@@ -12,8 +12,8 @@ singular value decomposition and without Eckart–Young, the following classical
    the Frobenius norm (`open scoped LeanDLRA.Frobenius`) the closedness of `M_{≤ r}`
    (`LeanDLRA.isClosed_lowRankSet`, proved there via compactness of the Stiefel set) and the
    existence of a best approximation `X⋆ ∈ M_{≤ r}` with `‖X - X⋆‖ = dist(X, M_{≤ r})`
-   (`LeanDLRA.exists_best_approx`) are in `LeanDLRA.Matrix.LowRankDistance`; here we add
-   `distLR_pos_iff` (`dist(X, M_{≤ r}) > 0 ↔ rank X > r`).
+   (`LeanDLRA.exists_best_approx`) are in `LeanDLRA.Matrix.LowRankDistance`, together with
+   `LeanDLRA.distLR_pos_iff` (`dist(X, M_{≤ r}) > 0 ↔ rank X > r`).
 2. **Gap-free quasi-optimality** (OP-RA-21, easy part).  Every best approximation `T` of `X`
    satisfies `‖T - Y‖ ≤ dist(Y, M_{≤ r}) + 2 ‖X - Y‖` for all `Y`, and `‖T - Y‖ ≤ 2 ‖X - Y‖`
    when `rank Y ≤ r` (`norm_sub_le_infDist_add_two_mul`, `norm_sub_le_two_mul_of_rank_le`).
@@ -132,17 +132,6 @@ namespace LeanDLRA
 open scoped Matrix LeanDLRA.Frobenius
 
 variable {m n : Type*} [Fintype m] [Fintype n] {r k : ℕ} {ε : ℝ} {X Y T : Matrix m n ℝ}
-
-/-! ### Consequences of closedness -/
-
-section Existence
-
-/-- A matrix of rank `> r` has positive distance to `M_{≤ r}`. -/
-theorem distLR_pos_iff : 0 < distLR r X ↔ r < X.rank := by
-  rw [lt_iff_le_and_ne, ← not_le, ← distLR_eq_zero_iff]
-  exact ⟨fun h => h.2 ∘ Eq.symm, fun h => ⟨distLR_nonneg, fun h' => h h'.symm⟩⟩
-
-end Existence
 
 /-! ### Gap-free quasi-optimality of best approximations -/
 

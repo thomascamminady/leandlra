@@ -227,7 +227,8 @@ private theorem distLR_slope_lt [DecidableEq m] [DecidableEq n] {r : ℕ}
 exact solution.**  If `rank A(t₀) ≤ r` and the factored normal component is `≤ ε` at all rank-`r`
 points within `ρ` of `A(t)` (with `ρ` larger than the bound below), then
 `dist(A(t), M_{≤ r}) ≤ ε (e^{L (t - t₀)} - 1) / L`: the Dini-derivative bound of the catalogue
-(the library proves `2 h ε e^{L h}` under the global assumption, `distLR_flow_le_exp`). -/
+(under the global factored assumption and a bound on `F`, `LeanDLRA.distLR_flow_le_exp` gives
+`h ε e^{L h}`, also for `L = 0`). -/
 theorem distLR_flow_le_dini_local [DecidableEq m] [DecidableEq n] {r : ℕ}
     {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {L : ℝ} (hF : IsLipschitzField F L) (hL : 0 < L)
     {A : ℝ → Matrix m n ℝ} {t₀ t₁ : ℝ} (hA : ODESolution F A t₀ t₁)
