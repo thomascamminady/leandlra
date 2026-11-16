@@ -54,8 +54,10 @@ Global gradient equal to the average of the client gradients (the setting of the
 * The statements are about one round before truncation, with exact client gradients.
 * The global gradient need not be the average of the client gradients. The equality case of
   the first group uses this freedom: there the client is concave and the global loss convex.
-* For convex clients the range `2 - λ β ≤ s⋆ λ β < 2` is not decided, and the amount of descent
-  that is proved is proportional to `λ`, not to `s⋆ λ`.
+* For convex clients the range `2 - λ β ≤ s⋆ λ β < 2` is covered by
+  `loss_fedRound_lt_of_convex_of_lr_mul_le_one` (file `Research/FederatedConvexThreshold.lean`):
+  for `λ β ≤ 1` the round decreases the loss whenever `s⋆ λ β < 2`. The amount of descent that
+  is proved in both files is proportional to `λ`, not to `s⋆ λ`.
 -/
 
 open Set Finset

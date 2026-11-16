@@ -106,6 +106,7 @@ import LeanDLRA.Research.AugmentationRank
 import LeanDLRA.Research.DataDrivenErrorRecursion
 import LeanDLRA.Research.ExplicitMidpointCapture
 import LeanDLRA.Research.ExplicitMidpointGalerkin
+import LeanDLRA.Research.FederatedConvexThreshold
 import LeanDLRA.Research.FederatedDescentThreshold
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.SameMinibatchAugmentation
