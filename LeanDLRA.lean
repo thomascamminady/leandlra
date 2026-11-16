@@ -46,6 +46,7 @@ import LeanDLRA.Integrators.Matrix.Defs
 import LeanDLRA.Integrators.Matrix.EulerBUGRun
 import LeanDLRA.Integrators.Matrix.EulerBUGStep
 import LeanDLRA.Integrators.Matrix.FactoredNormalBound
+import LeanDLRA.Integrators.Matrix.FlowDistance
 import LeanDLRA.Integrators.Matrix.KSLRun
 import LeanDLRA.Integrators.Matrix.KSLStep
 import LeanDLRA.Integrators.Matrix.ParallelBUG
