@@ -30,3 +30,11 @@ allowNonModules = true
 [[lean_lib]]
 name = "LeanDLRACatalogue"
 allowNonModules = true
+
+# Worked examples for newcomers (docs/GUIDE.md): complete, commented Lean files that apply the
+# theorems of the core to concrete problems. `Examples.lean` imports the example files.
+# `lake build Examples` compiles them. They are not part of `LeanDLRA` or of the default target,
+# so `lake build`, the core workflow of CI and the gate never compile them.
+[[lean_lib]]
+name = "Examples"
+allowNonModules = true

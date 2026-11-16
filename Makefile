@@ -14,10 +14,10 @@ AFTER ?= $(HASHDIFF)/after.jsonl.gz
 # Pages of docs/ that quote Lean statements. `make docs` writes them from the templates of the same
 # name in $(TEMPLATES) (scripts/docgen.py); `make docs-check` compares them with the sources.
 TEMPLATES := scripts/templates
-DOC_PAGES := docs/GETTING_STARTED.md docs/MAIN_RESULTS.md
+DOC_PAGES := docs/GETTING_STARTED.md docs/MAIN_RESULTS.md docs/GUIDE.md
 
 .DEFAULT_GOAL := help
-.PHONY: help deps build catalogue check audit verify index docs docs-check site dump hashdiff lint-py test-py ci \
+.PHONY: help examples deps build catalogue check audit verify index docs docs-check site dump hashdiff lint-py test-py ci \
         papers clean
 
 help: ## Show this help
@@ -53,6 +53,7 @@ docs: ## Regenerate the generated pages of docs/ and the README status block (qu
 	uv run -q scripts/ledger.py
 	uv run -q scripts/docgen.py expand $(TEMPLATES)/GETTING_STARTED.md docs/GETTING_STARTED.md --prefix ../
 	uv run -q scripts/docgen.py expand $(TEMPLATES)/MAIN_RESULTS.md docs/MAIN_RESULTS.md --prefix ../
+	uv run -q scripts/docgen.py expand $(TEMPLATES)/GUIDE.md docs/GUIDE.md --prefix ../
 	uv run -q scripts/definitions.py write
 	uv run -q scripts/docgen.py check $(DOC_PAGES)
 
@@ -88,3 +89,6 @@ papers: ## Fetch full texts of the surveyed papers into papers/pdf and papers/tx
 
 clean: ## Remove local check artifacts (keeps the Mathlib cache)
 	rm -rf .lake/check .lake/build/lib/lean/LeanDLRA
+
+examples: ## Build the worked examples (the library Examples, not part of the core)
+	lake build Examples
