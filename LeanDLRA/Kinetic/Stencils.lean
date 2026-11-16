@@ -17,6 +17,19 @@ summation by parts on a periodic grid.
 * `LeanDLRA.Kinetic.fwdDiff_transpose`, `bwdDiff_transpose`: `(D⁺)ᵀ = -D⁻` and `(D⁻)ᵀ = -D⁺`.
 * `LeanDLRA.Kinetic.centralDiff_transpose`: the central difference is skew.
 * `LeanDLRA.Kinetic.secondDiff_transpose`: the second difference is symmetric.
+* `LeanDLRA.Kinetic.fwdDiff_submatrix_finEquiv`, `bwdDiff_submatrix_finEquiv`,
+  `centralDiff_submatrix_finEquiv`, `secondDiff_submatrix_finEquiv`: the four matrices with the
+  cells numbered by `Fin N`, entry by entry.
+* `LeanDLRA.Kinetic.fwdDiff_submatrix_finEquiv_mulVec` and the three analogues: their stencils on
+  `Fin N`, for example `(ψ (i + 1) - ψ i) / h`.
+
+## Cells numbered by `Fin N`
+
+The periodic grid of the core is `ZMod N`, so that `i + 1` and `i - 1` wrap around. A stencil
+written on `Fin N` (whose addition wraps around as well) is the core stencil read through Mathlib's
+ring isomorphism `ZMod.finEquiv N : Fin N ≃+* ZMod N` on both sides, that is
+`(fwdDiff N h).submatrix (ZMod.finEquiv N) (ZMod.finEquiv N)`; on `Fin (n + 1)` take
+`N = n + 1`. Statements do not use the definitional equality of `ZMod (n + 1)` and `Fin (n + 1)`.
 -/
 
 open Finset
@@ -140,5 +153,119 @@ example (u : Matrix (ZMod 3) Unit ℝ) (hu : u = Matrix.of fun i _ => if i = 1 t
   norm_num
 
 end Mul
+
+/-! ### Cells numbered by `Fin N` -/
+
+section FinIndex
+
+variable {N : ℕ} [NeZero N] {h : ℝ}
+
+/-- Moving `ZMod.finEquiv` across a shift to the right. -/
+private theorem finEquiv_eq_add_one_iff (i j : Fin N) :
+    ZMod.finEquiv N j = ZMod.finEquiv N i + 1 ↔ j = i + 1 := by
+  rw [← map_one (ZMod.finEquiv N), ← map_add, (ZMod.finEquiv N).injective.eq_iff]
+
+/-- Moving `ZMod.finEquiv` across a shift to the left. -/
+private theorem finEquiv_eq_sub_one_iff (i j : Fin N) :
+    ZMod.finEquiv N j = ZMod.finEquiv N i - 1 ↔ j = i - 1 := by
+  rw [← map_one (ZMod.finEquiv N), ← map_sub, (ZMod.finEquiv N).injective.eq_iff]
+
+/-- The forward difference with the cells numbered by `Fin N`. -/
+theorem fwdDiff_submatrix_finEquiv :
+    (fwdDiff N h).submatrix (ZMod.finEquiv N) (ZMod.finEquiv N) =
+      Matrix.of fun i j : Fin N =>
+        ((if j = i + 1 then 1 else 0) - (if j = i then 1 else 0)) / h := by
+  ext i j
+  simp only [Matrix.submatrix_apply, fwdDiff, Matrix.of_apply, finEquiv_eq_add_one_iff,
+    (ZMod.finEquiv N).injective.eq_iff]
+
+/-- The backward difference with the cells numbered by `Fin N`. -/
+theorem bwdDiff_submatrix_finEquiv :
+    (bwdDiff N h).submatrix (ZMod.finEquiv N) (ZMod.finEquiv N) =
+      Matrix.of fun i j : Fin N =>
+        ((if j = i then 1 else 0) - (if j = i - 1 then 1 else 0)) / h := by
+  ext i j
+  simp only [Matrix.submatrix_apply, bwdDiff, Matrix.of_apply, finEquiv_eq_sub_one_iff,
+    (ZMod.finEquiv N).injective.eq_iff]
+
+/-- The central difference with the cells numbered by `Fin N`. -/
+theorem centralDiff_submatrix_finEquiv :
+    (centralDiff N h).submatrix (ZMod.finEquiv N) (ZMod.finEquiv N) =
+      Matrix.of fun i j : Fin N =>
+        ((if j = i + 1 then 1 else 0) - (if j = i - 1 then 1 else 0)) / (2 * h) := by
+  ext i j
+  simp only [Matrix.submatrix_apply, centralDiff, Matrix.of_apply, finEquiv_eq_add_one_iff,
+    finEquiv_eq_sub_one_iff]
+
+/-- The second difference with the cells numbered by `Fin N`. -/
+theorem secondDiff_submatrix_finEquiv :
+    (secondDiff N h).submatrix (ZMod.finEquiv N) (ZMod.finEquiv N) =
+      Matrix.of fun i j : Fin N =>
+        ((if j = i + 1 then 1 else 0) - 2 * (if j = i then 1 else 0) +
+          (if j = i - 1 then 1 else 0)) / h ^ 2 := by
+  ext i j
+  simp only [Matrix.submatrix_apply, secondDiff, Matrix.of_apply, finEquiv_eq_add_one_iff,
+    finEquiv_eq_sub_one_iff, (ZMod.finEquiv N).injective.eq_iff]
+
+/-- The stencil of the forward difference on `Fin N`. -/
+theorem fwdDiff_submatrix_finEquiv_mulVec (ψ : Fin N → ℝ) :
+    (fwdDiff N h).submatrix (ZMod.finEquiv N) (ZMod.finEquiv N) *ᵥ ψ =
+      fun i => (ψ (i + 1) - ψ i) / h := by
+  rw [fwdDiff_submatrix_finEquiv]
+  ext i
+  simp [Matrix.mulVec, dotProduct, sub_div, sub_mul, ite_mul, div_mul_eq_mul_div,
+    ← Finset.sum_div]
+
+/-- The stencil of the backward difference on `Fin N`. -/
+theorem bwdDiff_submatrix_finEquiv_mulVec (ψ : Fin N → ℝ) :
+    (bwdDiff N h).submatrix (ZMod.finEquiv N) (ZMod.finEquiv N) *ᵥ ψ =
+      fun i => (ψ i - ψ (i - 1)) / h := by
+  rw [bwdDiff_submatrix_finEquiv]
+  ext i
+  simp [Matrix.mulVec, dotProduct, sub_div, sub_mul, ite_mul, div_mul_eq_mul_div,
+    ← Finset.sum_div]
+
+/-- The stencil of the central difference on `Fin N`. -/
+theorem centralDiff_submatrix_finEquiv_mulVec (ψ : Fin N → ℝ) :
+    (centralDiff N h).submatrix (ZMod.finEquiv N) (ZMod.finEquiv N) *ᵥ ψ =
+      fun i => (ψ (i + 1) - ψ (i - 1)) / (2 * h) := by
+  rw [centralDiff_submatrix_finEquiv]
+  ext i
+  simp [Matrix.mulVec, dotProduct, sub_div, sub_mul, ite_mul, div_mul_eq_mul_div,
+    ← Finset.sum_div]
+
+/-- The stencil of the second difference on `Fin N`. -/
+theorem secondDiff_submatrix_finEquiv_mulVec (ψ : Fin N → ℝ) :
+    (secondDiff N h).submatrix (ZMod.finEquiv N) (ZMod.finEquiv N) *ᵥ ψ =
+      fun i => (ψ (i + 1) - 2 * ψ i + ψ (i - 1)) / h ^ 2 := by
+  rw [secondDiff_submatrix_finEquiv]
+  ext i
+  simp [Matrix.mulVec, dotProduct, add_div, sub_div, add_mul, sub_mul, ite_mul,
+    div_mul_eq_mul_div, Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.sum_div]
+
+/-- On `Fin 3` with `h = 1/2`: the wrap-around entry `D⁺(2, 0) = 2`, `D⁻(0, 2) = -2`,
+`D⁰(0, 1) = 1` and `D²(1, 1) = -8`, read through `ZMod.finEquiv 3`. -/
+example :
+    (fwdDiff 3 (1 / 2)).submatrix (ZMod.finEquiv 3) (ZMod.finEquiv 3) 2 0 = 2 ∧
+      (bwdDiff 3 (1 / 2)).submatrix (ZMod.finEquiv 3) (ZMod.finEquiv 3) 0 2 = -2 ∧
+      (centralDiff 3 (1 / 2)).submatrix (ZMod.finEquiv 3) (ZMod.finEquiv 3) 0 1 = 1 ∧
+      (secondDiff 3 (1 / 2)).submatrix (ZMod.finEquiv 3) (ZMod.finEquiv 3) 1 1 = -8 := by
+  rw [fwdDiff_submatrix_finEquiv, bwdDiff_submatrix_finEquiv, centralDiff_submatrix_finEquiv,
+    secondDiff_submatrix_finEquiv]
+  simp only [Matrix.of_apply]
+  norm_num [Fin.ext_iff]
+
+/-- On `Fin 3` with `h = 1/2` and the indicator `ψ` of cell `1`: `(D⁺ ψ)₀ = 2`, `(D⁻ ψ)₁ = 2`,
+`(D⁰ ψ)₀ = 1` and `(D² ψ)₁ = -8`. -/
+example (ψ : Fin 3 → ℝ) (hψ : ψ = fun i => if i = 1 then 1 else 0) :
+    ((fwdDiff 3 (1 / 2)).submatrix (ZMod.finEquiv 3) (ZMod.finEquiv 3) *ᵥ ψ) 0 = 2 ∧
+      ((bwdDiff 3 (1 / 2)).submatrix (ZMod.finEquiv 3) (ZMod.finEquiv 3) *ᵥ ψ) 1 = 2 ∧
+      ((centralDiff 3 (1 / 2)).submatrix (ZMod.finEquiv 3) (ZMod.finEquiv 3) *ᵥ ψ) 0 = 1 ∧
+      ((secondDiff 3 (1 / 2)).submatrix (ZMod.finEquiv 3) (ZMod.finEquiv 3) *ᵥ ψ) 1 = -8 := by
+  rw [fwdDiff_submatrix_finEquiv_mulVec, bwdDiff_submatrix_finEquiv_mulVec,
+    centralDiff_submatrix_finEquiv_mulVec, secondDiff_submatrix_finEquiv_mulVec, hψ]
+  norm_num [Fin.ext_iff]
+
+end FinIndex
 
 end LeanDLRA.Kinetic
