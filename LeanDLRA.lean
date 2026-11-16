@@ -11,6 +11,7 @@ import LeanDLRA.Classical.WeylSingular
 import LeanDLRA.Control.AdjointDLRA
 import LeanDLRA.DLRA.Defs
 import LeanDLRA.DLRA.DynamicallyOrthogonal
+import LeanDLRA.DLRA.Existence
 import LeanDLRA.DLRA.QuasiOptimality
 import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.Filtering.Defs
@@ -18,6 +19,7 @@ import LeanDLRA.FixedRank.Defs
 import LeanDLRA.FixedRank.TangentSpace
 import LeanDLRA.FixedRank.TangentSpace.Curvature
 import LeanDLRA.FixedRank.TangentSpace.Defs
+import LeanDLRA.Foundations.AprioriExistence
 import LeanDLRA.Foundations.ConjugatedField
 import LeanDLRA.Foundations.Existence
 import LeanDLRA.Foundations.Galerkin
