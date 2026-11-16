@@ -257,3 +257,83 @@ def test_baseline_only_keeps_the_other_entries(tmp_path: Path) -> None:
     assert cc.run_baseline(tmp_path, ["nope"]) == 2
     assert cc.split_list(("a", "b,c")) == ["a", "b", "c"]
     assert cc.split_list("") == []
+
+
+# -- mathlib and the ratchet ----------------------------------------------------------------------
+
+
+def test_core_files_that_import_all_of_mathlib(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    tree(
+        tmp_path,
+        {
+            "LeanDLRA/T/A.lean": "import Mathlib\n",
+            "LeanDLRA/T/B.lean": "import Mathlib.Analysis.Normed.Group.Basic\n",
+            "LeanDLRA/T/C.lean": "/- c -/\nimport LeanDLRA.T.B\nimport Mathlib\n",
+        },
+    )
+    (tmp_path / "docs").mkdir()
+    assert cc.mathlib_findings(tmp_path) == ["LeanDLRA.T.A", "LeanDLRA.T.C"]
+    assert cc.run_mathlib(tmp_path, strict=False, list_all=False) == 1
+    assert "IMPORT-MATHLIB LeanDLRA.T.A" in capsys.readouterr().out
+    cc.run_baseline(tmp_path, ["mathlib"])
+    assert cc.run_mathlib(tmp_path, strict=False, list_all=False) == 0
+
+
+def test_ratchet_fails_only_on_growth(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    tree(tmp_path, {"LeanDLRA/T/A.lean": "def a := 1\ndef b := 2\n"})
+    (tmp_path / "docs").mkdir()
+    assert cc.run_ratchet(tmp_path) == 2  # no baseline entries
+    assert "RATCHET defs: no baseline entry" in capsys.readouterr().out
+    cc.run_baseline(tmp_path)
+    assert set(cc.read_baseline(tmp_path)) == {"defs", "vacuity", "mathlib"}
+    assert cc.run_ratchet(tmp_path) == 0
+    out = capsys.readouterr().out
+    assert "RATCHET defs: 2, baseline 2" in out
+    assert "RATCHET duplicates: not measured" in out  # no record, as in CI
+    # A finding replaced by another (a rename, a file move) is no growth.
+    (tmp_path / "LeanDLRA/T/A.lean").write_text("def a := 1\ndef c := 2\n")
+    assert cc.run_ratchet(tmp_path, ["defs"]) == 0
+    (tmp_path / "LeanDLRA/T/A.lean").write_text("def a := 1\n")
+    assert cc.run_ratchet(tmp_path, ["defs"]) == 0
+    assert "1 fewer: the baseline can be rewritten" in capsys.readouterr().out
+    (tmp_path / "LeanDLRA/T/A.lean").write_text("def a := 1\ndef b := 2\ndef d := 3\n")
+    assert cc.run_ratchet(tmp_path, ["defs", "mathlib"]) == 1
+    out = capsys.readouterr().out
+    assert "RATCHET defs: 3, more than the 2 of the baseline" in out
+    assert "RATCHET mathlib: 0, baseline 0" in out
+    assert cc.run_ratchet(tmp_path, ["nope"]) == 2
+
+
+def test_duplicates_are_counted_by_extra_copies_and_read_the_round(
+    tmp_path: Path,
+) -> None:
+    tree(tmp_path, {"LeanDLRA/T/A.lean": "", "LeanDLRA/T/B.lean": ""})
+    (tmp_path / "docs").mkdir()
+    write_record(
+        tmp_path,
+        [
+            ("LeanDLRA.T.A", "LeanDLRA.A.one", "⊢ True"),
+            ("LeanDLRA.T.B", "LeanDLRA.B.one", "⊢ True"),
+            ("LeanDLRA.T.B", "LeanDLRA.B.two", "⊢ False"),
+        ],
+    )
+    cc.run_baseline(tmp_path, ["duplicates"])
+    assert cc.count("duplicates", tmp_path) == 1
+    assert cc.baseline_count("duplicates", ["a=b=c", "d=e"]) == 3
+    # A running gate round: its statements replace those of its modules.
+    path = tmp_path / cc.ROUND_RECORD
+    header = {"format": "leandlra-hashdiff/1", "module_list": ["LeanDLRA.T.B"]}
+    lines = [json.dumps(header)] + [
+        json.dumps({"module": "LeanDLRA.T.B", "name": n, "type": "⊢ True"})
+        for n in ("LeanDLRA.B.one", "LeanDLRA.B.two")
+    ]
+    with gzip.open(path, "wt", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    assert cc.count("duplicates", tmp_path) == 2
+    assert cc.run_ratchet(tmp_path, ["duplicates"]) == 1
+    path.unlink()
+    assert cc.run_ratchet(tmp_path, ["duplicates"]) == 0

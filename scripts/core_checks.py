@@ -32,13 +32,23 @@ ends in ``Example`` or ``Examples``. Not seen: hypotheses from ``variable``, dat
 that are propositions, witnesses in other files; a different declaration with the same last
 component counts as a mention.
 
+``mathlib``: a core file that imports all of Mathlib (``import Mathlib``).
+
+``ratchet``: the sizes of the findings against the sizes of the baseline, failing only on growth
+(a finding may be replaced by another; a file move is no growth). For ``duplicates`` the size is
+the number of theorems beyond the first of each group; it is not measured without a record (CI).
+While a gate round runs, ``duplicates`` reads the round's statements for the round's modules.
+``scripts/audit.sh`` runs ``ratchet`` when ``AUDIT_RATCHETS=1``.
+
     uv run -q scripts/core_checks.py defs [--strict] [--list]
     uv run -q scripts/core_checks.py duplicates [--strict] [--list]
     uv run -q scripts/core_checks.py vacuity [--strict] [--list]
+    uv run -q scripts/core_checks.py mathlib [--strict] [--list]
     uv run -q scripts/core_checks.py baseline [--only=vacuity,...]   # today's findings
+    uv run -q scripts/core_checks.py ratchet [--checks=defs,...]     # sizes against the baseline
 
-Exit 0: no finding beyond the baseline. Exit 1: a new finding (printed). Exit 2: nothing to read
-(no record, no core root file).
+Exit 0: no finding beyond the baseline. Exit 1: a new finding (printed); for ``ratchet``, a size
+grew. Exit 2: nothing to read (no record, no core root file, no baseline entry).
 """
 
 from __future__ import annotations
@@ -49,7 +59,7 @@ import json
 import re
 import sys
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -58,6 +68,8 @@ import core
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = "docs/core_checks_baseline.json"
 RECORD = ".lake/hashdiff/rolling_statements.jsonl.gz"
+# The statements of the running gate round (scripts/rolling.py dump), for its modules only.
+ROUND_RECORD = ".lake/hashdiff/round_statements.jsonl.gz"
 EXEMPT_AREAS = frozenset(("Corrections", "Counterexamples"))
 
 _BLOCK_COMMENT = re.compile(r"/-.*?-/", re.DOTALL)
@@ -176,21 +188,47 @@ def defs_findings(root: Path = ROOT) -> list[tuple[str, int, str, str]]:
     return out
 
 
+def statement_entries(root: Path) -> Iterator[dict[str, str]]:
+    """The entries ``module, name, type`` of the statement record; while a gate round runs (its
+    record exists), the round's entries replace those of its modules."""
+    fresh: set[str] = set()
+    path = root / ROUND_RECORD
+    if path.exists():
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            fresh = set(json.loads(f.readline()).get("module_list", []))
+            for line in f:
+                if line.strip():
+                    yield json.loads(line)
+    with gzip.open(root / RECORD, "rt", encoding="utf-8") as f:
+        next(f, None)  # the header
+        for line in f:
+            if line.strip():
+                entry: dict[str, str] = json.loads(line)
+                if entry["module"] not in fresh:
+                    yield entry
+
+
 def duplicate_groups(root: Path = ROOT) -> list[list[tuple[str, str]]]:
     """Groups of ``(module, theorem)`` of the core with one statement hash, largest first."""
-    path = root / RECORD
     modules = frozenset(core.core_modules(root))
     by_hash: dict[str, list[tuple[str, str]]] = defaultdict(list)
-    with gzip.open(path, "rt", encoding="utf-8") as f:
-        for number, line in enumerate(f):
-            if number == 0:
-                continue  # the header
-            entry = json.loads(line)
-            if entry["module"] in modules:
-                digest = hashlib.sha256(entry["type"].encode()).hexdigest()
-                by_hash[digest].append((entry["module"], entry["name"]))
+    for entry in statement_entries(root):
+        if entry["module"] in modules:
+            digest = hashlib.sha256(entry["type"].encode()).hexdigest()
+            by_hash[digest].append((entry["module"], entry["name"]))
     groups = [sorted(g) for g in by_hash.values() if len(g) > 1]
     return sorted(groups, key=lambda g: (-len(g), g))
+
+
+def mathlib_findings(root: Path = ROOT) -> list[str]:
+    """The core modules that import all of Mathlib (``import Mathlib``)."""
+    return [
+        m
+        for m in core.core_modules(root)
+        if core.source_of(m, root).exists()
+        and "Mathlib"
+        in core.header_imports(core.source_of(m, root).read_text(encoding="utf-8"))
+    ]
 
 
 # -- non-vacuity ----------------------------------------------------------------------------------
@@ -433,7 +471,79 @@ def run_vacuity(root: Path, strict: bool, list_all: bool) -> int:
     return 1 if new else 0
 
 
-CHECKS = ("defs", "duplicates", "vacuity")
+def run_mathlib(root: Path, strict: bool, list_all: bool) -> int:
+    findings = mathlib_findings(root)
+    known = set() if strict else set(read_baseline(root).get("mathlib", []))
+    new = [m for m in findings if m not in known]
+    for module in findings if list_all else new:
+        print(f"IMPORT-MATHLIB {module}: imports all of Mathlib")
+    print(
+        f"mathlib: {len(findings)} core files import all of Mathlib, {len(new)} not in the "
+        "baseline"
+    )
+    return 1 if new else 0
+
+
+CHECKS = ("defs", "duplicates", "vacuity", "mathlib")
+
+
+def count(check: str, root: Path) -> int | None:
+    """The size of today's findings of a check (None: cannot be measured, no record). For
+    ``duplicates``: the theorems beyond the first of each group of equal statements."""
+    if check == "defs":
+        return len(defs_keys(defs_findings(root)))
+    if check == "duplicates":
+        if not (root / RECORD).exists():
+            return None
+        return sum(len(g) - 1 for g in duplicate_groups(root))
+    if check == "vacuity":
+        return len(vacuity_keys(vacuity_findings(root)))
+    return len(mathlib_findings(root))
+
+
+def baseline_count(check: str, keys: list[str]) -> int:
+    """The size of the baseline of a check, counted as ``count`` counts today's findings."""
+    if check == "duplicates":
+        return sum(k.count("=") for k in keys)
+    return len(keys)
+
+
+def run_ratchet(root: Path, checks: Sequence[str] = ()) -> int:
+    """Compare the size of the findings of the checks (default: all) with the baseline: exit 1
+    if one grew, 2 if a check has no baseline entry; 0 otherwise, also when it shrank."""
+    wanted = list(checks) or list(CHECKS)
+    if unknown := [c for c in wanted if c not in CHECKS]:
+        print(f"ratchet: unknown check {unknown[0]} (known: {', '.join(CHECKS)})")
+        return 2
+    base = read_baseline(root)
+    grew = missing = False
+    for check in wanted:
+        now = count(check, root)
+        if now is None:
+            print(f"RATCHET {check}: not measured (no record {RECORD})")
+            continue
+        if check not in base:
+            print(
+                f"RATCHET {check}: no baseline entry (write it with "
+                f"`uv run -q scripts/core_checks.py baseline --only={check}`)"
+            )
+            missing = True
+            continue
+        before = baseline_count(check, base[check])
+        if now > before:
+            print(
+                f"RATCHET {check}: {now}, more than the {before} of the baseline "
+                f"(`uv run -q scripts/core_checks.py {check}` lists the new findings)"
+            )
+            grew = True
+        else:
+            tighter = (
+                f"; {before - now} fewer: the baseline can be rewritten"
+                if now < before
+                else ""
+            )
+            print(f"RATCHET {check}: {now}, baseline {before}{tighter}")
+    return 1 if grew else 2 if missing else 0
 
 
 def run_baseline(root: Path, only: Sequence[str] = ()) -> int:
@@ -452,8 +562,10 @@ def run_baseline(root: Path, only: Sequence[str] = ()) -> int:
             if not (root / RECORD).exists():
                 continue
             data["duplicates"] = duplicate_keys(duplicate_groups(root))
-        else:
+        elif check == "vacuity":
             data["vacuity"] = vacuity_keys(vacuity_findings(root))
+        else:
+            data["mathlib"] = sorted(mathlib_findings(root))
         written.append(check)
     (root / BASELINE).write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n")
     print(f"{BASELINE}: " + ", ".join(f"{c} {len(data[c])}" for c in written))
@@ -474,6 +586,15 @@ class Checks:
     def vacuity(self, strict: bool = False, list: bool = False) -> None:
         """Public core theorems with hypotheses that no example of their file mentions."""
         sys.exit(run_vacuity(ROOT, strict, list))
+
+    def mathlib(self, strict: bool = False, list: bool = False) -> None:
+        """Core files that import all of Mathlib."""
+        sys.exit(run_mathlib(ROOT, strict, list))
+
+    def ratchet(self, checks: object = "") -> None:
+        """Fail if the findings of a check (--checks=defs,duplicates,vacuity,mathlib; default
+        all) outnumber its baseline (what scripts/audit.sh runs with AUDIT_RATCHETS=1)."""
+        sys.exit(run_ratchet(ROOT, split_list(checks)))
 
     def baseline(self, only: object = "") -> None:
         """Write docs/core_checks_baseline.json from today's findings (--only=defs,vacuity:

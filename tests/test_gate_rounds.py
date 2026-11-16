@@ -42,6 +42,8 @@ class World:
         self.changed: dict[str, int] = {}  # module -> declarations it changes
         self.removed: dict[str, int] = {}  # module -> declarations it removes
         self.push_code = 0
+        self.ratchet_code = 0  # exit status of the duplicates ratchet after the dump
+        self.environments: list[str] = []  # assignments of `env VAR=... command`
         self.tool_broken = ""  # a rolling.py command that cannot run
         self.dumped: list[str] = []
         self.clock = 1000.0
@@ -202,6 +204,17 @@ class World:
 
     def __call__(self, *cmd: str, timeout: int = 14400) -> tuple[int, str]:
         self.calls.append(cmd)
+        if cmd[0] == "env":
+            assignments = [c for c in cmd[1:] if "=" in c and not c.startswith("-")]
+            self.environments += assignments
+            cmd = cmd[1 + len(assignments) :]
+        if cmd == gate.RATCHET:
+            if self.ratchet_code == 0:
+                return 0, "RATCHET duplicates: 3, baseline 3\n"
+            return (
+                self.ratchet_code,
+                "RATCHET duplicates: 4, more than the 3 of the baseline\n",
+            )
         if cmd == gate.PUSH:
             return (
                 self.push_code,
@@ -251,9 +264,16 @@ class World:
             c for c in self.commands("lake", "build", "--wfail") if c != gate.CORE_BUILD
         ]
 
-    def run_gate(self, batch: int = 12, legacy_max: int = 6, grace: float = 0.0) -> int:
+    def run_gate(
+        self,
+        batch: int = 12,
+        legacy_max: int = 6,
+        grace: float = 0.0,
+        ratchets: bool = False,
+    ) -> int:
         """One pass of the gate over the queue (as `gate.py --once`, until the queue is empty)."""
-        return gate.Gate(self.root, self).loop(batch, True, legacy_max, grace)
+        runner = gate.Gate(self.root, self, ratchets=ratchets)
+        return runner.loop(batch, True, legacy_max, grace)
 
 
 @pytest.fixture
@@ -1203,3 +1223,52 @@ def test_dry_run_reports_a_missing_rolling_dump(
         "the gate would STOP: .lake/hashdiff/rolling_statements.jsonl.gz is missing"
     )
     assert out[-1] == "nothing to do"
+
+
+# -- ratchets -------------------------------------------------------------------------------------
+
+
+def test_without_ratchets_the_audit_runs_as_before(world: World) -> None:
+    world.group("g1", ["A"])
+    assert world.run_gate() == 0
+    assert world.commands("env") == []
+    assert world.commands(*gate.RATCHET) == []
+    assert world.commands("scripts/audit.sh") == [
+        ("scripts/audit.sh", "LeanDLRA", "LeanDLRA.Literature.A")
+    ]
+
+
+def test_ratchets_run_in_the_audit_and_after_the_dump(world: World) -> None:
+    world.group("g1", ["A"])
+    assert world.run_gate(ratchets=True) == 0
+    assert world.environments == [gate.SOURCE_RATCHETS]
+    assert world.commands("env") == [
+        (
+            "env",
+            gate.SOURCE_RATCHETS,
+            "scripts/audit.sh",
+            "LeanDLRA",
+            "LeanDLRA.Literature.A",
+        )
+    ]
+    order = [c for c in world.calls if c[:4] == gate.TOOL or c == gate.RATCHET]
+    assert [c[4] for c in order] == ["dump", "fidelity", "ratchet", "diff", "accept"]
+    assert world.lines("PUSHED") == ["PUSHED Add 1 slice (A)"]
+
+
+def test_more_duplicate_statements_reject_the_group(world: World) -> None:
+    world.group("g1", ["A"])
+    world.ratchet_code = 1
+    assert world.run_gate(ratchets=True) == 0
+    assert world.commands(*gate.PUSH) == []
+    assert world.lines("REJECT") == ["REJECT A: ratchet: more duplicate statements"]
+    assert world.status() == ""
+    assert "ROUNDFAIL ratchet" in " ".join(world.log())
+
+
+def test_ratchet_that_cannot_run_stops_the_gate(world: World) -> None:
+    world.group("g1", ["A"])
+    world.ratchet_code = 2
+    assert world.run_gate(ratchets=True) == 1
+    assert world.commands(*gate.PUSH) == []
+    assert any("STOP: ratchet could not run" in line for line in world.log())

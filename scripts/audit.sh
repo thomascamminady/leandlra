@@ -7,6 +7,7 @@
 #   scripts/audit.sh                      the core library (target LeanDLRA)
 #   scripts/audit.sh LeanDLRACatalogue    everything: the core and the catalogue
 #   scripts/audit.sh LeanDLRA MODULE...   the core and the listed modules (what the gate runs)
+#   AUDIT_RATCHETS=1 scripts/audit.sh     also the ratchets of scripts/core_checks.py (below)
 #
 # A target is a library (LeanDLRA, LeanDLRACatalogue) or a module name (docs/STRUCTURE.md).
 set -uo pipefail
@@ -20,6 +21,15 @@ done
 # The placeholder scan covers all sources, also those outside the targets.
 if grep -rnE '\bsorry\b|\bsorryAx\b|\badmit\b|^\s*(@\[[^]]*\]\s*)?((private|protected|noncomputable|scoped|local)\s+)*axiom\b|native_decide|implemented_by|\bextern\b|\bunsafe\b|debug\.skipKernelTC|\bdecide\s*:=\s*true' LeanDLRA; then
   echo "AUDIT FAIL: placeholder or custom axiom in sources"; exit 1
+fi
+# Ratchets (AUDIT_RATCHETS=1): the findings of scripts/core_checks.py (definitions outside a
+# Defs.lean, duplicate statements, theorems with hypotheses and no example, core files that import
+# all of Mathlib) may not outnumber docs/core_checks_baseline.json. AUDIT_RATCHET_CHECKS selects
+# the checks; the gate checks the duplicates itself, after the dump of its round.
+if [ "${AUDIT_RATCHETS:-0}" = 1 ]; then
+  uv run -q scripts/core_checks.py ratchet \
+    --checks="${AUDIT_RATCHET_CHECKS:-defs,duplicates,vacuity,mathlib}" \
+    || { echo "AUDIT FAIL: ratchet (scripts/core_checks.py, docs/core_checks_baseline.json)"; exit 1; }
 fi
 # A private name defined in two modules makes the rolling record ambiguous (`_priv.<name>` has no
 # module): a warning, not a failure (scripts/private_dups.py).

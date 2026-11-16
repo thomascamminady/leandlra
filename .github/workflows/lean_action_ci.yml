@@ -55,6 +55,11 @@ jobs:
           path: .lake
           key: core-lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
       - name: Axiom audit (no placeholders, standard axioms only, private declarations included)
+        env:
+          # The ratchets of scripts/core_checks.py (docs/core_checks_baseline.json), on when the
+          # repository variable AUDIT_RATCHETS is 1. Without the rolling record CI does not
+          # measure the duplicate statements; the gate does.
+          AUDIT_RATCHETS: ${{ vars.AUDIT_RATCHETS }}
         run: scripts/audit.sh
       # Replaying one module loads all of Mathlib, so they run one at a time. Everything is
       # replayed by the nightly workflow kernel_replay.yml.

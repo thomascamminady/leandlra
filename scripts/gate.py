@@ -15,7 +15,9 @@ a marker ``<id>.group`` that names them.  A round takes whole groups in the orde
    (``scripts/audit.sh``);
 3. merges the renames of the groups into ``docs/renames.json`` and checks, with
    ``scripts/rolling.py``, the recorded statements (fidelity) and the changed declarations (hashdiff)
-   on the core modules and the slices;
+   on the core modules and the slices; with ``AUDIT_RATCHETS=1`` in its environment the gate also
+   runs the ratchets of ``scripts/core_checks.py`` (the audit those on the sources, the round the
+   one on duplicate statements, after its dump);
 4. commits exactly its own files and pushes.
 
 A failure in 1 rejects the group of the failing slice (a legacy slice alone) and the round goes on.
@@ -60,6 +62,18 @@ RENAMES, PROMOTED = "docs/renames.json", "docs/promoted.txt"
 HASHDIR = ".lake/hashdiff"
 ROLLING = ("rolling.jsonl.gz", "rolling_statements.jsonl.gz")
 TOOL = ("uv", "run", "-q", "scripts/rolling.py")
+# Ratchets of scripts/core_checks.py, with AUDIT_RATCHETS=1 in the environment of the gate: the
+# audit checks those that read the sources, the round checks the duplicate statements after its
+# dump (which they read).
+SOURCE_RATCHETS = "AUDIT_RATCHET_CHECKS=defs,vacuity,mathlib"
+RATCHET = (
+    "uv",
+    "run",
+    "-q",
+    "scripts/core_checks.py",
+    "ratchet",
+    "--checks=duplicates",
+)
 LEGACY = "legacy"
 IDENT = re.compile(r"[^\s()\[\]{}⦃⦄,]+")  # a constant name, as in scripts/fidelity.py
 MODULE = re.compile(r"LeanDLRA(\.[A-Za-z_][A-Za-z0-9_']*)+")
@@ -366,8 +380,13 @@ def shell(root: Path) -> Run:
 class Gate:
     """The gate on one repository; every command goes through ``run`` (a fake one in the tests)."""
 
-    def __init__(self, root: Path, run: Run, dry: bool = False) -> None:
+    def __init__(
+        self, root: Path, run: Run, dry: bool = False, ratchets: bool | None = None
+    ) -> None:
         self.root, self.run, self.dry = root, run, dry
+        if ratchets is None:
+            ratchets = os.environ.get("AUDIT_RATCHETS") == "1"
+        self.ratchets = ratchets
         self.wip = root / "wip"
         self.ready, self.rejected, self.done = (
             self.wip / "ready",
@@ -737,6 +756,9 @@ class Gate:
             (self.root / PROMOTED).write_text(
                 listed + sep + "".join(f"{m}\n" for m in promote), encoding="utf-8"
             )
+        audit = ("scripts/audit.sh", "LeanDLRA", *modules)
+        if self.ratchets:
+            audit = ("env", SOURCE_RATCHETS, *audit)
         checks: tuple[tuple[str, tuple[str, ...], str], ...] = (
             ("root files", ("scripts/gen_root.sh",), "gen_root failed"),
             (
@@ -745,7 +767,7 @@ class Gate:
                 "core module imports a catalogue module",
             ),
             ("core build", CORE_BUILD, "core build failed"),
-            ("audit", ("scripts/audit.sh", "LeanDLRA", *modules), "audit failed"),
+            ("audit", audit, "audit failed"),
         )
         for stage, cmd, why in checks:
             code, out = self.run(*cmd)
@@ -775,6 +797,13 @@ class Gate:
             )
         if code != 0:
             return self.stop(f"fidelity could not run {out[-800:]}")
+        if self.ratchets:
+            code, out = self.run(*RATCHET)
+            if code == 1:
+                reason = f"ratchet: more duplicate statements\n{out[-3000:]}\n"
+                return self.fail(journal, live, "ratchet", reason)
+            if code != 0:
+                return self.stop(f"ratchet could not run {out[-800:]}")
         code, out = self.run(*TOOL, "diff", f"--report={HASHDIR}/round_report.md")
         stats = parse_stats(out)
         if code != 0 or stats is None:
