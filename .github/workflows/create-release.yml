@@ -1,12 +1,10 @@
 name: Create Release
 
+# The Lean template tagged and published a release named after the toolchain on every
+# lean-toolchain push. This project versions its releases itself (v0.1.0 through Certify), so the
+# workflow runs only when started by hand.
 on:
-  push:
-    branches:
-      - 'main'
-      - 'master'
-    paths:
-      - 'lean-toolchain'
+  workflow_dispatch:
 
 jobs:
   lean-release-tag:
