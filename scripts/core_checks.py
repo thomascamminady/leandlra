@@ -12,7 +12,7 @@ the baseline.
 ``defs``: the ``Defs.lean`` rule of ``docs/CONVENTIONS.md`` §3, read from the sources: a public
 ``def``, ``abbrev``, ``structure``, ``class``, ``inductive``, ``opaque`` or non-scoped ``instance``
 in a core file that is not a ``Defs.lean``. Exempt: ``private``, ``scoped`` and ``local``
-declarations, declarations in or below a namespace ``…Examples`` and the ``Corrections`` and
+declarations, declarations in or below a namespace whose name ends in ``Example`` or ``Examples`` and the ``Corrections`` and
 ``Counterexamples`` folders. A source scan, not the elaborated environment: it sees what the
 author wrote (no projections, no ``match_1``), it does not see a definition that a macro makes.
 
@@ -87,7 +87,7 @@ def definitions_in(text: str) -> list[tuple[int, str, str]]:
                 name = "instance"
             namespaces = [c for scope in stack for c in scope]
             parts = namespaces + name.split(".")
-            if "Examples" in parts[:-1]:
+            if any(c.endswith(("Example", "Examples")) for c in parts[:-1]):
                 continue
             out.append((number, kind, ".".join(parts)))
     return out
