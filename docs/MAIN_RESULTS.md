@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit b2ba1c6 (2026-11-16). A theorem is quoted from its
+files and were compared with them at commit e362c7c (2026-11-17). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -1002,13 +1002,13 @@ noncomputable def bugGlobalBound (L B H T δ ε h : ℝ) : ℝ :=
     + T * Real.exp (L * T) * bugC₂ L B H * h
 ```
 
-`bugC₁` in [`LeanDLRA/Integrators/BUG.lean`, line 92](../LeanDLRA/Integrators/BUG.lean#L92):
+`bugC₁` in [`LeanDLRA/Integrators/Defs.lean`, line 359](../LeanDLRA/Integrators/Defs.lean#L359):
 
 ```lean
 noncomputable def bugC₁ (L H : ℝ) : ℝ := 2 + 2 * L * H * Real.exp (L * H)
 ```
 
-`bugC₂` in [`LeanDLRA/Integrators/BUG.lean`, line 96](../LeanDLRA/Integrators/BUG.lean#L96):
+`bugC₂` in [`LeanDLRA/Integrators/Defs.lean`, line 363](../LeanDLRA/Integrators/Defs.lean#L363):
 
 ```lean
 noncomputable def bugC₂ (L B H : ℝ) : ℝ := L * B * (8 + Real.exp (L * H) * (1 + 8 * L * H))
@@ -1881,7 +1881,7 @@ of one step. The page states no global error for this step: the file contains no
 Source: the module docstring cites Ceruti, Einkemmer, Kusch and Lubich, arXiv 2402.08607, for the
 Galerkin step (the docstring of `galerkin_local_error` names its Theorem 1). The explicit update
 has no source line in the docstrings. The file ends with `example`s that satisfy the hypotheses of
-`norm_midpoint_defect_le`, `norm_half_step_sub_le`, `norm_predictor_sub_le`,
+`ODESolution.norm_midpoint_defect_le`, `ODESolution.norm_half_step_sub_le`, `norm_predictor_sub_le`,
 `galerkin_local_error` (a constant field, every `h > 0`) and `norm_update_sub_le` (a field for
 which every rank-adaptive BUG step with a two-column left basis has error at least h²/2,
 with `h = 3/2`).
@@ -2063,7 +2063,7 @@ theorem distLR_flow_le_exp_of_tube (hε : FactoredNormalBoundOn F r (tubeSet A a
     distLR r (Φ t₁) ≤ (t₁ - t₀) * ε * Real.exp (L * (t₁ - t₀))
 ```
 
-`distLR_flow_le_exp` in [`LeanDLRA/Matrix/LowRankDistance.lean`, lines 1360–1364](../LeanDLRA/Matrix/LowRankDistance.lean#L1360-L1364):
+`distLR_flow_le_exp` in [`LeanDLRA/Matrix/LowRankDistance.lean`, lines 1365–1369](../LeanDLRA/Matrix/LowRankDistance.lean#L1365-L1369):
 
 ```lean
 theorem distLR_flow_le_exp (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
@@ -2535,7 +2535,7 @@ Euler sequence of the full problem as reference, so that they apply to low-rank 
 integrators. The truncation `consTrunc` is the conservative truncation of Einkemmer, Ostermann
 and Scalone, arXiv 2206.09374, as cited in its docstring:
 
-`consTrunc` in [`LeanDLRA/Stability/Conservation.lean`, line 290](../LeanDLRA/Stability/Conservation.lean#L290):
+`consTrunc` in [`LeanDLRA/Stability/Conservation.lean`, line 292](../LeanDLRA/Stability/Conservation.lean#L292):
 
 ```lean
 def consTrunc (C : E →L[ℝ] E) (T : E → E) (Y : E) : E := C Y + T (Y - C Y)
@@ -2635,7 +2635,7 @@ Source: the theorem cites no theorem of a paper. The module docstring refers to
 
 ### 7.5 No stiffness-uniform global bound when the forcing varies on the scale of the step
 
-`StiffGlobalCycle.half_le_norm_sub_exactState` in [`LeanDLRA/Research/StiffGlobalCycle.lean`, lines 533–535](../LeanDLRA/Research/StiffGlobalCycle.lean#L533-L535):
+`StiffGlobalCycle.half_le_norm_sub_exactState` in [`LeanDLRA/Research/StiffGlobalCycle.lean`, lines 544–546](../LeanDLRA/Research/StiffGlobalCycle.lean#L544-L546):
 
 ```lean
 theorem half_le_norm_sub_exactState (hcs : c ^ 2 + s ^ 2 = 1) (hl : 0 < lam) (hs : s ≠ 0)
@@ -2643,12 +2643,12 @@ theorem half_le_norm_sub_exactState (hcs : c ^ 2 + s ^ 2 = 1) (hl : 0 < lam) (hs
     J * h / 2 ≤ ‖state c s σ 0 0 - exactState c s lam σ h J‖
 ```
 
-`StiffGlobalCycle.not_exists_uniform_global_bound` in [`LeanDLRA/Research/StiffGlobalCycle.lean`, lines 649–652](../LeanDLRA/Research/StiffGlobalCycle.lean#L649-L652):
+`StiffGlobalCycle.not_exists_uniform_global_bound` in [`LeanDLRA/Research/StiffGlobalCycle.lean`, lines 688–691](../LeanDLRA/Research/StiffGlobalCycle.lean#L688-L691):
 
 ```lean
 theorem not_exists_uniform_global_bound :
     ¬ ∃ K : ℝ, ∀ (c s lam σ h : ℝ) (J : ℕ), c ^ 2 + s ^ 2 = 1 → 0 < lam → 0 < s → 0 < h →
-      2 ≤ lam * s ^ 2 * h → 3 * (J : ℝ) * h ≤ 1 →
+      0 < σ → σ * lam ≤ 1 → 2 ≤ lam * s ^ 2 * h → 3 * (J : ℝ) * h ≤ 1 →
       ‖state c s σ 0 0 - exactState c s lam σ h J‖ ≤ K * (h * (1 + |Real.log h|) + s)
 ```
 
@@ -2755,7 +2755,7 @@ of the tensors `tucker Ċ U + ∑ k, tucker C (Function.update U k (U̇ k))` wit
 Source: Bachmayr, Eisenmann and Uschmajew, arXiv 2308.16720, Proposition 4.2, as cited in the
 docstring.
 
-`IsTuckerBUGStep` in [`LeanDLRA/Integrators/TuckerBUG.lean`, lines 733–747](../LeanDLRA/Integrators/TuckerBUG.lean#L733-L747):
+`IsTuckerBUGStep` in [`LeanDLRA/Integrators/TuckerBUG.lean`, lines 724–738](../LeanDLRA/Integrators/TuckerBUG.lean#L724-L738):
 
 ```lean
 structure IsTuckerBUGStep (F : ℝ → E → E) (ε : ℝ) {d : ℕ} (Q₀ P₁ : Fin d → E →L[ℝ] E)
@@ -2775,7 +2775,7 @@ structure IsTuckerBUGStep (F : ℝ → E → E) (ε : ℝ) {d : ℕ} (Q₀ P₁ 
   sStart : YS t₀ = modeProd P₁ Y₀
 ```
 
-`tucker_global_error_le` in [`LeanDLRA/Integrators/TuckerBUG.lean`, lines 882–894](../LeanDLRA/Integrators/TuckerBUG.lean#L882-L894):
+`tucker_global_error_le` in [`LeanDLRA/Integrators/TuckerBUG.lean`, lines 873–885](../LeanDLRA/Integrators/TuckerBUG.lean#L873-L885):
 
 ```lean
 theorem tucker_global_error_le (hF : IsLipschitzField F L) (hL : 0 ≤ L)
@@ -3359,7 +3359,7 @@ truncation and with exact client gradients.
 Source: the module docstring names Schotthöfer and Laiu, arXiv 2406.17887, Theorem 2 and
 Theorem 8, as the setting.
 
-`GradientFlowConvergence.projectedGradient_global_error` in [`LeanDLRA/Training/GradientFlowConvergence.lean`, lines 239–250](../LeanDLRA/Training/GradientFlowConvergence.lean#L239-L250):
+`GradientFlowConvergence.projectedGradient_global_error` in [`LeanDLRA/Training/GradientFlowConvergence.lean`, lines 238–249](../LeanDLRA/Training/GradientFlowConvergence.lean#L238-L249):
 
 ```lean
 theorem projectedGradient_global_error {G : E → E} {β B ε σ ϑ lr t₀ : ℝ}

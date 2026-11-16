@@ -6,7 +6,7 @@ read the first two sections of [Getting started](GETTING_STARTED.md); the pages 
 core proves are [Main results](MAIN_RESULTS.md) and [Definitions](DEFINITIONS.md).
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit b2ba1c6 (2026-11-16).
+block links to the lines. The blocks were compared with the files at commit e362c7c (2026-11-17).
 
 ## Contents
 

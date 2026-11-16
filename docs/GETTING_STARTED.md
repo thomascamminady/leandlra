@@ -15,7 +15,7 @@ The page describes the core library, the modules imported by `LeanDLRA.lean`. Th
 * [Conventions](CONVENTIONS.md): the rules for names, statements and docstrings.
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit b2ba1c6 (2026-11-16).
+block links to the lines. The blocks were compared with the files at commit e362c7c (2026-11-17).
 Installation is described in the [README](../README.md#using-leandlra-in-your-project).
 
 ## Contents
@@ -176,13 +176,13 @@ noncomputable def bugGlobalBound (L B H T δ ε h : ℝ) : ℝ :=
     + T * Real.exp (L * T) * bugC₂ L B H * h
 ```
 
-`bugC₁` in [`LeanDLRA/Integrators/BUG.lean`, line 92](../LeanDLRA/Integrators/BUG.lean#L92):
+`bugC₁` in [`LeanDLRA/Integrators/Defs.lean`, line 359](../LeanDLRA/Integrators/Defs.lean#L359):
 
 ```lean
 noncomputable def bugC₁ (L H : ℝ) : ℝ := 2 + 2 * L * H * Real.exp (L * H)
 ```
 
-`bugC₂` in [`LeanDLRA/Integrators/BUG.lean`, line 96](../LeanDLRA/Integrators/BUG.lean#L96):
+`bugC₂` in [`LeanDLRA/Integrators/Defs.lean`, line 363](../LeanDLRA/Integrators/Defs.lean#L363):
 
 ```lean
 noncomputable def bugC₂ (L B H : ℝ) : ℝ := L * B * (8 + Real.exp (L * H) * (1 + 8 * L * H))
@@ -448,7 +448,7 @@ declarations.
 
 The Lean sources below `LeanDLRA/` form two libraries ([STRUCTURE.md](STRUCTURE.md)).
 
-* The **core** is the set of modules imported by `LeanDLRA.lean`, 171 modules at the commit
+* The **core** is the set of modules imported by `LeanDLRA.lean`, 175 modules at the commit
   named above. Its theorems are stated in shared definitions, so they can be combined: the
   solution of one theorem is the solution of the next, a run is a run. This page,
   [Main results](MAIN_RESULTS.md) and [Definitions](DEFINITIONS.md) describe the core only.
@@ -470,7 +470,7 @@ import LeanDLRACatalogue                     -- the core and the catalogue
 A single module can be imported in the same way; the theorem of section 3 is in the module that
 the root file of the core imports with the line
 
-[`LeanDLRA.lean`, line 50](../LeanDLRA.lean#L50):
+[`LeanDLRA.lean`, line 51](../LeanDLRA.lean#L51):
 
 ```lean
 import LeanDLRA.Integrators.Matrix.BUGRun
