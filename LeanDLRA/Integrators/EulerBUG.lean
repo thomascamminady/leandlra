@@ -996,7 +996,7 @@ theorem xl_local_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBounde
 projector `Pa n`), followed by a truncation with tolerance `ϑ_tr`.  With `Φ n` the exact flow from
 `(tₙ, Y n)`: `‖Y n - A(tₙ)‖ ≤ e^{L n h} (‖Y 0 - A t₀‖ + n ℓ)` with the local bound
 `ℓ = (e^{L h} - 1)(B h + ϑ) + ϑ + ϑ_tr`, `ϑ = h (4 L B h + ε)`.  Since
-`ℓ ≤ h (c₁ ε + c₂ h) + ϑ_tr` (`xl_global_error_le`), this is `O(δ + ε + h + n ϑ_tr)`,
+`ℓ ≤ h (c₁ ε + c₂ h) + ϑ_tr` (`xl_bound_le`), this is `O(δ + ε + h + n ϑ_tr)`,
 independent of singular values. -/
 theorem xl_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
     (hh : 0 ≤ h) {N : ℕ} (hA : ODESolution F A t₀ (t₀ + N * h)) {Pa Q : ℕ → E →L[ℝ] E}

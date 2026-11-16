@@ -936,7 +936,7 @@ theorem galerkin_ssp_linear_norm_le {P : E →L[ℝ] E} (hP : IsOrthProj P) (A :
 2508.04484).  With `M = P A`, the RK4 step
 `x + h M x + h²/2 M² x + h³/6 M³ x + h⁴/24 M⁴ x` is norm-nonincreasing on `range P` whenever the
 full forward-Euler step is (only on `range P` is needed).  It is `rk4Lin (P A) h x`, and
-`rk4Lin_norm_le` applies.  This proves the statement `galerkin_rk4_norm_le`. -/
+`rk4Lin_norm_le` applies. -/
 theorem galerkin_rk4_taylor_norm_le {P : E →L[ℝ] E} (hP : IsOrthProj P) (A : E →L[ℝ] E)
     {h : ℝ} (hFE : ∀ x, P x = x → ‖x + h • A x‖ ≤ ‖x‖) {x : E} (hx : P x = x) :
     let M : E → E := fun y => P (A y)

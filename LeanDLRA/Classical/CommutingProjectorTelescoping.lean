@@ -44,7 +44,8 @@ mode-`i` matricization this is the `√d` quasi-optimality of the higher-order S
   `(e^{L h} - 1) (B h + √d ϑ) + √d ϑ ≤ h (c₁ ε + c₂ h)` with the improved constants
   `tuckerSqrtC₁ d L H = √d (1 + L H e^{L H})` and
   `tuckerSqrtC₂ d L B H = L B (4 √d + e^{L H} (1 + 4 √d L H))` (OP-RA-06 / OP-RA-22 in
-  `docs/OPEN_PROBLEMS.md`); `IsBUGStep.local_error_sqrt_two` is the matrix case `d = 2`.
+  `docs/survey/open-problems.json`); `IsBUGStep.local_error_sqrt_two` is the matrix case
+  `d = 2`.
 * `LeanDLRA.norm_sub_modeProd_apply_le_sqrt_mul_norm_sub`,
   `LeanDLRA.norm_sub_modeProd_apply_le_sqrt_mul_infDist`: **quasi-optimality.**  If each `P i`
   is a best mode-`i` approximation, i.e. `‖x - P i x‖ ≤ dist(x, Mᵢ)` for sets `Mᵢ` containing the

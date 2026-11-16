@@ -4,15 +4,12 @@ import LeanDLRA.Integrators.EulerBUG
 import LeanDLRA.Stability.Energy
 
 /-!
-# Projected gradient flows and their iterations: integrability, Barbalat, robust bounds
+# Projected preconditioned descent and the global error of projected gradient iterations
 
-This file collects convergence statements for the projected gradient flow
-`ẏ = -Π(t) ∇ℒ(y)` (the dynamical low-rank training flow `Ẇ = -P(W) ∇ℒ(W)` when
-`Π(t) = P(W(t))` is the tangent projector), for the low-rank heavy-ball flow, and for the
-discrete iterations that are actually run in dynamical low-rank training (DLRT, GeoLoRA,
-augmented backward-corrected PSI, low-rank heavy ball, low-rank Adam).  Everything is stated on
-an abstract real inner product space `E` with a loss `ℒ` whose gradient `g` is `β`-Lipschitz,
-in the conventions of `Training/Descent.lean`.
+Statements for the discrete iterations of dynamical low-rank training on an abstract real inner
+product space `E` with a loss `ℒ` whose gradient `g` is `β`-Lipschitz, in the conventions of
+`Training/Descent.lean`: loss descent of projected preconditioned (Adam-type) steps, and the
+distance of a projected stochastic gradient iteration to the full gradient flow.
 
 ## Main results
 
@@ -39,38 +36,6 @@ in the conventions of `Training/Descent.lean`.
   arXiv 2410.18720, Thm 3, arXiv 2502.03006, Thm 5.6 and arXiv 2306.01485, Thm 1, now for the
   discrete iteration, with the factor `e^{βT}` explicit, and with the non-vanishing noise
   term `T σ` for stochastic gradients.
-* `heavyBall_global_error`: the same for the discrete low-rank heavy-ball method
-  (arXiv 2506.17475, Thm 3) written as an explicit Euler step of the first-order system on
-  `E × E`, with damping `(1 - λ γ)` (the paper mixes `(1 - γ)` and `(1 - λ γ)`).
-
-### OP-TR-05: integrability and asymptotic stationarity of projected flows
-
-* `integral_projGrad_sq_le`, `integrableOn_projGrad_sq_Ici`, `integral_Ici_projGrad_sq_le`:
-  along `ẏ = -Π(t) ∇ℒ(y)` with `ℒ ≥ ℒ_inf`, `∫_a^∞ ‖Π ∇ℒ(y)‖² ≤ ℒ(y a) - ℒ_inf` (OP-TR-05 (i)).
-* `integral_heavyBall_le`: `∫_a^b γ ‖V‖² ≤ ℒ(W a) + ‖V a‖²/2 - ℒ(W b) - ‖V b‖²/2` for the
-  low-rank heavy-ball flow.
-* `tendsto_zero_of_integrableOn_of_uniformContinuous` (**Barbalat's lemma**): a nonnegative,
-  uniformly continuous, integrable function on `[a, ∞)` tends to `0`.
-* `tendsto_projGrad_of_lipschitz`: if the projected gradient along the trajectory is Lipschitz in
-  time and bounded, then `Π(t) ∇ℒ(y t) → 0` (OP-TR-05 (ii)).  Convergence to a single critical
-  point (OP-TR-05 (iii)) needs a Łojasiewicz inequality and is not treated.
-
-### OP-EX-06: invariance of the multi-layer block structure
-
-* `mem_range_of_maskedFlow`, `odeSolution_of_maskedFlow`: if the mask projector `Π` satisfies
-  `Π P(Y) Π = P(Y) Π` on `range Π`, the solution of the auxiliary masked flow
-  `Z' = -Π P(Π Z) Π ∇ℒ(Π Z)` started in `range Π` stays in `range Π` and solves the original
-  flow `Y' = -P(Y) ∇ℒ(Y)`.  No block SVD of `Y(t)` is used (the argument of arXiv 2410.18720,
-  Prop. 1, is circular there).  Identification with an arbitrary solution of the original flow
-  needs uniqueness, which holds where the field is Lipschitz (`ODESolution.norm_sub_le_exp`);
-  this is stated as a hypothesis-level corollary `eq_of_maskedFlow`.
-
-### OP-TR-07: KSL loss descent
-
-* `loss_kslEuler_le`: for the Euler-substep KSL step (K-step, backward S-step, L-step, each one
-  explicit Euler step with the gradient frozen at `Y₀`), the loss satisfies
-  `ℒ(Y₁) ≤ ℒ(Y₀) - h (‖Q₀ G₀‖² - ‖P₁ Q₀ G₀‖² + ‖P₁ G₀‖²) + β h² C`, with an explicit `C`
-  independent of singular values.  Exact descent near stationarity remains open.
 -/
 
 open Set Finset MeasureTheory Filter Topology

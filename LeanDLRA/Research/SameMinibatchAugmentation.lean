@@ -760,13 +760,6 @@ definition `leftProj U * rightProj V`). -/
 @[deprecated (since := "2026-11-09")] alias isOrthProj_galerkinProj :=
   LeanDLRA.isOrthProj_galerkinProj
 
-/-! The local predicate `IsOrthBasisOf` (`Ûᵀ Û = 1 ∧ ∃ C, Û = K C`) of an earlier version of this
-file is replaced by the core `Matrix.IsOrthBasisOf` (equal for bases with as many columns as `K`,
-`isOrthBasisOf_iff`), and `IsOrthBasisOf.mul_transpose_eq` by
-`Matrix.IsOrthBasisOf.mul_transpose_eq_mul_transpose`. No deprecated alias is left: an alias
-`StochasticDescent.IsOrthBasisOf` would make `IsOrthBasisOf` ambiguous in the modules that open
-both this namespace and `Matrix (IsOrthBasisOf)`, and no other module used the old names. -/
-
 end StochasticDescent
 
 end LeanDLRA
