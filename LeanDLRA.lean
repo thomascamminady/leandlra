@@ -36,6 +36,7 @@ import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Integrators.GlobalError
 import LeanDLRA.Integrators.InexactSubsteps
 import LeanDLRA.Integrators.KStep
+import LeanDLRA.Integrators.Matrix.AdaptiveBUGRun
 import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
 import LeanDLRA.Integrators.Matrix.BUG
 import LeanDLRA.Integrators.Matrix.BUGRun
