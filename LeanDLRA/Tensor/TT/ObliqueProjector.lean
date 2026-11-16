@@ -516,28 +516,6 @@ theorem ttRightObliqueProj_tt_update
     refine Finset.sum_congr rfl fun b _ => ?_
     ring
 
-/-- The arithmetic of the alternating sum: if `aₖ = bₖ` for `k < m`, `a_m = z` and
-`aₖ = b_{k-1}` for `m < k < d`, then `∑_{k<d} aₖ - ∑_{k<d-1} bₖ = z`. -/
-private lemma sum_sub_sum_eq_of_shift {M : Type*} [AddCommGroup M] {a b : ℕ → M} {m d : ℕ}
-    {z : M} (hm : m < d) (hlt : ∀ k < m, a k = b k) (heq : a m = z)
-    (hgt : ∀ k, m < k → k < d → a k = b (k - 1)) :
-    ∑ k ∈ Finset.range d, a k - ∑ k ∈ Finset.range (d - 1), b k = z := by
-  obtain ⟨n, rfl⟩ : ∃ n, d = m + 1 + n := ⟨d - (m + 1), by omega⟩
-  have e1 : ∑ k ∈ Finset.range (m + 1 + n), a k =
-      ∑ k ∈ Finset.range m, b k + z + ∑ j ∈ Finset.range n, b (m + j) := by
-    rw [Finset.sum_range_add, Finset.sum_range_succ,
-      Finset.sum_congr rfl fun k hk => hlt k (Finset.mem_range.mp hk), heq]
-    congr 1
-    refine Finset.sum_congr rfl fun j hj => ?_
-    rw [hgt (m + 1 + j) (by omega) (by have := Finset.mem_range.mp hj; omega)]
-    congr 1
-    omega
-  have e2 : ∑ k ∈ Finset.range (m + 1 + n - 1), b k =
-      ∑ k ∈ Finset.range m, b k + ∑ j ∈ Finset.range n, b (m + j) := by
-    rw [show m + 1 + n - 1 = m + n by omega, Finset.sum_range_add]
-  rw [e1, e2]
-  abel
-
 /-- **`P_Y` fixes every single-core variation.** -/
 theorem ttObliqueTangentProj_tt_update
     (hXl : ∀ k, 0 < k → k < d → IsUnit ((Xl k)ᵀ * ttLeft A k).det)

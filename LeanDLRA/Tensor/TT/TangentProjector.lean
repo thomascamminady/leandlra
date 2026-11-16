@@ -457,10 +457,11 @@ theorem actOn_apply_eq_of_row_eq_one {κ : Type*} [Fintype κ] [DecidableEq κ] 
     (Z : Tensor ι) {x : ∀ k, ι k} (hx : Subtype.restrict p x ∈ I) : actOn p M Z x = Z x := by
   simp [actOn_apply, hM _ hx, Matrix.one_apply]
 
-/-- The arithmetic of the proof of arXiv 2402.18721, Thm 4.1: if `aₖ = bₖ` for `k < m`,
-`a_m = z` and `aₖ = b_{k-1}` for `m < k < d`, then `∑_{k<d} aₖ - ∑_{k<d-1} bₖ = z`. -/
-private lemma sum_sub_sum_eq_of_shift {a b : ℕ → ℝ} {m d : ℕ} {z : ℝ} (hm : m < d)
-    (hlt : ∀ k < m, a k = b k) (heq : a m = z) (hgt : ∀ k, m < k → k < d → a k = b (k - 1)) :
+/-- A shifted telescoping sum: if `aₖ = bₖ` for `k < m`, `a_m = z` and `aₖ = b_{k-1}` for
+`m < k < d`, then `∑_{k<d} aₖ - ∑_{k<d-1} bₖ = z`. -/
+lemma sum_sub_sum_eq_of_shift {M : Type*} [AddCommGroup M] {a b : ℕ → M} {m d : ℕ}
+    {z : M} (hm : m < d) (hlt : ∀ k < m, a k = b k) (heq : a m = z)
+    (hgt : ∀ k, m < k → k < d → a k = b (k - 1)) :
     ∑ k ∈ Finset.range d, a k - ∑ k ∈ Finset.range (d - 1), b k = z := by
   obtain ⟨n, rfl⟩ : ∃ n, d = m + 1 + n := ⟨d - (m + 1), by omega⟩
   have e1 : ∑ k ∈ Finset.range (m + 1 + n), a k =
@@ -476,7 +477,15 @@ private lemma sum_sub_sum_eq_of_shift {a b : ℕ → ℝ} {m d : ℕ} {z : ℝ} 
       ∑ k ∈ Finset.range m, b k + ∑ j ∈ Finset.range n, b (m + j) := by
     rw [show m + 1 + n - 1 = m + n by omega, Finset.sum_range_add]
   rw [e1, e2]
-  ring
+  abel
+
+/-- The hypotheses of `sum_sub_sum_eq_of_shift` can hold: `a = (0, 5, 0)`, `b = 0`, `m = 1`,
+`d = 3` and `z = 5`. -/
+example : ∑ k ∈ Finset.range 3, (if k = 1 then (5 : ℤ) else 0)
+    - ∑ _k ∈ Finset.range (3 - 1), (0 : ℤ) = 5 :=
+  sum_sub_sum_eq_of_shift (a := fun k => if k = 1 then 5 else 0) (b := fun _ => 0) (m := 1)
+    (by norm_num) (fun k hk => by simp [show k ≠ 1 by omega]) (by simp)
+    (fun k h1 _ => by simp [show k ≠ 1 by omega])
 
 /-- **Cross interpolation of the oblique TT tangent projector** (Dektor–Peng–Venturi,
 arXiv 2402.18721, Lemma 4.1 and Thm 4.1). Let `Ml k` act on the first `k` modes and `Mr k` on
