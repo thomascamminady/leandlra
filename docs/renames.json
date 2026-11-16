@@ -246,5 +246,13 @@
   "LeanDLRA.Literature.P2502_08951.StepData.IsStep.sigma_eq_zero": "LeanDLRA.Literature.P2502_08951.StepData.IsLowRankBGKStep.sigma_eq_zero",
   "LeanDLRA.Literature.P2502_08951.StepData.IsStep.orth_Vs": "LeanDLRA.Literature.P2502_08951.StepData.IsLowRankBGKStep.orth_Vs",
   "LeanDLRA.Literature.P2502_08951.PenalizedSetting.IsStep": "LeanDLRA.Literature.P2502_08951.PenalizedSetting.IsPenalizedBGKStep",
-  "LeanDLRA.Literature.P2502_08951.StepData.IsStep.Xh_left": "LeanDLRA.Literature.P2502_08951.StepData.IsLowRankBGKStep.Xh_left"
+  "LeanDLRA.Literature.P2502_08951.StepData.IsStep.Xh_left": "LeanDLRA.Literature.P2502_08951.StepData.IsLowRankBGKStep.Xh_left",
+  "LeanDLRA.Literature.P2609_02721.tensorCoeff_admissible": "LeanDLRA.Literature.P2609_02721.tensorCoeff_isDissipativeDivFree",
+  "LeanDLRA.Literature.P2609_02721.FaceCoeff.Admissible.abs_le": "LeanDLRA.Literature.P2609_02721.FaceCoeff.IsDissipativeDivFree.abs_le",
+  "LeanDLRA.Literature.P2609_02721.VlasovFV.IsRegular.admissible": "LeanDLRA.Literature.P2609_02721.VlasovFV.IsRegular.isDissipativeDivFree",
+  "LeanDLRA.Literature.P2609_02721.FaceCoeff.Admissible.abs_le_bdry": "LeanDLRA.Literature.P2609_02721.FaceCoeff.IsDissipativeDivFree.abs_le_bdry",
+  "LeanDLRA.Literature.P2609_02721.FaceCoeff.Admissible.mk": "LeanDLRA.Literature.P2609_02721.FaceCoeff.IsDissipativeDivFree.mk",
+  "LeanDLRA.Literature.P2609_02721.FaceCoeff.Admissible": "LeanDLRA.Literature.P2609_02721.FaceCoeff.IsDissipativeDivFree",
+  "LeanDLRA.Literature.P2609_02721.FaceCoeff.Admissible.div_free": "LeanDLRA.Literature.P2609_02721.FaceCoeff.IsDissipativeDivFree.div_free",
+  "LeanDLRA.Literature.P2112_02695.maxwellian": "LeanDLRA.Kinetic.maxwellian"
 }

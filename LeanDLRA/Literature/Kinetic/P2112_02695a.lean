@@ -1,6 +1,7 @@
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Matrix.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
+import LeanDLRA.Kinetic.Defs
 import LeanDLRA.Matrix.Frobenius
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
@@ -41,7 +42,7 @@ exactly if the discarded singular values vanish (`boundary_capture`), which is t
 In Sec. 4.2 the collision integral is taken over the product `ℝ^d × S^{d-1}`, it is assumed to
 converge for `Q(f_L, f_R)` and `Q(f_R, f_L)`, and this is proved for bounded kernels; the moment
 equation (4.18) is the hypothesis, not the Boltzmann equation itself, which the ansatz need not
-solve.
+solve.  The Maxwellian is the core `Kinetic.maxwellian`.
 `a(x₀) = 1/2` fixes the translation, which the paper leaves implicit.
 
 **Not formalized.**  The forward Euler scheme (2.24)-(2.26) and the boundary formula (2.20) for
@@ -853,6 +854,7 @@ section Maxwellian
 
 open MeasureTheory ProbabilityTheory
 open scoped NNReal Real
+open LeanDLRA.Kinetic (maxwellian)
 
 section Gaussian
 
@@ -947,10 +949,9 @@ end Gaussian
 
 variable {ι : Type*} [Fintype ι]
 
-/-- **The Maxwellian of arXiv 2112.02695**:
-`M(ρ, u, T)(v) = ρ (2 π R T)^{-d/2} exp(-|v - u|² / (2 R T))` in dimension `d = card ι`. -/
-noncomputable def maxwellian (R ρ T : ℝ) (u v : EuclideanSpace ℝ ι) : ℝ :=
-  ρ / (2 * π * R * T) ^ ((Fintype.card ι : ℝ) / 2) * Real.exp (-‖v - u‖ ^ 2 / (2 * R * T))
+/-! **The Maxwellian of arXiv 2112.02695**,
+`M(ρ, u, T)(v) = ρ (2 π R T)^{-d/2} exp(-|v - u|² / (2 R T))` in dimension `d = card ι`, is the
+core `Kinetic.maxwellian R ρ T u v`. -/
 
 /-- A Maxwellian is a product of one-dimensional Gaussian densities. -/
 private lemma maxwellian_eq_prod {R ρ T : ℝ} (hθ : 0 < R * T) (u v : EuclideanSpace ℝ ι) :

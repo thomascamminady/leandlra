@@ -117,7 +117,8 @@ The paper takes `ε → 0` formally in each substep.  The theorems here say when
 The discrete density `ρ (f)_i = ∑_j w_j f_{ij}` is the core `Kinetic.density` of
 `LeanDLRA/Kinetic/Defs.lean`. The discrete momentum `momentum` is vector valued and stays a
 definition of this file; `momentum_eq_quadMoment` writes each of its components as a core
-quadrature moment `Kinetic.quadMoment`.
+quadrature moment `Kinetic.quadMoment`. The Maxwellian of Eq. (7) is the core `Kinetic.maxwellian`
+with gas constant and temperature one (`maxwellian_eq_kinetic`).
 -/
 
 open Set Filter Topology Finset
@@ -150,6 +151,13 @@ lemma gaussConst_pos (d : ℕ) : 0 < gaussConst d := by
 `f^eq = ρ (2π)^{-d/2} exp (-(v - u)² / 2)`. -/
 noncomputable def maxwellian {d : ℕ} (ρ : ℝ) (u v : Vel d) : ℝ :=
   ρ * gaussConst d * Real.exp (-‖v - u‖ ^ 2 / 2)
+
+/-- The Maxwellian of Eq. (7) is the core Maxwellian `Kinetic.maxwellian` with gas constant and
+temperature one. -/
+theorem maxwellian_eq_kinetic {d : ℕ} (ρ : ℝ) (u v : Vel d) :
+    maxwellian ρ u v = Kinetic.maxwellian 1 ρ 1 u v := by
+  simp only [maxwellian, gaussConst, Kinetic.maxwellian, Fintype.card_fin, mul_one]
+  ring
 
 /-- The truncated Maxwellian of Eq. (8):
 `ρ (2π)^{-d/2} exp (-v² / 2) (1 + v · u + (v · u)² / 2 - u² / 2)`. -/

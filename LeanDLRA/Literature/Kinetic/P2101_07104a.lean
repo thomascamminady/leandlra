@@ -1,5 +1,6 @@
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.Matrix.BUG
+import LeanDLRA.Kinetic.Defs
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Novel.KineticAP
 
@@ -51,6 +52,9 @@ a limit theorem; `T ≠ 1`; the identification of the `O(ε)` term in (6.2)–(6
 ignores the low-rank projection error; the spatial discretizations of Sec. 5; and the KSL step with
 QR in `L²`, which is why the AP theorem is on matrices. The time derivatives in
 `chapmanEnskog_stress` are the Euler equations in non-conservative form.
+
+Core vocabulary: the isothermal Maxwellian (4.1) is the core `Kinetic.maxwellian` with gas constant
+and temperature one (`maxwellian_eq_kinetic`).
 -/
 
 open Set Filter Topology Finset MeasureTheory
@@ -71,6 +75,12 @@ noncomputable def gaussKernel (v : Vel d) : ℝ := Real.exp (-‖v‖ ^ 2 / 2)
 /-- The isothermal Maxwellian (4.1) (`T = 1`), for given density and bulk velocity. -/
 noncomputable def maxwellian (ρ : ℝ) (u v : Vel d) : ℝ :=
   ρ / (2 * Real.pi) ^ ((d : ℝ) / 2) * Real.exp (-‖v - u‖ ^ 2 / 2)
+
+/-- The isothermal Maxwellian (4.1) is the core Maxwellian `Kinetic.maxwellian` with gas constant
+and temperature one. -/
+theorem maxwellian_eq_kinetic (ρ : ℝ) (u v : Vel d) :
+    maxwellian ρ u v = Kinetic.maxwellian 1 ρ 1 u v := by
+  simp only [maxwellian, Kinetic.maxwellian, Fintype.card_fin, mul_one]
 
 /-- `w, a ↦ a • w`: the bilinear map convolving an `F`-valued function with a scalar kernel. -/
 noncomputable def scalarKernel (F : Type*) [NormedAddCommGroup F] [NormedSpace ℝ F] :

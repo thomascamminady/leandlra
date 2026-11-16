@@ -26,8 +26,8 @@ mean over `K₂`, which is their value since the normal is constant on `e` and t
 does not depend on the point of `e`.  The one geometric fact used, the closure relation `∑_{e ⊂ ∂K}
 |e| n_{K,e} = 0` of a polytope, is a field of `PolyMesh` (it is the divergence theorem for constant
 fields); from it the discrete divergence-free identity (A.4), which is a hypothesis of Lemma A.1 on
-a general mesh, is *derived* for the product mesh (`tensorCoeff_admissible`), as are the bounds
-`|a_e| ≤ b_e`, so the hypotheses of the main theorems are the regularity assumptions
+a general mesh, is *derived* for the product mesh (`tensorCoeff_isDissipativeDivFree`), as are the
+bounds `|a_e| ≤ b_e`, so the hypotheses of the main theorems are the regularity assumptions
 `VlasovFV.IsRegular` only.  The scheme is the one of (2.10): global Lax–Friedrichs on interior
 faces and upwind on boundary faces; Lemma A.1 itself covers all fluxes with `|a_e| ≤ b_e`, so also
 the upwind and local Lax–Friedrichs fluxes.  Truncated SVDs are specified by their singular-triplet
@@ -92,7 +92,7 @@ variable {C F B : Type*} [Fintype C] [Fintype F] [Fintype B] [DecidableEq C]
 /-- The hypotheses of Lemma A.1 on the coefficients: `|a| ≤ b` on all faces (true for upwind and
 Lax–Friedrichs fluxes) and the discrete divergence-free identity (A.4)
 `∑_{e ⊂ ∂K} |e| a_{K,e} = 0`. -/
-structure FaceCoeff.Admissible (M : FVMesh C F B) (c : FaceCoeff F B) : Prop where
+structure FaceCoeff.IsDissipativeDivFree (M : FVMesh C F B) (c : FaceCoeff F B) : Prop where
   abs_le : ∀ e, |c.a e| ≤ c.b e
   abs_le_bdry : ∀ β, |c.aB β| ≤ c.bB β
   div_free : ∀ K, ∑ e with M.side₁ e = K, M.area e * c.a e
@@ -167,8 +167,8 @@ variable (M : FVMesh C F B) {c : FaceCoeff F B}
 (Steps 2 to 10 of the proof of the lemma), for an arbitrary finite polyhedral mesh; only `|a| ≤ b`,
 (A.4) and the CFL condition are used.  Conditional on `|a| ≤ b` and (A.4), which the paper derives
 from the flux choice (2.6)-(2.7) and from `∇ · a = 0` by the divergence theorem; for the Vlasov
-scheme both are proved (`tensorCoeff_admissible`). -/
-theorem energy_euler_le (hc : c.Admissible M) {τ : ℝ} (hτ : 0 ≤ τ)
+scheme both are proved (`tensorCoeff_isDissipativeDivFree`). -/
+theorem energy_euler_le (hc : c.IsDissipativeDivFree M) {τ : ℝ} (hτ : 0 ≤ τ)
     (hcfl : ∀ K, τ * M.cflRate c K ≤ 1) (u : C → ℝ) :
     M.energy (M.euler c τ u) ≤ M.energy u := by
   -- the weights
@@ -362,14 +362,15 @@ theorem tauCFL_pos {c : ℝ → FaceCoeff F B} {T ᾱ : ℝ} (hα : 0 ≤ ᾱ)
 /-- arXiv 2609.02721, Lemma A.1, second claim, for the coefficients of an arbitrary finite
 polyhedral mesh: the forward Euler finite volume scheme (A.1) with homogeneous inflow is `L²`
 stable for `0 < τ ≤ τ_CFL` and all `n` with `tⁿ = n τ ≤ T`.  Conditional on the hypotheses
-`|a| ≤ b` and (A.4), collected in `FaceCoeff.Admissible`: on a general mesh the face coefficients
-are abstract numbers, while the paper derives `|a| ≤ b` from the flux choice (2.6)-(2.7) and (A.4)
-from `∇ · a = 0` by the divergence theorem.  For the Vlasov field on a tensor mesh both are proved,
-see `tensorCoeff_admissible`, so `VlasovFV.lemma41_stable` is unconditional.  The norm is
-`∑_K |K| u_K²`, which is the `L²` norm of the piecewise constant function, see
-`PolyMesh.integral_sq_pwc`. -/
-theorem lemmaA1_stable {c : ℝ → FaceCoeff F B} {T τ : ℝ} (hc : ∀ t ∈ Icc 0 T, (c t).Admissible M)
-    (hτ : 0 < τ) (hcfl : ENNReal.ofReal τ ≤ M.tauCFL c T) {u : ℕ → C → ℝ}
+`|a| ≤ b` and (A.4), collected in `FaceCoeff.IsDissipativeDivFree`: on a general mesh the face
+coefficients are abstract numbers, while the paper derives `|a| ≤ b` from the flux choice
+(2.6)-(2.7) and (A.4) from `∇ · a = 0` by the divergence theorem.  For the Vlasov field on a tensor
+mesh both are proved, see `tensorCoeff_isDissipativeDivFree`, so `VlasovFV.lemma41_stable` is
+unconditional.  The norm is `∑_K |K| u_K²`, which is the `L²` norm of the piecewise constant
+function, see `PolyMesh.integral_sq_pwc`. -/
+theorem lemmaA1_stable {c : ℝ → FaceCoeff F B} {T τ : ℝ}
+    (hc : ∀ t ∈ Icc 0 T, (c t).IsDissipativeDivFree M) (hτ : 0 < τ)
+      (hcfl : ENNReal.ofReal τ ≤ M.tauCFL c T) {u : ℕ → C → ℝ}
     (hu : ∀ n : ℕ, u (n + 1) = M.euler (c (n * τ)) τ (u n)) (n : ℕ) (hn : n * τ ≤ T) :
     M.energy (u n) ≤ M.energy (u 0) := by
   induction n with
@@ -461,9 +462,9 @@ theorem integral_sq_pwc (u : C → ℝ) : ∫ y, M.pwc u y ^ 2 ∂M.μ = M.energ
 
 /-- arXiv 2609.02721, Lemma A.1, second claim, literally in `L²(Ω)`: the piecewise constant
 functions of the forward Euler finite volume scheme satisfy `‖û_hⁿ‖_{L²} ≤ ‖û_h⁰‖_{L²}`, here
-squared.  Conditional on `FaceCoeff.Admissible`, as `FVMesh.lemmaA1_stable`. -/
+squared.  Conditional on `FaceCoeff.IsDissipativeDivFree`, as `FVMesh.lemmaA1_stable`. -/
 theorem lemmaA1_stable_L2 {c : ℝ → FaceCoeff F B} {T τ : ℝ}
-    (hc : ∀ t ∈ Icc 0 T, (c t).Admissible M.toFVMesh) (hτ : 0 < τ)
+    (hc : ∀ t ∈ Icc 0 T, (c t).IsDissipativeDivFree M.toFVMesh) (hτ : 0 < τ)
     (hcfl : ENNReal.ofReal τ ≤ M.tauCFL c T) {u : ℕ → C → ℝ}
     (hu : ∀ n : ℕ, u (n + 1) = M.euler (c (n * τ)) τ (u n)) (n : ℕ) (hn : n * τ ≤ T) :
     ∫ y, M.pwc (u n) y ^ 2 ∂M.μ ≤ ∫ y, M.pwc (u 0) y ^ 2 ∂M.μ := by
@@ -655,12 +656,12 @@ numerical flux of Section 2 on a product mesh: `|a_e| ≤ b_e` on all faces and 
 divergence-free identity (A.4) are derived from the closure relation of the cells and from the
 Lax–Friedrichs bound `α ≥ max_e max_{z ∈ e} |n_e · a|`.  (A.4) holds because the transport
 field `(w₁(y₂), w₂(y₁))` is divergence free by its structure. -/
-theorem tensorCoeff_admissible {w₁ : Y₂ → D₁ → ℝ} {w₂ : Y₁ → D₂ → ℝ} {α : ℝ}
+theorem tensorCoeff_isDissipativeDivFree {w₁ : Y₂ → D₁ → ℝ} {w₂ : Y₁ → D₂ → ℝ} {α : ℝ}
     (hw₁ : ∀ j s, IntegrableOn (fun y => w₁ y s) (M₂.cell j) M₂.μ)
     (hw₂ : ∀ i s, IntegrableOn (fun y => w₂ y s) (M₁.cell i) M₁.μ)
     (hα₁ : ∀ e j, ∀ y ∈ M₂.cell j, |∑ s, M₁.normal e s * w₁ y s| ≤ α)
     (hα₂ : ∀ f i, ∀ y ∈ M₁.cell i, |∑ s, M₂.normal f s * w₂ y s| ≤ α) :
-    (tensorCoeff M₁ M₂ w₁ w₂ α).Admissible (M₁.toFVMesh.prod M₂.toFVMesh) where
+    (tensorCoeff M₁ M₂ w₁ w₂ α).IsDissipativeDivFree (M₁.toFVMesh.prod M₂.toFVMesh) where
   abs_le := by
     rintro (⟨e, j⟩ | ⟨i, f⟩)
     · exact M₂.abs_mean_le (hα₁ e j)
@@ -1050,7 +1051,7 @@ theorem norm_add_smul_tensorL_le {w₁ : Y₂ → D₁ → ℝ} {w₂ : Y₁ →
     (hcfl : ∀ K, τ * (M₁.toFVMesh.prod M₂.toFVMesh).cflRate (tensorCoeff M₁ M₂ w₁ w₂ α) K ≤ 1)
     (U : Matrix C₁ C₂ ℝ) : ‖U + τ • tensorL M₁ M₂ w₁ w₂ α U‖ ≤ ‖U‖ := by
   have h := (M₁.toFVMesh.prod M₂.toFVMesh).energy_euler_le
-    (tensorCoeff_admissible M₁ M₂ hw₁ hw₂ hα₁ hα₂) hτ hcfl (hatU M₁ M₂ U)
+    (tensorCoeff_isDissipativeDivFree M₁ M₂ hw₁ hw₂ hα₁ hα₂) hτ hcfl (hatU M₁ M₂ U)
   rw [← hatU_add_smul_tensorL M₁ M₂ hw₁ hw₂, energy_hatU, energy_hatU] at h
   exact (sq_le_sq₀ (norm_nonneg _) (norm_nonneg _)).1 h
 
@@ -1486,10 +1487,11 @@ lemma IsRegular.force_bound (hD : D'.IsRegular T) {t : ℝ} (ht : t ∈ Icc 0 T)
   exact hD.α_v t ht f i x hx
 
 /-- arXiv 2609.02721, proof of Lemma A.1 for the Vlasov field: the coefficients of the scheme are
-admissible; the identity (A.4) and `|a_e| ≤ b_e` are derived from the geometry. -/
-theorem IsRegular.admissible (hD : D'.IsRegular T) {t : ℝ} (ht : t ∈ Icc 0 T) :
-    (D'.coeff t).Admissible D'.mesh :=
-  tensorCoeff_admissible D'.Mx D'.Mv hD.v_int (hD.force_int ht) (hD.α_x t ht)
+dissipative and divergence free: the identity (A.4) and `|a_e| ≤ b_e` are derived from the geometry.
+-/
+theorem IsRegular.isDissipativeDivFree (hD : D'.IsRegular T) {t : ℝ} (ht : t ∈ Icc 0 T) :
+    (D'.coeff t).IsDissipativeDivFree D'.mesh :=
+  tensorCoeff_isDissipativeDivFree D'.Mx D'.Mv hD.v_int (hD.force_int ht) (hD.α_x t ht)
     (fun f i => hD.force_bound ht f i)
 
 /-- arXiv 2609.02721, Lemma 4.1, one step: a forward Euler step of (2.10) is nonexpansive on

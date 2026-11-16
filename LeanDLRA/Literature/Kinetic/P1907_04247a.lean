@@ -32,7 +32,9 @@ treats only the first column of `A*_{∂_m}` after (B.15).  `exists_IEStep`, `ex
 Core vocabulary: a rule with `IsQuadrature v` gives, for every coordinate, a core quadrature
 `Kinetic.Quadrature` of `LeanDLRA/Kinetic/Defs.lean` with the equal weights `1 / N_v`
 (`IsQuadrature.toQuadrature`), and the density of this file is the core `Kinetic.density` with
-these weights, written as a column (`density_eq_kinetic`, `IsQuadrature.density_eq`).
+these weights, written as a column (`density_eq_kinetic`, `IsQuadrature.density_eq`).  The
+transport term `∑ₖ Gₖ Y Mₖ` is the core streaming operator (`transport_eq_streaming`).
+`Assumption1` is the paper's Assumption 1 and keeps its name.
 -/
 
 open Set Filter Topology Finset
@@ -49,6 +51,19 @@ variable {m p : Type*} [Fintype m] [DecidableEq m] [Fintype p] [DecidableEq p] {
 /-- The transport term `∑ₖ Gₖ Y Mₖ`. -/
 noncomputable def transport (G : Fin d → Matrix m m ℝ) (M : Fin d → Matrix p p ℝ)
     (Y : Matrix m p ℝ) : Matrix m p ℝ := ∑ k, G k * Y * M k
+
+omit [DecidableEq m] [DecidableEq p] in
+/-- The transport term is the core streaming operator `Kinetic.streaming G M` with the `d` terms
+`(Gₖ, Mₖ)`. -/
+theorem transport_eq_streaming (G : Fin d → Matrix m m ℝ) (M : Fin d → Matrix p p ℝ)
+    (Y : Matrix m p ℝ) : transport G M Y = Kinetic.streaming G M Y :=
+  (Kinetic.streaming_apply G M Y).symm
+
+/-- The transport term is additive, as an instance of the core streaming operator. -/
+example (G : Fin 2 → Matrix (Fin 3) (Fin 3) ℝ) (M : Fin 2 → Matrix (Fin 2) (Fin 2) ℝ)
+    (Y Z : Matrix (Fin 3) (Fin 2) ℝ) :
+    transport G M (Y + Z) = transport G M Y + transport G M Z := by
+  simp only [transport_eq_streaming, map_add]
 
 /-- The limit operator `1 - (τ / d) ∑ₖ Gₖ W⁻¹ Gₖ`. -/
 noncomputable def limitOp (G : Fin d → Matrix m m ℝ) (Winv : Matrix m m ℝ) (τ : ℝ) :
