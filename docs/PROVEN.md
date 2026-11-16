@@ -7,25 +7,43 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
-| [`Foundations/Existence`](../LeanDLRA/Foundations/Existence.lean) | Global existence of solutions under the standing DLRA assumptions | 19 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660) |
+| [`Foundations/ConjugatedField`](../LeanDLRA/Foundations/ConjugatedField.lean) | Fields conjugated by continuous linear maps | 5 |  |
+| [`Foundations/Existence`](../LeanDLRA/Foundations/Existence.lean) | Global existence of solutions under the standing DLRA assumptions | 20 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660) |
 | [`Foundations/Galerkin`](../LeanDLRA/Foundations/Galerkin.lean) | Galerkin ODEs `y' = P F(t, y)` | 51 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2107.07282](https://arxiv.org/abs/2107.07282), [2206.09374](https://arxiv.org/abs/2206.09374) |
 | [`Foundations/Gronwall`](../LeanDLRA/Foundations/Gronwall.lean) | Discrete Grönwall inequalities and Lady Windermere's fan | 13 | [1906.01369](https://arxiv.org/abs/1906.01369), [2010.02022](https://arxiv.org/abs/2010.02022) |
 | [`Foundations/Localization`](../LeanDLRA/Foundations/Localization.lean) | Localisation: tube hypotheses, global extension, bootstrap and continuation | 66 | [1604.05706](https://arxiv.org/abs/1604.05706), [2010.02022](https://arxiv.org/abs/2010.02022), [2010.05249](https://arxiv.org/abs/2010.05249), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660), [2308.11581](https://arxiv.org/abs/2308.11581), [2609.20307](https://arxiv.org/abs/2609.20307) |
 | [`Foundations/ODE`](../LeanDLRA/Foundations/ODE.lean) | ODE toolkit for dynamical low-rank error analysis | 11 |  |
 | [`Foundations/OneSided`](../LeanDLRA/Foundations/OneSided.lean) | One-sided Lipschitz vector fields: stability for stiff and dissipative problems | 45 | [2312.00172](https://arxiv.org/abs/2312.00172), [2402.05347](https://arxiv.org/abs/2402.05347), [2610.41606](https://arxiv.org/abs/2610.41606) |
-| [`Foundations/Projector`](../LeanDLRA/Foundations/Projector.lean) | Orthogonal projectors and the tangent-space operator calculus | 24 |  |
+| [`Foundations/Projector`](../LeanDLRA/Foundations/Projector.lean) | Orthogonal projectors and the tangent-space operator calculus | 22 |  |
+
+## Analysis
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`Analysis/Defs`](../LeanDLRA/Analysis/Defs.lean) | Definitions: ODE solutions and conditions on vector fields | 17 |  |
+
+## Linear algebra
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`LinearAlgebra/Factorization/Defs`](../LeanDLRA/LinearAlgebra/Factorization/Defs.lean) | Definitions: pseudoinverses, factorizations, and the projectors built from them | 89 |  |
+| [`LinearAlgebra/Frobenius/Defs`](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean) | Definitions: the Frobenius structure on real matrices | 32 |  |
+| [`LinearAlgebra/LowRank/Defs`](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean) | Definitions: low-rank matrices and matrices given by their columns | 2 |  |
+| [`LinearAlgebra/LowRank/SepRank`](../LeanDLRA/LinearAlgebra/LowRank/SepRank.lean) | Separation rank and the fixed-rank set | 10 |  |
+| [`LinearAlgebra/Projection/Defs`](../LeanDLRA/LinearAlgebra/Projection/Defs.lean) | Definitions: orthogonal and oblique projectors | 9 |  |
+| [`LinearAlgebra/SVD/Defs`](../LeanDLRA/LinearAlgebra/SVD/Defs.lean) | Definitions: singular vectors and the truncated SVD | 1 |  |
 
 ## Matrices
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
-| [`Matrix/Curvature`](../LeanDLRA/Matrix/Curvature.lean) | Curvature bounds for the manifold of fixed-rank matrices | 81 | [1906.01369](https://arxiv.org/abs/1906.01369), [2002.12197](https://arxiv.org/abs/2002.12197), [2306.01485](https://arxiv.org/abs/2306.01485), [2403.02834](https://arxiv.org/abs/2403.02834) |
-| [`Matrix/Frobenius`](../LeanDLRA/Matrix/Frobenius.lean) | The Frobenius inner product on real matrices | 35 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022) |
-| [`Matrix/GaugeODE`](../LeanDLRA/Matrix/GaugeODE.lean) | Gauge-fixed factor ODEs of dynamical low-rank approximation | 48 | [1301.1058](https://arxiv.org/abs/1301.1058) |
-| [`Matrix/Interpolation`](../LeanDLRA/Matrix/Interpolation.lean) | Oblique (interpolatory / sketched) projectors in dynamical low-rank approximation | 102 | [2410.17091](https://arxiv.org/abs/2410.17091), [2510.19518](https://arxiv.org/abs/2510.19518), [2607.03402](https://arxiv.org/abs/2607.03402) |
-| [`Matrix/LowRankDistance`](../LeanDLRA/Matrix/LowRankDistance.lean) | Distance to the low-rank set | 80 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2308.05914](https://arxiv.org/abs/2308.05914), [2402.08607](https://arxiv.org/abs/2402.08607), [2410.18720](https://arxiv.org/abs/2410.18720), [2602.06614](https://arxiv.org/abs/2602.06614), [2608.27749](https://arxiv.org/abs/2608.27749) |
-| [`Matrix/Orthonormal`](../LeanDLRA/Matrix/Orthonormal.lean) | Orthonormal bases capturing a column space ("QR / orth" step) | 27 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660) |
-| [`Matrix/Projectors`](../LeanDLRA/Matrix/Projectors.lean) | Left, right and tangent-space projectors on matrices | 40 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Matrix/Curvature`](../LeanDLRA/Matrix/Curvature.lean) | Curvature bounds for the manifold of fixed-rank matrices | 84 | [1906.01369](https://arxiv.org/abs/1906.01369), [2002.12197](https://arxiv.org/abs/2002.12197), [2306.01485](https://arxiv.org/abs/2306.01485), [2403.02834](https://arxiv.org/abs/2403.02834) |
+| [`Matrix/Frobenius`](../LeanDLRA/Matrix/Frobenius.lean) | The Frobenius inner product on real matrices | 20 |  |
+| [`Matrix/GaugeODE`](../LeanDLRA/Matrix/GaugeODE.lean) | Gauge-fixed factor ODEs of dynamical low-rank approximation | 46 | [1301.1058](https://arxiv.org/abs/1301.1058) |
+| [`Matrix/Interpolation`](../LeanDLRA/Matrix/Interpolation.lean) | Oblique (interpolatory / sketched) projectors in dynamical low-rank approximation | 100 | [2410.17091](https://arxiv.org/abs/2410.17091), [2510.19518](https://arxiv.org/abs/2510.19518), [2607.03402](https://arxiv.org/abs/2607.03402) |
+| [`Matrix/LowRankDistance`](../LeanDLRA/Matrix/LowRankDistance.lean) | Distance to the low-rank set | 78 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2308.05914](https://arxiv.org/abs/2308.05914), [2402.08607](https://arxiv.org/abs/2402.08607), [2410.18720](https://arxiv.org/abs/2410.18720), [2602.06614](https://arxiv.org/abs/2602.06614), [2608.27749](https://arxiv.org/abs/2608.27749) |
+| [`Matrix/Orthonormal`](../LeanDLRA/Matrix/Orthonormal.lean) | Orthonormal bases capturing a column space ("QR / orth" step) | 26 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660) |
+| [`Matrix/Projectors`](../LeanDLRA/Matrix/Projectors.lean) | Left, right and tangent-space projectors on matrices | 36 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247) |
 
 ## Classical matrix analysis
 
@@ -35,57 +53,180 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Classical/CommutingProjectorTelescoping`](../LeanDLRA/Classical/CommutingProjectorTelescoping.lean) | Pythagorean telescoping for orthogonal mode projectors: `√d` instead of `d` | 26 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247) |
 | [`Classical/CourantFischer`](../LeanDLRA/Classical/CourantFischer.lean) | Courant–Fischer min-max, Weyl's inequalities and Loewner monotonicity | 30 |  |
 | [`Classical/EckartYoung`](../LeanDLRA/Classical/EckartYoung.lean) | The Eckart–Young–Mirsky theorem for real matrices | 45 | [2104.05247](https://arxiv.org/abs/2104.05247), [2510.19518](https://arxiv.org/abs/2510.19518) |
-| [`Classical/KyFan`](../LeanDLRA/Classical/KyFan.lean) | Ky Fan's maximum principle and the optimality of POD bases | 33 | [2104.05247](https://arxiv.org/abs/2104.05247) |
-| [`Classical/SVD`](../LeanDLRA/Classical/SVD.lean) | The thin singular value decomposition | 30 |  |
-| [`Classical/WeylSingular`](../LeanDLRA/Classical/WeylSingular.lean) | Weyl's inequality for singular values | 24 | [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Classical/KyFan`](../LeanDLRA/Classical/KyFan.lean) | Ky Fan's maximum principle and the optimality of POD bases | 31 | [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Classical/SVD`](../LeanDLRA/Classical/SVD.lean) | The thin singular value decomposition | 29 |  |
+| [`Classical/WeylSingular`](../LeanDLRA/Classical/WeylSingular.lean) | Weyl's inequality for singular values | 25 | [2104.05247](https://arxiv.org/abs/2104.05247) |
+
+## The fixed-rank manifold
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`FixedRank/Defs`](../LeanDLRA/FixedRank/Defs.lean) | Definitions: tangent and normal projectors of the fixed-rank manifold | 5 |  |
+| [`FixedRank/TangentSpace`](../LeanDLRA/FixedRank/TangentSpace.lean) | Tangent vectors of the fixed-rank manifold | 13 | [1803.10473](https://arxiv.org/abs/1803.10473), [2010.05249](https://arxiv.org/abs/2010.05249) |
+| [`FixedRank/TangentSpace/Defs`](../LeanDLRA/FixedRank/TangentSpace/Defs.lean) | Definitions: tangent projector and tangent space at a point of the fixed-rank manifold | 2 |  |
+
+## The DLRA problem
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`DLRA/Defs`](../LeanDLRA/DLRA/Defs.lean) | Definitions: the DLRA problem and normal-component bounds | 5 |  |
+| [`DLRA/DynamicallyOrthogonal`](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean) | Dynamically orthogonal formulations of dynamical low-rank approximation | 20 |  |
+| [`DLRA/QuasiOptimality`](../LeanDLRA/DLRA/QuasiOptimality.lean) | Quasi-optimality of dynamical low-rank approximation for matrices | 4 |  |
 
 ## Dynamics
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
-| [`Dynamics/ContinuousDLRA`](../LeanDLRA/Dynamics/ContinuousDLRA.lean) | Time-continuous dynamical low-rank approximation | 57 | [2203.08455](https://arxiv.org/abs/2203.08455), [2206.09374](https://arxiv.org/abs/2206.09374), [2308.16720](https://arxiv.org/abs/2308.16720), [2312.00172](https://arxiv.org/abs/2312.00172), [2606.15843](https://arxiv.org/abs/2606.15843), [2610.41606](https://arxiv.org/abs/2610.41606) |
+| [`Dynamics/ContinuousDLRA`](../LeanDLRA/Dynamics/ContinuousDLRA.lean) | Time-continuous dynamical low-rank approximation | 56 | [2203.08455](https://arxiv.org/abs/2203.08455), [2206.09374](https://arxiv.org/abs/2206.09374), [2308.16720](https://arxiv.org/abs/2308.16720), [2312.00172](https://arxiv.org/abs/2312.00172), [2606.15843](https://arxiv.org/abs/2606.15843), [2610.41606](https://arxiv.org/abs/2610.41606) |
 
 ## Integrators
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
 | [`Integrators/BUG`](../LeanDLRA/Integrators/BUG.lean) | Robust error bound of the basis-update & Galerkin (BUG) integrator | 16 | [2010.02022](https://arxiv.org/abs/2010.02022) |
+| [`Integrators/BUGCore`](../LeanDLRA/Integrators/BUGCore.lean) | The basis update and the BUG step without analysis constants | 20 |  |
+| [`Integrators/Defs`](../LeanDLRA/Integrators/Defs.lean) | Definitions: time grids, local errors, step relations and runs | 11 |  |
 | [`Integrators/EulerBUG`](../LeanDLRA/Integrators/EulerBUG.lean) | Explicit-Euler BUG, XL/sXL and GAP integrators | 51 | [2104.05247](https://arxiv.org/abs/2104.05247), [2107.07282](https://arxiv.org/abs/2107.07282), [2209.00550](https://arxiv.org/abs/2209.00550), [2502.07040](https://arxiv.org/abs/2502.07040), [2502.08951](https://arxiv.org/abs/2502.08951), [2505.19929](https://arxiv.org/abs/2505.19929), [2609.02721](https://arxiv.org/abs/2609.02721) |
 | [`Integrators/Exactness`](../LeanDLRA/Integrators/Exactness.lean) | Exactness of low-rank integrators for rank-`r` data | 103 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660) |
+| [`Integrators/GlobalError`](../LeanDLRA/Integrators/GlobalError.lean) | Global error from local errors on a time grid | 23 |  |
 | [`Integrators/InexactSubsteps`](../LeanDLRA/Integrators/InexactSubsteps.lean) | Inexact and incompletely augmented substeps (BUG, Tucker BUG, parallel BUG) | 45 | [1709.02594](https://arxiv.org/abs/1709.02594), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660), [2602.07437](https://arxiv.org/abs/2602.07437), [2608.16994](https://arxiv.org/abs/2608.16994), [2608.27749](https://arxiv.org/abs/2608.27749) |
 | [`Integrators/KStep`](../LeanDLRA/Integrators/KStep.lean) | The K-step capture lemma | 9 | [2010.02022](https://arxiv.org/abs/2010.02022) |
-| [`Integrators/Matrix/BUG`](../LeanDLRA/Integrators/Matrix/BUG.lean) | The BUG integrator for matrices, at the level of the factors | 62 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Integrators/Matrix/AdaptiveBUGStep`](../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean) | The augmented BUG step as step relations: truncation by a tolerance or to a fixed rank | 36 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Integrators/Matrix/BUG`](../LeanDLRA/Integrators/Matrix/BUG.lean) | The BUG integrator for matrices, at the level of the factors | 58 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Integrators/Matrix/BUGRun`](../LeanDLRA/Integrators/Matrix/BUGRun.lean) | Runs of the fixed-rank BUG integrator: existence and error bound | 9 |  |
+| [`Integrators/Matrix/BUGStep`](../LeanDLRA/Integrators/Matrix/BUGStep.lean) | The matrix BUG step as a step relation | 16 |  |
+| [`Integrators/Matrix/BUGTube`](../LeanDLRA/Integrators/Matrix/BUGTube.lean) | The BUG integrator near the solution: global error from tube hypotheses | 2 |  |
+| [`Integrators/Matrix/Defs`](../LeanDLRA/Integrators/Matrix/Defs.lean) | Definitions: normal-component bounds for matrix integrators | 15 |  |
+| [`Integrators/Matrix/EulerBUGRun`](../LeanDLRA/Integrators/Matrix/EulerBUGRun.lean) | Runs of the fixed-rank explicit Euler BUG integrator: existence and error bound | 9 | [2209.00550](https://arxiv.org/abs/2209.00550), [2502.07040](https://arxiv.org/abs/2502.07040) |
+| [`Integrators/Matrix/EulerBUGStep`](../LeanDLRA/Integrators/Matrix/EulerBUGStep.lean) | The explicit Euler BUG step as a step relation | 20 | [2104.05247](https://arxiv.org/abs/2104.05247), [2502.07040](https://arxiv.org/abs/2502.07040) |
+| [`Integrators/Matrix/FactoredNormalBound`](../LeanDLRA/Integrators/Matrix/FactoredNormalBound.lean) | Mixed components of a field under the factored normal bound | 33 |  |
+| [`Integrators/Matrix/KSLRun`](../LeanDLRA/Integrators/Matrix/KSLRun.lean) | Runs of the matrix projector-splitting integrator: existence and error bound | 11 |  |
+| [`Integrators/Matrix/KSLStep`](../LeanDLRA/Integrators/Matrix/KSLStep.lean) | The matrix projector-splitting step as a step relation | 18 |  |
 | [`Integrators/Matrix/ParallelBUG`](../LeanDLRA/Integrators/Matrix/ParallelBUG.lean) | The parallel BUG integrator for matrices | 48 | [2304.05660](https://arxiv.org/abs/2304.05660), [2403.02834](https://arxiv.org/abs/2403.02834) |
+| [`Integrators/Matrix/ParallelBUGRun`](../LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean) | Runs of the fixed-rank parallel BUG integrator: existence and error bound | 10 | [2304.05660](https://arxiv.org/abs/2304.05660) |
+| [`Integrators/Matrix/ParallelBUGStep`](../LeanDLRA/Integrators/Matrix/ParallelBUGStep.lean) | The fixed-rank parallel BUG step as a step relation | 20 | [2304.05660](https://arxiv.org/abs/2304.05660) |
 | [`Integrators/Matrix/ProjectorSplitting`](../LeanDLRA/Integrators/Matrix/ProjectorSplitting.lean) | The projector-splitting (KSL) integrator for matrices | 30 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022) |
 | [`Integrators/Matrix/Symmetry`](../LeanDLRA/Integrators/Matrix/Symmetry.lean) | Preservation of symmetry and skew-symmetry by the BUG integrator | 44 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Integrators/Matrix/TruncBUGRun`](../LeanDLRA/Integrators/Matrix/TruncBUGRun.lean) | Runs of the augmented BUG integrator with truncation to a fixed rank | 8 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Integrators/Method`](../LeanDLRA/Integrators/Method.lean) | Step methods: existence of a run and error bound from four properties of one step | 9 |  |
+| [`Integrators/MethodGrid`](../LeanDLRA/Integrators/MethodGrid.lean) | Tube-local methods on general grids | 3 |  |
+| [`Integrators/MethodTolerance`](../LeanDLRA/Integrators/MethodTolerance.lean) | Tube-local methods with a tolerance per step | 5 |  |
 | [`Integrators/ParallelBUG`](../LeanDLRA/Integrators/ParallelBUG.lean) | The parallel rank-adaptive BUG integrator: robust local and global error bounds | 29 | [2304.05660](https://arxiv.org/abs/2304.05660), [2403.02834](https://arxiv.org/abs/2403.02834) |
 | [`Integrators/PerturbedField`](../LeanDLRA/Integrators/PerturbedField.lean) | Hyper-reduced, surrogate and frozen-coupling vector fields | 22 | [2303.01856](https://arxiv.org/abs/2303.01856), [2401.04249](https://arxiv.org/abs/2401.04249), [2610.08956](https://arxiv.org/abs/2610.08956) |
 | [`Integrators/ProjectorSplitting`](../LeanDLRA/Integrators/ProjectorSplitting.lean) | Robust error bound of the projector-splitting (KSL) integrator | 37 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022) |
 | [`Integrators/RankAdaptiveBUG`](../LeanDLRA/Integrators/RankAdaptiveBUG.lean) | The rank-adaptive (augmented) BUG integrator | 63 | [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Integrators/Tube`](../LeanDLRA/Integrators/Tube.lean) | The tube theorem: global error bounds from hypotheses near the solution | 16 |  |
 | [`Integrators/TuckerBUG`](../LeanDLRA/Integrators/TuckerBUG.lean) | The Tucker-tensor (`d`-mode) BUG integrator | 79 | [1709.02594](https://arxiv.org/abs/1709.02594), [2002.11392](https://arxiv.org/abs/2002.11392), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2412.00858](https://arxiv.org/abs/2412.00858) |
+| [`Integrators/TuckerBUGCore`](../LeanDLRA/Integrators/TuckerBUGCore.lean) | The Tucker BUG step without analysis constants, near a reference solution | 15 | [2010.02022](https://arxiv.org/abs/2010.02022) |
 
-## Stability and structure
+## Integrators of higher order
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
-| [`Stability/Conservation`](../LeanDLRA/Stability/Conservation.lean) | Conservation properties of dynamical low-rank integrators | 53 | [2107.07282](https://arxiv.org/abs/2107.07282), [2201.10397](https://arxiv.org/abs/2201.10397), [2206.09374](https://arxiv.org/abs/2206.09374), [2311.06399](https://arxiv.org/abs/2311.06399), [2606.31662](https://arxiv.org/abs/2606.31662) |
-| [`Stability/Energy`](../LeanDLRA/Stability/Energy.lean) | `L²`-stability and energy stability of robust dynamical low-rank integrators | 59 | [2104.05247](https://arxiv.org/abs/2104.05247), [2107.07282](https://arxiv.org/abs/2107.07282), [2212.12012](https://arxiv.org/abs/2212.12012), [2507.15192](https://arxiv.org/abs/2507.15192) |
+| [`HighOrder/MidpointBUG`](../LeanDLRA/HighOrder/MidpointBUG.lean) | Midpoint and trapezoidal BUG: interior capture and quadrature defects | 32 | [2402.08607](https://arxiv.org/abs/2402.08607), [2608.17157](https://arxiv.org/abs/2608.17157), [2608.27749](https://arxiv.org/abs/2608.27749), [2610.11747](https://arxiv.org/abs/2610.11747) |
+| [`HighOrder/MidpointBUGGlobal`](../LeanDLRA/HighOrder/MidpointBUGGlobal.lean) | Second-order global error bound of the midpoint BUG integrator | 12 | [2402.08607](https://arxiv.org/abs/2402.08607) |
+| [`HighOrder/RungeKuttaBUG`](../LeanDLRA/HighOrder/RungeKuttaBUG.lean) | Galerkin–Runge–Kutta BUG: exactness, stage span, robust order `p`, relaxed exactness, SSP/RK4 | 38 | [2209.00550](https://arxiv.org/abs/2209.00550), [2311.06399](https://arxiv.org/abs/2311.06399), [2502.07040](https://arxiv.org/abs/2502.07040), [2508.04484](https://arxiv.org/abs/2508.04484), [2512.15703](https://arxiv.org/abs/2512.15703), [2602.12337](https://arxiv.org/abs/2602.12337), [2608.17157](https://arxiv.org/abs/2608.17157), [2608.27749](https://arxiv.org/abs/2608.27749), [2609.02721](https://arxiv.org/abs/2609.02721) |
+
+## Randomized and interpolatory integrators
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`Randomized/ObliqueBUG`](../LeanDLRA/Randomized/ObliqueBUG.lean) | Interpolatory (DEIM/CUR) and sketched BUG: oblique capture and Lebesgue-constant bounds | 36 | [2010.02022](https://arxiv.org/abs/2010.02022), [2408.16591](https://arxiv.org/abs/2408.16591), [2411.15990](https://arxiv.org/abs/2411.15990), [2510.19518](https://arxiv.org/abs/2510.19518), [2512.15703](https://arxiv.org/abs/2512.15703), [2607.03402](https://arxiv.org/abs/2607.03402) |
+| [`Randomized/RandomizedBUG`](../LeanDLRA/Randomized/RandomizedBUG.lean) | Dynamical randomized SVD and generalized Nyström as BUG-type steps | 37 | [1301.1058](https://arxiv.org/abs/1301.1058), [2001.08599](https://arxiv.org/abs/2001.08599), [2010.02022](https://arxiv.org/abs/2010.02022), [2410.17091](https://arxiv.org/abs/2410.17091), [2506.15259](https://arxiv.org/abs/2506.15259) |
 
 ## Stiff problems
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
+| [`Stiff/CouplingLocalError`](../LeanDLRA/Stiff/CouplingLocalError.lean) | Stiff problems: a local error bound for the rank-adaptive BUG step with coupling numbers | 60 |  |
+| [`Stiff/DualWeightedResidual`](../LeanDLRA/Stiff/DualWeightedResidual.lean) | Dual-weighted residual identities for low-rank implicit Euler steps | 31 | [2206.09374](https://arxiv.org/abs/2206.09374) |
 | [`Stiff/ImplicitBUG`](../LeanDLRA/Stiff/ImplicitBUG.lean) | Implicit BUG integrators: implicit K-step capture, robust first order, B-convergence | 51 | [2010.02022](https://arxiv.org/abs/2010.02022), [2311.15143](https://arxiv.org/abs/2311.15143), [2402.05347](https://arxiv.org/abs/2402.05347), [2410.07465](https://arxiv.org/abs/2410.07465), [2412.09400](https://arxiv.org/abs/2412.09400), [2503.04932](https://arxiv.org/abs/2503.04932), [2609.02721](https://arxiv.org/abs/2609.02721), [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Stiff/ImplicitSolvability`](../LeanDLRA/Stiff/ImplicitSolvability.lean) | Unique solvability of projected implicit stages | 59 | [2002.12197](https://arxiv.org/abs/2002.12197), [2305.11532](https://arxiv.org/abs/2305.11532), [2402.05347](https://arxiv.org/abs/2402.05347), [2410.07465](https://arxiv.org/abs/2410.07465), [2607.27736](https://arxiv.org/abs/2607.27736), [2610.18419](https://arxiv.org/abs/2610.18419), [2610.41606](https://arxiv.org/abs/2610.41606), [2611.04360](https://arxiv.org/abs/2611.04360) |
+
+## Stability and structure
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`Stability/Conservation`](../LeanDLRA/Stability/Conservation.lean) | Conservation properties of dynamical low-rank integrators | 52 | [2107.07282](https://arxiv.org/abs/2107.07282), [2201.10397](https://arxiv.org/abs/2201.10397), [2206.09374](https://arxiv.org/abs/2206.09374), [2311.06399](https://arxiv.org/abs/2311.06399), [2606.31662](https://arxiv.org/abs/2606.31662) |
+| [`Stability/Energy`](../LeanDLRA/Stability/Energy.lean) | `L²`-stability and energy stability of robust dynamical low-rank integrators | 59 | [2104.05247](https://arxiv.org/abs/2104.05247), [2107.07282](https://arxiv.org/abs/2107.07282), [2212.12012](https://arxiv.org/abs/2212.12012), [2507.15192](https://arxiv.org/abs/2507.15192) |
+
+## Tensors
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`Tensor/Defs`](../LeanDLRA/Tensor/Defs.lean) | Tensors, unfoldings and tensor formats: definitions | 15 | [1407.2042](https://arxiv.org/abs/1407.2042), [2002.11392](https://arxiv.org/abs/2002.11392), [2402.18721](https://arxiv.org/abs/2402.18721) |
+| [`Tensor/Steps`](../LeanDLRA/Tensor/Steps.lean) | Step predicates of the Tucker and tree tensor network integrators | 0 | [1407.2042](https://arxiv.org/abs/1407.2042), [1709.02594](https://arxiv.org/abs/1709.02594), [2002.11392](https://arxiv.org/abs/2002.11392), [2412.00858](https://arxiv.org/abs/2412.00858) |
+| [`Tensor/TT/AugmentedBUG`](../LeanDLRA/Tensor/TT/AugmentedBUG.lean) | The augmented BUG integrator for tensor trains (MPS-BUG) | 18 | [2104.05247](https://arxiv.org/abs/2104.05247), [2603.13990](https://arxiv.org/abs/2603.13990), [2609.12848](https://arxiv.org/abs/2609.12848) |
+| [`Tensor/TT/Basic`](../LeanDLRA/Tensor/TT/Basic.lean) | Tensor trains: interfaces, orthonormality and interface projectors | 27 | [1407.2042](https://arxiv.org/abs/1407.2042), [2402.18721](https://arxiv.org/abs/2402.18721), [2603.13990](https://arxiv.org/abs/2603.13990) |
+| [`Tensor/TT/ObliqueProjector`](../LeanDLRA/Tensor/TT/ObliqueProjector.lean) | Oblique TT tangent projectors and the TT tangent space | 43 | [1407.2042](https://arxiv.org/abs/1407.2042), [2402.18721](https://arxiv.org/abs/2402.18721) |
+| [`Tensor/TT/Operations`](../LeanDLRA/Tensor/TT/Operations.lean) | Tensor trains: operations on cores, gauge transformations and the bond-centred form | 29 | [1407.2042](https://arxiv.org/abs/1407.2042), [2512.14950](https://arxiv.org/abs/2512.14950), [2603.13990](https://arxiv.org/abs/2603.13990) |
+| [`Tensor/TT/ProjectorSplitting`](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean) | The tensor-train projector-splitting integrator (TT-KSL, one-site TDVP) | 41 | [1407.2042](https://arxiv.org/abs/1407.2042), [2512.14950](https://arxiv.org/abs/2512.14950), [2603.13990](https://arxiv.org/abs/2603.13990), [2609.12848](https://arxiv.org/abs/2609.12848) |
+| [`Tensor/TT/TangentProjector`](../LeanDLRA/Tensor/TT/TangentProjector.lean) | The TT tangent projector and cross interpolation | 12 | [1407.2042](https://arxiv.org/abs/1407.2042), [2002.11392](https://arxiv.org/abs/2002.11392), [2402.18721](https://arxiv.org/abs/2402.18721), [2510.19518](https://arxiv.org/abs/2510.19518), [2603.13990](https://arxiv.org/abs/2603.13990) |
+| [`Tensor/TTN/Abstract/BUG`](../LeanDLRA/Tensor/TTN/Abstract/BUG.lean) | Error bounds and exactness of the fixed-rank BUG integrator for tree tensor networks | 12 |  |
+| [`Tensor/TTN/Abstract/ParallelBUG`](../LeanDLRA/Tensor/TTN/Abstract/ParallelBUG.lean) | Error bounds of the parallel BUG integrator for tree tensor networks | 3 |  |
+| [`Tensor/TTN/Abstract/ProjectorSplitting`](../LeanDLRA/Tensor/TTN/Abstract/ProjectorSplitting.lean) | Error bounds of the projector-splitting integrator for Tucker tensors and tree tensor networks | 14 |  |
+| [`Tensor/TTN/Abstract/ProjectorSplittingExactness`](../LeanDLRA/Tensor/TTN/Abstract/ProjectorSplittingExactness.lean) | Exactness of the nested Tucker projector-splitting integrator | 4 |  |
+| [`Tensor/TTN/Abstract/RankAdaptiveBUG`](../LeanDLRA/Tensor/TTN/Abstract/RankAdaptiveBUG.lean) | Error bounds and exactness of the rank-adaptive BUG integrator for tree tensor networks | 9 |  |
+| [`Tensor/TTN/BUG`](../LeanDLRA/Tensor/TTN/BUG.lean) | The fixed-rank BUG integrator on concrete tree tensor networks | 3 |  |
+| [`Tensor/TTN/Basic`](../LeanDLRA/Tensor/TTN/Basic.lean) | Tree tensor networks: subtree projectors and nested orthonormal bases | 16 | [2002.11392](https://arxiv.org/abs/2002.11392) |
+| [`Tensor/TTN/Integrators`](../LeanDLRA/Tensor/TTN/Integrators.lean) | Tree tensor network integrators on concrete tree tensor networks | 6 | [2002.11392](https://arxiv.org/abs/2002.11392), [2412.00858](https://arxiv.org/abs/2412.00858) |
+| [`Tensor/TTN/ParallelBUG`](../LeanDLRA/Tensor/TTN/ParallelBUG.lean) | Basis frames and the parallel BUG integrator on concrete tree tensor networks | 9 | [2002.11392](https://arxiv.org/abs/2002.11392), [2412.00858](https://arxiv.org/abs/2412.00858) |
+| [`Tensor/TTN/ProjectorSplitting`](../LeanDLRA/Tensor/TTN/ProjectorSplitting.lean) | The recursive TTN projector-splitting integrator on concrete tree tensor networks | 6 | [2002.11392](https://arxiv.org/abs/2002.11392) |
+| [`Tensor/TTN/ProjectorSplittingExactness`](../LeanDLRA/Tensor/TTN/ProjectorSplittingExactness.lean) | Exactness of the recursive TTN projector-splitting integrator | 2 | [1709.02594](https://arxiv.org/abs/1709.02594), [2002.11392](https://arxiv.org/abs/2002.11392) |
+| [`Tensor/TTN/Prolongation`](../LeanDLRA/Tensor/TTN/Prolongation.lean) | Prolongation and restriction for tree tensor network subproblems | 11 | [2002.11392](https://arxiv.org/abs/2002.11392), [2412.00858](https://arxiv.org/abs/2412.00858) |
+| [`Tensor/TTN/RankAdaptiveBUG`](../LeanDLRA/Tensor/TTN/RankAdaptiveBUG.lean) | The rank-adaptive BUG integrator on concrete tree tensor networks | 3 |  |
+| [`Tensor/Tucker/Basic`](../LeanDLRA/Tensor/Tucker/Basic.lean) | Tucker tensors: mode projectors, mode-wise interpolation and the Tucker integrators | 12 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2401.04249](https://arxiv.org/abs/2401.04249), [2402.18721](https://arxiv.org/abs/2402.18721), [2412.00858](https://arxiv.org/abs/2412.00858) |
+| [`Tensor/Tucker/Tangent`](../LeanDLRA/Tensor/Tucker/Tangent.lean) | The tangent space of constrained Tucker manifolds and its orthogonal projector | 27 | [2308.16720](https://arxiv.org/abs/2308.16720) |
+| [`Tensor/Unfolding`](../LeanDLRA/Tensor/Unfolding.lean) | Unfoldings and linear maps acting on a set of modes | 47 |  |
 
 ## Low-rank training
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
+| [`Training/Defs`](../LeanDLRA/Training/Defs.lean) | Dynamical low-rank training: definitions | 0 | [2406.17887](https://arxiv.org/abs/2406.17887), [2409.14938](https://arxiv.org/abs/2409.14938), [2410.18720](https://arxiv.org/abs/2410.18720), [2502.03006](https://arxiv.org/abs/2502.03006), [2506.21405](https://arxiv.org/abs/2506.21405) |
 | [`Training/Descent`](../LeanDLRA/Training/Descent.lean) | Dynamical low-rank training: loss descent and convergence | 66 | [2104.05247](https://arxiv.org/abs/2104.05247), [2306.01485](https://arxiv.org/abs/2306.01485), [2406.17887](https://arxiv.org/abs/2406.17887), [2410.18720](https://arxiv.org/abs/2410.18720), [2502.03006](https://arxiv.org/abs/2502.03006), [2505.08022](https://arxiv.org/abs/2505.08022), [2506.17475](https://arxiv.org/abs/2506.17475), [2607.05872](https://arxiv.org/abs/2607.05872), [2609.32615](https://arxiv.org/abs/2609.32615) |
 | [`Training/FactorizedDynamics`](../LeanDLRA/Training/FactorizedDynamics.lean) | Factor-wise (LoRA-type) dynamics versus gauge-free Riemannian/DLRT steps | 33 | [2209.13569](https://arxiv.org/abs/2209.13569), [2305.19059](https://arxiv.org/abs/2305.19059), [2306.00897](https://arxiv.org/abs/2306.00897), [2406.17887](https://arxiv.org/abs/2406.17887), [2410.18720](https://arxiv.org/abs/2410.18720), [2502.03006](https://arxiv.org/abs/2502.03006), [2506.17475](https://arxiv.org/abs/2506.17475), [2601.08882](https://arxiv.org/abs/2601.08882), [2609.21039](https://arxiv.org/abs/2609.21039) |
+| [`Training/FederatedDescent`](../LeanDLRA/Training/FederatedDescent.lean) | The step-size constant of the FeDLRT descent bound | 20 | [2406.17887](https://arxiv.org/abs/2406.17887) |
 | [`Training/GradientFlowConvergence`](../LeanDLRA/Training/GradientFlowConvergence.lean) | Projected gradient flows and their iterations: integrability, Barbalat, robust bounds | 10 | [2306.01485](https://arxiv.org/abs/2306.01485), [2406.17887](https://arxiv.org/abs/2406.17887), [2409.04206](https://arxiv.org/abs/2409.04206), [2410.18720](https://arxiv.org/abs/2410.18720), [2502.03006](https://arxiv.org/abs/2502.03006), [2506.17475](https://arxiv.org/abs/2506.17475) |
 | [`Training/InexactGradient`](../LeanDLRA/Training/InexactGradient.lean) | Low-rank training with inexact values and gradients | 27 | [2009.03887](https://arxiv.org/abs/2009.03887), [2104.05247](https://arxiv.org/abs/2104.05247), [2409.14938](https://arxiv.org/abs/2409.14938), [2410.18720](https://arxiv.org/abs/2410.18720), [2502.03006](https://arxiv.org/abs/2502.03006), [2506.21405](https://arxiv.org/abs/2506.21405), [2509.15113](https://arxiv.org/abs/2509.15113), [2610.29554](https://arxiv.org/abs/2610.29554) |
+
+## Stochastic problems
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`Stochastic/KalmanBucy`](../LeanDLRA/Stochastic/KalmanBucy.lean) | Dynamical low-rank Kalman–Bucy filters | 42 | [2306.07774](https://arxiv.org/abs/2306.07774), [2509.11210](https://arxiv.org/abs/2509.11210), [2602.06614](https://arxiv.org/abs/2602.06614), [2606.15843](https://arxiv.org/abs/2606.15843), [2607.27432](https://arxiv.org/abs/2607.27432) |
+| [`Stochastic/MeanSquare`](../LeanDLRA/Stochastic/MeanSquare.lean) | Abstract `L²(Ω)` cores of stochastic DLRA | 31 | [1803.00499](https://arxiv.org/abs/1803.00499), [2501.06125](https://arxiv.org/abs/2501.06125), [2601.21428](https://arxiv.org/abs/2601.21428), [2606.27888](https://arxiv.org/abs/2606.27888), [2607.27432](https://arxiv.org/abs/2607.27432), [2609.20292](https://arxiv.org/abs/2609.20292) |
+
+## Filtering
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`Filtering/Defs`](../LeanDLRA/Filtering/Defs.lean) | Filtering: definitions | 0 |  |
+
+## Kinetic equations
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`Kinetic/Defs`](../LeanDLRA/Kinetic/Defs.lean) | Kinetic equations: definitions | 21 |  |
+| [`Kinetic/LowRank`](../LeanDLRA/Kinetic/LowRank.lean) | Separation rank of the kinetic low-rank ansatz | 4 |  |
+| [`Kinetic/Stencils`](../LeanDLRA/Kinetic/Stencils.lean) | Periodic difference matrices: action on matrices and transposes | 20 |  |
+
+## Optimal control
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`Control/AdjointDLRA`](../LeanDLRA/Control/AdjointDLRA.lean) | DLRA in optimal control: gradient errors, adjoints and time reversibility | 14 | [2010.02022](https://arxiv.org/abs/2010.02022), [2409.14938](https://arxiv.org/abs/2409.14938), [2506.21405](https://arxiv.org/abs/2506.21405), [2608.21545](https://arxiv.org/abs/2608.21545), [2610.29554](https://arxiv.org/abs/2610.29554) |
+
+## Research
+
+| Module | Content | Theorems | Sources |
+|---|---|---:|---|
+| [`Research/AugmentationRank`](../LeanDLRA/Research/AugmentationRank.lean) | Galerkin steps that contain a predictor: a two-column K-step basis, Sylvester fields | 48 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.08607](https://arxiv.org/abs/2402.08607) |
+| [`Research/DataDrivenErrorRecursion`](../LeanDLRA/Research/DataDrivenErrorRecursion.lean) | Pythagorean error recursion for data-driven BUG and KSL | 32 | [1301.1058](https://arxiv.org/abs/1301.1058), [1507.07953](https://arxiv.org/abs/1507.07953), [2010.02022](https://arxiv.org/abs/2010.02022), [2606.30469](https://arxiv.org/abs/2606.30469), [2608.16994](https://arxiv.org/abs/2608.16994), [2608.17157](https://arxiv.org/abs/2608.17157) |
+| [`Research/ExplicitMidpointGalerkin`](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean) | The explicit midpoint Galerkin step in augmented bases | 18 | [2402.08607](https://arxiv.org/abs/2402.08607) |
+| [`Research/IntegratorErrorOrder`](../LeanDLRA/Research/IntegratorErrorOrder.lean) | An error partial order of KSL, BUG, augmented BUG and parallel BUG | 53 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660), [2309.08252](https://arxiv.org/abs/2309.08252), [2412.00858](https://arxiv.org/abs/2412.00858) |
+| [`Research/SameMinibatchAugmentation`](../LeanDLRA/Research/SameMinibatchAugmentation.lean) | Stochastic descent of DLRT: same-minibatch augmentation (draft) | 76 | [2410.18720](https://arxiv.org/abs/2410.18720) |
+| [`Research/StiffOrderReduction`](../LeanDLRA/Research/StiffOrderReduction.lean) | Order reduction of the BUG step for stiff problems: an exact family | 71 |  |
 
 ## Open problems of the survey
 
@@ -119,38 +260,34 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`OpenProblems/Curated/Classicala`](../LeanDLRA/OpenProblems/Curated/Classicala.lean) | Open problems OP-HO-14, OP-RA-45 | 10 |  |
 | [`OpenProblems/Curated/Classicalb`](../LeanDLRA/OpenProblems/Curated/Classicalb.lean) | Classical b | 34 |  |
 | [`OpenProblems/Curated/Classicalc`](../LeanDLRA/OpenProblems/Curated/Classicalc.lean) | Open problems OP-RA-21, OP-RA-45 | 18 |  |
-| [`OpenProblems/Curated/Classicald`](../LeanDLRA/OpenProblems/Curated/Classicald.lean) | Open problems OP-RA-30 | 2 | [2111.14540](https://arxiv.org/abs/2111.14540) |
+| [`OpenProblems/Curated/Classicald`](../LeanDLRA/OpenProblems/Curated/Classicald.lean) | Truncating a tangent step: the distance to rank `r` is of second order | 2 | [2111.14540](https://arxiv.org/abs/2111.14540) |
 | [`OpenProblems/Curated/HighOrderDefs`](../LeanDLRA/OpenProblems/Curated/HighOrderDefs.lean) | Definitions for HighOrder | 0 | [2311.15143](https://arxiv.org/abs/2311.15143), [2608.12893](https://arxiv.org/abs/2608.12893) |
 | [`OpenProblems/Curated/HighOrderHardStrangKSLnotrobustsecondorder`](../LeanDLRA/OpenProblems/Curated/HighOrderHardStrangKSLnotrobustsecondorder.lean) | `strangKSL_not_robust_second_order` | 56 | [2608.12893](https://arxiv.org/abs/2608.12893) |
 | [`OpenProblems/Curated/HighOrdera`](../LeanDLRA/OpenProblems/Curated/HighOrdera.lean) | Open problems OP-HO-02, OP-HO-03, OP-HO-34, OP-HO-35, OP-HO-39, | 13 | [2311.15143](https://arxiv.org/abs/2311.15143), [2402.08607](https://arxiv.org/abs/2402.08607), [2503.04932](https://arxiv.org/abs/2503.04932), [2608.12893](https://arxiv.org/abs/2608.12893), [2608.17157](https://arxiv.org/abs/2608.17157) |
 | [`OpenProblems/Curated/HighOrderb`](../LeanDLRA/OpenProblems/Curated/HighOrderb.lean) | HighOrder b | 2 | [2606.24190](https://arxiv.org/abs/2606.24190) |
-| [`OpenProblems/Curated/RankAdaptivityHardDistLRflowlesharp`](../LeanDLRA/OpenProblems/Curated/RankAdaptivityHardDistLRflowlesharp.lean) | `distLR_flow_le_sharp` | 7 |  |
-| [`OpenProblems/Curated/RankAdaptivitya`](../LeanDLRA/OpenProblems/Curated/RankAdaptivitya.lean) | Open problems OP-RA-07, OP-RA-27, OP-RA-29, OP-RA-45 | 10 |  |
-| [`OpenProblems/Curated/RankAdaptivityb`](../LeanDLRA/OpenProblems/Curated/RankAdaptivityb.lean) | Open problems OP-OT-19, OP-RA-04, OP-RA-14, OP-RA-17, | 8 | [2104.05247](https://arxiv.org/abs/2104.05247) |
-| [`OpenProblems/Curated/RankAdaptivityc`](../LeanDLRA/OpenProblems/Curated/RankAdaptivityc.lean) | RankAdaptivity c | 4 |  |
+| [`OpenProblems/Curated/RankAdaptivityHardDistLRflowlesharp`](../LeanDLRA/OpenProblems/Curated/RankAdaptivityHardDistLRflowlesharp.lean) | Growth of the distance to the matrices of rank at most `r` along the exact flow | 8 |  |
+| [`OpenProblems/Curated/RankAdaptivitya`](../LeanDLRA/OpenProblems/Curated/RankAdaptivitya.lean) | Rank selection: retained singular values, basis enrichment, ties, and Galerkin quasi-optimality | 11 |  |
+| [`OpenProblems/Curated/RankAdaptivityb`](../LeanDLRA/OpenProblems/Curated/RankAdaptivityb.lean) | Rank-adaptive BUG: a-posteriori bounds and tolerance schedules | 9 | [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`OpenProblems/Curated/RankAdaptivityc`](../LeanDLRA/OpenProblems/Curated/RankAdaptivityc.lean) | Quasi-optimality of dynamical low-rank approximation for matrices: the recorded form | 1 |  |
 | [`OpenProblems/Curated/StiffAndStochasticDefs`](../LeanDLRA/OpenProblems/Curated/StiffAndStochasticDefs.lean) | Definitions for StiffAndStochastic | 0 |  |
 | [`OpenProblems/Curated/StiffAndStochasticHardRiccatiequilibriumattracts`](../LeanDLRA/OpenProblems/Curated/StiffAndStochasticHardRiccatiequilibriumattracts.lean) | `riccati_equilibrium_attracts` | 12 |  |
 | [`OpenProblems/Curated/StiffAndStochastica`](../LeanDLRA/OpenProblems/Curated/StiffAndStochastica.lean) | Open problems OP-SB-07, OP-ST-04, OP-ST-09, OP-ST-16 | 18 | [2010.02022](https://arxiv.org/abs/2010.02022), [2402.05347](https://arxiv.org/abs/2402.05347), [2506.15259](https://arxiv.org/abs/2506.15259), [2601.08882](https://arxiv.org/abs/2601.08882) |
 | [`OpenProblems/Curated/StiffAndStochasticb`](../LeanDLRA/OpenProblems/Curated/StiffAndStochasticb.lean) | Open problems OP-CO-12, OP-HO-40, OP-RA-20, OP-SB-47, OP-SB-50, | 10 | [1906.01369](https://arxiv.org/abs/1906.01369), [1907.04247](https://arxiv.org/abs/1907.04247), [2308.05914](https://arxiv.org/abs/2308.05914), [2601.11900](https://arxiv.org/abs/2601.11900) |
 | [`OpenProblems/Curated/StiffAndStochasticc`](../LeanDLRA/OpenProblems/Curated/StiffAndStochasticc.lean) | Open problems OP-EX-14, OP-ST-25, OP-TR-06, OP-TR-37 | 3 | [2610.29554](https://arxiv.org/abs/2610.29554) |
-| [`OpenProblems/Curated/Structurea`](../LeanDLRA/OpenProblems/Curated/Structurea.lean) | Open problems OP-CO-07, OP-SB-03, OP-SB-05, OP-SB-65 | 8 | [1301.1058](https://arxiv.org/abs/1301.1058), [2104.05247](https://arxiv.org/abs/2104.05247), [2306.17526](https://arxiv.org/abs/2306.17526), [2403.02834](https://arxiv.org/abs/2403.02834) |
+| [`OpenProblems/Curated/Structurea`](../LeanDLRA/OpenProblems/Curated/Structurea.lean) | Norm and energy balance of the BUG, projector-splitting and parallel BUG steps | 9 | [1301.1058](https://arxiv.org/abs/1301.1058), [2104.05247](https://arxiv.org/abs/2104.05247), [2306.17526](https://arxiv.org/abs/2306.17526), [2403.02834](https://arxiv.org/abs/2403.02834) |
 | [`OpenProblems/Curated/Structureb`](../LeanDLRA/OpenProblems/Curated/Structureb.lean) | Open problems OP-CO-39, OP-OT-20, OP-OT-38, OP-SB-46 | 7 | [2007.13153](https://arxiv.org/abs/2007.13153), [2008.07427](https://arxiv.org/abs/2008.07427), [2104.05247](https://arxiv.org/abs/2104.05247), [2308.16547](https://arxiv.org/abs/2308.16547), [2606.31662](https://arxiv.org/abs/2606.31662), [2608.21545](https://arxiv.org/abs/2608.21545) |
 | [`OpenProblems/Curated/Structurec`](../LeanDLRA/OpenProblems/Curated/Structurec.lean) | Open problems OP-PA-11, OP-RA-30, OP-TN-27, OP-TR-09 | 18 | [1301.1058](https://arxiv.org/abs/1301.1058), [2104.05247](https://arxiv.org/abs/2104.05247), [2111.14540](https://arxiv.org/abs/2111.14540), [2309.06125](https://arxiv.org/abs/2309.06125) |
-| [`OpenProblems/Curated/TensorNetworksDefs`](../LeanDLRA/OpenProblems/Curated/TensorNetworksDefs.lean) | Definitions for TensorNetworks | 0 | [2002.11392](https://arxiv.org/abs/2002.11392), [2412.00858](https://arxiv.org/abs/2412.00858) |
-| [`OpenProblems/Curated/TensorNetworksHardParTTNglobalerrorle`](../LeanDLRA/OpenProblems/Curated/TensorNetworksHardParTTNglobalerrorle.lean) | `parTTN_global_error_le` | 6 | [2412.00858](https://arxiv.org/abs/2412.00858) |
-| [`OpenProblems/Curated/TensorNetworksa`](../LeanDLRA/OpenProblems/Curated/TensorNetworksa.lean) | Open problems OP-TN-01 | 12 | [2002.11392](https://arxiv.org/abs/2002.11392), [2010.02022](https://arxiv.org/abs/2010.02022) |
-| [`OpenProblems/Curated/TensorNetworksb`](../LeanDLRA/OpenProblems/Curated/TensorNetworksb.lean) | Open problems OP-CO-19, OP-PA-01, OP-RA-22, OP-TN-05, OP-TN-10, | 12 | [2104.05247](https://arxiv.org/abs/2104.05247), [2412.00858](https://arxiv.org/abs/2412.00858) |
-| [`OpenProblems/Curated/TensorNetworksc`](../LeanDLRA/OpenProblems/Curated/TensorNetworksc.lean) | Open problems OP-PA-01, OP-TN-04, OP-TN-10, OP-TN-13, OP-TN-21 | 6 |  |
+| [`OpenProblems/Curated/TensorNetworksc`](../LeanDLRA/OpenProblems/Curated/TensorNetworksc.lean) | Open problems OP-PA-01, OP-TN-04, OP-TN-10, OP-TN-13, OP-TN-21 | 5 |  |
 | [`OpenProblems/Curated/TrainingDefs`](../LeanDLRA/OpenProblems/Curated/TrainingDefs.lean) | Definitions for Training | 0 |  |
-| [`OpenProblems/Curated/Traininga`](../LeanDLRA/OpenProblems/Curated/Traininga.lean) | Open problems OP-HO-14, OP-RS-28, OP-TR-02, OP-TR-05, OP-TR-11, | 14 | [2307.05695](https://arxiv.org/abs/2307.05695), [2401.03748](https://arxiv.org/abs/2401.03748), [2403.03507](https://arxiv.org/abs/2403.03507), [2406.17887](https://arxiv.org/abs/2406.17887), [2607.05872](https://arxiv.org/abs/2607.05872) |
-| [`OpenProblems/Curated/Trainingb`](../LeanDLRA/OpenProblems/Curated/Trainingb.lean) | Open problems OP-TR-11 | 4 | [2406.17887](https://arxiv.org/abs/2406.17887) |
+| [`OpenProblems/Curated/Traininga`](../LeanDLRA/OpenProblems/Curated/Traininga.lean) | Convergence of low-rank training: PL rates, lazy projectors, random subspaces, federated rounds | 15 | [2307.05695](https://arxiv.org/abs/2307.05695), [2401.03748](https://arxiv.org/abs/2401.03748), [2403.03507](https://arxiv.org/abs/2403.03507), [2406.17887](https://arxiv.org/abs/2406.17887), [2607.05872](https://arxiv.org/abs/2607.05872) |
+| [`OpenProblems/Curated/Trainingb`](../LeanDLRA/OpenProblems/Curated/Trainingb.lean) | Fixed points of federated low-rank training with and without variance correction | 4 | [2406.17887](https://arxiv.org/abs/2406.17887) |
 | [`OpenProblems/HighOrder/Part1Defs`](../LeanDLRA/OpenProblems/HighOrder/Part1Defs.lean) | Definitions for HighOrder Part1 | 0 | [2402.08607](https://arxiv.org/abs/2402.08607) |
 | [`OpenProblems/HighOrder/Part1a`](../LeanDLRA/OpenProblems/HighOrder/Part1a.lean) | Open problems OP-HO-01 to OP-HO-05, OP-HO-11 | 13 | [2307.07538](https://arxiv.org/abs/2307.07538), [2308.05914](https://arxiv.org/abs/2308.05914), [2311.15143](https://arxiv.org/abs/2311.15143), [2402.08607](https://arxiv.org/abs/2402.08607), [2503.04932](https://arxiv.org/abs/2503.04932), [2608.17157](https://arxiv.org/abs/2608.17157), [2608.27749](https://arxiv.org/abs/2608.27749) |
 | [`OpenProblems/HighOrder/Part1b`](../LeanDLRA/OpenProblems/HighOrder/Part1b.lean) | Open problems OP-HO-05, OP-HO-06, OP-HO-07, OP-HO-08, OP-HO-11 | 9 | [2402.08607](https://arxiv.org/abs/2402.08607) |
 | [`OpenProblems/HighOrder/Part2Defs`](../LeanDLRA/OpenProblems/HighOrder/Part2Defs.lean) | Definitions for HighOrder Part2 | 0 |  |
 | [`OpenProblems/HighOrder/Part2a`](../LeanDLRA/OpenProblems/HighOrder/Part2a.lean) | Open problems OP-HO-11, OP-HO-12, OP-HO-13 | 14 | [2602.07437](https://arxiv.org/abs/2602.07437), [2608.27749](https://arxiv.org/abs/2608.27749), [2610.11747](https://arxiv.org/abs/2610.11747) |
 | [`OpenProblems/HighOrder/Part2b`](../LeanDLRA/OpenProblems/HighOrder/Part2b.lean) | Open problems OP-HO-16 | 1 | [2412.09400](https://arxiv.org/abs/2412.09400) |
-| [`OpenProblems/HighOrder/Part3Defs`](../LeanDLRA/OpenProblems/HighOrder/Part3Defs.lean) | Definitions for HighOrder Part3 | 0 | [2005.06571](https://arxiv.org/abs/2005.06571), [2206.09374](https://arxiv.org/abs/2206.09374), [2608.27749](https://arxiv.org/abs/2608.27749) |
+| [`OpenProblems/HighOrder/Part3Defs`](../LeanDLRA/OpenProblems/HighOrder/Part3Defs.lean) | Definitions for HighOrder Part3 | 3 | [2005.06571](https://arxiv.org/abs/2005.06571), [2206.09374](https://arxiv.org/abs/2206.09374), [2608.27749](https://arxiv.org/abs/2608.27749) |
 | [`OpenProblems/HighOrder/Part3a`](../LeanDLRA/OpenProblems/HighOrder/Part3a.lean) | Open problems OP-HO-11, OP-HO-17, OP-HO-18, OP-HO-19, OP-HO-20, | 20 |  |
 | [`OpenProblems/HighOrder/Part3b`](../LeanDLRA/OpenProblems/HighOrder/Part3b.lean) | Open problems OP-HO-22, OP-HO-23, OP-HO-24, OP-HO-25 | 13 | [2608.27749](https://arxiv.org/abs/2608.27749), [2609.32615](https://arxiv.org/abs/2609.32615) |
 | [`OpenProblems/HighOrder/Part4Defs`](../LeanDLRA/OpenProblems/HighOrder/Part4Defs.lean) | Definitions for HighOrder Part4 | 0 |  |
@@ -170,7 +307,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`OpenProblems/Randomized/Part3a`](../LeanDLRA/OpenProblems/Randomized/Part3a.lean) | Open problems OP-RS-20, OP-RS-21, OP-RS-22, OP-RS-23, OP-RS-24 | 23 |  |
 | [`OpenProblems/Randomized/Part3b`](../LeanDLRA/OpenProblems/Randomized/Part3b.lean) | Open problems OP-RS-24, OP-RS-25, OP-RS-26, OP-RS-27 | 16 |  |
 | [`OpenProblems/Randomized/Part3c`](../LeanDLRA/OpenProblems/Randomized/Part3c.lean) | Open problems OP-RS-28, OP-RS-29 | 2 |  |
-| [`OpenProblems/Randomized/Part4Defs`](../LeanDLRA/OpenProblems/Randomized/Part4Defs.lean) | Definitions for Randomized Part4 | 0 |  |
+| [`OpenProblems/Randomized/Part4Defs`](../LeanDLRA/OpenProblems/Randomized/Part4Defs.lean) | Definitions for Randomized Part4 | 2 |  |
 | [`OpenProblems/Randomized/Part4a`](../LeanDLRA/OpenProblems/Randomized/Part4a.lean) | Open problems OP-RS-30, OP-RS-31, OP-RS-32, OP-RS-33 | 13 | [2510.19518](https://arxiv.org/abs/2510.19518) |
 | [`OpenProblems/Randomized/Part4b`](../LeanDLRA/OpenProblems/Randomized/Part4b.lean) | Open problems OP-RS-36, OP-RS-37, OP-RS-38, OP-RS-39 | 17 |  |
 | [`OpenProblems/RankAdaptivity/MainDefs`](../LeanDLRA/OpenProblems/RankAdaptivity/MainDefs.lean) | Definitions for rank adaptivity | 0 |  |
@@ -213,22 +350,22 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`OpenProblems/Stiff/Part2a`](../LeanDLRA/OpenProblems/Stiff/Part2a.lean) | Open problems OP-ST-13, OP-ST-14, OP-ST-15 | 20 | [1803.10473](https://arxiv.org/abs/1803.10473), [1906.01369](https://arxiv.org/abs/1906.01369), [2006.05211](https://arxiv.org/abs/2006.05211), [2010.05249](https://arxiv.org/abs/2010.05249), [2307.07538](https://arxiv.org/abs/2307.07538), [2411.06844](https://arxiv.org/abs/2411.06844) |
 | [`OpenProblems/Stiff/Part2b`](../LeanDLRA/OpenProblems/Stiff/Part2b.lean) | Open problems OP-ST-16, OP-ST-17, OP-ST-18, OP-ST-19 | 12 | [2305.11532](https://arxiv.org/abs/2305.11532), [2312.00172](https://arxiv.org/abs/2312.00172), [2410.17091](https://arxiv.org/abs/2410.17091), [2609.02721](https://arxiv.org/abs/2609.02721) |
 | [`OpenProblems/Stiff/Part2c`](../LeanDLRA/OpenProblems/Stiff/Part2c.lean) | Open problems OP-ST-19, OP-ST-20, OP-ST-22 | 6 |  |
-| [`OpenProblems/Stiff/Part3Defs`](../LeanDLRA/OpenProblems/Stiff/Part3Defs.lean) | Definitions for Stiff Part3 | 0 |  |
+| [`OpenProblems/Stiff/Part3Defs`](../LeanDLRA/OpenProblems/Stiff/Part3Defs.lean) | Definitions for Stiff Part3 | 2 |  |
 | [`OpenProblems/Stiff/Part3HardDampedNewtonconverges`](../LeanDLRA/OpenProblems/Stiff/Part3HardDampedNewtonconverges.lean) | `dampedNewton_converges` | 5 | [2610.41606](https://arxiv.org/abs/2610.41606) |
 | [`OpenProblems/Stiff/Part3HardEnkfbuglocalerrorgramFree`](../LeanDLRA/OpenProblems/Stiff/Part3HardEnkfbuglocalerrorgramFree.lean) | `enkf_bug_local_error_gramFree` | 6 | [2509.11210](https://arxiv.org/abs/2509.11210) |
 | [`OpenProblems/Stiff/Part3HardExpRungedefectlog`](../LeanDLRA/OpenProblems/Stiff/Part3HardExpRungedefectlog.lean) | `expRunge_defect_log` | 6 |  |
 | [`OpenProblems/Stiff/Part3a`](../LeanDLRA/OpenProblems/Stiff/Part3a.lean) | Open problems OP-ST-23, OP-ST-24, OP-ST-25, OP-ST-26 | 14 | [2410.07465](https://arxiv.org/abs/2410.07465), [2610.29554](https://arxiv.org/abs/2610.29554), [2610.41606](https://arxiv.org/abs/2610.41606) |
 | [`OpenProblems/Stiff/Part3b`](../LeanDLRA/OpenProblems/Stiff/Part3b.lean) | Open problems OP-ST-27, OP-ST-28, OP-ST-29, OP-ST-30 | 16 | [1906.09940](https://arxiv.org/abs/1906.09940), [2005.06571](https://arxiv.org/abs/2005.06571), [2610.41606](https://arxiv.org/abs/2610.41606) |
 | [`OpenProblems/Stiff/Part3c`](../LeanDLRA/OpenProblems/Stiff/Part3c.lean) | Open problems OP-ST-31, OP-ST-32 | 5 |  |
-| [`OpenProblems/TensorNetworks/Part1Defs`](../LeanDLRA/OpenProblems/TensorNetworks/Part1Defs.lean) | Definitions for TensorNetworks Part1 | 0 | [1407.2042](https://arxiv.org/abs/1407.2042), [1709.02594](https://arxiv.org/abs/1709.02594), [2002.11392](https://arxiv.org/abs/2002.11392) |
-| [`OpenProblems/TensorNetworks/Part1a`](../LeanDLRA/OpenProblems/TensorNetworks/Part1a.lean) | Open problems OP-TN-01, OP-TN-02 | 17 | [1301.1058](https://arxiv.org/abs/1301.1058), [2002.11392](https://arxiv.org/abs/2002.11392), [2606.28169](https://arxiv.org/abs/2606.28169), [2608.16994](https://arxiv.org/abs/2608.16994) |
-| [`OpenProblems/TensorNetworks/Part1b`](../LeanDLRA/OpenProblems/TensorNetworks/Part1b.lean) | Open problems OP-TN-03, OP-TN-04, OP-TN-05 | 29 | [1709.02594](https://arxiv.org/abs/1709.02594), [2203.08455](https://arxiv.org/abs/2203.08455), [2603.13990](https://arxiv.org/abs/2603.13990) |
+| [`OpenProblems/TensorNetworks/Part1Defs`](../LeanDLRA/OpenProblems/TensorNetworks/Part1Defs.lean) | Definitions for TensorNetworks Part1 | 0 |  |
+| [`OpenProblems/TensorNetworks/Part1a`](../LeanDLRA/OpenProblems/TensorNetworks/Part1a.lean) | Open problems OP-TN-01, OP-TN-02 | 3 | [2606.28169](https://arxiv.org/abs/2606.28169), [2608.16994](https://arxiv.org/abs/2608.16994) |
+| [`OpenProblems/TensorNetworks/Part1b`](../LeanDLRA/OpenProblems/TensorNetworks/Part1b.lean) | Open problems OP-TN-03, OP-TN-04, OP-TN-05 | 22 | [1709.02594](https://arxiv.org/abs/1709.02594), [2203.08455](https://arxiv.org/abs/2203.08455), [2603.13990](https://arxiv.org/abs/2603.13990) |
 | [`OpenProblems/TensorNetworks/Part1c`](../LeanDLRA/OpenProblems/TensorNetworks/Part1c.lean) | Open problems OP-TN-06, OP-TN-07 | 3 | [2407.11792](https://arxiv.org/abs/2407.11792), [2501.04157](https://arxiv.org/abs/2501.04157), [2603.13990](https://arxiv.org/abs/2603.13990), [2606.28169](https://arxiv.org/abs/2606.28169) |
-| [`OpenProblems/TensorNetworks/Part2Defs`](../LeanDLRA/OpenProblems/TensorNetworks/Part2Defs.lean) | Definitions for TensorNetworks Part2 | 0 | [1407.2042](https://arxiv.org/abs/1407.2042), [2402.18721](https://arxiv.org/abs/2402.18721) |
+| [`OpenProblems/TensorNetworks/Part2Defs`](../LeanDLRA/OpenProblems/TensorNetworks/Part2Defs.lean) | Definitions for TensorNetworks Part2 | 1 | [1407.2042](https://arxiv.org/abs/1407.2042), [2402.18721](https://arxiv.org/abs/2402.18721) |
 | [`OpenProblems/TensorNetworks/Part2a`](../LeanDLRA/OpenProblems/TensorNetworks/Part2a.lean) | Open problems OP-TN-08, OP-TN-09 | 7 | [2305.19059](https://arxiv.org/abs/2305.19059), [2311.15143](https://arxiv.org/abs/2311.15143), [2402.05347](https://arxiv.org/abs/2402.05347), [2406.17887](https://arxiv.org/abs/2406.17887), [2412.09400](https://arxiv.org/abs/2412.09400), [2503.04932](https://arxiv.org/abs/2503.04932), [2511.01735](https://arxiv.org/abs/2511.01735), [2603.13990](https://arxiv.org/abs/2603.13990), [2607.03402](https://arxiv.org/abs/2607.03402) |
-| [`OpenProblems/TensorNetworks/Part2b`](../LeanDLRA/OpenProblems/TensorNetworks/Part2b.lean) | Open problems OP-TN-10, OP-TN-11, OP-TN-12, OP-TN-15 | 9 | [1407.2042](https://arxiv.org/abs/1407.2042), [2002.11392](https://arxiv.org/abs/2002.11392), [2104.05247](https://arxiv.org/abs/2104.05247), [2309.08252](https://arxiv.org/abs/2309.08252), [2402.18721](https://arxiv.org/abs/2402.18721), [2501.04157](https://arxiv.org/abs/2501.04157), [2510.19518](https://arxiv.org/abs/2510.19518) |
+| [`OpenProblems/TensorNetworks/Part2b`](../LeanDLRA/OpenProblems/TensorNetworks/Part2b.lean) | Open problems OP-TN-10, OP-TN-11, OP-TN-12, OP-TN-15 | 6 | [1407.2042](https://arxiv.org/abs/1407.2042), [2002.11392](https://arxiv.org/abs/2002.11392), [2104.05247](https://arxiv.org/abs/2104.05247), [2309.08252](https://arxiv.org/abs/2309.08252), [2402.18721](https://arxiv.org/abs/2402.18721), [2501.04157](https://arxiv.org/abs/2501.04157), [2510.19518](https://arxiv.org/abs/2510.19518) |
 | [`OpenProblems/TensorNetworks/Part2c`](../LeanDLRA/OpenProblems/TensorNetworks/Part2c.lean) | Open problems OP-TN-12, OP-TN-13, OP-TN-14 | 10 | [1803.10473](https://arxiv.org/abs/1803.10473), [2010.05249](https://arxiv.org/abs/2010.05249), [2309.08252](https://arxiv.org/abs/2309.08252), [2312.00172](https://arxiv.org/abs/2312.00172), [2412.00858](https://arxiv.org/abs/2412.00858), [2501.04157](https://arxiv.org/abs/2501.04157), [2506.15259](https://arxiv.org/abs/2506.15259), [2606.28169](https://arxiv.org/abs/2606.28169) |
-| [`OpenProblems/TensorNetworks/Part3Defs`](../LeanDLRA/OpenProblems/TensorNetworks/Part3Defs.lean) | Definitions for TensorNetworks Part3 | 0 |  |
+| [`OpenProblems/TensorNetworks/Part3Defs`](../LeanDLRA/OpenProblems/TensorNetworks/Part3Defs.lean) | Definitions for TensorNetworks Part3 | 1 |  |
 | [`OpenProblems/TensorNetworks/Part3a`](../LeanDLRA/OpenProblems/TensorNetworks/Part3a.lean) | Open problems OP-TN-16, OP-TN-17, OP-TN-18, OP-TN-19 | 9 | [1709.02594](https://arxiv.org/abs/1709.02594), [1801.01103](https://arxiv.org/abs/1801.01103), [2309.08252](https://arxiv.org/abs/2309.08252), [2501.04157](https://arxiv.org/abs/2501.04157), [2512.14950](https://arxiv.org/abs/2512.14950) |
 | [`OpenProblems/TensorNetworks/Part3b`](../LeanDLRA/OpenProblems/TensorNetworks/Part3b.lean) | Open problems OP-TN-20, OP-TN-22, OP-TN-23, OP-TN-24, OP-TN-25 | 8 | [1906.01369](https://arxiv.org/abs/1906.01369), [2002.12197](https://arxiv.org/abs/2002.12197), [2111.14540](https://arxiv.org/abs/2111.14540), [2308.16720](https://arxiv.org/abs/2308.16720), [2503.04932](https://arxiv.org/abs/2503.04932), [2507.08088](https://arxiv.org/abs/2507.08088), [2608.16994](https://arxiv.org/abs/2608.16994), [2609.12848](https://arxiv.org/abs/2609.12848) |
 | [`OpenProblems/TensorNetworks/Part3c`](../LeanDLRA/OpenProblems/TensorNetworks/Part3c.lean) | Open problems OP-TN-26, OP-TN-28, OP-TN-29, OP-TN-30 | 19 | [2002.11392](https://arxiv.org/abs/2002.11392), [2308.16720](https://arxiv.org/abs/2308.16720), [2402.08607](https://arxiv.org/abs/2402.08607), [2412.00858](https://arxiv.org/abs/2412.00858), [2608.27749](https://arxiv.org/abs/2608.27749), [2610.11747](https://arxiv.org/abs/2610.11747) |
@@ -272,8 +409,8 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Literature/HighOrder/P2412_09400a`](../LeanDLRA/Literature/HighOrder/P2412_09400a.lean) | Results of arXiv 2412.09400: high-order implicit low-rank SDC (SDC-mBUG) | 63 | [2412.09400](https://arxiv.org/abs/2412.09400) |
 | [`Literature/HighOrder/P2501_06145a`](../LeanDLRA/Literature/HighOrder/P2501_06145a.lean) | Results of arXiv 2501.06145: Second-order DLR mass-lumped FEM for Allen–Cahn | 97 | [2501.06145](https://arxiv.org/abs/2501.06145) |
 | [`Literature/HighOrder/P2501_06145b`](../LeanDLRA/Literature/HighOrder/P2501_06145b.lean) | Results of arXiv 2501.06145 (part b): Algorithm 3.3 and the modified energy law (Theorem 3.3) | 68 | [2501.06145](https://arxiv.org/abs/2501.06145) |
-| [`Literature/HighOrder/P2502_07040a`](../LeanDLRA/Literature/HighOrder/P2502_07040a.lean) | Results of arXiv 2502.07040: convergence of the RK-BUG integrator | 53 | [2502.07040](https://arxiv.org/abs/2502.07040) |
-| [`Literature/HighOrder/P2502_07040b`](../LeanDLRA/Literature/HighOrder/P2502_07040b.lean) | Results of arXiv 2502.07040: truncation error of the RK-BUG integrator | 62 | [2502.07040](https://arxiv.org/abs/2502.07040) |
+| [`Literature/HighOrder/P2502_07040a`](../LeanDLRA/Literature/HighOrder/P2502_07040a.lean) | Results of arXiv 2502.07040: convergence of the RK-BUG integrator | 55 | [2502.07040](https://arxiv.org/abs/2502.07040) |
+| [`Literature/HighOrder/P2502_07040b`](../LeanDLRA/Literature/HighOrder/P2502_07040b.lean) | Results of arXiv 2502.07040: truncation error of the RK-BUG integrator | 64 | [2502.07040](https://arxiv.org/abs/2502.07040) |
 | [`Literature/HighOrder/P2608_12893a`](../LeanDLRA/Literature/HighOrder/P2608_12893a.lean) | The counterexample family of arXiv 2608.12893 (Strang projector splitting) | 147 | [2608.12893](https://arxiv.org/abs/2608.12893) |
 | [`Literature/HighOrder/P2608_12893b`](../LeanDLRA/Literature/HighOrder/P2608_12893b.lean) | Desingularized substeps for arXiv 2608.12893 (Strang projector splitting) | 41 | [2608.12893](https://arxiv.org/abs/2608.12893) |
 | [`Literature/HighOrder/P2608_17157a`](../LeanDLRA/Literature/HighOrder/P2608_17157a.lean) | Robust high-order projector-splitting integrators (Zhang–Hu, arXiv 2608.17157) | 68 | [2608.17157](https://arxiv.org/abs/2608.17157) |
@@ -284,61 +421,65 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Literature/Integrators/P1301_1058a`](../LeanDLRA/Literature/Integrators/P1301_1058a.lean) | Results of arXiv 1301.1058: Projector-splitting (KSL) integrator | 80 | [1301.1058](https://arxiv.org/abs/1301.1058) |
 | [`Literature/Integrators/P1906_01369a`](../LeanDLRA/Literature/Integrators/P1906_01369a.lean) | Results of arXiv 1906.01369: Symmetric and skew-symmetric low-rank integrators | 15 | [1906.01369](https://arxiv.org/abs/1906.01369) |
 | [`Literature/Integrators/P1906_01369b`](../LeanDLRA/Literature/Integrators/P1906_01369b.lean) | Results of arXiv 1906.01369: (anti-)symmetric Tucker integrator, robust error bound | 28 | [1906.01369](https://arxiv.org/abs/1906.01369) |
-| [`Literature/Integrators/P2001_08599a`](../LeanDLRA/Literature/Integrators/P2001_08599a.lean) | Results of arXiv 2001.08599: Chart-based splitting from the fibre-bundle structure of M_r | 38 | [1301.1058](https://arxiv.org/abs/1301.1058), [2001.08599](https://arxiv.org/abs/2001.08599) |
+| [`Literature/Integrators/P2001_08599a`](../LeanDLRA/Literature/Integrators/P2001_08599a.lean) | Results of arXiv 2001.08599: Chart-based splitting from the fibre-bundle structure of M_r | 40 | [1301.1058](https://arxiv.org/abs/1301.1058), [2001.08599](https://arxiv.org/abs/2001.08599) |
 | [`Literature/Integrators/P2001_08599b`](../LeanDLRA/Literature/Integrators/P2001_08599b.lean) | Results of arXiv 2001.08599: Chart-based splitting from the fibre-bundle structure of M_r | 12 | [2001.08599](https://arxiv.org/abs/2001.08599) |
 | [`Literature/Integrators/P2010_02022a`](../LeanDLRA/Literature/Integrators/P2010_02022a.lean) | Results of arXiv 2010.02022: Tucker exactness of the unconventional robust BUG integrator | 88 | [2010.02022](https://arxiv.org/abs/2010.02022) |
-| [`Literature/Kinetic/P1801_01103a`](../LeanDLRA/Literature/Kinetic/P1801_01103a.lean) | A low-rank projector-splitting integrator for Vlasov–Poisson (arXiv 1801.01103) | 109 | [1709.02594](https://arxiv.org/abs/1709.02594), [1801.01103](https://arxiv.org/abs/1801.01103), [1807.02338](https://arxiv.org/abs/1807.02338) |
-| [`Literature/Kinetic/P1804_04561a`](../LeanDLRA/Literature/Kinetic/P1804_04561a.lean) | Low-rank BGK for weakly compressible flow (arXiv 1804.04561) | 118 | [1804.04561](https://arxiv.org/abs/1804.04561) |
-| [`Literature/Kinetic/P1807_02338a`](../LeanDLRA/Literature/Kinetic/P1807_02338a.lean) | Quasi-conservative dynamical low-rank approximation for Vlasov (arXiv 1807.02338) | 118 | [1807.02338](https://arxiv.org/abs/1807.02338) |
+| [`Literature/Kinetic/P1801_01103a`](../LeanDLRA/Literature/Kinetic/P1801_01103a.lean) | A low-rank projector-splitting integrator for Vlasov–Poisson (arXiv 1801.01103) | 113 | [1709.02594](https://arxiv.org/abs/1709.02594), [1801.01103](https://arxiv.org/abs/1801.01103), [1807.02338](https://arxiv.org/abs/1807.02338) |
+| [`Literature/Kinetic/P1804_04561a`](../LeanDLRA/Literature/Kinetic/P1804_04561a.lean) | Low-rank BGK for weakly compressible flow (arXiv 1804.04561) | 119 | [1804.04561](https://arxiv.org/abs/1804.04561) |
+| [`Literature/Kinetic/P1807_02338a`](../LeanDLRA/Literature/Kinetic/P1807_02338a.lean) | Quasi-conservative dynamical low-rank approximation for Vlasov (arXiv 1807.02338) | 126 | [1807.02338](https://arxiv.org/abs/1807.02338) |
 | [`Literature/Kinetic/P1807_02338b`](../LeanDLRA/Literature/Kinetic/P1807_02338b.lean) | Local and global mass conservation are incompatible (arXiv 1807.02338, Sec. 4) | 155 | [1807.02338](https://arxiv.org/abs/1807.02338) |
 | [`Literature/Kinetic/P1902_00424a`](../LeanDLRA/Literature/Kinetic/P1902_00424a.lean) | Results of arXiv 1902.00424: projector-splitting DLRA for Vlasov-Maxwell, divergence correction | 125 | [1902.00424](https://arxiv.org/abs/1902.00424) |
 | [`Literature/Kinetic/P1906_09940a`](../LeanDLRA/Literature/Kinetic/P1906_09940a.lean) | Results of arXiv 1906.09940: low-rank KSL for slab-geometry transport | 177 | [1906.09940](https://arxiv.org/abs/1906.09940) |
-| [`Literature/Kinetic/P1907_04247a`](../LeanDLRA/Literature/Kinetic/P1907_04247a.lean) | Results of arXiv 1907.04247: DLRA for linear Boltzmann in the diffusion limit | 171 | [1907.04247](https://arxiv.org/abs/1907.04247) |
+| [`Literature/Kinetic/P1907_04247a`](../LeanDLRA/Literature/Kinetic/P1907_04247a.lean) | Results of arXiv 1907.04247: DLRA for linear Boltzmann in the diffusion limit | 175 | [1907.04247](https://arxiv.org/abs/1907.04247) |
 | [`Literature/Kinetic/P1912_07522a`](../LeanDLRA/Literature/Kinetic/P1912_07522a.lean) | Low-rank KSL for the `P_N` radiation transport system (arXiv 1912.07522) | 116 | [1912.07522](https://arxiv.org/abs/1912.07522) |
 | [`Literature/Kinetic/P2005_06571a`](../LeanDLRA/Literature/Kinetic/P2005_06571a.lean) | Results of arXiv 2005.06571: Asymptotic-preserving DLRA for multiscale linear transport | 186 | [2005.06571](https://arxiv.org/abs/2005.06571), [2212.12012](https://arxiv.org/abs/2212.12012) |
 | [`Literature/Kinetic/P2011_06072a`](../LeanDLRA/Literature/Kinetic/P2011_06072a.lean) | HOLO conservation for low-rank transport (arXiv 2011.06072) | 53 | [2011.06072](https://arxiv.org/abs/2011.06072) |
 | [`Literature/Kinetic/P2101_07104a`](../LeanDLRA/Literature/Kinetic/P2101_07104a.lean) | Results of arXiv 2101.07104: Efficient DLR for Boltzmann–BGK near compressible Navier–Stokes | 107 | [2101.07104](https://arxiv.org/abs/2101.07104) |
-| [`Literature/Kinetic/P2101_12571a`](../LeanDLRA/Literature/Kinetic/P2101_12571a.lean) | Results of arXiv 2101.12571: Mass-, momentum- and energy-conservative DLRA for Vlasov | 154 | [2101.12571](https://arxiv.org/abs/2101.12571) |
-| [`Literature/Kinetic/P2101_12571b`](../LeanDLRA/Literature/Kinetic/P2101_12571b.lean) | Results of arXiv 2101.12571, Sec. 6.2: the unconventional conservative integrator | 129 | [2101.12571](https://arxiv.org/abs/2101.12571) |
+| [`Literature/Kinetic/P2101_12571a`](../LeanDLRA/Literature/Kinetic/P2101_12571a.lean) | Results of arXiv 2101.12571: Mass-, momentum- and energy-conservative DLRA for Vlasov | 163 | [2101.12571](https://arxiv.org/abs/2101.12571) |
+| [`Literature/Kinetic/P2101_12571b`](../LeanDLRA/Literature/Kinetic/P2101_12571b.lean) | Results of arXiv 2101.12571, Sec. 6.2: the unconventional conservative integrator | 132 | [2101.12571](https://arxiv.org/abs/2101.12571) |
 | [`Literature/Kinetic/P2106_09445a`](../LeanDLRA/Literature/Kinetic/P2106_09445a.lean) | Normalized minimal-entropy closures with the Maxwell–Boltzmann entropy (arXiv 2106.09445) | 22 | [2106.09445](https://arxiv.org/abs/2106.09445), [2201.10364](https://arxiv.org/abs/2201.10364), [2402.16613](https://arxiv.org/abs/2402.16613), [2404.14312](https://arxiv.org/abs/2404.14312) |
 | [`Literature/Kinetic/P2107_07282a`](../LeanDLRA/Literature/Kinetic/P2107_07282a.lean) | Results of arXiv 2107.07282: L²-stability of robust DLRA for hyperbolic problems | 117 | [2107.07282](https://arxiv.org/abs/2107.07282) |
-| [`Literature/Kinetic/P2111_07160a`](../LeanDLRA/Literature/Kinetic/P2111_07160a.lean) | arXiv 2111.07160: a collision source method for rank-adaptive DLRA in radiation therapy | 51 | [2111.07160](https://arxiv.org/abs/2111.07160) |
+| [`Literature/Kinetic/P2111_07160a`](../LeanDLRA/Literature/Kinetic/P2111_07160a.lean) | arXiv 2111.07160: a collision source method for rank-adaptive DLRA in radiation therapy | 59 | [2111.07160](https://arxiv.org/abs/2111.07160) |
 | [`Literature/Kinetic/P2112_02695a`](../LeanDLRA/Literature/Kinetic/P2112_02695a.lean) | Results of arXiv 2112.02695: Adaptive DLRA for the nonlinear Boltzmann equation | 76 | [2112.02695](https://arxiv.org/abs/2112.02695) |
+| [`Literature/Kinetic/P2201_10364a`](../LeanDLRA/Literature/Kinetic/P2201_10364a.lean) | Generalization gap of gradients of input convex networks (arXiv 2201.10364) | 14 | [2201.10364](https://arxiv.org/abs/2201.10364) |
 | [`Literature/Kinetic/P2205_08417a`](../LeanDLRA/Literature/Kinetic/P2205_08417a.lean) | The CSD pseudo-time transformation and the `P_N` closure of KiT-RT (arXiv 2205.08417) | 12 | [2205.08417](https://arxiv.org/abs/2205.08417) |
-| [`Literature/Kinetic/P2206_09374a`](../LeanDLRA/Literature/Kinetic/P2206_09374a.lean) | Results of arXiv 2206.09374: Robust conservative DLRA for Vlasov | 166 | [2206.09374](https://arxiv.org/abs/2206.09374) |
-| [`Literature/Kinetic/P2212_12012a`](../LeanDLRA/Literature/Kinetic/P2212_12012a.lean) | Results of arXiv 2212.12012: Asymptotic-preserving, energy-stable DLRA (Einkemmer-Hu-Kusch) | 127 | [2212.12012](https://arxiv.org/abs/2212.12012) |
+| [`Literature/Kinetic/P2206_09374a`](../LeanDLRA/Literature/Kinetic/P2206_09374a.lean) | Results of arXiv 2206.09374: Robust conservative DLRA for Vlasov | 174 | [2206.09374](https://arxiv.org/abs/2206.09374) |
+| [`Literature/Kinetic/P2212_12012a`](../LeanDLRA/Literature/Kinetic/P2212_12012a.lean) | Results of arXiv 2212.12012: Asymptotic-preserving, energy-stable DLRA (Einkemmer-Hu-Kusch) | 128 | [2212.12012](https://arxiv.org/abs/2212.12012) |
 | [`Literature/Kinetic/P2302_01391a`](../LeanDLRA/Literature/Kinetic/P2302_01391a.lean) | arXiv 2302.01391: macro-micro decomposition for shallow water moment equations | 83 | [2302.01391](https://arxiv.org/abs/2302.01391) |
 | [`Literature/Kinetic/P2303_01856a`](../LeanDLRA/Literature/Kinetic/P2303_01856a.lean) | Results of arXiv 2303.01856: DLRA for Vlasov–Poisson with boundary | 126 | [2303.01856](https://arxiv.org/abs/2303.01856) |
-| [`Literature/Kinetic/P2307_07538a`](../LeanDLRA/Literature/Kinetic/P2307_07538a.lean) | Energy-stable conservative DLRA for the Su–Olson problem (arXiv 2307.07538, part a) | 98 | [2307.07538](https://arxiv.org/abs/2307.07538) |
+| [`Literature/Kinetic/P2307_07538a`](../LeanDLRA/Literature/Kinetic/P2307_07538a.lean) | Energy-stable conservative DLRA for the Su–Olson problem (arXiv 2307.07538, part a) | 105 | [2307.07538](https://arxiv.org/abs/2307.07538) |
 | [`Literature/Kinetic/P2307_07538b`](../LeanDLRA/Literature/Kinetic/P2307_07538b.lean) | Local mass conservation of the energy-stable DLRA scheme for Su–Olson (arXiv 2307.07538) | 14 | [2307.07538](https://arxiv.org/abs/2307.07538) |
 | [`Literature/Kinetic/P2311_06399a`](../LeanDLRA/Literature/Kinetic/P2311_06399a.lean) | Conservative BUG integrators of arXiv 2311.06399, at the level of the matrix factors | 42 | [2206.09374](https://arxiv.org/abs/2206.09374), [2311.06399](https://arxiv.org/abs/2311.06399), [2402.08607](https://arxiv.org/abs/2402.08607) |
 | [`Literature/Kinetic/P2311_09425a`](../LeanDLRA/Literature/Kinetic/P2311_09425a.lean) | Results of arXiv 2311.09425: Conservative DLRA for Vlasov via macro-micro decomposition | 136 | [2311.09425](https://arxiv.org/abs/2311.09425) |
-| [`Literature/Kinetic/P2311_09425b`](../LeanDLRA/Literature/Kinetic/P2311_09425b.lean) | arXiv 2311.09425: the second-order conservative low-rank integrator (Theorem 3.2, Corollary 3.3) | 100 | [2311.09425](https://arxiv.org/abs/2311.09425) |
-| [`Literature/Kinetic/P2402_16746a`](../LeanDLRA/Literature/Kinetic/P2402_16746a.lean) | Results of arXiv 2402.16746: AP energy-stable DLRA for thermal radiative transfer | 106 | [2212.12012](https://arxiv.org/abs/2212.12012), [2402.16746](https://arxiv.org/abs/2402.16746) |
-| [`Literature/Kinetic/P2402_16746b`](../LeanDLRA/Literature/Kinetic/P2402_16746b.lean) | Results of arXiv 2402.16746: AP energy-stable DLRA for thermal radiative transfer | 82 | [2402.16746](https://arxiv.org/abs/2402.16746) |
-| [`Literature/Kinetic/P2411_06844a`](../LeanDLRA/Literature/Kinetic/P2411_06844a.lean) | Results of arXiv 2411.06844: Stable multiplicative DLRA for linear Boltzmann-BGK | 188 | [2411.06844](https://arxiv.org/abs/2411.06844) |
-| [`Literature/Kinetic/P2412_05912a`](../LeanDLRA/Literature/Kinetic/P2412_05912a.lean) | Results of arXiv 2412.05912: a review of low-rank methods for kinetic simulations | 151 | [1902.00424](https://arxiv.org/abs/1902.00424), [2005.06571](https://arxiv.org/abs/2005.06571), [2403.02834](https://arxiv.org/abs/2403.02834), [2412.05912](https://arxiv.org/abs/2412.05912) |
-| [`Literature/Kinetic/P2502_03008a`](../LeanDLRA/Literature/Kinetic/P2502_03008a.lean) | Results of arXiv 2502.03008: energy-stable multiplicative DLRA, Su–Olson | 99 | [2502.03008](https://arxiv.org/abs/2502.03008) |
+| [`Literature/Kinetic/P2311_09425b`](../LeanDLRA/Literature/Kinetic/P2311_09425b.lean) | arXiv 2311.09425: the second-order conservative low-rank integrator (Theorem 3.2, Corollary 3.3) | 107 | [2311.09425](https://arxiv.org/abs/2311.09425) |
+| [`Literature/Kinetic/P2402_16613a`](../LeanDLRA/Literature/Kinetic/P2402_16613a.lean) | Structure-preserving collision DeepONets (arXiv 2402.16613) | 10 | [2402.16613](https://arxiv.org/abs/2402.16613) |
+| [`Literature/Kinetic/P2402_16746a`](../LeanDLRA/Literature/Kinetic/P2402_16746a.lean) | Results of arXiv 2402.16746: AP energy-stable DLRA for thermal radiative transfer | 111 | [2212.12012](https://arxiv.org/abs/2212.12012), [2402.16746](https://arxiv.org/abs/2402.16746) |
+| [`Literature/Kinetic/P2402_16746b`](../LeanDLRA/Literature/Kinetic/P2402_16746b.lean) | Results of arXiv 2402.16746: AP energy-stable DLRA for thermal radiative transfer | 88 | [2402.16746](https://arxiv.org/abs/2402.16746) |
+| [`Literature/Kinetic/P2404_14312a`](../LeanDLRA/Literature/Kinetic/P2404_14312a.lean) | Partially regularized entropy closures (arXiv 2404.14312) | 38 | [2404.14312](https://arxiv.org/abs/2404.14312) |
+| [`Literature/Kinetic/P2411_06844a`](../LeanDLRA/Literature/Kinetic/P2411_06844a.lean) | Results of arXiv 2411.06844: Stable multiplicative DLRA for linear Boltzmann-BGK | 191 | [2411.06844](https://arxiv.org/abs/2411.06844) |
+| [`Literature/Kinetic/P2412_05912a`](../LeanDLRA/Literature/Kinetic/P2412_05912a.lean) | Results of arXiv 2412.05912: a review of low-rank methods for kinetic simulations | 155 | [1902.00424](https://arxiv.org/abs/1902.00424), [2005.06571](https://arxiv.org/abs/2005.06571), [2403.02834](https://arxiv.org/abs/2403.02834), [2412.05912](https://arxiv.org/abs/2412.05912) |
+| [`Literature/Kinetic/P2502_03008a`](../LeanDLRA/Literature/Kinetic/P2502_03008a.lean) | Results of arXiv 2502.03008: energy-stable multiplicative DLRA, Su–Olson | 101 | [2502.03008](https://arxiv.org/abs/2502.03008) |
 | [`Literature/Kinetic/P2502_03008b`](../LeanDLRA/Literature/Kinetic/P2502_03008b.lean) | Local mass conservation of the multiplicative DLRA scheme for Su–Olson (arXiv 2502.03008) | 23 | [2502.03008](https://arxiv.org/abs/2502.03008) |
 | [`Literature/Kinetic/P2502_08951a`](../LeanDLRA/Literature/Kinetic/P2502_08951a.lean) | Results of arXiv 2502.08951: Asymptotic-preserving DLR for the stiff nonlinear Boltzmann equation | 141 | [2502.08951](https://arxiv.org/abs/2502.08951) |
-| [`Literature/Kinetic/P2502_20883a`](../LeanDLRA/Literature/Kinetic/P2502_20883a.lean) | Results of arXiv 2502.20883: a parallel, energy-stable low-rank integrator for radiative transfer | 84 | [2502.20883](https://arxiv.org/abs/2502.20883) |
+| [`Literature/Kinetic/P2502_20883a`](../LeanDLRA/Literature/Kinetic/P2502_20883a.lean) | Results of arXiv 2502.20883: a parallel, energy-stable low-rank integrator for radiative transfer | 90 | [2502.20883](https://arxiv.org/abs/2502.20883) |
 | [`Literature/Kinetic/P2503_10562a`](../LeanDLRA/Literature/Kinetic/P2503_10562a.lean) | Results of arXiv 2503.10562: DG conservative DLRA for Vlasov–Poisson | 134 | [2503.10562](https://arxiv.org/abs/2503.10562) |
-| [`Literature/Kinetic/P2505_19929a`](../LeanDLRA/Literature/Kinetic/P2505_19929a.lean) | arXiv 2505.19929: Galerkin alternating projection for kinetic equations in the diffusive limit | 124 | [2505.19929](https://arxiv.org/abs/2505.19929) |
+| [`Literature/Kinetic/P2505_19929a`](../LeanDLRA/Literature/Kinetic/P2505_19929a.lean) | arXiv 2505.19929: Galerkin alternating projection for kinetic equations in the diffusive limit | 126 | [2505.19929](https://arxiv.org/abs/2505.19929) |
 | [`Literature/Kinetic/P2507_15192a`](../LeanDLRA/Literature/Kinetic/P2507_15192a.lean) | Results of arXiv 2507.15192: stability of projector-splitting integrators (Zhang–Hu) | 70 | [2507.15192](https://arxiv.org/abs/2507.15192) |
 | [`Literature/Kinetic/P2510_05452a`](../LeanDLRA/Literature/Kinetic/P2510_05452a.lean) | Rotational invariance of the data-driven filtered `P_N` equations (arXiv 2510.05452) | 44 | [1912.07522](https://arxiv.org/abs/1912.07522), [2510.05452](https://arxiv.org/abs/2510.05452) |
-| [`Literature/Kinetic/P2601_11900a`](../LeanDLRA/Literature/Kinetic/P2601_11900a.lean) | Results of arXiv 2601.11900: Separable AP DLR method for Vlasov–Poisson–Fokker–Planck | 145 | [2601.11900](https://arxiv.org/abs/2601.11900) |
+| [`Literature/Kinetic/P2601_11900a`](../LeanDLRA/Literature/Kinetic/P2601_11900a.lean) | Results of arXiv 2601.11900: Separable AP DLR method for Vlasov–Poisson–Fokker–Planck | 148 | [2601.11900](https://arxiv.org/abs/2601.11900) |
 | [`Literature/Kinetic/P2602_12337a`](../LeanDLRA/Literature/Kinetic/P2602_12337a.lean) | Energy stability of IMEX, IMEX-S and IMEX-S-BUG (arXiv 2602.12337, Sec. 3 and 4) | 141 | [2602.12337](https://arxiv.org/abs/2602.12337) |
 | [`Literature/Kinetic/P2602_12337b`](../LeanDLRA/Literature/Kinetic/P2602_12337b.lean) | The asymptotic-preserving property of IMEX-S-BUG (arXiv 2602.12337, Sec. 4.2) | 139 | [2602.12337](https://arxiv.org/abs/2602.12337) |
 | [`Literature/Kinetic/P2606_31662a`](../LeanDLRA/Literature/Kinetic/P2606_31662a.lean) | Positivity-preserving corrections of low-rank solutions (arXiv 2606.31662) | 65 | [2606.31662](https://arxiv.org/abs/2606.31662) |
-| [`Literature/Kinetic/P2607_27736a`](../LeanDLRA/Literature/Kinetic/P2607_27736a.lean) | Results of arXiv 2607.27736: AP low-rank semi-Lagrangian kinetic | 152 | [2607.27736](https://arxiv.org/abs/2607.27736) |
-| [`Literature/Kinetic/P2608_00397a`](../LeanDLRA/Literature/Kinetic/P2608_00397a.lean) | Structure-preserving DLRA for stochastic Vlasov–Poisson (arXiv 2608.00397) | 88 | [2608.00397](https://arxiv.org/abs/2608.00397) |
+| [`Literature/Kinetic/P2607_27736a`](../LeanDLRA/Literature/Kinetic/P2607_27736a.lean) | Results of arXiv 2607.27736: AP low-rank semi-Lagrangian kinetic | 156 | [2607.27736](https://arxiv.org/abs/2607.27736) |
+| [`Literature/Kinetic/P2608_00397a`](../LeanDLRA/Literature/Kinetic/P2608_00397a.lean) | Structure-preserving DLRA for stochastic Vlasov–Poisson (arXiv 2608.00397) | 95 | [2608.00397](https://arxiv.org/abs/2608.00397) |
 | [`Literature/Kinetic/P2609_02721a`](../LeanDLRA/Literature/Kinetic/P2609_02721a.lean) | Stable rank-adaptive step-and-truncate finite volumes for Vlasov (arXiv 2609.02721) | 58 | [2609.02721](https://arxiv.org/abs/2609.02721) |
-| [`Literature/Randomized/P2308_16547a`](../LeanDLRA/Literature/Randomized/P2308_16547a.lean) | Results of arXiv 2308.16547: Adaptive symplectic hyper-reduction | 35 | [2008.07427](https://arxiv.org/abs/2008.07427), [2308.16547](https://arxiv.org/abs/2308.16547) |
+| [`Literature/Randomized/P2308_16547a`](../LeanDLRA/Literature/Randomized/P2308_16547a.lean) | Results of arXiv 2308.16547: Adaptive symplectic hyper-reduction | 38 | [2008.07427](https://arxiv.org/abs/2008.07427), [2308.16547](https://arxiv.org/abs/2308.16547) |
 | [`Literature/Randomized/P2308_16547b`](../LeanDLRA/Literature/Randomized/P2308_16547b.lean) | Results of arXiv 2308.16547: Adaptive symplectic hyper-reduction (Proposition 3) | 10 | [2008.07427](https://arxiv.org/abs/2008.07427), [2308.16547](https://arxiv.org/abs/2308.16547) |
 | [`Literature/Randomized/P2401_04249a`](../LeanDLRA/Literature/Randomized/P2401_04249a.lean) | Results of arXiv 2401.04249: DEIM Tucker tensor cross for DLRA | 0 | [2401.04249](https://arxiv.org/abs/2401.04249) |
 | [`Literature/Randomized/P2402_18721a`](../LeanDLRA/Literature/Randomized/P2402_18721a.lean) | Results of arXiv 2402.18721: Collocation (cross-interpolation) methods on low-rank manifolds | 3 | [2402.18721](https://arxiv.org/abs/2402.18721) |
+| [`Literature/Randomized/P2402_18721b`](../LeanDLRA/Literature/Randomized/P2402_18721b.lean) | Results of arXiv 2402.18721: interpolatory TT tangent projectors | 5 | [2402.18721](https://arxiv.org/abs/2402.18721) |
 | [`Literature/Randomized/P2408_16591a`](../LeanDLRA/Literature/Randomized/P2408_16591a.lean) | CUR for implicit DLRA of random PDEs (arXiv 2408.16591) | 62 | [2408.16591](https://arxiv.org/abs/2408.16591) |
-| [`Literature/Randomized/P2409_06384a`](../LeanDLRA/Literature/Randomized/P2409_06384a.lean) | Randomized low-rank Runge–Kutta methods (arXiv 2409.06384, Lam–Ceruti–Kressner) | 74 | [2409.06384](https://arxiv.org/abs/2409.06384) |
+| [`Literature/Randomized/P2409_06384a`](../LeanDLRA/Literature/Randomized/P2409_06384a.lean) | Randomized low-rank Runge–Kutta methods (arXiv 2409.06384, Lam–Ceruti–Kressner) | 76 | [2409.06384](https://arxiv.org/abs/2409.06384) |
 | [`Literature/Randomized/P2410_17091a`](../LeanDLRA/Literature/Randomized/P2410_17091a.lean) | Carrel, *Randomized methods for dynamical low-rank approximation* (arXiv 2410.17091) | 43 | [2410.17091](https://arxiv.org/abs/2410.17091) |
 | [`Literature/Randomized/P2411_15990a`](../LeanDLRA/Literature/Randomized/P2411_15990a.lean) | arXiv 2411.15990: DEIM, the interpolatory projector-splitting and the BUC integrators | 43 | [2411.15990](https://arxiv.org/abs/2411.15990) |
 | [`Literature/Randomized/P2510_19518a`](../LeanDLRA/Literature/Randomized/P2510_19518a.lean) | Results of arXiv 2510.19518: interpolatory DLRA (DLRA-DEIM), Lemma 7, Lemma 13, Theorem 14 | 35 | [2510.19518](https://arxiv.org/abs/2510.19518) |
@@ -352,7 +493,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Literature/RankAdaptive/P2203_08455a`](../LeanDLRA/Literature/RankAdaptive/P2203_08455a.lean) | Results of arXiv 2203.08455: Low-rank Parareal | 10 | [2203.08455](https://arxiv.org/abs/2203.08455) |
 | [`Literature/RankAdaptive/P2209_00550a`](../LeanDLRA/Literature/RankAdaptive/P2209_00550a.lean) | Results of arXiv 2209.00550: Predictor-corrector rank adaptivity for DLRA | 7 | [2209.00550](https://arxiv.org/abs/2209.00550) |
 | [`Literature/RankAdaptive/P2304_05660a`](../LeanDLRA/Literature/RankAdaptive/P2304_05660a.lean) | Results of arXiv 2304.05660: Parallel rank-adaptive BUG integrator | 3 | [2304.05660](https://arxiv.org/abs/2304.05660) |
-| [`Literature/RankAdaptive/P2602_14854a`](../LeanDLRA/Literature/RankAdaptive/P2602_14854a.lean) | Results of arXiv 2602.14854: Domain-decomposition DLRA for radiative transfer | 12 | [2602.14854](https://arxiv.org/abs/2602.14854) |
+| [`Literature/RankAdaptive/P2602_14854a`](../LeanDLRA/Literature/RankAdaptive/P2602_14854a.lean) | Results of arXiv 2602.14854: Domain-decomposition DLRA for radiative transfer | 13 | [2602.14854](https://arxiv.org/abs/2602.14854) |
 | [`Literature/Stiff/P1705_10175a`](../LeanDLRA/Literature/Stiff/P1705_10175a.lean) | Results of arXiv 1705.10175: low-rank split-step integrator for differential Lyapunov equations | 7 | [1705.10175](https://arxiv.org/abs/1705.10175) |
 | [`Literature/Stiff/P1803_10473a`](../LeanDLRA/Literature/Stiff/P1803_10473a.lean) | Results of arXiv 1803.10473: Low-rank Lie-Trotter splitting for stiff matrix ODEs | 19 | [1803.10473](https://arxiv.org/abs/1803.10473) |
 | [`Literature/Stiff/P1803_10473b`](../LeanDLRA/Literature/Stiff/P1803_10473b.lean) | Results of arXiv 1803.10473, part b: the full-rank splitting error and Theorem 1 | 19 | [1803.10473](https://arxiv.org/abs/1803.10473) |
@@ -363,11 +504,12 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Literature/Stiff/P2305_11532a`](../LeanDLRA/Literature/Stiff/P2305_11532a.lean) | Results of arXiv 2305.11532: Implicit Riemannian low-rank schemes for stiff PDEs | 4 | [2305.11532](https://arxiv.org/abs/2305.11532) |
 | [`Literature/Stiff/P2308_05914a`](../LeanDLRA/Literature/Stiff/P2308_05914a.lean) | Results of arXiv 2308.05914: Semi-implicit DLR discontinuous Galerkin for emission/absorption | 7 | [2308.05914](https://arxiv.org/abs/2308.05914) |
 | [`Literature/Stiff/P2308_05914b`](../LeanDLRA/Literature/Stiff/P2308_05914b.lean) | Results of arXiv 2308.05914: Semi-implicit DLR discontinuous Galerkin for emission/absorption | 4 | [2308.05914](https://arxiv.org/abs/2308.05914) |
+| [`Literature/Stiff/P2308_16720a`](../LeanDLRA/Literature/Stiff/P2308_16720a.lean) | Results of arXiv 2308.16720: DLR tensor approximations to parabolic problems | 8 | [2308.16720](https://arxiv.org/abs/2308.16720) |
 | [`Literature/Stiff/P2311_15143a`](../LeanDLRA/Literature/Stiff/P2311_15143a.lean) | Results of arXiv 2311.15143: RAIL implicit low-rank integrators | 2 | [2311.15143](https://arxiv.org/abs/2311.15143) |
 | [`Literature/Stiff/P2312_00172a`](../LeanDLRA/Literature/Stiff/P2312_00172a.lean) | Results of arXiv 2312.00172: Projected exponential methods for stiff DLRA (Carrel-Vandereycken) | 5 | [2312.00172](https://arxiv.org/abs/2312.00172) |
 | [`Literature/Stiff/P2402_05347a`](../LeanDLRA/Literature/Stiff/P2402_05347a.lean) | Results of arXiv 2402.05347 (Appelö–Cheng): truncation, one-step stability, DLRA failure | 4 | [2402.05347](https://arxiv.org/abs/2402.05347) |
 | [`Literature/Stiff/P2410_07465a`](../LeanDLRA/Literature/Stiff/P2410_07465a.lean) | Meng–Appelö–Cheng (arXiv 2410.07465): stability, convergence and the ES-preconditioner lemma | 28 | [2410.07465](https://arxiv.org/abs/2410.07465) |
-| [`Literature/Stiff/P2503_04932a`](../LeanDLRA/Literature/Stiff/P2503_04932a.lean) | Results of arXiv 2503.04932: 3d-RAIL low-rank IMEX for convection-diffusion | 15 | [2503.04932](https://arxiv.org/abs/2503.04932) |
+| [`Literature/Stiff/P2503_04932a`](../LeanDLRA/Literature/Stiff/P2503_04932a.lean) | Results of arXiv 2503.04932: 3d-RAIL low-rank IMEX for convection-diffusion | 16 | [2503.04932](https://arxiv.org/abs/2503.04932) |
 | [`Literature/Stiff/P2506_15259a`](../LeanDLRA/Literature/Stiff/P2506_15259a.lean) | Stiff matrix ODEs: exact flow, variation of constants, low-rank splittings (arXiv 2506.15259) | 11 | [2506.15259](https://arxiv.org/abs/2506.15259) |
 | [`Literature/Stiff/P2602_07437a`](../LeanDLRA/Literature/Stiff/P2602_07437a.lean) | Results of arXiv 2602.07437: Convergence of a low-rank Strang splitting for stiff matrix ODEs | 23 | [1803.10473](https://arxiv.org/abs/1803.10473), [2602.07437](https://arxiv.org/abs/2602.07437) |
 | [`Literature/Stiff/P2605_15382a`](../LeanDLRA/Literature/Stiff/P2605_15382a.lean) | Results of arXiv 2605.15382: Sylvester solver via a Schur reduction (Section 3) | 6 | [2605.15382](https://arxiv.org/abs/2605.15382) |
@@ -384,6 +526,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Literature/Stochastic/P2306_07774a`](../LeanDLRA/Literature/Stochastic/P2306_07774a.lean) | Results of arXiv 2306.07774: Rank-reduced Kalman filter | 12 | [2306.07774](https://arxiv.org/abs/2306.07774) |
 | [`Literature/Stochastic/P2308_11581a`](../LeanDLRA/Literature/Stochastic/P2308_11581a.lean) | Results of arXiv 2308.11581: DLRA for SDEs: DO/DLR well-posedness | 7 | [2308.11581](https://arxiv.org/abs/2308.11581) |
 | [`Literature/Stochastic/P2402_03586a`](../LeanDLRA/Literature/Stochastic/P2402_03586a.lean) | Results of arXiv 2402.03586: Error estimates for SUPG-stabilised DLRA | 2 | [2402.03586](https://arxiv.org/abs/2402.03586) |
+| [`Literature/Stochastic/P2407_01404a`](../LeanDLRA/Literature/Stochastic/P2407_01404a.lean) | Results of arXiv 2407.01404: Petrov-Galerkin DLR approximation and SUPG stabilisation | 127 | [2402.03586](https://arxiv.org/abs/2402.03586), [2407.01404](https://arxiv.org/abs/2407.01404) |
 | [`Literature/Stochastic/P2501_06125a`](../LeanDLRA/Literature/Stochastic/P2501_06125a.lean) | Results of arXiv 2501.06125: Low-rank control variates for uncertain radiative transfer | 7 | [2501.06125](https://arxiv.org/abs/2501.06125) |
 | [`Literature/Stochastic/P2502_08464a`](../LeanDLRA/Literature/Stochastic/P2502_08464a.lean) | Results of arXiv 2502.08464: Dynamical variable separation for parametric dynamics | 4 | [2502.08464](https://arxiv.org/abs/2502.08464) |
 | [`Literature/Stochastic/P2509_11210a`](../LeanDLRA/Literature/Stochastic/P2509_11210a.lean) | Results of arXiv 2509.11210: DLR Kalman filtering | 8 | [2509.11210](https://arxiv.org/abs/2509.11210) |
@@ -399,33 +542,35 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Literature/Stochastic/P2609_20317a`](../LeanDLRA/Literature/Stochastic/P2609_20317a.lean) | Results of arXiv 2609.20317: DLRA of SDEs II: stochastic discretisation | 4 | [2609.20317](https://arxiv.org/abs/2609.20317) |
 | [`Literature/TensorNetworks/P1709_02594a`](../LeanDLRA/Literature/TensorNetworks/P1709_02594a.lean) | Results of arXiv 1709.02594: projector splitting for rank-constrained Tucker tensors | 6 | [1709.02594](https://arxiv.org/abs/1709.02594) |
 | [`Literature/TensorNetworks/P2002_11392a`](../LeanDLRA/Literature/TensorNetworks/P2002_11392a.lean) | Results of arXiv 2002.11392: Time integration of tree tensor networks | 3 | [2002.11392](https://arxiv.org/abs/2002.11392) |
-| [`Literature/TensorNetworks/P2407_11792a`](../LeanDLRA/Literature/TensorNetworks/P2407_11792a.lean) | Results of arXiv 2407.11792: Hierarchical DLRA for chemical master equation | 2 | [2407.11792](https://arxiv.org/abs/2407.11792) |
-| [`Literature/TensorNetworks/P2501_04157a`](../LeanDLRA/Literature/TensorNetworks/P2501_04157a.lean) | Results of arXiv 2501.04157: Automatic partitioning for low-rank stochastic Boolean networks | 13 | [2501.04157](https://arxiv.org/abs/2501.04157) |
-| [`Literature/TensorNetworks/P2512_14950a`](../LeanDLRA/Literature/TensorNetworks/P2512_14950a.lean) | Results of arXiv 2512.14950: Dynamical tensor trains for kinetics | 12 | [2512.14950](https://arxiv.org/abs/2512.14950) |
-| [`Literature/TensorNetworks/P2603_13990a`](../LeanDLRA/Literature/TensorNetworks/P2603_13990a.lean) | Results of arXiv 2603.13990: Rank-adaptive tensor BUG for Schrödinger | 4 | [2603.13990](https://arxiv.org/abs/2603.13990) |
+| [`Literature/TensorNetworks/P2002_11392b`](../LeanDLRA/Literature/TensorNetworks/P2002_11392b.lean) | Results of arXiv 2002.11392: Time integration of tree tensor networks (part b) | 1 | [2002.11392](https://arxiv.org/abs/2002.11392) |
+| [`Literature/TensorNetworks/P2407_11792a`](../LeanDLRA/Literature/TensorNetworks/P2407_11792a.lean) | Results of arXiv 2407.11792: Hierarchical DLRA for chemical master equation | 16 | [2407.11792](https://arxiv.org/abs/2407.11792) |
+| [`Literature/TensorNetworks/P2412_00858a`](../LeanDLRA/Literature/TensorNetworks/P2412_00858a.lean) | Results of arXiv 2412.00858: Parallel BUG integrator for tree tensor networks | 11 | [2412.00858](https://arxiv.org/abs/2412.00858) |
+| [`Literature/TensorNetworks/P2501_04157a`](../LeanDLRA/Literature/TensorNetworks/P2501_04157a.lean) | Results of arXiv 2501.04157: Automatic partitioning for low-rank stochastic Boolean networks | 31 | [2501.04157](https://arxiv.org/abs/2501.04157) |
+| [`Literature/TensorNetworks/P2512_14950a`](../LeanDLRA/Literature/TensorNetworks/P2512_14950a.lean) | Results of arXiv 2512.14950: Dynamical tensor-train approximation for kinetic equations | 24 | [2512.14950](https://arxiv.org/abs/2512.14950) |
+| [`Literature/TensorNetworks/P2603_13990a`](../LeanDLRA/Literature/TensorNetworks/P2603_13990a.lean) | Results of arXiv 2603.13990: Schrödinger dynamics with rank-adaptive tensor decompositions | 7 | [2603.13990](https://arxiv.org/abs/2603.13990) |
 | [`Literature/TensorNetworks/P2608_16994a`](../LeanDLRA/Literature/TensorNetworks/P2608_16994a.lean) | Results of arXiv 2608.16994: BUG time integration in canonical MPS form | 4 | [2608.16994](https://arxiv.org/abs/2608.16994) |
 | [`Literature/TensorNetworks/P2609_11811a`](../LeanDLRA/Literature/TensorNetworks/P2609_11811a.lean) | Results of arXiv 2609.11811: Fermionic mode optimization via block-entropy gradients | 42 | [2609.11811](https://arxiv.org/abs/2609.11811) |
-| [`Literature/TensorNetworks/P2609_12848a`](../LeanDLRA/Literature/TensorNetworks/P2609_12848a.lean) | Results of arXiv 2609.12848: Diversifying MPS time evolution using BUGs | 5 | [2609.12848](https://arxiv.org/abs/2609.12848) |
+| [`Literature/TensorNetworks/P2609_12848a`](../LeanDLRA/Literature/TensorNetworks/P2609_12848a.lean) | Results of arXiv 2609.12848: Diversifying time evolution of matrix product states using BUGs | 17 | [2609.12848](https://arxiv.org/abs/2609.12848) |
 | [`Literature/TensorNetworks/P2610_36257a`](../LeanDLRA/Literature/TensorNetworks/P2610_36257a.lean) | Results of arXiv 2610.36257: Dynamical tensor-train approximation for Wigner–Fokker–Planck | 1 | [2610.36257](https://arxiv.org/abs/2610.36257) |
 | [`Literature/TensorNetworks/P2611_04360a`](../LeanDLRA/Literature/TensorNetworks/P2611_04360a.lean) | arXiv 2611.04360, Sections 5.1 and 5.3: TT-rank calculus and the energy inequality | 58 | [2611.04360](https://arxiv.org/abs/2611.04360) |
 | [`Literature/TensorNetworks/P2611_04360b`](../LeanDLRA/Literature/TensorNetworks/P2611_04360b.lean) | arXiv 2611.04360, Section 5.3: propagation of the errors of a step | 15 | [2611.04360](https://arxiv.org/abs/2611.04360) |
 | [`Literature/Training/P2009_03887a`](../LeanDLRA/Literature/Training/P2009_03887a.lean) | Results of arXiv 2009.03887: Low-rank training for emerging memory technology | 69 | [2009.03887](https://arxiv.org/abs/2009.03887) |
-| [`Literature/Training/P2205_13571a`](../LeanDLRA/Literature/Training/P2205_13571a.lean) | Results of arXiv 2205.13571: Low-rank lottery tickets (DLRT) | 78 | [2104.05247](https://arxiv.org/abs/2104.05247), [2205.13571](https://arxiv.org/abs/2205.13571) |
-| [`Literature/Training/P2209_13569a`](../LeanDLRA/Literature/Training/P2209_13569a.lean) | Results of arXiv 2209.13569: Exploring low-rank training of deep neural networks | 43 | [2209.13569](https://arxiv.org/abs/2209.13569) |
-| [`Literature/Training/P2305_19059a`](../LeanDLRA/Literature/Training/P2305_19059a.lean) | Results of arXiv 2305.19059: Geometry-aware training of Tucker-factorized layers (TDLRT) | 87 | [2305.19059](https://arxiv.org/abs/2305.19059) |
-| [`Literature/Training/P2306_00897a`](../LeanDLRA/Literature/Training/P2306_00897a.lean) | Results of arXiv 2306.00897: Gauss-Southwell descent for low-rank matrix optimization | 125 | [2306.00897](https://arxiv.org/abs/2306.00897) |
+| [`Literature/Training/P2205_13571a`](../LeanDLRA/Literature/Training/P2205_13571a.lean) | Results of arXiv 2205.13571: Low-rank lottery tickets (DLRT) | 79 | [2104.05247](https://arxiv.org/abs/2104.05247), [2205.13571](https://arxiv.org/abs/2205.13571) |
+| [`Literature/Training/P2209_13569a`](../LeanDLRA/Literature/Training/P2209_13569a.lean) | Results of arXiv 2209.13569: Exploring low-rank training of deep neural networks | 44 | [2209.13569](https://arxiv.org/abs/2209.13569) |
+| [`Literature/Training/P2305_19059a`](../LeanDLRA/Literature/Training/P2305_19059a.lean) | Results of arXiv 2305.19059: Geometry-aware training of Tucker-factorized layers (TDLRT) | 89 | [2305.19059](https://arxiv.org/abs/2305.19059) |
+| [`Literature/Training/P2306_00897a`](../LeanDLRA/Literature/Training/P2306_00897a.lean) | Results of arXiv 2306.00897: Gauss-Southwell descent for low-rank matrix optimization | 126 | [2306.00897](https://arxiv.org/abs/2306.00897) |
 | [`Literature/Training/P2306_01485a`](../LeanDLRA/Literature/Training/P2306_01485a.lean) | Robust low-rank training via approximate orthonormal constraints (arXiv 2306.01485) | 109 | [2306.01485](https://arxiv.org/abs/2306.01485) |
 | [`Literature/Training/P2401_03748a`](../LeanDLRA/Literature/Training/P2401_03748a.lean) | Results of arXiv 2401.03748: Federated recommendation via low-rank training (CoLR) | 77 | [2401.03748](https://arxiv.org/abs/2401.03748) |
 | [`Literature/Training/P2401_10341a`](../LeanDLRA/Literature/Training/P2401_10341a.lean) | Results of arXiv 2401.10341: ELRT: low-rank training of compact CNNs | 33 | [2401.10341](https://arxiv.org/abs/2401.10341) |
 | [`Literature/Training/P2406_17887a`](../LeanDLRA/Literature/Training/P2406_17887a.lean) | Results of arXiv 2406.17887: Federated dynamical low-rank training | 85 | [2406.17887](https://arxiv.org/abs/2406.17887) |
 | [`Literature/Training/P2409_04206a`](../LeanDLRA/Literature/Training/P2409_04206a.lean) | Results of arXiv 2409.04206: Fast Forward low-rank (LoRA) training | 87 | [2409.04206](https://arxiv.org/abs/2409.04206) |
-| [`Literature/Training/P2410_18720a`](../LeanDLRA/Literature/Training/P2410_18720a.lean) | Results of arXiv 2410.18720: GeoLoRA, low-rank neural network training | 139 | [2410.18720](https://arxiv.org/abs/2410.18720) |
+| [`Literature/Training/P2410_18720a`](../LeanDLRA/Literature/Training/P2410_18720a.lean) | Results of arXiv 2410.18720: GeoLoRA, low-rank neural network training | 142 | [2410.18720](https://arxiv.org/abs/2410.18720) |
 | [`Literature/Training/P2502_03006a`](../LeanDLRA/Literature/Training/P2502_03006a.lean) | Results of arXiv 2502.03006: Augmented backward-corrected PSI for low-rank training | 55 | [2502.03006](https://arxiv.org/abs/2502.03006) |
 | [`Literature/Training/P2505_08022a`](../LeanDLRA/Literature/Training/P2505_08022a.lean) | Results of arXiv 2505.08022: Robust DLRT under adversarial attacks | 73 | [2505.08022](https://arxiv.org/abs/2505.08022) |
 | [`Literature/Training/P2505_21732a`](../LeanDLRA/Literature/Training/P2505_21732a.lean) | Results of arXiv 2505.21732: LaX, latent crossing for low-rank training | 31 | [2505.21732](https://arxiv.org/abs/2505.21732) |
 | [`Literature/Training/P2506_17475a`](../LeanDLRA/Literature/Training/P2506_17475a.lean) | Results of arXiv 2506.17475: Geometric momentum for low-rank training | 140 | [2506.17475](https://arxiv.org/abs/2506.17475) |
 | [`Literature/Training/P2508_21106a`](../LeanDLRA/Literature/Training/P2508_21106a.lean) | Results of arXiv 2508.21106: AdaGram: DLRA of a full-matrix preconditioner | 59 | [1301.1058](https://arxiv.org/abs/1301.1058), [2508.21106](https://arxiv.org/abs/2508.21106) |
-| [`Literature/Training/P2509_15113a`](../LeanDLRA/Literature/Training/P2509_15113a.lean) | Results of arXiv 2509.15113: Low-rank surrogates for black-box layers (I-PSI) | 82 | [2509.15113](https://arxiv.org/abs/2509.15113) |
+| [`Literature/Training/P2509_15113a`](../LeanDLRA/Literature/Training/P2509_15113a.lean) | Results of arXiv 2509.15113: Low-rank surrogates for black-box layers (I-PSI) | 85 | [2509.15113](https://arxiv.org/abs/2509.15113) |
 | [`Literature/Training/P2511_04485a`](../LeanDLRA/Literature/Training/P2511_04485a.lean) | Results of arXiv 2511.04485: Q3R reweighted rank regularizer | 143 | [2511.04485](https://arxiv.org/abs/2511.04485) |
 | [`Literature/Training/P2601_08882a`](../LeanDLRA/Literature/Training/P2601_08882a.lean) | DLRT for compressing vision transformers: arXiv 2601.08882, Sec. 2 | 111 | [2410.18720](https://arxiv.org/abs/2410.18720), [2601.08882](https://arxiv.org/abs/2601.08882) |
 | [`Literature/Training/P2602_06208a`](../LeanDLRA/Literature/Training/P2602_06208a.lean) | Results of arXiv 2602.06208: Emergent low-rank training dynamics in MLPs | 130 | [2602.06208](https://arxiv.org/abs/2602.06208) |
@@ -438,13 +583,13 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
-| [`Novel/BGKEntropy`](../LeanDLRA/Novel/BGKEntropy.lean) | The conservative `L²`-orthogonal DLRA of BGK can increase the entropy | 95 |  |
+| [`Novel/BGKEntropy`](../LeanDLRA/Novel/BGKEntropy.lean) | The conservative `L²`-orthogonal DLRA of BGK can increase the entropy | 94 |  |
 | [`Novel/BlindSpot`](../LeanDLRA/Novel/BlindSpot.lean) | Blind spot of augmentation-based rank adaptivity and the one-probe fix | 47 | [2104.05247](https://arxiv.org/abs/2104.05247), [2410.18720](https://arxiv.org/abs/2410.18720) |
 | [`Novel/BlindSpotII`](../LeanDLRA/Novel/BlindSpotII.lean) | The blind spot and the probe, for the concrete algorithm | 223 | [2104.05247](https://arxiv.org/abs/2104.05247), [2410.18720](https://arxiv.org/abs/2410.18720) |
-| [`Novel/EpsRank`](../LeanDLRA/Novel/EpsRank.lean) | Rank decay in the diffusive scaling | 106 | [1907.04247](https://arxiv.org/abs/1907.04247), [2005.06571](https://arxiv.org/abs/2005.06571) |
+| [`Novel/EpsRank`](../LeanDLRA/Novel/EpsRank.lean) | Rank decay in the diffusive scaling | 109 | [1907.04247](https://arxiv.org/abs/1907.04247), [2005.06571](https://arxiv.org/abs/2005.06571) |
 | [`Novel/GeoLoRAFreeze`](../LeanDLRA/Novel/GeoLoRAFreeze.lean) | The GeoLoRA freeze: why the zero doubly-normal block stops rank growth | 136 |  |
 | [`Novel/GoldenThresholding`](../LeanDLRA/Novel/GoldenThresholding.lean) | Tight bound of rank thresholding and its consequences | 92 | [2402.08607](https://arxiv.org/abs/2402.08607), [2608.27749](https://arxiv.org/abs/2608.27749) |
-| [`Novel/KineticAP`](../LeanDLRA/Novel/KineticAP.lean) | Asymptotic preservation of low-rank IMEX schemes, characterized | 141 | [1907.04247](https://arxiv.org/abs/1907.04247), [2212.12012](https://arxiv.org/abs/2212.12012), [2505.19929](https://arxiv.org/abs/2505.19929), [2607.27736](https://arxiv.org/abs/2607.27736) |
+| [`Novel/KineticAP`](../LeanDLRA/Novel/KineticAP.lean) | Asymptotic preservation of low-rank IMEX schemes, characterized | 139 | [1907.04247](https://arxiv.org/abs/1907.04247), [2212.12012](https://arxiv.org/abs/2212.12012), [2505.19929](https://arxiv.org/abs/2505.19929), [2607.27736](https://arxiv.org/abs/2607.27736) |
 | [`Novel/MinibatchBias`](../LeanDLRA/Novel/MinibatchBias.lean) | Same-minibatch augmentation bias and its repair | 129 | [2410.11289](https://arxiv.org/abs/2410.11289), [2410.18720](https://arxiv.org/abs/2410.18720), [2502.03006](https://arxiv.org/abs/2502.03006) |
 | [`Novel/OpCO45`](../LeanDLRA/Novel/OpCO45.lean) | High-order positivity-preserving and TVD/TVB low-rank methods | 112 |  |
 | [`Novel/OpHO38`](../LeanDLRA/Novel/OpHO38.lean) | The Weingarten term of accelerated forward Euler for ambient-linear fields (OP-HO-38) | 24 | [2309.06125](https://arxiv.org/abs/2309.06125) |
@@ -458,11 +603,11 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Novel/OpSB52`](../LeanDLRA/Novel/OpSB52.lean) | Energy stability of DLRA for nonlinear kinetic models: Stefan–Boltzmann emission and | 38 | [2402.16746](https://arxiv.org/abs/2402.16746) |
 | [`Novel/OpSB54`](../LeanDLRA/Novel/OpSB54.lean) | Algebraic stability of Galerkin Runge–Kutta steps, and its loss under stage-dependent bases | 17 | [2006.05211](https://arxiv.org/abs/2006.05211), [2311.15143](https://arxiv.org/abs/2311.15143), [2507.15192](https://arxiv.org/abs/2507.15192) |
 | [`Novel/OpSB55`](../LeanDLRA/Novel/OpSB55.lean) | Robustness of low-rank training to rank over-estimation and ill-conditioned initial spectra | 52 | [2305.19059](https://arxiv.org/abs/2305.19059), [2306.01485](https://arxiv.org/abs/2306.01485) |
-| [`Novel/OpSB64`](../LeanDLRA/Novel/OpSB64.lean) | Loss descent of the explicit Euler projector-splitting (PSI) training step | 24 | [2502.03006](https://arxiv.org/abs/2502.03006) |
+| [`Novel/OpSB64`](../LeanDLRA/Novel/OpSB64.lean) | Loss descent of the explicit Euler projector-splitting training step | 24 | [2502.03006](https://arxiv.org/abs/2502.03006) |
 | [`Novel/OpSL48`](../LeanDLRA/Novel/OpSL48.lean) | Projected local conservation laws in Vlasov–Poisson DLRA: what they are, and how a | 57 | [1807.02338](https://arxiv.org/abs/1807.02338), [2206.09374](https://arxiv.org/abs/2206.09374) |
 | [`Novel/OpST21`](../LeanDLRA/Novel/OpST21.lean) | Uniform-in-`ε` error bounds for low-rank kinetic schemes (OP-ST-21) | 71 |  |
 | [`Novel/OpST33`](../LeanDLRA/Novel/OpST33.lean) | AP of low-rank implicit steps for nonlinear BGK models (OP-ST-33) | 45 | [2502.08951](https://arxiv.org/abs/2502.08951), [2601.11900](https://arxiv.org/abs/2601.11900) |
-| [`Novel/OpTR37`](../LeanDLRA/Novel/OpTR37.lean) | Differentiating through a DLRA integrator: discrete adjoints of BUG-type steps | 106 | [2010.02022](https://arxiv.org/abs/2010.02022), [2506.21405](https://arxiv.org/abs/2506.21405), [2610.29554](https://arxiv.org/abs/2610.29554) |
+| [`Novel/OpTR37`](../LeanDLRA/Novel/OpTR37.lean) | Differentiating through a DLRA integrator: discrete adjoints of BUG-type steps | 107 | [2010.02022](https://arxiv.org/abs/2010.02022), [2506.21405](https://arxiv.org/abs/2506.21405), [2610.29554](https://arxiv.org/abs/2610.29554) |
 | [`Novel/OpTR38`](../LeanDLRA/Novel/OpTR38.lean) | Escape of spurious critical points by the Riemannian gradient flow on rank-`r` PSD matrices | 27 | [2107.09207](https://arxiv.org/abs/2107.09207) |
 | [`Novel/OpTR39`](../LeanDLRA/Novel/OpTR39.lean) | Low-rank gradient dynamics of a two-layer network with a smooth activation | 37 | [2602.06208](https://arxiv.org/abs/2602.06208) |
 | [`Novel/OpTR43`](../LeanDLRA/Novel/OpTR43.lean) | Singular-value dynamics and implicit bias in factorized training with weight decay | 39 | [2209.13569](https://arxiv.org/abs/2209.13569) |
@@ -476,53 +621,6 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Corrections/NormalLowerRank`](../LeanDLRA/Corrections/NormalLowerRank.lean) | Corrected form of the statement `normal_lowerRank_le` (OP-ST-20) | 11 |  |
 | [`Corrections/PPCAResidual`](../LeanDLRA/Corrections/PPCAResidual.lean) | Correction: arXiv 2407.03373, Proposition 8 (residual of the PPCA projection) | 10 | [2407.03373](https://arxiv.org/abs/2407.03373) |
 | [`Corrections/StrangNotRobust`](../LeanDLRA/Corrections/StrangNotRobust.lean) | Strang projector splitting is not robustly second order: the rank-two statement | 165 | [2608.12893](https://arxiv.org/abs/2608.12893) |
-
-## Control
-
-| Module | Content | Theorems | Sources |
-|---|---|---:|---|
-| [`Control/AdjointDLRA`](../LeanDLRA/Control/AdjointDLRA.lean) | DLRA in optimal control: gradient errors, adjoints and time reversibility | 14 | [2010.02022](https://arxiv.org/abs/2010.02022), [2409.14938](https://arxiv.org/abs/2409.14938), [2506.21405](https://arxiv.org/abs/2506.21405), [2608.21545](https://arxiv.org/abs/2608.21545), [2610.29554](https://arxiv.org/abs/2610.29554) |
-
-## HighOrder
-
-| Module | Content | Theorems | Sources |
-|---|---|---:|---|
-| [`HighOrder/MidpointBUG`](../LeanDLRA/HighOrder/MidpointBUG.lean) | Midpoint and trapezoidal BUG: interior capture and quadrature defects | 32 | [2402.08607](https://arxiv.org/abs/2402.08607), [2608.17157](https://arxiv.org/abs/2608.17157), [2608.27749](https://arxiv.org/abs/2608.27749), [2610.11747](https://arxiv.org/abs/2610.11747) |
-| [`HighOrder/RungeKuttaBUG`](../LeanDLRA/HighOrder/RungeKuttaBUG.lean) | Galerkin–Runge–Kutta BUG: exactness, stage span, robust order `p`, relaxed exactness, SSP/RK4 | 38 | [2209.00550](https://arxiv.org/abs/2209.00550), [2311.06399](https://arxiv.org/abs/2311.06399), [2502.07040](https://arxiv.org/abs/2502.07040), [2508.04484](https://arxiv.org/abs/2508.04484), [2512.15703](https://arxiv.org/abs/2512.15703), [2602.12337](https://arxiv.org/abs/2602.12337), [2608.17157](https://arxiv.org/abs/2608.17157), [2608.27749](https://arxiv.org/abs/2608.27749), [2609.02721](https://arxiv.org/abs/2609.02721) |
-
-## Randomized
-
-| Module | Content | Theorems | Sources |
-|---|---|---:|---|
-| [`Randomized/ObliqueBUG`](../LeanDLRA/Randomized/ObliqueBUG.lean) | Interpolatory (DEIM/CUR) and sketched BUG: oblique capture and Lebesgue-constant bounds | 36 | [2010.02022](https://arxiv.org/abs/2010.02022), [2408.16591](https://arxiv.org/abs/2408.16591), [2411.15990](https://arxiv.org/abs/2411.15990), [2510.19518](https://arxiv.org/abs/2510.19518), [2512.15703](https://arxiv.org/abs/2512.15703), [2607.03402](https://arxiv.org/abs/2607.03402) |
-| [`Randomized/RandomizedBUG`](../LeanDLRA/Randomized/RandomizedBUG.lean) | Dynamical randomized SVD and generalized Nyström as BUG-type steps | 37 | [1301.1058](https://arxiv.org/abs/1301.1058), [2001.08599](https://arxiv.org/abs/2001.08599), [2010.02022](https://arxiv.org/abs/2010.02022), [2410.17091](https://arxiv.org/abs/2410.17091), [2506.15259](https://arxiv.org/abs/2506.15259) |
-
-## Research
-
-| Module | Content | Theorems | Sources |
-|---|---|---:|---|
-| [`Research/DataDrivenErrorRecursion`](../LeanDLRA/Research/DataDrivenErrorRecursion.lean) | Pythagorean error recursion for data-driven BUG and KSL | 32 | [1301.1058](https://arxiv.org/abs/1301.1058), [1507.07953](https://arxiv.org/abs/1507.07953), [2010.02022](https://arxiv.org/abs/2010.02022), [2606.30469](https://arxiv.org/abs/2606.30469), [2608.16994](https://arxiv.org/abs/2608.16994), [2608.17157](https://arxiv.org/abs/2608.17157) |
-| [`Research/IntegratorErrorOrder`](../LeanDLRA/Research/IntegratorErrorOrder.lean) | An error partial order of KSL, BUG, augmented BUG and parallel BUG | 53 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660), [2309.08252](https://arxiv.org/abs/2309.08252), [2412.00858](https://arxiv.org/abs/2412.00858) |
-| [`Research/SameMinibatchAugmentation`](../LeanDLRA/Research/SameMinibatchAugmentation.lean) | Stochastic descent of DLRT: same-minibatch augmentation (draft) | 77 | [2410.18720](https://arxiv.org/abs/2410.18720) |
-
-## Stochastic
-
-| Module | Content | Theorems | Sources |
-|---|---|---:|---|
-| [`Stochastic/KalmanBucy`](../LeanDLRA/Stochastic/KalmanBucy.lean) | Dynamical low-rank Kalman–Bucy filters | 42 | [2306.07774](https://arxiv.org/abs/2306.07774), [2509.11210](https://arxiv.org/abs/2509.11210), [2602.06614](https://arxiv.org/abs/2602.06614), [2606.15843](https://arxiv.org/abs/2606.15843), [2607.27432](https://arxiv.org/abs/2607.27432) |
-| [`Stochastic/MeanSquare`](../LeanDLRA/Stochastic/MeanSquare.lean) | Abstract `L²(Ω)` cores of stochastic DLRA | 31 | [1803.00499](https://arxiv.org/abs/1803.00499), [2501.06125](https://arxiv.org/abs/2501.06125), [2601.21428](https://arxiv.org/abs/2601.21428), [2606.27888](https://arxiv.org/abs/2606.27888), [2607.27432](https://arxiv.org/abs/2607.27432), [2609.20292](https://arxiv.org/abs/2609.20292) |
-
-## Tensor
-
-| Module | Content | Theorems | Sources |
-|---|---|---:|---|
-| [`Tensor/Defs`](../LeanDLRA/Tensor/Defs.lean) | Tensors, unfoldings and tensor formats: definitions | 15 | [1407.2042](https://arxiv.org/abs/1407.2042), [2002.11392](https://arxiv.org/abs/2002.11392), [2402.18721](https://arxiv.org/abs/2402.18721) |
-| [`Tensor/TT/Basic`](../LeanDLRA/Tensor/TT/Basic.lean) | Tensor trains: interfaces, orthonormality and interface projectors | 27 | [1407.2042](https://arxiv.org/abs/1407.2042), [2402.18721](https://arxiv.org/abs/2402.18721), [2603.13990](https://arxiv.org/abs/2603.13990) |
-| [`Tensor/TT/TangentProjector`](../LeanDLRA/Tensor/TT/TangentProjector.lean) | The TT tangent projector and cross interpolation | 8 | [1407.2042](https://arxiv.org/abs/1407.2042), [2402.18721](https://arxiv.org/abs/2402.18721), [2603.13990](https://arxiv.org/abs/2603.13990) |
-| [`Tensor/TTN/Basic`](../LeanDLRA/Tensor/TTN/Basic.lean) | Tree tensor networks: subtree projectors and nested orthonormal bases | 16 | [2002.11392](https://arxiv.org/abs/2002.11392) |
-| [`Tensor/TTN/Integrators`](../LeanDLRA/Tensor/TTN/Integrators.lean) | Tree tensor network integrators on concrete tree tensor networks | 6 | [2002.11392](https://arxiv.org/abs/2002.11392), [2412.00858](https://arxiv.org/abs/2412.00858) |
-| [`Tensor/Tucker/Basic`](../LeanDLRA/Tensor/Tucker/Basic.lean) | Tucker tensors: mode projectors, mode-wise interpolation and the Tucker integrators | 12 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2401.04249](https://arxiv.org/abs/2401.04249), [2402.18721](https://arxiv.org/abs/2402.18721), [2412.00858](https://arxiv.org/abs/2412.00858) |
-| [`Tensor/Unfolding`](../LeanDLRA/Tensor/Unfolding.lean) | Unfoldings and linear maps acting on a set of modes | 47 |  |
 
 ## Curated main results
 
@@ -632,6 +730,10 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | The non-degeneracy hypothesis cannot be dropped: for the rank-one path e₁e₁ᵀ → e₂e₂ᵀ (r = 1), K₁ = 0, and the admissible QR factor U₁ = e₁ makes both the KSL and the BUG step return 0 ≠ A(t₁) | `Exactness.RankOneExample.not_exact_of_degenerate`, `Exactness.RankOneExample.bug_not_exact_of_not_capture` | Lubich–Oseledets arXiv:1301.1058, Theorem 4.1 (statement: rank at most r, plus a perturbation argument); Ceruti–Lubich arXiv:2010.02022, Theorems 1 and 3 | [`LeanDLRA/Integrators/Exactness.lean`](../LeanDLRA/Integrators/Exactness.lean) |
 | Abstract 'CL Lemma 1' and bundled exactness of IsBUGStep / IsKSLStep under maps T recovering A(t₁) from Q₀A(t₁) and commuting with P₁ | `Exactness.capture_abstract`, `IsBUGStep.exact`, `IsKSLStep.exact` | Ceruti–Lubich arXiv:2010.02022, Lemma 1 and Theorem 3; Lubich–Oseledets arXiv:1301.1058, Theorem 4.1 (abstract form) | [`LeanDLRA/Integrators/Exactness.lean`](../LeanDLRA/Integrators/Exactness.lean) |
 | Galerkin core-step exactness for d mode projectors: if each mode projector fixes A(t₁) (encoded via maps Tᵢ), the full-space core step y' = (∏ᵢ Pᵢ) F with y(t₀) = (∏ᵢ Pᵢ) A(t₀) returns A(t₁) | `Exactness.tucker_exact_abstract`, `Exactness.list_prod_apply_eq_self` | Ceruti–Lubich arXiv:2010.02022, Theorem 6 (abstract skeleton only) | [`LeanDLRA/Integrators/Exactness.lean`](../LeanDLRA/Integrators/Exactness.lean) |
+| One theorem for all one-step methods M (maps from fields to step relations, `StepMethod E`). If M has existence of a step for globally Lipschitz fields, invariance of a predicate Adm, and locality with margin constant κ ≥ 2 (`StepMethod.IsTubeLocal M Adm κ`), and every step from a value with Adm within the error bound of A has local error h c, then for F L-Lipschitz and bounded by B on the tube of radius ρ around a solution A on [t₀, t₀+Nh], jointly continuous there, N h ≤ T, Adm Y₀, ‖Y₀ − A(t₀)‖ ≤ δ and e^{LT}δ + T e^{LT}c + κBh < ρ, there is a run Y 0 = Y₀, …, Y N of M F on the grid t₀ + n h with Adm (Y n) and ‖Y n − A(t₀+nh)‖ ≤ e^{LT}δ + T e^{LT}c for all n ≤ N. Nothing is assumed about F outside the tube. | `StepMethod.IsTubeLocal.exists_run_norm_sub_le`, `StepMethod.IsTubeLocal`, `StepMethod` | No paper is cited in the file. The error bound is the tube form of Lady Windermere's fan (`IsRun.norm_sub_le_of_tube_uniformGrid`, Integrators/Tube.lean); the steps are constructed with the globally Lipschitz extension `tubeExt` of the field. | [`LeanDLRA/Integrators/Method.lean`](../LeanDLRA/Integrators/Method.lean) |
+| Tube theorem for the runs of a step relation with a predicate Adm n that may depend on the step index: if every step from a value with Adm n near A ends at a value with Adm (n+1) and has the given local error, every run from a start value with Adm 0 keeps Adm and satisfies the global error bound; if in addition steps exist from values with Adm near A, a run exists. General grid with local errors δ n and radii R n, and the uniform grid t₀ + n h with local error h c and bound e^{LT}δ + T e^{LT}c. | `IsRun.adm_and_norm_sub_le_of_tube`, `exists_isRun_norm_sub_le_of_tube`, `IsRun.adm_and_norm_sub_le_of_tube_uniformGrid` | No paper is cited in the file. Built on the tube theorem `IsRun.norm_sub_le_of_tube` of Integrators/Tube.lean. | [`LeanDLRA/Integrators/Method.lean`](../LeanDLRA/Integrators/Method.lean) |
+| The fixed-rank BUG integrator can be run, and the run satisfies the robust error bound. Let A solve Y' = F(t, Y) on [t₀, t₀+Nh], F be L-Lipschitz and bounded by B on the tube of radius ρ around A (`DLRAProblem`), jointly continuous there, with normal component at most ε at the rank-r matrices of the tube (`FactoredNormalBoundOn`); let r ≤ m, r ≤ n, 0 ≤ h ≤ H, N h ≤ T, rank Y₀ ≤ r, ‖Y₀ − A(t₀)‖ ≤ δ. If e^{LT}δ + T e^{LT}(c₁ε + c₂h) + 4Bh < ρ with c₁ = bugC₁ L H, c₂ = bugC₂ L B H, there are Y 0 = Y₀, …, Y N, each a BUG step of size h from the previous one, of rank at most r, with ‖Y n − A(t₀+nh)‖ ≤ e^{LT}δ + T e^{LT}(c₁ε + c₂h) for all n ≤ N. The constants do not depend on singular values; the bound holds for every run; the smallness condition can be met by small δ and h if T e^{LT} c₁ ε < ρ. | `MatrixBUG.exists_run_norm_sub_le`, `MatrixBUG.IsRun.norm_sub_le`, `exists_bugGlobalBound_lt` | [CerutiLubich2022] G. Ceruti, Ch. Lubich, An unconventional robust integrator for dynamical low-rank approximation, BIT Numer. Math. 62 (2022), Theorem 4 (as cited in the file) | [`LeanDLRA/Integrators/Matrix/BUGRun.lean`](../LeanDLRA/Integrators/Matrix/BUGRun.lean) |
+| A BUG step exists for every Lipschitz field that is continuous in time on the step interval (no bound on the field is needed). A step of `MatrixBUG.stepRel F r` from Y₀ exists if and only if Y₀ has rank at most r (for r ≤ m, r ≤ n), and for a globally Lipschitz field there is a run on every grid from every start value of rank at most r. | `MatrixBUG.exists_stepRel_iff`, `MatrixBUG.exists_run`, `MatrixBUG.exists_isStep_of_lipschitz` | [CerutiLubich2022] G. Ceruti, Ch. Lubich, BIT Numer. Math. 62 (2022) (algorithm; as cited in the file) | [`LeanDLRA/Integrators/Matrix/BUGRun.lean`](../LeanDLRA/Integrators/Matrix/BUGRun.lean) |
 
 ## Cited papers
 
