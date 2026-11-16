@@ -9,8 +9,8 @@ import LeanDLRA.Filtering.Defs
 # Dynamical low-rank Kalman–Bucy filters
 
 One-sided Riccati stability, uniform-in-time covariance bounds and structural negative results
-for DLR Kalman–Bucy filters (DLR-KBP of arXiv 2509.11210, the JMCO reduced filter of
-arXiv 2607.27432 Sec. 3.6, the DLR-EnKF of arXiv 2602.06614).
+for DLR Kalman–Bucy filters (DLR-KBP of [NobileTrigoTrindade2025b], the JMCO reduced filter of
+[KazashiEtAl2026] Sec. 3.6, the DLR-EnKF of [NobileRiffaudTrigoTrindade2027]).
 
 **Scope.**  Stochastic content enters only through the deterministic covariance (Riccati)
 equations and the Kalman analysis algebra: this file is an algebraic/analytic core on
@@ -27,10 +27,10 @@ probability spaces.
   `jmcoKalmanBucy_covariance_error_uniform` (OP-SL-01, resolved in the deterministic form stated
   there): for `μ < 0`, `‖P̃ t - P t‖ ≤ e^{μ (t-a)} ‖P̃ a - P a‖ + η / |μ|`, uniformly in time,
   with `η` the DO defect `sup ‖Qn - Π Qn Π‖` resp. the JMCO defect `sup ‖Π⊥ Qn Π⊥‖`.
-  **Beyond the literature:** arXiv 2509.11210 Prop. 4.4 has constants `C₁(T), C₂(T)` growing
-  exponentially in `T`; here the covariance part is time-uniform under dissipativity, because
-  the nonlinear term `-ρ P²` is monotone on the PSD cone (one-sided rather than Lipschitz
-  estimate).  It shows that DLR Kalman–Bucy covariances do not drift away over long assimilation
+  **Beyond the literature:** [NobileTrigoTrindade2025b] Prop. 4.4 has constants `C₁(T), C₂(T)`
+  growing exponentially in `T`; here the covariance part is time-uniform under dissipativity,
+  because the nonlinear term `-ρ P²` is monotone on the PSD cone (one-sided rather than Lipschitz
+  estimate). It shows that DLR Kalman–Bucy covariances do not drift away over long assimilation
   windows: the error is the noise defect divided by the dissipation rate.
 * `dlrKalmanBucy_ne_of_noise_not_in_range` (OP-SL-02 (i), negative result): if `Π Qn ≠ Qn`
   (noise not contained in the DO mode space) and both filters start from the same covariance,
@@ -44,14 +44,14 @@ probability spaces.
   `rotatingMode_proj_periodic_nonconst` (OP-SL-13, negative result): for skew `A` with `A² = -1`
   the rank-one DO basis `U(t) = cos t u₀ + sin t A u₀` solves `U' = (1 - U Uᵀ) A U` exactly; for
   the 2D rotation generator the DO subspace projector is `π`-periodic, non-constant and has no
-  limit as `t → ∞` (arXiv 2606.15843 Example 5.9).
+  limit as `t → ∞` ([BaoWangWu2026] Example 5.9).
 * `josephCov_sub_analysisCov`, `josephCov_sub_posSemidef`, `analysisCov_mono` (OP-SL-20 (i),
   resolved): the Joseph identity `J(Π, K) - Σ(Π) = (K - K_Π) S (K - K_Π)ᵀ` and the one-step
   Loewner monotonicity `Πᵣ ⪯ Π ⇒ Σ(Πᵣ) ⪯ Σ(Π)` of the Kalman analysis covariance
   (overconfidence of truncated filters).
 * `kalmanGain_lowRank`, `analysisCov_lowRank`, `one_sub_proj_mul_kalmanGain_lowRank`
-  (arXiv 2602.06614 eqs. (18)–(21), Sec. 3.1.2): for a low-rank prior `U M Uᵀ` the Kalman
-  analysis is the reduced analysis with observation operator `C U`, and the gain has no
+  ([NobileRiffaudTrigoTrindade2027] eqs. (18)–(21), Sec. 3.1.2): for a low-rank prior `U M Uᵀ` the
+  Kalman analysis is the reduced analysis with observation operator `C U`, and the gain has no
   component outside `span U` (only in-range corrections are assimilated).
 * `riccati_stationary_unique`, `riccati_attracts_stationary` (OP-SL-32, partial): uniqueness of
   the PSD stationary covariance and exponential attraction to it for `μ < 0` (existence of the
@@ -162,10 +162,10 @@ theorem riccatiField_sub (A : Matrix (Fin d) (Fin d) ℝ) (ρ : ℝ) (Q₁ Q₂ 
   abel
 
 /-- **The Riccati field is one-sided Lipschitz with constant `μ` on the PSD cone** (OP-SL-01;
-arXiv 2509.11210 Sec. 4, arXiv 2607.27432 Sec. 3.6).  If `xᵀ (A + Aᵀ) x ≤ μ |x|²` and `ρ ≥ 0`,
-then `⟪R(P₁) - R(P₂), P₁ - P₂⟫ ≤ μ ‖P₁ - P₂‖²` for PSD `P₁, P₂` in the Frobenius inner product,
-because `⟪A Δ + Δ Aᵀ, Δ⟫ ≤ μ ‖Δ‖²` and `⟪P₁ Δ + Δ P₂, Δ⟫ ≥ 0` (the quadratic term
-`P₁² - P₂² = P₁ Δ + Δ P₂`).  The noise `Qn` is arbitrary and `μ` may be negative. -/
+[NobileTrigoTrindade2025b] Sec. 4, [KazashiEtAl2026] Sec. 3.6). If `xᵀ (A + Aᵀ) x ≤ μ |x|²` and
+`ρ ≥ 0`, then `⟪R(P₁) - R(P₂), P₁ - P₂⟫ ≤ μ ‖P₁ - P₂‖²` for PSD `P₁, P₂` in the Frobenius inner
+product, because `⟪A Δ + Δ Aᵀ, Δ⟫ ≤ μ ‖Δ‖²` and `⟪P₁ Δ + Δ P₂, Δ⟫ ≥ 0` (the quadratic term
+`P₁² - P₂² = P₁ Δ + Δ P₂`). The noise `Qn` is arbitrary and `μ` may be negative. -/
 theorem riccatiField_isOneSidedLipschitzOn {A Qn : Matrix (Fin d) (Fin d) ℝ} {ρ μ : ℝ}
     (hA : ∀ x : Fin d → ℝ, x ⬝ᵥ ((A + Aᵀ) *ᵥ x) ≤ μ * (x ⬝ᵥ x)) (hρ : 0 ≤ ρ) :
     IsOneSidedLipschitzOn (riccatiField A ρ Qn) {P | P.PosSemidef} μ := by
@@ -195,8 +195,8 @@ equation with a time-dependent replacement forcing `Q̃ t`.  If the drift is str
 defect satisfies `‖Qn - Q̃ t‖ ≤ η`, then for all `t ∈ [a, b]`
 `‖P̃ t - P t‖ ≤ e^{μ (t - a)} ‖P̃ a - P a‖ + η / |μ|`,
 with no constant growing in `t - a`.  This is the deterministic covariance skeleton of
-arXiv 2509.11210 Prop. 4.4 with the exponentially growing constants `C₁(T), C₂(T)` replaced by
-time-uniform ones. -/
+[NobileTrigoTrindade2025b] Prop. 4.4 with the exponentially growing constants `C₁(T), C₂(T)`
+replaced by time-uniform ones. -/
 theorem riccati_forcing_error_uniform {A Qn : Matrix (Fin d) (Fin d) ℝ} {ρ μ η a b : ℝ}
     (hA : ∀ x : Fin d → ℝ, x ⬝ᵥ ((A + Aᵀ) *ᵥ x) ≤ μ * (x ⬝ᵥ x)) (hμ : μ < 0) (hρ : 0 ≤ ρ)
     {Q' : ℝ → Matrix (Fin d) (Fin d) ℝ} {P PD : ℝ → Matrix (Fin d) (Fin d) ℝ}
@@ -219,7 +219,7 @@ theorem riccati_forcing_error_uniform {A Qn : Matrix (Fin d) (Fin d) ℝ} {ρ μ
     _ = _ := by ring
 
 /-- **Uniform-in-time covariance error of the DLR Kalman–Bucy filter** (OP-SL-01; DLR-KBP of
-arXiv 2509.11210 Sec. 4).  If the drift is strictly dissipative (`μ < 0`) and the DLR
+[NobileTrigoTrindade2025b] Sec. 4).  If the drift is strictly dissipative (`μ < 0`) and the DLR
 covariance `P_D` solves the Riccati equation with projected model noise `Πᵤ Qn Πᵤ`, then for all
 `t`, `‖P_D t - P t‖ ≤ e^{μ (t-a)} ‖P_D a - P a‖ + η / |μ|` with `η` the noise projection defect
 `sup ‖Qn - Πᵤ Qn Πᵤ‖` (both covariances assumed PSD; for the DLR filter this holds since
@@ -235,7 +235,7 @@ theorem dlrKalmanBucy_covariance_error_uniform {A Qn : Matrix (Fin d) (Fin d) �
   riccati_forcing_error_uniform hA hμ hρ hP hPD hpsd hη0 hη
 
 /-- **Uniform-in-time covariance error of the JMCO reduced Kalman–Bucy filter** (OP-SL-01,
-second half; arXiv 2607.27432 Sec. 3.6, eqs. (36)–(40)).  The reduced filter is forced by the
+second half; [KazashiEtAl2026] Sec. 3.6, eqs. (36)–(40)).  The reduced filter is forced by the
 tangent projection `Qn - Π⊥ Qn Π⊥` of the model noise (`Π⊥ = 1 - Πᵤ`), so the defect is the
 normal block `‖Π⊥ Qn Π⊥‖ ≤ η` and
 `‖P_J t - P t‖ ≤ e^{μ (t-a)} ‖P_J a - P a‖ + η / |μ|`. -/
@@ -273,11 +273,11 @@ theorem eventually_ne_zero_of_hasDerivWithinAt {E : Type*} [NormedAddCommGroup E
   exact ht (by simp [slope_def_module, hft, h0])
 
 /-- **DLR-KBP differs from KBP whenever the noise leaves the mode space** (OP-SL-02 (i);
-arXiv 2509.11210 Sec. 4 after (4.4), Sec. 6.1).  Let `P` solve the Kalman–Bucy Riccati equation
-and `P_D` the DLR-KBP equation with projected noise `Π(t) Qn Π(t)`, both starting from the same
-`P₀` at `a < b`.  If `Π(a)` is idempotent and `Π(a) Qn ≠ Qn`, then `P_D t ≠ P t` for all `t > a`
-close enough to `a`: the two covariances separate immediately.  (The right derivatives at `a`
-differ by `Π Qn Π - Qn ≠ 0`.) -/
+[NobileTrigoTrindade2025b] Sec. 4 after (4.4), Sec. 6.1). Let `P` solve the Kalman–Bucy Riccati
+equation and `P_D` the DLR-KBP equation with projected noise `Π(t) Qn Π(t)`, both starting from the
+same `P₀` at `a < b`. If `Π(a)` is idempotent and `Π(a) Qn ≠ Qn`, then `P_D t ≠ P t` for all `t > a`
+close enough to `a`: the two covariances separate immediately. (The right derivatives at `a` differ
+by `Π Qn Π - Qn ≠ 0`.) -/
 theorem dlrKalmanBucy_ne_of_noise_not_in_range {A Qn : Matrix (Fin d) (Fin d) ℝ} {ρ a b : ℝ}
     (hab : a < b) {PU : ℝ → Matrix (Fin d) (Fin d) ℝ} {P PD : ℝ → Matrix (Fin d) (Fin d) ℝ}
     (hP : ODESolution (riccatiField A ρ Qn) P a b)
@@ -293,7 +293,7 @@ theorem dlrKalmanBucy_ne_of_noise_not_in_range {A Qn : Matrix (Fin d) (Fin d) �
   exact fun h => ht (by simp [h])
 
 /-- **The JMCO defect never exceeds the DO defect — exact Pythagorean identity** (OP-SL-02 (ii);
-arXiv 2607.27432 Secs. 6.2, 6.4).  For `Π = U Uᵀ` with orthonormal columns (`Uᵀ U = 1`),
+[KazashiEtAl2026] Secs. 6.2, 6.4).  For `Π = U Uᵀ` with orthonormal columns (`Uᵀ U = 1`),
 `‖Q - Π Q Π‖² = ‖(1 - Π) Q (1 - Π)‖² + ‖Π Q (1 - Π) + (1 - Π) Q Π‖²`.
 Hence the JMCO forcing defect `‖Π⊥ Q Π⊥‖` is at most the DO defect `‖Q - Π Q Π‖`, with equality
 iff the off-diagonal blocks `Π Q Π⊥ + Π⊥ Q Π` vanish. -/
@@ -342,11 +342,12 @@ theorem transpose_mul_mul_eq_zero_of_skew {A : Matrix (Fin d) (Fin d) ℝ} (hA :
   have : (2 : ℝ) • (uᵀ * A * u) = 0 := by rw [two_smul]; nth_rw 1 [h1]; abel
   exact (smul_eq_zero.1 this).resolve_left two_ne_zero
 
-/-- **Exact solution of the DO mode equation for skew drift** (OP-SL-13; arXiv 2606.15843
-Example 5.9, arXiv 2509.11210 Sec. 4.1.2).  If `Aᵀ = -A` and `A² = -1` (skew and orthogonal),
-then the rank-one basis `U(t) = cos t • u₀ + sin t • (A u₀)` solves the deterministic-mode
-equation `U' = (1 - U Uᵀ) A U` for every `t` and every initial column `u₀`.  The correction
-term `U Uᵀ A U` vanishes identically because `Uᵀ A U = 0` for a single column and skew `A`. -/
+/-- **Exact solution of the DO mode equation for skew drift** (OP-SL-13; [BaoWangWu2026]
+Example 5.9, [NobileTrigoTrindade2025b] Sec. 4.1.2). If `Aᵀ = -A` and `A² = -1` (skew and
+orthogonal), then the rank-one basis `U(t) = cos t • u₀ + sin t • (A u₀)` solves the
+deterministic-mode equation `U' = (1 - U Uᵀ) A U` for every `t` and every initial column `u₀`. The
+correction term `U Uᵀ A U` vanishes identically because `Uᵀ A U = 0` for a single column and skew
+`A`. -/
 theorem hasDerivAt_rotatingMode {A : Matrix (Fin d) (Fin d) ℝ} (hA : Aᵀ = -A) (hA2 : A * A = -1)
     (u₀ : Matrix (Fin d) (Fin 1) ℝ) (t : ℝ) :
     HasDerivAt (rotatingMode A u₀)
@@ -485,12 +486,11 @@ theorem innovCov_posDef {C : Matrix (Fin p) (Fin d) ℝ} {R : Matrix (Fin p) (Fi
   exact Matrix.PosDef.posSemidef_add h hR
 
 /-- **Overconfidence of truncated Kalman analyses: one-step Loewner monotonicity**
-(OP-SL-20 (i); arXiv 2306.07774 Sec. 5, arXiv 2602.06614 Sec. 3.1.2).  If the (e.g. truncated)
-prior `Πᵣ` is PSD and Loewner-below the full prior `Π` (`Π - Πᵣ ⪰ 0`) and the observation noise
-`R` is positive definite, then the analysis covariances are Loewner-ordered:
-`Σ(Πᵣ) ⪯ Σ(Π)`.  Indeed
-`Σ(Π) - Σ(Πᵣ) = (1 - K C)(Π - Πᵣ)(1 - K C)ᵀ + (K - Kᵣ) S(Πᵣ) (K - Kᵣ)ᵀ` with `K = K(Π)`,
-`Kᵣ = K(Πᵣ)`.  A low-rank filter that underestimates the prior therefore underestimates the
+(OP-SL-20 (i); [SchmidtEtAl2023] Sec. 5, [NobileRiffaudTrigoTrindade2027] Sec. 3.1.2). If the (e.g.
+truncated) prior `Πᵣ` is PSD and Loewner-below the full prior `Π` (`Π - Πᵣ ⪰ 0`) and the observation
+noise `R` is positive definite, then the analysis covariances are Loewner-ordered: `Σ(Πᵣ) ⪯ Σ(Π)`.
+Indeed `Σ(Π) - Σ(Πᵣ) = (1 - K C)(Π - Πᵣ)(1 - K C)ᵀ + (K - Kᵣ) S(Πᵣ) (K - Kᵣ)ᵀ` with `K = K(Π)`,
+`Kᵣ = K(Πᵣ)`. A low-rank filter that underestimates the prior therefore underestimates the
 posterior: it is overconfident after every analysis step. -/
 theorem analysisCov_mono {C : Matrix (Fin p) (Fin d) ℝ} {R : Matrix (Fin p) (Fin p) ℝ}
     {Pi Pir : Matrix (Fin d) (Fin d) ℝ} (hr : Pir.PosSemidef) (h : (Pi - Pir).PosSemidef)
@@ -554,7 +554,8 @@ theorem riccati_attracts_stationary {A Qn : Matrix (Fin d) (Fin d) ℝ} {ρ μ a
   exact hP.norm_sub_le_exp_of_oneSidedOn hc (riccatiField_isOneSidedLipschitzOn hA hρ)
     (fun t ht => hpsd t (Ico_subset_Icc_self ht)) (fun _ _ => hinf)
 
-/-! ### The DLR analysis is the Kalman analysis on `span U` (arXiv 2602.06614, eqs. (18)–(21)) -/
+/-! ### The DLR analysis is the Kalman analysis on `span U`
+([NobileRiffaudTrigoTrindade2027, eqs. (18)–(21)]) -/
 
 section LowRankAnalysis
 
@@ -566,9 +567,9 @@ theorem innovCov_lowRank (C : Matrix (Fin p) (Fin d) ℝ) (R : Matrix (Fin p) (F
     innovCov C R (U * M * Uᵀ) = innovCov (C * U) R M := by
   simp [innovCov, Matrix.transpose_mul, Matrix.mul_assoc]
 
-/-- **Low-rank Kalman gain** (arXiv 2602.06614, eqs. (18)–(21)): for a low-rank prior
-`Π = U M Uᵀ`, `K(U M Uᵀ) = U K_r(M)` with `K_r` the Kalman gain of the reduced problem with
-observation operator `C U`.  In particular the update `K (z - C x)` lies in `span U`: only the
+/-- **Low-rank Kalman gain** ([NobileRiffaudTrigoTrindade2027, eqs. (18)–(21)]): for a low-rank
+prior `Π = U M Uᵀ`, `K(U M Uᵀ) = U K_r(M)` with `K_r` the Kalman gain of the reduced problem with
+observation operator `C U`. In particular the update `K (z - C x)` lies in `span U`: only the
 directions of the current basis are corrected. -/
 theorem kalmanGain_lowRank (C : Matrix (Fin p) (Fin d) ℝ) (R : Matrix (Fin p) (Fin p) ℝ)
     (U : Matrix (Fin d) (Fin r) ℝ) (M : Matrix (Fin r) (Fin r) ℝ) :
@@ -577,8 +578,8 @@ theorem kalmanGain_lowRank (C : Matrix (Fin p) (Fin d) ℝ) (R : Matrix (Fin p) 
   simp only [Matrix.transpose_mul, Matrix.mul_assoc]
 
 /-- **The DLR analysis covariance is the EnKF/Kalman analysis on `span U`**
-(arXiv 2602.06614, eqs. (18)–(21)): `Σ(U M Uᵀ) = U Σ_r(M) Uᵀ`, where `Σ_r` is the analysis
-covariance of the reduced problem with observation operator `C U`.  No orthonormality of `U`
+([NobileRiffaudTrigoTrindade2027, eqs. (18)–(21)]): `Σ(U M Uᵀ) = U Σ_r(M) Uᵀ`, where `Σ_r` is the
+analysis covariance of the reduced problem with observation operator `C U`. No orthonormality of `U`
 is needed. -/
 theorem analysisCov_lowRank (C : Matrix (Fin p) (Fin d) ℝ) (R : Matrix (Fin p) (Fin p) ℝ)
     (U : Matrix (Fin d) (Fin r) ℝ) (M : Matrix (Fin r) (Fin r) ℝ) :
@@ -586,8 +587,8 @@ theorem analysisCov_lowRank (C : Matrix (Fin p) (Fin d) ℝ) (R : Matrix (Fin p)
   rw [analysisCov, analysisCov, innovCov_lowRank]
   simp only [Matrix.transpose_mul, Matrix.mul_sub, Matrix.sub_mul, Matrix.mul_assoc]
 
-/-- **Only in-range corrections** (arXiv 2602.06614, Sec. 3.1.2): with orthonormal `U`, the
-low-rank Kalman gain has no component orthogonal to `span U`: `(1 - U Uᵀ) K(U M Uᵀ) = 0`.
+/-- **Only in-range corrections** ([NobileRiffaudTrigoTrindade2027, Sec. 3.1.2]): with orthonormal
+`U`, the low-rank Kalman gain has no component orthogonal to `span U`: `(1 - U Uᵀ) K(U M Uᵀ) = 0`.
 Hence uncertainty and corrections outside the retained subspace are never assimilated. -/
 theorem one_sub_proj_mul_kalmanGain_lowRank (C : Matrix (Fin p) (Fin d) ℝ)
     (R : Matrix (Fin p) (Fin p) ℝ) {U : Matrix (Fin d) (Fin r) ℝ} (hU : Uᵀ * U = 1)

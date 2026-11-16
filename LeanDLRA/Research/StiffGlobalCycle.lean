@@ -19,19 +19,24 @@ One cycle of three steps, from the state `σ w vᵀ` of rank one (`w = e₁`, `v
 * *return step* (forcing `-(α c / h) u eᵀ`): the start has rank two, the step is the exact flow,
   and it ends on `σ w vᵀ`.
 
-The numerical solution is `3 h`-periodic (`exists_cycle`). The exact solution gains `h - α c`
-in the entry `(u, e)` in every cycle (`exists_exact_cycle`), and that entry is not damped. For
-`λ s² h ≥ 2` the error after `J` cycles is at least `J h / 2` (`half_le_norm_sub_exactState`):
-one sixth of the elapsed time `3 J h`.
+One cycle of the integrator leads from `σ w vᵀ` back to `σ w vᵀ` (`exists_cycle`); repeating it
+`J` times, the numerical solution after `3 J` steps is `σ w vᵀ` again. The exact solution gains
+`h - α c` in the entry `(u, e)` in every cycle (`exists_exact_cycle`, one cycle from
+`exactState … j` to `exactState … (j + 1)`), and that entry is not damped. The chains of `3 J`
+steps and of `3 J` exact flows are these repetitions; they are not stated as one declaration.
+For `λ s² h ≥ 2` the distance of `σ w vᵀ` from `exactState … J` is at least `J h / 2`
+(`half_le_norm_sub_exactState`): one sixth of the elapsed time `3 J h`.
 
 ## Which hypotheses of a bound `C (h (1 + |log h|) + ε + n ϑ)` hold for the family
 
 * The forcing does not depend on the solution (Lipschitz constant zero).
-* It is bounded: `‖G‖² = (σ λ s)² + p² + q²` (`norm_sq_forcing`) with `|p| ≤ 1`
-  (`abs_gain_mul_div_le`) and `|q| ≤ |s|` (`abs_kill_le`); for `σ λ ≤ 1` this is at most
-  `1 + 2 s²`.
-* `N` is symmetric negative semidefinite, so the smoothing estimates of arXiv 1803.10473,
-  Assumption 1(a), hold with `ω = 0` and a constant independent of `λ`.
+* It is bounded uniformly over the family when `0 < σ` and `σ λ ≤ 1`: then every forcing of the
+  cycle has `‖G‖² ≤ 1 + 2 s² ≤ 3` (`norm_sq_cycleForcing_le`, from `norm_sq_forcing`,
+  `abs_gain_mul_div_le` and `abs_kill_le`). `not_exists_uniform_global_bound` assumes `0 < σ`
+  and `σ λ ≤ 1`.
+* `N` is symmetric negative semidefinite, so the smoothing estimates of
+  [OstermannPiazzolaWalach2019], Assumption 1(a), hold with `ω = 0` and a constant independent
+  of `λ`.
 * The normal component of the forcing at the start of the active step is `|s|`
   (`norm_normal_forcing_active`); the return step starts from a state of full rank, where it
   vanishes.
@@ -43,6 +48,11 @@ one sixth of the elapsed time `3 J h`.
 So `not_exists_uniform_global_bound` excludes a bound `K (h (1 + |log h|) + s)` only for forcing
 that may vary on the scale of the step. It says nothing about forcing whose regularity in time
 is bounded independently of `h`.
+
+## References
+
+* [OstermannPiazzolaWalach2019] (smoothing estimates for stiff matrix differential equations,
+  Assumption 1).
 -/
 
 open Set
@@ -527,9 +537,10 @@ lemma gain_mul_le (hcs : c ^ 2 + s ^ 2 = 1) (hl : 0 < lam) (hs : s ≠ 0)
     ring
   linarith
 
-/-- **The global error.** If `λ s² h ≥ 2`, then after `J` cycles (`3 J` steps, time `3 J h`) the
-numerical solution, which is back at `σ w vᵀ`, differs from the exact solution by at least
-`J h / 2`. -/
+/-- **The global error.** If `λ s² h ≥ 2`, then `σ w vᵀ = state c s σ 0 0`, where the numerical
+solution is after every cycle (`exists_cycle`), differs from the exact solution after `J` cycles
+(`3 J` steps, time `3 J h`), `exactState c s λ σ h J`, by at least `J h / 2`. The bound does not
+depend on `σ`. -/
 theorem half_le_norm_sub_exactState (hcs : c ^ 2 + s ^ 2 = 1) (hl : 0 < lam) (hs : s ≠ 0)
     (hx : 2 ≤ lam * s ^ 2 * h) (J : ℕ) :
     J * h / 2 ≤ ‖state c s σ 0 0 - exactState c s lam σ h J‖ := by
@@ -606,6 +617,26 @@ theorem abs_kill_le (hcs : c ^ 2 + s ^ 2 = 1) (hl : 0 < lam) (hs : s ≠ 0) (hh 
       _ ≤ |s| * damp lam h := mul_le_mul_of_nonneg_left hEd (abs_nonneg s)
   exact le_of_mul_le_mul_right h6 hd
 
+/-- **The forcing is bounded uniformly over the family.** If `0 < σ` and `σ λ ≤ 1`, every
+forcing of the cycle has `‖G‖² ≤ 1 + 2 s²`, which is at most `3`; the bound depends neither on
+`λ` nor on `h`. -/
+theorem norm_sq_cycleForcing_le (hcs : c ^ 2 + s ^ 2 = 1) (hl : 0 < lam) (hs : s ≠ 0)
+    (hh : 0 < h) (hσ : 0 < σ) (hσl : σ * lam ≤ 1) (k : Fin 3) :
+    ‖cycleForcing c s lam σ h k‖ ^ 2 ≤ 1 + 2 * s ^ 2 := by
+  have h0 : 0 ≤ σ * lam := (mul_pos hσ hl).le
+  have h1 : (σ * lam * s) ^ 2 ≤ s ^ 2 := by
+    rw [mul_pow]
+    have : (σ * lam) ^ 2 ≤ 1 := by nlinarith
+    nlinarith [sq_nonneg s]
+  have hk : kill c s lam h ^ 2 ≤ s ^ 2 := sq_le_sq.2 (abs_kill_le hcs hl hs hh)
+  have hg : (-(gain c s lam h * c / h)) ^ 2 ≤ 1 := by
+    rw [neg_sq]
+    exact (sq_le_one_iff_abs_le_one _).2 (abs_gain_mul_div_le hcs hl hs hh)
+  have hs2 : 0 ≤ s ^ 2 := sq_nonneg s
+  fin_cases k <;> simp only [cycleForcing, Fin.zero_eta, Fin.mk_one, Fin.reduceFinMk,
+    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two, Matrix.head_cons,
+    Matrix.tail_cons, norm_sq_forcing] <;> nlinarith
+
 lemma normal_forcing_active :
     forcing s lam σ 1 0 - rightProj (V₀ c s) (forcing s lam σ 1 0)
         - leftProj U₀ (forcing s lam σ 1 0 - rightProj (V₀ c s) (forcing s lam σ 1 0))
@@ -631,24 +662,32 @@ theorem norm_normal_forcing_active (hcs : c ^ 2 + s ^ 2 = 1) :
 /-! ### No uniform global bound -/
 
 /-- **No stiffness-uniform global bound for forcing that may vary on the scale of the step.**
-There is no constant `K` such that, for all admissible parameters of the family, all step sizes
-`h`, and all numbers `J` of cycles with final time `3 J h ≤ 1`, the error of the rank-adaptive
-BUG integrator after `3 J` steps is at most `K (h (1 + |log h|) + s)`.
+There is no constant `K` such that, for all admissible parameters of the family with `0 < σ` and
+`σ λ ≤ 1`, all step sizes `h`, and all numbers `J` of cycles with final time `3 J h ≤ 1`, the
+error of the rank-adaptive BUG integrator after `3 J` steps is at most `K (h (1 + |log h|) + s)`.
 
 Here the forcing of step `k` is `cycleForcing c s λ σ h (k mod 3)`: piecewise constant in time
 with jumps at the grid points, so it depends on `h`. The numerical solution after `3 J` steps is
-`state c s σ 0 0` (`exists_cycle`), the exact solution is `exactState c s λ σ h J`
-(`exists_exact_cycle`). The forcing does not depend on the solution, is bounded
-(`norm_sq_forcing`, `abs_gain_mul_div_le`, `abs_kill_le`), its normal component at the start of
-the active step is `|s|` (`norm_normal_forcing_active`), the truncation tolerance is zero and
-`N` is symmetric negative semidefinite. Only `‖N‖ = λ` is unbounded over the family; in the
-proof `s = h`, `λ = 2 / h³`, `3 J h = 1` and the error is at least `1 / 6`.
+`state c s σ 0 0` and the exact solution is `exactState c s λ σ h J`; both are the `J`-fold
+repetitions of one cycle (`exists_cycle`, `exists_exact_cycle`), not stated as one run. Over the
+family:
+
+* the forcing does not depend on the solution, and every forcing of the cycle has
+  `‖G‖² ≤ 1 + 2 s² ≤ 3` (`norm_sq_cycleForcing_le`, which uses `0 < σ` and `σ λ ≤ 1`);
+* its normal component at the start of the active step is `|s|`
+  (`norm_normal_forcing_active`);
+* the truncation tolerance is zero and `N` is symmetric negative semidefinite.
+
+What is unbounded over the family is `‖N‖ = λ` and the variation of the forcing in time (it
+jumps by an amount of order one at the grid points). In the proof `s = h`, `λ = 2 / h³`,
+`σ = h³ / 2` (so `σ λ = 1`), `3 J h = 1`, and the error is at least `1 / 6`
+(`half_le_norm_sub_exactState`, whose lower bound does not depend on `σ`).
 
 The statement does not exclude a bound of this form for forcing whose regularity in time is
 bounded independently of `h`. -/
 theorem not_exists_uniform_global_bound :
     ¬ ∃ K : ℝ, ∀ (c s lam σ h : ℝ) (J : ℕ), c ^ 2 + s ^ 2 = 1 → 0 < lam → 0 < s → 0 < h →
-      2 ≤ lam * s ^ 2 * h → 3 * (J : ℝ) * h ≤ 1 →
+      0 < σ → σ * lam ≤ 1 → 2 ≤ lam * s ^ 2 * h → 3 * (J : ℝ) * h ≤ 1 →
       ‖state c s σ 0 0 - exactState c s lam σ h J‖ ≤ K * (h * (1 + |Real.log h|) + s) := by
   rintro ⟨K, hK⟩
   obtain ⟨m, hm⟩ := exists_nat_gt (12 * |K| + 1)
@@ -676,8 +715,13 @@ theorem not_exists_uniform_global_bound :
   have hJ : 3 * ((m ^ 2 : ℕ) : ℝ) * h ≤ 1 := by
     push_cast
     exact hmh.le
-  have hlow := half_le_norm_sub_exactState (σ := 1) hcs hl h0.ne' hx (m ^ 2)
-  have hup := hK _ h (2 / h ^ 3) 1 h (m ^ 2) hcs hl h0 h0 hx hJ
+  have hσ : 0 < h ^ 3 / 2 := by positivity
+  have hσl : h ^ 3 / 2 * (2 / h ^ 3) ≤ 1 := by
+    have : h ^ 3 / 2 * (2 / h ^ 3) = 1 := by
+      field_simp
+    rw [this]
+  have hlow := half_le_norm_sub_exactState (σ := h ^ 3 / 2) hcs hl h0.ne' hx (m ^ 2)
+  have hup := hK _ h (2 / h ^ 3) (h ^ 3 / 2) h (m ^ 2) hcs hl h0 h0 hσ hσl hx hJ
   have hlow' : (1 : ℝ) / 6 ≤ ((m ^ 2 : ℕ) : ℝ) * h / 2 := by
     push_cast
     linarith
@@ -719,15 +763,24 @@ theorem not_exists_uniform_global_bound :
       _ = 4 * |K| := by rw [h8, mul_one]
   linarith
 
-/-- The hypotheses of `half_le_norm_sub_exactState` and the conditions on the parameters in
-`not_exists_uniform_global_bound` can hold: `c = 3/5`, `s = 4/5`, `λ = 25`, `h = 1/8`, one
-cycle; the error is at least `1/16`. -/
+/-- The hypotheses of `half_le_norm_sub_exactState` and of `norm_sq_cycleForcing_le`, and the
+conditions on the parameters in `not_exists_uniform_global_bound`, hold together for
+`c = 3/5`, `s = 4/5`, `λ = 25`, `σ = 1/25` (so `σ λ = 1`), `h = 1/8` and one cycle: the error
+is at least `1/16`, and every forcing of the cycle has `‖G‖² ≤ 1 + 2 s² = 57/25`. -/
 example :
-    (1 : ℝ) / 16 ≤ ‖state (3 / 5) (4 / 5) 1 0 0 - exactState (3 / 5) (4 / 5) 25 1 (1 / 8) 1‖ := by
-  have key := half_le_norm_sub_exactState (c := 3 / 5) (s := 4 / 5) (lam := 25) (σ := 1)
-    (h := 1 / 8) (by norm_num) (by norm_num) (by norm_num) (by norm_num) 1
-  norm_num at key
-  linarith
+    (1 : ℝ) / 16 ≤
+        ‖state (3 / 5) (4 / 5) (1 / 25) 0 0 - exactState (3 / 5) (4 / 5) 25 (1 / 25) (1 / 8) 1‖ ∧
+      ∀ k, ‖cycleForcing (3 / 5) (4 / 5) 25 (1 / 25) (1 / 8) k‖ ^ 2 ≤ 57 / 25 := by
+  refine ⟨?_, fun k => ?_⟩
+  · have key := half_le_norm_sub_exactState (c := 3 / 5) (s := 4 / 5) (lam := 25)
+      (σ := 1 / 25) (h := 1 / 8) (by norm_num) (by norm_num) (by norm_num) (by norm_num) 1
+    norm_num at key
+    linarith
+  · have key := norm_sq_cycleForcing_le (c := 3 / 5) (s := 4 / 5) (lam := 25) (σ := 1 / 25)
+      (h := 1 / 8) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+      (by norm_num) k
+    norm_num at key
+    linarith
 
 end StiffGlobalCycle
 

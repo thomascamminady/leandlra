@@ -13,6 +13,7 @@ import LeanDLRA.DLRA.Defs
 import LeanDLRA.DLRA.DynamicallyOrthogonal
 import LeanDLRA.DLRA.Existence
 import LeanDLRA.DLRA.QuasiOptimality
+import LeanDLRA.DLRA.QuasiOptimalityGap
 import LeanDLRA.DLRA.QuasiOptimalityTube
 import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.Filtering.Defs
@@ -87,6 +88,7 @@ import LeanDLRA.LinearAlgebra.LowRank.SepRank
 import LeanDLRA.LinearAlgebra.Projection.Defs
 import LeanDLRA.LinearAlgebra.SVD.Defs
 import LeanDLRA.LinearAlgebra.SVD.MinMax
+import LeanDLRA.LinearAlgebra.SVD.TruncationDeriv
 import LeanDLRA.Literature.Applications.P2503_18271a
 import LeanDLRA.Literature.Applications.P2508_04484a
 import LeanDLRA.Literature.Randomized.P2402_18721a
@@ -126,6 +128,7 @@ import LeanDLRA.Research.SameMinibatchAugmentation
 import LeanDLRA.Research.StiffEnergyGalerkin
 import LeanDLRA.Research.StiffGlobalCycle
 import LeanDLRA.Research.StiffGlobalVariation
+import LeanDLRA.Research.StiffOldColumnGalerkin
 import LeanDLRA.Research.StiffOrderReduction
 import LeanDLRA.Research.SylvesterFlows
 import LeanDLRA.Research.SylvesterGlobal

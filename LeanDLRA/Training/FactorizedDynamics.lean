@@ -21,8 +21,8 @@ Simultaneous gradient flow `U̇ = -Z V Sᵀ`, `Ṡ = -Uᵀ Z V`, `V̇ = -Zᵀ U 
   needed).
 * `loraPrecond_eq_zero_iff`: for orthonormal `U`, `V` and **invertible** `S`, `P̂ Z = 0 ⇔
   P(W) Z = 0`: the equilibria of LoRA-type factor descent are exactly the Riemannian stationary
-  points.  The negative claims of GeoLoRA (arXiv 2410.18720, Sec. 3) and of the factorised
-  momentum paper (arXiv 2506.17475, Thm 4) can therefore only concern singular `S`.
+  points.  The negative claims of GeoLoRA ([SchotthoferEtAl2025, Sec. 3]) and of the factorised
+  momentum paper ([SchotthoferKleinKusch2025, Thm. 4]) can therefore only concern singular `S`.
 * `exists_loraPrecond_eq_zero_of_not_injective`: conversely, if `S` has a kernel and `r < m`
   there is `Z` with `P̂ Z = 0` but `P(W) Z ≠ 0` (spurious equilibria exist exactly in the singular
   case, as far as the instantaneous operator is concerned).
@@ -47,7 +47,7 @@ which converges to a point with `P(W) ∇L ≠ 0` (a dynamical, not instantaneou
   tolerance `δ > 0`, there is a factorization with `|b a - 1| ≤ δ` from which one factor-GD step
   *increases* `f` — no gauge-uniform step size exists, whereas the DLRT step never ascends for
   `h ≤ 2 / β` (`loss_projGradStep_le_self`).  This turns the unproven statements of
-  arXiv 2609.21039, 2306.00897 and 2601.08882 ("non-uniqueness of `W = B A` destabilizes
+  [ZangrandoSuttiTudisco2026], 2306.00897 and 2601.08882 ("non-uniqueness of `W = B A` destabilizes
   training") into a theorem.
 
 ## Balancedness (OP-TR-10)
@@ -57,12 +57,12 @@ which converges to a point with `P(W) ∇L ≠ 0` (a dynamical, not instantaneou
   `D = UᵀU - VᵀV` satisfies `Ḋ = -2 λ D`, hence `D(t) = e^{-2λt} D(0)`; for `λ = 0` it is
   conserved.  `G(t)` is an arbitrary curve, so the result holds for every loss.
 * `spectralInit_balanced`: the spectral initialization `U = Û Σ^{1/2}`, `V = V̂ Σ^{1/2}` of
-  arXiv 2209.13569 (Sec. 3.2, eq. (3)) gives `UᵀU = VᵀV = Σ` and `U Vᵀ = Û Σ V̂ᵀ`.  This is the
+  [KamalakaraEtAl2022] (Sec. 3.2, eq. (3)) gives `UᵀU = VᵀV = Σ` and `U Vᵀ = Û Σ V̂ᵀ`.  This is the
   dimensionally correct balancedness statement; the refutation in 2209.13569 compares `U Uᵀ` with
   `Σ`, which does not test balancedness.
 * `factorGD_balance`: one discrete factor-GD step changes `D` by exactly
   `α² ((G V)ᵀ (G V) - (Gᵀ U)ᵀ (Gᵀ U))`, i.e. `O(α²)`.
-* `factorGD_product` (arXiv 2209.13569, Sec. 3, eq. (1)): one factor-GD step produces
+* `factorGD_product` ([KamalakaraEtAl2022, Sec. 3], eq. (1)): one factor-GD step produces
   `W - α (∇W V Vᵀ + U Uᵀ ∇W) + α² ∇W Wᵀ ∇W`, which is not a GD step on `W`.
 
 What remains of OP-TR-10: why spectral initialization and Frobenius decay *help* (an
@@ -78,19 +78,21 @@ implicit-regularization statement), which needs a quantitative model of the loss
 * `leftProj_tangentProj_of_capture`, `norm_tangentProj_le_of_left_capture`: left-only
   augmentation `Û ⊇ [U, ∇L V]` gives `‖P(W) ∇L‖ ≤ ‖Ûᵀ ∇L‖`.
 * `exists_leftProj_ne_tangentProj_of_capture`: the identity `P_Û ∇ℓ = P(Y) ∇ℓ` used in the proof
-  of abc-PSI (arXiv 2502.03006, Thm 5.9) is false (explicit `2 × 2` example with `U = V = e₁`,
-  `∇ℓ = [[1, 0], [1, 1]]`, for which `[U, ∇ℓ V]` spans `ℝ²`); only the inequality holds.
+  of abc-PSI ([KuschSchotthoferWalter2026, Thm. 5.9]) is false (explicit `2 × 2` example with
+  `U = V = e₁`, `∇ℓ = [[1, 0], [1, 1]]`, for which `[U, ∇ℓ V]` spans `ℝ²`); only the inequality
+  holds.
 
 Combined with `exists_tangentGrad_sq_le_of_absorbs` and `frequently_tangentGrad_sq_lt_of_absorbs`
-(`Training/Descent.lean`), the stationarity measures of FeDLRT (arXiv 2406.17887, Thm 3),
-TDLRT (arXiv 2305.19059, Thm 3.2) and abc-PSI imply Riemannian `ε`-stationarity.
+(`Training/Descent.lean`), the stationarity measures of FeDLRT ([SchotthoferLaiu2024, Thm. 3]),
+TDLRT ([ZangrandoEtAl2024, Thm. 3.2]) and abc-PSI imply Riemannian `ε`-stationarity.
 
 ## K-step augmentation equals gradient augmentation
 
-* `capture_kStep_iff` (arXiv 2506.17475, derivation of Algs. 1–2; arXiv 2305.19059, Cor. 2.2;
-  arXiv 2406.17887, Lemma 2): with `K(t₀) = U₀ S₀` and `K' = -∇L V₀`, a projector fixing `U₀`
-  fixes `K(t₀) + h K'` (`h ≠ 0`) iff it fixes `∇L V₀`; so augmenting by the K-step derivative and
-  by the basis gradient give the same space.  (No invertibility of `S₀` is needed.)
+* `capture_kStep_iff` ([SchotthoferKleinKusch2025], derivation of Algs. 1–2;
+  [ZangrandoEtAl2024, Cor. 2.2]; [SchotthoferLaiu2024, Lemma 2]): with `K(t₀) = U₀ S₀` and
+  `K' = -∇L V₀`, a projector fixing `U₀` fixes `K(t₀) + h K'` (`h ≠ 0`) iff it fixes `∇L V₀`; so
+  augmenting by the K-step derivative and by the basis gradient give the same space. (No
+  invertibility of `S₀` is needed.)
 
 The statements `loraPrecond_eq_zero_iff`, `sq_mul_norm_tangentProj_le_inner_loraPrecond`,
 `exists_loraPrecond_eq_zero_of_not_injective` and `exists_factorGD_ascent` are proved here (with
@@ -199,8 +201,8 @@ theorem loraPrecond_eq_zero_of_tangentProj_eq_zero [DecidableEq k] [DecidableEq 
   simp only [loraPrecond, Matrix.mul_assoc, hl, hr, Matrix.mul_zero, Matrix.zero_mul, add_zero]
 
 /-- **LoRA equilibria are Riemannian stationary points when `S` is invertible** (OP-TR-14;
-negative claims of arXiv 2410.18720 Sec. 3 and arXiv 2506.17475 Thm 4). For orthonormal `U`,
-`V` and invertible `S`, `P̂ Z = 0 ⇔ P(W) Z = 0`.  Proof: the quadratic form forces
+negative claims of [SchotthoferEtAl2025] Sec. 3 and [SchotthoferKleinKusch2025] Thm 4). For
+orthonormal `U`, `V` and invertible `S`, `P̂ Z = 0 ⇔ P(W) Z = 0`. Proof: the quadratic form forces
 `Z V Sᵀ = 0` and `Sᵀ Uᵀ Z = 0`, so `Z V = 0` and `Uᵀ Z = 0`. -/
 theorem loraPrecond_eq_zero_iff [DecidableEq k] {U : Matrix m k ℝ} {S : Matrix k k ℝ}
     {V : Matrix n k ℝ} (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (hS : IsUnit S)
@@ -365,9 +367,9 @@ theorem norm_factorGrad_sub_le {g : Matrix m n ℝ → Matrix m n ℝ} {β : ℝ
     _ = β * ‖A‖ ^ 2 * ‖B₁ - B₂‖ := by ring
 
 /-- **No gauge-uniform step size for factor gradient descent** (OP-TR-15; claims of
-arXiv 2609.21039, 2601.08882). For `f(b, a) = (b a - 1)² / 2`, every `h > 0` and `δ > 0`, there
-is a factorization `b a = 1 - min δ (1/2)` (with `a² = 3 / h`) from which one gradient step on the
-factors increases `f`. -/
+[ZangrandoSuttiTudisco2026], 2601.08882). For `f(b, a) = (b a - 1)² / 2`, every `h > 0` and `δ > 0`,
+there is a factorization `b a = 1 - min δ (1/2)` (with `a² = 3 / h`) from which one gradient step on
+the factors increases `f`. -/
 theorem exists_factorGD_ascent {h δ : ℝ} (hh : 0 < h) (hδ : 0 < δ) :
     ∃ b a : ℝ, |b * a - 1| ≤ δ ∧
       (b * a - 1) ^ 2 / 2 <
@@ -439,7 +441,7 @@ theorem balance_eq_exp {U : ℝ → Matrix m k ℝ} {V : ℝ → Matrix n k ℝ}
   rw [← hc, smul_smul, ← Real.exp_add, show -2 * lam * t + 2 * lam * t = 0 by ring,
     Real.exp_zero, one_smul]
 
-/-- **Conservation of balancedness** (OP-TR-10; arXiv 2209.13569 Sec. 3.2): without weight
+/-- **Conservation of balancedness** (OP-TR-10; [KamalakaraEtAl2022] Sec. 3.2): without weight
 decay `UᵀU - VᵀV` is constant along `U̇ = -G V`, `V̇ = -Gᵀ U`. -/
 theorem balance_eq_const {U : ℝ → Matrix m k ℝ} {V : ℝ → Matrix n k ℝ}
     {G : ℝ → Matrix m n ℝ} (hU : ∀ t, HasDerivAt U (-(G t * V t)) t)
@@ -449,7 +451,7 @@ theorem balance_eq_const {U : ℝ → Matrix m k ℝ} {V : ℝ → Matrix n k �
     (fun t => by simpa using hV t) t
   simpa using this
 
-/-- **Spectral initialization is balanced** (arXiv 2209.13569 Sec. 3.2, eq. (3); OP-TR-10): for
+/-- **Spectral initialization is balanced** ([KamalakaraEtAl2022] Sec. 3.2, eq. (3); OP-TR-10): for
 orthonormal `Û`, `V̂` and symmetric `R` (`R = Σ^{1/2}`), the factors `U = Û R`, `V = V̂ R` satisfy
 `UᵀU = VᵀV = R R` and `U Vᵀ = Û (R R) V̂ᵀ`. -/
 theorem spectralInit_balanced [DecidableEq k] {Uh : Matrix m k ℝ} {Vh : Matrix n k ℝ}
@@ -473,7 +475,7 @@ theorem factorGD_balance (U : Matrix m k ℝ) (V : Matrix n k ℝ) (G : Matrix m
     Matrix.mul_smul, Matrix.mul_assoc]
   module
 
-/-- **One factor GD step is not a GD step on `W`** (arXiv 2209.13569, Sec. 3, eq. (1)): with
+/-- **One factor GD step is not a GD step on `W`** ([KamalakaraEtAl2022, Sec. 3], eq. (1)): with
 `W = U Vᵀ`, the step gives `W - α (∇W V Vᵀ + U Uᵀ ∇W) + α² ∇W Wᵀ ∇W`. -/
 theorem factorGD_product (U : Matrix m k ℝ) (V : Matrix n k ℝ) (G : Matrix m n ℝ) (α : ℝ) :
     (U - α • (G * V)) * (V - α • (Gᵀ * U))ᵀ =
@@ -520,8 +522,8 @@ theorem galerkin_tangentProj_of_capture {k₁ k₂ : Type*} [Fintype k₁] [Fint
   simp only [Matrix.mul_assoc]
 
 /-- **The augmented Galerkin gradient dominates the Riemannian gradient** (OP-TR-01;
-FeDLRT arXiv 2406.17887 Thm 3, TDLRT arXiv 2305.19059 Thm 3.2, abc-PSI arXiv 2502.03006 Thm 5.9):
-`‖Ûᵀ G V̂‖² = ‖P(W) G‖² + ‖Û Ûᵀ G V̂ V̂ᵀ - P(W) G‖²`. -/
+FeDLRT [SchotthoferLaiu2024] Thm 3, TDLRT [ZangrandoEtAl2024] Thm 3.2, abc-PSI
+[KuschSchotthoferWalter2026] Thm 5.9): `‖Ûᵀ G V̂‖² = ‖P(W) G‖² + ‖Û Ûᵀ G V̂ V̂ᵀ - P(W) G‖²`. -/
 theorem norm_sq_galerkin_eq_of_capture {k₁ k₂ : Type*} [Fintype k₁] [Fintype k₂]
     [DecidableEq k] [DecidableEq k'] [DecidableEq k₁] [DecidableEq k₂]
     {Uh : Matrix m k₁ ℝ} {Vh : Matrix n k₂ ℝ} {U : Matrix m k ℝ} {V : Matrix n k' ℝ}
@@ -587,9 +589,10 @@ theorem norm_tangentProj_le_of_left_capture {k₁ : Type*} [Fintype k₁]
     (isOrthProj_leftProj hUh) (leftProj_tangentProj_of_capture hUU hUG)
   rwa [leftProj_apply, Matrix.mul_assoc, Frobenius.norm_mul_of_orthonormal hUh] at h
 
-/-- **The identity `P_Û ∇ℓ = P(Y) ∇ℓ` used in the proof of abc-PSI (arXiv 2502.03006, Thm 5.9)
-is false** (OP-TR-01): for `U = V = e₁`, `∇ℓ = [[1, 0], [1, 1]]` and `Û = I` (an orthonormal
-basis of `span[U, ∇ℓ V] = ℝ²`) the capture identities hold but `Û Ûᵀ ∇ℓ ≠ P(Y) ∇ℓ`. -/
+/-- **The identity `P_Û ∇ℓ = P(Y) ∇ℓ` used in the proof of abc-PSI
+([KuschSchotthoferWalter2026, Thm. 5.9]) is false** (OP-TR-01): for `U = V = e₁`,
+`∇ℓ = [[1, 0], [1, 1]]` and `Û = I` (an orthonormal basis of `span[U, ∇ℓ V] = ℝ²`) the capture
+identities hold but `Û Ûᵀ ∇ℓ ≠ P(Y) ∇ℓ`. -/
 theorem exists_leftProj_ne_tangentProj_of_capture :
     ∃ (U V : Matrix (Fin 2) (Fin 1) ℝ) (Uh G : Matrix (Fin 2) (Fin 2) ℝ),
       Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ Uhᵀ * Uh = 1 ∧ Uh * Uhᵀ * U = U ∧
@@ -604,10 +607,10 @@ theorem exists_leftProj_ne_tangentProj_of_capture :
 
 /-! ### Augmentation by the K-step derivative equals gradient augmentation -/
 
-/-- Augmenting by the K-step derivative is augmenting by the basis gradient (arXiv 2506.17475,
-Algs. 1–2; arXiv 2305.19059, Cor. 2.2; arXiv 2406.17887, Lemma 2): for `K(t₀) = U₀ S₀`,
-`K' = -∇L V₀` (`GV = ∇L V₀`) and `h ≠ 0`, a projector `P` with `P U₀ = U₀` fixes
-`K(t₀) + h K'` iff it fixes `∇L V₀`. -/
+/-- Augmenting by the K-step derivative is augmenting by the basis gradient
+([SchotthoferKleinKusch2025], Algs. 1–2; [ZangrandoEtAl2024, Cor. 2.2];
+[SchotthoferLaiu2024, Lemma 2]): for `K(t₀) = U₀ S₀`, `K' = -∇L V₀` (`GV = ∇L V₀`) and `h ≠ 0`, a
+projector `P` with `P U₀ = U₀` fixes `K(t₀) + h K'` iff it fixes `∇L V₀`. -/
 theorem capture_kStep_iff {P : Matrix m m ℝ} {U₀ : Matrix m k ℝ} (S₀ : Matrix k k ℝ)
     (GV : Matrix m k ℝ) {h : ℝ} (hh : h ≠ 0) (hP : P * U₀ = U₀) :
     P * (U₀ * S₀ - h • GV) = U₀ * S₀ - h • GV ↔ P * GV = GV := by

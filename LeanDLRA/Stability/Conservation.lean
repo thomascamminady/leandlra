@@ -10,13 +10,13 @@ Kinetic equations conserve mass, momentum and (sometimes) energy, i.e. the veloc
 divergence form), and integrating in space gives *global* invariants.  Standard dynamical
 low-rank integrators destroy these laws twice: the Galerkin step projects the flux onto the
 spatial basis, and the SVD truncation does not preserve moments.  The conservative integrators of
-Einkemmer–Ostermann–Scalone (arXiv 2206.09374) and Einkemmer–Kusch–Schotthöfer
-(arXiv 2311.06399) cure both defects by
+Einkemmer–Ostermann–Scalone ([EinkemmerOstermannScalone2023]) and Einkemmer–Kusch–Schotthöfer
+([EinkemmerKuschSchotthofer2023]) cure both defects by
 
 * keeping the conserved velocity functions `U` in the velocity basis (as already done, for a
   fixed-rank scheme with modified Galerkin equations, by Einkemmer–Joseph 2021), here through
-  augmentation and the *conservative truncation* of arXiv 2206.09374 (a similar approach is
-  Guo–Qiu, arXiv 2201.10397) that only truncates the part orthogonal to `U`, and
+  augmentation and the *conservative truncation* of [EinkemmerOstermannScalone2023] (a similar
+  approach is Guo–Qiu, [GuoQiu2022]) that only truncates the part orthogonal to `U`, and
 * making sure that the spatial basis contains the flux moments (automatic for the augmented BUG
   integrator with explicit Euler substeps, enforced by one extra augmentation for general
   Runge–Kutta S-steps).
@@ -45,7 +45,7 @@ Linear invariants of Galerkin steps (exact and explicit Euler substeps).
   assumed anywhere.
 * `inner_eq_of_forall_step`: per-step conservation gives conservation over many steps.
 
-Conservative truncation (arXiv 2206.09374, Algorithm 1, steps 5–12).
+Conservative truncation ([EinkemmerOstermannScalone2023, Alg. 1], steps 5–12).
 * `consTrunc C T Ŷ = C Ŷ + T ((1 - C) Ŷ)`: the truncation `T` only acts on the part of `Ŷ`
   orthogonal to the conserved directions.
 * `consTrunc_moments`, `consTrunc_inner`: if `T` maps into `range (1 - C)`, all moments and all
@@ -60,16 +60,17 @@ Conservative truncation (arXiv 2206.09374, Algorithm 1, steps 5–12).
   (projector `C + R`) again contains the conserved directions, and contains `Y₁`;
   `consTrunc_proj_eq`: truncation by a projector `R ⊥ C` is the projection onto `[U, W]`.
 
-Local conservation laws (arXiv 2206.09374, Theorems 1–2 and the moment part of Theorem 3, abstract
-analogue of Lemmas 1–2; arXiv 2311.06399, §§5–7).  The S-step is modelled as
-`P̂ Q̂ (Y₀ + h F(Y₀))`; this is the BUG S-step (whose field is evaluated at `P̂ Q̂ Y₀`) whenever the
-augmented bases contain the old ones, `P̂ Q̂ Y₀ = Y₀`.
+Local conservation laws ([EinkemmerOstermannScalone2023], Theorems 1–2 and the moment part of
+Theorem 3, abstract analogue of Lemmas 1–2; [EinkemmerKuschSchotthofer2023], §§5–7). The S-step is
+modelled as `P̂ Q̂ (Y₀ + h F(Y₀))`; this is the BUG S-step (whose field is evaluated at `P̂ Q̂ Y₀`)
+whenever the augmented bases contain the old ones, `P̂ Q̂ Y₀ = Y₀`.
 * `moment_galerkin`, `galerkin_moment_hasDerivWithinAt`: the Galerkin moment identity
   `⟨P_V̂ P_X̂ F, U⟩_v = P_X̂ ⟨F, U⟩_v` and the continuous law `∂ₜ ϕ_S = P_X̂ ⟨F(Y_S), U⟩_v`
-  (arXiv 2311.06399, eq. (5)).
-* `consBug_euler_flux_mem` (abstract analogue of Lemmas 1–2 of arXiv 2206.09374, following the
-  argument of §6.1 of arXiv 2311.06399): the augmented spatial basis contains the combined flux
-  moments `⟨F(Y₀), U⟩_v` of the explicit Euler K-step, without a `∇ₓX` augmentation.
+  ([EinkemmerKuschSchotthofer2023, eq. (5)]).
+* `consBug_euler_flux_mem` (abstract analogue of Lemmas 1–2 of [EinkemmerOstermannScalone2023],
+  following the argument of §6.1 of [EinkemmerKuschSchotthofer2023]): the augmented spatial basis
+  contains the combined flux moments `⟨F(Y₀), U⟩_v` of the explicit Euler K-step, without a `∇ₓX`
+  augmentation.
 * `consBug_euler_moment`, `consBug_euler_local_law`: the explicit Euler augmented BUG step with
   conservative truncation reproduces *exactly* the moment equations of the full explicit Euler
   scheme, `C Y₁ = C (Y₀ + h F(Y₀))` — the discrete continuity and momentum equations
@@ -89,11 +90,11 @@ augmented bases contain the old ones, `P̂ Q̂ Y₀ = Y₀`.
   conservative parallel BUG integrator (§7) inherits it.
 
 Metric projections, motivated by the positivity-preserving corrections (3.3), (4.4) of
-arXiv 2606.31662 (standard convex-projection facts, not results of that paper).
+[KormannNazarovWen2026] (standard convex-projection facts, not results of that paper).
 * `norm_sub_sq_add_le_of_metricProj`, `norm_sub_le_of_metricProj`, `exists_metricProj`: the
   metric projection onto a closed convex set `K` exists and is at least as close to every
   *element of `K`* as the uncorrected state (Kolmogorov criterion / obtuse-angle inequality).
-  In arXiv 2606.31662 `K` is the admissible set within the current low-rank bases, so this
+  In [KormannNazarovWen2026] `K` is the admissible set within the current low-rank bases, so this
   covers comparison states representable in these bases, not the analytical solution `F_a` of
   the paper's error split (3.2) in general.
 
@@ -209,7 +210,8 @@ theorem galerkinRK_inner (hP : IsOrthProj P) {c : E} (hc : P c = c) {s : ℕ} (b
   simp only [real_inner_smul_right]
 
 /-- **Runge–Kutta Galerkin steps conserve linear invariants** (all Runge–Kutta methods preserve
-linear invariants, arXiv 2311.06399, §7): if `P c = c` and `⟪c, Gᵢ⟫ = 0` for all stages. -/
+linear invariants, [EinkemmerKuschSchotthofer2023, §7]): if `P c = c` and `⟪c, Gᵢ⟫ = 0` for all
+stages. -/
 theorem galerkinRK_inner_eq (hP : IsOrthProj P) {c : E} (hc : P c = c) {s : ℕ} (b : Fin s → ℝ)
     {G : Fin s → E} (hG : ∀ i, ⟪c, G i⟫ = 0) (h : ℝ) (u : E) :
     ⟪c, P (u + h • ∑ i, b i • G i)⟫ = ⟪c, u⟫ := by
@@ -283,8 +285,8 @@ section ConservativeTruncation
 
 variable {C : E →L[ℝ] E}
 
-/-- The **conservative truncation** of Einkemmer–Ostermann–Scalone (arXiv 2206.09374,
-Algorithm 1, steps 5–12; a similar approach is Guo–Qiu, arXiv 2201.10397): the part `C Ŷ` of
+/-- The **conservative truncation** of Einkemmer–Ostermann–Scalone ([EinkemmerOstermannScalone2023],
+Algorithm 1, steps 5–12; a similar approach is Guo–Qiu, [GuoQiu2022]): the part `C Ŷ` of
 `Ŷ` in the conserved directions (`K̃_cons Uᵀ`) is kept exactly, and only the remainder
 `(1 - C) Ŷ` (`K̃_rem W̃ᵀ`) is truncated by `T` (an SVD truncation to rank `r - m`). -/
 def consTrunc (C : E →L[ℝ] E) (T : E → E) (Y : E) : E := C Y + T (Y - C Y)
@@ -365,11 +367,12 @@ lemma IsOrthProj.add_of_comp_eq_zero (hC : IsOrthProj C) {R : E →L[ℝ] E} (hR
   symm x y := by
     simp only [add_apply, inner_add_left, inner_add_right, hC.symm, hR.symm]
 
-/-- **The new velocity basis contains the conserved directions** (arXiv 2311.06399, §5: "if
-`P_V̂ U = U` then `P_{V¹} U = U`").  If the truncated remainder lies in the range of a projector
-`R` orthogonal to the conserved directions (`C R = 0`, the span of the new non-conserved
-velocity functions `W`), then the new basis projector `C + R` contains the conserved directions
-and the truncated solution `Y₁`; this is the hypothesis `Q₀ C = C` of the next step. -/
+/-- **The new velocity basis contains the conserved directions**
+([EinkemmerKuschSchotthofer2023, §5]: "if `P_V̂ U = U` then `P_{V¹} U = U`"). If the truncated
+remainder lies in the range of a projector `R` orthogonal to the conserved directions (`C R = 0`,
+the span of the new non-conserved velocity functions `W`), then the new basis projector `C + R`
+contains the conserved directions and the truncated solution `Y₁`; this is the hypothesis `Q₀ C = C`
+of the next step. -/
 theorem consTrunc_mem_range (hC : IsOrthProj C) {R : E →L[ℝ] E} (hR : IsOrthProj R)
     (hCR : ∀ x, C (R x) = 0) {T : E → E} {Y : E} (hT : R (T (Y - C Y)) = T (Y - C Y)) :
     (C + R) (consTrunc C T Y) = consTrunc C T Y ∧ (∀ x, (C + R) (C x) = C x) ∧
@@ -396,16 +399,16 @@ section LocalConservation
 
 variable {C : E →L[ℝ] E}
 
-/-- **Galerkin moment identity** (arXiv 2311.06399, eq. (5)): if the right projector `Q` contains
-the conserved directions (`Q C = C`) and the left projector `P` commutes with `C`, then
+/-- **Galerkin moment identity** ([EinkemmerKuschSchotthofer2023, eq. (5)]): if the right projector
+`Q` contains the conserved directions (`Q C = C`) and the left projector `P` commutes with `C`, then
 `C (P Q z) = P (C z)`, i.e. `⟨P_V̂ P_X̂ F, U⟩_v = P_X̂ ⟨F, U⟩_v`. -/
 theorem moment_galerkin (hC : IsOrthProj C) {P Q : E →L[ℝ] E} (hQ : IsOrthProj Q)
     (hQC : ∀ x, Q (C x) = C x) (hPC : ∀ x, P (C x) = C (P x)) (z : E) :
     C (P (Q z)) = P (C z) := by
   rw [← hPC, hC.comp_eq_of_comp_eq hQ hQC]
 
-/-- **Continuous moment law of the S-step** (arXiv 2311.06399, eq. (5)): along the Galerkin
-S-step `YS' = P̂ Q̂ F(t, YS)` the moments satisfy `d/dt C YS = P̂ C F(t, YS)`, i.e.
+/-- **Continuous moment law of the S-step** ([EinkemmerKuschSchotthofer2023, eq. (5)]): along the
+Galerkin S-step `YS' = P̂ Q̂ F(t, YS)` the moments satisfy `d/dt C YS = P̂ C F(t, YS)`, i.e.
 `∂ₜ ϕ_S = P_X̂ ⟨F(Y_S), U⟩_v`: the exact law up to the spatial projection. -/
 theorem galerkin_moment_hasDerivWithinAt (hC : IsOrthProj C) {P Q : E →L[ℝ] E}
     (hQ : IsOrthProj Q) (hQC : ∀ x, Q (C x) = C x) (hPC : ∀ x, P (C x) = C (P x))
@@ -416,9 +419,9 @@ theorem galerkin_moment_hasDerivWithinAt (hC : IsOrthProj C) {P Q : E →L[ℝ] 
   rw [← moment_galerkin hC hQ hQC hPC]
   exact h
 
-/-- **Exact local conservation law along the K-step** (arXiv 2311.06399, eq. (11)): if the old
-velocity basis contains the conserved directions (`Q₀ C = C`), the K-step `YK' = Q₀ F(t, YK)`
-satisfies `d/dt C YK = C F(t, YK)`, i.e. `∂ₜ ϕ = ⟨F(t, Y_K), U⟩_v`. -/
+/-- **Exact local conservation law along the K-step** ([EinkemmerKuschSchotthofer2023, eq. (11)]):
+if the old velocity basis contains the conserved directions (`Q₀ C = C`), the K-step
+`YK' = Q₀ F(t, YK)` satisfies `d/dt C YK = C F(t, YK)`, i.e. `∂ₜ ϕ = ⟨F(t, Y_K), U⟩_v`. -/
 theorem kStep_moment_hasDerivWithinAt (hC : IsOrthProj C) {Q₀ : E →L[ℝ] E}
     (hQ₀ : IsOrthProj Q₀) (hQ₀C : ∀ x, Q₀ (C x) = C x) {F : ℝ → E → E} {YK : ℝ → E}
     {a b t : ℝ} (hYK : ODESolution (fun t x => Q₀ (F t x)) YK a b) (ht : t ∈ Ico a b) :
@@ -428,16 +431,16 @@ theorem kStep_moment_hasDerivWithinAt (hC : IsOrthProj C) {Q₀ : E →L[ℝ] E}
   exact h
 
 /-- **The augmented spatial basis contains the flux moments of the explicit Euler K-step**
-(abstract analogue of Lemmas 1–2 of arXiv 2206.09374, by the argument of §6.1 of
-arXiv 2311.06399).  If the old
+(abstract analogue of Lemmas 1–2 of [EinkemmerOstermannScalone2023], by the argument of §6.1 of
+[EinkemmerKuschSchotthofer2023]).  If the old
 velocity basis contains the conserved directions (`Q₀ C = C`), the augmented left basis `P̂`
 (commuting with `C`) contains the old solution `Y₀` and the explicit Euler K-step result
 `YK₁ = Y₀ + h Q₀ F(Y₀)` (`span[X⁰, K¹] ⊆ span X̂`), and `h ≠ 0`, then `P̂` fixes the flux moments:
 `P̂ C F(Y₀) = C F(Y₀)`, i.e. the *combined* flux moments `⟨F(Y₀), U_k⟩_v` (for Vlasov–Poisson
 `-∇ₓ·j`, `-∇ₓ·σ ± E ρ`, …) lie in `span X̂`.  This is what the discrete local laws need, and it
-holds without a `∇ₓX` augmentation (arXiv 2311.06399, §4.1).  It does not show that the separate
-terms (`∇ₓ·j`, `E ρ`, `E·j`) lie in `span X̂`, which is the content of EOS Lemmas 1–2 and uses the
-`∇ₓX` augmentation there. -/
+holds without a `∇ₓX` augmentation ([EinkemmerKuschSchotthofer2023, §4.1]). It does not show that
+the separate terms (`∇ₓ·j`, `E ρ`, `E·j`) lie in `span X̂`, which is the content of EOS Lemmas 1–2
+and uses the `∇ₓX` augmentation there. -/
 theorem consBug_euler_flux_mem (hC : IsOrthProj C) {Q₀ Pa : E →L[ℝ] E} (hQ₀ : IsOrthProj Q₀)
     (hQ₀C : ∀ x, Q₀ (C x) = C x) (hPC : ∀ x, Pa (C x) = C (Pa x)) {F : E → E} {h : ℝ}
     (hh : h ≠ 0) {Y₀ : E} (hY₀ : Pa Y₀ = Y₀)
@@ -448,7 +451,8 @@ theorem consBug_euler_flux_mem (hC : IsOrthProj C) {Q₀ Pa : E →L[ℝ] E} (hQ
   rw [← hC.comp_eq_of_comp_eq hQ₀ hQ₀C (F Y₀), hPC, hinc]
 
 /-- **Discrete moment law of the explicit Euler augmented BUG step** (abstract form of the proofs
-of Theorems 1–3 of arXiv 2206.09374 and §6.1 of arXiv 2311.06399).  Assume
+of Theorems 1–3 of [EinkemmerOstermannScalone2023] and §6.1 of [EinkemmerKuschSchotthofer2023]).
+Assume
 
 * the old velocity basis `Q₀` and the augmented velocity basis `Q̂` contain the conserved
   directions (`Q₀ C = C`, `Q̂ C = C`; `U ⊆ span V⁰ ⊆ span Ṽ`),
@@ -472,12 +476,12 @@ theorem consBug_euler_moment (hC : IsOrthProj C) {Q₀ Pa Qa : E →L[ℝ] E} (h
     hY₀, ← hCQ₀ (F Y₀), hPC, ← map_smul, hinc, map_smul]
 
 /-- **The conservative augmented BUG integrator satisfies the discrete local conservation laws**
-(Einkemmer–Ostermann–Scalone, arXiv 2206.09374, Theorems 1–2, abstract form; arXiv 2311.06399,
-§6.1).  With the hypotheses of `consBug_euler_moment` and a conservative truncation
-`Y₁ = C Ŷ + T((1 - C) Ŷ)` whose truncated part has no conserved components, the new
-approximation has exactly the moments of the full explicit Euler step,
+(Einkemmer–Ostermann–Scalone, [EinkemmerOstermannScalone2023], Theorems 1–2, abstract form;
+[EinkemmerKuschSchotthofer2023], §6.1). With the hypotheses of `consBug_euler_moment` and a
+conservative truncation `Y₁ = C Ŷ + T((1 - C) Ŷ)` whose truncated part has no conserved components,
+the new approximation has exactly the moments of the full explicit Euler step,
 `C Y₁ = C Y₀ + h C F(Y₀)`: for `U = (1, v)` this is the discrete continuity equation
-`ρ¹ = ρ⁰ - h ∇ₓ·j⁰` and the discrete momentum equation.  (As in `consBug_euler_moment`, the S-step
+`ρ¹ = ρ⁰ - h ∇ₓ·j⁰` and the discrete momentum equation. (As in `consBug_euler_moment`, the S-step
 field is evaluated at `Y₀`, which is the BUG S-step when `P̂ Q̂ Y₀ = Y₀`.) -/
 theorem consBug_euler_local_law (hC : IsOrthProj C) {Q₀ Pa Qa : E →L[ℝ] E}
     (hQ₀ : IsOrthProj Q₀) (hQa : IsOrthProj Qa) (hQ₀C : ∀ x, Q₀ (C x) = C x)
@@ -503,8 +507,8 @@ theorem consBug_euler_inner (hC : IsOrthProj C) {Q₀ Pa Qa : E →L[ℝ] E} (hQ
     hC.inner_apply_right_of_mem _ hc, inner_add_right, real_inner_smul_right]
 
 /-- **Conservation of total mass/momentum by the conservative augmented BUG step**
-(arXiv 2206.09374, Theorems 1–2, integrated in space): if moreover `⟪c, F(Y₀)⟫ = 0` (the flux is
-a divergence, `∫ ∇ₓ·j dx = 0`), then `⟪c, Y₁⟫ = ⟪c, Y₀⟫`. -/
+([EinkemmerOstermannScalone2023], Theorems 1–2, integrated in space): if moreover `⟪c, F(Y₀)⟫ = 0`
+(the flux is a divergence, `∫ ∇ₓ·j dx = 0`), then `⟪c, Y₁⟫ = ⟪c, Y₀⟫`. -/
 theorem consBug_euler_inner_eq (hC : IsOrthProj C) {Q₀ Pa Qa : E →L[ℝ] E}
     (hQ₀ : IsOrthProj Q₀) (hQa : IsOrthProj Qa) (hQ₀C : ∀ x, Q₀ (C x) = C x)
     (hQaC : ∀ x, Qa (C x) = C x) (hPC : ∀ x, Pa (C x) = C (Pa x)) {F : E → E} {h : ℝ} {Y₀ : E}
@@ -515,13 +519,13 @@ theorem consBug_euler_inner_eq (hC : IsOrthProj C) {Q₀ Pa Qa : E →L[ℝ] E}
   rw [consBug_euler_inner hC hQ₀ hQa hQ₀C hQaC hPC hY₀ hK hT hc, hF, mul_zero, add_zero]
 
 /-- **Moment-dependent quantities agree with the full scheme** (a reduction lemma towards
-arXiv 2206.09374, Theorem 3).  Every quantity `Φ` depending only on the moments (for
+[EinkemmerOstermannScalone2023, Thm. 3]).  Every quantity `Φ` depending only on the moments (for
 `U = (1, v, v² - 1)`: the density, the current, the kinetic energy and, through the Poisson
 equation, the electric energy) takes the same value on the low-rank solution `Y₁` as on the full
 explicit Euler step `Y₀ + h F(Y₀)`.  Consequently any identity between moment-determined
 quantities of the full explicit Euler scheme, such as the discrete energy identity (26) of
-arXiv 2206.09374, transfers to the low-rank step.  The identity (26) itself (and its `O(h²)`
-defect) is not formalised here. -/
+[EinkemmerOstermannScalone2023], transfers to the low-rank step. The identity (26) itself (and its
+`O(h²)` defect) is not formalised here. -/
 theorem consBug_euler_moment_functional {α : Type*} (Φ : E → α) (hC : IsOrthProj C)
     {Q₀ Pa Qa : E →L[ℝ] E} (hQ₀ : IsOrthProj Q₀) (hQa : IsOrthProj Qa)
     (hQ₀C : ∀ x, Q₀ (C x) = C x) (hQaC : ∀ x, Qa (C x) = C x) (hPC : ∀ x, Pa (C x) = C (Pa x))
@@ -533,8 +537,8 @@ theorem consBug_euler_moment_functional {α : Type*} (Φ : E → α) (hC : IsOrt
 
 /-- **The conservative augmented BUG step is `L²`-stable under the CFL condition of the full
 scheme**: if the full explicit Euler step is norm-nonincreasing at `Y₀` and the truncation of the
-remainder is norm-nonincreasing, then `‖Y₁‖ ≤ ‖Y₀‖` (combining arXiv 2206.09374 with
-arXiv 2107.07282, Theorem 4). -/
+remainder is norm-nonincreasing, then `‖Y₁‖ ≤ ‖Y₀‖` (combining [EinkemmerOstermannScalone2023] with
+[KuschEinkemmerCeruti2023, Thm. 4]). -/
 theorem consBug_euler_norm_le (hC : IsOrthProj C) {Pa Qa : E →L[ℝ] E} (hPa : IsOrthProj Pa)
     (hQa : IsOrthProj Qa) {F : E → E} {h : ℝ} {Y₀ : E} (hF : ‖eulerStep F h Y₀‖ ≤ ‖Y₀‖)
     {T : E → E}
@@ -545,12 +549,12 @@ theorem consBug_euler_norm_le (hC : IsOrthProj C) {Pa Qa : E →L[ℝ] E} (hPa :
   (norm_consTrunc_le hC hT hTn).trans
     ((hPa.norm_le _).trans ((hQa.norm_le _).trans hF))
 
-/-- **Discrete moment law of a Runge–Kutta S-step** (arXiv 2311.06399, eq. (8)).  Let the
-velocity basis `Q̂` contain the conserved directions, let the spatial basis `P̄` commute with `C`
-and contain `Y₀` (augmented bases contain the old ones; with `Q̂ Y₀ = Y₀` the S-step then starts at
-`P̄ Q̂ Y₀ = Y₀`).  For the explicit Runge–Kutta S-step
-`Ŷ = P̄ Q̂ (Y₀ + h ∑ᵢ bᵢ Gᵢ)` with stage values `Gᵢ = F(Y⁽ⁱ⁾)`:
-`C Ŷ = C Y₀ + h P̄ (∑ᵢ bᵢ C Gᵢ)`, i.e. `ϕ¹ = ϕ⁰ + h P_X̄ ∑ᵢ bᵢ ⟨F⁽ⁱ⁾, U⟩_v`. -/
+/-- **Discrete moment law of a Runge–Kutta S-step** ([EinkemmerKuschSchotthofer2023, eq. (8)]). Let
+the velocity basis `Q̂` contain the conserved directions, let the spatial basis `P̄` commute with
+`C` and contain `Y₀` (augmented bases contain the old ones; with `Q̂ Y₀ = Y₀` the S-step then starts
+at `P̄ Q̂ Y₀ = Y₀`). For the explicit Runge–Kutta S-step `Ŷ = P̄ Q̂ (Y₀ + h ∑ᵢ bᵢ Gᵢ)` with stage
+values `Gᵢ = F(Y⁽ⁱ⁾)`: `C Ŷ = C Y₀ + h P̄ (∑ᵢ bᵢ C Gᵢ)`, i.e. `ϕ¹ = ϕ⁰ + h P_X̄ ∑ᵢ bᵢ ⟨F⁽ⁱ⁾, U⟩_v`.
+-/
 theorem consBug_rk_moment (hC : IsOrthProj C) {Pe Qa : E →L[ℝ] E} (hQa : IsOrthProj Qa)
     (hQaC : ∀ x, Qa (C x) = C x) (hPC : ∀ x, Pe (C x) = C (Pe x)) {Y₀ : E} (hY₀ : Pe Y₀ = Y₀)
     {s : ℕ} (b : Fin s → ℝ) (G : Fin s → E) (h : ℝ) :
@@ -560,9 +564,9 @@ theorem consBug_rk_moment (hC : IsOrthProj C) {Pe Qa : E →L[ℝ] E} (hQa : IsO
   simp only [map_smul]
 
 /-- **Local conservation of the Runge–Kutta BUG integrator with flux augmentation**
-(arXiv 2311.06399, §5, eq. (7)): if the spatial basis contains the Runge–Kutta flux moment
-`∑ᵢ bᵢ ⟨F⁽ⁱ⁾, U⟩_v` (as it does for `X̄ = ortho[X̂, ∑ᵢ bᵢ ⟨F⁽ⁱ⁾, U⟩_v]`), the moments satisfy the
-discrete local conservation law `C Ŷ = C Y₀ + h ∑ᵢ bᵢ C Gᵢ` of the Runge–Kutta method. -/
+([EinkemmerKuschSchotthofer2023, §5], eq. (7)): if the spatial basis contains the Runge–Kutta flux
+moment `∑ᵢ bᵢ ⟨F⁽ⁱ⁾, U⟩_v` (as it does for `X̄ = ortho[X̂, ∑ᵢ bᵢ ⟨F⁽ⁱ⁾, U⟩_v]`), the moments satisfy
+the discrete local conservation law `C Ŷ = C Y₀ + h ∑ᵢ bᵢ C Gᵢ` of the Runge–Kutta method. -/
 theorem consBug_rk_local_law (hC : IsOrthProj C) {Pe Qa : E →L[ℝ] E} (hQa : IsOrthProj Qa)
     (hQaC : ∀ x, Qa (C x) = C x) (hPC : ∀ x, Pe (C x) = C (Pe x)) {Y₀ : E} (hY₀ : Pe Y₀ = Y₀)
     {s : ℕ} (b : Fin s → ℝ) (G : Fin s → E) (h : ℝ)
@@ -570,7 +574,7 @@ theorem consBug_rk_local_law (hC : IsOrthProj C) {Pe Qa : E →L[ℝ] E} (hQa : 
     C (Pe (Qa (Y₀ + h • ∑ i, b i • G i))) = C Y₀ + h • ∑ i, b i • C (G i) := by
   rw [consBug_rk_moment hC hQa hQaC hPC hY₀, hflux]
 
-/-- **The flux condition is also necessary** (cf. arXiv 2311.06399, §6, where
+/-- **The flux condition is also necessary** (cf. [EinkemmerKuschSchotthofer2023, §6], where
 `P_X̂ ∑ᵢ bᵢ ⟨F⁽ⁱ⁾, U⟩_v = ∑ᵢ bᵢ ⟨F⁽ⁱ⁾, U⟩_v` is identified as the key ingredient): for `h ≠ 0`, the
 Runge–Kutta S-step satisfies the discrete local conservation law iff the spatial basis contains
 the flux moment. -/
@@ -610,19 +614,20 @@ theorem norm_sub_apply_le_of_le {Pa Pe : E →L[ℝ] E} (hPe : IsOrthProj Pe)
     (hle : ∀ x, Pe (Pa x) = Pa x) (x : E) : ‖x - Pe x‖ ≤ ‖x - Pa x‖ :=
   hPe.norm_sub_le_of_mem_range x (Pa x) (hle x)
 
-/-- **Moments of the conservative parallel BUG integrator** (arXiv 2311.06399, §7).  The S-block
-is replaced by the K-step result: `Ŷ₁ = P̂ YK(t₁) + Z`, where the augmented spatial basis
-contains `YK(t₁)` (`X̂¹ = [X̂⁰, X̃²]` captures `K(t₁)`) and the remaining block `Z` has velocity
-factor `Ṽ₂ ⊥ U` (`C Z = 0`).  Then `C Ŷ₁ = C YK(t₁)`: the moments follow the K-step, whose
+/-- **Moments of the conservative parallel BUG integrator** ([EinkemmerKuschSchotthofer2023, §7]).
+The S-block is replaced by the K-step result: `Ŷ₁ = P̂ YK(t₁) + Z`, where the augmented spatial
+basis contains `YK(t₁)` (`X̂¹ = [X̂⁰, X̃²]` captures `K(t₁)`) and the remaining block `Z` has
+velocity factor `Ṽ₂ ⊥ U` (`C Z = 0`). Then `C Ŷ₁ = C YK(t₁)`: the moments follow the K-step, whose
 moments satisfy the exact local law `kStep_moment_hasDerivWithinAt`. -/
 theorem consParallelBug_moment {Pa : E →L[ℝ] E} {YK₁ Z : E} (hYK : Pa YK₁ = YK₁)
     (hZ : C Z = 0) : C (Pa YK₁ + Z) = C YK₁ := by
   rw [map_add, hYK, hZ, add_zero]
 
-/-- **Global conservation by the conservative parallel BUG integrator** (arXiv 2311.06399, §7):
-if `YK` solves the K-step `YK' = Q₀ F(t, YK)` on `[t₀, t₁]` (in the algorithm `YK(t₀) = Y₀`), `Q₀`
-contains the conserved directions, `C c = c` and `⟪c, F(t, x)⟫ = 0`, then `Ŷ₁ = P̂ YK(t₁) + Z`
-(with `P̂ YK(t₁) = YK(t₁)`, `C Z = 0`) satisfies `⟪c, Ŷ₁⟫ = ⟪c, YK(t₀)⟫`. -/
+/-- **Global conservation by the conservative parallel BUG integrator**
+([EinkemmerKuschSchotthofer2023, §7]): if `YK` solves the K-step `YK' = Q₀ F(t, YK)` on `[t₀, t₁]`
+(in the algorithm `YK(t₀) = Y₀`), `Q₀` contains the conserved directions, `C c = c` and
+`⟪c, F(t, x)⟫ = 0`, then `Ŷ₁ = P̂ YK(t₁) + Z` (with `P̂ YK(t₁) = YK(t₁)`, `C Z = 0`) satisfies
+`⟪c, Ŷ₁⟫ = ⟪c, YK(t₀)⟫`. -/
 theorem consParallelBug_inner_eq (hC : IsOrthProj C) {Q₀ Pa : E →L[ℝ] E} (hQ₀ : IsOrthProj Q₀)
     (hQ₀C : ∀ x, Q₀ (C x) = C x) {F : ℝ → E → E} {YK : ℝ → E} {t₀ t₁ : ℝ} (ht : t₀ ≤ t₁)
     (hYK : ODESolution (fun t x => Q₀ (F t x)) YK t₀ t₁) {Z : E} (hYK₁ : Pa (YK t₁) = YK t₁)
@@ -649,13 +654,13 @@ section Positivity
 /-- **Metric projections onto convex sets do not increase distances to points of the set**
 (the standard Kolmogorov criterion / obtuse-angle inequality for projections onto convex sets;
 motivated by the positivity- and moment-preserving corrections (3.3), (4.4) of
-Kormann–Nazarov–Wen, arXiv 2606.31662).  If `u` satisfies the variational inequality
+Kormann–Nazarov–Wen, [KormannNazarovWen2026]).  If `u` satisfies the variational inequality
 `⟪x - u, w - u⟫ ≤ 0` for all `w ∈ K` (for convex `K` and `u ∈ K` this characterises the metric
 projection of `x` onto `K`, cf. `norm_eq_iInf_iff_real_inner_le_zero`), then for every `a ∈ K`:
 `‖u - a‖² + ‖x - u‖² ≤ ‖x - a‖²`.
 
 Scope.  The comparison state must lie in `K` (for `a ∉ K` the conclusion fails: `x = -1`,
-`K = [0, ∞)`, `u = 0`, `a = -1`).  In arXiv 2606.31662, `K` is the set of admissible states
+`K = [0, ∞)`, `u = 0`, `a = -1`).  In [KormannNazarovWen2026], `K` is the set of admissible states
 *within the current bases* (`{(K̃ + δK) Vᵀ ⪰ 0}` for (3.3), resp. `{X (S̃ + δS) Vᵀ ⪰ 0}` with fixed
 mass and momentum for (4.4)), so the analytical solution `F_a` of the error split (3.2) is covered
 only if these bases can represent it; this theorem does not replace (3.2) in general.  Moreover
@@ -683,7 +688,7 @@ theorem norm_sub_le_of_metricProj {K : Set E} {x u : E} (hvi : ∀ w ∈ K, ⟪x
 
 /-- **Existence of the metric projection** onto a nonempty, complete and convex set `K` (e.g. the
 non-negative states with prescribed mass and momentum within fixed low-rank bases, the feasible set
-of the corrections (3.3), (4.4) of arXiv 2606.31662, when it is nonempty). -/
+of the corrections (3.3), (4.4) of [KormannNazarovWen2026], when it is nonempty). -/
 theorem exists_metricProj {K : Set E} (hne : K.Nonempty) (hcomp : IsComplete K)
     (hconv : Convex ℝ K) (x : E) : ∃ u ∈ K, ∀ w ∈ K, ⟪x - u, w - u⟫ ≤ 0 := by
   obtain ⟨u, hu, hmin⟩ := exists_norm_eq_iInf_of_complete_convex hne hcomp hconv x
@@ -815,12 +820,12 @@ example (hv : Orthonormal ℝ v) {h : ℝ} (hh : h ≠ 0) :
     simp [norm_smul, hn]
 
 /-- **Without the flux augmentation the local conservation law fails** (the reason for the extra
-augmentation of arXiv 2311.06399, §5), in the tensor-product configuration of the previous example:
-right projector `C` onto `U = e₀`, velocity basis `Q̂ = 1`, left projector `P̄` onto `span{e₀}`,
-`Y₀ = e₀ ⊗ U` (so `P̄ Q̂ Y₀ = Y₀` is a valid S-step start) and a single explicit Euler stage with
-flux `G = e₁ ⊗ U` (mass flowing into the spatial cell `e₁`).  The S-step violates the discrete
-local law for every `h ≠ 0`, because `P̄` does not contain the flux moment `C G = e₁ ⊗ U`
-(`consBug_rk_local_law_iff`). -/
+augmentation of [EinkemmerKuschSchotthofer2023, §5]), in the tensor-product configuration of the
+previous example: right projector `C` onto `U = e₀`, velocity basis `Q̂ = 1`, left projector `P̄`
+onto `span{e₀}`, `Y₀ = e₀ ⊗ U` (so `P̄ Q̂ Y₀ = Y₀` is a valid S-step start) and a single explicit
+Euler stage with flux `G = e₁ ⊗ U` (mass flowing into the spatial cell `e₁`). The S-step violates
+the discrete local law for every `h ≠ 0`, because `P̄` does not contain the flux moment
+`C G = e₁ ⊗ U` (`consBug_rk_local_law_iff`). -/
 example (hv : Orthonormal ℝ v) {h : ℝ} (hh : h ≠ 0) :
     let C := rankOneProj (v (0, 0)) + rankOneProj (v (1, 0))
     let Pe := rankOneProj (v (0, 0)) + rankOneProj (v (0, 1))

@@ -36,24 +36,24 @@ and tree tensors, or function spaces).  A solution with a state-dependent projec
   is `L`-Lipschitz, `‖(1 - P(t)) F(t, Y t)‖ ≤ ε` along `Y` and `‖Y a - A a‖ ≤ δ`, then
   `‖Y t - A t‖ ≤ gronwallBound δ L ε (t - a) = e^{L(t-a)} δ + ε (e^{L(t-a)} - 1)/L`
   (Kieri–Lubich–Walach, SIAM J. Numer. Anal. 54 (2016), the continuous DLRA estimate;
-  Carrel–Gander–Vandereycken, arXiv 2203.08455, Theorem 2.3), with explicit forms
+  Carrel–Gander–Vandereycken, [CarrelGanderVandereycken2023, Thm. 2.3]), with explicit forms
   `dlra_norm_sub_le_exp_add` and `dlra_norm_sub_le_exp_mul`.
 * **One-sided Lipschitz (stiff / parabolic) version**
   (`ODESolution.dlra_norm_sub_le_gronwallBound_of_oneSided`): the same with the one-sided
   Lipschitz constant `ℓ ∈ ℝ` (possibly negative) in place of `L` (Carrel–Vandereycken,
-  arXiv 2312.00172, Theorem 7), also with the one-sided condition only along the two
+  [CarrelVandereycken2023, Thm. 7]), also with the one-sided condition only along the two
   trajectories, and the stiff splitting `F = 𝓛 + G` with tangent stiff part
   (`dlra_norm_sub_le_of_stiff_split`, Theorem 7 with `ℓ_F ≤ ℓ_𝓛 + L_G` and `ε` bounding only
   the normal component of `G`).  For `ℓ < 0` the bound is **uniform in time**:
   `‖Y t - A t‖ ≤ e^{ℓ(t-a)} δ + ε/(-ℓ)`, and `dlra_eventually_norm_sub_le` gives
   `‖Y t - A t‖ ≤ ε/(-ℓ) + η` for all large `t` (long-time behaviour, the deterministic analogue
-  of the rank-defect bound of arXiv 2606.15843, Theorem 4.5).
+  of the rank-defect bound of [BaoWangWu2026, Thm. 4.5]).
 * **Norm conservation / dissipation** (`ODESolution.dlra_norm_eq`, `ODESolution.dlra_norm_le`)
   when `⟪F(t, Y), Y⟫ = 0` resp. `≤ 0` and `P(t) Y = Y` (the cone property `Y ∈ T_Y M` of
   low-rank manifolds), the identity `d/dt ‖Y‖² = 2 ⟪F(t, Y), Y⟫`, exponential bounds
   `‖Y t‖ ≤ e^{μ(t-a)} ‖Y a‖` and the **uniform-in-time Lyapunov bound**
   `‖Y t‖² ≤ e^{2μ(t-a)} ‖Y a‖² + β/(-μ)` under `⟪F(t, Y), Y⟫ ≤ μ ‖Y‖² + β`, `μ < 0`
-  (deterministic analogue of arXiv 2606.15843, Theorem 4.4, whose key step is exactly
+  (deterministic analogue of [BaoWangWu2026, Thm. 4.4], whose key step is exactly
   `⟪Y, P_Y f⟫ = ⟪Y, f⟫`).  Further: energy decay for projected gradient flows and conservation
   of linear invariants `⟪c, Y⟫` with `P(t) c = c`.
 * **Quasi-optimality** (`ODESolution.dlra_norm_sub_le_of_comparison`,
@@ -66,13 +66,13 @@ and tree tensors, or function spaces).  A solution with a state-dependent projec
   `‖Y t - A t‖ ≤ d + gronwallBound ‖Y a - X a‖ (L + γ(μ + μ')) ((L + c) d) (t - a)`, where
   `d` bounds the best-approximation error `‖A - X‖` on the interval.
 * **Stability with respect to the data** (`ODESolution.dlra_norm_sub_sq_le_of_curvature`,
-  abstract form of Bachmayr–Eisenmann–Uschmajew, arXiv 2308.16720, Theorem 2.5, parabolic
-  problems on low-rank tensor manifolds): two DLRA trajectories `u' = P(t) F₁(t, u)`,
+  abstract form of Bachmayr–Eisenmann–Uschmajew, [BachmayrEisenmannUschmajew2025, Thm. 2.5],
+  parabolic problems on low-rank tensor manifolds): two DLRA trajectories `u' = P(t) F₁(t, u)`,
   `v' = Q(t) F₂(t, v)` satisfy
   `‖u t - v t‖² ≤ gronwallBound ‖u a - v a‖² (2(ℓ + κ(α + β)) + ε) (η²/ε) (t - a)` under the
   curvature estimate `‖(1 - P(t)) (u - v)‖ ≤ κ ‖u - v‖²` (Assumption A2 there), bounded normal
-  components `α, β` and the one-sided bound `⟪F₁(u) - F₂(v), u - v⟫ ≤ ℓ ‖u - v‖² + η ‖u - v‖`;
-  with exact data the exponential bound `dlra_norm_sub_le_exp_of_curvature` and uniqueness
+  components `α, β` and the one-sided bound `⟪F₁(u) - F₂(v), u - v⟫ ≤ ℓ ‖u - v‖² + η ‖u - v‖`; with
+  exact data the exponential bound `dlra_norm_sub_le_exp_of_curvature` and uniqueness
   `dlra_eqOn_of_curvature`.
 
 ## Deviations from the papers
@@ -80,7 +80,7 @@ and tree tensors, or function spaces).  A solution with a state-dependent projec
 * The projector is a time-dependent family `P(t)` (frozen along the trajectory) rather than a
   map `Y ↦ P(Y)` on a manifold; all assumptions are required only along the trajectories, which
   is the generality used in the proofs of Koch–Lubich and Carrel–Vandereycken.
-* In the stability theorem of arXiv 2308.16720 the time-dependent integrand of
+* In the stability theorem of [BachmayrEisenmannUschmajew2025] the time-dependent integrand of
   `Λ(t) = 2κ ∫ (‖u'‖ + ‖v'‖ + …)` is replaced by constant bounds `α, β` of the normal components,
   and the operator is bounded (the paper allows unbounded coercive `𝒜(t) : V → V*`).
 * Koch–Lubich Theorem 5.1 bounds `‖Y - X‖` by `2βe^{βt} ∫₀ᵗ ‖A - X‖`; we use the supremum `d`
@@ -247,11 +247,11 @@ private lemma dlra_field_defect (hε : ∀ t ∈ Ico a b, ‖(1 - P t) (F t (Y t
 namespace ODESolution
 
 /-- **Robust DLRA error bound, Lipschitz case** (Kieri–Lubich–Walach 2016; Carrel–Gander–
-Vandereycken, arXiv 2203.08455, Theorem 2.3).  Let `A' = F(t, A)` with `F` `L`-Lipschitz and let
-`Y` solve the DLRA equation `Y' = P(t) F(t, Y)`.  If the normal component of the field is small
-along the DLRA trajectory, `‖(1 - P(t)) F(t, Y t)‖ ≤ ε`, and `‖Y a - A a‖ ≤ δ`, then
-`‖Y t - A t‖ ≤ gronwallBound δ L ε (t - a) = e^{L(t-a)} δ + ε (e^{L(t-a)} - 1) / L`.
-No property of the projectors is needed. -/
+Vandereycken, [CarrelGanderVandereycken2023, Thm. 2.3]). Let `A' = F(t, A)` with `F` `L`-Lipschitz
+and let `Y` solve the DLRA equation `Y' = P(t) F(t, Y)`. If the normal component of the field is
+small along the DLRA trajectory, `‖(1 - P(t)) F(t, Y t)‖ ≤ ε`, and `‖Y a - A a‖ ≤ δ`, then
+`‖Y t - A t‖ ≤ gronwallBound δ L ε (t - a) = e^{L(t-a)} δ + ε (e^{L(t-a)} - 1) / L`. No property of
+the projectors is needed. -/
 theorem dlra_norm_sub_le_gronwallBound {L : ℝ} (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hA : ODESolution F A a b) (hY : ODESolution (fun t x => P t (F t x)) Y a b)
     (hε : ∀ t ∈ Ico a b, ‖(1 - P t) (F t (Y t))‖ ≤ ε) (hδ : ‖Y a - A a‖ ≤ δ) :
@@ -295,7 +295,7 @@ theorem dlra_norm_sub_le_gronwallBound_of_mem {L : ℝ} {PY : E → E →L[ℝ] 
     (fun t ht => hεM t _ (hYM t ht)) hδ
 
 /-- **Robust DLRA error bound, one-sided Lipschitz case** (Carrel–Vandereycken,
-arXiv 2312.00172, Theorem 7).  If `F` is one-sided Lipschitz with constant `ℓ ∈ ℝ` (possibly
+[CarrelVandereycken2023, Thm. 7]).  If `F` is one-sided Lipschitz with constant `ℓ ∈ ℝ` (possibly
 negative: stiff, parabolic, dissipative problems), `‖(1 - P(t)) F(t, Y t)‖ ≤ ε` along the DLRA
 trajectory and `‖Y a - A a‖ ≤ δ`, then
 `‖Y t - A t‖ ≤ gronwallBound δ ℓ ε (t - a) = e^{ℓ(t-a)} δ + (t - a) φ₁(ℓ (t - a)) ε`. -/
@@ -310,7 +310,7 @@ theorem dlra_norm_sub_le_gronwallBound_of_oneSided {ℓ : ℝ} (hF : IsOneSidedL
 
 /-- **Localised one-sided version**: the one-sided Lipschitz inequality is only required along
 the pair of trajectories, `⟪F(t, Y) - F(t, A), Y - A⟫ ≤ ℓ ‖Y - A‖²` (cf. the energy-localised
-region of Hu–Yu, arXiv 2610.41606, §3). -/
+region of Hu–Yu, [HuYu2026, §3]). -/
 theorem dlra_norm_sub_le_gronwallBound_of_inner_le {ℓ : ℝ}
     (hF : ∀ t ∈ Ico a b, ⟪F t (Y t) - F t (A t), Y t - A t⟫ ≤ ℓ * ‖Y t - A t‖ ^ 2)
     (hA : ODESolution F A a b) (hY : ODESolution (fun t x => P t (F t x)) Y a b)
@@ -344,7 +344,7 @@ theorem dlra_norm_sub_le_of_oneSided_nonpos {ℓ : ℝ} (hF : IsOneSidedLipschit
 
 /-- **Uniform-in-time error bound** for strictly dissipative problems `ℓ < 0`:
 `‖Y t - A t‖ ≤ e^{ℓ(t-a)} δ + ε / (-ℓ)` for all `t ∈ [a, b]`, independently of `b`
-(long-time behaviour of DLRA; deterministic analogue of arXiv 2606.15843, Theorem 4.5, where
+(long-time behaviour of DLRA; deterministic analogue of [BaoWangWu2026, Thm. 4.5], where
 the rank defect `d - r` plays the role of `ε`). -/
 theorem dlra_norm_sub_le_of_oneSided_neg {ℓ : ℝ} (hF : IsOneSidedLipschitzField F ℓ)
     (hℓ : ℓ < 0) (hε0 : 0 ≤ ε) (hA : ODESolution F A a b)
@@ -355,7 +355,7 @@ theorem dlra_norm_sub_le_of_oneSided_neg {ℓ : ℝ} (hF : IsOneSidedLipschitzFi
     (gronwallBound_le_of_neg hℓ hε0)
   linarith [mul_comm δ (Real.exp (ℓ * (t - a)))]
 
-/-- **Stiff splitting** (Carrel–Vandereycken, arXiv 2312.00172, Theorem 7 with
+/-- **Stiff splitting** (Carrel–Vandereycken, [CarrelVandereycken2023, Thm. 7] with
 `ℓ_F ≤ ℓ_𝓛 + L_G`).  Let `F(t, x) = 𝓛(t) x + G(t, x)` with linear stiff part of logarithmic norm
 `μ` (`⟪𝓛(t) x, x⟫ ≤ μ ‖x‖²`) and `L_G`-Lipschitz non-stiff part `G`.  If the stiff part maps the
 DLRA trajectory into the tangent space (`P(t) 𝓛(t) Y = 𝓛(t) Y`, true e.g. for Lyapunov/Sylvester
@@ -432,7 +432,7 @@ theorem dlra_norm_eq (hY : ODESolution (fun t x => P t (F t x)) Y a b)
 
 /-- **Lyapunov bound** for the DLRA flow: if `⟪F(t, Y), Y⟫ ≤ μ ‖Y‖² + β` and `P(t) Y = Y` along
 the trajectory, then `‖Y t‖² ≤ gronwallBound ‖Y a‖² (2μ) (2β) (t - a)`.  The key step is
-`⟪Y, P(t) F⟫ = ⟪Y, F⟫` (arXiv 2606.15843, proof of Theorem 4.4). -/
+`⟪Y, P(t) F⟫ = ⟪Y, F⟫` ([BaoWangWu2026], proof of Theorem 4.4). -/
 theorem dlra_norm_sq_le_gronwallBound (hY : ODESolution (fun t x => P t (F t x)) Y a b)
     (hP : ∀ t ∈ Ico a b, IsOrthProj (P t)) (hYP : ∀ t ∈ Ico a b, P t (Y t) = Y t) {μ β : ℝ}
     (hF : ∀ t ∈ Ico a b, ⟪F t (Y t), Y t⟫ ≤ μ * ‖Y t‖ ^ 2 + β) :
@@ -468,7 +468,7 @@ theorem dlra_norm_le (hY : ODESolution (fun t x => P t (F t x)) Y a b)
   have h := hY.dlra_norm_le_exp hP hYP (μ := 0) (fun s hs => by simpa using hF s hs) t ht
   simpa using h
 
-/-- **Uniform-in-time Lyapunov bound** (deterministic analogue of arXiv 2606.15843,
+/-- **Uniform-in-time Lyapunov bound** (deterministic analogue of [BaoWangWu2026],
 Theorem 4.4): if `⟪F(t, Y), Y⟫ ≤ μ ‖Y‖² + β` with `μ < 0 ≤ β` and `P(t) Y = Y` along the
 trajectory, then `‖Y t‖² ≤ e^{2μ(t-a)} ‖Y a‖² + β / (-μ)` for all `t ∈ [a, b]`. -/
 theorem dlra_norm_sq_le_of_neg (hY : ODESolution (fun t x => P t (F t x)) Y a b)
@@ -485,7 +485,8 @@ theorem dlra_norm_sq_le_of_neg (hY : ODESolution (fun t x => P t (F t x)) Y a b)
 
 /-- **Conservation of linear invariants** by the DLRA flow: if `c` lies in the tangent space
 along the trajectory (`P(t) c = c`, e.g. bases augmented by the conserved directions as in
-Einkemmer–Joseph and arXiv 2206.09374) and `⟪c, F(t, Y)⟫ = 0`, then `⟪c, Y t⟫` is constant. -/
+Einkemmer–Joseph and [EinkemmerOstermannScalone2023]) and `⟪c, F(t, Y)⟫ = 0`, then `⟪c, Y t⟫` is
+constant. -/
 theorem dlra_inner_const (hY : ODESolution (fun t x => P t (F t x)) Y a b)
     (hP : ∀ t ∈ Ico a b, IsOrthProj (P t)) {c : E} (hc : ∀ t ∈ Ico a b, P t c = c)
     (hF : ∀ t ∈ Ico a b, ⟪c, F t (Y t)⟫ = 0) : ∀ t ∈ Icc a b, ⟪c, Y t⟫ = ⟪c, Y a⟫ := by
@@ -866,7 +867,8 @@ private lemma abs_inner_normal_le {Q : E →L[ℝ] E} (hQ : IsOrthProj Q) {f e :
     (mul_le_mul hf he (norm_nonneg _) ((norm_nonneg _).trans hf))
 
 /-- Pointwise energy estimate for the difference of two DLRA velocities
-`P F₁(u) - Q F₂(v)` (proof of Bachmayr–Eisenmann–Uschmajew, arXiv 2308.16720, Theorem 2.5). -/
+`P F₁(u) - Q F₂(v)` (proof of Bachmayr–Eisenmann–Uschmajew,
+[BachmayrEisenmannUschmajew2025, Thm. 2.5]). -/
 private lemma inner_dlra_sub_le {P Q : E →L[ℝ] E} (hP : IsOrthProj P) (hQ : IsOrthProj Q)
     {f₁ f₂ e : E} {ℓ η κ α β : ℝ} (hF : ⟪f₁ - f₂, e⟫ ≤ ℓ * ‖e‖ ^ 2 + η * ‖e‖)
     (hcP : ‖(1 - P) e‖ ≤ κ * ‖e‖ ^ 2) (hcQ : ‖(1 - Q) e‖ ≤ κ * ‖e‖ ^ 2)
@@ -905,15 +907,16 @@ private lemma hasDerivWithinAt_norm_sub_sq
   ((hu.deriv t ht).sub (hv.deriv t ht)).norm_sq
 
 /-- **Stability of DLRA with respect to the data** (abstract form of Bachmayr–Eisenmann–
-Uschmajew, arXiv 2308.16720, Theorem 2.5, for parabolic problems on low-rank tensor manifolds).
-Let `u' = P(t) F₁(t, u)` and `v' = Q(t) F₂(t, v)` be two DLRA trajectories with orthogonal
-projector families `P(t) = P(u(t))`, `Q(t) = P(v(t))` (tangent projectors at `u`, `v`).  Assume
-along the trajectories
+Uschmajew, [BachmayrEisenmannUschmajew2025, Thm. 2.5], for parabolic problems on low-rank tensor
+manifolds). Let `u' = P(t) F₁(t, u)` and `v' = Q(t) F₂(t, v)` be two DLRA trajectories with
+orthogonal projector families `P(t) = P(u(t))`, `Q(t) = P(v(t))` (tangent projectors at `u`, `v`).
+Assume along the trajectories
 
 * the one-sided bound `⟪F₁(t, u) - F₂(t, v), u - v⟫ ≤ ℓ ‖u - v‖² + η ‖u - v‖` (for
   `F₁ = f - 𝒜 u`, `F₂ = g - 𝒜 v` with coercive `𝒜`: `ℓ ≤ 0` and `η = ‖f - g‖`);
 * the curvature estimate `‖(1 - P(t)) (u - v)‖ ≤ κ ‖u - v‖²`, `‖(1 - Q(t)) (u - v)‖ ≤ κ ‖u - v‖²`
-  (Assumption A2 of arXiv 2308.16720, valid on low-rank manifolds away from lower rank);
+  (Assumption A2 of [BachmayrEisenmannUschmajew2025], valid on low-rank manifolds away from lower
+  rank);
 * the normal components `‖(1 - P(t)) F₁(t, u)‖ ≤ α`, `‖(1 - Q(t)) F₂(t, v)‖ ≤ β`.
 
 Then for every `ε > 0`, with `K = ℓ + κ (α + β)`,
@@ -947,7 +950,7 @@ theorem dlra_norm_sub_sq_le_of_curvature {ℓ η κ α β ε : ℝ}
       nlinarith
 
 /-- Explicit form of `ODESolution.dlra_norm_sub_sq_le_of_curvature` in the shape of
-arXiv 2308.16720, Theorem 2.5: if `2K + ε ≥ 0` then
+[BachmayrEisenmannUschmajew2025, Thm. 2.5]: if `2K + ε ≥ 0` then
 `‖u t - v t‖² ≤ (‖u a - v a‖² + (t - a) η² / ε) e^{(2K + ε)(t - a)}`. -/
 theorem dlra_norm_sub_sq_le_exp_of_curvature {ℓ η κ α β ε : ℝ}
     (hu : ODESolution (fun t x => P t (F₁ t x)) u a b)
@@ -1003,8 +1006,8 @@ theorem dlra_norm_sub_le_exp_of_curvature {ℓ κ α β : ℝ}
 
 /-- **Uniqueness of DLRA trajectories through the curvature estimate**: two DLRA trajectories
 of the same problem starting at the same point coincide, provided the curvature estimate and
-bounded normal components hold along them (arXiv 2308.16720, uniqueness part of Theorem 2.2,
-i.e. Theorem 2.5 with equal data). -/
+bounded normal components hold along them ([BachmayrEisenmannUschmajew2025], uniqueness part of
+Theorem 2.2, i.e. Theorem 2.5 with equal data). -/
 theorem dlra_eqOn_of_curvature {ℓ κ α β : ℝ}
     (hu : ODESolution (fun t x => P t (F₁ t x)) u a b)
     (hv : ODESolution (fun t x => Q t (F₂ t x)) v a b)

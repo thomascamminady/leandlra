@@ -7,9 +7,9 @@ import LeanDLRA.Analysis.Defs
 For hyperbolic and parabolic (kinetic) problems the relevant notion of stability of a
 time-stepping scheme is `L²`-stability, `‖uⁿ⁺¹‖ ≤ ‖uⁿ‖`, typically guaranteed for the full
 (full-rank) scheme by a CFL condition.  The question studied by Kusch–Einkemmer–Ceruti
-(arXiv 2107.07282), Einkemmer–Hu–Kusch (arXiv 2212.12012) and Zhang–Hu (arXiv 2507.15192) is
-whether dynamical low-rank integrators *inherit* this stability.  The answer depends on the
-integrator:
+([KuschEinkemmerCeruti2023]), Einkemmer–Hu–Kusch ([EinkemmerHuKusch2024]) and Zhang–Hu
+([ZhangHu2025]) is whether dynamical low-rank integrators *inherit* this stability. The answer
+depends on the integrator:
 
 * the **basis-update & Galerkin (BUG)** integrator only uses forward Galerkin steps, which are
   orthogonal projections of forward steps of the full problem; hence it inherits `L²`-stability
@@ -18,15 +18,15 @@ integrator:
   `Ṡ = -U₁ᵀ F(U₁ S V₀ᵀ) V₀`, which runs the dynamics backward in time: for dissipative problems it
   is *anti-dissipative*.  How much stability is lost depends on the discretisation.  With the
   classical Lax–Friedrichs scheme, whose numerical diffusion `∼ Δx²/Δt` scales like `1/h`, the
-  discretise-first KSL integrator is unstable for every step size (arXiv 2107.07282, Theorem 1).
-  With the Lax–Friedrichs field `F_LF` of Zhang–Hu, whose numerical diffusion `λ_max M₂/(2Δx)`
-  does not depend on `h` (a Rusanov-type flux), Zhang–Hu prove `L²`-stability under the stricter
-  CFL condition `ν ≤ 1/3` (arXiv 2507.15192, Theorems 3.3 and 3.6).  They state explicitly that
-  their conclusions differ from those of arXiv 2107.07282, Theorems 1–2.  The abstract
-  counterpart is `kslEulerStep_smul`: an `h`-independent field gives a stricter CFL condition,
-  while the `h`-dependent field `-(2/h)·id` gives the factor `3` for every `h`.  Stability can
-  also be recovered by suitable implicit/explicit combinations of the substeps
-  (arXiv 2507.15192, Theorem 4.3).
+  discretise-first KSL integrator is unstable for every step size
+  ([KuschEinkemmerCeruti2023, Thm. 1]). With the Lax–Friedrichs field `F_LF` of Zhang–Hu, whose
+  numerical diffusion `λ_max M₂/(2Δx)` does not depend on `h` (a Rusanov-type flux), Zhang–Hu prove
+  `L²`-stability under the stricter CFL condition `ν ≤ 1/3` ([ZhangHu2025], Theorems 3.3 and 3.6).
+  They state explicitly that their conclusions differ from those of [KuschEinkemmerCeruti2023],
+  Theorems 1–2. The abstract counterpart is `kslEulerStep_smul`: an `h`-independent field gives a
+  stricter CFL condition, while the `h`-dependent field `-(2/h)·id` gives the factor `3` for every
+  `h`. Stability can also be recovered by suitable implicit/explicit combinations of the substeps
+  ([ZhangHu2025, Thm. 4.3]).
 
 Following the abstract framework of the library, all substeps are written as full-space maps on
 a real inner product space `E` with orthogonal projectors standing for the basis projectors:
@@ -38,7 +38,7 @@ Explicit Euler (BUG).
 * `galerkinEulerStep_norm_le`, `bug_euler_norm_le`, `galerkinEulerIter_norm_le`,
   `augmentedBug_euler_norm_le`: if the full explicit Euler step `x ↦ x + h F(x)` has
   amplification factor `γ` (`γ = 1`: the CFL condition of the full scheme), so has the explicit
-  Euler BUG step `u₁ = P₁ Q₁ (ū + h F(ū))`, `ū = P₁ Q₁ u₀` (arXiv 2107.07282, Theorem 4), for
+  Euler BUG step `u₁ = P₁ Q₁ (ū + h F(ū))`, `ū = P₁ Q₁ u₀` ([KuschEinkemmerCeruti2023, Thm. 4]), for
   arbitrary bases, over any number of steps, and for the augmented (rank-adaptive) BUG integrator
   with a norm-nonincreasing truncation.
 * `eulerStep_norm_le_of_inner_le`: an abstract CFL condition: `⟪F x, x⟫ ≤ -β ‖F x‖²` and
@@ -55,17 +55,17 @@ Projector-splitting integrator (KSL).
 * `hasDerivWithinAt_norm_sq_backward`, `ksl_sStep_hasDerivWithinAt_norm_sq`: along the backward
   S-step `YS' = -P₁ Q₀ F(t, YS)`, `d/dt ‖YS‖² = -2 ⟪P₁ Q₀ F(t, YS), YS⟫ = -2 ⟪F(t, YS), YS⟫`.
 * `ksl_sStep_norm_ge_of_dissipative`: for dissipative `F` the backward S-step does not decrease
-  the norm (the instability mechanism of arXiv 2107.07282, Theorem 1 and Remark 1).
+  the norm (the instability mechanism of [KuschEinkemmerCeruti2023, Thm. 1] and Remark 1).
 * `norm_le_exp_of_inner_deriv_le`, `ksl_sStep_norm_le_exp`, `ksl_sStep_norm_le_exp_linear`:
   `‖YS(t₁)‖ ≤ exp(‖𝒜‖ h) ‖YS(t₀)‖`, attained by `ksl_sStep_growth_example`.
 * `kslSplitStep_norm_le`, `kslEulerStep_norm_le`: generic composition lemmas.  The substeps may
   use different discretisations `FK, FS, FL`, and the substep amplification bounds are needed only
   on the inputs that occur (`range Q₀`, resp. `range P₁ ∩ range Q₀`).  This is the structure of
-  the proofs of arXiv 2107.07282, Theorems 2–3, for the schemes (31) and (35), whose S-step is
-  discretised differently from the K- and L-steps.  The Fourier-analytic substep factors are not
-  formalised.
+  the proofs of [KuschEinkemmerCeruti2023], Theorems 2–3, for the schemes (31) and (35), whose
+  S-step is discretised differently from the K- and L-steps. The Fourier-analytic substep factors
+  are not formalised.
 * `kslSplitStep_energy_le`: the same composition with energy functionals in place of norms.  This
-  is the structure of the proof of arXiv 2507.15192, Theorem 3.3, which carries the mixed `L²–H¹`
+  is the structure of the proof of [ZhangHu2025, Thm. 3.3], which carries the mixed `L²–H¹`
   energy `‖·‖² + ν(1 - ν)|·|²_{1,x}` from the K-step (eq. (3.12)) through the S- and L-steps
   (Lemma 3.4, eq. (3.18)), because the S-step is not stable on its own.
 * `kslS_norm_ge_of_dissipative`: discrete anti-dissipativity of the S-step.
@@ -76,14 +76,14 @@ Projector-splitting integrator (KSL).
   instability.
 * `kslEulerStep_unstable`: for the `h`-dependent field `-(2/h)·id` (`hc = 2`, the classical
   Lax–Friedrichs mode with `cos(ᾱπΔx) = -1`), the KSL step amplifies by `3` although the full
-  explicit Euler step is norm-preserving (arXiv 2107.07282, Theorem 1, abstract form).
+  explicit Euler step is norm-preserving ([KuschEinkemmerCeruti2023, Thm. 1], abstract form).
 * `implicitGalerkin_norm_le` (backward Euler Galerkin steps are contractive for dissipative
-  fields, arXiv 2507.15192, Theorem 4.1), `hybridKSL_norm_le`: the hybrid KSL integrator with
+  fields, [ZhangHu2025, Thm. 4.1]), `hybridKSL_norm_le`: the hybrid KSL integrator with
   backward Euler K- and L-steps and a forward Euler S-step is unconditionally `L²`-stable
-  (arXiv 2507.15192, Theorems 4.3–4.4); `allBackwardKSL_unstable`: the all-backward variant is not
-  (arXiv 2507.15192, Proposition 4.2 with `θ = 1`).
+  ([ZhangHu2025], Theorems 4.3–4.4); `allBackwardKSL_unstable`: the all-backward variant is not
+  ([ZhangHu2025, Prop. 4.2] with `θ = 1`).
 
-Energy stability (arXiv 2212.12012).
+Energy stability ([EinkemmerHuKusch2024]).
 * `galerkin_norm_sq_add_integral_le`: if `⟪F(t, x), x⟫ ≤ -D(x)` on the Galerkin space, then
   `‖y(t)‖² + 2 ∫ₐᵗ D(y) ≤ ‖y(a)‖²`.  This is the integrated abstract form of Theorem 5.1, where
   `D` is the scattering dissipation `(σ₀/ε²)‖gˢ‖²` of the microscopic part.
@@ -104,10 +104,10 @@ projectors (`P ≠ 1`) and a dissipative field that couples the two coordinates.
 Discrete steps use an autonomous (frozen-time) field `F : E → E`; time dependence is covered by
 the iterated versions with step-dependent fields `F n`.  Implicit steps are stated for given
 solutions of the implicit equations (existence is a separate matter and is not needed for
-stability).  The energy `eⁿ = ‖ρ‖² + ε²‖g‖²` of the micro–macro scheme of arXiv 2212.12012 is the
-squared norm of a weighted inner product on the product space `(ρ, g)`, with the Galerkin
-projector acting as the identity on the macroscopic component; this is covered by working with
-an arbitrary inner product space.
+stability). The energy `eⁿ = ‖ρ‖² + ε²‖g‖²` of the micro–macro scheme of [EinkemmerHuKusch2024] is
+the squared norm of a weighted inner product on the product space `(ρ, g)`, with the Galerkin
+projector acting as the identity on the macroscopic component; this is covered by working with an
+arbitrary inner product space.
 -/
 
 open Set
@@ -123,7 +123,7 @@ section ExplicitEuler
 
 /-- The explicit-Euler Galerkin step `x ↦ P (P x + h F(P x))`.  For `P = P₁ Q₁` this is the
 explicit Euler BUG step: the S-step starts from `ū = P₁ Q₁ u₀ = U₁ (U₁ᵀ U₀ S₀ V₀ᵀ V₁) V₁ᵀ` and
-`u₁ = U₁ S₁ V₁ᵀ = P₁ Q₁ (ū + h F(ū))` (arXiv 2107.07282, eq. (38)). -/
+`u₁ = U₁ S₁ V₁ᵀ = P₁ Q₁ (ū + h F(ū))` ([KuschEinkemmerCeruti2023, eq. (38)]). -/
 def galerkinEulerStep (P : E →L[ℝ] E) (F : E → E) (h : ℝ) (x : E) : E :=
   P (eulerStep F h (P x))
 
@@ -135,13 +135,13 @@ theorem galerkinEulerStep_norm_le {P : E →L[ℝ] E} (hP : IsOrthProj P) {F : E
   (hP.norm_le _).trans
     ((hF _ (hP.idem x)).trans (mul_le_mul_of_nonneg_left (hP.norm_le x) hγ))
 
-/-- **`L²`-stability of the explicit Euler BUG step** (Kusch–Einkemmer–Ceruti, arXiv 2107.07282,
-Theorem 4, abstract form).  Let `P₁, Q₁` be commuting orthogonal projectors (the new left and
-right bases).  If the full explicit Euler step is norm-nonincreasing up to the factor `γ` on
-`range (P₁ Q₁)` (for `γ = 1`: the CFL condition of the full scheme), then the BUG step
-`u₁ = P₁ Q₁ (ū + h F(ū))`, `ū = P₁ Q₁ u₀`, satisfies `‖u₁‖ ≤ γ ‖u₀‖`.  The paper proves this for
-the Lax–Friedrichs discretisation of linear advection via Fourier analysis; here it holds for any
-field and any choice of the bases. -/
+/-- **`L²`-stability of the explicit Euler BUG step** (Kusch–Einkemmer–Ceruti,
+[KuschEinkemmerCeruti2023], Theorem 4, abstract form). Let `P₁, Q₁` be commuting orthogonal
+projectors (the new left and right bases). If the full explicit Euler step is norm-nonincreasing up
+to the factor `γ` on `range (P₁ Q₁)` (for `γ = 1`: the CFL condition of the full scheme), then the
+BUG step `u₁ = P₁ Q₁ (ū + h F(ū))`, `ū = P₁ Q₁ u₀`, satisfies `‖u₁‖ ≤ γ ‖u₀‖`. The paper proves this
+for the Lax–Friedrichs discretisation of linear advection via Fourier analysis; here it holds for
+any field and any choice of the bases. -/
 theorem bug_euler_norm_le {P₁ Q₁ : E →L[ℝ] E} (hP₁ : IsOrthProj P₁) (hQ₁ : IsOrthProj Q₁)
     (hc : ∀ x, P₁ (Q₁ x) = Q₁ (P₁ x)) {F : E → E} {h γ : ℝ} (hγ : 0 ≤ γ)
     (hF : ∀ x, P₁ (Q₁ x) = x → ‖eulerStep F h x‖ ≤ γ * ‖x‖) (u₀ : E) :
@@ -265,8 +265,8 @@ theorem bug_norm_le_of_dissipative_linear {A : E →L[ℝ] E} (hA : ∀ x, ⟪A 
   bug_norm_le_of_dissipative (F := fun _ x => A x) hP₁ hQ₁ hc ht hYS h0 fun _ x _ => hA x
 
 /-- **`L²`-stability of the augmented (rank-adaptive) BUG integrator for dissipative problems**
-(cf. Ceruti–Kusch–Lubich, arXiv 2104.05247, Thm 4, dissipative version): the Galerkin step starts
-at `Y₀ ∈ range P` (the augmented basis contains the old one) and is followed by a
+(cf. Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 4], dissipative version): the Galerkin step
+starts at `Y₀ ∈ range P` (the augmented basis contains the old one) and is followed by a
 norm-nonincreasing truncation `‖Y₁‖ ≤ ‖YS(t₁)‖`. -/
 theorem augmentedBug_norm_le_of_dissipative {P : E →L[ℝ] E} (hP : IsOrthProj P)
     {YS : ℝ → E} {t₀ t₁ : ℝ} (ht : t₀ ≤ t₁) (hYS : ODESolution (fun t x => P (F t x)) YS t₀ t₁)
@@ -320,7 +320,7 @@ and `y(a) ∈ range P`, the Galerkin solution of `y' = P F(t, y)` satisfies
 `‖y(t)‖ ≤ exp(ℓ (t - a)) ‖y(a)‖`.
 
 For `ℓ = 0` this is the norm-nonincreasing consequence of the continuous energy stability of the
-DLRA micro–macro scheme (Einkemmer–Hu–Kusch, arXiv 2212.12012, Theorem 5.1, abstract form, with
+DLRA micro–macro scheme (Einkemmer–Hu–Kusch, [EinkemmerHuKusch2024, Thm. 5.1], abstract form, with
 `‖·‖²` the energy `‖ρ‖² + ε²‖g‖²`).  This consequence drops the dissipation term
 `-(σ₀/ε²)‖gˢ‖²` of Theorem 5.1, which `galerkin_norm_sq_add_integral_le` keeps.  For the
 micro–macro system no bound with `ℓ < 0` holds.  Scattering damps only the microscopic part `g`,
@@ -337,7 +337,7 @@ theorem galerkin_norm_le_exp {P : E →L[ℝ] E} (hP : IsOrthProj P) {F : ℝ �
   rw [hP.inner_apply_left_of_mem _ hr]
   exact hF t _ hr
 
-/-- **Energy dissipation of Galerkin solutions** (Einkemmer–Hu–Kusch, arXiv 2212.12012,
+/-- **Energy dissipation of Galerkin solutions** (Einkemmer–Hu–Kusch, [EinkemmerHuKusch2024],
 Theorem 5.1, abstract integrated form).  Suppose that `⟪F(t, x), x⟫ ≤ -D(x)` for all `x` in the
 Galerkin space `range P`, where `D` is a continuous dissipation functional, and that
 `y(a) ∈ range P`.  Then the Galerkin solution of `y' = P F(t, y)` satisfies
@@ -430,7 +430,7 @@ theorem ksl_sStep_hasDerivWithinAt_norm_sq {P₁ Q₀ : E →L[ℝ] E} (hP₁ : 
   exact hP.inner_apply_left_of_mem _ hr
 
 /-- **The backward S-step is anti-dissipative** (the instability mechanism of the
-projector-splitting integrator, Kusch–Einkemmer–Ceruti, arXiv 2107.07282, Theorem 1 and
+projector-splitting integrator, Kusch–Einkemmer–Ceruti, [KuschEinkemmerCeruti2023, Thm. 1] and
 Remark 1): if `⟪F(t, x), x⟫ ≤ 0` on `range P` and `y(a) ∈ range P`, the solution of
 `y' = -P F(t, y)` satisfies `‖y(a)‖ ≤ ‖y(t)‖`. -/
 theorem ksl_sStep_norm_ge_of_dissipative {P : E →L[ℝ] E} (hP : IsOrthProj P) {y : ℝ → E}
@@ -514,8 +514,8 @@ def kslL (P₁ : E →L[ℝ] E) (F : E → E) (h : ℝ) (w : E) : E := w + h •
 
 /-- One explicit Euler step of the projector-splitting (KSL) integrator with the same field `F`
 in all three substeps, in full-space form.  For `F` the classical Lax–Friedrichs discretisation
-this is arXiv 2107.07282, eq. (28).  For the field `F_LF`, whose numerical diffusion does not
-depend on `h`, it is the DtP scheme (3.4)–(3.6) of arXiv 2507.15192.
+this is [KuschEinkemmerCeruti2023, eq. (28)]. For the field `F_LF`, whose numerical diffusion does
+not depend on `h`, it is the DtP scheme (3.4)–(3.6) of [ZhangHu2025].
 
 The definition agrees with the integrator under two preconditions:
 * `Q₀ x = x`: the input `x = X⁰ S⁰ W⁰ᵀ` lies in the old co-range;
@@ -530,7 +530,7 @@ def kslEulerStep (P₁ Q₀ : E →L[ℝ] E) (F : E → E) (h : ℝ) (x : E) : E
 
 /-- One explicit Euler step of the projector-splitting integrator whose K-, S- and L-substeps
 use the possibly different (frozen-time) discretisations `FK`, `FS`, `FL`.  Examples are the
-schemes (31) and (35) of arXiv 2107.07282, whose S-step uses central differences, resp. a
+schemes (31) and (35) of [KuschEinkemmerCeruti2023], whose S-step uses central differences, resp. a
 Lax–Friedrichs stabilisation with the sign flipped, while the K- and L-steps use
 Lax–Friedrichs fluxes.  The same preconditions as for `kslEulerStep` apply. -/
 def kslSplitStep (P₁ Q₀ : E →L[ℝ] E) (FK FS FL : E → E) (h : ℝ) (x : E) : E :=
@@ -569,7 +569,7 @@ with the possibly different fields `FK, FS, FL`, amplify the norm by at most `γ
 by at most `γK γS γL`.  No precondition `P₁ (kslK x) = kslK x` is needed, because the S-step
 starts from the contraction `P₁ z` of its input.
 
-The proofs of arXiv 2107.07282, Theorems 2–3, have this structure for the schemes (31) and
+The proofs of [KuschEinkemmerCeruti2023], Theorems 2–3, have this structure for the schemes (31) and
 (35).  Those schemes are instances of `kslSplitStep` and not of `kslEulerStep`, because their
 S-step is discretised differently from the K- and L-steps.  In the paper, Fourier analysis
 bounds the substeps on inputs of the form `Ex ũ Wᵀ`, and the product `G` of the factors is
@@ -604,7 +604,7 @@ theorem kslSplitStep_norm_le {P₁ Q₀ : E →L[ℝ] E} (hP₁ : IsOrthProj P�
     _ = γK * γS * γL * ‖x‖ := by ring
 
 /-- `kslSplitStep_norm_le` for the KSL step `kslEulerStep` with one field `F` in all three
-substeps (e.g. the discretise-first scheme (28) of arXiv 2107.07282). -/
+substeps (e.g. the discretise-first scheme (28) of [KuschEinkemmerCeruti2023]). -/
 theorem kslEulerStep_norm_le {P₁ Q₀ : E →L[ℝ] E} (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀)
     (hc : ∀ x, P₁ (Q₀ x) = Q₀ (P₁ x)) {F : E → E} {h γK γS γL : ℝ}
     (hγS : 0 ≤ γS) (hγL : 0 ≤ γL)
@@ -620,7 +620,7 @@ Suppose that, on the inputs that occur, the K-step maps the energy `𝓔₀` to 
 maps `𝓔₁` to `𝓔₂`, and the L-step maps `𝓔₂` to `𝓔₃`.  Then `𝓔₃(step x) ≤ 𝓔₀(x)` for every
 `x ∈ range Q₀` whose K-step result lies in the new basis.
 
-This is the structure of the proof of Zhang–Hu, arXiv 2507.15192, Theorem 3.3, for the DtP
+This is the structure of the proof of Zhang–Hu, [ZhangHu2025, Thm. 3.3], for the DtP
 scheme (an instance of `kslEulerStep`).  There the S-step is not stable on its own, and the
 proof uses the following energies:
 * `𝓔₀ = 𝓔₃ = ‖·‖²`;
@@ -717,7 +717,7 @@ theorem ksl_scalar_amplification_le_one_iff {s : ℝ} (hs : 0 ≤ s) :
     linarith
 
 /-- **Instability of the explicit Euler projector-splitting integrator** (abstract form of
-Kusch–Einkemmer–Ceruti, arXiv 2107.07282, Theorem 1).  Consider the field `F(y) = -(2/h) y`,
+Kusch–Einkemmer–Ceruti, [KuschEinkemmerCeruti2023, Thm. 1]).  Consider the field `F(y) = -(2/h) y`,
 which is dissipative for `h > 0` (the statement holds for every `h ≠ 0`).  Its full explicit
 Euler step `x ↦ -x` is norm-preserving; this is the Lax–Friedrichs mode with `cos(ᾱπΔx) = -1`.
 For every `x` lying in both the old and the new basis (`P₁ x = x`, `Q₀ x = x`, i.e. the basis
@@ -727,9 +727,10 @@ and the L-step `3x`.  This is `kslEulerStep_smul` with `hc = 2`.
 The field scales like `1/h`, as does the numerical diffusion `∼ Δx²/Δt` of the classical
 Lax–Friedrichs scheme.  This is what makes the instability unconditional.  For an
 `h`-independent field the same mechanism only gives a stricter CFL condition
-(`ksl_scalar_amplification_le_one_iff`).  Correspondingly, Zhang–Hu (arXiv 2507.15192,
+(`ksl_scalar_amplification_le_one_iff`).  Correspondingly, Zhang–Hu ([ZhangHu2025],
 Theorem 3.3) prove stability under `ν ≤ 1/3` for a Lax–Friedrichs field whose diffusion does not
-depend on `h`, and note that their conclusions differ from arXiv 2107.07282, Theorems 1–2. -/
+depend on `h`, and note that their conclusions differ from [KuschEinkemmerCeruti2023], Theorems 1–2.
+-/
 theorem kslEulerStep_unstable {P₁ Q₀ : E →L[ℝ] E} {h : ℝ} (hh : h ≠ 0) {x : E}
     (h₁ : P₁ x = x) (h₀ : Q₀ x = x) :
     eulerStep (fun y => -(2 / h) • y) h x = -x ∧
@@ -760,7 +761,7 @@ end DiscreteKSL
 section Hybrid
 
 /-- **Backward Euler Galerkin steps are contractive for dissipative fields** (the full-space
-statement is arXiv 2507.15192, Theorem 4.1; the Galerkin version is used for the L-step of
+statement is [ZhangHu2025, Thm. 4.1]; the Galerkin version is used for the L-step of
 Theorem 4.3).  If `v = w + h P F(v)` with `P w = w`, `h ≥ 0` and `⟪F v, v⟫ ≤ 0`, then
 `P v = v` and `‖v‖ ≤ ‖w‖`. -/
 theorem implicitGalerkin_norm_le {P : E →L[ℝ] E} (hP : IsOrthProj P) {F : E → E} {h : ℝ}
@@ -781,7 +782,7 @@ theorem implicitGalerkin_norm_le {P : E →L[ℝ] E} (hP : IsOrthProj P) {F : E 
   nlinarith [norm_nonneg w, norm_nonneg v, not_le.1 hlt]
 
 /-- **Unconditional `L²`-stability of the hybrid projector-splitting integrator**
-(Zhang–Hu, arXiv 2507.15192, Theorems 4.3–4.4, for an arbitrary dissipative field and arbitrary
+(Zhang–Hu, [ZhangHu2025], Theorems 4.3–4.4, for an arbitrary dissipative field and arbitrary
 bases).  Backward Euler K-step `uK = u + h Q₀ F(uK)`, new basis with `P₁ uK = uK`, forward Euler
 (backward-in-time) S-step `uS = uK - h P₁ Q₀ F(uK)`, backward Euler L-step
 `uL = uS + h P₁ F(uL)`.  Then the K- and S-steps cancel exactly, `uS = P₁ u`, and
@@ -802,7 +803,7 @@ theorem hybridKSL_norm_le {P₁ : E →L[ℝ] E} (hP₁ : IsOrthProj P₁) (Q₀
   exact hP₁.norm_le u
 
 /-- **The all-backward projector-splitting integrator is not unconditionally stable**
-(arXiv 2507.15192, Proposition 4.2 with `θ = 1`: amplification `1 / ((1 + ψ)² (1 - ψ))`).  On
+([ZhangHu2025, Prop. 4.2] with `θ = 1`: amplification `1 / ((1 + ψ)² (1 - ψ))`).  On
 `ℝ` with the dissipative field `F(x) = -(9/10) x`, `h = 1` and trivial projectors, backward Euler
 in all three substeps (`uK = u + F(uK)`, `uS = uK - F(uS)`, `uL = uS + F(uL)`) maps `u = 1` to
 `uL = 1000/361 > 2`, although each full backward Euler step is contractive
@@ -819,7 +820,7 @@ theorem allBackwardKSL_unstable :
 
 end Hybrid
 
-/-! ### Energy stability of IMEX Galerkin steps (arXiv 2212.12012) -/
+/-! ### Energy stability of IMEX Galerkin steps ([EinkemmerHuKusch2024]) -/
 
 section IMEX
 
@@ -827,8 +828,8 @@ variable {P : E →L[ℝ] E}
 
 /-- **Discrete energy identity for Galerkin steps.**  If `u ∈ range P` and `v = P (u + h G)`,
 then `‖v‖² - ‖u‖² + ‖v - u‖² = 2 h ⟪G, v⟫` — exactly the identity obtained for the full scheme
-(`P = 1`) by testing with the new iterate (arXiv 2212.12012, eqs. (3.12)–(3.13) and (5.6)–(5.7):
-"this equation is equal to (3.13) when replacing `gⁿ` with `g̃ⁿ`"). -/
+(`P = 1`) by testing with the new iterate ([EinkemmerHuKusch2024, eqs. (3.12)–(3.13)] and
+(5.6)–(5.7): "this equation is equal to (3.13) when replacing `gⁿ` with `g̃ⁿ`"). -/
 theorem galerkin_step_energy_identity (hP : IsOrthProj P) {u v G : E} {h : ℝ}
     (hu : P u = u) (hv : v = P (u + h • G)) :
     ‖v‖ ^ 2 - ‖u‖ ^ 2 + ‖v - u‖ ^ 2 = 2 * h * ⟪G, v⟫ := by
@@ -849,7 +850,7 @@ theorem galerkin_imex_norm_le (hP : IsOrthProj P) {u v G : E} {h : ℝ} (hu : P 
   have h1 := galerkin_step_energy_identity hP hu hv
   exact (sq_le_sq₀ (norm_nonneg _) (norm_nonneg _)).1 (by linarith)
 
-/-- **Energy stability of the DLRA IMEX scheme** (Einkemmer–Hu–Kusch, arXiv 2212.12012,
+/-- **Energy stability of the DLRA IMEX scheme** (Einkemmer–Hu–Kusch, [EinkemmerHuKusch2024],
 Theorem 5.2, abstract form).  Let `Fex` (explicit: streaming, coupling) and `Fim` (implicit:
 scattering) be such that the full IMEX scheme satisfies the energy estimate obtained by testing
 with the new iterate, `2 h ⟪Fex u + Fim v, v⟫ ≤ ‖v - u‖²` for all `u, v` in the Galerkin space

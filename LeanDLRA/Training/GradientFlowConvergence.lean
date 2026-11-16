@@ -19,7 +19,7 @@ distance of a projected stochastic gradient iteration to the full gradient flow.
   `dmin ‖v‖² ≤ ⟪M v, v⟫` and `‖M v‖ ≤ dmax ‖v‖` (no symmetry, no commutation with `Π`), the
   project–precondition–project step `x - h Π M Π ∇ℒ(x)` satisfies
   `ℒ ≤ ℒ(x) - h (dmin - β h dmax² / 2) ‖Π ∇ℒ(x)‖²`.  This is the one-step target of OP-TR-17
-  (low-rank Adam of arXiv 2506.17475, Algorithm 2, with the second moment as a diagonal
+  (low-rank Adam of [SchotthoferKleinKusch2025, Alg. 2], with the second moment as a diagonal
   preconditioner in `[dmin, dmax]`).
 * `exists_projGrad_sq_le_of_projPrecond` (min-rate `O(1/n)`) and
   `frequently_projGrad_sq_lt_of_projPrecond` (`liminf = 0` under Robbins–Monro step sizes) for
@@ -33,9 +33,9 @@ distance of a projected stochastic gradient iteration to the full gradient flow.
   capture defect `ε`, gradient noise `σ` and truncation `ϑ` tracks the full gradient flow,
   `‖W_n - W(t_n)‖ ≤ e^{β T} (‖W_0 - W(t_0)‖ + T (β B λ / 2 + ε + σ) + n ϑ)`; for `n λ ≤ T` the
   last term is `≤ T ϑ / λ`.  This is the bound `e^{βT}(c ε + c λ + c ϑ / λ)` of
-  arXiv 2410.18720, Thm 3, arXiv 2502.03006, Thm 5.6 and arXiv 2306.01485, Thm 1, now for the
-  discrete iteration, with the factor `e^{βT}` explicit, and with the non-vanishing noise
-  term `T σ` for stochastic gradients.
+  [SchotthoferEtAl2025, Thm. 3], [KuschSchotthoferWalter2026, Thm. 5.6] and
+  [SavostianovaEtAl2023, Thm. 1], now for the discrete iteration, with the factor `e^{βT}` explicit,
+  and with the non-vanishing noise term `T σ` for stochastic gradients.
 -/
 
 open Set Finset MeasureTheory Filter Topology
@@ -66,12 +66,12 @@ lemma norm_projPrecond_le {P M : E →L[ℝ] E} (hP : IsOrthProj P) {dmax : ℝ}
   (hP.norm_le _).trans (hmax _)
 
 /-- **Project–precondition–project is a descent step** (OP-TR-17; low-rank Adam,
-arXiv 2506.17475, Algorithm 2, and momentum aligned with the low-rank basis, arXiv 2409.04206,
-Sec. 7).  For an orthogonal projector `Π` and a (not necessarily symmetric, not necessarily
-commuting) preconditioner `M` with `dmin ‖v‖² ≤ ⟪M v, v⟫` and `‖M v‖ ≤ dmax ‖v‖`, the step
-`x - h Π M Π ∇ℒ(x)` satisfies `ℒ ≤ ℒ(x) - h (dmin - β h dmax² / 2) ‖Π ∇ℒ(x)‖²`.
-For an entrywise preconditioner `D ∘ ·` with entries in `[dmin, dmax]`, `0 ≤ dmin`, both
-hypotheses hold. -/
+[SchotthoferKleinKusch2025, Alg. 2], and momentum aligned with the low-rank basis,
+[RahamimEtAl2024], Sec. 7). For an orthogonal projector `Π` and a (not necessarily symmetric, not
+necessarily commuting) preconditioner `M` with `dmin ‖v‖² ≤ ⟪M v, v⟫` and `‖M v‖ ≤ dmax ‖v‖`, the
+step `x - h Π M Π ∇ℒ(x)` satisfies `ℒ ≤ ℒ(x) - h (dmin - β h dmax² / 2) ‖Π ∇ℒ(x)‖²`. For an
+entrywise preconditioner `D ∘ ·` with entries in `[dmin, dmax]`, `0 ≤ dmin`, both hypotheses hold.
+-/
 theorem loss_projPrecondStep_le (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) (hβ : 0 ≤ β) {P M : E →L[ℝ] E}
     (hP : IsOrthProj P) {dmin dmax : ℝ} (hmin : ∀ v, dmin * ‖v‖ ^ 2 ≤ ⟪M v, v⟫)
@@ -222,20 +222,19 @@ end PrecondExample
 section GlobalError
 
 /-- **Robust global error of the executed projected (stochastic) gradient iteration**
-(OP-HO-14; DLRT arXiv 2306.01485 Thm 1, GeoLoRA arXiv 2410.18720 Thm 3, augmented
-backward-corrected PSI arXiv 2502.03006 Thm 5.6, federated DLRT arXiv 2406.17887 Thm 5).
-The iteration `W_{n+1} ≈ W_n - λ Π_n g_n` with truncation `‖W_{n+1} - (W_n - λ Π_n g_n)‖ ≤ ϑ`,
-gradient estimate `‖g_n - ∇ℒ(W_n)‖ ≤ σ` and tangent capture defect
-`‖(1 - Π_n) ∇ℒ(W_n)‖ ≤ ε` (the augmented projector absorbs the tangent gradient, so
-`ε` bounds the normal component, `LeanDLRA.norm_apply_le_of_absorbs`) tracks the gradient flow
-`W' = -∇ℒ(W)`:
-`‖W_n - W(t_n)‖ ≤ e^{β T} (‖W_0 - W(t_0)‖ + T (β B λ / 2 + ε + σ) + n ϑ)` for `n λ ≤ T`.
-Since `n ≤ T / λ`, this is `e^{βT}(δ + c ε + c λ + c σ + c ϑ / λ)`, the deterministic bound
-announced in the papers, but with the factor `e^{βT}` explicit (the papers' claim of constants
-independent of `T` is not justified) and with the stochastic term `T σ`, which does not vanish
-as `λ → 0`.  Compared with `LeanDLRA.projectedGradient_global_error`, the
-hypotheses `0 ≤ ε` and `0 ≤ σ` are added: without them the statement is false for `N = 0`
-(take `ε = -T⁻¹ (1 + δ)`); for `N > 0` they follow from `hε`, `hσ`. -/
+(OP-HO-14; DLRT [SavostianovaEtAl2023] Thm 1, GeoLoRA [SchotthoferEtAl2025] Thm 3, augmented
+backward-corrected PSI [KuschSchotthoferWalter2026] Thm 5.6, federated DLRT [SchotthoferLaiu2024]
+Thm 5). The iteration `W_{n+1} ≈ W_n - λ Π_n g_n` with truncation
+`‖W_{n+1} - (W_n - λ Π_n g_n)‖ ≤ ϑ`, gradient estimate `‖g_n - ∇ℒ(W_n)‖ ≤ σ` and tangent capture
+defect `‖(1 - Π_n) ∇ℒ(W_n)‖ ≤ ε` (the augmented projector absorbs the tangent gradient, so `ε`
+bounds the normal component, `LeanDLRA.norm_apply_le_of_absorbs`) tracks the gradient flow
+`W' = -∇ℒ(W)`: `‖W_n - W(t_n)‖ ≤ e^{β T} (‖W_0 - W(t_0)‖ + T (β B λ / 2 + ε + σ) + n ϑ)` for
+`n λ ≤ T`. Since `n ≤ T / λ`, this is `e^{βT}(δ + c ε + c λ + c σ + c ϑ / λ)`, the deterministic
+bound announced in the papers, but with the factor `e^{βT}` explicit (the papers' claim of constants
+independent of `T` is not justified) and with the stochastic term `T σ`, which does not vanish as
+`λ → 0`. Compared with `LeanDLRA.projectedGradient_global_error`, the hypotheses `0 ≤ ε` and `0 ≤ σ`
+are added: without them the statement is false for `N = 0` (take `ε = -T⁻¹ (1 + δ)`); for `N > 0`
+they follow from `hε`, `hσ`. -/
 theorem projectedGradient_global_error {G : E → E} {β B ε σ ϑ lr t₀ : ℝ}
     (hG : ∀ x y, ‖G x - G y‖ ≤ β * ‖x - y‖) (hβ : 0 ≤ β) (hB : ∀ x, ‖G x‖ ≤ B) (hlr : 0 ≤ lr)
     (hε0 : 0 ≤ ε) (hσ0 : 0 ≤ σ)

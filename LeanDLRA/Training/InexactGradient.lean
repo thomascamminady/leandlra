@@ -16,8 +16,8 @@ descent guarantees survive these errors, in the abstract calculus of `Training/D
 
 ## Main results
 
-**OP-TR-02 (inexact-gradient descent; arXiv 2506.21405 Alg. 2, arXiv 2409.14938 Algs. 2–3,
-arXiv 2610.29554 Sec. 6.3, arXiv 2509.15113 Sec. 5).**
+**OP-TR-02 (inexact-gradient descent; [BaumannEtAl2025b] Alg. 2, [ScaloneEtAl2025] Algs. 2–3,
+[CarrelVanzan2026] Sec. 6.3, [ChertkovEtAl2025] Sec. 5).**
 * `loss_inexact_step_le`: for `0 ≤ h`, `β h ≤ 1`,
   `ℒ(x - h Π g̃) ≤ ℒ(x) - (h/2) ‖Π ∇ℒ(x)‖² + (h/2) ‖Π (g̃ - ∇ℒ(x))‖²`
   (descent lemma plus polarization `2⟪a, b⟫ = ‖a‖² + ‖b‖² - ‖a - b‖²`).
@@ -41,7 +41,7 @@ arXiv 2610.29554 Sec. 6.3, arXiv 2509.15113 Sec. 5).**
   `2δ/(c s_min)` neighbourhood.  Before this file the tolerance rules of 2506.21405 and
   2409.14938 were heuristic and convergence was observed only numerically.
 
-**OP-TR-04 (discrete S-step solvers; arXiv 2104.05247 Sec. 3.3 after Thm 5).**
+**OP-TR-04 (discrete S-step solvers; [CerutiKuschLubich2022] Sec. 3.3 after Thm 5).**
 * explicit Euler is `loss_projGradStep_le` (Descent.lean);
 * `loss_implicitEuler_le`: the implicit Euler (proximal) Galerkin step
   `x₁ = x₀ - h Π ∇ℒ(x₁)` satisfies `ℒ(x₁) ≤ ℒ(x₀) - h (1 - βh/2) ‖Π ∇ℒ(x₁)‖²`, i.e. descent for
@@ -55,7 +55,8 @@ arXiv 2610.29554 Sec. 6.3, arXiv 2509.15113 Sec. 5).**
   (e.g. higher-order explicit) step `‖x₁ - (x₀ - hΠ∇ℒ(x₀))‖ ≤ C h²` loses at most `G C h²`
   (`loss_perturbedStep_le`).
 
-**OP-TR-08 (stochastic descent; arXiv 2410.18720 Thm 1, arXiv 2502.03006 Thms 5.8–5.9).**
+**OP-TR-08 (stochastic descent; [SchotthoferEtAl2025] Thm 1, [KuschSchotthoferWalter2026] Thms
+5.8–5.9).**
 * `sum_loss_truncated_le_variance`: for unbiased minibatch gradients on a finite probability
   space and a projector `Π` independent of the minibatch, the truncated SGD step satisfies
   `E ℒ(W₊) ≤ ℒ(W) - λ(1 - βλ/2) ‖Π∇ℒ(W)‖² + βλ²σ²/2 + Gϑ` (the one-step bound of the
@@ -70,7 +71,7 @@ arXiv 2610.29554 Sec. 6.3, arXiv 2509.15113 Sec. 5).**
   With minibatch-dependent projectors the unbiasedness identity fails
   (`lt_sum_loss_of_bias_neg`, `published_bound_false` in `Research/SameMinibatchAugmentation`).
 
-**Online projected gradient with perturbed gradients (arXiv 2009.03887, Thm 1 and Eq. (15)).**
+**Online projected gradient with perturbed gradients ([GuralEtAl2020, Thm. 1] and Eq. (15)).**
 * `regret_le_of_perturbed`: for convex-feasible-set projections (nonexpansive towards `w⋆`),
   `c`-strongly convex losses (inequality (8)), gradient perturbations
   `‖ε_t‖ ≤ (c/2) ‖w_t - w⋆‖` (sufficient condition (15)), `‖g̃_t‖ ≤ G + E`, diameter `D` and
@@ -120,7 +121,7 @@ theorem loss_inexact_step_le (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) 
 most `η` and `0 < h`, `β h ≤ 1`, then
 `min_{k<n} ‖Π_k ∇ℒ(x_k)‖² ≤ 2 (ℒ(x₀) - ℒ_inf) / (n h) + η²`.  With `η = c₁ε + c₂h + c₃nϑ` from
 the robust DLRA error bounds this quantifies the stationarity reached by DLRA-based
-optimisation (arXiv 2506.21405, 2409.14938, 2610.29554, 2509.15113). -/
+optimisation ([BaumannEtAl2025b], 2409.14938, 2610.29554, 2509.15113). -/
 theorem exists_projGrad_sq_le_of_inexact (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) {P : ℕ → E →L[ℝ] E} (hP : ∀ k, IsOrthProj (P k))
     {x gt : ℕ → E} {h η ℒinf : ℝ} (hh : 0 < h) (hβh : β * h ≤ 1)
@@ -145,8 +146,8 @@ theorem exists_projGrad_sq_le_of_inexact (hℒ : ∀ x, HasFDerivAt ℒ (innerSL
   field_simp
 
 /-- **Relative-error gradients keep the exact rate** (claim (iii) of OP-TR-02, tolerance
-coupled to the gradient size as in arXiv 2506.21405 and the adaptive tolerances of
-arXiv 2610.29554): if
+coupled to the gradient size as in [BaumannEtAl2025b] and the adaptive tolerances of
+[CarrelVanzan2026]): if
 `‖Π_k (g̃_k - ∇ℒ(x_k))‖ ≤ ρ ‖Π_k ∇ℒ(x_k)‖` with `0 ≤ ρ < 1`, then
 `min_{k<n} ‖Π_k ∇ℒ(x_k)‖² ≤ 2 (ℒ(x₀) - ℒ_inf) / (n h (1 - ρ²))`. -/
 theorem exists_projGrad_sq_le_of_relInexact (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
@@ -179,7 +180,7 @@ theorem exists_projGrad_sq_le_of_relInexact (hℒ : ∀ x, HasFDerivAt ℒ (inne
 /-- **Linear convergence to an `η²`-ball under PL with inexact gradients** (claim (ii) of
 OP-TR-02).  Under the (Riemannian) PL
 inequality `2μ (ℒ(x_k) - ℒ⋆) ≤ ‖Π_k ∇ℒ(x_k)‖²` (implied by `μ`-strong convexity when `Π = 1`,
-e.g. the linear-quadratic control problems of arXiv 2509.15113 and 2610.29554), `β h ≤ 1` and
+e.g. the linear-quadratic control problems of [ChertkovEtAl2025] and 2610.29554), `β h ≤ 1` and
 `μ h ≤ 1`: `ℒ(x_n) - ℒ⋆ ≤ (1 - μh)ⁿ (ℒ(x₀) - ℒ⋆) + η² / (2μ)`. -/
 theorem loss_sub_le_of_PL_inexact (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) {P : ℕ → E →L[ℝ] E} (hP : ∀ k, IsOrthProj (P k))
@@ -271,8 +272,8 @@ theorem armijoTest_of_le (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
   unfold ArmijoTest
   nlinarith
 
-/-- **Termination of inexact Armijo backtracking** (OP-TR-02 (iii); arXiv 2506.21405 Alg. 2,
-arXiv 2409.14938 Algs. 2–3).  Let `β > 0`, `0 < c < 1`, `s₀ > 0`, values with error `δ`, and
+/-- **Termination of inexact Armijo backtracking** (OP-TR-02 (iii); [BaumannEtAl2025b] Alg. 2,
+[ScaloneEtAl2025] Algs. 2–3).  Let `β > 0`, `0 < c < 1`, `s₀ > 0`, values with error `δ`, and
 a direction `d = g̃` with `‖d - ∇ℒ(x)‖ ≤ η`.  If the direction dominates the errors,
 `4η ≤ (1-c)‖d‖` and `16 β δ ≤ (1-c)² ‖d‖²`, and `8δ ≤ (1-c) s₀ ‖d‖²`, then backtracking
 `s_j = s₀ / 2ʲ` terminates: there is a first index `j` whose step passes the test, and the
@@ -368,7 +369,7 @@ section SStep
 
 variable {ℒ : E → ℝ} {g : E → E} {β : ℝ} {P : E →L[ℝ] E}
 
-/-- **Implicit Euler (proximal) Galerkin step** (OP-TR-04 (b), arXiv 2104.05247 Sec. 3.3): if
+/-- **Implicit Euler (proximal) Galerkin step** (OP-TR-04 (b), [CerutiKuschLubich2022] Sec. 3.3): if
 `x₁ = x₀ - h Π ∇ℒ(x₁)`, then `ℒ(x₁) ≤ ℒ(x₀) - h (1 - β h / 2) ‖Π ∇ℒ(x₁)‖²`; in particular the
 loss decreases for `0 ≤ h ≤ 2/β`. -/
 theorem loss_implicitEuler_le (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
@@ -502,9 +503,9 @@ section Stochastic
 variable {Ξ : Type*} [Fintype Ξ] {ℒ : E → ℝ} {g : E → E} {β : ℝ}
 
 /-- **Expected loss descent of truncated projected SGD** (OP-TR-08, one-step bound; corrects
-arXiv 2410.18720 Thm 1 and arXiv 2502.03006 Thm 5.8): for unbiased minibatch gradients
-`∑ p_ξ g_ξ = ∇ℒ(x)` with variance `∑ p_ξ ‖g_ξ - ∇ℒ(x)‖² ≤ σ²`, a projector `Π` independent of
-`ξ`, and truncations `‖x₁(ξ) - (x - λ Π g_ξ)‖ ≤ ϑ` with `‖∇ℒ‖ ≤ G` in between,
+[SchotthoferEtAl2025] Thm 1 and [KuschSchotthoferWalter2026] Thm 5.8): for unbiased minibatch
+gradients `∑ p_ξ g_ξ = ∇ℒ(x)` with variance `∑ p_ξ ‖g_ξ - ∇ℒ(x)‖² ≤ σ²`, a projector `Π` independent
+of `ξ`, and truncations `‖x₁(ξ) - (x - λ Π g_ξ)‖ ≤ ϑ` with `‖∇ℒ‖ ≤ G` in between,
 `E ℒ(x₁) ≤ ℒ(x) - λ(1 - βλ/2) ‖Π∇ℒ(x)‖² + βλ²σ²/2 + G ϑ`. -/
 theorem sum_loss_truncated_le_variance (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) (hβ : 0 ≤ β) {P : E →L[ℝ] E} (hP : IsOrthProj P)
@@ -575,7 +576,7 @@ theorem frequently_lt_of_expected_descent {a b lr ϑ : ℕ → ℝ} {β σsq G D
 
 end Stochastic
 
-/-! ### Online projected gradient with perturbed gradients (arXiv 2009.03887, Thm 1) -/
+/-! ### Online projected gradient with perturbed gradients ([GuralEtAl2020, Thm. 1]) -/
 
 section Regret
 
@@ -597,7 +598,7 @@ lemma sum_sub_div_le {A η : ℕ → ℝ} {Dsq : ℝ} (hAD : ∀ t, A t ≤ Dsq)
     linarith
 
 /-- **Regret of online projected gradient descent with perturbed (low-rank) gradients**
-(arXiv 2009.03887, Appendix A, inequality (12)).  Let `proj` be nonexpansive towards the
+([GuralEtAl2020], Appendix A, inequality (12)).  Let `proj` be nonexpansive towards the
 comparator `w⋆` (true for the metric projection onto a closed convex set containing `w⋆`), the
 iterates stay within `D` of `w⋆`, the losses satisfy the strong-convexity inequality (8)
 `f_t(w_t) - f_t(w⋆) ≤ ⟪g_t, w_t - w⋆⟫ - (c/2) ‖w_t - w⋆‖²`, the gradient perturbations satisfy
@@ -656,7 +657,7 @@ theorem regret_le_of_perturbed {f : ℕ → E → ℝ} {w gr gt : ℕ → E} {ws
   rw [e]
   linarith
 
-/-- `∑_{t ≤ T} 1/√(t+1) ≤ 2 √(T+1) - 1` (Zinkevich 2003, used in arXiv 2009.03887). -/
+/-- `∑_{t ≤ T} 1/√(t+1) ≤ 2 √(T+1) - 1` (Zinkevich 2003, used in [GuralEtAl2020]). -/
 lemma sum_inv_sqrt_le (T : ℕ) :
     ∑ t ∈ range (T + 1), 1 / √((t : ℝ) + 1) ≤ 2 * √((T : ℝ) + 1) - 1 := by
   induction T with
@@ -675,7 +676,7 @@ lemma sum_inv_sqrt_le (T : ℕ) :
       nlinarith [sq_nonneg (a - b)]
     linarith
 
-/-- **Theorem 1 of arXiv 2009.03887** (sublinear regret of LRT-based SGD): with
+/-- **Theorem 1 of [GuralEtAl2020]** (sublinear regret of LRT-based SGD): with
 `η_t = 1/√(t+1)`, under the hypotheses of `regret_le_of_perturbed`, after `T + 1` rounds
 `R ≤ (D²/2) √(T+1) + (G + E)² (√(T+1) - 1/2)`. -/
 theorem regret_le_sqrt {f : ℕ → E → ℝ} {w gr gt : ℕ → E} {wstar : E} {proj : E → E}
