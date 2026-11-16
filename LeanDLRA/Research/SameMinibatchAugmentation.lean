@@ -753,13 +753,6 @@ end SameBatchExample
 definition `leftProj U * rightProj V`). -/
 @[deprecated (since := "2026-11-09")] alias galerkinProj := LeanDLRA.galerkinProj
 
-/-- Replaced by the core `LeanDLRA.galerkinProj_apply`. -/
-@[deprecated (since := "2026-11-09")] alias galerkinProj_apply := LeanDLRA.galerkinProj_apply
-
-/-- Replaced by the core `LeanDLRA.isOrthProj_galerkinProj`. -/
-@[deprecated (since := "2026-11-09")] alias isOrthProj_galerkinProj :=
-  LeanDLRA.isOrthProj_galerkinProj
-
 end StochasticDescent
 
 end LeanDLRA

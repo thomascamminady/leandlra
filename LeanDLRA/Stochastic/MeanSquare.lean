@@ -610,15 +610,6 @@ theorem tendsto_corr_optCoeff {ι : Type*} {X : ι → ℕ → E} {Y : ℕ → E
 
 section PseudoInverse
 
-/-- The orthogonal projector onto a subspace with orthogonal projection (in particular onto the
-span `span Ỹ` of finitely many, possibly linearly dependent, stochastic basis functions) is an
-`IsOrthProj`.  This is the projector `E[· Ỹᵀ] C⁺ Ỹ` of 2601.21428 Remark 3.2; no invertibility of
-the Gramian `C` is needed. -/
-theorem isOrthProj_starProjection (K : Submodule ℝ E) [K.HasOrthogonalProjection] :
-    IsOrthProj K.starProjection where
-  idem x := Submodule.starProjection_eq_self_iff.mpr (K.starProjection_apply_mem x)
-  symm x y := K.starProjection_isSymmetric x y
-
 /-- **The tangent projector fixes the iterate** (OP-SL-08): if `R X = X` (the iterate lies in the
 range of the stochastic projector, e.g. `Xₙ ∈ ℝᵈ ⊗ span Ỹₙ`), then `tangent L R X = X`; neither
 commutation nor exact rank is needed. -/

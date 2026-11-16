@@ -721,16 +721,6 @@ example : rk4Lin (-1 : ℝ →L[ℝ] ℝ) 1 1 = 3 / 8 := by
 
 /-! ### BUG-p local and global error with interior capture (arXiv 2608.27749, 2502.07040) -/
 
-/-- `e^x - 1 ≤ x e^x` for all `x`. -/
-lemma exp_sub_one_le_mul_exp (x : ℝ) : Real.exp x - 1 ≤ x * Real.exp x := by
-  have h1 := Real.add_one_le_exp (-x)
-  rw [Real.exp_neg] at h1
-  have hpos := Real.exp_pos x
-  have h2 : (-x + 1) * Real.exp x ≤ (Real.exp x)⁻¹ * Real.exp x :=
-    mul_le_mul_of_nonneg_right h1 hpos.le
-  rw [inv_mul_cancel₀ hpos.ne'] at h2
-  linarith
-
 /-- **BUG-p local error** (arXiv 2608.27749, Sec. 3.1 properties P1–P2 and Thm 1; arXiv
 2502.07040, Thm 1).  Let the Galerkin projector `R` fix the starting value `y₀` (P1), capture the
 exact solution `A` (`A t₀ = y₀`) to `ρ` on the step and to `θ` at the endpoint, and let the

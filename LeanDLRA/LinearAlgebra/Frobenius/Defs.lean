@@ -320,10 +320,7 @@ namespace LeanDLRA
 @[deprecated (since := "2026-11-09")] alias Exactness.sandwichTransposeCLM :=
   Frobenius.sandwichTransposeCLM
 @[deprecated (since := "2026-11-09")] alias GaugeODE.mulBilin := Frobenius.mulCLM
-@[deprecated (since := "2026-11-09")] alias GaugeODE.mulBilin_apply := Frobenius.mulCLM_apply
 @[deprecated (since := "2026-11-09")] alias GaugeODE.transposeCLM := Frobenius.transposeCLM
-@[deprecated (since := "2026-11-09")] alias GaugeODE.transposeCLM_apply :=
-  Frobenius.transposeCLM_apply
 
 end LeanDLRA
 
