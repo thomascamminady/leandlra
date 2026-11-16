@@ -81,7 +81,7 @@ lint-py: ## Ruff + ty on the Python scripts
 	uvx ty check --python $(PYENV) --extra-search-path scripts $(PY_SCRIPTS)
 
 test-py: ## Pytest for the Python scripts (tests/)
-	uv run -q --with pytest --with polars pytest -q tests
+	uv run -q --with pytest --with polars --with fire pytest -q tests
 
 ci: verify lint-py test-py ## Everything the core workflow of CI checks
 
