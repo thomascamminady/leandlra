@@ -236,4 +236,66 @@ theorem defectBUG_norm_sub_le_of_tube [CompleteSpace E]
 
 end Global
 
+/-! ### Non-vacuity -/
+
+section Examples
+
+/-- **Non-vacuity of `InexactSubsteps.defectBUG_norm_sub_le_of_tube`**, for the nonzero constant
+field `F t x = v` with the solution `A t = x₀ + (t - t₀) v`, the identity as all four projectors
+and S-step results that are perturbed by at most `η`. Every sequence with
+`‖Y (n + 1) - (Y n + h v)‖ ≤ η` is a chain of defect steps with `ηK = ηL = 0` and `ηS = η`: the
+K-, L- and S-trajectories of step `n` are the straight line `Y n + (t - t₀ - n h) v`. The field
+is Lipschitz with constant `0` and bounded by `‖v‖`, so `c₁ ε = 0` (`ε = 0`) and `c₂ = 0`, and
+the theorem gives the bound `δ + T · 3 η / h`. -/
+example [CompleteSpace E] (v x₀ : E) {t₀ h T δ η ρ : ℝ} {N : ℕ} (hh : 0 < h) (hη : 0 ≤ η)
+    (hNT : N * h ≤ T) {Y : ℕ → E} (hY : ∀ n < N, ‖Y (n + 1) - (Y n + h • v)‖ ≤ η)
+    (hδ : ‖Y 0 - x₀‖ ≤ δ) (hsmall : δ + T * (3 * η / h) + 4 * ‖v‖ * h + 2 * η < ρ) :
+    ∀ n ≤ N, ‖Y n - (x₀ + ((n : ℝ) * h) • v)‖ ≤ δ + T * (3 * η / h) := by
+  have aff : ∀ (y₀ : E) (a b : ℝ),
+      ODESolution (fun _ _ => v) (fun t => y₀ + (t - a) • v) a b := fun y₀ a b =>
+    ⟨by fun_prop, fun t _ => by
+      have hd : HasDerivAt (fun t : ℝ => y₀ + (t - a) • v) v t := by
+        simpa using (((hasDerivAt_id t).sub_const a).smul_const v).const_add y₀
+      exact hd.hasDerivWithinAt⟩
+  have hP : DLRAProblem (fun _ _ => v) (fun t => x₀ + (t - t₀) • v) t₀ (t₀ + N * h) ρ 0 ‖v‖ :=
+    ⟨aff x₀ t₀ _, le_rfl, norm_nonneg v, fun t _ x y _ _ => by simp, fun t _ x _ => le_rfl⟩
+  have hstep : ∀ n < N, IsDefectBUGStep (fun _ _ => v) 0 0 0 η 1 1 1 1 (t₀ + n * h)
+      (t₀ + (n + 1) * h) (Y n) (fun t => Y n + (t - (t₀ + n * h)) • v)
+      (fun t => Y n + (t - (t₀ + n * h)) • v) (fun t => Y n + (t - (t₀ + n * h)) • v)
+      (Y (n + 1)) := by
+    intro n hn
+    have hsol := aff (Y n) (t₀ + n * h) (t₀ + (n + 1) * h)
+    have e : t₀ + ((n : ℝ) + 1) * h - (t₀ + n * h) = h := by ring
+    exact
+      { projP₀ := IsOrthProj.one
+        projQ₀ := IsOrthProj.one
+        projP₁ := IsOrthProj.one
+        projQ₁ := IsOrthProj.one
+        comm₁ := fun _ => rfl
+        kSol := by simpa only [one_apply_eq_self] using hsol
+        kStart := by simp
+        kNormal := fun _ _ => by simp
+        kDefect := by simp
+        lSol := by simpa only [one_apply_eq_self] using hsol
+        lStart := by simp
+        lNormal := fun _ _ => by simp
+        lDefect := by simp
+        sSol := by simpa only [one_apply_eq_self] using hsol
+        sStart := by simp
+        sErr := by simpa only [e] using hY n hn }
+  have e : Real.exp (0 * T) * δ + T * Real.exp (0 * T) * (bugC₁ 0 h * 0 + bugC₂ 0 ‖v‖ h * h +
+      (2 * Real.exp (0 * h) + 1) * η / h) = δ + T * (3 * η / h) := by
+    simp only [bugC₂, zero_mul, mul_zero, Real.exp_zero, one_mul, zero_add]
+    ring
+  have key := defectBUG_norm_sub_le_of_tube (ε := 0) (H := h) (T := T) (δ := δ) hP
+    continuousOn_const le_rfl hη hh le_rfl hNT hstep (ηK := fun _ => 0) (ηL := fun _ => 0)
+    (ηS := fun _ => η) (fun _ _ => hη) (fun _ _ => hη) (fun _ _ => le_rfl) (by simpa using hδ)
+    (by rw [e]; linarith)
+  intro n hn
+  have hn' := key n hn
+  rw [e] at hn'
+  simpa only [add_sub_cancel_left] using hn'
+
+end Examples
+
 end LeanDLRA.InexactSubsteps

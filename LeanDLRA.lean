@@ -127,6 +127,7 @@ import LeanDLRA.Research.StiffGlobalCycle
 import LeanDLRA.Research.StiffGlobalVariation
 import LeanDLRA.Research.StiffOrderReduction
 import LeanDLRA.Research.SylvesterFlows
+import LeanDLRA.Research.SylvesterGlobal
 import LeanDLRA.Research.TwoSidedLeak
 import LeanDLRA.Stability.Conservation
 import LeanDLRA.Stability.Energy
