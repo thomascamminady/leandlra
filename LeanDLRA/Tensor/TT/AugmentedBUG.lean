@@ -6,20 +6,21 @@ import LeanDLRA.Integrators.RankAdaptiveBUG
 
 The augmented (rank-adaptive) basis-update & Galerkin integrator for tensor trains / matrix
 product states (Ceruti–Lubich–Sulz for tree tensor networks; formulated for MPS by
-Kapás–Sulz–Verhoeven–Werner–Legeza–Lubich, arXiv 2609.12848, §II B, and by
-Petersson–Hodges-Heilmann–Günther, arXiv 2603.13990, §5.2) keeps the orthogonality centre at a
-fixed bond (or site) and performs one step in three parts:
+Kapás–Sulz–Verhoeven–Werner–Legeza–Lubich, [KapasEtAl2026], §II B, and by
+Petersson–Hodges-Heilmann–Günther, [PeterssonHodgesHeilmannGunther2026, §5.2]) keeps the
+orthogonality centre at a fixed bond (or site) and performs one step in three parts:
 
 1. **left sweep**: for the cores `i < n` from left to right, a K-step
    `Y' = P̂_{≤i} P_{>i+1} F(t, Y)` (left interface of the new augmented cores `Ah`, right interface
-   of the old right-orthogonal cores `B`; arXiv 2609.12848, Eqs. (6)–(10); arXiv 2603.13990,
-   Eq. (5.10)) started from the old state in the new basis, `P̂_{≤i} Y₀`, followed by the
-   augmented QR decomposition: the new core `Ah i` spans the K-step values at `t₀` and `t₁`; the
-   **right sweep** is the mirror image (Eq. (5.11) of arXiv 2603.13990);
+   of the old right-orthogonal cores `B`; [KapasEtAl2026, Eqs. (6)–(10)];
+   [PeterssonHodgesHeilmannGunther2026], Eq. (5.10)) started from the old state in the new basis,
+   `P̂_{≤i} Y₀`, followed by the augmented QR decomposition: the new core `Ah i` spans the K-step
+   values at `t₀` and `t₁`; the **right sweep** is the mirror image (Eq. (5.11) of
+   [PeterssonHodgesHeilmannGunther2026]);
 2. a **Galerkin step** in the space of tensor trains with the augmented left interface `X̂_{≤j}`
-   and right interface `X̂_{>k}` (a bond matrix for `j = k`, arXiv 2609.12848; a centre core for
-   `k = j + 1`, arXiv 2603.13990, Eq. (5.12)), started from the old state rotated into the new
-   bases;
+   and right interface `X̂_{>k}` (a bond matrix for `j = k`, [KapasEtAl2026]; a centre core for
+   `k = j + 1`, [PeterssonHodgesHeilmannGunther2026, Eq. (5.12)]), started from the old state
+   rotated into the new bases;
 3. a **truncation** to a tolerance `ϑ`.
 
 Every step goes forward in time; there is no backward substep (in contrast to the projector
@@ -31,13 +32,13 @@ splitting integrator `IsTTKSLStep`, whose forward substeps use the same projecto
   fixed augmented interfaces that contain the starting value.
 * `IsTTAugLeftSweep`, `IsTTAugRightSweep`: the augmentation sweeps.
 * `IsTTAugBUGStep`: one step of the augmented MPS-BUG integrator.
-* `IsTTMidpointBUGStep`: the Galerkin part of the midpoint MPS-BUG integrator (arXiv 2609.12848,
+* `IsTTMidpointBUGStep`: the Galerkin part of the midpoint MPS-BUG integrator ([KapasEtAl2026],
   §II C), whose bases contain the bases at `t₀` and the predictor at the midpoint.
 
 ## Main results
 
 * `IsTTAugGalerkinStep.toAugmentedGalerkinStep`: bridge to the abstract augmented Galerkin step
-  `IsAugmentedGalerkinStep` (Ceruti–Kusch–Lubich, arXiv 2104.05247), with the orthogonal
+  `IsAugmentedGalerkinStep` (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]), with the orthogonal
   projector `R = P̂_{≤j} P̂_{>k}`.
 * `IsTTAugGalerkinStep.start_eq`, `norm_eq`, `energy_eq`: the Galerkin step starts at `Y₀` and,
   in the absence of truncation, conserves the norm (`⟪F(t, x), x⟫ = 0`) and the energy
@@ -49,7 +50,7 @@ splitting integrator `IsTTKSLStep`, whose forward substeps use the same projecto
   state, `P̂_{≤n} Y₀ = Y₀`, `P̂_{>m} Y₀ = Y₀`.
 * `IsTTAugBUGStep.toTTAugGalerkinStep`, `IsTTAugBUGStep.norm_eq`, `IsTTAugBUGStep.energy_eq`:
   **the augmented MPS-BUG integrator conserves norm and energy in the absence of truncation**
-  (arXiv 2609.12848, §I: "further preserve norm and energy for unitary dynamics in the absence
+  ([KapasEtAl2026], §I: "further preserve norm and energy for unitary dynamics in the absence
   of truncation"), and `IsTTMidpointBUGStep.norm_eq`, `energy_eq` for the midpoint variant.
 
 Everything is real. Complex MPS (quantum states) are covered only through the abstract
@@ -73,8 +74,8 @@ trains with the left interface of the augmented left-orthogonal cores `A` (cores
 right interface of the augmented right-orthogonal cores `B` (cores `≥ k`), `j ≤ k ≤ d`, which
 contain the starting value (`augL`, `augR`), the Galerkin equation
 `YS' = P̂_{≤j} P̂_{>k} F(t, YS)` from `YS t₀ = P̂_{≤j} P̂_{>k} Y₀` (the old core rotated into the
-new bases, arXiv 2609.12848, Fig. 2e) followed by a truncation `‖Y₁ - YS t₁‖ ≤ ϑ`
-(arXiv 2609.12848, Eqs. (11)–(12)). -/
+new bases, [KapasEtAl2026, Fig. 2e]) followed by a truncation `‖Y₁ - YS t₁‖ ≤ ϑ`
+([KapasEtAl2026, Eqs. (11)–(12)]). -/
 structure IsTTAugGalerkinStep (F : ℝ → Tensor ι → Tensor ι) (ϑ : ℝ) (A B : TTCores ι β)
     (j k : ℕ) (t₀ t₁ : ℝ) (Y₀ : Tensor ι) (YS : ℝ → Tensor ι) (Y₁ : Tensor ι) : Prop where
   le : j ≤ k
@@ -99,8 +100,8 @@ theorem proj (hs : IsTTAugGalerkinStep F ϑ A B j k t₀ t₁ Y₀ YS Y₁) :
     IsOrthProj (ttLeftProj A j * ttRightProj B k) :=
   isOrthProj_ttLeftProj_mul_ttRightProj hs.le hs.le_d hs.leftOrth hs.rightOrth
 
-/-- **Bridge to the abstract augmented Galerkin step** (arXiv 2104.05247, §3): the TT Galerkin
-step is an `IsAugmentedGalerkinStep` with `R = P̂_{≤j} P̂_{>k}`. -/
+/-- **Bridge to the abstract augmented Galerkin step** ([CerutiKuschLubich2022, §3]): the TT
+Galerkin step is an `IsAugmentedGalerkinStep` with `R = P̂_{≤j} P̂_{>k}`. -/
 theorem toAugmentedGalerkinStep (hs : IsTTAugGalerkinStep F ϑ A B j k t₀ t₁ Y₀ YS Y₁) :
     IsAugmentedGalerkinStep F ϑ (ttLeftProj A j * ttRightProj B k) t₀ t₁ Y₀ YS Y₁ where
   proj := hs.proj
@@ -111,12 +112,12 @@ theorem toAugmentedGalerkinStep (hs : IsTTAugGalerkinStep F ϑ A B j k t₀ t₁
   sStart := hs.sStart
   trunc := hs.trunc
 
-/-- The Galerkin step starts exactly at the old state (Lemma 1 of arXiv 2104.05247 for MPS; the
-rotation of the core into the augmented bases is exact, arXiv 2609.12848, Fig. 2e). -/
+/-- The Galerkin step starts exactly at the old state (Lemma 1 of [CerutiKuschLubich2022] for MPS;
+the rotation of the core into the augmented bases is exact, [KapasEtAl2026, Fig. 2e]). -/
 theorem start_eq (hs : IsTTAugGalerkinStep F ϑ A B j k t₀ t₁ Y₀ YS Y₁) : YS t₀ = Y₀ :=
   hs.toAugmentedGalerkinStep.start_eq
 
-/-- **Norm conservation of the augmented MPS-BUG Galerkin step** (arXiv 2609.12848, §I; arXiv
+/-- **Norm conservation of the augmented MPS-BUG Galerkin step** ([KapasEtAl2026], §I; arXiv
 2104.05247, Thm 4): if `⟪F(t, x), x⟫ = 0` (e.g. `F(t, x) = A x` with `A` skew-symmetric, the real
 form of unitary dynamics), then `‖YS t₁‖ = ‖Y₀‖` before the truncation and
 `|‖Y₁‖ - ‖Y₀‖| ≤ ϑ` after it. -/
@@ -124,7 +125,7 @@ theorem norm_eq (hs : IsTTAugGalerkinStep F ϑ A B j k t₀ t₁ Y₀ YS Y₁) (
     (hF : ∀ t x, ⟪F t x, x⟫ = 0) : ‖YS t₁‖ = ‖Y₀‖ ∧ |‖Y₁‖ - ‖Y₀‖| ≤ ϑ :=
   hs.toAugmentedGalerkinStep.abs_norm_sub_le h01 fun t x _ => hF t x
 
-/-- **Energy conservation of the augmented MPS-BUG Galerkin step** (arXiv 2609.12848, §I; arXiv
+/-- **Energy conservation of the augmented MPS-BUG Galerkin step** ([KapasEtAl2026], §I; arXiv
 2104.05247, Thms 6–7): for `F = J ∇ℰ` with `J` skew and commuting with the Galerkin projector,
 `ℰ(YS t₁) = ℰ(Y₀)` before the truncation and `|ℰ(Y₁) - ℰ(Y₀)| ≤ β ϑ` after it, if `‖∇ℰ‖ ≤ β` on
 the segment `[YS t₁, Y₁]`. -/
@@ -143,16 +144,16 @@ theorem mem_range (hs : IsTTAugGalerkinStep F ϑ A B j k t₀ t₁ Y₀ YS Y₁)
     change ttLeftProj A j (ttRightProj B k (YS t₀)) = YS t₀
     rw [hs.start_eq, hs.augR, hs.augL])
 
-/-- **Bond-centred Galerkin step** (arXiv 2609.12848, §II B): for `j = k` the Galerkin solution
+/-- **Bond-centred Galerkin step** ([KapasEtAl2026], §II B): for `j = k` the Galerkin solution
 is the bond-centred tensor train `X̂_{≤j} S(t) X̂_{>j}ᵀ` with the augmented interfaces and the bond
 matrix `S(t) = X̂_{≤j}ᵀ YS(t)⟨j⟩ X̂_{>j}` (of size up to `2M × 2M`). -/
 theorem eq_ttBond (hs : IsTTAugGalerkinStep F ϑ A B j j t₀ t₁ Y₀ YS Y₁) :
     ∀ t ∈ Icc t₀ t₁, YS t = ttBond A B j (ttBondCoeff A B j (YS t)) := fun t ht => by
   rw [ttBond_ttBondCoeff, hs.mem_range t ht]
 
-/-- **Site-centred Galerkin step** (arXiv 2603.13990, Eq. (5.12)): for `k = j + 1` the Galerkin
-solution is the tensor train with the augmented left cores before `j`, the centre core
-`M(t) = ttCoreCoeff A B j (YS t)` and the augmented right cores after `j`. -/
+/-- **Site-centred Galerkin step** ([PeterssonHodgesHeilmannGunther2026, Eq. (5.12)]): for
+`k = j + 1` the Galerkin solution is the tensor train with the augmented left cores before `j`, the
+centre core `M(t) = ttCoreCoeff A B j (YS t)` and the augmented right cores after `j`. -/
 theorem eq_tt_update (hs : IsTTAugGalerkinStep F ϑ A B j (j + 1) t₀ t₁ Y₀ YS Y₁) (hj : j < d) :
     ∀ t ∈ Icc t₀ t₁,
       YS t = tt (Function.update (ttMix A B j) ⟨j, hj⟩ (ttCoreCoeff A B j hj (YS t))) :=
@@ -162,12 +163,12 @@ end IsTTAugGalerkinStep
 
 /-! ### The augmentation sweeps -/
 
-/-- **Left augmentation sweep of the MPS-BUG integrator** (arXiv 2609.12848, Eqs. (6)–(10);
-arXiv 2603.13990, Eq. (5.10)) over the cores `i < n`: the old state `Y₀` is in right-orthonormal
-form (`P_{>1} Y₀ = Y₀` for the right-orthogonal cores `B i`, `i ≥ 1`, after the RQ sweep (5)), the
-K-step of core `i` solves `YK i' = P̂_{≤i} P_{>i+1} F(t, YK i)` from the old state in the new
-basis, `YK i t₀ = P̂_{≤i} Y₀`, and the augmented QR step makes the new left-orthogonal core
-`A i` span both `YK i t₀` and `YK i t₁` (`K̃ = [K(t₀), K(t₁)]`, Eq. (8)). -/
+/-- **Left augmentation sweep of the MPS-BUG integrator** ([KapasEtAl2026, Eqs. (6)–(10)];
+[PeterssonHodgesHeilmannGunther2026, Eq. (5.10)]) over the cores `i < n`: the old state `Y₀` is in
+right-orthonormal form (`P_{>1} Y₀ = Y₀` for the right-orthogonal cores `B i`, `i ≥ 1`, after the RQ
+sweep (5)), the K-step of core `i` solves `YK i' = P̂_{≤i} P_{>i+1} F(t, YK i)` from the old state
+in the new basis, `YK i t₀ = P̂_{≤i} Y₀`, and the augmented QR step makes the new left-orthogonal
+core `A i` span both `YK i t₀` and `YK i t₁` (`K̃ = [K(t₀), K(t₁)]`, Eq. (8)). -/
 structure IsTTAugLeftSweep (F : ℝ → Tensor ι → Tensor ι) (A B : TTCores ι β) (n : ℕ)
     (t₀ t₁ : ℝ) (Y₀ : Tensor ι) (YK : ℕ → ℝ → Tensor ι) : Prop where
   le_d : n ≤ d
@@ -180,8 +181,8 @@ structure IsTTAugLeftSweep (F : ℝ → Tensor ι → Tensor ι) (A B : TTCores 
   capEnd : ∀ i < n, ttLeftProj A (i + 1) (YK i t₁) = YK i t₁
 
 /-- **Right augmentation sweep of the MPS-BUG integrator** (the mirror image of the left sweep;
-arXiv 2603.13990, Eq. (5.11)) over the cores `i ≥ m`: the old state is in left-orthonormal form
-(left-orthogonal cores `A i`, `i < d - 1`), the K-step of core `i` solves
+[PeterssonHodgesHeilmannGunther2026, Eq. (5.11)]) over the cores `i ≥ m`: the old state is in
+left-orthonormal form (left-orthogonal cores `A i`, `i < d - 1`), the K-step of core `i` solves
 `YL i' = P_{≤i} P̂_{>i+1} F(t, YL i)` from `P̂_{>i+1} Y₀`, and the new right-orthogonal core `B i`
 spans `YL i t₀` and `YL i t₁`. -/
 structure IsTTAugRightSweep (F : ℝ → Tensor ι → Tensor ι) (A B : TTCores ι β) (m : ℕ)
@@ -230,11 +231,11 @@ theorem IsTTAugRightSweep.augR [Unique (β d)] {F : ℝ → Tensor ι → Tensor
 
 /-! ### One step of the augmented MPS-BUG integrator -/
 
-/-- **One step of the augmented MPS-BUG integrator** (arXiv 2609.12848, §II B, with `m = n`, a
-bond-centred Galerkin step; arXiv 2603.13990, §5.2, with `m = n + 1`, a site-centred one): a
-left sweep producing the augmented left cores `Ah` (from the right-orthonormal form `B` of `Y₀`),
-a right sweep producing the augmented right cores `Bh` (from the left-orthonormal form `A` of
-`Y₀`), the Galerkin step in the augmented bases and a truncation. -/
+/-- **One step of the augmented MPS-BUG integrator** ([KapasEtAl2026], §II B, with `m = n`, a
+bond-centred Galerkin step; [PeterssonHodgesHeilmannGunther2026, §5.2], with `m = n + 1`, a
+site-centred one): a left sweep producing the augmented left cores `Ah` (from the right-orthonormal
+form `B` of `Y₀`), a right sweep producing the augmented right cores `Bh` (from the left-orthonormal
+form `A` of `Y₀`), the Galerkin step in the augmented bases and a truncation. -/
 structure IsTTAugBUGStep (F : ℝ → Tensor ι → Tensor ι) (ϑ : ℝ) (A B Ah Bh : TTCores ι β)
     (n m : ℕ) (t₀ t₁ : ℝ) (Y₀ : Tensor ι) (YK YL : ℕ → ℝ → Tensor ι) (YS : ℝ → Tensor ι)
     (Y₁ : Tensor ι) : Prop where
@@ -266,14 +267,14 @@ theorem toTTAugGalerkinStep (hs : IsTTAugBUGStep F ϑ A B Ah Bh n m t₀ t₁ Y�
   trunc := hs.trunc
 
 /-- **The augmented MPS-BUG integrator conserves the norm in the absence of truncation**
-(arXiv 2609.12848, §I and §II B): for `⟪F(t, x), x⟫ = 0`, `‖YS t₁‖ = ‖Y₀‖` and
+([KapasEtAl2026], §I and §II B): for `⟪F(t, x), x⟫ = 0`, `‖YS t₁‖ = ‖Y₀‖` and
 `|‖Y₁‖ - ‖Y₀‖| ≤ ϑ`. -/
 theorem norm_eq (hs : IsTTAugBUGStep F ϑ A B Ah Bh n m t₀ t₁ Y₀ YK YL YS Y₁) (h01 : t₀ ≤ t₁)
     (hF : ∀ t x, ⟪F t x, x⟫ = 0) : ‖YS t₁‖ = ‖Y₀‖ ∧ |‖Y₁‖ - ‖Y₀‖| ≤ ϑ :=
   hs.toTTAugGalerkinStep.norm_eq h01 hF
 
 /-- **The augmented MPS-BUG integrator conserves the energy in the absence of truncation**
-(arXiv 2609.12848, §I): for `F = J ∇ℰ` with `J` skew and commuting with the Galerkin projector,
+([KapasEtAl2026], §I): for `F = J ∇ℰ` with `J` skew and commuting with the Galerkin projector,
 `ℰ(YS t₁) = ℰ(Y₀)` and `|ℰ(Y₁) - ℰ(Y₀)| ≤ β ϑ` if `‖∇ℰ‖ ≤ β` on `[YS t₁, Y₁]`. -/
 theorem energy_eq (hs : IsTTAugBUGStep F ϑ A B Ah Bh n m t₀ t₁ Y₀ YK YL YS Y₁) (h01 : t₀ ≤ t₁)
     {ℰ : Tensor ι → ℝ} {g : Tensor ι → Tensor ι} (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x)
@@ -287,7 +288,7 @@ end IsTTAugBUGStep
 
 /-! ### The midpoint MPS-BUG integrator -/
 
-/-- **The Galerkin part of the midpoint MPS-BUG integrator** (arXiv 2609.12848, §II C, steps
+/-- **The Galerkin part of the midpoint MPS-BUG integrator** ([KapasEtAl2026], §II C, steps
 (iii)–(iv)): the Galerkin step over the full interval from `t₀`, in bases of up to four times the
 bond dimension that contain the bases at `t₀` (`augL`, `augR` of the Galerkin step) and the
 predictor `Yh` at the midpoint (`midL`, `midR`). In the paper `Yh` is the untruncated augmented
@@ -306,13 +307,13 @@ variable [Subsingleton (β 0)] [Subsingleton (β d)] {F : ℝ → Tensor ι → 
   {Y₁ : Tensor ι}
 
 /-- **The midpoint MPS-BUG integrator conserves the norm in the absence of truncation**
-(arXiv 2609.12848, §I). -/
+([KapasEtAl2026], §I). -/
 theorem norm_eq (hs : IsTTMidpointBUGStep F ϑ A B n m t₀ t₁ Y₀ Yh YS Y₁) (h01 : t₀ ≤ t₁)
     (hF : ∀ t x, ⟪F t x, x⟫ = 0) : ‖YS t₁‖ = ‖Y₀‖ ∧ |‖Y₁‖ - ‖Y₀‖| ≤ ϑ :=
   hs.toIsTTAugGalerkinStep.norm_eq h01 hF
 
 /-- **The midpoint MPS-BUG integrator conserves the energy in the absence of truncation**
-(arXiv 2609.12848, §I). -/
+([KapasEtAl2026], §I). -/
 theorem energy_eq (hs : IsTTMidpointBUGStep F ϑ A B n m t₀ t₁ Y₀ Yh YS Y₁) (h01 : t₀ ≤ t₁)
     {ℰ : Tensor ι → ℝ} {g : Tensor ι → Tensor ι} (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x)
     {J : Tensor ι →L[ℝ] Tensor ι} (hJ : ∀ z, ⟪J z, z⟫ = 0)

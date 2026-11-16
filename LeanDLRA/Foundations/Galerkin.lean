@@ -6,11 +6,11 @@ import LeanDLRA.Analysis.Defs
 
 Every substep of a robust dynamical low-rank integrator that is *not* a basis update is a
 **Galerkin ODE** on a fixed linear space: the S-step of the basis-update & Galerkin (BUG)
-integrator (Ceruti–Lubich, arXiv 2010.02022), the S-step of the augmented / rank-adaptive BUG
-integrator (Ceruti–Kusch–Lubich, arXiv 2104.05247, eq. (5)), the conservative schemes with
-augmented bases (Einkemmer–Ostermann–Scalone, arXiv 2206.09374, there discretized by explicit
-Euler, see `inner_proj_euler_eq`) and the coefficient flow of dynamical low-rank training.  In
-all of them the full-space trajectory `Ŷ(t) = Û S(t) V̂ᵀ` solves
+integrator (Ceruti–Lubich, [CerutiLubich2022]), the S-step of the augmented / rank-adaptive BUG
+integrator (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, eq. (5)]), the conservative schemes with
+augmented bases (Einkemmer–Ostermann–Scalone, [EinkemmerOstermannScalone2023], there discretized by
+explicit Euler, see `inner_proj_euler_eq`) and the coefficient flow of dynamical low-rank training.
+In all of them the full-space trajectory `Ŷ(t) = Û S(t) V̂ᵀ` solves
 
     Ŷ' = P F(t, Ŷ),     P Z = Û Ûᵀ Z V̂ V̂ᵀ,
 
@@ -27,29 +27,30 @@ with an arbitrary orthogonal projector `P` on a real inner product space `E`.
   determines the velocity uniquely).
 * `ODESolution.galerkin_norm_eq` / `ODESolution.galerkin_norm_le`: **norm conservation** if
   `⟪F(t, x), x⟫ = 0` and **norm dissipation** if `⟪F(t, x), x⟫ ≤ 0`
-  (arXiv 2104.05247, Thm 4, the identity `d/dt ‖Ŝ‖² / 2 = ⟪Ŷ, F(Ŷ)⟫ = 0`).
+  ([CerutiKuschLubich2022, Thm. 4], the identity `d/dt ‖Ŝ‖² / 2 = ⟪Ŷ, F(Ŷ)⟫ = 0`).
 * `ODESolution.hasDerivWithinAt_energy_gradFlow`, `ODESolution.energy_le_sub_gradFlow`,
   `ODESolution.energy_le_gradFlow`: **energy decay** for projected gradient flows
   `y' = -P ∇ℰ(y)`, with the dissipation identity `d/dt ℰ(y) = -‖P ∇ℰ(y)‖²`
-  (arXiv 2104.05247, Thm 5, without the truncation term).
+  ([CerutiKuschLubich2022, Thm. 5], without the truncation term).
 * `ODESolution.galerkin_energy_eq`, `ODESolution.galerkin_energy_eq_of_skew`: **energy
   conservation**; for `F = J ∇ℰ` with `J` skew and commuting with `P` (the Schrödinger case
-  `J = -i`, arXiv 2104.05247, Thms 6–7, without the truncation term).
+  `J = -i`, [CerutiKuschLubich2022], Thms 6–7, without the truncation term).
 * `ODESolution.galerkin_inner_const`: the standard Galerkin **conservation of linear invariants**
   `⟪c, y⟫` when `⟪c, F⟫ = 0` and the conserved direction lies in the trial space, `P c = c`.
   `ODESolution.hasDerivWithinAt_inner_galerkin` and
   `ODESolution.galerkin_inner_const_of_inner_apply` give the variant in which only the moment is
   reproduced, `⟪c, P F⟫ = ⟪c, F⟫`, which is how conservative DLRA (Einkemmer–Joseph 2021;
-  Einkemmer–Ostermann–Scalone, arXiv 2206.09374) enforces conservation.
+  Einkemmer–Ostermann–Scalone, [EinkemmerOstermannScalone2023]) enforces conservation.
 * `inner_proj_euler_eq`, `inner_projEuler_eq`, `inner_projEuler_eq_of_mem`,
   `inner_projEulerIter_eq_of_mem`: the **discrete balance law** `⟪c, x₁⟫ = ⟪c, x₀⟫ + h ⟪c, F⟫`
   of an explicit-Euler Galerkin step `x₁ = P (x₀ + h F(t, x₀))` when the projection is exact on
   the moments of `x₀` and of `F(t, x₀)`.  This is the abstract form of the local continuity
-  equation of arXiv 2206.09374, Thm 1 (see the docstrings for what is and is not covered).
+  equation of [EinkemmerOstermannScalone2023, Thm. 1] (see the docstrings for what is and is not
+  covered).
 * `ODESolution.truncated_galerkin_norm_sub_le`, `ODESolution.truncated_energy_le_gradFlow`,
   `ODESolution.truncated_energy_sub_le_of_skew`,
   `ODESolution.truncated_quadratic_energy_sub_le_of_skew`: the same properties for a Galerkin
-  step followed by a truncation `‖Y₁ - Ŷ₁‖ ≤ ϑ`, up to `O(ϑ)` (arXiv 2104.05247, Thms 4–7,
+  step followed by a truncation `‖Y₁ - Ŷ₁‖ ≤ ϑ`, up to `O(ϑ)` ([CerutiKuschLubich2022], Thms 4–7,
   abstract form, comparing with `Ŷ₀ = y a`).  The identification `Ŷ₀ = Y₀` (Lemma 1 of that
   paper) is not proved in this file; it is `IsRankAdaptiveBUGStep.start_eq` in
   `Integrators/RankAdaptiveBUG.lean`, which derives the paper-form theorems from these.  The last
@@ -57,10 +58,10 @@ with an arbitrary orthogonal projector `P` on a real inner product space `E`.
 * `galerkin_euler_norm_le`, `projEuler_norm_le`, `projEulerIter_norm_le`: **stability of
   explicit-Euler Galerkin steps**: if the full explicit Euler step is norm-nonincreasing then so
   is the Galerkin step.  This is the abstract mechanism of Kusch–Einkemmer–Ceruti,
-  arXiv 2107.07282, Thm 4 (unconventional/BUG integrator), and of Thm 3 substep by substep.  It
-  does not cover Thm 2 (projector splitting), whose S-step is amplifying.  `L²`-stability of the
-  full explicit step (the CFL condition and Fourier analysis) is an assumption, not a result of
-  this file.
+  [KuschEinkemmerCeruti2023, Thm. 4] (unconventional/BUG integrator), and of Thm 3 substep by
+  substep. It does not cover Thm 2 (projector splitting), whose S-step is amplifying. `L²`-stability
+  of the full explicit step (the CFL condition and Fourier analysis) is an assumption, not a result
+  of this file.
 
 ## Conventions
 
@@ -196,7 +197,7 @@ theorem hasDerivWithinAt_norm_sq_galerkin (hP : IsOrthProj P)
   show 2 * ⟪y t, P (F t (y t))⟫ = _
   rw [hP.inner_apply_right_of_mem _ hr, real_inner_comm]
 
-/-- **Norm conservation** of the Galerkin ODE (Ceruti–Kusch–Lubich, arXiv 2104.05247, Thm 4,
+/-- **Norm conservation** of the Galerkin ODE (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 4],
 for the Galerkin step without truncation): if `⟪F(t, y t), y t⟫ = 0` along the solution and
 `y a ∈ range P`, then `‖y t‖ = ‖y a‖`. -/
 theorem galerkin_norm_eq (hP : IsOrthProj P) (hy : ODESolution (fun t x => P (F t x)) y a b)
@@ -245,7 +246,7 @@ model in the direction `c`.  Neither `P c = c` nor an orthogonality property of 
 `P` the hypothesis is equivalent to `F(t, y t) ⊥ (c - P c)`.  In conservative DLRA it holds
 because the relevant moment of the field (for mass, the flux divergence `∫ F dv = -∇ₓ · j`) lies
 in the range of the spatial projector and `1` lies in the velocity basis; this is how local
-conservation is enforced there (cf. arXiv 2206.09374, eqs. (10)–(12)). -/
+conservation is enforced there (cf. [EinkemmerOstermannScalone2023, eqs. (10)–(12)]). -/
 theorem hasDerivWithinAt_inner_galerkin (hy : ODESolution (fun t x => P (F t x)) y a b) {c : E}
     {t : ℝ} (ht : t ∈ Ico a b) (hPF : ⟪c, P (F t (y t))⟫ = ⟪c, F t (y t)⟫) :
     HasDerivWithinAt (fun s => ⟪c, y s⟫) ⟪c, F t (y t)⟫ (Ici t) t := by
@@ -258,8 +259,8 @@ theorem hasDerivWithinAt_inner_galerkin (hy : ODESolution (fun t x => P (F t x))
 `⟪c, P F(t, y t)⟫ = ⟪c, F(t, y t)⟫` (the projection is exact on the relevant moment of the
 field) and `⟪c, F(t, y t)⟫ = 0` along a solution of `y' = P F(t, y)`, then `⟪c, y t⟫ = ⟪c, y a⟫`.
 This is the continuous-time form of the mechanism of conservative DLRA (Einkemmer–Joseph 2021;
-Einkemmer–Ostermann–Scalone, arXiv 2206.09374), where the conserved direction `c` need not lie in
-the Galerkin space.  No assumption on `y a` is needed. -/
+Einkemmer–Ostermann–Scalone, [EinkemmerOstermannScalone2023]), where the conserved direction `c`
+need not lie in the Galerkin space. No assumption on `y a` is needed. -/
 theorem galerkin_inner_const_of_inner_apply (hy : ODESolution (fun t x => P (F t x)) y a b)
     {c : E} (hPF : ∀ t ∈ Ico a b, ⟪c, P (F t (y t))⟫ = ⟪c, F t (y t)⟫)
     (hF : ∀ t ∈ Ico a b, ⟪c, F t (y t)⟫ = 0) :
@@ -272,12 +273,12 @@ theorem galerkin_inner_const_of_inner_apply (hy : ODESolution (fun t x => P (F t
 `⟪c, F(t, y t)⟫ = 0` along a solution of `y' = P F(t, y)` and the conserved direction lies in the
 Galerkin trial space, `P c = c`, then `⟪c, y t⟫ = ⟪c, y a⟫`.  No assumption on `y a` is needed.
 
-Cf. conservative DLRA (Einkemmer–Joseph 2021; Einkemmer–Ostermann–Scalone, arXiv 2206.09374),
-where conservation is instead enforced by making the projection exact on `f^n` and on the flux
-rather than by `P c = c`; that mechanism is `galerkin_inner_const_of_inner_apply` and, for the
-explicit-Euler step of the paper, `inner_proj_euler_eq`.  With `P c = c` one also has
-`⟪c, P Y₀⟫ = ⟪c, Y₀⟫`, so a Galerkin step started from the projected value `P Y₀` conserves
-`⟪c, Y₀⟫` (`galerkin_inner_eq_of_eq_proj`). -/
+Cf. conservative DLRA (Einkemmer–Joseph 2021; Einkemmer–Ostermann–Scalone,
+[EinkemmerOstermannScalone2023]), where conservation is instead enforced by making the projection
+exact on `f^n` and on the flux rather than by `P c = c`; that mechanism is
+`galerkin_inner_const_of_inner_apply` and, for the explicit-Euler step of the paper,
+`inner_proj_euler_eq`. With `P c = c` one also has `⟪c, P Y₀⟫ = ⟪c, Y₀⟫`, so a Galerkin step started
+from the projected value `P Y₀` conserves `⟪c, Y₀⟫` (`galerkin_inner_eq_of_eq_proj`). -/
 theorem galerkin_inner_const (hP : IsOrthProj P) (hy : ODESolution (fun t x => P (F t x)) y a b)
     {c : E} (hc : P c = c) (hF : ∀ t ∈ Ico a b, ⟪c, F t (y t)⟫ = 0) :
     ∀ t ∈ Icc a b, ⟪c, y t⟫ = ⟪c, y a⟫ :=
@@ -329,7 +330,7 @@ theorem continuous_of_hasFDerivAt_innerSL (hℰ : ∀ x, HasFDerivAt ℰ (innerS
 namespace ODESolution
 
 /-- **Dissipation identity** for projected gradient flows `y' = -P ∇ℰ(y)`:
-`d/dt ℰ(y(t)) = -‖P ∇ℰ(y(t))‖²` (Ceruti–Kusch–Lubich, arXiv 2104.05247, proof of Thm 5).
+`d/dt ℰ(y(t)) = -‖P ∇ℰ(y(t))‖²` (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022], proof of Thm 5).
 No assumption on `y a` is needed. -/
 theorem hasDerivWithinAt_energy_gradFlow (hP : IsOrthProj P)
     (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x) (hy : ODESolution (fun _ x => -P (g x)) y a b)
@@ -339,7 +340,7 @@ theorem hasDerivWithinAt_energy_gradFlow (hP : IsOrthProj P)
   rw [inner_neg_right, real_inner_comm, hP.inner_self_apply]
 
 /-- **Energy decay with rate** for projected gradient flows (Ceruti–Kusch–Lubich,
-arXiv 2104.05247, Thm 5 for the Galerkin step, i.e. without the truncation term `β ϑ`):
+[CerutiKuschLubich2022, Thm. 5] for the Galerkin step, i.e. without the truncation term `β ϑ`):
 if `α² ≤ ‖P ∇ℰ(y)‖²` along the solution, then `ℰ(y t) ≤ ℰ(y a) - α² (t - a)`. -/
 theorem energy_le_sub_gradFlow (hP : IsOrthProj P)
     (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x) (hy : ODESolution (fun _ x => -P (g x)) y a b)
@@ -401,7 +402,7 @@ theorem galerkin_energy_eq' (hP : IsOrthProj P) (hℰ : ∀ x, HasFDerivAt ℰ (
     hF t _ (hy.galerkin_mem_range hP h0 t (Ico_subset_Icc_self ht))
 
 /-- **Energy conservation for Hamiltonian-type fields** (Ceruti–Kusch–Lubich,
-arXiv 2104.05247, Thms 6–7 for the Galerkin step, i.e. without truncation): if
+[CerutiKuschLubich2022], Thms 6–7 for the Galerkin step, i.e. without truncation): if
 `F(t, x) = J ∇ℰ(x)` with `J` skew (`⟪J z, z⟫ = 0`, e.g. multiplication by `-i` on a complex
 space viewed as a real one) and `J` commuting with `P` (e.g. `P` complex linear), then the
 Galerkin solution conserves `ℰ`.  No assumption on `y a` is needed. -/
@@ -419,11 +420,11 @@ end Energy
 
 /-! ### Galerkin steps followed by a truncation
 
-The rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, arXiv 2104.05247) follows the Galerkin
+The rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]) follows the Galerkin
 step `Ŷ₀ = y a ↦ Ŷ₁ = y b` by a truncation `Y₁` with `‖Y₁ - Ŷ₁‖ ≤ ϑ`.  The conservation
 properties of the Galerkin step then hold up to `O(ϑ)`; this is the structure of the proofs of
 Thms 4–7 of that paper, and we state them for an abstract Galerkin step.  Two inputs of the paper
-are hypotheses here: the identification `Ŷ₀ = Y₀` (Lemma 1 of arXiv 2104.05247 for augmented
+are hypotheses here: the identification `Ŷ₀ = Y₀` (Lemma 1 of [CerutiKuschLubich2022] for augmented
 bases), which the statements below leave to the user by comparing with `y a`; and the truncation
 bound `‖Y₁ - Ŷ₁‖ ≤ ϑ` itself.  Lemma 1 is proved downstream as `IsRankAdaptiveBUGStep.start_eq`
 (`Integrators/RankAdaptiveBUG.lean`), where the paper-form statements comparing with `Y₀` are
@@ -475,11 +476,11 @@ theorem hasFDerivAt_half_inner_apply_self {A : E →L[ℝ] E} (hA : ∀ u v, ⟪
 
 namespace ODESolution
 
-/-- **Norm conservation up to truncation** (Ceruti–Kusch–Lubich, arXiv 2104.05247, Thm 4, in
+/-- **Norm conservation up to truncation** (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 4], in
 the two-sided form): if the Galerkin step conserves the norm (`⟪F(t, y), y⟫ = 0` along the
 solution, `y a ∈ range P`) and `‖Y₁ - y b‖ ≤ ϑ`, then `|‖Y₁‖ - ‖y a‖| ≤ ϑ`.  The paper's
 statement compares with `Y₀`: it is recovered with `y a = Y₀`, which for the augmented BUG step
-(together with `P (y a) = y a`) is Lemma 1 of arXiv 2104.05247, not proved in this file
+(together with `P (y a) = y a`) is Lemma 1 of [CerutiKuschLubich2022], not proved in this file
 (`IsRankAdaptiveBUGStep.start_eq`; the paper form is `IsRankAdaptiveBUGStep.abs_norm_sub_le` in
 `Integrators/RankAdaptiveBUG.lean`). -/
 theorem truncated_galerkin_norm_sub_le (hP : IsOrthProj P)
@@ -490,12 +491,12 @@ theorem truncated_galerkin_norm_sub_le (hP : IsOrthProj P)
   exact (abs_norm_sub_norm_le _ _).trans htr
 
 /-- **Energy decay up to truncation** for projected gradient flows (Ceruti–Kusch–Lubich,
-arXiv 2104.05247, Thm 5): if `α² ≤ ‖P ∇ℰ(y)‖²` along the Galerkin solution of
+[CerutiKuschLubich2022, Thm. 5]): if `α² ≤ ‖P ∇ℰ(y)‖²` along the Galerkin solution of
 `y' = -P ∇ℰ(y)`, the truncation satisfies `‖Y₁ - y b‖ ≤ ϑ` and `‖∇ℰ‖ ≤ β` on the segment
 `[y b, Y₁]`, then `ℰ(Y₁) ≤ ℰ(y a) - α² (b - a) + β ϑ`.  The paper's statement compares with
 `Y₀`: it is recovered with `y a = Y₀`, which for the augmented BUG step is Lemma 1 of
-arXiv 2104.05247, not proved in this file (`IsRankAdaptiveBUGStep.start_eq`; the paper form is
-`IsRankAdaptiveBUGStep.energy_le` in `Integrators/RankAdaptiveBUG.lean`). -/
+[CerutiKuschLubich2022], not proved in this file (`IsRankAdaptiveBUGStep.start_eq`; the paper form
+is `IsRankAdaptiveBUGStep.energy_le` in `Integrators/RankAdaptiveBUG.lean`). -/
 theorem truncated_energy_le_gradFlow (hP : IsOrthProj P)
     (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x) (hy : ODESolution (fun _ x => -P (g x)) y a b)
     (hab : a ≤ b) {α : ℝ} (hα : ∀ t ∈ Ico a b, α ^ 2 ≤ ‖P (g (y t))‖ ^ 2) {Y₁ : E} {ϑ β : ℝ}
@@ -509,11 +510,11 @@ theorem truncated_energy_le_gradFlow (hP : IsOrthProj P)
   linarith
 
 /-- **Energy conservation up to truncation** for Hamiltonian-type fields `F = J ∇ℰ`
-(Ceruti–Kusch–Lubich, arXiv 2104.05247, Thms 6–7): with `J` skew and commuting with `P`,
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022], Thms 6–7): with `J` skew and commuting with `P`,
 `‖Y₁ - y b‖ ≤ ϑ` and `‖∇ℰ‖ ≤ β` on `[y b, Y₁]`, one has `|ℰ(Y₁) - ℰ(y a)| ≤ β ϑ`.  The paper's
 statement compares with `Y₀`: it is recovered with `y a = Y₀`, which for the augmented BUG step
-is Lemma 1 of arXiv 2104.05247, not proved in this file (`IsRankAdaptiveBUGStep.start_eq`; the
-paper form of Thm 7 is `IsRankAdaptiveBUGStep.hamiltonian_energy_sub_le` in
+is Lemma 1 of [CerutiKuschLubich2022], not proved in this file (`IsRankAdaptiveBUGStep.start_eq`;
+the paper form of Thm 7 is `IsRankAdaptiveBUGStep.hamiltonian_energy_sub_le` in
 `Integrators/RankAdaptiveBUG.lean`).
 
 For Thm 7 the constant matches the paper (`β` is the maximum of `‖∇ℰ‖` over the segment).  For
@@ -532,14 +533,14 @@ theorem truncated_energy_sub_le_of_skew (hP : IsOrthProj P)
   exact (abs_energy_sub_le hℰ hβ).trans (mul_le_mul_of_nonneg_left htr hβ0)
 
 /-- **Quadratic energy conservation up to truncation, with the published constant**
-(Ceruti–Kusch–Lubich, arXiv 2104.05247, Thm 6): let `A` be self-adjoint, `E(x) = ⟪x, A x⟫`,
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 6]): let `A` be self-adjoint, `E(x) = ⟪x, A x⟫`,
 and let the Galerkin step solve `y' = P (J (A y))` with `J` skew and commuting with `P` (the
 Schrödinger equation `i Y' = H[Y]` on `ℂ^{m×n}` viewed as a real space, with `A = H`, `J = -i`,
 `P` the complex-linear projector `Z ↦ Û Û* Z V̂ V̂*`).  If `‖Y₁ - y b‖ ≤ ϑ`, then
 `|E(Y₁) - E(y a)| ≤ γ ϑ` with `γ = ‖A Y₁ + A (y b)‖`, the paper's `‖H[Y₁] + H[Ŷ₁]‖`.  The proof
 is the paper's: `E` is conserved by the Galerkin step and
 `E(Y₁) - E(Ŷ₁) = ⟪A Y₁ + A Ŷ₁, Y₁ - Ŷ₁⟫`.  The bound is stated two-sided.  The paper's
-comparison with `Y₀` is recovered with `y a = Y₀`, Lemma 1 of arXiv 2104.05247, not proved in
+comparison with `Y₀` is recovered with `y a = Y₀`, Lemma 1 of [CerutiKuschLubich2022], not proved in
 this file (`IsRankAdaptiveBUGStep.start_eq`; the paper form is
 `IsRankAdaptiveBUGStep.schrodinger_energy_sub_le` in `Integrators/RankAdaptiveBUG.lean`). -/
 theorem truncated_quadratic_energy_sub_le_of_skew (hP : IsOrthProj P) {A J : E →L[ℝ] E}
@@ -569,11 +570,11 @@ variable {P : E →L[ℝ] E}
 `x ↦ P (P x + h F(t, P x))` does not increase the norm.
 
 This is the form `uⁿ⁺¹ = P_{n+1} G(P_{n+1} uⁿ)` of the unconventional (BUG) integrator applied to
-an explicit full step `G` in Kusch–Einkemmer–Ceruti, arXiv 2107.07282, Thm 4, and it applies to
-Thm 3 of that paper substep by substep (each of the K-, S- and L-substeps is a projection of a
-nonexpansive full step; for the S-step with the sign-reversed full step).  It does **not** cover
+an explicit full step `G` in Kusch–Einkemmer–Ceruti, [KuschEinkemmerCeruti2023, Thm. 4], and it
+applies to Thm 3 of that paper substep by substep (each of the K-, S- and L-substeps is a projection
+of a nonexpansive full step; for the S-step with the sign-reversed full step). It does **not** cover
 Thm 2 (projector splitting with the original S-step), whose S-step amplifies and whose stability
-comes only from the product of the three substep factors under a stricter CFL condition.  The
+comes only from the product of the three substep factors under a stricter CFL condition. The
 `L²`-stability of the full explicit step (CFL condition and Fourier analysis, the substantive part
 of Thm 4) is the hypothesis `hF`, not a result of this file. -/
 theorem galerkin_euler_norm_le (hP : IsOrthProj P) {F : ℝ → E → E} {t h : ℝ}
@@ -593,7 +594,7 @@ lemma projEuler_mem_range (hP : IsOrthProj P) {F : ℝ → E → E} {h t : ℝ} 
 
 /-- **Stability of the projected forward Euler step** on `range P`: under the hypothesis that
 the full forward Euler step is norm-nonincreasing on `range P`, so is the projected step.  See
-`galerkin_euler_norm_le` for the relation to arXiv 2107.07282: Thm 4 (and Thm 3 substep by
+`galerkin_euler_norm_le` for the relation to [KuschEinkemmerCeruti2023]: Thm 4 (and Thm 3 substep by
 substep), not Thm 2; the full-step `L²`-stability (CFL condition) is the hypothesis `hF`. -/
 theorem projEuler_norm_le (hP : IsOrthProj P) {F : ℝ → E → E} {t h : ℝ}
     (hF : ∀ x, P x = x → ‖x + h • F t x‖ ≤ ‖x‖) {x : E} (hx : P x = x) :
@@ -604,7 +605,8 @@ theorem projEuler_norm_le (hP : IsOrthProj P) {F : ℝ → E → E} {t h : ℝ}
 /-- **Discrete norm stability**: if every full forward Euler step is norm-nonincreasing on
 `range P` and `x₀ ∈ range P`, all iterates of the projected forward Euler method stay in
 `range P` and satisfy `‖xₙ‖ ≤ ‖x₀‖`.  (The projector is fixed here; for the BUG integrator of
-arXiv 2107.07282, Thm 4, with step-dependent projectors, iterate `galerkin_euler_norm_le`.) -/
+[KuschEinkemmerCeruti2023, Thm. 4], with step-dependent projectors, iterate
+`galerkin_euler_norm_le`.) -/
 theorem projEulerIter_norm_le (hP : IsOrthProj P) {F : ℝ → E → E} {h t₀ : ℝ}
     (hF : ∀ t x, P x = x → ‖x + h • F t x‖ ≤ ‖x‖) {x₀ : E} (hx₀ : P x₀ = x₀) (n : ℕ) :
     P (projEulerIter P F h t₀ x₀ n) = projEulerIter P F h t₀ x₀ n ∧
@@ -618,9 +620,9 @@ theorem projEulerIter_norm_le (hP : IsOrthProj P) {F : ℝ → E → E} {h t₀ 
 /-! ### Discrete balance laws of explicit-Euler Galerkin steps -/
 
 /-- **Discrete balance law of a Galerkin explicit Euler step** (abstract form of the local
-continuity equation of Einkemmer–Ostermann–Scalone, arXiv 2206.09374, Thm 1): for the step
-`x₁ = P (x₀ + h F(t, x₀))`, if the projection is exact on the moments `⟪c, ·⟫` of the old state
-and of the field, `⟪c, P x₀⟫ = ⟪c, x₀⟫` and `⟪c, P F(t, x₀)⟫ = ⟪c, F(t, x₀)⟫`, then
+continuity equation of Einkemmer–Ostermann–Scalone, [EinkemmerOstermannScalone2023, Thm. 1]): for
+the step `x₁ = P (x₀ + h F(t, x₀))`, if the projection is exact on the moments `⟪c, ·⟫` of the old
+state and of the field, `⟪c, P x₀⟫ = ⟪c, x₀⟫` and `⟪c, P F(t, x₀)⟫ = ⟪c, F(t, x₀)⟫`, then
 `⟪c, x₁⟫ = ⟪c, x₀⟫ + h ⟪c, F(t, x₀)⟫`, i.e. `(⟪c, x₁⟫ - ⟪c, x₀⟫) / h = ⟪c, F(t, x₀)⟫`.
 
 In the paper `P = P_x ⊗ P_v` is the projection onto the augmented bases, the first hypothesis

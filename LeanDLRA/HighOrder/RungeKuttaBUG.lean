@@ -10,9 +10,9 @@ import LeanDLRA.Integrators.Exactness
 
 High-order basis-update & Galerkin (BUG) integrators replace the exact Galerkin S-flow by an
 explicit Runge–Kutta (RK) method whose stages live on (augmented) low-rank bases (Nobile–Riffaud,
-arXiv 2502.07040; BUG-p, arXiv 2608.27749).  Everything is abstract: `E` is a real inner product
-space and bases are orthogonal projectors (`IsOrthProj`).  All declarations live in the namespace
-`LeanDLRA.RungeKuttaBUG`.
+[NobileRiffaud2025]; BUG-p, [HauckKuschSchotthofer2026]). Everything is abstract: `E` is a real
+inner product space and bases are orthogonal projectors (`IsOrthProj`). All declarations live in the
+namespace `LeanDLRA.RungeKuttaBUG`.
 
 ## Main results
 
@@ -22,18 +22,18 @@ space and bases are orthogonal projectors (`IsOrthProj`).  All declarations live
   `y` and the stage derivatives of the full RK step that enter with nonzero weight, the Galerkin RK
   step **equals** the full RK step (stages and result). Strong induction over the stages; the
   one-stage case is `projEuler_eq`.
-* `rk_stage_mem`, `rk_result_mem` (arXiv 2608.27749, Lemma 1 and property P2): every full RK stage
-  and the result lie in the range of any projector fixing `y` and the relevant stage derivatives;
-  `galerkinRK_stage_mem_of_nested`: with nested stage bases all Galerkin stages lie in the later
-  and the final bases.  Not done: OP-HO-15 (b), the explicit check that the low-storage SSPRK
-  final combination of 2608.27749 lies in `span(U_n, U⁽⁴⁾, F⁽⁴⁾V⁽⁴⁾, U⁽⁹⁾, F⁽⁹⁾V⁽⁹⁾)` (a finite
-  Shu–Osher-to-Butcher computation for that particular tableau); `rk_result_mem` reduces it to
-  the span membership of `y` and the weighted stage derivatives.
+* `rk_stage_mem`, `rk_result_mem` ([HauckKuschSchotthofer2026, Lemma 1] and property P2): every full
+  RK stage and the result lie in the range of any projector fixing `y` and the relevant stage
+  derivatives; `galerkinRK_stage_mem_of_nested`: with nested stage bases all Galerkin stages lie in
+  the later and the final bases. Not done: OP-HO-15 (b), the explicit check that the low-storage
+  SSPRK final combination of 2608.27749 lies in `span(U_n, U⁽⁴⁾, F⁽⁴⁾V⁽⁴⁾, U⁽⁹⁾, F⁽⁹⁾V⁽⁹⁾)` (a
+  finite Shu–Osher-to-Butcher computation for that particular tableau); `rk_result_mem` reduces it
+  to the span membership of `y` and the weighted stage derivatives.
 * `IsShuOsherStep`, `galerkinShuOsher_eq` (OP-HO-15 (a) in Shu–Osher form): a Galerkin Shu–Osher
   step whose stage projectors fix the full stages and stage derivatives entering with nonzero weight
   equals the full Shu–Osher step.
 
-### Robust order `p` of RK-BUG (arXiv 2502.07040, Lemma 4 and Thms 1–2; OP-RA-12)
+### Robust order `p` of RK-BUG ([NobileRiffaud2025, Lemma 4] and Thms 1–2; OP-RA-12)
 * `IsRKBUGStep`: RK-BUG step with normal components `≤ ε` and stage/final truncations `≤ h γ`.
 * `IsRKBUGStep.norm_sub_rk_le` / `IsRKBUGStep.sub_rk_le`: one RK-BUG step
   deviates from the full RK step by `≤ C h (ε + γ)`, with the explicit constant
@@ -45,13 +45,13 @@ space and bases are orthogonal projectors (`IsOrthProj`).  All declarations live
   `p` is kept: `C (δ + ε + (α + K) h^p)`.  For OP-RA-12 (ii) (untruncated constructor) take
   `γ = 0`: the hypothesis `normalR` of `IsRKBUGStep` is then exactly the normal-component bound
   at every stage basis (rank up to `2^{s-1} r`), which is recorded as a hypothesis, not proved.
-* `bugP_local_error` (arXiv 2608.27749, P1–P2 and Thm 1): interior capture `ρ`, endpoint capture
-  `θ` and an S-solver of endpoint accuracy `η` give local error `(e^{L h} - 1) ρ + θ + η`;
+* `bugP_local_error` ([HauckKuschSchotthofer2026], P1–P2 and Thm 1): interior capture `ρ`, endpoint
+  capture `θ` and an S-solver of endpoint accuracy `η` give local error `(e^{L h} - 1) ρ + θ + η`;
   `bugP_global_error`: the robust global bound `e^{LT}(δ + T(L e^{LH} ρ + θ' + η'))`.
 * `bugP_local_error_of_le` (OP-HO-12 (c)): extra augmentation of the basis (conservative RK-BUG,
   `X̄ ⊇ X̂`) only decreases the capture errors, so the bounds hold verbatim.
 
-### Relaxed exactness (arXiv 2608.17157, Thms 4.1, 4.3, 5.1)
+### Relaxed exactness ([ZhangHu2026b], Thms 4.1, 4.3, 5.1)
 * `relaxed_exactness`: `Y₁ = P X`, `P (M X) = M X`, `M Y⋆ = Y⋆`, `‖M‖ ≤ Λ` give
   `‖Y₁ - Y⋆‖ ≤ (1 + Λ)‖X - Y⋆‖` (for the reduced K–L step: `P = U₁U₁ᵀ`, `X = Y₀ + ΔA`,
   `M Z = Z V₀ Q`).
@@ -117,7 +117,7 @@ lemma proj_comb_eq {s : ℕ} {R : E →L[ℝ] E} {y : E} (hy : R y = y) {w : Fin
   · simp [hw]
   · rw [map_smul, hv j hw]
 
-/-- **Galerkin–Runge–Kutta exactness** (OP-HO-15 (a); arXiv 2512.15703, arXiv 2608.27749).
+/-- **Galerkin–Runge–Kutta exactness** (OP-HO-15 (a); [YeYang2025], [HauckKuschSchotthofer2026]).
 For an explicit tableau, if the stage and final projectors fix `y` and every stage derivative of
 the full Runge–Kutta step that enters with a nonzero weight, the Galerkin Runge–Kutta step
 coincides with the full one (stages and result). The one-stage case is `projEuler_eq`. -/
@@ -174,7 +174,7 @@ lemma norm_proj_comb_sub_le {s : ℕ} {R : E →L[ℝ] E} {y : E} (hy : R y = y)
     rw [hsplit]
     exact (norm_sub_le _ _).trans (add_le_add le_rfl (hu j hw))
 
-/-- One step of the **Runge–Kutta BUG integrator** (Nobile–Riffaud, arXiv 2502.07040,
+/-- One step of the **Runge–Kutta BUG integrator** (Nobile–Riffaud, [NobileRiffaud2025],
 Algorithm 2) in abstract form: Galerkin Runge–Kutta stages on augmented bases (projectors
 `R i`, `Rf` fixing `y` and capturing the stage derivatives with nonzero weight up to `ε`), each
 stage and the result computed up to a truncation error `h γ`. -/
@@ -252,7 +252,7 @@ lemma sum_abs_mul_le {s : ℕ} {w : Fin s → ℝ} {D : Fin s → ℝ} {X M : �
     _ = (∑ j, |w j|) * X := by rw [Finset.sum_mul]
     _ ≤ M * X := mul_le_mul_of_nonneg_right hw hX
 
-/-- **RK-BUG versus full Runge–Kutta, explicit constant** (arXiv 2502.07040, Lemma 4 and (39) in
+/-- **RK-BUG versus full Runge–Kutta, explicit constant** ([NobileRiffaud2025, Lemma 4] and (39) in
 the proof of Thm 1). For an explicit tableau and `0 ≤ h ≤ H`, one RK-BUG step deviates from the
 full Runge–Kutta step from the same starting value by `≤ rkConst a b L H · h (ε + γ)`, where
 `rkConst a b L H = (1 + H⁺ L⁺ M κ^s)(M + 1)`, `M = ∑|aᵢⱼ| + ∑|bᵢ|`, `κ = 1 + H⁺ L⁺ M`
@@ -339,7 +339,7 @@ theorem IsRKBUGStep.norm_sub_rk_le {s : ℕ} {a : Fin s → Fin s → ℝ} {b c 
         mul_le_mul_of_nonneg_left heM hA
     _ = rkConst a b L H * h * (ε + γ) := by rw [rkConst, ← hMdef, ← hκdef]; ring
 
-/-- **RK-BUG versus full Runge–Kutta** in robust `∃ C` form (arXiv 2502.07040, Lemma 4): the
+/-- **RK-BUG versus full Runge–Kutta** in robust `∃ C` form ([NobileRiffaud2025, Lemma 4]): the
 constant is `rkConst a b L H` and depends only on the tableau, `L` and `H` (it is chosen before
 the space `E`). -/
 theorem IsRKBUGStep.sub_rk_le {s : ℕ} (a : Fin s → Fin s → ℝ) (b c : Fin s → ℝ)
@@ -356,7 +356,7 @@ theorem IsRKBUGStep.sub_rk_le {s : ℕ} (a : Fin s → Fin s → ℝ) (b c : Fin
 noncomputable def rkGlobalConst {s : ℕ} (a : Fin s → Fin s → ℝ) (b : Fin s → ℝ) (L T H : ℝ) : ℝ :=
   Real.exp (L * T) * (1 + max T 0 * (rkConst a b L H + 1))
 
-/-- **Robust order `p` of the RK-BUG integrator, explicit constant** (arXiv 2502.07040, Thm 2;
+/-- **Robust order `p` of the RK-BUG integrator, explicit constant** ([NobileRiffaud2025, Thm. 2];
 reduces OP-HO-21 (i) to the truncation hypothesis: the bound `h γ ≲ h (ε + h^p)` on the stage and
 final truncations is assumed, not derived from Eckart–Young here). If the underlying explicit
 Runge–Kutta method has local error `≤ K h^{p+1}` along
@@ -408,7 +408,7 @@ theorem rkBUG_global_error_le {s : ℕ} {a : Fin s → Fin s → ℝ} {b c : Fin
     _ = rkGlobalConst a b L T H * (‖Y 0 - A t₀‖ + ε + γ + K * h ^ p) := by
         rw [rkGlobalConst, ← hC₁]; ring
 
-/-- **Robust order `p` of the RK-BUG integrator** in robust `∃ C` form (arXiv 2502.07040, Thm 2;
+/-- **Robust order `p` of the RK-BUG integrator** in robust `∃ C` form ([NobileRiffaud2025, Thm. 2];
 OP-HO-21 (i) modulo the truncation hypothesis, see `rkBUG_global_error_le`); `C = rkGlobalConst a b
 L T H` depends only on the tableau, `L`, `T`, `H`. -/
 theorem rkBUG_global_error {s : ℕ} (a : Fin s → Fin s → ℝ) (b c : Fin s → ℝ)
@@ -429,7 +429,7 @@ theorem rkBUG_global_error {s : ℕ} (a : Fin s → Fin s → ℝ) (b c : Fin s 
     rkBUG_global_error_le ha hF hL hh hH hε hγ hK hA hΦ hΦ₀ hstep⟩
 
 /-- **Rank-adaptive RK-BUG with step tolerance `α h^{p+1}` keeps order `p`** (OP-RA-12 (i);
-arXiv 2502.07040, Sec. 3, tolerance strategy). If every stage and the final truncation of each
+[NobileRiffaud2025, Sec. 3], tolerance strategy). If every stage and the final truncation of each
 step are accurate to `α h^{p+1}` (i.e. `γ = α h^p` in `IsRKBUGStep`; the bases `R`, `Rf` and hence
 the ranks may change from step to step), then
 `‖Y n - A tₙ‖ ≤ C (‖Y 0 - A t₀‖ + ε + (α + K) h^p)`.  The relative `β`-term of the tolerance and
@@ -472,10 +472,10 @@ example : IsRKBUGStep (E := ℝ) (s := 2) (fun _ x => x + 1) ![![0, 0], ![1, 0]]
     simp [Fin.sum_univ_two]
     norm_num
 
-/-! ### Stage-span lemmas (arXiv 2608.27749, Lemma 1) -/
+/-! ### Stage-span lemmas ([HauckKuschSchotthofer2026, Lemma 1]) -/
 
-/-- **Stage-span of the full Runge–Kutta step** (arXiv 2608.27749, Lemma 1): the `i`-th stage
-`Zᵢ = y + h ∑ⱼ aᵢⱼ F(Zⱼ)` lies in the range of every linear projector that fixes `y` and the
+/-- **Stage-span of the full Runge–Kutta step** ([HauckKuschSchotthofer2026, Lemma 1]): the `i`-th
+stage `Zᵢ = y + h ∑ⱼ aᵢⱼ F(Zⱼ)` lies in the range of every linear projector that fixes `y` and the
 stage derivatives `F(Zⱼ)` entering it with nonzero weight. -/
 theorem rk_stage_mem {s : ℕ} {F : ℝ → E → E} {a : Fin s → Fin s → ℝ} {b c : Fin s → ℝ}
     {t h : ℝ} {y z₁ : E} {Z : Fin s → E}
@@ -488,7 +488,7 @@ theorem rk_stage_mem {s : ℕ} {F : ℝ → E → E} {a : Fin s → Fin s → �
 
 /-- **Result-span of the full Runge–Kutta step**: the result `z₁ = y + h ∑ᵢ bᵢ F(Zᵢ)` lies in
 the range of every linear projector fixing `y` and the stage derivatives with `bᵢ ≠ 0`. This is
-the admissibility property P2 of arXiv 2608.27749 (Sec. 3.1) for a single final basis. -/
+the admissibility property P2 of [HauckKuschSchotthofer2026] (Sec. 3.1) for a single final basis. -/
 theorem rk_result_mem {s : ℕ} {F : ℝ → E → E} {a : Fin s → Fin s → ℝ} {b c : Fin s → ℝ}
     {t h : ℝ} {y z₁ : E} {Z : Fin s → E}
     (hZ : IsGalerkinRKStep F a b c (fun _ => 1) 1 t h y Z z₁) {P : E →L[ℝ] E} (hy : P y = y)
@@ -498,7 +498,7 @@ theorem rk_result_mem {s : ℕ} {F : ℝ → E → E} {a : Fin s → Fin s → �
   rw [hz]
   exact proj_comb_eq hy hF h
 
-/-- **Nested Galerkin stages** (arXiv 2608.27749, Lemma 1, BUG-p bases): if the stage
+/-- **Nested Galerkin stages** ([HauckKuschSchotthofer2026, Lemma 1], BUG-p bases): if the stage
 projectors are nested (`R k (R i x) = R i x` for `i ≤ k`, i.e. `range R i ⊆ range R k`) and the
 final projector contains all of them, every Galerkin stage `Yᵢ` lies in `range R k` for `k ≥ i`
 and in `range Rf`. -/
@@ -548,7 +548,7 @@ theorem shuOsher_norm_le {s : ℕ} {u : ℕ → E} {α : ℕ → ℕ → ℝ} {T
   exact fun i hi => key i i le_rfl hi
 
 /-- **SSP Runge–Kutta low-rank schemes are `L²`-stable under the forward-Euler CFL condition**
-(OP-HO-09 (a); arXiv 2209.00550 Sec. 7, arXiv 2602.12337 Sec. 6, arXiv 2609.02721 Sec. 6).
+(OP-HO-09 (a); [HauckSchnake2023] Sec. 7, [LiEtAl2026a] Sec. 6, [UschmajewZeiser2026] Sec. 6).
 Shu–Osher stages `u (i+1) = ∑_{k ≤ i} αᵢₖ Θᵢₖ(Pᵢₖ (Pᵢₖ u k + τᵢₖ F(Pᵢₖ u k)))` with Euler step
 sizes `τᵢₖ = h βᵢₖ / αᵢₖ`, Galerkin projectors `Pᵢₖ` (arbitrary, step- and stage-dependent) and
 norm-nonincreasing truncations/corrections `Θᵢₖ`.  If the full forward-Euler step
@@ -669,7 +669,7 @@ lemma eulerLin_iter {B : E →L[ℝ] E} {h : ℝ} {P : E →L[ℝ] E}
   refine ⟨?_, hstab x hx⟩
   simp only [eulerLin, map_add, map_smul, hx, hinv x hx]
 
-/-- **RK4 inherits forward-Euler contractivity** (OP-SB-06, linear case; arXiv 2508.04484,
+/-- **RK4 inherits forward-Euler contractivity** (OP-SB-06, linear case; [StammerEtAl2026],
 Sec. 3.3.3).  If the linear operator `B` maps `range P` into itself and the forward-Euler map
 `x ↦ x + h B x` is norm-nonincreasing on `range P`, then so is the classical RK4 step. -/
 theorem rk4Lin_norm_le {B : E →L[ℝ] E} {h : ℝ} {P : E →L[ℝ] E}
@@ -685,7 +685,7 @@ theorem rk4Lin_norm_le {B : E →L[ℝ] E} {h : ℝ} {P : E →L[ℝ] E}
   norm_num
   linarith
 
-/-- **Galerkin RK4 substeps are norm-nonincreasing** (OP-SB-06; arXiv 2508.04484 uses RK4 in the
+/-- **Galerkin RK4 substeps are norm-nonincreasing** (OP-SB-06; [StammerEtAl2026] uses RK4 in the
 K-, L- and S-substeps of BUG).  For a linear field `A` and an orthogonal projector `P` (the K-,
 L- or S-step projector), if the full forward-Euler step satisfies `‖x + h A x‖ ≤ ‖x‖` on
 `range P`, then the RK4 step for the Galerkin operator `P A P` is norm-nonincreasing on
@@ -703,7 +703,7 @@ theorem galerkinRK4_norm_le {A P : E →L[ℝ] E} (hP : IsOrthProj P) {h : ℝ}
     rw [this]
     exact (hP.norm_le _).trans (hEuler y hy)
 
-/-- **RK4-BUG step is norm-nonincreasing up to truncation** (OP-SB-06; arXiv 2508.04484).  The
+/-- **RK4-BUG step is norm-nonincreasing up to truncation** (OP-SB-06; [StammerEtAl2026]).  The
 S-substep starts from `P y` (`P` the augmented-basis projector), applies RK4 to the Galerkin
 operator `P A P`, and a norm-nonincreasing truncation `Θ` follows; if the full forward-Euler step
 is norm-nonincreasing on `range P`, then `‖Θ(RK4(P y))‖ ≤ ‖y‖`. -/
@@ -719,9 +719,10 @@ example : rk4Lin (-1 : ℝ →L[ℝ] ℝ) 1 1 = 3 / 8 := by
   simp [rk4Lin]
   norm_num
 
-/-! ### BUG-p local and global error with interior capture (arXiv 2608.27749, 2502.07040) -/
+/-! ### BUG-p local and global error with interior capture ([HauckKuschSchotthofer2026], 2502.07040)
+-/
 
-/-- **BUG-p local error** (arXiv 2608.27749, Sec. 3.1 properties P1–P2 and Thm 1; arXiv
+/-- **BUG-p local error** ([HauckKuschSchotthofer2026, Sec. 3.1] properties P1–P2 and Thm 1; arXiv
 2502.07040, Thm 1).  Let the Galerkin projector `R` fix the starting value `y₀` (P1), capture the
 exact solution `A` (`A t₀ = y₀`) to `ρ` on the step and to `θ` at the endpoint, and let the
 S-solver (e.g. an `s`-stage Runge–Kutta method) reproduce the Galerkin flow
@@ -781,13 +782,13 @@ theorem bugP_local_error_of_le {F : ℝ → E → E} {L ρ θ η h t₀ : ℝ} {
     (fun t ht => (norm_sub_apply_le_of_le hPe hle _).trans (hρ t ht))
     ((norm_sub_apply_le_of_le hPe hle _).trans hθ) hη
 
-/-- **BUG-p global error** (arXiv 2608.27749, Thm 2; arXiv 2502.07040, Thm 2).  In every step
-the Galerkin projector `R n` fixes `Y n`, captures the local exact flow `Φ n` (started at `Y n`)
-to `ρ` on the step and to `h θ'` at the endpoint, and the S-solver reproduces the Galerkin flow
-`YS n` up to `h η'`.  Then for `n h ≤ T`, `h ≤ H`:
-`‖Y n - A tₙ‖ ≤ e^{L T} (‖Y 0 - A t₀‖ + T (L e^{L H} ρ + θ' + η'))`.
-With `ρ = O(h^p)`, `θ' = O(ε + h^p)` and an order-`p` S-solver (`η' = O(h^p)`) this is the
-robust bound `O(δ + ε + h^p)`. -/
+/-- **BUG-p global error** ([HauckKuschSchotthofer2026, Thm. 2]; [NobileRiffaud2025, Thm. 2]). In
+every step the Galerkin projector `R n` fixes `Y n`, captures the local exact flow `Φ n` (started at
+`Y n`) to `ρ` on the step and to `h θ'` at the endpoint, and the S-solver reproduces the Galerkin
+flow `YS n` up to `h η'`. Then for `n h ≤ T`, `h ≤ H`:
+`‖Y n - A tₙ‖ ≤ e^{L T} (‖Y 0 - A t₀‖ + T (L e^{L H} ρ + θ' + η'))`. With `ρ = O(h^p)`,
+`θ' = O(ε + h^p)` and an order-`p` S-solver (`η' = O(h^p)`) this is the robust bound
+`O(δ + ε + h^p)`. -/
 theorem bugP_global_error {F : ℝ → E → E} {L ρ θ' η' t₀ h H T : ℝ} {N : ℕ} {A : ℝ → E}
     {Y : ℕ → E} {Φ YS : ℕ → ℝ → E} {R : ℕ → E →L[ℝ] E}
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hh : 0 ≤ h) (hH : h ≤ H) (hρ0 : 0 ≤ ρ)
@@ -823,9 +824,9 @@ theorem bugP_global_error {F : ℝ → E → E} {L ρ θ' η' t₀ h H T : ℝ} 
         gcongr
     _ = h * (L * Real.exp (L * H) * ρ + θ' + η') := by ring
 
-/-! ### Relaxed exactness of the reduced K–L step (arXiv 2608.17157) -/
+/-! ### Relaxed exactness of the reduced K–L step ([ZhangHu2026b]) -/
 
-/-- **Relaxed exactness** (arXiv 2608.17157, Thm 4.1, abstract form).  Let the step return
+/-- **Relaxed exactness** ([ZhangHu2026b, Thm. 4.1], abstract form).  Let the step return
 `Y₁ = P X` with an orthogonal projector `P` (`P = U₁U₁ᵀ`, `X = Y₀ + ΔA`: the reduced K–L step
 `Y₁ = U₁U₁ᵀ (Y₀ + ΔA)`, cf. `ksl_eq_proj`) such that `P (M X) = M X` (the K-step capture
 `U₁U₁ᵀ (Y₀ + ΔA) V₀ = (Y₀ + ΔA) V₀`, for `M Z = Z V₀ Q`), and let `Y⋆` satisfy the row-space
@@ -846,7 +847,7 @@ theorem relaxed_exactness {P M : E →L[ℝ] E} (hP : IsOrthProj P) {Λ : ℝ}
         exact hM _
     _ = (1 + Λ) * ‖X - Ys‖ := by ring
 
-/-- **Global error from the increment error** (arXiv 2608.17157, Thms 4.3 and 5.1, abstract
+/-- **Global error from the increment error** ([ZhangHu2026b], Thms 4.3 and 5.1, abstract
 form).  In step `n` the method returns `Y (n+1) = P n (X n)` (`X n = Y n + ΔAₙ`) with the
 hypotheses of `relaxed_exactness` for a comparison point `Ys n` that is `h c ε`-close to the
 local exact flow (the rank-`r` comparison curve of Lemma 4.2, with `‖Q‖₂ ≤ Λ`; its existence is
@@ -906,7 +907,7 @@ lemma galerkinEulerPow_mem_norm_le {P A : E →L[ℝ] E} (hP : IsOrthProj P) {h 
     exact ⟨hP.idem _, (hP.norm_le _).trans ((hFE z h1).trans h2)⟩
 
 /-- **Absolutely monotonic linear Runge–Kutta substeps are norm-nonincreasing** (OP-SB-06,
-general linear part; arXiv 2508.04484).  If the stability polynomial is written as
+general linear part; [StammerEtAl2026]).  If the stability polynomial is written as
 `R(z) = ∑ₖ cₖ (1 + z)^k` with `cₖ ≥ 0`, `∑ cₖ = 1`, and the full forward-Euler step is
 norm-nonincreasing on `range P`, then the Galerkin Runge–Kutta step `R(h P A)` is
 norm-nonincreasing on `range P`.  This proves (with a weaker hypothesis: contractivity only on
@@ -966,7 +967,7 @@ theorem galerkin_sspRK2_norm_le {P : E →L[ℝ] E} (hP : IsOrthProj P) {F : E �
     _ ≤ ‖x‖ := by linarith
 
 /-- **SSP low-rank schemes with a projection after each stage are norm-stable** (OP-HO-09 (a),
-second formulation; arXiv 2209.00550 Sec. 7, 2602.12337 Sec. 6, 2609.02721 Sec. 6).  Shu–Osher
+second formulation; [HauckSchnake2023] Sec. 7, 2602.12337 Sec. 6, 2609.02721 Sec. 6).  Shu–Osher
 stages `uᵢ = Tᵢ(Pᵢ ∑ₖ (αᵢₖ uₖ + βᵢₖ τ F uₖ))` (explicit, `α, β ≥ 0`, `∑ₖ αᵢₖ = 1`), orthogonal
 projectors `Pᵢ`, nonexpansive truncations `Tᵢ`, forward-Euler stable for `0 ≤ σ ≤ τ₀` and
 `βᵢₖ τ ≤ αᵢₖ τ₀` (`τ ≤ c_SSP τ₀`): every stage satisfies `‖uᵢ‖ ≤ ‖u₀‖`.  This proves the
@@ -1013,14 +1014,14 @@ theorem sspLowRank_norm_le {s : ℕ} {F : E → E} {τ₀ τ : ℝ} (hτ : 0 ≤
 
 /-- An explicit Runge–Kutta step in **Shu–Osher form** with Galerkin projections: stages
 `u₀ = y`, `uᵢ = Rᵢ (∑ₖ αᵢₖ uₖ + h βᵢₖ F(t + cₖ h, uₖ))` (`Rᵢ = 1`: the full method).  The
-low-storage SSPRK BUG of arXiv 2608.27749 (Sec. 8.2) is of this form with `Rᵢ` the projectors
-onto the augmented bases. -/
+low-storage SSPRK BUG of [HauckKuschSchotthofer2026] (Sec. 8.2) is of this form with `Rᵢ` the
+projectors onto the augmented bases. -/
 def IsShuOsherStep {s : ℕ} (F : ℝ → E → E) (α β : Fin (s + 1) → Fin (s + 1) → ℝ)
     (c : Fin (s + 1) → ℝ) (R : Fin (s + 1) → E →L[ℝ] E) (t h : ℝ) (y : E)
     (u : Fin (s + 1) → E) : Prop :=
   u 0 = y ∧ ∀ i, i ≠ 0 → u i = R i (∑ k, (α i k • u k + (h * β i k) • F (t + c k * h) (u k)))
 
-/-- **Galerkin Shu–Osher exactness** (OP-HO-15 (a), Shu–Osher form; arXiv 2512.15703, arXiv
+/-- **Galerkin Shu–Osher exactness** (OP-HO-15 (a), Shu–Osher form; [YeYang2025], arXiv
 2608.27749 Remark 1).  If every stage projector fixes the full-method stages `vₖ` entering with
 `αᵢₖ ≠ 0` and the stage derivatives `F(t + cₖ h, vₖ)` entering with `βᵢₖ ≠ 0`, the Galerkin
 Shu–Osher step coincides with the full one (all stages, hence the result).  This proves the
@@ -1061,7 +1062,7 @@ theorem galerkinShuOsher_eq {s : ℕ} {F : ℝ → E → E} {α β : Fin (s + 1)
         · rw [hRF i k hb]
   exact funext fun i => key (s + 1) i i.isLt
 
-/-- **Perturbed explicit Runge–Kutta step** (OP-HO-09 (b), per-stage form; arXiv 2209.00550
+/-- **Perturbed explicit Runge–Kutta step** (OP-HO-09 (b), per-stage form; [HauckSchnake2023]
 Sec. 7, 2502.07040 Lemma 4).  If the stages and the result of an explicit Runge–Kutta step are
 computed up to per-stage errors `ηᵢ` and a final error `η₁`, the result deviates from the exact
 step by `≤ η₁ + C h ∑ᵢ ηᵢ` with `C = L⁺ M κ^s` (`M = ∑|aᵢⱼ| + ∑|bᵢ|`, `κ = 1 + H⁺ L⁺ M`),

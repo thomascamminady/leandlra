@@ -15,19 +15,19 @@ does not depend on `Y`.  The remarkable *exactness property* states that the pro
 BUG integrator started from `Y₀ = A(t₀)` reproduce `A(t₁)` exactly after one step:
 
 * Lubich–Oseledets, *A projector-splitting integrator for dynamical low-rank approximation*,
-  arXiv:1301.1058, **Theorem 4.1** (KSL);
+  [LubichOseledets2014], **Theorem 4.1** (KSL);
 * Ceruti–Lubich, *An unconventional robust integrator for dynamical low-rank approximation*,
-  arXiv:2010.02022, **Lemma 1**, **Theorem 1** (restatement of LO 4.1) and **Theorem 3** (BUG);
+  [CerutiLubich2022], **Lemma 1**, **Theorem 1** (restatement of LO 4.1) and **Theorem 3** (BUG);
 * Ceruti–Kusch–Lubich, *A rank-adaptive robust integrator for dynamical low-rank approximation*,
-  arXiv:2104.05247, **Theorem 1** (augmented BUG, before truncation);
+  [CerutiKuschLubich2022], **Theorem 1** (augmented BUG, before truncation);
 * Ceruti–Kusch–Lubich, *A parallel rank-adaptive integrator for dynamical low-rank
-  approximation*, arXiv:2304.05660, §3: the parallel BUG integrator does **not** have the
+  approximation*, [CerutiKuschLubich2024, §3]: the parallel BUG integrator does **not** have the
   exactness property.  We prove the exact defect formula
   `Ŷ₁ = A₁ - (I - U₀U₀ᵀ)(A₁ - A₀)(I - V₀V₀ᵀ)` for the *untruncated* parallel update, so that
   this update is exact iff the doubly-normal part of the increment vanishes, and we give a
   concrete rank-one example where the untruncated update is not exact (the final truncation
   step of the integrator is not formalized).
-* Ceruti–Lubich, arXiv:2010.02022, **Theorem 6** (Tucker BUG): only the Galerkin core-step
+* Ceruti–Lubich, [CerutiLubich2022], **Theorem 6** (Tucker BUG): only the Galerkin core-step
   part, for `d` abstract mode projectors (`tucker_exact_abstract`); the matricization layer is
   not formalized, see below.
 
@@ -197,7 +197,7 @@ theorem galerkin_exact {F : ℝ → E → E} {A : ℝ → E} {t₀ t₁ : ℝ} (
   rw [galerkin_eq_add hA Pg (fun _ _ => rfl) hy t₁ ⟨ht, le_rfl⟩, h0, map_sub, h1, hY₀]
   abel
 
-/-- **Abstract BUG exactness** (Ceruti–Lubich, arXiv:2010.02022, Thm 3, abstract form).
+/-- **Abstract BUG exactness** (Ceruti–Lubich, [CerutiLubich2022, Thm. 3], abstract form).
 The S-step `y' = P₁ Q₁ F(t, y)`, `y(t₀) = P₁ Q₁ A(t₀)`, with `F(t,Y) = Ȧ(t)` returns `A(t₁)` as
 soon as the new left and right projectors capture `A(t₁)`.  (For matrices the capture
 hypotheses are provided by `left_capture` and `right_capture`.) -/
@@ -207,7 +207,7 @@ theorem bug_exact_abstract {F : ℝ → E → E} {A : ℝ → E} {t₀ t₁ : �
     (hP₁ : P₁ (A t₁) = A t₁) (hQ₁ : Q₁ (A t₁) = A t₁) : y t₁ = A t₁ :=
   galerkin_exact (Pg := P₁ * Q₁) ht hA hy h0 rfl (by simp [hQ₁, hP₁])
 
-/-- **Abstract augmented-BUG exactness** (Ceruti–Kusch–Lubich, arXiv:2104.05247, Thm 1,
+/-- **Abstract augmented-BUG exactness** (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 1],
 abstract form, before truncation).  The augmented projectors `P̂`, `Q̂` fix the starting value
 `Y₀ = A(t₀)`, the S-step starts at `Y₀` itself, and if `P̂`, `Q̂` capture `A(t₁)` the step is
 exact. -/
@@ -219,7 +219,7 @@ theorem augBug_exact_abstract {F : ℝ → E → E} {A : ℝ → E} {t₀ t₁ :
   galerkin_exact (Pg := P * Q) (Y₀ := A t₀) ht hA hy (by simp [h0, hQ₀, hP₀]) rfl
     (by simp [hQ₁, hP₁])
 
-/-- **Abstract KSL exactness** (Lubich–Oseledets, arXiv:1301.1058, Thm 4.1, abstract form).
+/-- **Abstract KSL exactness** (Lubich–Oseledets, [LubichOseledets2014, Thm. 4.1], abstract form).
 K-step `YK' = Q₀ F`, `YK(t₀) = A(t₀)`; the new left projector captures `YK(t₁)`; backward
 S-step `YS' = -P₁ Q₀ F`, `YS(t₀) = YK(t₁)`; L-step `YL' = P₁ F`, `YL(t₀) = YS(t₁)`.
 With `F(t,Y) = Ȧ(t)`, `Q₀ A(t₀) = A(t₀)` and `P₁ A(t₁) = A(t₁)` the result is exact. -/
@@ -244,12 +244,12 @@ theorem ksl_exact_abstract {F : ℝ → E → E} {A : ℝ → E} {t₀ t₁ : �
   simp only [map_sub, hcap, hQ₀, hP₁]
   abel
 
-/-- **Abstract parallel BUG step** (Ceruti–Kusch–Lubich, arXiv:2304.05660, §3, abstract form).
-K-, L- and S-steps are run in parallel from `Y₀ = A(t₀)` with `P₀ Y₀ = Y₀ = Q₀ Y₀`, and the
-result is `Ŷ₁ = YS(t₁) + (I - P₀) YK(t₁) + (I - Q₀) YL(t₁)`.  For `F(t,Y) = Ȧ(t)` and commuting
-`P₀`, `Q₀` this equals `A(t₁) - (I - P₀)(I - Q₀)(A(t₁) - A(t₀))` (i.e. `A(t₁)` minus
-`normal P₀ Q₀ (A(t₁) - A(t₀))`): the parallel integrator misses exactly the doubly-normal part
-of the increment. -/
+/-- **Abstract parallel BUG step** (Ceruti–Kusch–Lubich, [CerutiKuschLubich2024, §3], abstract
+form). K-, L- and S-steps are run in parallel from `Y₀ = A(t₀)` with `P₀ Y₀ = Y₀ = Q₀ Y₀`, and the
+result is `Ŷ₁ = YS(t₁) + (I - P₀) YK(t₁) + (I - Q₀) YL(t₁)`. For `F(t,Y) = Ȧ(t)` and commuting `P₀`,
+`Q₀` this equals `A(t₁) - (I - P₀)(I - Q₀)(A(t₁) - A(t₀))` (i.e. `A(t₁)` minus
+`normal P₀ Q₀ (A(t₁) - A(t₀))`): the parallel integrator misses exactly the doubly-normal part of
+the increment. -/
 theorem parBug_eq_abstract {F : ℝ → E → E} {A : ℝ → E} {t₀ t₁ : ℝ} (ht : t₀ ≤ t₁)
     (hA : IsDerivRHS F A t₀ t₁) {P₀ Q₀ : E →L[ℝ] E} (hc : ∀ x, P₀ (Q₀ x) = Q₀ (P₀ x))
     {YK YL YS : ℝ → E}
@@ -326,7 +326,7 @@ theorem capture_fromCols {k l : Type*} {P : Matrix m m R} {K : Matrix m k R} {U 
 
 omit [Fintype m] in
 /-- **Range condition from a non-degenerate factorization** (proof of Lubich–Oseledets,
-arXiv:1301.1058, Theorem 4.1).  If `A = U S Vᵀ` with `r` columns in `U`, `V` (so `rank A ≤ r`;
+[LubichOseledets2014, Thm. 4.1]).  If `A = U S Vᵀ` with `r` columns in `U`, `V` (so `rank A ≤ r`;
 `S` may be singular) and `G = Vᵀ W` is invertible, then `A = (A W) C` for `C = G⁻¹ Vᵀ`: the
 range of `A` is contained in the range of `A W`. -/
 theorem exists_eq_mul_mul_of_isUnit [DecidableEq r] {U : Matrix m r R} {S : Matrix r r R}
@@ -401,7 +401,7 @@ theorem right_capture [DecidableEq r] {U₀ : Matrix m r R} {S₀ : Matrix r r R
 
 /-! ### (a) BUG exactness -/
 
-/-- **Exactness of the BUG integrator** (Ceruti–Lubich, arXiv:2010.02022, Theorem 3).
+/-- **Exactness of the BUG integrator** (Ceruti–Lubich, [CerutiLubich2022, Thm. 3]).
 
 One step of the basis-update & Galerkin integrator for `F(t,Y) = Ȧ(t)` from
 `Y₀ = U₀ S₀ V₀ᵀ = A₀ = A(t₀)` (orthonormal `U₀`, `V₀`):
@@ -439,7 +439,7 @@ theorem bug_exact [DecidableEq r] {U₀ : Matrix m r R} {S₀ : Matrix r r R} {V
 /-! ### (b) Projector-splitting (KSL) exactness -/
 
 /-- **Exactness of the projector-splitting integrator, capture form**
-(Lubich–Oseledets, arXiv:1301.1058, Theorem 4.1; restated as CL Theorem 1).
+(Lubich–Oseledets, [LubichOseledets2014, Thm. 4.1]; restated as CL Theorem 1).
 
 One step of the KSL integrator of LO §3.2 for `F(t,Y) = Ȧ(t)` from `Y₀ = U₀ S₀ V₀ᵀ = A₀`
 (`V₀ᵀ V₀ = I`): `K₁ = U₀ S₀ + (A₁ - A₀) V₀`; `U₁` captures `K₁` and `Ŝ₁ = U₁ᵀ K₁`;
@@ -469,7 +469,7 @@ theorem ksl_exact_capture [DecidableEq r] {U₀ : Matrix m r R} {S₀ : Matrix r
     Matrix.mul_assoc, mul_mul_mul_eq_of_eq hP, hPr, hA₀Q]
   abel
 
-/-- **Exactness of the projector-splitting integrator** (Lubich–Oseledets, arXiv:1301.1058,
+/-- **Exactness of the projector-splitting integrator** (Lubich–Oseledets, [LubichOseledets2014],
 Theorem 4.1), in the QR form of the algorithm of LO §3.2:
 `K₁ = U₀ S₀ + ΔA V₀ = U₁ Ŝ₁` (`U₁ᵀ U₁ = I`), `S̃₀ = Ŝ₁ - U₁ᵀ ΔA V₀`,
 `L₁ = V₀ S̃₀ᵀ + ΔAᵀ U₁ = V₁ S₁ᵀ`, and `Y₁ = U₁ S₁ V₁ᵀ`, where `ΔA = A₁ - A₀`.
@@ -492,7 +492,7 @@ theorem ksl_exact [DecidableEq r] [DecidableEq p] {U₀ : Matrix m r R} {S₀ : 
 
 /-! ### (c) Augmented (rank-adaptive) BUG exactness -/
 
-/-- The augmented S-step of Ceruti–Kusch–Lubich (arXiv:2104.05247, §2.1) starts at `Y₀`:
+/-- The augmented S-step of Ceruti–Kusch–Lubich ([CerutiKuschLubich2022, §2.1]) starts at `Y₀`:
 if the augmented bases `Û`, `V̂` capture `U₀` and `V₀`, then
 `Û (M̂ S₀ N̂ᵀ) V̂ᵀ = U₀ S₀ V₀ᵀ` with `M̂ = Ûᵀ U₀`, `N̂ = V̂ᵀ V₀`. -/
 theorem augBug_start {U₀ : Matrix m r R} {S₀ : Matrix r r R} {V₀ : Matrix n r R}
@@ -505,7 +505,7 @@ theorem augBug_start {U₀ : Matrix m r R} {S₀ : Matrix r r R} {V₀ : Matrix 
     mul_mul_mul_eq_of_eq hUh, hVh']
 
 /-- **Exactness of the rank-adaptive BUG integrator before truncation**
-(Ceruti–Kusch–Lubich, arXiv:2104.05247, Theorem 1).
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 1]).
 
 `Û` (resp. `V̂`) is a basis capturing the augmented matrix `[K₁, U₀]` (resp. `[L₁, V₀]`), i.e.
 `Û Ûᵀ [K₁, U₀] = [K₁, U₀]`, the augmented S-step is
@@ -529,7 +529,8 @@ theorem augBug_exact [DecidableEq r] {U₀ : Matrix m r R} {S₀ : Matrix r r R}
 
 /-! ### (d) Parallel BUG: the exactness defect -/
 
-/-- **The parallel BUG step for `F(t,Y) = Ȧ(t)`** (Ceruti–Kusch–Lubich, arXiv:2304.05660, §3.1).
+/-- **The parallel BUG step for `F(t,Y) = Ȧ(t)`** (Ceruti–Kusch–Lubich,
+[CerutiKuschLubich2024, §3.1]).
 
 From `Y₀ = U₀ S₀ V₀ᵀ = A₀` with orthonormal `U₀`, `V₀`, the K-, L- and S-steps are computed in
 parallel: `K₁ = U₀ S₀ + ΔA V₀`, `L₁ = V₀ S₀ᵀ + ΔAᵀ U₀`, `S̄₁ = S₀ + U₀ᵀ ΔA V₀` (`ΔA = A₁ - A₀`).
@@ -574,7 +575,7 @@ theorem parBug_eq [DecidableEq m] [DecidableEq n] [DecidableEq r] {U₀ : Matrix
 
 /-- The parallel BUG step is exact iff the doubly-normal part
 `(I - U₀U₀ᵀ)(A₁ - A₀)(I - V₀V₀ᵀ)` of the increment vanishes (cf. Ceruti–Kusch–Lubich,
-arXiv:2304.05660, §3: "the parallel integrator does not have the exactness property"). -/
+[CerutiKuschLubich2024, §3]: "the parallel integrator does not have the exactness property"). -/
 theorem parBug_exact_iff [DecidableEq m] [DecidableEq n] [DecidableEq r] {U₀ : Matrix m r R}
     {S₀ : Matrix r r R} {V₀ : Matrix n r R} {A₀ A₁ : Matrix m n R}
     (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1) (hY₀ : U₀ * S₀ * V₀ᵀ = A₀)
@@ -619,8 +620,8 @@ theorem factorODE_eq_add {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A : �
   exact hS.eq_add_map_sub (Frobenius.sandwichCLM M N) (A' := fun t => F t (Ψ (S t))) hA.cont
     (fun t ht => hA.deriv t ht _) (fun t _ => by rw [hf]; rfl) t ht
 
-/-- **Exact K-step** (Ceruti–Lubich, arXiv:2010.02022, proof of Lemma 1; Lubich–Oseledets,
-arXiv:1301.1058, Lemma 3.1): the solution of `K' = F(t, K V₀ᵀ) V₀` with `F(t,Y) = Ȧ(t)` is
+/-- **Exact K-step** (Ceruti–Lubich, [CerutiLubich2022], proof of Lemma 1; Lubich–Oseledets,
+[LubichOseledets2014, Lemma 3.1]): the solution of `K' = F(t, K V₀ᵀ) V₀` with `F(t,Y) = Ȧ(t)` is
 `K(t) = K(t₀) + (A(t) - A(t₀)) V₀`. -/
 theorem kStepODE_eq_add {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A : ℝ → Matrix m n ℝ}
     {t₀ t₁ : ℝ} (hA : IsDerivRHS F A t₀ t₁) {V₀ : Matrix n r ℝ} {K : ℝ → Matrix m r ℝ}
@@ -648,7 +649,7 @@ theorem lStepODE_eq_add {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A : ℝ
   change L t = L t₀ + (1 : Matrix n n ℝ) * (A t - A t₀)ᵀ * U₀ at h
   rwa [Matrix.one_mul] at h
 
-/-- **Exactness of the BUG integrator, ODE form** (Ceruti–Lubich, arXiv:2010.02022,
+/-- **Exactness of the BUG integrator, ODE form** (Ceruti–Lubich, [CerutiLubich2022],
 Theorem 3).  The K-step `K' = F(t, K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`, the L-step
 `L' = F(t, U₀ Lᵀ)ᵀ U₀`, `L(t₀) = V₀ S₀ᵀ`, new bases `U₁`, `V₁` capturing `K(t₁)`, `L(t₁)`
 (e.g. by QR), and the Galerkin S-step `S' = U₁ᵀ F(t, U₁ S V₁ᵀ) V₁`, `S(t₀) = M S₀ Nᵀ`
@@ -679,7 +680,7 @@ theorem bug_exact_ode [DecidableEq r] {F : ℝ → Matrix m n ℝ → Matrix m n
   exact bug_exact hU₀ hV₀ hY₀ hA₁ hU hV eK eL hU₁ hV₁ eS
 
 /-- **Exactness of the rank-adaptive BUG integrator before truncation, ODE form**
-(Ceruti–Kusch–Lubich, arXiv:2104.05247, Theorem 1).  As `bug_exact_ode`, but the bases `Û`, `V̂`
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 1]).  As `bug_exact_ode`, but the bases `Û`, `V̂`
 capture the augmented matrices `[K(t₁), U₀]`, `[L(t₁), V₀]`, and the S-step
 `Ŝ' = Ûᵀ F(t, Û Ŝ V̂ᵀ) V̂` starts at `Ŝ(t₀) = M̂ S₀ N̂ᵀ` (`M̂ = Ûᵀ U₀`, `N̂ = V̂ᵀ V₀`). -/
 theorem augBug_exact_ode [DecidableEq r] {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
@@ -703,7 +704,7 @@ theorem augBug_exact_ode [DecidableEq r] {F : ℝ → Matrix m n ℝ → Matrix 
     (capture_fromCols.mp hVh).1 hSf hSf₀
 
 /-- **Exactness of the projector-splitting integrator, ODE form** (Lubich–Oseledets,
-arXiv:1301.1058, Lemma 3.1 and Theorem 4.1).  K-step `K' = F(t, K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`,
+[LubichOseledets2014, Lemma 3.1] and Theorem 4.1).  K-step `K' = F(t, K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`,
 QR `K(t₁) = U₁ Ŝ₁`; backward S-step `S' = -U₁ᵀ F(t, U₁ S V₀ᵀ) V₀`, `S(t₀) = Ŝ₁`; L-step
 `L' = F(t, U₁ Lᵀ)ᵀ U₁`, `L(t₀) = V₀ S(t₁)ᵀ`, QR `L(t₁) = V₁ S₁ᵀ`.  For `F(t,Y) = Ȧ(t)`,
 `Y₀ = U₀ S₀ V₀ᵀ = A(t₀)` and `A(t₁) = U S Vᵀ` with `Vᵀ V₀` invertible, `U₁ S₁ V₁ᵀ = A(t₁)`. -/
@@ -732,11 +733,10 @@ theorem ksl_exact_ode [DecidableEq r] [DecidableEq p] {F : ℝ → Matrix m n �
     rw [eS, hSf₀, Matrix.neg_mul, Matrix.neg_mul, ← sub_eq_add_neg]
   exact ksl_exact hV₀ hY₀ hA₁ hV eK hU₁ hqrK eS' eL hqrL
 
-/-- **The parallel BUG step, ODE form** (Ceruti–Kusch–Lubich, arXiv:2304.05660, §3.1).  K-step
-and L-step as in `bug_exact_ode`, the S-step `S̄' = U₀ᵀ F(t, U₀ S̄ V₀ᵀ) V₀`, `S̄(t₀) = S₀`, all
-run in parallel; with augmented bases `[U₀, Ũ₁]`, `[V₀, Ṽ₁]` capturing `[U₀, K(t₁)]`,
-`[V₀, L(t₁)]`, the result for `F(t,Y) = Ȧ(t)` is
-`A(t₁) - (I - U₀U₀ᵀ)(A(t₁) - A(t₀))(I - V₀V₀ᵀ)`. -/
+/-- **The parallel BUG step, ODE form** (Ceruti–Kusch–Lubich, [CerutiKuschLubich2024, §3.1]). K-step
+and L-step as in `bug_exact_ode`, the S-step `S̄' = U₀ᵀ F(t, U₀ S̄ V₀ᵀ) V₀`, `S̄(t₀) = S₀`, all run
+in parallel; with augmented bases `[U₀, Ũ₁]`, `[V₀, Ṽ₁]` capturing `[U₀, K(t₁)]`, `[V₀, L(t₁)]`, the
+result for `F(t,Y) = Ȧ(t)` is `A(t₁) - (I - U₀U₀ᵀ)(A(t₁) - A(t₀))(I - V₀V₀ᵀ)`. -/
 theorem parBug_eq_ode [DecidableEq m] [DecidableEq n] [DecidableEq r]
     {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A : ℝ → Matrix m n ℝ} {t₀ t₁ : ℝ} (ht : t₀ ≤ t₁)
     (hA : IsDerivRHS F A t₀ t₁) {U₀ : Matrix m r ℝ} {S₀ : Matrix r r ℝ} {V₀ : Matrix n r ℝ}
@@ -803,7 +803,7 @@ theorem apply_eq_self_of_isRecoverable {𝓛 : Set (E →L[ℝ] E)} {P Q : E →
   obtain ⟨T, hT, hTx⟩ := hrec
   rw [← hTx, hT P hP, hcap]
 
-/-- **Abstract form of Ceruti–Lubich, arXiv:2010.02022, Lemma 1.**  Let the K-step end at
+/-- **Abstract form of Ceruti–Lubich, [CerutiLubich2022, Lemma 1]**  Let the K-step end at
 `YK(t₁) = Q₀ A(t₁)` (`kStep_eq_abstract`) and let the new projector `P₁` capture it.  The
 rank/non-degeneracy assumption of the paper is replaced by the recoverability of `A(t₁)` from
 `Q₀ A(t₁)` modulo a class `𝓛` containing `P₁` (`IsRecoverable`).  Then `P₁ A(t₁) = A(t₁)`.
@@ -893,7 +893,7 @@ theorem list_prod_apply_eq_self {l : List (E →L[ℝ] E)} {x : E} (h : ∀ T �
       ih (fun T' hT' => h T' (List.mem_cons_of_mem T hT')), h T List.mem_cons_self]
 
 /-- **Tucker core-step exactness from mode-wise capture** (the Galerkin part of Ceruti–Lubich,
-arXiv:2010.02022, Theorem 6, for `d` abstract mode projectors).  For each mode `i < d` the
+[CerutiLubich2022, Thm. 6], for `d` abstract mode projectors).  For each mode `i < d` the
 mode-`i` K-step is the full-space trajectory `YKᵢ' = Qᵢ F(t, YKᵢ)`,
 `YKᵢ(t₀) = A(t₀) = Qᵢ A(t₀)`, and the new mode projector `Pᵢ` (`X ↦ X ×ᵢ U¹ᵢU¹ᵢᵀ`) captures
 `YKᵢ(t₁)`.  If moreover `A(t₁)` is recoverable from `Qᵢ A(t₁)` modulo a class `𝓛ᵢ` containing
@@ -933,7 +933,7 @@ section MatrixExplicit
 variable {R : Type*} [CommRing R] {m n r p q : Type*}
   [Fintype m] [Fintype n] [Fintype r] [Fintype p] [Fintype q]
 
-/-- **Explicit result of the BUG S-step** (proof of Ceruti–Lubich, arXiv:2010.02022,
+/-- **Explicit result of the BUG S-step** (proof of Ceruti–Lubich, [CerutiLubich2022],
 Theorem 3).  For `F(t,Y) = Ȧ(t)` and `Y₀ = U₀ S₀ V₀ᵀ = A₀`, the S-step gives
 `S₁ = U₁ᵀ A₁ V₁` and `Y₁ = U₁ U₁ᵀ A₁ V₁ V₁ᵀ`, for arbitrary new bases `U₁`, `V₁` (no rank,
 orthonormality or capture assumptions). -/
@@ -1048,7 +1048,7 @@ theorem isUnit_transpose_mul_of_eq' [DecidableEq r] {U₀ : Matrix m r R} {S₀ 
     simpa only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc] using h2
   exact isUnit_transpose_mul_of_eq h' hV ((Matrix.isUnit_transpose S).mpr hS) hW
 
-/-- **Exactness of the BUG integrator, paper form** (Ceruti–Lubich, arXiv:2010.02022,
+/-- **Exactness of the BUG integrator, paper form** (Ceruti–Lubich, [CerutiLubich2022],
 Theorem 3 with the hypotheses of Theorem 1).  Let `A(t₀) = U(t₀) S(t₀) V(t₀)ᵀ` and
 `A(t₁) = U(t₁) S(t₁) V(t₁)ᵀ` (here `Ue₀ Se₀ Ve₀ᵀ`, `Ue₁ Se₁ Ve₁ᵀ`) with orthonormal
 `U(t₀)`, `V(t₀)` and invertible `S(t₀)`, and assume that `U(t₁)ᵀ U(t₀)` and
@@ -1072,7 +1072,7 @@ theorem bug_exact_of_factors [DecidableEq r] {U₀ : Matrix m r R} {S₀ : Matri
     (isUnit_transpose_mul_of_eq (hY₀.trans hA₀) hUe₀ hSe₀ hVV) hK₁ hL₁ hU₁ hV₁ hS₁
 
 /-- **Exactness of the rank-adaptive BUG integrator before truncation, paper form**
-(Ceruti–Kusch–Lubich, arXiv:2104.05247, Theorem 1).  Under the hypotheses of
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 1]).  Under the hypotheses of
 `bug_exact_of_factors` on the exact factors, the augmented step of `augBug_exact` (bases `Û`,
 `V̂` capturing `[K₁, U₀]`, `[L₁, V₀]`, Galerkin step in the augmented bases) returns
 `Û Ŝ₁ V̂ᵀ = A(t₁)`.  The final truncation (which leaves `A(t₁)` unchanged when the tolerance is
@@ -1094,7 +1094,7 @@ theorem augBug_exact_of_factors [DecidableEq r] {U₀ : Matrix m r R} {S₀ : Ma
     (isUnit_transpose_mul_of_eq (hY₀.trans hA₀) hUe₀ hSe₀ hVV) hK₁ hL₁ hUh hVh hŜ₁
 
 /-- **Exactness of the projector-splitting integrator, paper form** (Lubich–Oseledets,
-arXiv:1301.1058, Theorem 4.1; Ceruti–Lubich, arXiv:2010.02022, Theorem 1).  As
+[LubichOseledets2014, Thm. 4.1]; Ceruti–Lubich, [CerutiLubich2022, Thm. 1]).  As
 `bug_exact_of_factors`, for the KSL step of `ksl_exact`.  Only the invertibility of
 `V(t₁)ᵀ V(t₀)` is needed (the condition on `U(t₁)ᵀ U(t₀)` in CL Theorem 1 is not used),
 `S(t₁)` may be singular (rank `A(t₁) ≤ r`, as in LO Theorem 4.1), and `U₀` need not be
@@ -1172,7 +1172,7 @@ structure IsKSLIncrementStep [DecidableEq r] (A₀ A₁ : Matrix m n R) (U₀ : 
   qrL : V₁ * S₁ᵀ = V₀ * (Ŝ₁ - U₁ᵀ * (A₁ - A₀) * V₀)ᵀ + (A₁ - A₀)ᵀ * U₁
 
 /-- **Multi-step exactness of the projector-splitting integrator** (Lubich–Oseledets,
-arXiv:1301.1058, Theorem 4.1, iterated over the time grid).  If `A k = Ue k Se k (Ve k)ᵀ` with
+[LubichOseledets2014, Thm. 4.1], iterated over the time grid).  If `A k = Ue k Se k (Ve k)ᵀ` with
 orthonormal `Ue k` and invertible `Se k` for `k < N`, and invertible overlaps
 `(Ve (k+1))ᵀ Ve k`, then the KSL
 integrator with orthonormal right bases `V k`, started from `U 0 S 0 (V 0)ᵀ = A 0`, reproduces
@@ -1206,7 +1206,7 @@ attribute [local instance] Matrix.frobeniusNormedAddCommGroup Matrix.frobeniusNo
 
 variable {m n r p q : Type*} [Fintype m] [Fintype n] [Fintype r] [Fintype p] [Fintype q]
 
-/-- **Exactness of the BUG integrator, ODE and paper form** (Ceruti–Lubich, arXiv:2010.02022,
+/-- **Exactness of the BUG integrator, ODE and paper form** (Ceruti–Lubich, [CerutiLubich2022],
 Theorem 3 with the hypotheses of Theorem 1): `bug_exact_ode` with the non-degeneracy stated on
 exact factors `A(t₀) = U(t₀) S(t₀) V(t₀)ᵀ`, `A(t₁) = U(t₁) S(t₁) V(t₁)ᵀ` (orthonormal `U(t₀)`,
 `V(t₀)`, invertible `S(t₀)`, invertible overlaps `U(t₁)ᵀ U(t₀)`, `V(t₁)ᵀ V(t₀)`), as in
@@ -1234,7 +1234,7 @@ theorem bug_exact_ode_of_factors [DecidableEq r] {F : ℝ → Matrix m n ℝ →
     (isUnit_transpose_mul_of_eq (hY₀.trans hA₀) hUe₀ hSe₀ hVV) hK hK₀ hL hL₀ hU₁ hV₁ hSf hSf₀
 
 /-- **Exactness of the projector-splitting integrator, ODE and paper form** (Lubich–Oseledets,
-arXiv:1301.1058, Theorem 4.1; Ceruti–Lubich, arXiv:2010.02022, Theorem 1): `ksl_exact_ode`
+[LubichOseledets2014, Thm. 4.1]; Ceruti–Lubich, [CerutiLubich2022, Thm. 1]): `ksl_exact_ode`
 with the non-degeneracy stated on exact factors, as in `ksl_exact_of_factors` (only the
 `V`-overlap is used, `S(t₁)` may be singular). -/
 theorem ksl_exact_ode_of_factors [DecidableEq r] [DecidableEq p]
@@ -1300,7 +1300,7 @@ theorem isRecoverable_leftMulClass_of_eq_mul [DecidableEq r] {V₀ : Matrix n r 
     rw [← Matrix.mul_assoc, ← hC]
 
 /-- **Non-degeneracy implies recoverability** (left version; proof of Ceruti–Lubich,
-arXiv:2010.02022, Lemma 1).  If `A₁ = U S Vᵀ` (rank at most `r`) with `Vᵀ V₀` invertible and
+[CerutiLubich2022, Lemma 1]).  If `A₁ = U S Vᵀ` (rank at most `r`) with `Vᵀ V₀` invertible and
 `V₀ᵀ V₀ = I`, then `A₁` is recoverable from `Q₀ A₁ = A₁ V₀ V₀ᵀ` modulo left multiplications. -/
 theorem isRecoverable_leftMulClass_of_isUnit [DecidableEq r] {V₀ : Matrix n r ℝ}
     (hV₀ : V₀ᵀ * V₀ = 1) {A₁ : Matrix m n ℝ} {U : Matrix m r ℝ} {S : Matrix r r ℝ}
@@ -1366,7 +1366,7 @@ theorem exists_mul_right_of_commute [Nonempty m]
 (and `m` nonempty), `A` is recoverable from `A V₀ V₀ᵀ` modulo left multiplications iff
 `A = A V₀ C` for some `C`, i.e. iff the column space of `A V₀` contains that of `A`.  In
 particular the condition does not involve the new left basis `U₁`, and it is exactly the
-non-degeneracy used in the proof of Ceruti–Lubich, arXiv:2010.02022, Lemma 1. -/
+non-degeneracy used in the proof of Ceruti–Lubich, [CerutiLubich2022, Lemma 1] -/
 theorem isRecoverable_leftMulClass_iff [DecidableEq r]
     [Nonempty m] {V₀ : Matrix n r ℝ} (hV₀ : V₀ᵀ * V₀ = 1) (A : Matrix m n ℝ) :
     IsRecoverable leftMulClass (rightProj V₀) A ↔ ∃ C : Matrix r n ℝ, A = A * V₀ * C := by
@@ -1452,7 +1452,7 @@ Then `A₁` has rank one with `uᵀ U₀ = 3/5` invertible, so all hypotheses of
 theorems hold (with `U₁ = V₁ = u`): this shows that they are jointly satisfiable in a
 non-trivial situation (`A₁ ≠ A₀`).  For the same data the untruncated parallel BUG update with
 the orthonormal augmented bases `[e₁, e₂]` is **not** exact, confirming the remark of
-Ceruti–Kusch–Lubich (arXiv:2304.05660, §3). -/
+Ceruti–Kusch–Lubich ([CerutiKuschLubich2024, §3]). -/
 
 namespace RankOneExample
 
@@ -1533,7 +1533,7 @@ example : u * (e₁ * (uᵀ * (e₁ * S₀ + (A₁ - A₀) * e₁) - uᵀ * (A�
   ksl_exact_capture e₁_orth Y₀_eq A₁_eq isUnit_u_e₁ rfl capture_K rfl rfl rfl
 
 /-- **The untruncated parallel BUG update is not exact** (Ceruti–Kusch–Lubich,
-arXiv:2304.05660, §3).  For the rank-one data above (for which BUG and KSL are exact) and the
+[CerutiKuschLubich2024, §3]).  For the rank-one data above (for which BUG and KSL are exact) and the
 orthonormal augmented bases `Û = V̂ = [e₁, e₂]` (see `basis_orth`), the untruncated update
 `Ŷ₁ = Û Ŝ₁ V̂ᵀ` of `parBug_eq` does not reproduce `A₁`.  (Here `Ŷ₁ = [[9,12],[12,0]]/25` has
 rank `2`, and its best rank-one approximation is not `A₁` either, so the claim survives the
@@ -1589,8 +1589,8 @@ target `B₁ = e₂e₂ᵀ`, the overlap `V(t₁)ᵀV(t₀) = e₂ᵀe₁ = 0` i
 `K₁ = B₁ e₁` vanishes, and `U₁ = e₁` (with `Ŝ₁ = 0`) is an admissible QR factor of `K₁`.  With
 this choice the projector-splitting step returns `U₁U₁ᵀB₁ = 0 ≠ B₁` (likewise the BUG step
 with `U₁ = V₁ = e₁`).  So the invertibility of `V(t₁)ᵀ V(t₀)` assumed in the proof of
-Lubich–Oseledets, arXiv:1301.1058, Theorem 4.1 (whose statement only requires rank at most `r`
-and appeals to a perturbation argument), and in Ceruti–Lubich, arXiv:2010.02022, Theorems 1
+Lubich–Oseledets, [LubichOseledets2014, Thm. 4.1] (whose statement only requires rank at most `r`
+and appeals to a perturbation argument), and in Ceruti–Lubich, [CerutiLubich2022], Theorems 1
 and 3, is needed when the QR factor of a rank-deficient `K₁` is chosen arbitrarily. -/
 theorem not_exact_of_degenerate :
     ¬ IsUnit (e₂ᵀ * e₁) ∧
@@ -1716,7 +1716,7 @@ theorem IsBUGStep.exact_iff {F : ℝ → E → E} {ε : ℝ} {P₀ Q₀ P₁ Q�
   Exactness.bug_exact_iff_abstract ht hA (fun x => hs.projP₁.idem x)
     (fun x => hs.projQ₁.idem x) hs.comm₁ hs.sSol (hs.sStart.trans (by rw [hY₀]))
 
-/-- **Exactness of a bundled BUG step** (Ceruti–Lubich, arXiv:2010.02022, Theorem 3, abstract
+/-- **Exactness of a bundled BUG step** (Ceruti–Lubich, [CerutiLubich2022, Thm. 3], abstract
 form).  For `F(t,Y) = Ȧ(t)` and `Y₀ = A(t₀)` fixed by `P₀` and `Q₀`, assume that `A(t₁)` is
 recoverable (`Exactness.IsRecoverable`) from `Q₀ A(t₁)` modulo a class `𝓛 ∋ P₁` and from
 `P₀ A(t₁)` modulo a class `𝓡 ∋ Q₁`.  Then the BUG step is exact: `YS(t₁) = A(t₁)`.
@@ -1753,7 +1753,7 @@ theorem IsKSLStep.exact_iff {F : ℝ → E → E} {ε : ℝ} {P₁ Q₀ : E →L
     YL t₁ = A t₁ ↔ P₁ (A t₁) = A t₁ := by
   rw [hs.eq_of_isDerivRHS ht hA hY₀ hQ₀]
 
-/-- **Exactness of a bundled KSL step** (Lubich–Oseledets, arXiv:1301.1058, Theorem 4.1,
+/-- **Exactness of a bundled KSL step** (Lubich–Oseledets, [LubichOseledets2014, Thm. 4.1],
 abstract form).  For `F(t,Y) = Ȧ(t)` and `Y₀ = A(t₀)` fixed by `Q₀`, assume that `A(t₁)` is
 recoverable (`Exactness.IsRecoverable`) from `Q₀ A(t₁)` modulo a class `𝓛 ∋ P₁` (fixed
 independently of `P₁`; for matrices, the left multiplications).  Then the KSL step is exact:
@@ -1768,7 +1768,7 @@ theorem IsKSLStep.exact {F : ℝ → E → E} {ε : ℝ} {P₁ Q₀ : E →L[ℝ
     (Exactness.capture_abstract ht hA hs.kSol (hs.kStart.trans hY₀) hQ₀ hs.kCap hP₁ hrec)
 
 /-- **Explicit result of a bundled parallel BUG step** (`IsParallelBUGStep`, see
-`Integrators/ParallelBUG.lean`; Ceruti–Kusch–Lubich, arXiv:2304.05660, §3) for
+`Integrators/ParallelBUG.lean`; Ceruti–Kusch–Lubich, [CerutiKuschLubich2024, §3]) for
 `F(t,Y) = Ȧ(t)` from `Y₀ = A(t₀)`: the untruncated update is
 `parallelBUG P₀ Q₀ (YK t₁) (YL t₁) (YS t₁) = A(t₁) - (1 - P₀)(1 - Q₀)(A(t₁) - A(t₀))`. -/
 theorem IsParallelBUGStep.eq_of_isDerivRHS {F : ℝ → E → E} {P₀ Q₀ : E →L[ℝ] E} {t₀ t₁ : ℝ}
@@ -1780,7 +1780,7 @@ theorem IsParallelBUGStep.eq_of_isDerivRHS {F : ℝ → E → E} {P₀ Q₀ : E 
     hs.initS hs.fixP hs.fixQ
 
 /-- **A bundled parallel BUG step is exact iff the doubly-normal part of the increment
-vanishes** (cf. arXiv:2304.05660, §3: the parallel integrator does not have the exactness
+vanishes** (cf. [CerutiKuschLubich2024, §3]: the parallel integrator does not have the exactness
 property; see `Exactness.RankOneExample.parBug_not_exact`). -/
 theorem IsParallelBUGStep.exact_iff {F : ℝ → E → E} {P₀ Q₀ : E →L[ℝ] E} {t₀ t₁ : ℝ}
     {Y₀ : E} {YK YL YS : ℝ → E} (hs : IsParallelBUGStep F P₀ Q₀ t₀ t₁ Y₀ YK YL YS)
@@ -1800,7 +1800,7 @@ open scoped LeanDLRA.Frobenius
 variable {m n r p q : Type*} [Fintype m] [Fintype n] [Fintype r] [Fintype p] [Fintype q]
   [DecidableEq r]
 
-/-- **Exactness of a bundled matrix BUG step** (Ceruti–Lubich, arXiv:2010.02022, Theorem 3).
+/-- **Exactness of a bundled matrix BUG step** (Ceruti–Lubich, [CerutiLubich2022, Thm. 3]).
 Let `IsBUGStep` hold for `m × n` matrices (Frobenius inner product) with the projectors
 `P₀ = U₀U₀ᵀ·`, `Q₀ = ·V₀V₀ᵀ`, `P₁ = U₁U₁ᵀ·`, `Q₁ = ·V₁V₁ᵀ`, for `F(t,Y) = Ȧ(t)` and
 `Y₀ = U₀ S₀ V₀ᵀ = A(t₀)` with orthonormal `U₀`, `V₀`.  If `A(t₁) = U S Vᵀ` with `Uᵀ U₀` and
@@ -1826,7 +1826,7 @@ theorem IsBUGStep.exact_matrix {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {
     (Exactness.isRecoverable_leftMulClass_of_isUnit hV₀ hA₁ hV)
     (Exactness.isRecoverable_rightMulClass_of_isUnit hU₀ hA₁ hU)
 
-/-- **Exactness of a bundled matrix KSL step** (Lubich–Oseledets, arXiv:1301.1058,
+/-- **Exactness of a bundled matrix KSL step** (Lubich–Oseledets, [LubichOseledets2014],
 Theorem 4.1).  Let `IsKSLStep` hold for `m × n` matrices with `P₁ = U₁U₁ᵀ·`, `Q₀ = ·V₀V₀ᵀ`, for
 `F(t,Y) = Ȧ(t)` and `Y₀ = U₀ S₀ V₀ᵀ = A(t₀)` with `V₀ᵀ V₀ = I`.  If `A(t₁) = U S Vᵀ` (rank at
 most `r`) with `Vᵀ V₀` invertible, then `YL(t₁) = A(t₁)`. -/

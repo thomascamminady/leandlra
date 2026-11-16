@@ -24,8 +24,8 @@ become small.
 * **OP-RA-03 (rank tracking).** `epsRank ε X = min {k : dist(X, M_{≤ k}) ≤ ε}` and the sandwich
   `epsRank_sandwich`: `‖X - Y‖ ≤ e ≤ ε ⇒ rank_{ε+e}(Y) ≤ rank_ε(X) ≤ rank_{ε-e}(Y)`; exact rank
   identification near a rank-`(k+1)` target (`epsRank_eq_of_norm_sub_le`, FeDLRT
-  arXiv 2410.18720); geometric convergence to a rank-one equilibrium
-  (`distLR_one_le_of_geometric`, `epsRank_le_one_of_geometric`, arXiv 2308.05914 Sec. 5).
+  [SchotthoferEtAl2025]); geometric convergence to a rank-one equilibrium
+  (`distLR_one_le_of_geometric`, `epsRank_le_one_of_geometric`, [YinEtAl2023] Sec. 5).
 * **OP-EX-02 (robust flow capture).** `exists_capture_flow`, `exists_lowRank_near_flow`,
   `distLR_flow_le`: for every exact solution `A` on `[t₀, t₀ + h]` starting at a matrix of rank
   `≤ r` (arbitrarily small singular values allowed),
@@ -33,7 +33,7 @@ become small.
   normal-component bound `ε` needed only within distance `B h` of `A(t₀)` (`NearNormalBound`);
   flow form `exists_flow_distLR_le`, quasi-best truncation `norm_quasiBest_flow_le`.
   Proof: one BUG step from `A(t₀)` exists (`MatrixBUG.exists_isStep`), `bug_capture`
-  (arXiv 2010.02022, Lemma 3) and `rank_mul_mul_transpose_le`.
+  ([CerutiLubich2022, Lemma 3]) and `rank_mul_mul_transpose_le`.
 * **Growth along the exact flow and the `h²`-free robust bound.**  Under the global factored
   normal-component bound, `distLR_flow_le_exp_mul_add`: along every exact solution, from any
   start, `dist(A(t), M_{≤ r}) ≤ e^{L (t - t₀)} dist(A(t₀), M_{≤ r}) + ε (t - t₀) e^{L (t - t₀)}`
@@ -44,15 +44,15 @@ become small.
   in an explicit example.  For fields continuous in time, `distLR_flow_step` (one step from
   almost-nearest points and flow stability `norm_sub_le_exp_of_odeSolution`) and
   `distLR_flow_le_grid` (discrete Grönwall) give the bound with an `h²` term on a grid.
-* **OP-RA-07 / rank-`r` truncation** (arXiv 2402.08607, Remark 4; arXiv 2608.27749, Remark 2).
-  `norm_trunc_sub_le`: `‖T - A₁‖ ≤ κ dist(A₁, M_{≤ r}) + (1 + κ) ‖Ŷ - A₁‖` for every
-  `κ`-quasi-best rank-`r` approximation `T` of `Ŷ`; `norm_trunc_flow_le`,
-  `fixedRank_trunc_local_error_le`: the augmented BUG step truncated back to rank `r` has local
-  error `O(h (h + ε_r))` without a tolerance term and without a rank-`r` DLRA solution;
-  `norm_trunc_flow_le_exp`: `‖T - A(t₁)‖ ≤ κ h ε_r e^{L h} + (1 + κ) ‖Ŷ - A(t₁)‖`, the papers'
-  bound `h ε_r + 2 ‖Ŷ - A(t₁)‖` up to the factor `e^{L h}`.
-  Counterexample `trunc_bound_fails_of_normal_at_start`: with `ε` measured only at `(t₀, Y₀)`
-  the claimed bound fails (`F = [[0,1],[1,0]]`, `Y₀ = diag(δ, 0)`).
+* **OP-RA-07 / rank-`r` truncation** ([CerutiEtAl2024b, Remark 4];
+  [HauckKuschSchotthofer2026, Remark 2]). `norm_trunc_sub_le`:
+  `‖T - A₁‖ ≤ κ dist(A₁, M_{≤ r}) + (1 + κ) ‖Ŷ - A₁‖` for every `κ`-quasi-best rank-`r`
+  approximation `T` of `Ŷ`; `norm_trunc_flow_le`, `fixedRank_trunc_local_error_le`: the augmented
+  BUG step truncated back to rank `r` has local error `O(h (h + ε_r))` without a tolerance term and
+  without a rank-`r` DLRA solution; `norm_trunc_flow_le_exp`:
+  `‖T - A(t₁)‖ ≤ κ h ε_r e^{L h} + (1 + κ) ‖Ŷ - A(t₁)‖`, the papers' bound `h ε_r + 2 ‖Ŷ - A(t₁)‖`
+  up to the factor `e^{L h}`. Counterexample `trunc_bound_fails_of_normal_at_start`: with `ε`
+  measured only at `(t₀, Y₀)` the claimed bound fails (`F = [[0,1],[1,0]]`, `Y₀ = diag(δ, 0)`).
 * **Closedness and best approximation.** `isClosed_lowRankSet` (via compactness of the Stiefel
   set, `isCompact_stiefel`), `distLR_eq_zero_iff`, `distLR_pos_iff`, `exists_best_approx`
   (existence part of Eckart–Young without SVD), `epsRank_le_iff_exists` (`rank_ε(X)` is the
@@ -68,7 +68,8 @@ become small.
   `≥ ⌈log₂ ⌈r*/r₀⌉⌉` steps), `norm_residual_le_norm_sub` (error `≥ ‖(1 - P̂Q̂) A₁‖`, independent
   of the tolerance), `distLR_le_residual`, the explicit tolerance-independent lower bound
   `rankAdaptive_error_ge` (`F ≡ I₃`, `Y₀ = e₁e₁ᵀ`: every rank-`≤ 2` result has error `≥ h`), and
-  the truncation rule (22) of arXiv 2602.06614 Sec. 3.1.1 as an `ε`-rank (`epsRank_augmented_le`).
+  the truncation rule (22) of [NobileRiffaudTrigoTrindade2027] Sec. 3.1.1 as an `ε`-rank
+  (`epsRank_augmented_le`).
 * **OP-OT-19 (monotonicity).** `norm_one_sub_le_of_le`, `norm_normal_le_of_le`,
   `norm_sub_apply_apply_le_of_le` (capture residuals and doubly-normal parts decrease under basis
   enrichment, abstract inner product spaces), `galerkin_step_error_of_le`, `IsBUGStep.enrich`
@@ -84,7 +85,7 @@ become small.
   Re-deriving each cited paper's convergence theorem from it is not done here.
 * OP-RA-07: the gap-free truncation inequality, the robust bound
   `dist(A(t₁), M_{≤ r}) ≤ h ε_r e^{L h}` (no `h²` term, so the high-order claims
-  `O(h (h² + ε_r))` of arXiv 2402.08607 hold robustly) and the counterexample for `ε` measured
+  `O(h (h² + ε_r))` of [CerutiEtAl2024b] hold robustly) and the counterexample for `ε` measured
   only at `(t₀, Y₀)` are formalised.  For `0 < L` and a start of rank `≤ r` the catalogue theorem
   `LeanDLRA.OpenProblems.RankAdaptivity.distLR_flow_le_dini_local` proves the smaller bound
   `ε_r (e^{L h} - 1) / L` of the Dini-derivative argument, with `ε_r` assumed only near the exact
@@ -228,7 +229,7 @@ theorem epsRank_sandwich (he : e ≤ ε) (hXY : ‖X - Y‖ ≤ e) :
     epsRank (ε + e) Y ≤ epsRank ε X ∧ epsRank ε X ≤ epsRank (ε - e) Y :=
   ⟨epsRank_add_le (((norm_nonneg _).trans hXY).trans he) hXY, epsRank_le_sub he hXY⟩
 
-/-- **Exact rank identification** (OP-RA-03 (v); FeDLRT, arXiv 2410.18720).  Let `Xs` have rank
+/-- **Exact rank identification** (OP-RA-03 (v); FeDLRT, [SchotthoferEtAl2025]).  Let `Xs` have rank
 `≤ k + 1` and be separated from `M_{≤ k}` by `dist(Xs, M_{≤ k}) > θ + e` (by Eckart–Young the
 left-hand side is `≥ σ_{k+1}(Xs)`).  Then every `X` with `‖X - Xs‖ ≤ e ≤ θ` has `θ`-rank exactly
 `k + 1`: tolerance truncation identifies the exact target rank once the iterate is close. -/
@@ -244,7 +245,7 @@ theorem epsRank_eq_of_norm_sub_le (hXs : Xs.rank ≤ k + 1) (hXY : ‖X - Xs‖ 
     rw [norm_sub_rev] at h2
     linarith
 
-/-- **Geometric convergence to a rank-one equilibrium** (OP-RA-03 (iv); arXiv 2308.05914,
+/-- **Geometric convergence to a rank-one equilibrium** (OP-RA-03 (iv); [YinEtAl2023],
 Sec. 5): if `‖F_j - F_eq‖ ≤ c^j C` with `rank F_eq ≤ 1`, then `dist(F_j, M_{≤ 1}) ≤ c^j C`
 (by Eckart–Young: `(σ₂² + σ₃² + ⋯)^{1/2}(F_j) ≤ c^j C`). -/
 theorem distLR_one_le_of_geometric {F : ℕ → Matrix m n ℝ} {Feq : Matrix m n ℝ}
@@ -410,7 +411,8 @@ theorem exists_best_approx (r : ℕ) (X : Matrix m n ℝ) :
 
 /-- **The `ε`-rank is the smallest rank within distance `ε`**: `rank_ε(X) ≤ k` iff some `Z` of
 rank `≤ k` satisfies `‖X - Z‖ ≤ ε`.  This is the matrix form of the tolerance truncation rule
-(eq. (22) of arXiv 2602.06614, step 3 of arXiv 2104.05247) without singular values. -/
+(eq. (22) of [NobileRiffaudTrigoTrindade2027], step 3 of [CerutiKuschLubich2022]) without singular
+values. -/
 theorem epsRank_le_iff_exists (hε : 0 ≤ ε) :
     epsRank ε X ≤ k ↔ ∃ Z : Matrix m n ℝ, Z.rank ≤ k ∧ ‖X - Z‖ ≤ ε := by
   rw [epsRank_le_iff hε]
@@ -585,7 +587,7 @@ section Truncation
 
 variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ}
 
-/-- **Gap-free truncation inequality** (arXiv 2402.08607, Remark 4; arXiv 2608.27749,
+/-- **Gap-free truncation inequality** ([CerutiEtAl2024b, Remark 4]; [HauckKuschSchotthofer2026],
 Remark 2, abstract core).  If `T` is a `κ`-quasi-best rank-`r` approximation of `Ŷ`,
 `‖T - Ŷ‖ ≤ κ dist(Ŷ, M_{≤ r})` (`κ = 1`: truncated SVD), then for every `A₁`
 
@@ -602,7 +604,8 @@ theorem norm_trunc_sub_le {Yh A₁ T : Matrix m n ℝ} {κ : ℝ} (hκ : 0 ≤ �
   nlinarith
 
 /-- The best-approximation case `κ = 1` of `norm_trunc_sub_le`:
-`‖T - A₁‖ ≤ dist(A₁, M_{≤ r}) + 2 ‖Ŷ - A₁‖` (the inequality of arXiv 2608.27749, Remark 2). -/
+`‖T - A₁‖ ≤ dist(A₁, M_{≤ r}) + 2 ‖Ŷ - A₁‖` (the inequality of
+[HauckKuschSchotthofer2026, Remark 2]). -/
 theorem norm_bestTrunc_sub_le {Yh A₁ T : Matrix m n ℝ} (hT : ‖T - Yh‖ ≤ distLR r Yh) :
     ‖T - A₁‖ ≤ distLR r A₁ + 2 * ‖Yh - A₁‖ := by
   have := norm_trunc_sub_le (r := r) (A₁ := A₁) zero_le_one (by rwa [one_mul])
@@ -611,10 +614,11 @@ theorem norm_bestTrunc_sub_le {Yh A₁ T : Matrix m n ℝ} (hT : ‖T - Yh‖ �
 variable [DecidableEq m] [DecidableEq n] {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
   {L B ε h t₀ t₁ : ℝ} {A : ℝ → Matrix m n ℝ}
 
-/-- **Robust rank-`r` truncation bound** (OP-RA-07, robust part; arXiv 2402.08607, Remark 4 and
-arXiv 2608.27749, Remark 2 without a rank-`r` DLRA solution).  Let `A` be the exact solution on
-`[t₀, t₁]` from a value of rank `≤ r`, `Ŷ` any approximation of `A(t₁)` (e.g. the augmented,
-midpoint or parallel BUG result), and `T` a `κ`-quasi-best rank-`r` approximation of `Ŷ`.  Then
+/-- **Robust rank-`r` truncation bound** (OP-RA-07, robust part; [CerutiEtAl2024b, Remark 4] and
+[HauckKuschSchotthofer2026, Remark 2] without a rank-`r` DLRA solution). Let `A` be the exact
+solution on `[t₀, t₁]` from a value of rank `≤ r`, `Ŷ` any approximation of `A(t₁)` (e.g. the
+augmented, midpoint or parallel BUG result), and `T` a `κ`-quasi-best rank-`r` approximation of `Ŷ`.
+Then
 
     ‖T - A(t₁)‖ ≤ 2 κ h (4 L B h + ε_r) + (1 + κ) ‖Ŷ - A(t₁)‖,
 
@@ -633,8 +637,8 @@ theorem norm_trunc_flow_le (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBo
   linarith
 
 /-- **Fixed-rank truncation of the rank-adaptive (augmented) BUG step** (OP-RA-07; the
-"rank truncation" of arXiv 2402.08607, Remark 4 for the augmented BUG integrator of
-arXiv 2104.05247).  If the augmented result `Ŷ₁ = Û Ŝ(t₁) V̂ᵀ` is truncated back to rank `r`
+"rank truncation" of [CerutiEtAl2024b, Remark 4] for the augmented BUG integrator of
+[CerutiKuschLubich2022]).  If the augmented result `Ŷ₁ = Û Ŝ(t₁) V̂ᵀ` is truncated back to rank `r`
 by a `κ`-quasi-best approximation `T`, then for step sizes `0 ≤ h ≤ H`
 
     ‖T - A(t₁)‖ ≤ 2 κ h (4 L B h + ε) + (1 + κ) h (c₁ ε + c₂ h),
@@ -763,9 +767,9 @@ section RankGrowth
 variable {m n : Type*} [Fintype m] [Fintype n]
 
 omit [Fintype m] in
-/-- **Rank at most doubles** (OP-RA-16; arXiv 2602.06614, Sec. 3.1.1; arXiv 2104.05247,
-Sec. 5): the augmented (or parallel) BUG result `Û Ŝ V̂ᵀ` with `2 r`-column bases has rank
-`≤ 2 r`. -/
+/-- **Rank at most doubles** (OP-RA-16; [NobileRiffaudTrigoTrindade2027, Sec. 3.1.1];
+[CerutiKuschLubich2022], Sec. 5): the augmented (or parallel) BUG result `Û Ŝ V̂ᵀ` with `2 r`-column
+bases has rank `≤ 2 r`. -/
 theorem rank_augmented_le {r : ℕ} (Ua : Matrix m (Fin (2 * r)) ℝ)
     (Sa : Matrix (Fin (2 * r)) (Fin (2 * r)) ℝ) (Va : Matrix n (Fin (2 * r)) ℝ) :
     (Ua * Sa * Vaᵀ).rank ≤ 2 * r :=
@@ -799,9 +803,10 @@ variable [DecidableEq m] [DecidableEq n] {k k' : Type*} [Fintype k] [Fintype k']
   [DecidableEq k] [DecidableEq k']
 
 omit [DecidableEq m] [DecidableEq n] in
-/-- **Error lower bound by the augmented subspace** (OP-RA-16; arXiv 2602.06614, Sec. 3.1.1,
-second limitation).  Any matrix of the form `Ŷ = Û Ŝ V̂ᵀ` with orthonormal `Û`, `V̂` (the
-augmented BUG result and all of its truncations) satisfies
+/-- **Error lower bound by the augmented subspace** (OP-RA-16;
+[NobileRiffaudTrigoTrindade2027, Sec. 3.1.1], second limitation). Any matrix of the form
+`Ŷ = Û Ŝ V̂ᵀ` with orthonormal `Û`, `V̂` (the augmented BUG result and all of its truncations)
+satisfies
 
     ‖A₁ - Û Ûᵀ A₁ V̂ V̂ᵀ‖ ≤ ‖A₁ - Ŷ‖,
 
@@ -858,10 +863,10 @@ theorem rankAdaptive_error_ge {h : ℝ} (hh : 0 ≤ h) :
   · rw [abs_of_nonneg (by linarith)]; linarith
   · rw [abs_of_nonneg hh]
 
-/-- **The `ε`-rank truncation rule of arXiv 2602.06614, eq. (22)** (rank-adaptive BUG of
-arXiv 2104.05247, step 3), in distance form: `R_new = rank_ϑ(Ŝ(t₁))` for the `2 R_old × 2 R_old`
-coefficient matrix `Ŝ(t₁)`.  Then `R_new ≤ 2 R_old` (rank at most doubles) and the discarded
-part is within tolerance, `dist(Ŝ(t₁), M_{≤ R_new}) ≤ ϑ`. -/
+/-- **The `ε`-rank truncation rule of [NobileRiffaudTrigoTrindade2027, eq. (22)]** (rank-adaptive
+BUG of [CerutiKuschLubich2022], step 3), in distance form: `R_new = rank_ϑ(Ŝ(t₁))` for the
+`2 R_old × 2 R_old` coefficient matrix `Ŝ(t₁)`. Then `R_new ≤ 2 R_old` (rank at most doubles) and
+the discarded part is within tolerance, `dist(Ŝ(t₁), M_{≤ R_new}) ≤ ϑ`. -/
 theorem epsRank_augmented_le {R : ℕ} (S : Matrix (Fin (2 * R)) (Fin (2 * R)) ℝ) {ϑ : ℝ}
     (hϑ : 0 ≤ ϑ) : epsRank ϑ S ≤ 2 * R ∧ distLR (epsRank ϑ S) S ≤ ϑ :=
   ⟨(epsRank_le_rank hϑ).trans (by simpa using S.rank_le_card_width), distLR_epsRank_le hϑ⟩
@@ -932,7 +937,7 @@ theorem galerkin_step_error_of_le {R R' : E →L[ℝ] E} (hR' : IsOrthProj R')
   galerkin_step_error hR' hF hL hB ht₁ hh hA hS hS₀
     ((hR'.norm_sub_le_of_mem_range _ _ (hle _)).trans hθ)
 
-/-- **Enriched BUG step** (OP-OT-19; covers the augmented BUG of arXiv 2104.05247 and any
+/-- **Enriched BUG step** (OP-OT-19; covers the augmented BUG of [CerutiKuschLubich2022] and any
 further enrichment).  If `IsBUGStep` holds with new projectors `P₁`, `Q₁`, and `P₁'`, `Q₁'` are
 commuting orthogonal projectors with larger ranges (`P₁' P₁ = P₁`, `Q₁' Q₁ = Q₁`), then the
 Galerkin step `YS'` in the enriched space is again a BUG step with the **same** `ε`.  In
@@ -1368,14 +1373,14 @@ theorem distLR_flow_le_exp (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBo
   linarith
 
 /-- **Robust rank-`r` truncation with the `h ε_r` term of the papers** (OP-RA-07;
-arXiv 2402.08607, Remark 4; arXiv 2608.27749, Remark 2, robust form).  For every approximation
-`Ŷ` of `A(t₁)` and every `κ`-quasi-best rank-`r` approximation `T` of `Ŷ`,
+[CerutiEtAl2024b, Remark 4]; [HauckKuschSchotthofer2026, Remark 2], robust form). For every
+approximation `Ŷ` of `A(t₁)` and every `κ`-quasi-best rank-`r` approximation `T` of `Ŷ`,
 
     ‖T - A(t₁)‖ ≤ κ h ε_r e^{L h} + (1 + κ) ‖Ŷ - A(t₁)‖,
 
 the bound `h ε_r + 2 ‖Ŷ - A(t₁)‖` of the papers (`κ = 1`) with the factor `e^{L h}` in front of
 `h ε_r`, and **without** assuming that a rank-`r` DLRA solution exists over the step.  Combined
-with a local error `‖Ŷ - A(t₁)‖ = O(h (h² + ε_r))` (midpoint BUG, arXiv 2402.08607 Thm. 1) this
+with a local error `‖Ŷ - A(t₁)‖ = O(h (h² + ε_r))` (midpoint BUG, [CerutiEtAl2024b] Thm. 1) this
 gives the `O(h (h² + ε_r))` truncated bound of Remark 4. -/
 theorem norm_trunc_flow_le_exp (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hB : IsBoundedField F B) (hε0 : 0 ≤ ε)
@@ -1419,11 +1424,11 @@ noncomputable def fixedRankDefect (κ L B ε h H : ℝ) : ℝ :=
 
 /-- **Robust global error of the fixed-rank truncated augmented BUG integrator** (the
 fixed-rank variant "augment, Galerkin, truncate back to rank `r`" of the rank-adaptive BUG
-integrator of arXiv 2104.05247, cf. arXiv 2402.08607, Remark 4).  Let `F` be `L`-Lipschitz and
-bounded by `B`, with the factored normal-component bound `ε` at rank `r`.
-Each step `j < N` is a rank-adaptive step (`IsRankAdaptiveStep`, any tolerance `θ`) from
-`Yⱼ = Uⱼ Sⱼ Vⱼᵀ` (rank `r`) whose result `Yⱼ₊₁` is a `κ`-quasi-best rank-`r` approximation of
-the augmented result `Ŷⱼ₊₁ = Ûⱼ Ŝⱼ(tⱼ₊₁) V̂ⱼᵀ`.  Then for `j ≤ N`, `j h ≤ T`, `0 ≤ h ≤ H`,
+integrator of [CerutiKuschLubich2022], cf. [CerutiEtAl2024b, Remark 4]). Let `F` be `L`-Lipschitz
+and bounded by `B`, with the factored normal-component bound `ε` at rank `r`. Each step `j < N` is a
+rank-adaptive step (`IsRankAdaptiveStep`, any tolerance `θ`) from `Yⱼ = Uⱼ Sⱼ Vⱼᵀ` (rank `r`) whose
+result `Yⱼ₊₁` is a `κ`-quasi-best rank-`r` approximation of the augmented result
+`Ŷⱼ₊₁ = Ûⱼ Ŝⱼ(tⱼ₊₁) V̂ⱼᵀ`. Then for `j ≤ N`, `j h ≤ T`, `0 ≤ h ≤ H`,
 
     ‖Yⱼ - A(tⱼ)‖ ≤ e^{L T} δ + T e^{L T} c₁ ε + T e^{L T} c₂ h + e^{L T} j ϑ⋆,
 

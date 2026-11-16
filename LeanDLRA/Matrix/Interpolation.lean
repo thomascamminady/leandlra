@@ -10,9 +10,9 @@ import LeanDLRA.Analysis.Defs
 # Oblique (interpolatory / sketched) projectors in dynamical low-rank approximation
 
 Interpolatory DLRA (DLRA-DEIM, Carrel–Kressner–Nobile–Vandereycken, *Interpolatory dynamical
-low-rank approximation: theoretical foundations and algorithms*, arXiv 2510.19518) and sketched
+low-rank approximation: theoretical foundations and algorithms*, [CarrelEtAl2025]) and sketched
 DLRA (Carrel–Grigori, *Sketch low-rank dynamics: orthogonal vs. oblique projections*,
-arXiv 2607.03402) replace the orthogonal projector `U Uᵀ` onto the column space of an orthonormal
+[CarrelGrigori2026]) replace the orthogonal projector `U Uᵀ` onto the column space of an orthonormal
 basis `U ∈ ℝ^{m × r}` by the **oblique projector**
 
     𝒫 = U (Sᵀ U)⁻¹ Sᵀ ,
@@ -20,7 +20,7 @@ basis `U ∈ ℝ^{m × r}` by the **oblique projector**
 where `S ∈ ℝ^{m × r}` is a selection matrix (DEIM: `𝒫 x` interpolates `x` at the selected
 rows) or a sketch (`S = Θᵀ Θ U` for a sketching matrix `Θ ∈ ℝ^{ℓ × m}`), and the orthogonal
 tangent-space projector `P(Y) Z = U Uᵀ Z + Z V Vᵀ - U Uᵀ Z V Vᵀ` by the oblique tangent-space
-projector `P^∠(Y) Z = 𝒫_U Z + Z 𝒫_Vᵀ - 𝒫_U Z 𝒫_Vᵀ` (arXiv 2510.19518, eqs. (12)–(13)).
+projector `P^∠(Y) Z = 𝒫_U Z + Z 𝒫_Vᵀ - 𝒫_U Z 𝒫_Vᵀ` ([CarrelEtAl2025, eqs. (12)–(13)]).
 
 `IsObliqueProj`, `obliqueProj`, `leftOblique` and `rightOblique` are defined in
 `LeanDLRA/LinearAlgebra/Projection/Defs.lean`, and `obliqueTangentProj`, `sketchTangentProj` in
@@ -32,20 +32,20 @@ projector `P^∠(Y) Z = 𝒫_U Z + Z 𝒫_Vᵀ - 𝒫_U Z 𝒫_Vᵀ` (arXiv 2510
 range of the orthogonal projector `Q`: `P Q = Q` and `Q P = P`.  We prove
 
 * `IsObliqueProj.idem`: `P` is idempotent; `sub_apply_eq`: `(I - P) = (I - P)(I - Q)`
-  (arXiv 2510.19518, eq. (14));
+  ([CarrelEtAl2025, eq. (14)]);
 * `norm_sub_sq`: `‖x - P x‖² = ‖x - Q x‖² + ‖P (x - Q x)‖²`;
-* `norm_sub_le_opNorm` (**DEIM error bound**, Chaturantabut–Sorensen; arXiv 2510.19518,
+* `norm_sub_le_opNorm` (**DEIM error bound**, Chaturantabut–Sorensen; [CarrelEtAl2025],
   eq. (6)): `‖x - P x‖ ≤ ‖P‖ ‖x - Q x‖` for `Q ≠ 0`, together with the quasi-optimality
   `‖x - P x‖ ≤ ‖P‖ ‖x - y‖` for every `y` in the range of `Q`;
 * `opNorm_one_sub_eq` (**Szyld's identity** in this setting): `‖I - P‖ = ‖P‖` if `0 ≠ Q ≠ I`
-  (used in the proof of Lemma 4 of arXiv 2510.19518);
+  (used in the proof of Lemma 4 of [CarrelEtAl2025]);
 * `IsObliqueProj.tangent`: if `P_L`, `P_R` are oblique projectors onto commuting orthogonal
   projectors `Q_L`, `Q_R`, and the cross-commutations `P_L Q_R = Q_R P_L`, `P_R Q_L = Q_L P_R`
   hold (`P_L` and `P_R` need not commute), then `tangent P_L P_R = P_L + P_R - P_L P_R` is an
   oblique projector onto the orthogonal tangent projector `tangent Q_L Q_R` (the matrix case is
-  arXiv 2510.19518, §3.1; this is the two-factor analogue of its Tucker Lemma 15, which is not
+  [CarrelEtAl2025, §3.1]; this is the two-factor analogue of its Tucker Lemma 15, which is not
   covered);
-* `norm_sub_tangent_le_opNorm` (**Lemma 4** of arXiv 2510.19518):
+* `norm_sub_tangent_le_opNorm` (**Lemma 4** of [CarrelEtAl2025]):
   `‖x - P^∠ x‖ ≤ ‖P_L‖ ‖P_R‖ ‖x - P x‖`; `opNorm_tangent_le`: `‖P^∠‖ ≤ ‖P_L‖ ‖P_R‖`
   (unconditionally, for `Q_L, Q_R ≠ 0`); `opNorm_one_sub_tangent_eq`: `‖I - P^∠‖ = ‖P^∠‖` when
   the tangent projector satisfies `0 ≠ P ≠ I`;
@@ -70,12 +70,12 @@ range of the orthogonal projector `Q`: `P Q = Q` and `Q P = P`.  We prove
   distance of the exact one-step flow to `ℳ`; `norm_projEulerDEIM_sub_le_global_of_dlra`
   discharges this with `g = ε_d e^{L h}` from DLRA trajectories on `ℳ` with defect `ε_d`;
 * `IsObliqueProj.eq_iff_of_sketch` (the deterministic core of **Proposition 4.4** of
-  arXiv 2607.03402): if a sketch `σ` maps the oblique projector to an orthogonal one
+  [CarrelGrigori2026]): if a sketch `σ` maps the oblique projector to an orthogonal one
   (`σ ∘ P^∠ = P̂ ∘ σ`) and does not annihilate the single tangent vector
   `δ = P^∠ z - P z` (the `Z` of Prop. 4.4), then `P^∠ z = P z` iff the sketched normal
   component `σ (z - P z)` is orthogonal to the sketched tangent space (condition (14));
 * `IsObliqueProj.norm_sub_le_of_sketch`, `norm_sub_le_of_obliqueSketch` (a quantitative form of
-  eq. (15), in the spirit of Remark 4.6 of arXiv 2607.03402, which does not pursue it): if the
+  eq. (15), in the spirit of Remark 4.6 of [CarrelGrigori2026], which does not pursue it): if the
   sketch embeds `δ = P^∠ z - P z` from below, `(1 - ε) ‖δ‖ ≤ ‖σ δ‖`, and the oblique residual
   at `δ` is small, `|⟪σ (z - P z), σ δ⟫| ≤ η ‖z - P z‖ ‖δ‖`, then
   `‖P^∠ z - P z‖ ≤ η / (1 - ε)² ‖z - P z‖`, and the oblique sketch DLRA satisfies the DLRA
@@ -90,15 +90,15 @@ range of the orthogonal projector `Q`: `P Q = Q` and `Q P = P`.  We prove
   it only depends on the ranges of `U` and `S` (`obliqueProj_mul_right`,
   `obliqueProj_mul_right'`); for `S = U` it is the orthogonal projector `U (UᵀU)⁻¹ Uᵀ`, equal to
   `U₀ U₀ᵀ` for any orthonormal basis `U₀` of the range (`obliqueProj_self_mul_right`:
-  orthogonal sketch DLRA is DLRA, arXiv 2607.03402, eqs. (7)–(8); the projector `Π_Ω` of
-  arXiv 2410.17091, eq. (7));
+  orthogonal sketch DLRA is DLRA, [CarrelGrigori2026, eqs. (7)–(8)]; the projector `Π_Ω` of
+  [Carrel2025, eq. (7)]);
 * `norm_sub_obliqueProj_mul_le_of_orthonormal`: `‖X - 𝒫 X‖_F ≤ ‖(Sᵀ U)⁻¹‖₂ ‖X - U Uᵀ X‖_F`
-  for a selection (orthonormal) `S` (arXiv 2510.19518, eq. (6)); for general `S`,
+  for a selection (orthonormal) `S` ([CarrelEtAl2025, eq. (6)]); for general `S`,
   `‖X - 𝒫 X‖_F ≤ ‖(Sᵀ U)⁻¹‖₂ ‖S‖₂ ‖X - U Uᵀ X‖_F` and the purely Frobenius bound
   `‖(I - 𝒫) X‖_F ≤ (1 + ‖U‖_F ‖(SᵀU)⁻¹‖_F ‖S‖_F) ‖(I - U Uᵀ) X‖_F`;
 * `obliqueTangentProj`: the oblique tangent projector `P^∠(Y)`; it is an oblique projector onto
   `P(Y)`, has the interpolation property `S_Uᵀ P^∠(Y)[Z] S_V = S_Uᵀ Z S_V`, and satisfies
-  **Lemma 4** of arXiv 2510.19518:
+  **Lemma 4** of [CarrelEtAl2025]:
   `‖Z - P^∠(Y) Z‖_F ≤ ‖(S_Uᵀ U)⁻¹‖₂ ‖(S_Vᵀ V)⁻¹‖₂ ‖Z - P(Y) Z‖_F`,
   `‖P^∠(Y)‖ ≤ ‖(S_Uᵀ U)⁻¹‖₂ ‖(S_Vᵀ V)⁻¹‖₂` and `‖I - P^∠(Y)‖ = ‖P^∠(Y)‖` (if `P(Y) ≠ I`);
   `norm_sub_obliqueTangentProj_le_of_normal`: the interpolatory projected field is
@@ -108,7 +108,7 @@ range of the orthogonal projector `Q`: `P Q = Q` and `Q P = P`.  We prove
   `‖X - 𝒫_U X 𝒫_Vᵀ‖_F ≤ C_U ‖X - U Uᵀ X‖_F + C_U C_V ‖X - X V Vᵀ‖_F`.  It is built from the
   bases `U`, `V` and the selected cross of `X`; it is *not* the DEIM-CUR factorisation `C U R`
   of Sorensen–Embree, whose factors `C`, `R` are actual columns and rows of `X`;
-* sketching (arXiv 2607.03402, Lemma 4.2): for sketch-orthonormal `P` (`(ΘP)ᵀ(ΘP) = I`),
+* sketching ([CarrelGrigori2026, Lemma 4.2]): for sketch-orthonormal `P` (`(ΘP)ᵀ(ΘP) = I`),
   `P (ΘP)⁺ Θ = P Pᵀ Θᵀ Θ = obliqueProj P (Θᵀ Θ P)`, the sketch maps it to the orthogonal
   projector of the sketched basis (`Θ 𝒫 = (ΘP)(ΘP)ᵀ Θ`), and the two-sided oblique sketch
   projector is, in sketch coordinates, the orthogonal tangent projector at `Θ Y Ωᵀ`;
@@ -125,7 +125,7 @@ range of the orthogonal projector `Q`: `P Q = Q` and `Q P = P`.  We prove
 * Lemma 4 / eq. (6) are proved with the spectral norm `specNorm` of `U (SᵀU)⁻¹ Sᵀ`, which is
   bounded by `‖(SᵀU)⁻¹‖₂ ‖S‖₂`; for selection matrices (`SᵀS = I`) this is the paper's
   `‖(SᵀU)⁻¹‖₂`.  The abstract versions use the operator norm induced by the Frobenius norm,
-  exactly as in arXiv 2510.19518, eq. (15).
+  exactly as in [CarrelEtAl2025, eq. (15)].
 * Theorem 12 assumes, in addition to the paper's Assumptions 1–3, a bound `‖F‖ ≤ B` along the
   exact one-step flows (Assumption 4, localised) to make Euler's local error `L B h²` explicit,
   and `norm_projEulerDEIM_sub_le_global` takes as a hypothesis that the exact flow from `Y_n` is
@@ -142,9 +142,9 @@ range of the orthogonal projector `Q`: `P Q = Q` and `Q P = P`.  We prove
   continuous solutions satisfying the inclusion almost everywhere.  This is a genuine
   restriction: absolutely continuous solutions whose derivative leaves the Filippov set (or
   fails to exist) on a null set of times are not covered.  The set `filippov` itself coincides
-  with eq. (16) of arXiv 2510.19518 (closed convex hull; open versus closed balls are
+  with eq. (16) of [CarrelEtAl2025] (closed convex hull; open versus closed balls are
   immaterial in the intersection over `δ > 0`).
-* The results on oblique *sketched* projectors (arXiv 2607.03402) are deterministic: the
+* The results on oblique *sketched* projectors ([CarrelGrigori2026]) are deterministic: the
   embedding hypotheses are imposed on the realized sketch and only at the specific,
   sketch-dependent tangent vector `δ = P^∠ z - P z`, as in Proposition 4.4 and Remark 4.5.
   Uniform hypotheses over the whole tangent space would be vacuous for compressive sketches
@@ -184,7 +184,7 @@ lemma idem' (h : IsObliqueProj P Q) : P * P = P := by
 lemma map_sub_proj (h : IsObliqueProj P Q) (x : E) : P (x - Q x) = P x - Q x := by
   rw [map_sub, h.fix]
 
-/-- `(I - P) = (I - P) (I - Q)` (arXiv 2510.19518, eq. (14)). -/
+/-- `(I - P) = (I - P) (I - Q)` ([CarrelEtAl2025, eq. (14)]). -/
 lemma sub_apply_eq (h : IsObliqueProj P Q) (x : E) :
     x - P x = (x - Q x) - P (x - Q x) := by
   rw [h.map_sub_proj]; abel
@@ -225,7 +225,7 @@ lemma one_le_opNorm (h : IsObliqueProj P Q) (hQ : Q ≠ 0) : 1 ≤ ‖P‖ := by
   have h2 : 0 < ‖Q y‖ := norm_pos_iff.2 hy
   nlinarith
 
-/-- **DEIM error bound** (Chaturantabut–Sorensen; arXiv 2510.19518, eq. (6)): an oblique
+/-- **DEIM error bound** (Chaturantabut–Sorensen; [CarrelEtAl2025, eq. (6)]): an oblique
 projector onto the range of a nonzero orthogonal projector `Q` is quasi-optimal,
 `‖x - P x‖ ≤ ‖P‖ ‖x - Q x‖`.
 
@@ -280,7 +280,7 @@ theorem norm_sub_le_opNorm_mul_norm_sub (h : IsObliqueProj P Q) (hQ : Q ≠ 0) (
     (mul_le_mul_of_nonneg_left (h.orth.norm_sub_le_of_mem_range x y hy) (norm_nonneg _))
 
 /-- Error of the oblique projection of a vector with small normal component: if
-`‖x - Q x‖ ≤ ε` and `‖P‖ ≤ C`, then `‖x - P x‖ ≤ C ε` (arXiv 2510.19518, proof of
+`‖x - Q x‖ ≤ ε` and `‖P‖ ≤ C`, then `‖x - P x‖ ≤ C ε` ([CarrelEtAl2025], proof of
 Corollary 9 and of Lemma 11). -/
 theorem norm_sub_le_of_normal (h : IsObliqueProj P Q) (hQ : Q ≠ 0) {x : E} {C ε : ℝ}
     (hx : ‖x - Q x‖ ≤ ε) (hC : ‖P‖ ≤ C) : ‖x - P x‖ ≤ C * ε :=
@@ -343,7 +343,7 @@ theorem opNorm_le_opNorm_one_sub (h : IsObliqueProj P Q) (hQ : Q ≠ 1) : ‖P�
   exact (pow_le_pow_iff_left₀ (norm_nonneg _) (by positivity) two_ne_zero).1 this
 
 /-- **Szyld's identity** for oblique projectors: `‖I - P‖ = ‖P‖` whenever `0 ≠ Q ≠ I`
-(used in the proof of Lemma 4 of arXiv 2510.19518: `‖I - P_U^∠‖₂ = ‖P_U^∠‖₂`). -/
+(used in the proof of Lemma 4 of [CarrelEtAl2025]: `‖I - P_U^∠‖₂ = ‖P_U^∠‖₂`). -/
 theorem opNorm_one_sub_eq (h : IsObliqueProj P Q) (hQ0 : Q ≠ 0) (hQ1 : Q ≠ 1) :
     ‖1 - P‖ = ‖P‖ :=
   le_antisymm (h.opNorm_one_sub_le hQ0) (h.opNorm_le_opNorm_one_sub hQ1)
@@ -354,7 +354,7 @@ section Tangent
 
 variable {PL PR QL QR : E →L[ℝ] E}
 
-/-- The key identity behind Lemma 4 of arXiv 2510.19518: `(I - P_L)(I - P_R)(I - Q_L)(I - Q_R)
+/-- The key identity behind Lemma 4 of [CarrelEtAl2025]: `(I - P_L)(I - P_R)(I - Q_L)(I - Q_R)
 = (I - P_L)(I - P_R)` when the right oblique projector commutes with the left orthogonal one. -/
 lemma normal_normal (hL : IsObliqueProj PL QL) (hR : IsObliqueProj PR QR)
     (hRL : ∀ x, PR (QL x) = QL (PR x)) (x : E) :
@@ -362,7 +362,7 @@ lemma normal_normal (hL : IsObliqueProj PL QL) (hR : IsObliqueProj PR QR)
   simp only [normal_apply, map_sub, hL.fix, hR.fix, hRL]
   abel
 
-/-- **Oblique tangent-space projector** (abstract form of arXiv 2510.19518, §3.1; the two-factor
+/-- **Oblique tangent-space projector** (abstract form of [CarrelEtAl2025, §3.1]; the two-factor
 analogue of its Tucker Lemma 15, whose three-mode projector (34) is not of this form): if `P_L`,
 `P_R` are oblique projectors onto the commuting orthogonal projectors `Q_L`, `Q_R`
 (`Q_L Q_R = Q_R Q_L`) and the cross-commutations `P_L Q_R = Q_R P_L`, `P_R Q_L = Q_L P_R` hold,
@@ -389,7 +389,7 @@ theorem tangent (hL : IsObliqueProj PL QL) (hR : IsObliqueProj PR QR)
     exact h1
 
 /-- `x - P^∠ x = (I - P_L)(I - P_R)(x - P x)`, the identity of the proof of Lemma 4 of
-arXiv 2510.19518. -/
+[CarrelEtAl2025]. -/
 lemma sub_tangent_eq (hL : IsObliqueProj PL QL) (hR : IsObliqueProj PR QR)
     (hRL : ∀ x, PR (QL x) = QL (PR x)) (x : E) :
     x - LeanDLRA.tangent PL PR x =
@@ -407,7 +407,7 @@ theorem norm_sub_tangent_le (hL : IsObliqueProj PL QL) (hR : IsObliqueProj PR QR
   exact ((1 - PL).le_opNorm _).trans
     (mul_le_mul_of_nonneg_left ((1 - PR).le_opNorm _) (norm_nonneg _))
 
-/-- **Lemma 4 of arXiv 2510.19518** (abstract form): the oblique tangent projection is
+/-- **Lemma 4 of [CarrelEtAl2025]** (abstract form): the oblique tangent projection is
 quasi-optimal, `‖x - P^∠ x‖ ≤ ‖P_L‖ ‖P_R‖ ‖x - P x‖`. -/
 theorem norm_sub_tangent_le_opNorm (hL : IsObliqueProj PL QL) (hR : IsObliqueProj PR QR)
     (hRL : ∀ x, PR (QL x) = QL (PR x)) (hQL : QL ≠ 0) (hQR : QR ≠ 0) (x : E) :
@@ -458,7 +458,7 @@ theorem _root_.LeanDLRA.opNorm_one_sub_tangent_le (PL PR : E →L[ℝ] E) :
   rw [← normal_eq_one_sub_tangent]
   exact norm_mul_le _ _
 
-/-- **Lemma 4 of arXiv 2510.19518** (norm of the oblique tangent projector):
+/-- **Lemma 4 of [CarrelEtAl2025]** (norm of the oblique tangent projector):
 `‖P^∠‖ ≤ ‖P_L‖ ‖P_R‖` for `Q_L, Q_R ≠ 0`, unconditionally as in eq. (15) of the paper.  If the
 tangent projector `P = tangent Q_L Q_R` is a proper projector, this follows from Szyld's
 identity; if `P = I`, then `P^∠ = I` and `‖I‖ ≤ 1 ≤ ‖P_L‖ ‖P_R‖`. -/
@@ -483,7 +483,7 @@ theorem opNorm_tangent_le (hL : IsObliqueProj PL QL) (hR : IsObliqueProj PR QR)
         mul_le_mul (hL.opNorm_one_sub_le hQL) (hR.opNorm_one_sub_le hQR) (norm_nonneg _)
           (norm_nonneg _)
 
-/-- **Lemma 4 of arXiv 2510.19518** (Szyld's identity for the oblique tangent projector):
+/-- **Lemma 4 of [CarrelEtAl2025]** (Szyld's identity for the oblique tangent projector):
 `‖I - P^∠‖ = ‖P^∠‖` when `0 ≠ P ≠ I`. -/
 theorem opNorm_one_sub_tangent_eq (hL : IsObliqueProj PL QL) (hR : IsObliqueProj PR QR)
     (hQ : ∀ x, QL (QR x) = QR (QL x)) (hLR : ∀ x, PL (QR x) = QR (PL x))
@@ -502,13 +502,13 @@ section Sketch
 
 variable {E' : Type*} [NormedAddCommGroup E'] [InnerProductSpace ℝ E']
 
-/-- **Deterministic core of Proposition 4.4 of arXiv 2607.03402.**  Let `P^∠` be an oblique
+/-- **Deterministic core of Proposition 4.4 of [CarrelGrigori2026].**  Let `P^∠` be an oblique
 projector onto the orthogonal (tangent) projector `P`, and let the sketch `σ : E → E'` map it
 to an orthogonal projector `P̂` of the sketch space (`σ ∘ P^∠ = P̂ ∘ σ`, Lemma 4.2 of
-arXiv 2607.03402).  Assume that `σ` does not annihilate the single tangent vector
+[CarrelGrigori2026]).  Assume that `σ` does not annihilate the single tangent vector
 `δ = P^∠ z - P z`.  Then the oblique projection reproduces the orthogonal one, `P^∠ z = P z`, if
 and only if the sketched normal component `σ (z - P z)` is orthogonal to the sketch of every
-tangent vector (condition (14) of arXiv 2607.03402).
+tangent vector (condition (14) of [CarrelGrigori2026]).
 
 For the oblique sketch DLRA (`z = F(Y)`, `Ẏ = P^∠ z`), `δ = Ẏ - P_Y F(Y)` is exactly the `Z` of
 Prop. 4.4, whose hypothesis (`Θ`, `Ω` embed the column and row spaces of `Z`) gives
@@ -539,7 +539,7 @@ theorem IsObliqueProj.eq_iff_of_sketch {Pob P : E →L[ℝ] E} {Phat : E' →L[�
     exact hinj (by rw [← hN]; exact h3)
 
 /-- **Approximate equivalence of oblique sketched projection and orthogonal projection**
-(deterministic, quantitative form of eq. (15) of arXiv 2607.03402; Remark 4.6 there discusses
+(deterministic, quantitative form of eq. (15) of [CarrelGrigori2026]; Remark 4.6 there discusses
 this regime but does not pursue a bound).  In the setting of `IsObliqueProj.eq_iff_of_sketch`,
 let `n = z - P z` be the normal component and `δ = P^∠ z - P z` (the `Z` of Prop. 4.4), and
 assume, for these two vectors only,
@@ -550,7 +550,7 @@ Then `‖P^∠ z - P z‖ ≤ η / (1 - ε)² ‖z - P z‖`: the oblique sketch
 orthogonal one when the normal component is small.
 
 On the hypotheses: for a pair `(n, δ)` fixed independently of the sketch, with combined column
-and row spaces of dimension `≤ d`, Corollary 2.3 of arXiv 2607.03402 would give both bounds with
+and row spaces of dimension `≤ d`, Corollary 2.3 of [CarrelGrigori2026] would give both bounds with
 `η = 2ε + ε²` for `OSE(d, ε, δ)` sketches.  Here, however, `δ` depends on the sketch, and `n` has
 in general full rank, so Corollary 2.3 does not apply directly (Remarks 4.5 and 4.6 of the
 paper); the hypotheses are therefore stated deterministically on the realized sketch, as in
@@ -600,7 +600,7 @@ section Filippov
 
 /- `filippov` is defined in `LeanDLRA/Analysis/Defs.lean`. -/
 
-/-- **Corollary 9 of arXiv 2510.19518.**  If `‖f z - F z‖ ≤ c` for all `z ∈ ℳ` and `F` is
+/-- **Corollary 9 of [CarrelEtAl2025].**  If `‖f z - F z‖ ≤ c` for all `z ∈ ℳ` and `F` is
 continuous at `y`, then every element `v` of the Filippov set `𝓕(y)` satisfies
 `‖v - F y‖ ≤ c`. -/
 theorem norm_sub_le_of_mem_filippov {f F : E → E} {M : Set E} {c : ℝ} {y v : E}
@@ -627,7 +627,7 @@ theorem norm_sub_le_of_mem_filippov {f F : E → E} {M : Set E} {c : ℝ} {y v :
 
 /-- The field `f(z) = P^∠(z) F(z)` of interpolatory DLRA is `C ε`-close to `F` on `ℳ`, if the
 oblique projectors `P^∠(z)` (onto nonzero orthogonal projectors `P(z)`) have norm `≤ C` and the
-normal component of `F` is `≤ ε` on `ℳ` (Assumption 3 and Lemma 4 of arXiv 2510.19518). -/
+normal component of `F` is `≤ ε` on `ℳ` (Assumption 3 and Lemma 4 of [CarrelEtAl2025]). -/
 theorem norm_obliqueField_sub_le {F : E → E} {M : Set E} {Pob P : E → E →L[ℝ] E} {C ε : ℝ}
     (hP : ∀ z ∈ M, IsObliqueProj (Pob z) (P z)) (hP0 : ∀ z ∈ M, P z ≠ 0)
     (hC : ∀ z ∈ M, ‖Pob z‖ ≤ C) (hε : ∀ z ∈ M, ‖F z - P z (F z)‖ ≤ ε) :
@@ -635,7 +635,7 @@ theorem norm_obliqueField_sub_le {F : E → E} {M : Set E} {Pob P : E → E →L
   rw [norm_sub_rev]
   exact (hP z hz).norm_sub_le_of_normal (hP0 z hz) (hε z hz) (hC z hz)
 
-/-- **Theorem 10 of arXiv 2510.19518** (error bound for DLRA-DEIM, Filippov form).  Let `A`
+/-- **Theorem 10 of [CarrelEtAl2025]** (error bound for DLRA-DEIM, Filippov form).  Let `A`
 solve `A' = F(t, A)` with `F` one-sided Lipschitz with constant `ℓ` and `F t` continuous, and let
 `Y` be a continuous trajectory whose right derivative lies, at every `t ∈ [a, b)`, in the
 Filippov set of a field `f t` with `‖f t z - F t z‖ ≤ c` on `ℳ` (by
@@ -654,7 +654,7 @@ theorem norm_sub_le_of_filippov {F f : ℝ → E → E} {M : Set E} {ℓ c a b :
     hA.cont hA.deriv (fun _ _ => by simp) le_rfl t ht
   rwa [add_zero] at h
 
-/-- **Theorem 10 of arXiv 2510.19518** (classical-solution form): if
+/-- **Theorem 10 of [CarrelEtAl2025]** (classical-solution form): if
 `Y' = P^∠(t) F(t, Y)` where, along `Y`, `P^∠(t)` is an oblique projector onto the nonzero
 orthogonal projector `P(t)` with `‖P^∠(t)‖ ≤ C` and the normal component satisfies
 `‖F(t, Y t) - P(t) F(t, Y t)‖ ≤ ε`, and `A' = F(t, A)` with `F` one-sided Lipschitz (constant
@@ -671,7 +671,7 @@ theorem norm_sub_le_of_oblique {F : ℝ → E → E} {Pob P : ℝ → E →L[ℝ
     exact (hP t ht).norm_sub_le_of_normal (hP0 t ht) (hε t ht) (hC t ht)
 
 /-- **Error bound for oblique sketch DLRA** (a quantitative trajectory version of eq. (15) of
-arXiv 2607.03402, §4.2; Remark 4.6 there leaves such a perturbation argument open): if
+[CarrelGrigori2026, §4.2]; Remark 4.6 there leaves such a perturbation argument open): if
 `Y' = P^∠(t) F(t, Y)` with oblique sketched projectors satisfying, along `Y` and at every
 `t ∈ [a, b)`, the pointwise hypotheses of `IsObliqueProj.norm_sub_le_of_sketch` (constants
 `ε < 1`, `η ≥ 0`) at the realized vectors `n_t = F(t, Y t) - P(t) F(t, Y t)` and
@@ -713,7 +713,7 @@ lemma mem_filippov_self {f : E → E} {M : Set E} {y : E} (hy : y ∈ M) :
   mem_iInter₂.2 fun _ hδ =>
     subset_closure (subset_convexHull ℝ _ ⟨y, ⟨mem_ball_self hδ, hy⟩, rfl⟩)
 
-/-- **Lemma 7 of arXiv 2510.19518, existence part** (exactness, pointwise Filippov form): if
+/-- **Lemma 7 of [CarrelEtAl2025], existence part** (exactness, pointwise Filippov form): if
 `y ∈ ℳ` and `F(y)` lies in the range of the orthogonal (tangent) projector `P(y)`, then `F(y)`
 belongs to the Filippov set of the interpolatory field `z ↦ P^∠(z) F(z)` at `y`, for every
 oblique projector `P^∠(y)` onto `P(y)` (because `P^∠(y)` fixes the range of `P(y)`).  Applied at
@@ -732,7 +732,7 @@ theorem mem_filippov_of_mem_range {F : E → E} {M : Set E} {Pob P : E → E →
   have := mem_filippov_self (f := fun z => Pob z (F z)) hy
   rwa [h] at this
 
-/-- **Lemma 7 of arXiv 2510.19518, existence part** (exactness, classical trajectory form): if
+/-- **Lemma 7 of [CarrelEtAl2025], existence part** (exactness, classical trajectory form): if
 `A' = F(t, A)` and the velocity `F(t, A(t))` lies in the range of `P(t)` (the tangent space;
 in the paper this follows from `A(t) ∈ ℳ_r`, which is not derived here), then `A` also solves
 the interpolatory DLRA `Y' = P^∠(t) F(t, Y)` for any oblique projectors `P^∠(t)` onto `P(t)`.
@@ -771,7 +771,7 @@ theorem ODESolution.norm_sub_euler_le {F : ℝ → E → E} {φ : ℝ → E} {a 
     simp only [hg, sub_self, zero_smul, sub_zero]; abel
   rwa [hgb] at h
 
-/-- **Lemma 11 of arXiv 2510.19518** (local error of projected Euler-DEIM, abstract form).
+/-- **Lemma 11 of [CarrelEtAl2025]** (local error of projected Euler-DEIM, abstract form).
 Let `T` be a quasi-best approximation onto `ℳ` (`‖T x - x‖ ≤ κ ‖z - x‖` for `z ∈ ℳ`; `κ = 1`
 for the truncated SVD `T_r` by Eckart–Young), `P^∠` an oblique projector onto the nonzero
 orthogonal (tangent) projector `P` with `‖P^∠‖ ≤ C`, and `v = F(y)` with normal component
@@ -780,7 +780,7 @@ and some `z ∈ ℳ` is `d`-close to `w`, then the projected Euler-DEIM step sat
 `‖T(y + h P^∠ v) - w‖ ≤ κ d + (1 + κ)(e + h C ε)`.
 
 This is the argument of Kieri–Vandereycken (Lemma 3 of their projection-method paper) with the
-oblique projection, as in the proof of Lemma 11 of arXiv 2510.19518: `d = O(h ε)` comes from the
+oblique projection, as in the proof of Lemma 11 of [CarrelEtAl2025]: `d = O(h ε)` comes from the
 DLRA error bound (`ODESolution.norm_sub_le_of_perturbed_max` with zero initial error) and
 `e = O(h²)` from `ODESolution.norm_sub_euler_le`. -/
 theorem norm_projEulerDEIM_sub_le {T : E → E} {M : Set E} {κ : ℝ}
@@ -807,7 +807,7 @@ theorem norm_projEulerDEIM_sub_le {T : E → E} {M : Set E} {κ : ℝ}
         add_le_add ((hT x z hz).trans (mul_le_mul_of_nonneg_left hzx hκ)) hxw
     _ = κ * d + (1 + κ) * (e + h * (C * ε)) := by ring
 
-/-- **Theorem 12 of arXiv 2510.19518** (global error of projected Euler-DEIM, abstract form).
+/-- **Theorem 12 of [CarrelEtAl2025]** (global error of projected Euler-DEIM, abstract form).
 Let `F` be `L`-Lipschitz (Assumption 1), `A' = F(A)`, and let
 `Y_{n+1} = T(Y_n + h P^∠_n F(Y_n))` with oblique projectors `P^∠_n` onto nonzero orthogonal
 (tangent) projectors `P_n`, `‖P^∠_n‖ ≤ C` (`C = C_{m,r} C_{n,r}` by Lemma 4) and normal components
@@ -858,7 +858,7 @@ theorem norm_projEulerDEIM_sub_le_global {F : E → E} {L B : ℝ}
       ≤ κ * (h * g) + (1 + κ) * (L * (B * h) * h + h * (C * ε)) := hloc
     _ = h * (κ * g + (1 + κ) * (L * B * h + C * ε)) := by ring
 
-/-- **Theorem 12 of arXiv 2510.19518** with the closeness hypothesis discharged by the DLRA error
+/-- **Theorem 12 of [CarrelEtAl2025]** with the closeness hypothesis discharged by the DLRA error
 bound.  In the setting of `norm_projEulerDEIM_sub_le_global`, assume that for every step there is
 a trajectory `Ψ_n` on `[t_n, t_{n+1}]` starting at `Y_n`, lying on `ℳ` at `t_{n+1}`, and solving
 a perturbed problem `Ψ' = G_n(t, Ψ)` with defect `‖G_n(t, Ψ_n t) - F(Ψ_n t)‖ ≤ ε_d` (e.g. the
@@ -959,7 +959,7 @@ theorem obliqueProj_mul_self (hSU : IsUnit (Sᵀ * U).det) :
   rw [obliqueProj_mul_of_mul hSU, ← h]
 
 /-- **Interpolation property** `Sᵀ 𝒫 = Sᵀ`: `𝒫 x` agrees with `x` at the selected entries
-(arXiv 2510.19518, §3.1). -/
+([CarrelEtAl2025, §3.1]). -/
 theorem transpose_mul_obliqueProj (hSU : IsUnit (Sᵀ * U).det) :
     Sᵀ * obliqueProj U S = Sᵀ := by
   simp only [obliqueProj, ← Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hSU, Matrix.one_mul]
@@ -997,14 +997,14 @@ theorem obliqueProj_mul_right' {R : Matrix k k ℝ} (hR : IsUnit R.det) :
         rw [Matrix.nonsing_inv_mul _ hRt, Matrix.mul_one, obliqueProj, Matrix.mul_assoc]
 
 /-- The transpose of `U (SᵀU)⁻¹ Sᵀ` is `S (UᵀS)⁻¹ Uᵀ`, the right projector `P_V^∠` of
-arXiv 2510.19518, eq. (12). -/
+[CarrelEtAl2025, eq. (12)]. -/
 theorem obliqueProj_transpose : (obliqueProj U S)ᵀ = S * (Uᵀ * S)⁻¹ * Uᵀ := by
   simp only [obliqueProj, Matrix.transpose_mul, Matrix.transpose_transpose,
     Matrix.transpose_nonsing_inv, Matrix.mul_assoc]
 
 /-- With `S = U` the oblique projector is `U (UᵀU)⁻¹ Uᵀ`, which is symmetric (and idempotent
 when `UᵀU` is invertible): the orthogonal projector onto the range of `U`
-(`Π_Ω = Ω (ΩᵀΩ)⁻¹ Ωᵀ` of arXiv 2410.17091, eq. (7); `P (PᵀP)⁻¹ Pᵀ` of arXiv 2607.03402,
+(`Π_Ω = Ω (ΩᵀΩ)⁻¹ Ωᵀ` of [Carrel2025, eq. (7)]; `P (PᵀP)⁻¹ Pᵀ` of [CarrelGrigori2026],
 eq. (7)). -/
 theorem obliqueProj_self_transpose : (obliqueProj U U)ᵀ = obliqueProj U U :=
   obliqueProj_transpose
@@ -1015,18 +1015,18 @@ theorem obliqueProj_transpose_mul (hSU : IsUnit (Sᵀ * U).det) : (obliqueProj U
         rw [Matrix.transpose_mul, Matrix.transpose_transpose]
     _ = S := by rw [transpose_mul_obliqueProj hSU, Matrix.transpose_transpose]
 
-/-- `𝒫 U Uᵀ = U Uᵀ` (arXiv 2510.19518, eq. (14)). -/
+/-- `𝒫 U Uᵀ = U Uᵀ` ([CarrelEtAl2025, eq. (14)]). -/
 theorem obliqueProj_mul_proj (hSU : IsUnit (Sᵀ * U).det) :
     obliqueProj U S * (U * Uᵀ) = U * Uᵀ :=
   obliqueProj_mul_of_mul hSU Uᵀ
 
-/-- `(I - 𝒫)(I - U Uᵀ) = I - 𝒫` (arXiv 2510.19518, eq. (14)). -/
+/-- `(I - 𝒫)(I - U Uᵀ) = I - 𝒫` ([CarrelEtAl2025, eq. (14)]). -/
 theorem one_sub_obliqueProj_mul [DecidableEq m] (hSU : IsUnit (Sᵀ * U).det) :
     (1 - obliqueProj U S) * (1 - U * Uᵀ) = 1 - obliqueProj U S := by
   rw [Matrix.mul_sub, Matrix.mul_one, Matrix.sub_mul, Matrix.one_mul, obliqueProj_mul_proj hSU,
     sub_self, sub_zero]
 
-/-- `U Uᵀ 𝒫ᵀ = U Uᵀ` (the right-projector form of eq. (14) of arXiv 2510.19518). -/
+/-- `U Uᵀ 𝒫ᵀ = U Uᵀ` (the right-projector form of eq. (14) of [CarrelEtAl2025]). -/
 theorem proj_mul_obliqueProj_transpose (hSU : IsUnit (Sᵀ * U).det) :
     U * Uᵀ * (obliqueProj U S)ᵀ = U * Uᵀ := by
   calc U * Uᵀ * (obliqueProj U S)ᵀ = (obliqueProj U S * (U * Uᵀ))ᵀ := by
@@ -1035,7 +1035,7 @@ theorem proj_mul_obliqueProj_transpose (hSU : IsUnit (Sᵀ * U).det) :
         rw [obliqueProj_mul_proj hSU, Matrix.transpose_mul, Matrix.transpose_transpose]
 
 /-- **Equivalence with the orthogonal projection** (one-sided form of Proposition 4.4 of
-arXiv 2607.03402): `𝒫 X = U Uᵀ X` iff the normal component `(I - U Uᵀ) X` is invisible to the
+[CarrelGrigori2026]): `𝒫 X = U Uᵀ X` iff the normal component `(I - U Uᵀ) X` is invisible to the
 selection / sketch, `Sᵀ (X - U Uᵀ X) = 0`. -/
 theorem obliqueProj_mul_eq_iff (hSU : IsUnit (Sᵀ * U).det) (X : Matrix m n ℝ) :
     obliqueProj U S * X = U * Uᵀ * X ↔ Sᵀ * (X - U * Uᵀ * X) = 0 := by
@@ -1060,7 +1060,7 @@ theorem proj_mul_obliqueProj : U * Uᵀ * obliqueProj U S = obliqueProj U S := b
 theorem obliqueProj_self_of_orthonormal : obliqueProj U U = U * Uᵀ := by
   rw [obliqueProj, hU, inv_one, Matrix.mul_one]
 
-/-- **Orthogonal sketch DLRA is DLRA** (arXiv 2607.03402, eqs. (7)–(8)): for any basis
+/-- **Orthogonal sketch DLRA is DLRA** ([CarrelGrigori2026, eqs. (7)–(8)]): for any basis
 `P = U R` of the range of an orthonormal `U` (`R` invertible), `P (PᵀP)⁻¹ Pᵀ = U Uᵀ`, so the
 tangent projector written in sketch-orthogonal (non-orthonormal) factors is the usual one. -/
 theorem obliqueProj_self_mul_right {R : Matrix k k ℝ} (hR : IsUnit R.det) :
@@ -1076,7 +1076,7 @@ theorem obliqueProj_transpose_mul_proj :
 
 end Algebra
 
-/-! ### Sketched projectors (arXiv 2607.03402) -/
+/-! ### Sketched projectors ([CarrelGrigori2026]) -/
 
 section Sketch
 
@@ -1088,7 +1088,7 @@ theorem sketch_transpose_mul (Θ : Matrix p m ℝ) (U : Matrix m k ℝ) :
     (Θᵀ * Θ * U)ᵀ * U = (Θ * U)ᵀ * (Θ * U) := by
   simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
 
-/-- **Lemma 4.2 of arXiv 2607.03402** (compact form): for a sketch-orthonormal basis `P`
+/-- **Lemma 4.2 of [CarrelGrigori2026]** (compact form): for a sketch-orthonormal basis `P`
 (`(ΘP)ᵀ(ΘP) = I`, so `(ΘP)⁺ = (ΘP)ᵀ`) the sketched oblique projector `P (ΘP)⁺ Θ` is
 `P Pᵀ Θᵀ Θ = obliqueProj P (Θᵀ Θ P)`. -/
 theorem obliqueProj_sketch_eq {Θ : Matrix p m ℝ} {P : Matrix m k ℝ}
@@ -1098,7 +1098,7 @@ theorem obliqueProj_sketch_eq {Θ : Matrix p m ℝ} {P : Matrix m k ℝ}
   simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
 
 /-- In sketch coordinates the sketched oblique projector is the orthogonal projector of the
-sketched basis: `Θ 𝒫 = (ΘP)(ΘP)ᵀ Θ` (arXiv 2607.03402, after Lemma 4.2). -/
+sketched basis: `Θ 𝒫 = (ΘP)(ΘP)ᵀ Θ` ([CarrelGrigori2026], after Lemma 4.2). -/
 theorem sketch_mul_obliqueProj {Θ : Matrix p m ℝ} {P : Matrix m k ℝ}
     (hP : (Θ * P)ᵀ * (Θ * P) = 1) :
     Θ * obliqueProj P (Θᵀ * Θ * P) = Θ * P * (Θ * P)ᵀ * Θ := by
@@ -1107,7 +1107,7 @@ theorem sketch_mul_obliqueProj {Θ : Matrix p m ℝ} {P : Matrix m k ℝ}
 
 /-- **Sketched Galerkin condition**: the residual of the sketched oblique projection is
 orthogonal to the sketched basis in the sketched inner product,
-`(ΘU)ᵀ Θ (X - 𝒫 X) = 0` (arXiv 2607.03402, eq. (10), one-sided form). -/
+`(ΘU)ᵀ Θ (X - 𝒫 X) = 0` ([CarrelGrigori2026, eq. (10)], one-sided form). -/
 theorem sketch_galerkin {Θ : Matrix p m ℝ} {U : Matrix m k ℝ}
     (hG : IsUnit ((Θ * U)ᵀ * (Θ * U)).det) (X : Matrix m n ℝ) :
     (Θ * U)ᵀ * (Θ * (X - obliqueProj U (Θᵀ * Θ * U) * X)) = 0 := by
@@ -1235,7 +1235,7 @@ theorem norm_sub_obliqueProj_mul_le' [Nonempty k] (hU : Uᵀ * U = 1)
   exact (norm_sub_obliqueProj_mul_le hU hSU X).trans
     (mul_le_mul_of_nonneg_right (specNorm_obliqueProj_le hU) (norm_nonneg _))
 
-/-- **DEIM error bound** (Chaturantabut–Sorensen; arXiv 2510.19518, eq. (6)): for a selection
+/-- **DEIM error bound** (Chaturantabut–Sorensen; [CarrelEtAl2025, eq. (6)]): for a selection
 matrix `S` (`Sᵀ S = I`) and orthonormal `U`,
 `‖X - U (SᵀU)⁻¹ Sᵀ X‖_F ≤ ‖(SᵀU)⁻¹‖₂ ‖X - U Uᵀ X‖_F`. -/
 theorem norm_sub_obliqueProj_mul_le_of_orthonormal [Nonempty k] (hU : Uᵀ * U = 1)
@@ -1275,7 +1275,7 @@ variable [Fintype k] [DecidableEq k] [Fintype l] [DecidableEq l] [Fintype m] [Fi
 `LeanDLRA/FixedRank/Defs.lean`. -/
 
 /-- `P^∠(Y)` is an oblique projector onto the orthogonal tangent projector `P(Y)`:
-`P^∠(Y) P(Y) = P(Y)`, `P(Y) P^∠(Y) = P^∠(Y)` (arXiv 2510.19518, §3.1; Lemma 15 for Tucker). -/
+`P^∠(Y) P(Y) = P(Y)`, `P(Y) P^∠(Y) = P^∠(Y)` ([CarrelEtAl2025, §3.1]; Lemma 15 for Tucker). -/
 theorem isObliqueProj_obliqueTangentProj (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
     (hSU : IsUnit (SUᵀ * U).det) (hSV : IsUnit (SVᵀ * V).det) :
     IsObliqueProj (obliqueTangentProj U SU V SV) (tangentProj U V) :=
@@ -1291,7 +1291,7 @@ theorem obliqueTangentProj_idem (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
   (isObliqueProj_obliqueTangentProj hU hV hSU hSV).idem Z
 
 /-- **Interpolation property** of the oblique tangent projector:
-`S_Uᵀ P^∠(Y)[Z] S_V = S_Uᵀ Z S_V` (arXiv 2510.19518, §3.1). -/
+`S_Uᵀ P^∠(Y)[Z] S_V = S_Uᵀ Z S_V` ([CarrelEtAl2025, §3.1]). -/
 theorem transpose_mul_obliqueTangentProj_mul (hSU : IsUnit (SUᵀ * U).det)
     (hSV : IsUnit (SVᵀ * V).det) (Z : Matrix m n ℝ) :
     SUᵀ * obliqueTangentProj U SU V SV Z * SV = SUᵀ * Z * SV := by
@@ -1304,7 +1304,7 @@ theorem transpose_mul_obliqueTangentProj_mul (hSU : IsUnit (SUᵀ * U).det)
   abel
 
 /-- `Z - P^∠(Y) Z = (I - 𝒫_U) (Z - P(Y) Z) (I - 𝒫_Vᵀ)` (proof of Lemma 4 of
-arXiv 2510.19518). -/
+[CarrelEtAl2025]). -/
 theorem sub_obliqueTangentProj_eq [DecidableEq m] [DecidableEq n] (hU : Uᵀ * U = 1)
     (hV : Vᵀ * V = 1) (hSU : IsUnit (SUᵀ * U).det) (hSV : IsUnit (SVᵀ * V).det)
     (Z : Matrix m n ℝ) :
@@ -1317,7 +1317,7 @@ theorem sub_obliqueTangentProj_eq [DecidableEq m] [DecidableEq n] (hU : Uᵀ * U
   simp only [Matrix.mul_sub, Matrix.sub_mul, Matrix.one_mul, Matrix.mul_one, Matrix.mul_assoc]
   abel
 
-/-- **Lemma 4 of arXiv 2510.19518** (spectral-norm form):
+/-- **Lemma 4 of [CarrelEtAl2025]** (spectral-norm form):
 `‖Z - P^∠(Y) Z‖_F ≤ ‖𝒫_U‖₂ ‖𝒫_V‖₂ ‖Z - P(Y) Z‖_F`. -/
 theorem norm_sub_obliqueTangentProj_le [Nonempty k] [Nonempty l] [DecidableEq m]
     [DecidableEq n] (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (hSU : IsUnit (SUᵀ * U).det)
@@ -1336,7 +1336,7 @@ theorem norm_sub_obliqueTangentProj_le [Nonempty k] [Nonempty l] [DecidableEq m]
   exact mul_le_mul_of_nonneg_right (mul_le_mul (opNorm_leftOblique_le _ _)
     (opNorm_rightOblique_le _ _) (norm_nonneg _) (specNorm_nonneg _)) (norm_nonneg _)
 
-/-- **Lemma 4 of arXiv 2510.19518** for selection matrices (`S_Uᵀ S_U = I`, `S_Vᵀ S_V = I`):
+/-- **Lemma 4 of [CarrelEtAl2025]** for selection matrices (`S_Uᵀ S_U = I`, `S_Vᵀ S_V = I`):
 `‖Z - P^∠(Y) Z‖_F ≤ ‖(S_Uᵀ U)⁻¹‖₂ ‖(S_Vᵀ V)⁻¹‖₂ ‖Z - P(Y) Z‖_F`, i.e. the constant
 `C_{m,r} C_{n,r}`. -/
 theorem norm_sub_obliqueTangentProj_le_of_orthonormal [Nonempty k] [Nonempty l]
@@ -1351,7 +1351,7 @@ theorem norm_sub_obliqueTangentProj_le_of_orthonormal [Nonempty k] [Nonempty l]
       ((specNorm_nonneg _).trans (specNorm_obliqueProj_le_of_orthonormal hU hSU')))
     (norm_nonneg _)
 
-/-- **Lemma 4 of arXiv 2510.19518** for general selections / sketches:
+/-- **Lemma 4 of [CarrelEtAl2025]** for general selections / sketches:
 `‖Z - P^∠(Y) Z‖_F ≤ (‖(S_UᵀU)⁻¹‖₂ ‖S_U‖₂) (‖(S_VᵀV)⁻¹‖₂ ‖S_V‖₂) ‖Z - P(Y) Z‖_F`. -/
 theorem norm_sub_obliqueTangentProj_le' [Nonempty k] [Nonempty l]
     (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (hSU : IsUnit (SUᵀ * U).det)
@@ -1365,7 +1365,7 @@ theorem norm_sub_obliqueTangentProj_le' [Nonempty k] [Nonempty l]
       ((specNorm_nonneg _).trans (specNorm_obliqueProj_le hU)))
     (norm_nonneg _)
 
-/-- **Error of the interpolatory projected vector field** (arXiv 2510.19518, Corollary 9 /
+/-- **Error of the interpolatory projected vector field** ([CarrelEtAl2025, Cor. 9] /
 Lemma 11): if the normal component of `F` at `Y` is `ε`-small,
 `‖(I - U Uᵀ) F (I - V Vᵀ)‖_F ≤ ε`, then `‖F - P^∠(Y) F‖_F ≤ ‖(S_UᵀU)⁻¹‖₂ ‖(S_VᵀV)⁻¹‖₂ ε` for
 selection matrices. -/
@@ -1380,7 +1380,7 @@ theorem norm_sub_obliqueTangentProj_le_of_normal [Nonempty k] [Nonempty l] [Deci
   rw [hN]
   exact mul_le_mul_of_nonneg_left hF (mul_nonneg (specNorm_nonneg _) (specNorm_nonneg _))
 
-/-- **Lemma 4.2 of arXiv 2607.03402** (explicit form): for sketch-orthonormal bases `P`, `W`
+/-- **Lemma 4.2 of [CarrelGrigori2026]** (explicit form): for sketch-orthonormal bases `P`, `W`
 (`(ΘP)ᵀ(ΘP) = I`, `(ΩW)ᵀ(ΩW) = I`), the oblique sketch tangent projector is
 `P^{Θ,Ω}_Y Z = P Pᵀ Θᵀ Θ Z - P Pᵀ Θᵀ Θ Z Ωᵀ Ω W Wᵀ + Z Ωᵀ Ω W Wᵀ`. -/
 theorem obliqueTangentProj_sketch_eq {p q : Type*} [Fintype p] [Fintype q] {Θ : Matrix p m ℝ}
@@ -1392,7 +1392,7 @@ theorem obliqueTangentProj_sketch_eq {p q : Type*} [Fintype p] [Fintype q] {Θ :
   simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc]
   abel
 
-/-- **Sketch coordinates** (arXiv 2607.03402, after Lemma 4.2): the oblique sketch tangent
+/-- **Sketch coordinates** ([CarrelGrigori2026], after Lemma 4.2): the oblique sketch tangent
 projector becomes the *orthogonal* tangent projector at the sketched point `Θ Y Ωᵀ`:
 `Θ (P^{Θ,Ω}_Y Z) Ωᵀ = P_{ΘYΩᵀ}(Θ Z Ωᵀ)` with sketched orthonormal factors `ΘP`, `ΩW`. -/
 theorem sketch_obliqueTangentProj {p q : Type*} [Fintype p] [Fintype q] {Θ : Matrix p m ℝ}
@@ -1405,7 +1405,7 @@ theorem sketch_obliqueTangentProj {p q : Type*} [Fintype p] [Fintype q] {Θ : Ma
     Matrix.sub_mul, Matrix.mul_assoc]
   abel
 
-/-! #### Matrix form of Proposition 4.4 and of eq. (15) of arXiv 2607.03402 -/
+/-! #### Matrix form of Proposition 4.4 and of eq. (15) of [CarrelGrigori2026] -/
 
 /-- The oblique tangent projector only depends on the ranges of the bases:
 `P^∠` built from `(U R, V R')` equals `P^∠` built from `(U, V)` for invertible `R`, `R'`. -/
@@ -1441,7 +1441,7 @@ theorem sketchCLM_eq_sandwichCLM {p q : Type*} [Fintype p] [Fintype q] (Θ : Mat
     (Ω : Matrix q n ℝ) : sketchCLM Θ Ω = Frobenius.sandwichCLM Θ Ωᵀ :=
   ContinuousLinearMap.ext fun _ => rfl
 
-/-- **Setting of Lemma 4.2 and Proposition 4.4 of arXiv 2607.03402.**  Let `U`, `V` be
+/-- **Setting of Lemma 4.2 and Proposition 4.4 of [CarrelGrigori2026].**  Let `U`, `V` be
 orthonormal and `P = U R`, `W = V R'` sketch-orthonormal bases of the same ranges
 (`(ΘP)ᵀ(ΘP) = I`, `(ΩW)ᵀ(ΩW) = I`; `R`, `R'` are then automatically invertible).  Then the
 oblique sketch tangent projector `P^{Θ,Ω}_Y` is an oblique projector onto the orthogonal tangent
@@ -1456,7 +1456,7 @@ theorem isObliqueProj_sketchTangentProj {p q : Type*} [Fintype p] [Fintype q]
   rw [sketchTangentProj, obliqueTangentProj_mul_right hR hR']
   exact isObliqueProj_obliqueTangentProj hU hV hSU hSV
 
-/-- **Proposition 4.4 of arXiv 2607.03402** (matrix form; deterministic, as in the paper).  In
+/-- **Proposition 4.4 of [CarrelGrigori2026]** (matrix form; deterministic, as in the paper).  In
 the setting of `isObliqueProj_sketchTangentProj`, let `δ = P^{Θ,Ω}_Y Z - P_Y Z`.  If the sketch
 does not annihilate this single tangent vector (`Θ δ Ωᵀ = 0 → δ = 0`; for `Z = F(Y)` and
 `Ẏ = P^{Θ,Ω}_Y F(Y)`, `δ = Ẏ - P_Y F(Y)` is the `Z` of Prop. 4.4, and the hypothesis that `Θ`,
@@ -1476,7 +1476,7 @@ theorem sketchTangentProj_eq_iff {p q : Type*} [Fintype p] [Fintype q] {Θ : Mat
   (isObliqueProj_sketchTangentProj hU hV hP hW).eq_iff_of_sketch (σ := sketchCLM Θ Ω)
     (isOrthProj_tangentProj hP hW) (sketch_obliqueTangentProj hP hW) Z hZ
 
-/-- **Quantitative form of eq. (15) of arXiv 2607.03402** (matrix form; deterministic).  In the
+/-- **Quantitative form of eq. (15) of [CarrelGrigori2026]** (matrix form; deterministic).  In the
 setting of `isObliqueProj_sketchTangentProj`, with `N = Z - P_Y Z` and
 `δ = P^{Θ,Ω}_Y Z - P_Y Z`, assume the lower embedding `(1 - ε) ‖δ‖_F ≤ ‖Θ δ Ωᵀ‖_F` and the
 oblique-residual bound `|⟪Θ N Ωᵀ, Θ δ Ωᵀ⟫| ≤ η ‖N‖_F ‖δ‖_F` at these two matrices only.  Then
@@ -1538,7 +1538,7 @@ theorem norm_sub_obliqueProj_mul_mul_le [Nonempty k] [Nonempty l] [DecidableEq m
 /-- **Error of the two-sided interpolatory (cross) projection with selection matrices**
 (`S_Uᵀ S_U = I`, `S_Vᵀ S_V = I`; not the Sorensen–Embree DEIM-CUR bound):
 `‖X - 𝒫_U X 𝒫_Vᵀ‖_F ≤ C_U ‖X - U Uᵀ X‖_F + C_U C_V ‖X - X V Vᵀ‖_F` with
-`C_U = ‖(S_UᵀU)⁻¹‖₂`, `C_V = ‖(S_VᵀV)⁻¹‖₂` (the constants of arXiv 2510.19518, eq. (6)). -/
+`C_U = ‖(S_UᵀU)⁻¹‖₂`, `C_V = ‖(S_VᵀV)⁻¹‖₂` (the constants of [CarrelEtAl2025, eq. (6)]). -/
 theorem norm_sub_obliqueProj_mul_mul_le_of_orthonormal [Nonempty k] [Nonempty l]
     (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (hSU' : SUᵀ * SU = 1) (hSV' : SVᵀ * SV = 1)
     (hSU : IsUnit (SUᵀ * U).det) (hSV : IsUnit (SVᵀ * V).det) (X : Matrix m n ℝ) :
@@ -1552,7 +1552,7 @@ theorem norm_sub_obliqueProj_mul_mul_le_of_orthonormal [Nonempty k] [Nonempty l]
     (mul_le_mul_of_nonneg_right hCU (norm_nonneg _)) (mul_le_mul_of_nonneg_right
       (mul_le_mul hCU hCV (specNorm_nonneg _) ((specNorm_nonneg _).trans hCU)) (norm_nonneg _)))
 
-/-- **Lemma 4 of arXiv 2510.19518** (operator norm of the oblique tangent projector):
+/-- **Lemma 4 of [CarrelEtAl2025]** (operator norm of the oblique tangent projector):
 `‖P^∠(Y)‖ ≤ ‖𝒫_U‖₂ ‖𝒫_V‖₂` (operator norm for the Frobenius norm), unconditionally as in
 eq. (15) of the paper. -/
 theorem opNorm_obliqueTangentProj_le [Nonempty k] [Nonempty l] [Nonempty m] [Nonempty n]
@@ -1565,7 +1565,7 @@ theorem opNorm_obliqueTangentProj_le [Nonempty k] [Nonempty l] [Nonempty m] [Non
     (mul_le_mul (opNorm_leftOblique_le _ _) (opNorm_rightOblique_le _ _) (norm_nonneg _)
       (specNorm_nonneg _))
 
-/-- **Lemma 4 of arXiv 2510.19518** for selection matrices:
+/-- **Lemma 4 of [CarrelEtAl2025]** for selection matrices:
 `‖P^∠(Y)‖ ≤ ‖(S_UᵀU)⁻¹‖₂ ‖(S_VᵀV)⁻¹‖₂ = C_{m,r} C_{n,r}`. -/
 theorem opNorm_obliqueTangentProj_le_of_orthonormal [Nonempty k] [Nonempty l] [Nonempty m]
     [Nonempty n] (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (hSU' : SUᵀ * SU = 1)
@@ -1577,7 +1577,7 @@ theorem opNorm_obliqueTangentProj_le_of_orthonormal [Nonempty k] [Nonempty l] [N
     (mul_le_mul hCU (specNorm_obliqueProj_le_of_orthonormal hV hSV') (specNorm_nonneg _)
       ((specNorm_nonneg _).trans hCU))
 
-/-- **Szyld's identity for the oblique tangent projector** (Lemma 4 of arXiv 2510.19518):
+/-- **Szyld's identity for the oblique tangent projector** (Lemma 4 of [CarrelEtAl2025]):
 `‖I - P^∠(Y)‖ = ‖P^∠(Y)‖` when `P(Y) ≠ I` (`P(Y) ≠ 0` follows from `Uᵀ U = I` with `k`, `n`
 nonempty). -/
 theorem opNorm_one_sub_obliqueTangentProj_eq [Nonempty k] [Nonempty n] (hU : Uᵀ * U = 1)

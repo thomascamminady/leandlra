@@ -49,18 +49,18 @@ Matrix equations and solvers:
   unique solvability of `A K + K (Vᵀ B V) = C` (OP-EX-03 (ii));
   `compressedSylvester_counterexample`: spectral disjointness `σ(A) ∩ σ(-B) = ∅` alone is not
   enough.
-* `bugPreconditioner_exact`: the BUG preconditioner (arXiv 2410.07465, Algorithm 4.1) returns
+* `bugPreconditioner_exact`: the BUG preconditioner ([MengAppeloCheng2025, Alg. 4.1]) returns
   `X⋆` exactly when `Q₀ X⋆ = X⋆` and `𝒜` is coercive; `existsUnique_galerkin_linear`,
   `bijective_of_coercive` (finite-dimensional Lax–Milgram).
 * `sylvester_iff_shifted_columns`, `shifted_existsUnique`: correctness and well-posedness of the
-  sparse-by-small Sylvester solver (arXiv 2610.18419, Algorithm 4.1).
+  sparse-by-small Sylvester solver ([SahaYangYin2026, Alg. 4.1]).
 * `densitySolve_invertible`, `densitySolve_coercive`, `densitySolve_perturbation`,
-  `grid_l2_le_sqrt_mul`: arXiv 2607.27736, Lemmas 4–5 and Proposition 6 (abstract cores).
-* `thetaMethod_resolvent`, `thetaMethod_step_le`: arXiv 2611.04360, Lemma 5.3 (i)–(ii).
+  `grid_l2_le_sqrt_mul`: [LiEtAl2026b], Lemmas 4–5 and Proposition 6 (abstract cores).
+* `thetaMethod_resolvent`, `thetaMethod_step_le`: [AdakEtAl2026, Lemma 5.3 (i)]–(ii).
 
-Variational steps (OP-ST-17, arXiv 2305.11532, arXiv 2002.12197):
+Variational steps (OP-ST-17, [SuttiVandereycken2024], [BachmayrEtAl2021]):
 * `cone_minimizer_fderiv_self`, `rothe_cone_optimality`, `rothe_energy_step`,
-  `rothe_energy_sum`: arXiv 2002.12197, Lemma 4.4 (optimality on cones, energy estimate (4.1)).
+  `rothe_energy_sum`: [BachmayrEtAl2021, Lemma 4.4] (optimality on cones, energy estimate (4.1)).
 * `mm_energy_le`, `mm_energy_sum`: unconditional energy stability of minimising-movement steps
   over any admissible set containing the previous iterate; `mm_exists_minimizer`: existence on
   closed sets; `mm_unique_of_semiconvex`: uniqueness on convex sets when `h κ < 1`;
@@ -69,10 +69,10 @@ Variational steps (OP-ST-17, arXiv 2305.11532, arXiv 2002.12197):
 
 Counterexamples and root selection:
 * `implicitGalerkin_linear_counterexample`, `exp_lt_inv_one_sub`: the `e^{α Δt}` bound of
-  arXiv 2402.05347, Theorem 3.2 fails for every `α ≠ 0` (OP-SB-11); the factor `(1 - α Δt)⁻¹`
+  [AppeloCheng2025, Thm. 3.2] fails for every `α ≠ 0` (OP-SB-11); the factor `(1 - α Δt)⁻¹`
   is attained; `norm_implicitGalerkin_iter_le_exp`: `‖xₙ‖ ≤ e^{2 α tₙ} ‖x₀‖` for
   `0 ≤ α Δt ≤ 1/2`.
-* `cubic_stage_roots`, `cubic_stage_unique_of_mem_ball`: arXiv 2610.41606, §5.4 — the three
+* `cubic_stage_roots`, `cubic_stage_unique_of_mem_ball`: [HuYu2026, §5.4] — the three
   zero-residual roots of `z - τ z³ = 0`, and selection by the energy ball `|z| ≤ Q`, `τ Q² < 1`.
 
 ## What remains open
@@ -85,11 +85,11 @@ Counterexamples and root selection:
 
 ## References
 
-* Appelö–Cheng, arXiv 2402.05347, Theorems 3.1–3.2; Hu–Yu, arXiv 2610.41606, Theorem 5.1, §5.4;
-  Meng–Appelö–Cheng, arXiv 2410.07465, Algorithm 4.1; Saha–Yang–Yin, arXiv 2610.18419,
-  Algorithm 4.1, Theorem 3.6; arXiv 2607.27736, Lemmas 4–5, Proposition 6; arXiv 2611.04360,
-  Lemma 5.3; Bachmayr–Eisenmann–Kieri–Uschmajew, arXiv 2002.12197, Lemma 4.4;
-  Sutti–Vandereycken, arXiv 2305.11532 (implicit steps as Riemannian optimisation).
+* Appelö–Cheng, [AppeloCheng2025], Theorems 3.1–3.2; Hu–Yu, [HuYu2026, Thm. 5.1], §5.4;
+  Meng–Appelö–Cheng, [MengAppeloCheng2025, Alg. 4.1]; Saha–Yang–Yin, [SahaYangYin2026],
+  Algorithm 4.1, Theorem 3.6; [LiEtAl2026b], Lemmas 4–5, Proposition 6; [AdakEtAl2026],
+  Lemma 5.3; Bachmayr–Eisenmann–Kieri–Uschmajew, [BachmayrEtAl2021, Lemma 4.4];
+  Sutti–Vandereycken, [SuttiVandereycken2024] (implicit steps as Riemannian optimisation).
 * Open problems addressed: OP-EX-03, OP-SB-08, OP-ST-03, OP-ST-17, OP-SB-11.
 -/
 
@@ -385,7 +385,7 @@ theorem exp_lt_inv_one_sub {x : ℝ} (hx : x < 1) (hx0 : x ≠ 0) : Real.exp x <
   have h2 : Real.exp x * Real.exp (-x) = 1 := by rw [← Real.exp_add, add_neg_cancel, Real.exp_zero]
   nlinarith [Real.exp_pos x]
 
-/-- **Counterexample to arXiv 2402.05347, Theorem 3.2** (OP-SB-11).  For the semi-bounded field
+/-- **Counterexample to [AppeloCheng2025, Thm. 3.2]** (OP-SB-11).  For the semi-bounded field
 `F(X) = α X` (`⟪F X, X⟫ = α ‖X‖²`), any orthogonal projector `P`, `x₀ ≠ 0` in `range P`, `Δt > 0`,
 `α Δt < 1` and `α ≠ 0`, the implicit Galerkin step `x₁ = P (x₀ + Δt F(x₁))` is
 `x₁ = (1 - α Δt)⁻¹ x₀` (its unique solution), so `‖x₁‖ = (1 - α Δt)⁻¹ ‖x₀‖`, which is
@@ -467,11 +467,11 @@ theorem norm_implicitGalerkin_iter_le_exp {F : ℝ → E → E} {α dt t : ℝ}
 
 end GrowthBound
 
-/-! ### Residual control cannot select the root (Hu–Yu, arXiv 2610.41606, §5.4) -/
+/-! ### Residual control cannot select the root (Hu–Yu, [HuYu2026, §5.4]) -/
 
 section Cubic
 
-/-- **Three zero-residual roots** (arXiv 2610.41606, eq. (5.9)).  For `y' = y³` with `yₙ = 0`
+/-- **Three zero-residual roots** ([HuYu2026, eq. (5.9)]).  For `y' = y³` with `yₙ = 0`
 and step `τ > 0`, the backward Euler stage `z - τ z³ = 0` has the three distinct roots
 `0`, `τ^{-1/2}`, `-τ^{-1/2}`; the two nonzero ones have error `τ^{-1/2}`, which blows up as
 `τ → 0`.  So a residual test alone cannot select the correct root. -/
@@ -488,7 +488,7 @@ theorem cubic_stage_roots {τ : ℝ} (hτ : 0 < τ) :
     rw [this, hz2, mul_inv_cancel₀ hτ.ne', one_mul, sub_self]
   refine ⟨by ring, hroot, by linear_combination -hroot, inv_pos.2 hs, hz2⟩
 
-/-- **The energy ball selects the root** (arXiv 2610.41606, §5.4): if `τ ≥ 0` and `τ Q² < 1`,
+/-- **The energy ball selects the root** ([HuYu2026, §5.4]): if `τ ≥ 0` and `τ Q² < 1`,
 the only root of `z - τ z³ = 0` with `|z| ≤ Q` is `z = 0`. -/
 theorem cubic_stage_unique_of_mem_ball {τ Q z : ℝ} (hτ : 0 ≤ τ) (hQ : τ * Q ^ 2 < 1)
     (hz : |z| ≤ Q) (h : z - τ * z ^ 3 = 0) : z = 0 := by
@@ -867,11 +867,11 @@ theorem existsUnique_galerkin_linear [FiniteDimensional ℝ E] (hP : IsOrthProj 
 
 end Coercive
 
-/-! ### The BUG preconditioner is exact (arXiv 2410.07465, Algorithm 4.1) -/
+/-! ### The BUG preconditioner is exact ([MengAppeloCheng2025, Alg. 4.1]) -/
 
 section BUGPreconditioner
 
-/-- **Exactness of the BUG preconditioner** (Meng–Appelö–Cheng, arXiv 2410.07465,
+/-- **Exactness of the BUG preconditioner** (Meng–Appelö–Cheng, [MengAppeloCheng2025],
 Algorithm 4.1; abstract form).  Let `𝒜` be coercive (`c ‖y‖² ≤ ⟪𝒜 y, y⟫`, e.g.
 `𝒜 X = X - Δt θ Σⱼ Aⱼ X Bⱼᵀ` with `Δt θ μ < 1` for a one-sided bound `μ` of `Σⱼ Aⱼ X Bⱼᵀ`), and
 let `X⋆` solve `𝒜 X⋆ = b`.  The preconditioner solves, in sequence,
@@ -1063,7 +1063,7 @@ lemma shifted_mulVec_apply [DecidableEq m] (A : Matrix m m ℝ) (s : ℝ) (v : m
     ((A + s • (1 : Matrix m m ℝ)) *ᵥ v) i = (A *ᵥ v) i + s * v i := by
   simp [add_mulVec, smul_mulVec, one_mulVec]
 
-/-- **Correctness of the sparse-by-small Sylvester solver** (Saha–Yang–Yin, arXiv 2610.18419,
+/-- **Correctness of the sparse-by-small Sylvester solver** (Saha–Yang–Yin, [SahaYangYin2026],
 Algorithm 4.1).  If `B Q = Q Λ` with `Λ = diag(λ)` and `Q` orthogonal (`Q Qᵀ = 1`), then
 `A X + X B = C` holds iff every column `yⱼ` of `Y = X Q` solves the shifted system
 `(A + λⱼ I) yⱼ = c̃ⱼ`, `c̃ⱼ` the `j`-th column of `C Q`. -/
@@ -1099,7 +1099,7 @@ theorem sylvester_iff_shifted_columns [DecidableEq m] [DecidableEq k] {A : Matri
     simp only [mulVec, dotProduct, Matrix.mul_apply]
     ring
 
-/-- **Well-posedness of the shifted systems** of Algorithm 4.1 (arXiv 2610.18419, with
+/-- **Well-posedness of the shifted systems** of Algorithm 4.1 ([SahaYangYin2026], with
 Theorem 3.6 there): if `xᵀ A x ≥ 0` for all `x` (no symmetry of `A` needed) and `s > 0`, then
 `(A + s I) y = c` has exactly one solution for every `c`. -/
 theorem shifted_existsUnique [DecidableEq m] {A : Matrix m m ℝ}
@@ -1125,11 +1125,11 @@ theorem shifted_existsUnique [DecidableEq m] {A : Matrix m m ℝ}
 
 end Sylvester
 
-/-! ### Implicit macroscopic density solve (arXiv 2607.27736, Lemmas 4–5, Proposition 6) -/
+/-! ### Implicit macroscopic density solve ([LiEtAl2026b], Lemmas 4–5, Proposition 6) -/
 
 section DensitySolve
 
-/-- **Lemma 5 of arXiv 2607.27736** (abstract form).  If `⟪A u, u⟫ ≥ ‖u‖²` for all `u` (e.g.
+/-- **Lemma 5 of [LiEtAl2026b]** (abstract form).  If `⟪A u, u⟫ ≥ ‖u‖²` for all `u` (e.g.
 `A = I - Δt L_β + Δt diag(σᵃ)` with `-L_β`, `diag(σᵃ)` positive semidefinite), then `A` is
 invertible and `‖A⁻¹‖ ≤ 1`, i.e. `‖u‖ ≤ ‖A u‖`. -/
 theorem densitySolve_invertible [FiniteDimensional ℝ E] (A : E →ₗ[ℝ] E)
@@ -1145,7 +1145,7 @@ theorem densitySolve_coercive {N S : E →L[ℝ] E} (hN : ∀ u, 0 ≤ ⟪N u, u
   rw [inner_add_left, real_inner_smul_left, inner_add_left, real_inner_self_eq_norm_sq]
   nlinarith [mul_nonneg hΔt (add_nonneg (hN u) (hS u))]
 
-/-- **Proposition 6 of arXiv 2607.27736** (eq. (13), abstract form).  If `⟪A u, u⟫ ≥ ‖u‖²` and
+/-- **Proposition 6 of [LiEtAl2026b]** (eq. (13), abstract form).  If `⟪A u, u⟫ ≥ ‖u‖²` and
 the two provisional densities differ by `A (ρ - ρ') = c • D η` (`c = -Δt/ε`,
 `D = diag(α₁)` with `‖D η‖ ≤ d ‖η‖`, `η` the flux sampling error), then
 `‖ρ - ρ'‖ ≤ |c| d ‖η‖`. -/
@@ -1162,7 +1162,7 @@ theorem densitySolve_perturbation {A D : E →L[ℝ] E} (hA : ∀ u, ‖u‖ ^ 2
     _ ≤ |c| * (d * ‖η‖) := mul_le_mul_of_nonneg_left hD (abs_nonneg c)
     _ = |c| * d * ‖η‖ := by ring
 
-/-- **Lemma 4 of arXiv 2607.27736** (abstract core: sup-norm to grid-`ℓ²` bound).  On a grid of
+/-- **Lemma 4 of [LiEtAl2026b]** (abstract core: sup-norm to grid-`ℓ²` bound).  On a grid of
 `N` cells of width `Δx ≥ 0` (`N Δx = x_R - x_L`), if `|J̃ᵢ| ≤ a` and `|Jᵢ| ≤ b` for all `i`, then
 `‖J̃ - J‖_{Δx} = (Σᵢ Δx (J̃ᵢ - Jᵢ)²)^{1/2} ≤ √(N Δx) (a + b)`.  With `a = 2 C_g C_we / Δx`,
 `b = 2 C_g / Δx` this is the paper's bound `2 √(x_R - x_L) C_g (1 + C_we) / Δx`. -/
@@ -1191,11 +1191,11 @@ theorem grid_l2_le_sqrt_mul {N : ℕ} {Δx a b : ℝ} (hΔx : 0 ≤ Δx) {J J' :
 
 end DensitySolve
 
-/-! ### θ-method in an energy norm (arXiv 2611.04360, Lemma 5.3) -/
+/-! ### θ-method in an energy norm ([AdakEtAl2026, Lemma 5.3]) -/
 
 section ThetaMethod
 
-/-- **Lemma 5.3 (i) of arXiv 2611.04360** (abstract form).  In the energy inner product
+/-- **Lemma 5.3 (i) of [AdakEtAl2026]** (abstract form).  In the energy inner product
 `⟪x, y⟫_E = xᵀ W V⁻¹ y`, write `Vi = V⁻¹` and assume the energy inequality
 `xᵀ W A x = ⟪x, V A x⟫_E ≥ -γ ‖x‖²_E`.  For `θ, Δt ≥ 0` with `θ γ Δt < 1` the θ-method step
 matrix `K = V⁻¹ + θ Δt A` is invertible and `(1 - θ γ Δt) ‖K⁻¹ y‖_E ≤ ‖V y‖_E`. -/
@@ -1227,7 +1227,7 @@ theorem thetaMethod_resolvent [FiniteDimensional ℝ E] {Vi V A : E →ₗ[ℝ] 
   · rw [← h0, mul_zero]; exact norm_nonneg _
   · nlinarith
 
-/-- **Lemma 5.3 (ii) of arXiv 2611.04360**: for `1/2 ≤ θ ≤ 1`, `γ, Δt ≥ 0` and `θ γ Δt < 1`,
+/-- **Lemma 5.3 (ii) of [AdakEtAl2026]**: for `1/2 ≤ θ ≤ 1`, `γ, Δt ≥ 0` and `θ γ Δt < 1`,
 one exact θ-step `K z = B x` (`K = V⁻¹ + θ Δt A`, `B = V⁻¹ - (1 - θ) Δt A`) satisfies
 `(1 - θ γ Δt) ‖z‖_E ≤ (1 + (1 - θ) γ Δt) ‖x‖_E`, i.e. `‖K⁻¹ B‖_E ≤ ϑ`. -/
 theorem thetaMethod_step_le {Vi V A : E →ₗ[ℝ] E} (hVVi : ∀ z, V (Vi z) = z) {γ θ Δt : ℝ}
@@ -1290,11 +1290,11 @@ theorem thetaMethod_step_le {Vi V A : E →ₗ[ℝ] E} (hVVi : ∀ z, V (Vi z) =
 
 end ThetaMethod
 
-/-! ### Rothe steps on cones: optimality and energy estimates (arXiv 2002.12197, Lemma 4.4) -/
+/-! ### Rothe steps on cones: optimality and energy estimates ([BachmayrEtAl2021, Lemma 4.4]) -/
 
 section Rothe
 
-/-- **Optimality along rays for minimisers on cones** (arXiv 2002.12197, proof of Lemma 4.4:
+/-- **Optimality along rays for minimisers on cones** ([BachmayrEtAl2021], proof of Lemma 4.4:
 "since `M` is a cone ... the optimality condition holds with `v = u_{i+1}`").  If `M` is a cone
 (`s • u ∈ M` for `u ∈ M`, `s > 0`, e.g. the low-rank variety `M_{≤ r}`), `u ∈ M` minimises `J`
 on `M` and `J` is differentiable at `u`, then `J'(u) u = 0`. -/
@@ -1312,7 +1312,7 @@ theorem cone_minimizer_fderiv_self {M : Set E} (hM : ∀ u ∈ M, ∀ s : ℝ, 0
 
 /-- **Optimality condition of a Rothe step on a cone**: if `u₁ ∈ M` minimises
 `½ ‖v - u₀‖² + h Ψ(v)` over a cone `M` and `Ψ` has derivative `Ψ'` at `u₁`, then
-`⟪u₁ - u₀, u₁⟫ + h Ψ'(u₁) = 0` (arXiv 2002.12197, eq. (3.1) with `v = u_{i+1}`). -/
+`⟪u₁ - u₀, u₁⟫ + h Ψ'(u₁) = 0` ([BachmayrEtAl2021, eq. (3.1)] with `v = u_{i+1}`). -/
 theorem rothe_cone_optimality {M : Set E} (hM : ∀ u ∈ M, ∀ s : ℝ, 0 < s → s • u ∈ M)
     {Ψ : E → ℝ} {Ψ' : E →L[ℝ] ℝ} {u₀ u₁ : E} {h : ℝ} (hu₁ : u₁ ∈ M)
     (hmin : ∀ v ∈ M, ‖u₁ - u₀‖ ^ 2 / 2 + h * Ψ u₁ ≤ ‖v - u₀‖ ^ 2 / 2 + h * Ψ v)
@@ -1335,7 +1335,7 @@ theorem two_inner_sub_self (u₀ u₁ : E) :
   rw [norm_sub_sq_real, inner_sub_left, real_inner_self_eq_norm_sq, real_inner_comm]
   ring
 
-/-- **One-step energy estimate of the Rothe scheme** (arXiv 2002.12197, Lemma 4.4, first
+/-- **One-step energy estimate of the Rothe scheme** ([BachmayrEtAl2021, Lemma 4.4], first
 display).  If `⟪u₁ - u₀, u₁⟫ + h a₁ = h g₁` with coercivity `a₁ ≥ μ v₁²` (`v₁ = ‖u₁‖_V`,
 `a₁ = a(u₁, u₁)`), forcing `g₁ ≤ φ v₁` (`g₁ = ⟨f, u₁⟩`, `φ = ‖f‖_{V*}`), `μ > 0` and `h ≥ 0`,
 then `‖u₁‖² - ‖u₀‖² + ‖u₁ - u₀‖² + h μ v₁² ≤ h φ² / μ`. -/
@@ -1355,7 +1355,7 @@ theorem rothe_energy_step {u₀ u₁ : E} {h μ a₁ g₁ v₁ φ : ℝ} (hh : 0
   nlinarith
 
 omit [InnerProductSpace ℝ E] in
-/-- **Telescoped energy estimate** (arXiv 2002.12197, Lemma 4.4, eq. (4.1)): if every Rothe step
+/-- **Telescoped energy estimate** ([BachmayrEtAl2021, Lemma 4.4], eq. (4.1)): if every Rothe step
 satisfies the one-step estimate of `rothe_energy_step`, then
 `‖u_N‖² + Σ_{i<N} ‖u_{i+1} - u_i‖² + h μ Σ_{i<N} v_{i+1}² ≤ ‖u₀‖² + (h/μ) Σ_{i<N} φ_{i+1}²`. -/
 theorem rothe_energy_sum {u : ℕ → E} {v φ : ℕ → ℝ} {h μ : ℝ}

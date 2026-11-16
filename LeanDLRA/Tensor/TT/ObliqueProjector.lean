@@ -11,21 +11,21 @@ right-orthogonal cores `B` (interfaces `V_{>k}`), this file introduces
   `U_{≤k} δC V_{>k+1} = tt (Function.update (ttMix A B k) k δC)` (the core `δC` in position `k`
   between the left cores of `A` and the right cores of `B`, `ttCoreVarₗ`): every first-order
   variation `δY = δC₁ C₂ ⋯ C_d + ⋯ + C₁ ⋯ C_{d-1} δC_d` of a tensor train in mixed canonical form
-  has this form (Dektor, arXiv 2402.18721, Eq. (18) and the proof of Prop. 4.1;
-  Lubich–Oseledets–Vandereycken, arXiv 1407.2042, §3);
+  has this form (Dektor, [Dektor2025, Eq. (18)] and the proof of Prop. 4.1;
+  Lubich–Oseledets–Vandereycken, [LubichOseledetsVandereycken2015, §3]);
 * the **oblique interface projectors** `P_{≤k} = Ten_k(U_{≤k} (X_{≤k}ᵀ U_{≤k})⁻¹ X_{≤k}ᵀ ·)`
   (`ttLeftObliqueProj`) and `P_{>k} = Ten_k(· X_{>k} (V_{>k}ᵀ X_{>k})⁻¹ V_{>k}ᵀ)`
   (`ttRightObliqueProj`) for arbitrary test matrices `X_{≤k}`, `X_{>k}`, with
-  `P_{≤0} = P_{>d} = 1` (arXiv 2402.18721, Eqs. (22)–(23)); both are `actOn` of the core matrix
+  `P_{≤0} = P_{>d} = 1` ([Dektor2025, Eqs. (22)–(23)]); both are `actOn` of the core matrix
   oblique projector `obliqueProj`;
 * the **oblique TT tangent projector**
   `P_Y = ∑_{k=1}^{d} P_{≤k-1} P_{>k} - ∑_{k=1}^{d-1} P_{≤k} P_{>k}` (`ttObliqueTangentProj`,
-  arXiv 2402.18721, Eq. (24)), the core alternating sum `ttTangentSum` of these operators.
+  [Dektor2025, Eq. (24)]), the core alternating sum `ttTangentSum` of these operators.
 
 The main theorem is that `P_Y` is a projector **onto** the TT tangent space for every choice of
 test matrices with invertible `X_{≤k}ᵀ U_{≤k}`, `X_{>k}ᵀ V_{>k}`: it maps into the tangent space
 (each summand is a single-core variation or a bond-centred tensor train `ttBond`,
-arXiv 2402.18721, Eqs. (29) and (31)) and it fixes every single-core variation. The latter uses
+[Dektor2025, Eqs. (29)] and (31)) and it fixes every single-core variation. The latter uses
 only the nesting of the interfaces `U_{≤k+1} = (U_{≤k} ⊗ I) A_k^{<l>}`,
 `V_{>k} = (I ⊗ V_{>k+1}) B_k^{<r>}ᵀ` and the commutation of left and right operators, and gives
 the idempotence `P_Y² = P_Y` for all `d`. (The idempotence of the factors `P_{≤k}`, `P_{>k}`,
@@ -38,7 +38,7 @@ range of `ttTangentProj` is `ttTangentSpace A B`.
 
 For selection (interpolation) test matrices `X = I(:, ℐ)`, written
 `(1 : Matrix _ _ ℝ).submatrix id ℐ`, the operators interpolate on the selected index sets
-(arXiv 2402.18721, Eqs. (35)–(37)), which feeds the cross interpolation theorem
+([Dektor2025, Eqs. (35)–(37)]), which feeds the cross interpolation theorem
 `ttTangentSum_actOn_apply_eq_of_interp`.
 
 ## Main definitions
@@ -53,14 +53,14 @@ For selection (interpolation) test matrices `X = I(:, ℐ)`, written
   `p`-unfolding has its columns in the range of `U`; `exists_ttLeft_eq_sum`,
   `exists_ttRight_eq_sum`: nested interfaces.
 * `actOn_mul_actOn_mul_eq_tt_update`: `P_{≤m} P_{>m+1} Z = U_{≤m} δC V_{>m+1}` with the explicit
-  core `δC` (arXiv 2402.18721, Eqs. (26)–(29)); `actOn_mul_actOn_mul_eq_ttBond`:
+  core `δC` ([Dektor2025, Eqs. (26)–(29)]); `actOn_mul_actOn_mul_eq_ttBond`:
   `P_{≤k} P_{>k} Z = U_{≤k} δS V_{>k}ᵀ` (Eqs. (30)–(32)). These generalize the orthogonal
   `tt_update_ttCoreCoeff` and `ttBond_ttBondCoeff` to arbitrary test matrices.
 * `ttLeftObliqueProj_eq`, `ttRightObliqueProj_eq`: `P_{≤k}`, `P_{>k}` are `actOn` of
   `obliqueProj` for every `k` (also `k = 0`, `k = d`).
 * `ttObliqueTangentProj_apply_mem`: `P_Y Z ∈ ttTangentSpace A B`.
 * `ttObliqueTangentProj_apply_of_mem`: `P_Y W = W` for `W ∈ ttTangentSpace A B`.
-* `ttObliqueTangentProj_idem`: `P_Y` is idempotent (arXiv 2402.18721, Prop. 4.1).
+* `ttObliqueTangentProj_idem`: `P_Y` is idempotent ([Dektor2025, Prop. 4.1]).
 * `ttObliqueTangentProj_self`: with `X_{≤k} = U_{≤k}`, `X_{>k} = V_{>k}` it is `ttTangentProj`.
 * `isObliqueProj_ttObliqueTangentProj`: `IsObliqueProj P_Y (ttTangentProj A B)`;
   `ttTangentProj_apply_mem`, `ttTangentProj_apply_of_mem`.
@@ -93,7 +93,7 @@ theorem tt_update_ttMix_apply (A B : TTCores ι β) (k : ℕ) (hk : k < d)
 
 /-- The single-core variation `K ↦ U_{≤k} K V_{>k+1} = tt (Function.update (ttMix A B k) k K)`
 as a linear map of the core `K` (`tt_update_add`, `tt_update_smul`); the `k`-th term
-`C₁ ⋯ δC_{k+1} ⋯ C_d` of Eq. (18) of arXiv 2402.18721, in 0-based numbering. -/
+`C₁ ⋯ δC_{k+1} ⋯ C_d` of Eq. (18) of [Dektor2025], in 0-based numbering. -/
 noncomputable def ttCoreVarₗ (A B : TTCores ι β) (k : Fin d) :
     (β k → ι k → β (k + 1) → ℝ) →ₗ[ℝ] Tensor ι where
   toFun K := tt (Function.update (ttMix A B k) k K)
@@ -107,9 +107,10 @@ noncomputable def ttCoreVarₗ (A B : TTCores ι β) (k : Fin d) :
 /-- The **TT tangent space** at a tensor train in mixed canonical form, with left-orthogonal
 cores `A` and right-orthogonal cores `B`: the span of all single-core variations
 `U_{≤k} δC V_{>k+1} = tt (Function.update (ttMix A B k) k δC)`, `k = 0, …, d - 1`
-(arXiv 2402.18721, Eq. (18): every first-order variation of the cores is a sum of such terms after
-absorbing the gauge into the varied core; arXiv 1407.2042, §3). That it is the tangent space of
-the manifold of tensor trains of fixed TT rank at `Y` (for full-rank cores) is not proved here. -/
+([Dektor2025, Eq. (18)]: every first-order variation of the cores is a sum of such terms after
+absorbing the gauge into the varied core; [LubichOseledetsVandereycken2015, §3]). That it is the
+tangent space of the manifold of tensor trains of fixed TT rank at `Y` (for full-rank cores) is not
+proved here. -/
 noncomputable def ttTangentSpace (A B : TTCores ι β) : Submodule ℝ (Tensor ι) :=
   ⨆ k : Fin d, LinearMap.range (ttCoreVarₗ A B k)
 
@@ -236,7 +237,7 @@ lemma override_not_override {κ : Type*} {ι : κ → Type*} (p : κ → Prop) [
   funext k
   by_cases hk : p k <;> simp [override, merge, hk]
 
-/-- **Eqs. (26)–(29) of arXiv 2402.18721.** If the left operator acting on the modes `< m` has
+/-- **Eqs. (26)–(29) of [Dektor2025].** If the left operator acting on the modes `< m` has
 the form `U_{≤m} L` and the right operator acting on the modes `> m` has the form `V_{>m+1} R`,
 then `P_{≤m} P_{>m+1} Z = U_{≤m} δC V_{>m+1}` is the single-core variation of core `m` by
 `δC(a, c, b) = ∑_{y,z} L(a, y) R(b, z) Z(y, c, z)`. With `L = U_{≤m}ᵀ`, `R = V_{>m+1}ᵀ` this is
@@ -258,7 +259,7 @@ theorem actOn_mul_actOn_mul_eq_tt_update (A B : TTCores ι β) {m : ℕ} (hm : m
       (Subtype.restrict (fun i : Fin d => ¬ i.val < m + 1) x) b) (fun b z => R b z)
     (fun y z => Z (assemble m hm y (x ⟨m, hm⟩) z))
 
-/-- **Eqs. (30)–(32) of arXiv 2402.18721.** If the operators acting on the modes `< k` and
+/-- **Eqs. (30)–(32) of [Dektor2025].** If the operators acting on the modes `< k` and
 `≥ k` have the forms `U_{≤k} L` and `V_{>k} R`, then `P_{≤k} P_{>k} Z = U_{≤k} δS V_{>k}ᵀ` is the
 bond-centred tensor train with `δS(a, b) = ∑_{y,z} L(a, y) R(b, z) Z(y, z)`. With
 `L = U_{≤k}ᵀ`, `R = V_{>k}ᵀ` this is the orthogonal case `ttBond_ttBondCoeff`. -/
@@ -287,7 +288,7 @@ section Oblique
 variable [∀ i, Fintype (ι i)] [∀ i, DecidableEq (ι i)] [∀ k, DecidableEq (β k)]
 
 /-- The **oblique left interface projector** `P_{≤k} Z = Ten_k(U_{≤k} (X_{≤k}ᵀ U_{≤k})⁻¹ X_{≤k}ᵀ
-Z^{⟨k⟩})` of arXiv 2402.18721, Eqs. (22)–(23), acting on the modes `< k`, with test matrices
+Z^{⟨k⟩})` of [Dektor2025, Eqs. (22)–(23)], acting on the modes `< k`, with test matrices
 `X k = X_{≤k}`; `P_{≤0} = 1` as in the paper. -/
 noncomputable def ttLeftObliqueProj (A : TTCores ι β)
     (X : ∀ k : ℕ, Matrix (∀ i : {i : Fin d // i.val < k}, ι i) (β k) ℝ) (k : ℕ) :
@@ -295,7 +296,7 @@ noncomputable def ttLeftObliqueProj (A : TTCores ι β)
   actOn (fun i : Fin d => i.val < k) (if 0 < k then obliqueProj (ttLeft A k) (X k) else 1)
 
 /-- The **oblique right interface projector** `P_{>k} Z = Ten_k(Z^{⟨k⟩} X_{>k} (V_{>k}ᵀ
-X_{>k})⁻¹ V_{>k}ᵀ)` of arXiv 2402.18721, Eqs. (22)–(23), acting on the modes `≥ k` (rows of the
+X_{>k})⁻¹ V_{>k}ᵀ)` of [Dektor2025, Eqs. (22)–(23)], acting on the modes `≥ k` (rows of the
 transposed unfolding) through `V_{>k} (X_{>k}ᵀ V_{>k})⁻¹ X_{>k}ᵀ = obliqueProj V_{>k} X_{>k}`,
 with test matrices `X k = X_{>k}`; `P_{>k} = 1` for `k ≥ d`. -/
 noncomputable def ttRightObliqueProj (B : TTCores ι β)
@@ -303,7 +304,7 @@ noncomputable def ttRightObliqueProj (B : TTCores ι β)
     Tensor ι →L[ℝ] Tensor ι :=
   actOn (fun i : Fin d => ¬ i.val < k) (if k < d then obliqueProj (ttRight B k) (X k) else 1)
 
-/-- The **oblique TT tangent projector** of arXiv 2402.18721, Eq. (24),
+/-- The **oblique TT tangent projector** of [Dektor2025, Eq. (24)],
 `P_Y = ∑_{k=1}^{d} P_{≤k-1} P_{>k} - ∑_{k=1}^{d-1} P_{≤k} P_{>k}`, i.e. the core alternating sum
 `ttTangentSum` of the oblique interface projectors. -/
 noncomputable def ttObliqueTangentProj (A B : TTCores ι β)
@@ -451,7 +452,7 @@ theorem ttLeftObliqueProj_mul_ttRightObliqueProj_self_mem {k : ℕ} (hk0 : 0 < k
   rw [ttLeftObliqueProj, ttRightObliqueProj, hL, hR, actOn_mul_actOn_mul_eq_ttBond A B k]
   exact ttBond_mem_ttTangentSpace A B hk _
 
-/-- **`P_Y` maps into the TT tangent space** (arXiv 2402.18721, Prop. 4.1, first part; every
+/-- **`P_Y` maps into the TT tangent space** ([Dektor2025, Prop. 4.1], first part; every
 summand is a single-core variation, Eqs. (29) and (33)). No invertibility is needed. -/
 theorem ttObliqueTangentProj_apply_mem [Unique (β 0)] [Unique (β d)] (Z : Tensor ι) :
     ttObliqueTangentProj A B Xl Xr Z ∈ ttTangentSpace A B := by
@@ -547,7 +548,7 @@ theorem ttObliqueTangentProj_apply_of_mem
   obtain ⟨K, rfl⟩ := hW
   exact ttObliqueTangentProj_tt_update hXl hXr k.isLt K
 
-/-- **Prop. 4.1 of arXiv 2402.18721 (idempotence)**: the oblique TT tangent projector is
+/-- **Prop. 4.1 of [Dektor2025] (idempotence)**: the oblique TT tangent projector is
 idempotent, for any test matrices with invertible `X_{≤k}ᵀ U_{≤k}`, `X_{>k}ᵀ V_{>k}`
 (`0 < k < d`). -/
 theorem ttObliqueTangentProj_idem [Unique (β 0)] [Unique (β d)]
@@ -590,7 +591,7 @@ theorem ttRightObliqueProj_self [Unique (β d)] (hB : ∀ i, IsRightOrth B i) {k
 
 /-- **Bridging lemma**: with the orthonormal interfaces `X_{≤k} = U_{≤k}`, `X_{>k} = V_{>k}` as
 test matrices, the oblique TT tangent projector is the orthogonal TT tangent projector
-`ttTangentProj` (arXiv 2402.18721, Eq. (21) as the special case of Eq. (24)). -/
+`ttTangentProj` ([Dektor2025, Eq. (21)] as the special case of Eq. (24)). -/
 theorem ttObliqueTangentProj_self [Unique (β 0)] [Unique (β d)] (hA : ∀ i, IsLeftOrth A i)
     (hB : ∀ i, IsRightOrth B i) :
     ttObliqueTangentProj A B (fun k => ttLeft A k) (fun k => ttRight B k) = ttTangentProj A B := by
@@ -638,7 +639,7 @@ theorem ttTangentProj_apply_of_mem [Unique (β 0)] [Unique (β d)] (hA : ∀ i, 
     (isUnit_det_ttRight_transpose_mul hB) hW
 
 /-- **The oblique TT tangent projector is an oblique projector onto the TT tangent space**
-(arXiv 2402.18721, Prop. 4.1), in the sense of the core structure `IsObliqueProj`: it fixes the
+([Dektor2025, Prop. 4.1]), in the sense of the core structure `IsObliqueProj`: it fixes the
 range of the orthogonal TT tangent projector `ttTangentProj A B` and maps into it, for any test
 matrices with invertible `X_{≤k}ᵀ U_{≤k}`, `X_{>k}ᵀ V_{>k}` (`0 < k < d`). Hence the generic
 quasi-optimality bounds for oblique projectors (`IsObliqueProj.norm_sub_le_opNorm`) apply. -/
@@ -667,7 +668,7 @@ theorem transpose_one_submatrix_mul {m r n : Type*} [Fintype m] [DecidableEq m] 
   simp [Matrix.mul_apply, Matrix.one_apply]
 
 /-- **Interpolation property of the interpolatory projector** `U U(ℐ, :)⁻¹ I(:, ℐ)ᵀ`
-(arXiv 2402.18721, Eq. (36)): its rows at the selected indices are unit rows. -/
+([Dektor2025, Eq. (36)]): its rows at the selected indices are unit rows. -/
 theorem obliqueProj_one_submatrix_apply_self {m r : Type*} [Fintype m] [DecidableEq m]
     [Fintype r] [DecidableEq r] {U : Matrix m r ℝ} {I : r → m}
     (hU : IsUnit (U.submatrix I id).det) (a : r) (z : m) :
@@ -679,7 +680,7 @@ theorem obliqueProj_one_submatrix_apply_self {m r : Type*} [Fintype m] [Decidabl
 
 variable [∀ i, Fintype (ι i)] [∀ i, DecidableEq (ι i)] [∀ k, DecidableEq (β k)]
 
-/-- **Interpolation of `P_{≤k}`** (arXiv 2402.18721, Eq. (37)): with the selection matrices of
+/-- **Interpolation of `P_{≤k}`** ([Dektor2025, Eq. (37)]): with the selection matrices of
 index maps `Il k : β k → (multi-indices of the modes < k)` and invertible `U_{≤k}(I^{≤k}, :)`,
 `[P_{≤k} Z](x) = Z(x)` whenever the first `k` entries of `x` are a selected multi-index. -/
 theorem ttLeftObliqueProj_sel_apply (A : TTCores ι β)
@@ -693,7 +694,7 @@ theorem ttLeftObliqueProj_sel_apply (A : TTCores ι β)
   · exact obliqueProj_one_submatrix_apply_self (hM hk) a z
   · rfl
 
-/-- **Interpolation of `P_{>k}`** (arXiv 2402.18721, Eq. (37)): with the selection matrices of
+/-- **Interpolation of `P_{>k}`** ([Dektor2025, Eq. (37)]): with the selection matrices of
 index maps `Ir k : β k → (multi-indices of the modes ≥ k)` and invertible `V_{>k}(I^{>k}, :)`,
 `[P_{>k} Z](x) = Z(x)` whenever the entries of `x` in the modes `≥ k` are a selected
 multi-index. -/

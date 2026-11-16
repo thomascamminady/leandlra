@@ -6,9 +6,9 @@ import LeanDLRA.Foundations.Galerkin
 
 This file formalises the rank-adaptive robust integrator of Ceruti–Kusch–Lubich,
 *A rank-adaptive robust integrator for dynamical low-rank approximation*
-(BIT 2022, arXiv 2104.05247), in the abstract projector framework of the library.
+(BIT 2022, [CerutiKuschLubich2022]), in the abstract projector framework of the library.
 
-## The algorithm (arXiv 2104.05247, §2.1) as full-space trajectories
+## The algorithm ([CerutiKuschLubich2022, §2.1]) as full-space trajectories
 
 One step from `Y₀ = U₀ S₀ V₀ᵀ` (rank `r`) at `t₀` to `t₁ = t₀ + h`:
 
@@ -38,7 +38,7 @@ all robust estimates of `Integrators/BUG.lean` apply; this is how the error anal
 
 ## Main results
 
-Numbering as in arXiv 2104.05247.
+Numbering as in [CerutiKuschLubich2022].
 
 * `IsRankAdaptiveBUGStep.start_eq` (**Lemma 1**): the Galerkin step starts at `Ŷ₀ = Y₀`;
   `galerkin_eqOn_iff`: the Galerkin S-step started at `R Y₀` (as in the algorithm) equals the
@@ -136,7 +136,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 /-! ### The rank-adaptive step -/
 
 /-- All hypotheses of one step of the rank-adaptive (augmented) BUG integrator of
-Ceruti–Kusch–Lubich (arXiv 2104.05247, §2.1) from `(t₀, Y₀)` to `t₁`: a BUG step
+Ceruti–Kusch–Lubich ([CerutiKuschLubich2022, §2.1]) from `(t₀, Y₀)` to `t₁`: a BUG step
 (`IsBUGStep`) with the old projectors `P₀, Q₀` (bases `U₀`, `V₀`) and the **augmented**
 projectors `P₁, Q₁` (bases `Û`, `V̂` spanning `(K(t₁), U₀)` and `(L(t₁), V₀)`), such that the
 augmented bases capture `Y₀`, followed by a truncation `Y₁` of the Galerkin result
@@ -173,8 +173,8 @@ lemma galerkin_fix (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ 
     P₁ (Q₁ Y₀) = Y₀ := by
   rw [hs.augQ, hs.augP]
 
-/-- **Lemma 1 of arXiv 2104.05247**: the Galerkin step of the rank-adaptive integrator starts at
-`Ŷ₀ = Û Ŝ(t₀) V̂ᵀ = Y₀` (in contrast to the BUG integrator, where `Ŷ₀ = P₁ Q₁ Y₀ ≠ Y₀` in
+/-- **Lemma 1 of [CerutiKuschLubich2022]**: the Galerkin step of the rank-adaptive integrator starts
+at `Ŷ₀ = Û Ŝ(t₀) V̂ᵀ = Y₀` (in contrast to the BUG integrator, where `Ŷ₀ = P₁ Q₁ Y₀ ≠ Y₀` in
 general). -/
 theorem start_eq (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁) :
     YS t₀ = Y₀ :=
@@ -207,7 +207,7 @@ section LocalError
 
 variable {L B h : ℝ} {A : ℝ → E}
 
-/-- **Robust local error of the untruncated rank-adaptive step** (arXiv 2104.05247, proof of
+/-- **Robust local error of the untruncated rank-adaptive step** ([CerutiKuschLubich2022], proof of
 Theorem 2, following Ceruti–Lubich Lemma 4): `‖Ŷ₁ - A t₁‖ ≤ (e^{L h} - 1)(B h + 2ϑ_K) + 2ϑ_K`,
 `ϑ_K = h (4 L B h + ε)`.  This is `bug_local_error` for the augmented projectors. -/
 theorem local_error_untruncated
@@ -218,7 +218,7 @@ theorem local_error_untruncated
       + 2 * (h * (4 * L * B * h + ε)) :=
   hs.toIsBUGStep.local_error hF hL hB ht₁ hh hA hA₀
 
-/-- **Robust local error of the rank-adaptive integrator** (arXiv 2104.05247, Theorem 2, local
+/-- **Robust local error of the rank-adaptive integrator** ([CerutiKuschLubich2022, Thm. 2], local
 form with explicit constants): the BUG local bound plus the truncation tolerance,
 `‖Y₁ - A t₁‖ ≤ (e^{L h} - 1)(B h + 2ϑ_K) + 2ϑ_K + ϑ`, `ϑ_K = h (4 L B h + ε)`. -/
 theorem local_error (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁)
@@ -231,7 +231,7 @@ theorem local_error (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀
   calc ‖Y₁ - A t₁‖ ≤ ‖Y₁ - YS t₁‖ + ‖YS t₁ - A t₁‖ := norm_sub_le_norm_sub_add_norm_sub _ _ _
     _ ≤ _ := by linarith
 
-/-- **Robust local error of the rank-adaptive integrator, `O`-form** (arXiv 2104.05247,
+/-- **Robust local error of the rank-adaptive integrator, `O`-form** ([CerutiKuschLubich2022],
 Theorem 2): for `0 ≤ h ≤ H`, `‖Y₁ - A t₁‖ ≤ h (c₁ ε + c₂ h) + ϑ` with `c₁ = bugC₁ L H`,
 `c₂ = bugC₂ L B H` independent of singular values. -/
 theorem local_error_le (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁)
@@ -254,7 +254,7 @@ section Global
 variable {F : ℝ → E → E} {L B ε ϑ : ℝ}
 
 /-- **Robust global error bound of the rank-adaptive integrator** (Ceruti–Kusch–Lubich,
-arXiv 2104.05247, Theorem 2, with explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and
+[CerutiKuschLubich2022, Thm. 2], with explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and
 bounded by `B`, `tₙ = t₀ + n h` with `0 ≤ h ≤ H`, and `A` a solution of `A' = F(t, A)` on
 `[t₀, t₀ + N h]`.  For `n < N` let step `n` go from `(tₙ, Y n)` to `Y (n+1)` as described by
 `IsRankAdaptiveBUGStep` (old projectors `P n, Q n`, augmented projectors `Pa n, Qa n`,
@@ -280,7 +280,7 @@ theorem rankAdaptiveBUG_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L)
   exact lady_windermere hF hL hh hA hΦ hΦ₀ hloc
 
 /-- **Robust global error bound of the rank-adaptive integrator, final form**
-(Ceruti–Kusch–Lubich, arXiv 2104.05247, Theorem 2): under the hypotheses of
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 2]): under the hypotheses of
 `rankAdaptiveBUG_global_error`, with `‖Y 0 - A t₀‖ ≤ δ`, `ε ≥ 0` and `n h ≤ T`,
 
     ‖Y n - A tₙ‖ ≤ c₀ δ + c₁ ε + c₂ h + c₃ n ϑ,
@@ -326,14 +326,14 @@ theorem rankAdaptiveBUG_global_error_le (hF : IsLipschitzField F L) (hL : 0 ≤ 
 
 end Global
 
-/-! ### Inexact substeps (arXiv 2104.05247, remark after Theorem 2) -/
+/-! ### Inexact substeps ([CerutiKuschLubich2022], remark after Theorem 2) -/
 
 section InexactCapture
 
 variable {F : ℝ → E → E} {L B ε : ℝ} {P₁ Q₀ : E →L[ℝ] E} {t₀ t₁ h : ℝ} {A YK : ℝ → E}
 
-/-- **K-step capture lemma with an inexact K-step** (arXiv 2104.05247, remark after Theorem 2;
-cf. Kieri–Lubich–Walach 2016, §2.6.3).  As `kstep_capture`, but the new basis only captures a
+/-- **K-step capture lemma with an inexact K-step** ([CerutiKuschLubich2022], remark after Theorem
+2; cf. Kieri–Lubich–Walach 2016, §2.6.3). As `kstep_capture`, but the new basis only captures a
 computed approximation `K₁` of `YK t₁` (`P₁ K₁ = K₁`, `‖YK t₁ - K₁‖ ≤ η`): then
 `‖(1 - P₁) (A t₁)‖ ≤ h (4 L B h + ε) + η`. -/
 theorem kstep_capture_approx (hF : IsLipschitzField F L) (hL : 0 ≤ L)
@@ -371,7 +371,7 @@ theorem kstep_capture_approx (hF : IsLipschitzField F L) (hL : 0 ≤ L)
 end InexactCapture
 
 /-- One step of the rank-adaptive BUG integrator with **inexactly solved substeps**
-(arXiv 2104.05247, remark after Theorem 2).  `YK`, `YL`, `YS` are the exact solutions of the
+([CerutiKuschLubich2022], remark after Theorem 2).  `YK`, `YL`, `YS` are the exact solutions of the
 K-, L- and S-step differential equations; the computed K- and L-step results `K₁`, `L₁` and the
 computed S-step result `Ŷ₁` have local errors at most `η`; the augmented bases span the
 *computed* `K₁`, `L₁` and the old bases (so they capture `Y₀`); `Y₁` is the truncation of `Ŷ₁`
@@ -469,7 +469,7 @@ theorem capture (hs : IsInexactRankAdaptiveBUGStep F ε η ϑ P₀ Q₀ P₁ Q�
   have h3 := norm_sub_apply_apply_le (Q := Q₁) hs.projP₁ (A t₁)
   linarith
 
-/-- **Local error with inexact substeps** (arXiv 2104.05247, remark after Theorem 2, explicit
+/-- **Local error with inexact substeps** ([CerutiKuschLubich2022], remark after Theorem 2, explicit
 form): with `ϑ_K = h (4 L B h + ε)` and `θ = 2 (ϑ_K + η)`,
 `‖Y₁ - A t₁‖ ≤ (e^{L h} - 1)(B h + θ) + θ + η + ϑ`. -/
 theorem local_error (hs : IsInexactRankAdaptiveBUGStep F ε η ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS K₁
@@ -483,10 +483,10 @@ theorem local_error (hs : IsInexactRankAdaptiveBUGStep F ε η ϑ P₀ Q₀ P₁
   have h2 := norm_sub_le_norm_sub_add_norm_sub Ŷ₁ (YS t₁) (A t₁)
   linarith [hs.trunc, hs.sApprox]
 
-/-- **Local error with inexact substeps, `O`-form** (arXiv 2104.05247, remark after Theorem 2):
-for `0 ≤ h ≤ H`, `‖Y₁ - A t₁‖ ≤ h (c₁ ε + c₂ h) + (2 e^{L H} + 1) η + ϑ` with the constants
-`c₁ = bugC₁ L H`, `c₂ = bugC₂ L B H` of the exact case: the substep errors enter additively,
-with constants independent of singular values. -/
+/-- **Local error with inexact substeps, `O`-form** ([CerutiKuschLubich2022], remark after Theorem
+2): for `0 ≤ h ≤ H`, `‖Y₁ - A t₁‖ ≤ h (c₁ ε + c₂ h) + (2 e^{L H} + 1) η + ϑ` with the constants
+`c₁ = bugC₁ L H`, `c₂ = bugC₂ L B H` of the exact case: the substep errors enter additively, with
+constants independent of singular values. -/
 theorem local_error_le (hs : IsInexactRankAdaptiveBUGStep F ε η ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS
     K₁ L₁ Ŷ₁ Y₁) (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
     (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h) {H : ℝ} (hhH : h ≤ H) (hA : ODESolution F A t₀ t₁)
@@ -507,7 +507,7 @@ theorem local_error_le (hs : IsInexactRankAdaptiveBUGStep F ε η ϑ P₀ Q₀ P
     mul_le_mul_of_nonneg_right (by linarith) hη
   linarith
 
-/-- **Norm conservation with inexact S-step** (arXiv 2104.05247, Theorem 4 with the remark after
+/-- **Norm conservation with inexact S-step** ([CerutiKuschLubich2022, Thm. 4] with the remark after
 Theorem 2): if `⟪F(t, Y), Y⟫ = 0` on the Galerkin space, then `|‖Y₁‖ - ‖Y₀‖| ≤ η + ϑ`. -/
 theorem abs_norm_sub_le (hs : IsInexactRankAdaptiveBUGStep F ε η ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS
     K₁ L₁ Ŷ₁ Y₁) (h01 : t₀ ≤ t₁) (hF : ∀ t x, P₁ (Q₁ x) = x → ⟪F t x, x⟫ = 0) :
@@ -524,7 +524,7 @@ theorem abs_norm_sub_le (hs : IsInexactRankAdaptiveBUGStep F ε η ϑ P₀ Q₀ 
 
 end IsInexactRankAdaptiveBUGStep
 
-/-- **Robust global error with inexact substeps** (Ceruti–Kusch–Lubich, arXiv 2104.05247,
+/-- **Robust global error with inexact substeps** (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022],
 Theorem 2 and the remark following it, explicit constants): under the hypotheses of
 `rankAdaptiveBUG_global_error`, but with substeps solved up to local errors `η`
 (`IsInexactRankAdaptiveBUGStep`), for `n ≤ N`
@@ -550,7 +550,7 @@ theorem rankAdaptiveBUG_inexact_global_error {F : ℝ → E → E} {L B ε η ϑ
     fun n hn => (hstep n hn).local_error_le hF hL hB (by ring) hh hhH (hΦ n hn) (hΦ₀ n hn)
   exact lady_windermere hF hL hh hA hΦ hΦ₀ hloc
 
-/-- **Robust global error with inexact substeps, final form** (arXiv 2104.05247, Theorem 2 and
+/-- **Robust global error with inexact substeps, final form** ([CerutiKuschLubich2022, Thm. 2] and
 the remark following it): under the hypotheses of `rankAdaptiveBUG_inexact_global_error`, with
 `‖Y 0 - A t₀‖ ≤ δ`, `ε ≥ 0` and `n h ≤ T`,
 
@@ -609,7 +609,7 @@ variable {F : ℝ → E → E} {ε ϑ : ℝ} {P₀ Q₀ P₁ Q₁ : E →L[ℝ] 
 
 section Norm
 
-/-- **Norm conservation of the untruncated step** (arXiv 2104.05247, proof of Theorem 4): if
+/-- **Norm conservation of the untruncated step** ([CerutiKuschLubich2022], proof of Theorem 4): if
 `⟪F(t, Y), Y⟫ = 0` for all `Y` in the Galerkin space (in particular under condition (12)), then
 `‖Ŷ₁‖ = ‖Y₀‖`, independently of the step size.  This uses Lemma 1 (`start_eq`). -/
 theorem norm_untruncated_eq (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁)
@@ -618,14 +618,14 @@ theorem norm_untruncated_eq (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q
   rwa [hs.start_eq] at h
 
 /-- **Norm conservation up to the truncation tolerance** (Ceruti–Kusch–Lubich,
-arXiv 2104.05247, Theorem 4, two-sided form): if `⟪F(t, Y), Y⟫ = 0` on the Galerkin space, then
+[CerutiKuschLubich2022, Thm. 4], two-sided form): if `⟪F(t, Y), Y⟫ = 0` on the Galerkin space, then
 `|‖Y₁‖ - ‖Y₀‖| ≤ ϑ`, independently of the step size. -/
 theorem abs_norm_sub_le (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁)
     (h01 : t₀ ≤ t₁) (hF : ∀ t x, P₁ (Q₁ x) = x → ⟪F t x, x⟫ = 0) : |‖Y₁‖ - ‖Y₀‖| ≤ ϑ := by
   rw [← hs.norm_untruncated_eq h01 hF]
   exact (abs_norm_sub_norm_le _ _).trans hs.trunc
 
-/-- **Theorem 4 of arXiv 2104.05247** under the paper's condition (12),
+/-- **Theorem 4 of [CerutiKuschLubich2022]** under the paper's condition (12),
 `⟪Y, F(t, Y)⟫ = 0` for all `Y` and `t`: `‖Y₁‖ - ‖Y₀‖ ≤ ϑ` (in fact `|‖Y₁‖ - ‖Y₀‖| ≤ ϑ`). -/
 theorem norm_sub_le (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁)
     (h01 : t₀ ≤ t₁) (hF : ∀ t Y, ⟪Y, F t Y⟫ = 0) : ‖Y₁‖ - ‖Y₀‖ ≤ ϑ :=
@@ -667,7 +667,7 @@ end Norm
 
 end IsRankAdaptiveBUGStep
 
-/-- **Norm drift over many steps** (arXiv 2104.05247, Theorem 4 iterated): for a sequence of
+/-- **Norm drift over many steps** ([CerutiKuschLubich2022, Thm. 4] iterated): for a sequence of
 rank-adaptive steps with arbitrary (nondecreasing) time grid `τ` and truncation tolerance `ϑ`,
 if `⟪F(t, Y), Y⟫ = 0` for all `t, Y`, then `|‖Yₙ‖ - ‖Y₀‖| ≤ n ϑ` for `n ≤ N`, independently of
 the step sizes. -/
@@ -708,9 +708,9 @@ lemma sSol_gradFlow (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀
     rfl
   exact hfun ▸ hs.sSol
 
-/-- **Energy decrease of the untruncated step for gradient systems** (arXiv 2104.05247, proof of
-Theorem 5): if `F = -∇ℰ` and `α² ≤ ‖Û Ûᵀ ∇ℰ(Ŷ(t)) V̂ V̂ᵀ‖²` along the S-step, then
-`ℰ(Ŷ₁) ≤ ℰ(Y₀) - α² (t₁ - t₀)`.  (Uses Lemma 1: the S-step starts at `Y₀`.) -/
+/-- **Energy decrease of the untruncated step for gradient systems** ([CerutiKuschLubich2022], proof
+of Theorem 5): if `F = -∇ℰ` and `α² ≤ ‖Û Ûᵀ ∇ℰ(Ŷ(t)) V̂ V̂ᵀ‖²` along the S-step, then
+`ℰ(Ŷ₁) ≤ ℰ(Y₀) - α² (t₁ - t₀)`. (Uses Lemma 1: the S-step starts at `Y₀`.) -/
 theorem energy_untruncated_le
     (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁) (h01 : t₀ ≤ t₁)
     (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x) (hFg : ∀ t x, F t x = -g x) {α : ℝ}
@@ -721,8 +721,8 @@ theorem energy_untruncated_le
   rwa [hs.start_eq] at h
 
 /-- **Energy decrease up to truncation for gradient systems** (Ceruti–Kusch–Lubich,
-arXiv 2104.05247, **Theorem 5**): for `F = -∇ℰ`, with `α² ≤ ‖Û Ûᵀ ∇ℰ(Ŷ(t)) V̂ V̂ᵀ‖²` along the
-S-step and `‖∇ℰ‖ ≤ β` on the segment `[Ŷ₁, Y₁]`,
+[CerutiKuschLubich2022], **Theorem 5**): for `F = -∇ℰ`, with `α² ≤ ‖Û Ûᵀ ∇ℰ(Ŷ(t)) V̂ V̂ᵀ‖²` along
+the S-step and `‖∇ℰ‖ ≤ β` on the segment `[Ŷ₁, Y₁]`,
 
     ℰ(Y₁) ≤ ℰ(Y₀) - α² h + β ϑ,     h = t₁ - t₀. -/
 theorem energy_le (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁)
@@ -746,7 +746,7 @@ theorem energy_le_add (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t�
   have h2 := hs.energy_le h01 hℰ hFg hα hβ
   constructor <;> linarith
 
-/-- **Theorem 5 for a Lipschitz energy** (arXiv 2104.05247, Theorem 5, the form requested for
+/-- **Theorem 5 for a Lipschitz energy** ([CerutiKuschLubich2022, Thm. 5], the form requested for
 `ℰ` Lipschitz on the relevant set): if `ℰ` is `Λ`-Lipschitz on a set `s` containing `Ŷ₁` and
 `Y₁`, then `ℰ(Y₁) ≤ ℰ(Y₀) + Λ ϑ`. -/
 theorem energy_le_of_lipschitzOnWith
@@ -777,7 +777,7 @@ lemma norm_le_on_segment (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁
     _ ≤ ‖g Y₁‖ + Lg * ϑ :=
         add_le_add le_rfl ((hgL _ _).trans (mul_le_mul_of_nonneg_left hw' hLg))
 
-/-- **Theorem 5 with explicit `α` and `β` for a Lipschitz gradient** (arXiv 2104.05247,
+/-- **Theorem 5 with explicit `α` and `β` for a Lipschitz gradient** ([CerutiKuschLubich2022],
 Theorem 5, second sentence: "`α = ‖Ûᵀ G(Y₀) V̂‖ + O(h)` and `β = ‖G(Y₁)‖ + O(ϑ)`").  If
 `G = ∇ℰ` is `Lg`-Lipschitz and bounded by `Bg`, `F = -G` and `t₁ = t₀ + h`, then
 
@@ -827,8 +827,8 @@ lemma comm_galerkinProj {J : E →L[ℝ] E} (hJP : ∀ z, J (P₁ z) = P₁ (J z
   change J (P₁ (Q₁ z)) = P₁ (Q₁ (J z))
   rw [hJP, hJQ]
 
-/-- **Energy conservation of the untruncated step** (arXiv 2104.05247, proof of Theorem 7): for
-`F = J ∇ℋ` with `J` skew (`⟪J z, z⟫ = 0`) and commuting with `P₁` and `Q₁` (in the complex
+/-- **Energy conservation of the untruncated step** ([CerutiKuschLubich2022], proof of Theorem 7):
+for `F = J ∇ℋ` with `J` skew (`⟪J z, z⟫ = 0`) and commuting with `P₁` and `Q₁` (in the complex
 formulation: `J = -i` and complex-linear projectors), `ℋ(Ŷ₁) = ℋ(Y₀)`, for every step size. -/
 theorem hamiltonian_energy_untruncated_eq
     (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁) (h01 : t₀ ≤ t₁)
@@ -840,8 +840,8 @@ theorem hamiltonian_energy_untruncated_eq
   rwa [hs.start_eq] at h
 
 /-- **Energy conservation up to truncation for Hamiltonian systems** (Ceruti–Kusch–Lubich,
-arXiv 2104.05247, **Theorem 7**, real formulation): for `F = J ∇ℋ` with `J` skew and commuting
-with `P₁`, `Q₁`, and `‖∇ℋ‖ ≤ β` on the segment `[Ŷ₁, Y₁]`, `|ℋ(Y₁) - ℋ(Y₀)| ≤ β ϑ`. -/
+[CerutiKuschLubich2022], **Theorem 7**, real formulation): for `F = J ∇ℋ` with `J` skew and
+commuting with `P₁`, `Q₁`, and `‖∇ℋ‖ ≤ β` on the segment `[Ŷ₁, Y₁]`, `|ℋ(Y₁) - ℋ(Y₀)| ≤ β ϑ`. -/
 theorem hamiltonian_energy_sub_le
     (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁) (h01 : t₀ ≤ t₁)
     (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x) {J : E →L[ℝ] E} (hJ : ∀ z, ⟪J z, z⟫ = 0)
@@ -852,7 +852,7 @@ theorem hamiltonian_energy_sub_le
     (comm_galerkinProj hJP hJQ) hFJ h01 hs.trunc hβ
   rwa [hs.start_eq] at h
 
-/-- **Theorem 7 of arXiv 2104.05247 with explicit `β`**: if moreover `∇ℋ` is `Lg`-Lipschitz,
+/-- **Theorem 7 of [CerutiKuschLubich2022] with explicit `β`**: if moreover `∇ℋ` is `Lg`-Lipschitz,
 `|ℋ(Y₁) - ℋ(Y₀)| ≤ (‖∇ℋ(Y₁)‖ + Lg ϑ) ϑ`, i.e. `β = ‖∇ℋ(Y₁)‖ + O(ϑ)` as stated in the paper. -/
 theorem hamiltonian_energy_sub_le_of_lipschitz_grad
     (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁) (h01 : t₀ ≤ t₁)
@@ -893,7 +893,7 @@ variable {F : ℝ → E → E} {ε ϑ : ℝ} {P₀ Q₀ P₁ Q₁ : E →L[ℝ] 
 section Schrodinger
 
 /-- **Energy conservation of the untruncated step for Schrödinger equations**
-(arXiv 2104.05247, proof of Theorem 6, real formulation): for `F(Y) = J H Y` (`J = -i`) with
+([CerutiKuschLubich2022], proof of Theorem 6, real formulation): for `F(Y) = J H Y` (`J = -i`) with
 `J` skew and commuting with `P₁`, `Q₁`, and `H` self-adjoint (`H` commuting with `J` is not
 needed), the energy `E(Y) = ⟪Y, H Y⟫` satisfies `E(Ŷ₁) = E(Y₀)`. -/
 theorem schrodinger_energy_untruncated_eq
@@ -911,7 +911,7 @@ theorem schrodinger_energy_untruncated_eq
     norm_num
 
 /-- **Energy conservation up to truncation for Schrödinger equations** (Ceruti–Kusch–Lubich,
-arXiv 2104.05247, **Theorem 6**, real formulation, two-sided): under the hypotheses of
+[CerutiKuschLubich2022], **Theorem 6**, real formulation, two-sided): under the hypotheses of
 `schrodinger_energy_untruncated_eq`,
 
     |E(Y₁) - E(Y₀)| ≤ γ ϑ,     γ = ‖H Y₁ + H Ŷ₁‖. -/
@@ -931,7 +931,7 @@ end Schrodinger
 
 end IsRankAdaptiveBUGStep
 
-/-- **Energy over many steps for gradient systems** (arXiv 2104.05247, Theorem 5 iterated with
+/-- **Energy over many steps for gradient systems** ([CerutiKuschLubich2022, Thm. 5] iterated with
 `α = 0`): for a sequence of rank-adaptive steps on a nondecreasing time grid `τ` applied to
 `F = -∇ℰ`, with `‖∇ℰ‖ ≤ β k` on the truncation segment of step `k`,
 `ℰ(Yₙ) ≤ ℰ(Y₀) + (∑_{k < n} β k) ϑ`. -/
@@ -963,7 +963,7 @@ variable {F : ℝ → E → E} {L : ℝ} {R : E →L[ℝ] E} {t₀ t₁ : ℝ} {
 ODE `x' = R F(t, x)` from `y t₀ = Y₀` and `z t₀ = R Y₀`.  Then `(1 - R)(y t - z t) = (1 - R) Y₀`
 for all `t`, so `‖Y₀ - R Y₀‖ ≤ ‖y t - z t‖`: if `Y₀` is not in the Galerkin space, the two
 flows never meet (the S-step of the BUG integrator of Ceruti–Lubich starts at `P₁ Q₁ Y₀`, which
-by this result loses the component `(1 - P₁ Q₁) Y₀` for good; arXiv 2104.05247, §3.1). -/
+by this result loses the component `(1 - P₁ Q₁) Y₀` for good; [CerutiKuschLubich2022, §3.1]). -/
 theorem galerkin_normal_sub_eq (hR : IsOrthProj R)
     (hy : ODESolution (fun t x => R (F t x)) y t₀ t₁) (hy₀ : y t₀ = Y₀)
     (hz : ODESolution (fun t x => R (F t x)) z t₀ t₁) (hz₀ : z t₀ = R Y₀) :
@@ -987,7 +987,7 @@ theorem norm_normal_le_galerkin_sub (hR : IsOrthProj R)
 
 /-- **The S-step from `R Y₀` equals the Galerkin flow from `Y₀` exactly when `Y₀ ∈ range R`**
 (for Lipschitz `F`).  For the rank-adaptive integrator `R = P₁ Q₁` fixes `Y₀` (Lemma 1 of
-arXiv 2104.05247), so its S-step is the Galerkin flow from `Y₀` itself
+[CerutiKuschLubich2022]), so its S-step is the Galerkin flow from `Y₀` itself
 (`IsRankAdaptiveBUGStep.eqOn_of_start`). -/
 theorem galerkin_eqOn_iff (hR : IsOrthProj R) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (h01 : t₀ ≤ t₁) (hy : ODESolution (fun t x => R (F t x)) y t₀ t₁) (hy₀ : y t₀ = Y₀)
@@ -1004,8 +1004,8 @@ theorem galerkin_eqOn_iff (hR : IsOrthProj R) (hF : IsLipschitzField F L) (hL : 
 end StartingValue
 
 /-- **The rank-adaptive S-step is the Galerkin flow from `Y₀`** (consequence of Lemma 1 of
-arXiv 2104.05247): any solution `y` of `y' = P₁ Q₁ F(t, y)` with `y t₀ = Y₀` coincides with the
-S-step `YS` on `[t₀, t₁]` (for Lipschitz `F`), so the untruncated result is `Ŷ₁ = y t₁`. -/
+[CerutiKuschLubich2022]): any solution `y` of `y' = P₁ Q₁ F(t, y)` with `y t₀ = Y₀` coincides with
+the S-step `YS` on `[t₀, t₁]` (for Lipschitz `F`), so the untruncated result is `Ŷ₁ = y t₁`. -/
 theorem IsRankAdaptiveBUGStep.eqOn_of_start {F : ℝ → E → E} {ε ϑ L : ℝ}
     {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E} {t₀ t₁ : ℝ} {Y₀ : E} {YK YL YS : ℝ → E} {Y₁ : E}
     (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁)
@@ -1015,9 +1015,9 @@ theorem IsRankAdaptiveBUGStep.eqOn_of_start {F : ℝ → E → E} {ε ϑ L : ℝ
   (galerkin_eqOn_iff (R := P₁ * Q₁) hs.galerkinProj hF hL h01 hy hy₀ hs.sSol hs.sStart).2
     hs.galerkin_fix
 
-/-! ### General augmented Galerkin steps (Tucker tensors, arXiv 2104.05247, §4.2)
+/-! ### General augmented Galerkin steps (Tucker tensors, [CerutiKuschLubich2022, §4.2])
 
-The structure-preservation proofs of §3 of arXiv 2104.05247 only use that the Galerkin space
+The structure-preservation proofs of §3 of [CerutiKuschLubich2022] only use that the Galerkin space
 (an orthogonal projector `R`) contains `Y₀` and that the Galerkin step is followed by a
 truncation.  For the rank-adaptive Tucker integrator (§4) `R = ∏ᵢ P̂ᵢ` is the product of the
 commuting mode projectors onto the augmented bases `Ûᵢ ⊇ (Kᵢ(t₁), U⁰ᵢ)`, each of which fixes
@@ -1063,11 +1063,11 @@ namespace IsAugmentedGalerkinStep
 variable {F : ℝ → E → E} {ϑ : ℝ} {R : E →L[ℝ] E} {t₀ t₁ : ℝ} {Y₀ : E} {YS : ℝ → E} {Y₁ : E}
   {ℰ : E → ℝ} {g : E → E}
 
-/-- Lemma 1 of arXiv 2104.05247 for a general augmented Galerkin step: `YS t₀ = Y₀`. -/
+/-- Lemma 1 of [CerutiKuschLubich2022] for a general augmented Galerkin step: `YS t₀ = Y₀`. -/
 theorem start_eq (hs : IsAugmentedGalerkinStep F ϑ R t₀ t₁ Y₀ YS Y₁) : YS t₀ = Y₀ :=
   hs.sStart.trans hs.fix
 
-/-- **Norm conservation up to truncation** (arXiv 2104.05247, Theorem 4 and §4.2): if
+/-- **Norm conservation up to truncation** ([CerutiKuschLubich2022, Thm. 4] and §4.2): if
 `⟪F(t, Y), Y⟫ = 0` on `range R`, then `‖Ŷ₁‖ = ‖Y₀‖` and `|‖Y₁‖ - ‖Y₀‖| ≤ ϑ`. -/
 theorem abs_norm_sub_le (hs : IsAugmentedGalerkinStep F ϑ R t₀ t₁ Y₀ YS Y₁) (h01 : t₀ ≤ t₁)
     (hF : ∀ t x, R x = x → ⟪F t x, x⟫ = 0) : ‖YS t₁‖ = ‖Y₀‖ ∧ |‖Y₁‖ - ‖Y₀‖| ≤ ϑ := by
@@ -1078,7 +1078,7 @@ theorem abs_norm_sub_le (hs : IsAugmentedGalerkinStep F ϑ R t₀ t₁ Y₀ YS Y
   rw [← h]
   exact (abs_norm_sub_norm_le _ _).trans hs.trunc
 
-/-- **Energy decrease up to truncation for gradient systems** (arXiv 2104.05247, Theorem 5 and
+/-- **Energy decrease up to truncation for gradient systems** ([CerutiKuschLubich2022, Thm. 5] and
 §4.2): for `F = -∇ℰ`, `α² ≤ ‖R ∇ℰ(YS t)‖²` along the S-step and `‖∇ℰ‖ ≤ β` on `[Ŷ₁, Y₁]`,
 `ℰ(Y₁) ≤ ℰ(Y₀) - α² (t₁ - t₀) + β ϑ`. -/
 theorem energy_le (hs : IsAugmentedGalerkinStep F ϑ R t₀ t₁ Y₀ YS Y₁) (h01 : t₀ ≤ t₁)
@@ -1093,7 +1093,7 @@ theorem energy_le (hs : IsAugmentedGalerkinStep F ϑ R t₀ t₁ Y₀ YS Y₁) (
   have h := hy.truncated_energy_le_gradFlow hs.proj hℰ h01 hα hs.trunc hβ
   rwa [hs.start_eq] at h
 
-/-- **Energy conservation up to truncation** (arXiv 2104.05247, Theorems 6–7 and §4.2): for
+/-- **Energy conservation up to truncation** ([CerutiKuschLubich2022], Theorems 6–7 and §4.2): for
 `F = J ∇ℋ` with `J` skew and commuting with `R`, `ℋ(Ŷ₁) = ℋ(Y₀)` and `|ℋ(Y₁) - ℋ(Y₀)| ≤ β ϑ`
 if `‖∇ℋ‖ ≤ β` on `[Ŷ₁, Y₁]`. -/
 theorem energy_sub_le_of_skew (hs : IsAugmentedGalerkinStep F ϑ R t₀ t₁ Y₀ YS Y₁)

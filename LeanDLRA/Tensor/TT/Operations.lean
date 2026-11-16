@@ -5,21 +5,22 @@ import LeanDLRA.Tensor.TT.Basic
 
 For tensor-train cores `G` (`Tensor.TTCores`) this file provides the elementary operations on
 tensor trains that every TT algorithm uses (Oseledets 2011; Lubich–Oseledets–Vandereycken, arXiv
-1407.2042; the list of operations in Wang–Hu, arXiv 2512.14950, §2; the canonical forms of
-Petersson–Hodges-Heilmann–Günther, arXiv 2603.13990, §4):
+1407.2042; the list of operations in Wang–Hu, [WangHu2026a, §2]; the canonical forms of
+Petersson–Hodges-Heilmann–Günther, [PeterssonHodgesHeilmannGunther2026, §4]):
 
 * **locality of the interfaces**: `X_{≤k}` depends only on the cores `< k`, `X_{>k}` only on the
   cores `≥ k`; hence the expansion of a tensor train around one core
   `Y(x) = ∑ X_{≤k}(x_{<k}, α) C_k(α, x_k, α') X_{>k+1}(x_{>k}, α')`;
 * **replacing one core** (`Function.update G k C`): the tensor train is linear in each core, so
   scaling one core scales the tensor train and two tensor trains that differ in a single core add
-  up to the tensor train with the summed core (arXiv 2512.14950, operations 1 and 3);
+  up to the tensor train with the summed core ([WangHu2026a], operations 1 and 3);
 * **gauge transformations**: moving a matrix `R` across a bond does not change the tensor train
-  (`tt_gauge`). This is the step behind the QR/RQ orthonormalization sweeps (arXiv 2512.14950,
-  operations 7–8), moving the orthogonality centre (arXiv 2603.13990, Eqs. (4.11), (4.13)) and
-  the gauge invariance `M_k ↦ M_k C⁻¹`, `M_{k+1} ↦ C M_{k+1}`;
+  (`tt_gauge`). This is the step behind the QR/RQ orthonormalization sweeps ([WangHu2026a],
+  operations 7–8), moving the orthogonality centre
+  ([PeterssonHodgesHeilmannGunther2026, Eqs. (4.11)], (4.13)) and the gauge invariance
+  `M_k ↦ M_k C⁻¹`, `M_{k+1} ↦ C M_{k+1}`;
 * **rank-one tensor trains** (all bonds of size one): entrywise products, inverses and Hadamard
-  products with a general tensor train (arXiv 2512.14950, operations 4–5), the sum of all entries
+  products with a general tensor train ([WangHu2026a], operations 4–5), the sum of all entries
   (operation 6), and the rank bound for sums of tensor trains (operation 2);
 * **mixed canonical and bond-centred forms**: the cores `A i` (`i < k`) followed by `B i`
   (`i ≥ k`) (`ttMix`), the bond-centred tensor `Y⟨k⟩ = X_{≤k} S X_{>k}ᵀ` (`ttBond`, arXiv
@@ -113,7 +114,7 @@ theorem tt_update_apply (G : TTCores ι β) (k : ℕ) (hk : k < d)
   rw [tt_apply_eq_sum_core _ k hk x, ttLeft_update G ⟨k, hk⟩ C le_rfl,
     ttRight_update G ⟨k, hk⟩ C (Nat.lt_succ_self k), Function.update_self]
 
-/-- **Tensor trains with a single varying core** (arXiv 2512.14950, operation 3, Eq. (2.4)): two
+/-- **Tensor trains with a single varying core** ([WangHu2026a], operation 3, Eq. (2.4)): two
 tensor trains that differ only in core `k` add up to the tensor train whose core `k` is the sum of
 the two cores; the bond dimensions do not grow. -/
 theorem tt_update_add (G : TTCores ι β) (k : ℕ) (hk : k < d)
@@ -124,7 +125,7 @@ theorem tt_update_add (G : TTCores ι β) (k : ℕ) (hk : k < d)
   simp only [PiLp.add_apply, tt_update_apply, Pi.add_apply, mul_add, add_mul,
     Finset.sum_add_distrib]
 
-/-- **Scaling one core** scales the tensor train (arXiv 2512.14950, operation 1, Eq. (2.2)). -/
+/-- **Scaling one core** scales the tensor train ([WangHu2026a], operation 1, Eq. (2.2)). -/
 theorem tt_update_smul (G : TTCores ι β) (k : ℕ) (hk : k < d) (c : ℝ)
     (C : β k → ι ⟨k, hk⟩ → β (k + 1) → ℝ) :
     tt (Function.update G ⟨k, hk⟩ (c • C)) = c • tt (Function.update G ⟨k, hk⟩ C) := by
@@ -133,7 +134,7 @@ theorem tt_update_smul (G : TTCores ι β) (k : ℕ) (hk : k < d) (c : ℝ)
   refine Finset.sum_congr rfl fun a _ => Finset.sum_congr rfl fun b _ => ?_
   ring
 
-/-- **Scaling a tensor train** (arXiv 2512.14950, operation 1, Eq. (2.2)): `c Y` is the tensor
+/-- **Scaling a tensor train** ([WangHu2026a], operation 1, Eq. (2.2)): `c Y` is the tensor
 train with core `k` replaced by `c C_k`, for any `k`. -/
 theorem tt_update_self_smul (G : TTCores ι β) (k : ℕ) (hk : k < d) (c : ℝ) :
     tt (Function.update G ⟨k, hk⟩ (c • G ⟨k, hk⟩)) = c • tt G := by
@@ -149,10 +150,10 @@ section Gauge
 `k` and `k + 1`, where `C'_k = C_k ×₃ R` (`C'_k(α, x, γ) = ∑_β C_k(α, x, β) R(β, γ)`) and
 `C_{k+1} = R ×₁ C'_{k+1}` (`C_{k+1}(β, x, α') = ∑_γ R(β, γ) C'_{k+1}(γ, x, α')`), then `G` and
 `G'` represent the same tensor. With `C_k = Q R` a QR (or `C_{k+1} = R Q` an RQ) factorization
-this is one step of the orthonormalization sweeps (arXiv 2512.14950, operations 7–8, Eqs.
-(2.8)–(2.14)), with `R = C_j` the shift of the orthogonality centre (arXiv 2603.13990, Eqs.
-(4.11) and (4.13)), and with `R C⁻¹ = 1` the gauge invariance noted after Eq. (4.3) of arXiv
-2603.13990. -/
+this is one step of the orthonormalization sweeps ([WangHu2026a], operations 7–8, Eqs.
+(2.8)–(2.14)), with `R = C_j` the shift of the orthogonality centre
+([PeterssonHodgesHeilmannGunther2026], Eqs. (4.11) and (4.13)), and with `R C⁻¹ = 1` the gauge
+invariance noted after Eq. (4.3) of arXiv 2603.13990. -/
 theorem tt_gauge {G G' : TTCores ι β} {k : ℕ} (hk : k + 1 < d)
     (R : Matrix (β (k + 1)) (β (k + 1)) ℝ)
     (hl : ∀ (a : β k) (x : ι ⟨k, Nat.lt_of_succ_lt hk⟩) (c : β (k + 1)),
@@ -250,7 +251,7 @@ theorem tt_rankOne [∀ k, Unique (β k)] (G : TTCores ι β) (x : ∀ i, ι i) 
   rw [Fintype.sum_unique, ttLeft_rankOne G x d le_rfl,
     Finset.filter_true_of_mem fun (i : Fin d) _ => i.2]
 
-/-- **Hadamard product with a rank-one tensor train** (arXiv 2512.14950, operation 5, Eq. (2.6)):
+/-- **Hadamard product with a rank-one tensor train** ([WangHu2026a], operation 5, Eq. (2.6)):
 for a rank-one tensor train `A` and any tensor train `B`, `A ⊙ B` is the tensor train with cores
 `A_i(x_i) B_i(α, x_i, α')`, with the bond dimensions of `B`. -/
 theorem tt_hadamard_rankOne {γ : ℕ → Type*} [∀ k, Fintype (γ k)] [∀ k, Unique (γ k)]
@@ -258,14 +259,14 @@ theorem tt_hadamard_rankOne {γ : ℕ → Type*} [∀ k, Fintype (γ k)] [∀ k,
     tt (fun i a c b => A i default c default * G i a c b) x = tt A x * tt G x := by
   rw [tt_mul_rankOne, tt_rankOne A x]
 
-/-- **Entrywise inverse of a rank-one tensor train** (arXiv 2512.14950, operation 4, Eq. (2.5)):
+/-- **Entrywise inverse of a rank-one tensor train** ([WangHu2026a], operation 4, Eq. (2.5)):
 inverting every core entry inverts every entry of the tensor train. -/
 theorem tt_inv_rankOne [∀ k, Unique (β k)] (G : TTCores ι β) (x : ∀ i, ι i) :
     tt (fun i a c b => (G i a c b)⁻¹) x = (tt G x)⁻¹ := by
   rw [tt_rankOne, tt_rankOne, Finset.prod_inv_distrib]
 
 /-- The entrywise inverse of a rank-one tensor train with nonzero core entries is a
-multiplicative inverse (arXiv 2512.14950, Eq. (2.5), where all entries are assumed nonzero). -/
+multiplicative inverse ([WangHu2026a, Eq. (2.5)], where all entries are assumed nonzero). -/
 theorem tt_mul_tt_inv_rankOne [∀ k, Unique (β k)] (G : TTCores ι β)
     (hG : ∀ i a c b, G i a c b ≠ 0) (x : ∀ i, ι i) :
     tt G x * tt (fun i a c b => (G i a c b)⁻¹) x = 1 := by
@@ -292,7 +293,7 @@ theorem sum_ttLeft [∀ i, Fintype (ι i)] (G : TTCores ι β) :
     exact Finset.sum_comm.trans
       ((Finset.sum_congr rfl fun _ _ => Finset.sum_comm).trans Finset.sum_comm)
 
-/-- **Sum of all entries of a tensor train** (arXiv 2512.14950, operation 6, Eq. (2.7)):
+/-- **Sum of all entries of a tensor train** ([WangHu2026a], operation 6, Eq. (2.7)):
 `∑ₓ Y(x)` is the contraction of the summed cores `∑_{x_i} C_i(·, x_i, ·)`, i.e. the tensor train
 of the summed cores at the single multi-index of the one-point physical index sets. -/
 theorem sum_tt [∀ i, Fintype (ι i)] (G : TTCores ι β) :
@@ -305,7 +306,7 @@ theorem sum_tt [∀ i, Fintype (ι i)] (G : TTCores ι β) :
   simp only [restrict_merge, Finset.sum_const, Finset.card_univ, Fintype.card_unique, one_smul]
   exact Finset.sum_comm.trans (Finset.sum_congr rfl fun b _ => sum_ttLeft G d le_rfl _ b)
 
-/-- **Bond dimensions of a sum of tensor trains** (arXiv 2512.14950, operation 2, Eq. (2.3)): the
+/-- **Bond dimensions of a sum of tensor trains** ([WangHu2026a], operation 2, Eq. (2.3)): the
 `k`-th unfolding of the sum of two tensor trains with bond dimensions `|β k|` and `|β' k|` has
 rank at most `|β k| + |β' k|`. -/
 theorem rank_unfold_tt_add_le [∀ i, Fintype (ι i)] {β' : ℕ → Type*} [∀ k, Fintype (β' k)]
@@ -322,7 +323,8 @@ end RankOne
 section Canonical
 
 /-- The cores `A i` for `i < k` followed by the cores `B i` for `i ≥ k` (the mixed canonical form
-with left-orthogonal `A` and right-orthogonal `B`, arXiv 2603.13990, Eq. (4.4)). -/
+with left-orthogonal `A` and right-orthogonal `B`, [PeterssonHodgesHeilmannGunther2026, Eq. (4.4)]).
+-/
 def ttMix (A B : TTCores ι β) (k : ℕ) : TTCores ι β := fun i => if i.val < k then A i else B i
 
 /-- The left interfaces of `ttMix A B k` up to `k` are those of `A`. -/
@@ -335,9 +337,9 @@ theorem ttRight_ttMix (A B : TTCores ι β) {j k : ℕ} (hj : k ≤ j) :
     ttRight (ttMix A B k) j = ttRight B j :=
   ttRight_congr j fun i hi => by simp [ttMix, show ¬ i.val < k by omega]
 
-/-- The **bond-centred tensor train** (arXiv 2603.13990, Eq. (4.12); the forms (II) and (IV) of
-arXiv 2512.14950, Eq. (3.6)): `Y⟨k⟩ = X_{≤k} S X_{>k}ᵀ` with left interface of `A`, bond matrix
-`S` and right interface of `B`. -/
+/-- The **bond-centred tensor train** ([PeterssonHodgesHeilmannGunther2026, Eq. (4.12)]; the forms
+(II) and (IV) of [WangHu2026a, Eq. (3.6)]): `Y⟨k⟩ = X_{≤k} S X_{>k}ᵀ` with left interface of `A`,
+bond matrix `S` and right interface of `B`. -/
 noncomputable def ttBond (A B : TTCores ι β) (k : ℕ) (S : Matrix (β k) (β k) ℝ) : Tensor ι :=
   WithLp.toLp 2 fun x => ∑ a, ∑ a',
     ttLeft A k (Subtype.restrict (fun i : Fin d => i.val < k) x) a * S a a' *
@@ -357,9 +359,10 @@ theorem unfold_ttBond (A B : TTCores ι β) (k : ℕ) (S : Matrix (β k) (β k) 
     Matrix.transpose_apply, Finset.sum_mul]
   exact Finset.sum_comm
 
-/-- **The bond-centred form is a tensor train** (arXiv 2603.13990, Eq. (4.13); arXiv 2512.14950,
-Eqs. (3.14), (3.22)): merging the bond matrix into the next core, `M_k = S C_k`, gives the tensor
-train with the cores of `A` before `k`, the core `M_k` and the cores of `B` after `k`. -/
+/-- **The bond-centred form is a tensor train** ([PeterssonHodgesHeilmannGunther2026, Eq. (4.13)];
+[WangHu2026a], Eqs. (3.14), (3.22)): merging the bond matrix into the next core, `M_k = S C_k`,
+gives the tensor train with the cores of `A` before `k`, the core `M_k` and the cores of `B` after
+`k`. -/
 theorem ttBond_eq_tt (A B : TTCores ι β) (k : ℕ) (hk : k < d) (S : Matrix (β k) (β k) ℝ) :
     ttBond A B k S = tt (Function.update (ttMix A B k) ⟨k, hk⟩
       fun a c b => ∑ a', S a a' * B ⟨k, hk⟩ a' c b) := by
@@ -373,9 +376,9 @@ theorem ttBond_eq_tt (A B : TTCores ι β) (k : ℕ) (hk : k < d) (S : Matrix (�
   refine Finset.sum_congr rfl fun b _ => Finset.sum_congr rfl fun a' _ => ?_
   ring
 
-/-- **Schmidt rank** (arXiv 2603.13990, after Eq. (4.12)): with orthonormal interfaces
-(`X_{≤k}ᵀ X_{≤k} = 1`, `X_{>k}ᵀ X_{>k} = 1`) the rank of the `k`-th unfolding of the bond-centred
-tensor train equals the rank of its bond matrix. -/
+/-- **Schmidt rank** ([PeterssonHodgesHeilmannGunther2026], after Eq. (4.12)): with orthonormal
+interfaces (`X_{≤k}ᵀ X_{≤k} = 1`, `X_{>k}ᵀ X_{>k} = 1`) the rank of the `k`-th unfolding of the
+bond-centred tensor train equals the rank of its bond matrix. -/
 theorem rank_unfold_ttBond [∀ i, Fintype (ι i)] [∀ k, DecidableEq (β k)] {A B : TTCores ι β}
     {k : ℕ}
     (hA : (ttLeft A k)ᵀ * ttLeft A k = 1) (hB : (ttRight B k)ᵀ * ttRight B k = 1)
@@ -392,7 +395,7 @@ theorem rank_unfold_ttBond [∀ i, Fintype (ι i)] [∀ k, DecidableEq (β k)] {
 
 /-- **A tensor train is fixed by the right interface projectors of its own right-orthogonal
 cores**: `P_{>k} Y = Y` if the cores `k, …, d - 1` (0-based) of `Y = tt G` are right-orthogonal
-(the right analogue of `ttLeftProj_tt`; arXiv 2603.13990, before Eq. (4.22)). -/
+(the right analogue of `ttLeftProj_tt`; [PeterssonHodgesHeilmannGunther2026], before Eq. (4.22)). -/
 theorem ttRightProj_tt [∀ i, Fintype (ι i)] [Subsingleton (β d)] [∀ k, DecidableEq (β k)]
     {G : TTCores ι β} {k : ℕ} (hk : k ≤ d) (hG : ∀ i : Fin d, k ≤ i.val → IsRightOrth G i) :
     ttRightProj G k (tt G) = tt G :=

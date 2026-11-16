@@ -9,9 +9,9 @@ import LeanDLRA.Matrix.Projectors
 Most practical DLRA codes replace the exact K-, L- and S-substep flows of the basis-update &
 Galerkin (BUG) integrator by **one explicit Euler step each**, but quote robust error bounds that
 were proved for exactly solved substeps.  This file closes that gap and adds the corresponding
-theory for the XL/sXL integrators (Einkemmer–Hu–Zhang, arXiv 2502.08951) and the GAP
-integrator (Ceruti–Crouseilles–Einkemmer, arXiv 2505.19929).  Everything is abstract: `E` is a
-real inner product space, left/right bases are orthogonal projectors.
+theory for the XL/sXL integrators (Einkemmer–Hu–Zhang, [EinkemmerHuZhang2025]) and the GAP
+integrator (Ceruti–Crouseilles–Einkemmer, [CerutiCrouseillesEinkemmer2025]). Everything is abstract:
+`E` is a real inner product space, left/right bases are orthogonal projectors.
 
 ## Main results
 
@@ -27,7 +27,8 @@ real inner product space, left/right bases are orthogonal projectors.
   this is exactly the claimed `h (ε + (3/2) L B h)` of OP-OT-01.
 * `euler_bug_capture`: `‖A(t₁) - P₁ Q₁ A(t₁)‖ ≤ 2 h (ε + (3 L B + Lₜ) h / 2)`.
 
-### Explicit-Euler BUG (Hauck–Schnake, arXiv 2209.00550, Thm 4.1 / Lemma 4.1; arXiv 2502.07040)
+### Explicit-Euler BUG (Hauck–Schnake, [HauckSchnake2023, Thm. 4.1] / Lemma 4.1;
+[NobileRiffaud2025])
 
 * `projected_euler_local_error`, `galerkin_euler_local_error`: local error of the projected
   Euler step `R (Y₀ + h F(t₀, Y₀))` (2209.00550, (4.18), Algorithm 4.3; the forward-Euler
@@ -65,10 +66,10 @@ real inner product space, left/right bases are orthogonal projectors.
   `xl_euler_global_vs_euler`: `‖Yₙ - uₙ‖ ≤ e^{C tₙ} (‖Y₀ - u₀‖ + tₙ ε + n θ)` against the full
   explicit Euler iterates `uₙ`, **without any Lipschitz constant of `F`**.
 * `sat_step_sub_euler`, `sat_global_error`, `sat_global_error_paper`: Theorem 4.3 of
-  arXiv 2609.02721 (rank-adaptive SAT scheme vs. full forward Euler), and
+  [UschmajewZeiser2026] (rank-adaptive SAT scheme vs. full forward Euler), and
   `sat_tolerance_scaling`: the tolerance-scaling corollary (`≤ 2 C τ`).
 
-### XL, sXL and GAP (OP-HO-07; arXiv 2502.08951, Sec. 2; arXiv 2505.19929)
+### XL, sXL and GAP (OP-HO-07; [EinkemmerHuZhang2025, Sec. 2]; [CerutiCrouseillesEinkemmer2025])
 
 * `xl_local_error`, `xl_global_error`: robust local/global error of the XL integrator
   (K-step, then Galerkin L-step in the new left basis, truncation):
@@ -250,17 +251,17 @@ theorem euler_bug_capture (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBou
 
 end Capture
 
-/-! ### Explicit-Euler BUG: local and global error (arXiv 2209.00550, Thm 4.1) -/
+/-! ### Explicit-Euler BUG: local and global error ([HauckSchnake2023, Thm. 4.1]) -/
 
 section EulerBUG
 
 variable {F : ℝ → E → E} {L B Lt ε : ℝ} {t₀ t₁ h : ℝ} {A : ℝ → E} {Y₀ : E}
 
-/-- **Local error of a projected Euler step** (arXiv 2209.00550, proof of Lemma 4.1).  For any
+/-- **Local error of a projected Euler step** ([HauckSchnake2023], proof of Lemma 4.1).  For any
 orthogonal projector `R` with capture defect `‖A(t₁) - R A(t₁)‖ ≤ θ`,
 `‖R (Y₀ + h F(t₀, Y₀)) - A(t₁)‖ ≤ (L B + Lₜ) h² / 2 + θ`.  With `R = P₁ Q₁` this is the projected
 unconventional integrator (2209.00550, (4.18), Algorithm 4.3), and, when `R` fixes `Y₀`, the
-forward-Euler augmented BUG step (arXiv 2502.07040, Sec. 2.1: the Galerkin projection of the
+forward-Euler augmented BUG step ([NobileRiffaud2025, Sec. 2.1]: the Galerkin projection of the
 full Euler step). -/
 theorem projected_euler_local_error (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hB : IsBoundedField F B) {R : E →L[ℝ] E} (hR : IsOrthProj R) (ht₁ : t₁ = t₀ + h)
@@ -278,7 +279,7 @@ theorem projected_euler_local_error (hF : IsLipschitzField F L) (hL : 0 ≤ L)
         refine add_le_add ((hR.norm_le _).trans ?_) hθ
         rwa [norm_sub_rev]
 
-/-- **Local error of a Galerkin Euler step** (arXiv 2209.00550, (4.16); the explicit-Euler BUG
+/-- **Local error of a Galerkin Euler step** ([HauckSchnake2023], (4.16); the explicit-Euler BUG
 step `Energy.galerkinEulerStep`).  The S-step starts from the *projected* old value `R Y₀` (the
 `S^{n,*}` of OP-OT-01): for any orthogonal projector `R` with `‖A(t₁) - R A(t₁)‖ ≤ θ`,
 `‖R (R Y₀ + h F(t₀, R Y₀)) - A(t₁)‖ ≤ (L B + Lₜ) h² / 2 + θ + h L (B h + θ)`.
@@ -314,7 +315,7 @@ theorem galerkin_euler_local_error (hF : IsLipschitzField F L) (hL : 0 ≤ L)
         exact mul_le_mul_of_nonneg_left hY hL
     _ = _ := by ring
 
-/-- **Robust local error of the explicit-Euler BUG step** (arXiv 2209.00550, Lemma 4.1, with
+/-- **Robust local error of the explicit-Euler BUG step** ([HauckSchnake2023, Lemma 4.1], with
 explicit constants; Algorithm 4.3, *projected unconventional integrator*).  The new bases
 `P₁`, `Q₁` (commuting orthogonal projectors) capture the Euler K- and L-steps, and the normal
 component is bounded at these points.  Then the step `Y₁ = P₁ Q₁ (Y₀ + h F(t₀, Y₀))` satisfies
@@ -335,9 +336,9 @@ theorem eulerBug_local_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : Is
   calc _ ≤ _ := h1
     _ = _ := by ring
 
-/-- **Local error of the explicit-Euler BUG step with Galerkin S-step** (arXiv 2209.00550,
-(4.16); arXiv 2107.07282, eq. (38)): `Y₁ = P₁ Q₁ (Ȳ + h F(t₀, Ȳ))` with `Ȳ = P₁ Q₁ Y₀`.  Under the
-hypotheses of `eulerBug_local_error`, with `ϑ = 2 h (ε + (3 L B + Lₜ) h / 2)`,
+/-- **Local error of the explicit-Euler BUG step with Galerkin S-step** ([HauckSchnake2023],
+(4.16); [KuschEinkemmerCeruti2023, eq. (38)]): `Y₁ = P₁ Q₁ (Ȳ + h F(t₀, Ȳ))` with `Ȳ = P₁ Q₁ Y₀`.
+Under the hypotheses of `eulerBug_local_error`, with `ϑ = 2 h (ε + (3 L B + Lₜ) h / 2)`,
 `‖Y₁ - A(t₁)‖ ≤ (L B + Lₜ) h² / 2 + ϑ + h L (B h + ϑ)`. -/
 theorem galerkinEulerBug_local_error (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hB : IsBoundedField F B) {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E} (hP₀ : IsOrthProj P₀)
@@ -355,7 +356,7 @@ theorem galerkinEulerBug_local_error (hF : IsLipschitzField F L) (hL : 0 ≤ L)
   have hcap := euler_bug_capture hF hL hB hP₀ hQ₀ hP₁ hQ₁ ht₁ hh hA hA₀ hFt hKcap hLcap hεK hεL
   exact galerkin_euler_local_error hF hL hB (hP₁.mul hQ₁ hc₁) ht₁ hh hA hA₀ hFt hcap
 
-/-- **Robust global error of the explicit-Euler BUG integrator** (arXiv 2209.00550,
+/-- **Robust global error of the explicit-Euler BUG integrator** ([HauckSchnake2023],
 Theorem 4.1, with explicit constants `c₀ = e^{L T}`, `c₁ = 2 T e^{L T}`,
 `c₂ = T e^{L T} (7 L B + 3 Lₜ) / 2`).  On the grid `tₙ = t₀ + n h`, the step `n` uses old bases
 `P n`, `Q n` and new bases `P (n+1)`, `Q (n+1)` capturing the Euler K- and L-steps from `Y n`,
@@ -395,8 +396,8 @@ theorem eulerBug_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (by ring) hh (hΦ n hn) (hΦ₀ n hn) (hFt n hn) (hKcap n hn) (hLcap n hn) (hεK n hn) (hεL n hn)
 
 /-- **Robust global error of the explicit-Euler BUG integrator with Galerkin S-step**
-(arXiv 2209.00550, (4.16); arXiv 2107.07282, eq. (38)).  As `eulerBug_global_error`, but with
-`Y (n+1) = P₁ Q₁ (Ȳ + h F(tₙ, Ȳ))`, `Ȳ = P₁ Q₁ Y n`, `P₁ = P (n+1)`, `Q₁ = Q (n+1)`: with
+([HauckSchnake2023], (4.16); [KuschEinkemmerCeruti2023, eq. (38)]). As `eulerBug_global_error`, but
+with `Y (n+1) = P₁ Q₁ (Ȳ + h F(tₙ, Ȳ))`, `Ȳ = P₁ Q₁ Y n`, `P₁ = P (n+1)`, `Q₁ = Q (n+1)`: with
 `ϑ = 2 h (ε + (3 L B + Lₜ) h / 2)` and `ℓ = (L B + Lₜ) h² / 2 + ϑ + h L (B h + ϑ) = O(h (h + ε))`,
 `‖Y n - A(tₙ)‖ ≤ e^{L n h} (‖Y 0 - A t₀‖ + n ℓ)`. -/
 theorem galerkinEulerBug_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L)
@@ -525,7 +526,7 @@ theorem xl_euler_sub_euler {P₀ Q₀ Pa : E →L[ℝ] E} (hPa : IsOrthProj Pa)
   rw [heq, norm_neg, norm_smul, Real.norm_of_nonneg hh]
   exact mul_le_mul_of_nonneg_left (hPa.compl.norm_le _) hh
 
-/-- **The sXL step is the full Euler step** (arXiv 2502.08951, Sec. 2, separable fields
+/-- **The sXL step is the full Euler step** ([EinkemmerHuZhang2025, Sec. 2], separable fields
 `F(K Vᵀ) = 𝒦(K) 𝒱(V)ᵀ`): the augmented basis `X̂ = orth[Xⁿ, 𝒦(Xⁿ Sⁿ)]` contains the range of
 `f = F(Yⁿ)`, i.e. `Pa f = f`, and `Pa Y₀ = Y₀`; then the untruncated sXL step `Pa (Y₀ + h f)`
 *equals* the full explicit Euler step `Y₀ + h f`. -/
@@ -642,7 +643,7 @@ theorem xl_euler_global_vs_euler {F : ℝ → E → E} {C h t₀ ε θ : ℝ} (h
   calc _ ≤ _ := this
     _ = _ := by ring
 
-/-- **One step of the rank-adaptive SAT scheme vs. full forward Euler** (arXiv 2609.02721,
+/-- **One step of the rank-adaptive SAT scheme vs. full forward Euler** ([UschmajewZeiser2026],
 proof of Theorem 4.3, eq. (4.1)).  If `P`, `Q` are commuting orthogonal projectors (`X̃ X̃ᵀ ·` and
 `· Ṽ Ṽᵀ`), `P Q U = U`, and some `G` in the Galerkin space (the `ε₁`-truncated SVD of the
 right-hand side) is `ε₁`-close to `f = F(tₙ, U)`, then
@@ -658,7 +659,7 @@ theorem sat_step_sub_euler {P Q : E →L[ℝ] E} (hP : IsOrthProj P) (hQ : IsOrt
   rw [heq, norm_neg, norm_smul, Real.norm_of_nonneg hτ]
   exact mul_le_mul_of_nonneg_left (h1.trans hfG) hτ
 
-/-- **Theorem 4.3 of arXiv 2609.02721, generalized** (rank-adaptive SAT scheme vs. the fully
+/-- **Theorem 4.3 of [UschmajewZeiser2026], generalized** (rank-adaptive SAT scheme vs. the fully
 discrete forward Euler scheme).  The full Euler map `Y ↦ Y + τ F(tₙ, Y)` is `(1 + C τ)`-Lipschitz;
 `Ufₙ` are its iterates; the SAT iterates `Uₙ` satisfy, at each step, the hypotheses of
 `sat_step_sub_euler` with tolerance `ε₁` and the final truncation `‖Uₙ₊₁ - Ũₙ₊₁‖ ≤ ε₂`.  Then
@@ -683,7 +684,7 @@ theorem sat_global_error {F : ℝ → E → E} {C τ t₀ ε₁ ε₂ : ℝ} (hC
   calc _ ≤ _ := this
     _ = _ := by ring
 
-/-- **Theorem 4.3 of arXiv 2609.02721, verbatim form** (non-expansive full scheme, `C = 0`):
+/-- **Theorem 4.3 of [UschmajewZeiser2026], verbatim form** (non-expansive full scheme, `C = 0`):
 `‖Uₙ - Ufₙ‖ ≤ δ + tₙ ε₁ + (tₙ / τ) ε₂ ≤ δ + T ε₁ + (T / τ) ε₂` for `tₙ = n τ ≤ T`. -/
 theorem sat_global_error_paper {F : ℝ → E → E} {τ t₀ ε₁ ε₂ δ T : ℝ} (hτ : 0 < τ)
     (hε₁ : 0 ≤ ε₁) (hε₂ : 0 ≤ ε₂) {N : ℕ}
@@ -710,7 +711,7 @@ theorem sat_global_error_paper {F : ℝ → E → E} {τ t₀ ε₁ ε₂ δ T :
   linarith
 
 omit [InnerProductSpace ℝ E] in
-/-- **Tolerance-scaling corollary of Theorem 4.3** (arXiv 2609.02721, after Theorem 4.3).  If
+/-- **Tolerance-scaling corollary of Theorem 4.3** ([UschmajewZeiser2026], after Theorem 4.3).  If
 the full forward Euler scheme converges with `‖A(tₙ) - Ufₙ‖ ≤ C τ`, the low-rank iterates obey the
 bound of Theorem 4.3, `‖Uₙ - Ufₙ‖ ≤ δ + tₙ ε₁ + n ε₂`, and the tolerances are chosen as
 `δ ≤ C τ / 3`, `ε₁ = C τ / (3 T)`, `ε₂ = C τ² / (3 T)`, then `‖A(tₙ) - Uₙ‖ ≤ 2 C τ` for
@@ -806,7 +807,7 @@ theorem norm_sub_exact_le_of_sub_euler (hF : IsLipschitzField F L) (hL : 0 ≤ L
   exact norm_sub_le_of_le_of_le hη hdef
 
 /-- **Robust local error of the explicit-Euler augmented (rank-adaptive) BUG step**
-(arXiv 2502.07040, Sec. 2.1, Algorithm 1; arXiv 2104.05247 with Euler substeps).  With the
+([NobileRiffaud2025, Sec. 2.1], Algorithm 1; [CerutiKuschLubich2022] with Euler substeps).  With the
 augmented bases `P₁ ⊇ [P₀, Q₀ f]`, `Q₁ ⊇ [Q₀, P₀ f]`, `f = F(t₀, Y₀)`, doubly normal component
 `‖(1 - P₀)(1 - Q₀) f‖ ≤ ε` and truncation `‖Y₁ - P₁ Q₁ (Y₀ + h f)‖ ≤ ϑ_tr`:
 `‖Y₁ - A(t₁)‖ ≤ h ε + (L B + Lₜ) h² / 2 + ϑ_tr`.  The constant in front of `h ε` is `1` (compare
@@ -969,7 +970,7 @@ section XL
 
 variable {F : ℝ → E → E} {L B Lt ε : ℝ} {t₀ t₁ h : ℝ} {A : ℝ → E} {Y₀ : E}
 
-/-- **Robust local error of the XL integrator** (OP-HO-07; arXiv 2502.08951, Sec. 2).  K-step
+/-- **Robust local error of the XL integrator** (OP-HO-07; [EinkemmerHuZhang2025, Sec. 2]).  K-step
 `YK' = Q₀ F(t, YK)`, `YK t₀ = A t₀`; the new left basis `Pa` (an orthogonal projector) captures
 `YK t₁` with normal-component bound `‖(1 - Pa)(1 - Q₀) F(t, YK t₁)‖ ≤ ε`; Galerkin L-step
 `YL' = Pa F(t, YL)` from `YL t₀ = Pa (A t₀)` (`= A t₀` for the augmented basis `X̂ = [Xⁿ, K]` of
@@ -1032,7 +1033,7 @@ theorem xl_bound_le {H : ℝ} (hL : 0 ≤ L) (hB : 0 ≤ B) (hε : 0 ≤ ε) (hh
   have := bug_bound_le hL hB hε hh hhH
   nlinarith
 
-/-- **Robust local error of the GAP integrator** (arXiv 2505.19929, Algorithm 2.3 and
+/-- **Robust local error of the GAP integrator** ([CerutiCrouseillesEinkemmer2025, Alg. 2.3] and
 Theorem 3.3, with explicit constants).  L-step `YL' = P₀ F(t, YL)`, `YL t₀ = A t₀`; the new right
 basis `Q₁` captures `YL t₁` with `‖(1 - Q₁)(1 - P₀) F(t, YL t₁)‖ ≤ ε`; Galerkin K-step
 `YK' = Q₁ F(t, YK)` from `YK t₀ = Q₁ (A t₀)`.  Then with `ϑ = h (4 L B h + ε)`,
@@ -1050,9 +1051,9 @@ theorem gap_local_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBound
   simpa using xl_local_error hF hL hB hQ₁ hP₀ ht₁ hh hA hYL hL₀ hLcap hε hYK hK₀
     (Y₁ := YK t₁) (θtr := 0) (by simp)
 
-/-- **Global error of the GAP integrator** (arXiv 2505.19929, Corollary 3.4, with explicit
-constants): `‖Y n - A(tₙ)‖ ≤ e^{L n h} (‖Y 0 - A t₀‖ + n ((e^{L h} - 1)(B h + ϑ) + ϑ))`, i.e.
-`O(δ + ε + h)` on bounded time intervals (cf. `xl_bound_le`). -/
+/-- **Global error of the GAP integrator** ([CerutiCrouseillesEinkemmer2025, Cor. 3.4], with
+explicit constants): `‖Y n - A(tₙ)‖ ≤ e^{L n h} (‖Y 0 - A t₀‖ + n ((e^{L h} - 1)(B h + ϑ) + ϑ))`,
+i.e. `O(δ + ε + h)` on bounded time intervals (cf. `xl_bound_le`). -/
 theorem gap_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
     (hh : 0 ≤ h) {N : ℕ} (hA : ODESolution F A t₀ (t₀ + N * h)) {P Q : ℕ → E →L[ℝ] E}
     {Y : ℕ → E} {YK YL Φ : ℕ → ℝ → E} (hP : ∀ n, IsOrthProj (P n))
@@ -1078,7 +1079,7 @@ theorem gap_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoun
       ((hL₀ n hn).trans (hΦ₀ n hn).symm) (hLcap n hn) (hε n hn) (hYK n hn)
       (by rw [hK₀ n hn, hΦ₀ n hn])
 
-/-- **Robust local error of the sXL integrator** (OP-HO-07; arXiv 2502.08951, Sec. 2,
+/-- **Robust local error of the sXL integrator** (OP-HO-07; [EinkemmerHuZhang2025, Sec. 2],
 (2.9)–(2.11)): augmentation `Pa ⊇ [P₀, Q₀ F(t₀, Y₀)]` (for separable fields `Pa ⊇ range F(Y₀)`),
 explicit Euler L-step `Ŷ₁ = Pa (Y₀ + h F(t₀, Y₀))`, truncation `‖Y₁ - Ŷ₁‖ ≤ ϑ_tr`.  With the
 doubly normal component `‖(1 - P₀)(1 - Q₀) F(t₀, Y₀)‖ ≤ ε` (`ε = 0` for separable fields):
@@ -1136,8 +1137,8 @@ theorem ODESolution.norm_sub_le_abs {A : ℝ → E} (hB : IsBoundedField F B)
   · have := (hA.mono ht.1 hs.2).norm_sub_le_of_bounded hB s ⟨hts, le_rfl⟩
     rw [norm_sub_rev, abs_of_nonpos (sub_nonpos.2 hts), neg_sub]; exact this
 
-/-- **Lemma 3.2 of arXiv 2505.19929, Lipschitz part**: for an orthogonal projector `P` onto a
-fixed subspace, `s ↦ ‖A s - P A s‖` is `B`-Lipschitz along the exact flow. -/
+/-- **Lemma 3.2 of [CerutiCrouseillesEinkemmer2025], Lipschitz part**: for an orthogonal projector
+`P` onto a fixed subspace, `s ↦ ‖A s - P A s‖` is `B`-Lipschitz along the exact flow. -/
 theorem normal_dist_lipschitz {P : E →L[ℝ] E} (hP : IsOrthProj P) (hB : IsBoundedField F B)
     (hA : ODESolution F A t₀ t₁) {s t : ℝ} (hs : s ∈ Icc t₀ t₁) (ht : t ∈ Icc t₀ t₁) :
     |‖A t - P (A t)‖ - ‖A s - P (A s)‖| ≤ B * |t - s| := by
@@ -1147,8 +1148,8 @@ theorem normal_dist_lipschitz {P : E →L[ℝ] E} (hP : IsOrthProj P) (hB : IsBo
   rw [this]
   exact (hP.norm_sub_le _).trans (hA.norm_sub_le_abs hB hs ht)
 
-/-- **Lemma 3.2 of arXiv 2505.19929, bound (3.1)**, with the sharper constant `B` (the paper
-states `2 B`): `‖A s - P A s‖ ≤ ‖A t₁ - P A t₁‖ + B (t₁ - s)` for `s ∈ [t₀, t₁]`. -/
+/-- **Lemma 3.2 of [CerutiCrouseillesEinkemmer2025], bound (3.1)**, with the sharper constant `B`
+(the paper states `2 B`): `‖A s - P A s‖ ≤ ‖A t₁ - P A t₁‖ + B (t₁ - s)` for `s ∈ [t₀, t₁]`. -/
 theorem normal_dist_le_end {P : E →L[ℝ] E} (hP : IsOrthProj P) (hB : IsBoundedField F B)
     (hA : ODESolution F A t₀ t₁) {s : ℝ} (hs : s ∈ Icc t₀ t₁) :
     ‖A s - P (A s)‖ ≤ ‖A t₁ - P (A t₁)‖ + B * (t₁ - s) := by
@@ -1157,7 +1158,7 @@ theorem normal_dist_le_end {P : E →L[ℝ] E} (hP : IsOrthProj P) (hB : IsBound
   rw [abs_sub_comm s t₁, abs_of_nonneg (sub_nonneg.2 hs.2)] at h
   linarith [le_abs_self (‖A s - P (A s)‖ - ‖A t₁ - P (A t₁)‖)]
 
-/-- Bound (3.1) of arXiv 2505.19929 exactly as published (constant `2 B`). -/
+/-- Bound (3.1) of [CerutiCrouseillesEinkemmer2025] exactly as published (constant `2 B`). -/
 theorem normal_dist_le_end_paper {P : E →L[ℝ] E} (hP : IsOrthProj P) (hB : IsBoundedField F B)
     (hA : ODESolution F A t₀ t₁) {s : ℝ} (hs : s ∈ Icc t₀ t₁) :
     ‖A s - P (A s)‖ ≤ ‖A t₁ - P (A t₁)‖ + 2 * B * |t₁ - s| := by

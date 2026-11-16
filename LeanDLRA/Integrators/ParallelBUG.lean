@@ -7,15 +7,15 @@ This file formalizes the robust error analysis of the *parallel* basis-update & 
 integrator of
 
 * G. Ceruti, J. Kusch, Ch. Lubich, *A parallel rank-adaptive integrator for dynamical low-rank
-  approximation*, arXiv:2304.05660 (SIAM J. Sci. Comput. 2024), §3.1 (algorithm), §3.2 (block
+  approximation*, [CerutiKuschLubich2024] (SIAM J. Sci. Comput. 2024), §3.1 (algorithm), §3.2 (block
   structure of the augmented coefficient matrix), (4.1) (local error) and **Theorem 4.1**
   (global error);
 
 see also J. Kusch, *Second-order robust parallel integrators for dynamical low-rank
-approximation*, arXiv:2403.02834, Theorem 2.2 (restatement of Theorem 4.1 above with the
+approximation*, [Kusch2025, Thm. 2.2] (restatement of Theorem 4.1 above with the
 truncation term written as `C₃ k ϑ`).
 
-## The algorithm (matrix form, arXiv:2304.05660 §3.1)
+## The algorithm (matrix form, [CerutiKuschLubich2024] §3.1)
 
 Starting from `Y₀ = U₀ S₀ V₀ᵀ` (`U₀ᵀU₀ = I`, `V₀ᵀV₀ = I`), a step `t₀ → t₁ = t₀ + h` solves
 **in parallel**
@@ -77,7 +77,7 @@ fixes `K(t₁)`, hence
                    ≤ C₀ δ + C₁ h + C₂ ε + C₃ ϑ / h,
 
   with `C₀ = e^{LT}`, `C₁ = 7 L B T e^{LT}`, `C₂ = C₃ = T e^{LT}`.  This is **Theorem 4.1** of
-  arXiv:2304.05660.  `parallelBUG_global_error_of_timeLipschitz` assumes the normal-component
+  [CerutiKuschLubich2024].  `parallelBUG_global_error_of_timeLipschitz` assumes the normal-component
   bound only at the grid points `(tₙ, Yₙ)`, exactly as Assumption 2 of the paper.
 * `IsParallelBUGStep.local_error_truncated`: the truncated local error (4.1),
   `‖Y₁ - A(t₁)‖ ≤ h (7 L B h + ε) + ϑ`.
@@ -93,10 +93,10 @@ fixes `K(t₁)`, hence
 * `parallelBUG_euler`, `parallelBUG_euler_norm_le`, `parallelBUG_euler_stable`: with explicit
   Euler substeps the parallel BUG step is the tangent-space projected Euler step,
   `Ŷ₁ = P(Y₀)(Y₀ + h F(t₀, Y₀))`; hence it inherits the CFL condition of the full explicit Euler
-  scheme, `‖Ŷ₁‖ ≤ ‖Y₀ + h F(t₀, Y₀)‖ ≤ ‖Y₀‖` (§5.1 of arXiv:2304.05660), and with norm-nonincreasing
-  truncation `‖Yₙ‖ ≤ ‖Y₀‖` for all `n`.
+  scheme, `‖Ŷ₁‖ ≤ ‖Y₀ + h F(t₀, Y₀)‖ ≤ ‖Y₀‖` (§5.1 of [CerutiKuschLubich2024]), and with
+  norm-nonincreasing truncation `‖Yₙ‖ ≤ ‖Y₀‖` for all `n`.
 
-## Statement of Theorem 4.1 of arXiv:2304.05660
+## Statement of Theorem 4.1 of [CerutiKuschLubich2024]
 
 Assumptions: (1) `F` is bounded and Lipschitz continuous; (2) the normal component of
 `F(tₙ, Yₙ)` is `ε`-small, `‖P⊥_{rₙ}(Yₙ) F(tₙ, Yₙ)‖ ≤ ε` for `0 ≤ nh ≤ T`, where
@@ -122,7 +122,7 @@ the bound and Lipschitz constant of `F` and on `T`.  The local error bound (4.1)
   `lady_windermere`; their existence for Lipschitz fields is `Foundations/Existence.lean`.
 * The truncation is abstracted to `‖Yₙ₊₁ - Ŷₙ₊₁‖ ≤ ϑ` (the SVD truncation of the paper
   satisfies this by construction); the step-rejection strategy (§3.3) is not formalized.
-* The second-order parallel integrators of arXiv:2403.02834 (whose analysis needs bounds on third
+* The second-order parallel integrators of [Kusch2025] (whose analysis needs bounds on third
   derivatives of the exact solution) are not formalized here.
 * For the CFL statement of §5.1 the paper projects onto the span of
   `[U₀ ⊗ V₀, Ũ₁ ⊗ V₀, U₀ ⊗ Ṽ₁]`; we use the (equivalent on `Y₀ + h F₀`, and basis-free) tangent
@@ -140,7 +140,7 @@ section Blocks
 /-- **Four-block decomposition of the identity.**  For any two elements `p`, `q` of a ring,
 `1 = p q + (1 - p) q + p (1 - q) + (1 - p)(1 - q)`.  For the left and right projectors
 `P₀ = U₀U₀ᵀ·`, `Q₀ = ·V₀V₀ᵀ` this is the splitting of a matrix into the four blocks with respect
-to `[U₀, U₀^⊥]` and `[V₀, V₀^⊥]` (arXiv:2304.05660, (3.6)). -/
+to `[U₀, U₀^⊥]` and `[V₀, V₀^⊥]` ([CerutiKuschLubich2024], (3.6)). -/
 theorem four_block_decomp {R : Type*} [Ring R] (p q : R) :
     p * q + (1 - p) * q + p * (1 - q) + (1 - p) * (1 - q) = 1 := by
   noncomm_ring
@@ -154,7 +154,7 @@ theorem ContinuousLinearMap.four_block_decomp_apply (P Q : E →L[ℝ] E) (x : E
   simpa only [add_apply, mul_apply_eq_comp,
     one_apply_eq_self] using h
 
-/-- **The parallel BUG update** (arXiv:2304.05660, §3.1, before truncation):
+/-- **The parallel BUG update** ([CerutiKuschLubich2024, §3.1], before truncation):
 `Ŷ₁ = YS(t₁) + (1 - P₀) YK(t₁) + (1 - Q₀) YL(t₁)`, given the end values `yK = YK(t₁)`,
 `yL = YL(t₁)`, `yS = YS(t₁)` of the K-, L- and S-steps.  In matrix form this is `Û Ŝ₁ V̂ᵀ`, see
 `parallelBUG_eq_augmented` and `matrix_parallelBUG_eq`. -/
@@ -173,7 +173,7 @@ theorem parallelBUG_eq_augmented (P₀ Q₀ P₁ Q₁ : E →L[ℝ] E) (yK yL yS
   have hL' : Q₁ yL = yL - Q₀ yL := eq_sub_of_add_eq' hL
   simp only [parallelBUG, sub_apply, one_apply_eq_self, hK', hL']
 
-/-- **Block structure of `Ŷ₁`** (arXiv:2304.05660, (3.4)).  If `P₀`, `Q₀` are commuting
+/-- **Block structure of `Ŷ₁`** ([CerutiKuschLubich2024], (3.4)).  If `P₀`, `Q₀` are commuting
 idempotents, `yK` lies in the range of `Q₀`, `yL` in the range of `P₀`, and `yS` in the range
 of `P₀Q₀`, then the four blocks of `Ŷ₁ = parallelBUG P₀ Q₀ yK yL yS` are `yS`, `(1-P₀) yK`,
 `(1-Q₀) yL` and `0` — the zero `(1,1)` block of `Ŝ₁`. -/
@@ -216,13 +216,13 @@ theorem sub_parallelBUG_eq {P₀ Q₀ : E →L[ℝ] E} (hc : ∀ x, P₀ (Q₀ x
     hc]
   abel
 
-/-- **The step-rejection indicator** (arXiv:2304.05660, (3.11), abstract form).  Let `P₁`, `Q₁`
-be the projectors onto the new basis directions (`Ũ₁Ũ₁ᵀ·`, `·Ṽ₁Ṽ₁ᵀ`), orthogonal to the old ones
-(`P₀P₁ = 0`, `Q₀Q₁ = 0`), so that `P₀ + P₁ = ÛÛᵀ·` and `Q₀ + Q₁ = ·V̂V̂ᵀ`.  Then the normal
+/-- **The step-rejection indicator** ([CerutiKuschLubich2024], (3.11), abstract form). Let `P₁`,
+`Q₁` be the projectors onto the new basis directions (`Ũ₁Ũ₁ᵀ·`, `·Ṽ₁Ṽ₁ᵀ`), orthogonal to the old
+ones (`P₀P₁ = 0`, `Q₀Q₁ = 0`), so that `P₀ + P₁ = ÛÛᵀ·` and `Q₀ + Q₁ = ·V̂V̂ᵀ`. Then the normal
 component at `Y₀` of the projection of `x` onto the augmented space is
-`normal P₀ Q₀ ((P₀ + P₁)((Q₀ + Q₁) x)) = P₁ (Q₁ x)`, i.e.
-`P⊥(Y₀)[ÛÛᵀ F₀ V̂V̂ᵀ] = Ũ₁Ũ₁ᵀ F₀ Ṽ₁Ṽ₁ᵀ`, whose norm is the computable `η = ‖Ũ₁ᵀ F₀ Ṽ₁‖`.
-Only idempotence of `P₀`, `Q₀` and commutation of `Q₀` with `P₀`, `P₁` are needed. -/
+`normal P₀ Q₀ ((P₀ + P₁)((Q₀ + Q₁) x)) = P₁ (Q₁ x)`, i.e. `P⊥(Y₀)[ÛÛᵀ F₀ V̂V̂ᵀ] = Ũ₁Ũ₁ᵀ F₀ Ṽ₁Ṽ₁ᵀ`,
+whose norm is the computable `η = ‖Ũ₁ᵀ F₀ Ṽ₁‖`. Only idempotence of `P₀`, `Q₀` and commutation of
+`Q₀` with `P₀`, `P₁` are needed. -/
 theorem normal_augmented_eq {P₀ P₁ Q₀ Q₁ : E →L[ℝ] E} (hP₀ : ∀ x, P₀ (P₀ x) = P₀ x)
     (hQ₀ : ∀ x, Q₀ (Q₀ x) = Q₀ x) (hP₀₁ : ∀ x, P₀ (P₁ x) = 0) (hQ₀₁ : ∀ x, Q₀ (Q₁ x) = 0)
     (hc₀ : ∀ x, P₀ (Q₀ x) = Q₀ (P₀ x)) (hc₁ : ∀ x, P₁ (Q₀ x) = Q₀ (P₁ x)) (x : E) :
@@ -231,7 +231,7 @@ theorem normal_augmented_eq {P₀ P₁ Q₀ Q₁ : E →L[ℝ] E} (hP₀ : ∀ x
     hQ₀₁, map_zero, hP₀, hP₀₁]
   abel
 
-/-- **The step-rejection indicator is bounded by the normal component** (arXiv:2304.05660,
+/-- **The step-rejection indicator is bounded by the normal component** ([CerutiKuschLubich2024],
 §3.3).  For orthogonal projectors `P₀ ⟂ P₁`, `Q₀ ⟂ Q₁` with `Q₁` commuting with `P₀`,
 `‖P₁ (Q₁ x)‖ ≤ ‖normal P₀ Q₀ x‖`.  With `x = F₀ = F(t₀, Y₀)` this is
 `η = ‖Ũ₁ᵀ F₀ Ṽ₁‖ ≤ ‖P⊥(Y₀) F₀‖`: the computable quantity used in the step-rejection criterion
@@ -350,13 +350,12 @@ section Local
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
-/-- **Robust local error of the parallel BUG integrator** (arXiv:2304.05660, §4.1, bound (4.1)
-before truncation, with explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by
-`B`; let `P₀`, `Q₀` be commuting orthogonal projectors with `P₀ Y₀ = Y₀ = Q₀ Y₀`; let the
-K-, L- and S-steps `YK' = Q₀ F(t, YK)`, `YL' = P₀ F(t, YL)`, `YS' = P₀Q₀ F(t, YS)` all start at
-`Y₀` at time `t₀`, and let `A' = F(t, A)`, `A(t₀) = Y₀` be the exact solution, all on
-`[t₀, t₁]`.  If the normal component `‖(1-P₀)(1-Q₀) F(t, Y₀)‖ ≤ ε` for `t ∈ [t₀, t₁)`, then
-with `h = t₁ - t₀`
+/-- **Robust local error of the parallel BUG integrator** ([CerutiKuschLubich2024, §4.1], bound
+(4.1) before truncation, with explicit constants). Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by
+`B`; let `P₀`, `Q₀` be commuting orthogonal projectors with `P₀ Y₀ = Y₀ = Q₀ Y₀`; let the K-, L- and
+S-steps `YK' = Q₀ F(t, YK)`, `YL' = P₀ F(t, YL)`, `YS' = P₀Q₀ F(t, YS)` all start at `Y₀` at time
+`t₀`, and let `A' = F(t, A)`, `A(t₀) = Y₀` be the exact solution, all on `[t₀, t₁]`. If the normal
+component `‖(1-P₀)(1-Q₀) F(t, Y₀)‖ ≤ ε` for `t ∈ [t₀, t₁)`, then with `h = t₁ - t₀`
 
     ‖Ŷ₁ - A(t₁)‖ ≤ h (7 L B h + ε),   Ŷ₁ = YS(t₁) + (1-P₀) YK(t₁) + (1-Q₀) YL(t₁).
 
@@ -422,7 +421,7 @@ theorem norm_map_le_of_timeLipschitz {F : ℝ → E → E} (N : E →L[ℝ] E) (
     _ = ε + Lt * h := add_comm _ _
 
 /-- **Local error with the normal-component bound only at the initial time** (Assumption 2 of
-arXiv:2304.05660, Theorem 4.1, is imposed at the grid points `(tₙ, Yₙ)` only).  If
+[CerutiKuschLubich2024, Thm. 4.1], is imposed at the grid points `(tₙ, Yₙ)` only).  If
 `‖(1-P₀)(1-Q₀) F(t₀, Y₀)‖ ≤ ε` and `‖F(t, Y₀) - F(t₀, Y₀)‖ ≤ Lₜ (t - t₀)` on the step, then
 `‖Ŷ₁ - A(t₁)‖ ≤ h ((7 L B + Lₜ) h + ε)` with `h = t₁ - t₀`. -/
 theorem parallelBUG_local_error_of_timeLipschitz {F : ℝ → E → E} {L B ε Lt : ℝ}
@@ -468,7 +467,7 @@ section Global
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
-/-- **One step of the parallel BUG integrator** from `(t₀, Y₀)` to `t₁` (arXiv:2304.05660,
+/-- **One step of the parallel BUG integrator** from `(t₀, Y₀)` to `t₁` ([CerutiKuschLubich2024],
 §3.1, abstract form): `P₀`, `Q₀` are commuting orthogonal projectors (`U₀U₀ᵀ·`, `·V₀V₀ᵀ`)
 fixing `Y₀`, and `YK`, `YL`, `YS` are the K-, L- and S-step trajectories
 `YK' = Q₀ F(t, YK)`, `YL' = P₀ F(t, YL)`, `YS' = P₀Q₀ F(t, YS)` on `[t₀, t₁]`, all started at
@@ -499,7 +498,7 @@ theorem IsParallelBUGStep.local_error {F : ℝ → E → E} {P₀ Q₀ : E →L[
   parallelBUG_local_error hF hL hB hs.orthP hs.orthQ hs.comm ht hs.fixP hs.fixQ hA hA0
     hs.solK hs.initK hs.solL hs.initL hs.solS hs.initS hε
 
-/-- **Block structure along a parallel BUG step** (arXiv:2304.05660, (3.4)).  The K-, L- and
+/-- **Block structure along a parallel BUG step** ([CerutiKuschLubich2024], (3.4)).  The K-, L- and
 S-steps stay in their Galerkin spaces (`Q₀ YK = YK`, `P₀ YL = YL`, `P₀Q₀ YS = YS`), so the four
 blocks of `Ŷ₁` are `YS(t₁)`, `(1-P₀) YK(t₁)`, `(1-Q₀) YL(t₁)` and — the zero block of `Ŝ₁` —
 `normal P₀ Q₀ Ŷ₁ = (1-P₀)(1-Q₀) Ŷ₁ = 0`. -/
@@ -530,7 +529,7 @@ theorem IsParallelBUGStep.tangent_eq {F : ℝ → E → E} {P₀ Q₀ : E →L[�
   have h := tangent_apply_add_normal_apply P₀ Q₀ (parallelBUG P₀ Q₀ (YK t₁) (YL t₁) (YS t₁))
   rwa [(hs.blocks ht).2.2.2, add_zero] at h
 
-/-- **Robust local error after truncation** (arXiv:2304.05660, (4.1), with explicit constants
+/-- **Robust local error after truncation** ([CerutiKuschLubich2024], (4.1), with explicit constants
 `c₁ = 7 L B`, `c₂ = 1`): if the truncated value satisfies `‖Y₁ - Ŷ₁‖ ≤ ϑ`, then
 `‖Y₁ - A(t₁)‖ ≤ h (7 L B h + ε) + ϑ` with `h = t₁ - t₀`. -/
 theorem IsParallelBUGStep.local_error_truncated {F : ℝ → E → E} {P₀ Q₀ : E →L[ℝ] E}
@@ -556,7 +555,7 @@ Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B`, `tₙ = t₀ + n h` wit
 
     ‖Yₙ - A(tₙ)‖ ≤ exp(L n h) (‖Y₀ - A(t₀)‖ + n h (7 L B h + ε) + ∑_{k<n} ϑₖ).
 
-(arXiv:2304.05660, §4.2, via Lady Windermere's fan.) -/
+([CerutiKuschLubich2024, §4.2], via Lady Windermere's fan.) -/
 theorem parallelBUG_global_error_sum {F : ℝ → E → E} {L B ε : ℝ} (hF : IsLipschitzField F L)
     (hL : 0 ≤ L) (hB : IsBoundedField F B) {t₀ h : ℝ} (hh : 0 ≤ h) {N : ℕ} {A : ℝ → E}
     (hA : ODESolution F A t₀ (t₀ + N * h)) {Y : ℕ → E} {P Q : ℕ → E →L[ℝ] E}
@@ -591,8 +590,8 @@ theorem parallelBUG_global_error_sum {F : ℝ → E → E} {L B ε : ℝ} (hF : 
     (ℓ := fun k => h * (7 * L * B * h + ε) + ϑ k) hloc n hn
   rwa [sum_add_distrib, sum_const, card_range, nsmul_eq_mul, ← add_assoc] at key
 
-/-- **Global error of the parallel rank-adaptive BUG integrator** (arXiv:2304.05660,
-**Theorem 4.1**, in the form of arXiv:2403.02834, Theorem 2.2).  Under the hypotheses of
+/-- **Global error of the parallel rank-adaptive BUG integrator** ([CerutiKuschLubich2024],
+**Theorem 4.1**, in the form of [Kusch2025, Thm. 2.2]).  Under the hypotheses of
 `parallelBUG_global_error_sum` with a uniform truncation tolerance `ϑ ≥ 0` and `ε ≥ 0`, for
 `n ≤ N` with `n h ≤ T`
 
@@ -629,7 +628,7 @@ theorem parallelBUG_global_error {F : ℝ → E → E} {L B ε : ℝ} (hF : IsLi
   have hin0 : 0 ≤ ‖Y 0 - A t₀‖ + n * (h * (7 * L * B * h + ε)) + n * ϑ := by positivity
   exact h1.trans (mul_le_mul hexp hin hin0 (Real.exp_pos _).le)
 
-/-- **Theorem 4.1 of arXiv:2304.05660, verbatim form.**  Under the hypotheses of
+/-- **Theorem 4.1 of [CerutiKuschLubich2024], verbatim form.**  Under the hypotheses of
 `parallelBUG_global_error` with `h > 0`, for `0 ≤ n h ≤ T`
 
     ‖Yₙ - A(tₙ)‖ ≤ C₀ δ + C₁ h + C₂ ε + C₃ ϑ / h
@@ -664,7 +663,7 @@ theorem parallelBUG_global_error_paper {F : ℝ → E → E} {L B ε : ℝ} (hF 
     _ = _ := by ring
 
 /-- **Global error with the normal-component assumption at the grid points only**
-(Assumption 2 of arXiv:2304.05660, Theorem 4.1, verbatim:
+(Assumption 2 of [CerutiKuschLubich2024, Thm. 4.1], verbatim:
 `‖(1-Pₙ)(1-Qₙ) F(tₙ, Yₙ)‖ ≤ ε`), for `F` additionally `Lₜ`-Lipschitz in time.  Then for
 `n ≤ N` with `n h ≤ T`: `‖Yₙ - A(tₙ)‖ ≤ exp(L T) (δ + T ((7 L B + Lₜ) h + ε) + n ϑ)`. -/
 theorem parallelBUG_global_error_of_timeLipschitz {F : ℝ → E → E} {L B ε Lt : ℝ}
@@ -730,11 +729,11 @@ section Euler
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- **Parallel BUG with explicit Euler substeps is the tangent-projected Euler step**
-(arXiv:2304.05660, §5.1).  If the K-, L- and S-steps are each solved by one explicit Euler step
-with the frozen field `f = F(t₀, Y₀)` — `YK(t₁) = Y₀ + h Q₀ f`, `YL(t₁) = Y₀ + h P₀ f`,
+([CerutiKuschLubich2024, §5.1]). If the K-, L- and S-steps are each solved by one explicit Euler
+step with the frozen field `f = F(t₀, Y₀)` — `YK(t₁) = Y₀ + h Q₀ f`, `YL(t₁) = Y₀ + h P₀ f`,
 `YS(t₁) = Y₀ + h P₀Q₀ f` (matrix form: `K₁ = U₀S₀ + h F₀V₀`, `L₁ = V₀S₀ᵀ + h F₀ᵀU₀`,
-`S̄₁ = S₀ + h U₀ᵀF₀V₀`) — then
-`Ŷ₁ = P(Y₀)(Y₀ + h f) = Y₀ + h P(Y₀) f` with the tangent projector `P(Y₀) = tangent P₀ Q₀`. -/
+`S̄₁ = S₀ + h U₀ᵀF₀V₀`) — then `Ŷ₁ = P(Y₀)(Y₀ + h f) = Y₀ + h P(Y₀) f` with the tangent projector
+`P(Y₀) = tangent P₀ Q₀`. -/
 theorem parallelBUG_euler {P₀ Q₀ : E →L[ℝ] E} (hc : ∀ x, P₀ (Q₀ x) = Q₀ (P₀ x)) {Y₀ : E}
     (hPY : P₀ Y₀ = Y₀) (hQY : Q₀ Y₀ = Y₀) (h : ℝ) (f : E) :
     parallelBUG P₀ Q₀ (Y₀ + h • Q₀ f) (Y₀ + h • P₀ f) (Y₀ + h • P₀ (Q₀ f)) =
@@ -743,7 +742,7 @@ theorem parallelBUG_euler {P₀ Q₀ : E →L[ℝ] E} (hc : ∀ x, P₀ (Q₀ x)
     hPY, hQY, hc]
   module
 
-/-- **CFL inheritance, one step** (arXiv:2304.05660, §5.1).  With explicit Euler substeps and
+/-- **CFL inheritance, one step** ([CerutiKuschLubich2024, §5.1]).  With explicit Euler substeps and
 commuting orthogonal projectors `P₀`, `Q₀` fixing `Y₀`, `‖Ŷ₁‖ ≤ ‖Y₀ + h f‖`: the parallel BUG step
 is never larger than the full explicit Euler step. -/
 theorem parallelBUG_euler_norm_le {P₀ Q₀ : E →L[ℝ] E} (hP : IsOrthProj P₀) (hQ : IsOrthProj Q₀)
@@ -754,12 +753,12 @@ theorem parallelBUG_euler_norm_le {P₀ Q₀ : E →L[ℝ] E} (hP : IsOrthProj P
   rw [parallelBUG_euler hc hPY hQY]
   exact (hP.tangent hQ hc).norm_le _
 
-/-- **CFL inheritance** (arXiv:2304.05660, §5.1).  Run the parallel BUG integrator with explicit
-Euler substeps on the grid `tₙ = t₀ + n h`: step `n` uses commuting orthogonal projectors
+/-- **CFL inheritance** ([CerutiKuschLubich2024, §5.1]). Run the parallel BUG integrator with
+explicit Euler substeps on the grid `tₙ = t₀ + n h`: step `n` uses commuting orthogonal projectors
 `Pₙ`, `Qₙ` fixing `Yₙ` and the field `fₙ = F(tₙ, Yₙ)`, and the truncation does not increase the
-norm, `‖Yₙ₊₁‖ ≤ ‖Ŷₙ₊₁‖` (true for SVD truncation).  If the full explicit Euler step is stable at
-the iterates, `‖Yₙ + h F(tₙ, Yₙ)‖ ≤ ‖Yₙ‖` (e.g. under the CFL condition of the full problem),
-then `‖Yₙ‖ ≤ ‖Y₀‖` for all `n ≤ N`. -/
+norm, `‖Yₙ₊₁‖ ≤ ‖Ŷₙ₊₁‖` (true for SVD truncation). If the full explicit Euler step is stable at the
+iterates, `‖Yₙ + h F(tₙ, Yₙ)‖ ≤ ‖Yₙ‖` (e.g. under the CFL condition of the full problem), then
+`‖Yₙ‖ ≤ ‖Y₀‖` for all `n ≤ N`. -/
 theorem parallelBUG_euler_stable {F : ℝ → E → E} {t₀ h : ℝ} {N : ℕ} {Y : ℕ → E}
     {P Q : ℕ → E →L[ℝ] E} (hP : ∀ n < N, IsOrthProj (P n)) (hQ : ∀ n < N, IsOrthProj (Q n))
     (hc : ∀ n < N, ∀ x, P n (Q n x) = Q n (P n x)) (hPY : ∀ n < N, P n (Y n) = Y n)
@@ -811,7 +810,7 @@ open Matrix
 
 variable {m n r : Type*} [Fintype r] {R : Type*} [CommRing R]
 
-/-- **Block expansion of `Û Ŝ₁ V̂ᵀ`** (arXiv:2304.05660, (3.4)).  With `Û = [U₀, Ũ₁]`,
+/-- **Block expansion of `Û Ŝ₁ V̂ᵀ`** ([CerutiKuschLubich2024], (3.4)).  With `Û = [U₀, Ũ₁]`,
 `V̂ = [V₀, Ṽ₁]` and `Ŝ₁ = [[S̄, S̃ᴸ], [S̃ᴷ, 0]]`,
 `Û Ŝ₁ V̂ᵀ = U₀ S̄ V₀ᵀ + Ũ₁ S̃ᴷ V₀ᵀ + U₀ S̃ᴸ Ṽ₁ᵀ`. -/
 theorem matrix_parallelBUG_blocks (U₀ U₁ : Matrix m r R) (V₀ V₁ : Matrix n r R)
@@ -866,7 +865,7 @@ theorem matrix_augmented_proj (U₀ : Matrix m r R) (U₁ : Matrix m s R) :
     fromCols U₀ U₁ * (fromCols U₀ U₁)ᵀ = U₀ * U₀ᵀ + U₁ * U₁ᵀ := by
   rw [transpose_fromCols, fromCols_mul_fromRows]
 
-/-- **Identity (3.11) of arXiv:2304.05660** (matrix form).  Let `U₀`, `V₀` have orthonormal
+/-- **Identity (3.11) of [CerutiKuschLubich2024]** (matrix form).  Let `U₀`, `V₀` have orthonormal
 columns and let the new directions be orthogonal to them, `U₀ᵀŨ₁ = 0`, `V₀ᵀṼ₁ = 0`.  Then for
 every `F₀`
 `(I - U₀U₀ᵀ) [ÛÛᵀ F₀ V̂V̂ᵀ] (I - V₀V₀ᵀ) = Ũ₁Ũ₁ᵀ F₀ Ṽ₁Ṽ₁ᵀ`, i.e. the normal component at
