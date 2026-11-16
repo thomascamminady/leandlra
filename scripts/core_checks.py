@@ -36,6 +36,7 @@ import json
 import re
 import sys
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 
 import core
@@ -48,13 +49,40 @@ EXEMPT_AREAS = frozenset(("Corrections", "Counterexamples"))
 _BLOCK_COMMENT = re.compile(r"/-.*?-/", re.DOTALL)
 _LINE_COMMENT = re.compile(r"--[^\n]*")
 _NAMESPACE = re.compile(r"^\s*namespace\s+(\S+)")
-_SECTION = re.compile(r"^\s*section\b")
+# A scope that `end` closes without being a namespace: a section (also `noncomputable section`)
+# and a `mutual` block.
+_SECTION = re.compile(r"^\s*(?:noncomputable\s+)?section\b|^\s*mutual\b")
 _END = re.compile(r"^\s*end\b(?:\s+\S+)?\s*$")
 _DECL = re.compile(
-    r"^\s*(?:@\[[^\]]*\]\s*)*"
+    r"^\s*(?:(?:open|set_option)\b[^\n]*?\bin\s+)?"
+    r"(?:@\[[^\]]*\]\s*)*"
     r"((?:(?:public|noncomputable|protected|unsafe|partial|nonrec|scoped|local|private)\s+)*)"
-    r"(def|abbrev|structure|class|inductive|instance|opaque)\b\s*(\S*)"
+    r"(class\s+inductive|irreducible_def|def|abbrev|structure|class|inductive|instance"
+    r"|opaque|theorem|lemma)\b(.*)"
 )
+_PRIORITY = re.compile(r"^\s*\(priority\s*:=[^)]*\)")
+_NAME = re.compile(r"^\s*([^\s:({\[⦃⟨]+)")
+# The kinds of declaration that the `Defs.lean` rule covers.
+DEFINITION_KINDS = frozenset(
+    ("def", "abbrev", "structure", "class", "inductive", "instance", "opaque")
+)
+
+
+@dataclass(frozen=True)
+class Declaration:
+    """A declaration of a source text, as the source writes it.
+
+    ``name`` is qualified with the namespaces open at the declaration (``_root_.`` removed); an
+    unnamed instance (``named`` false) gets the name ``instance`` under them. ``in_examples``:
+    a namespace of the name ends in ``Example`` or ``Examples``.
+    """
+
+    line: int
+    kind: str
+    name: str
+    modifiers: frozenset[str]
+    named: bool
+    in_examples: bool
 
 
 def strip_comments(text: str) -> str:
@@ -63,11 +91,17 @@ def strip_comments(text: str) -> str:
     return _LINE_COMMENT.sub("", _BLOCK_COMMENT.sub(keep, text))
 
 
-def definitions_in(text: str) -> list[tuple[int, str, str]]:
-    """``(line, kind, qualified name)`` of the public definitions of a source text that the
-    ``Defs.lean`` rule covers (unnamed instances get the name ``instance``)."""
+def declarations_in(text: str) -> list[Declaration]:
+    """The theorems, lemmas, definitions, structures, classes, inductive types, instances and
+    opaque constants of a source text, in their order.
+
+    A line scan of the text without comments: a declaration starts a line (after attributes,
+    modifiers and ``open … in``); ``namespace``, ``section``, ``mutual`` and ``end`` are
+    followed. A declaration that a macro makes is not seen; ``irreducible_def`` counts as
+    ``def``, ``class inductive`` as ``class``.
+    """
     stack: list[list[str]] = []
-    out: list[tuple[int, str, str]] = []
+    out: list[Declaration] = []
     for number, line in enumerate(strip_comments(text).splitlines(), start=1):
         if m := _NAMESPACE.match(line):
             stack.append(m.group(1).split("."))
@@ -77,20 +111,40 @@ def definitions_in(text: str) -> list[tuple[int, str, str]]:
             if stack:
                 stack.pop()
         elif m := _DECL.match(line):
-            modifiers = m.group(1).split()
-            if {"private", "scoped", "local"} & set(modifiers):
-                continue
-            kind, name = m.group(2), m.group(3)
-            if kind == "instance" and (
-                not name or name.startswith((":", "(", "{", "["))
-            ):
-                name = "instance"
+            kind = m.group(2).split()[0]
+            kind = "def" if kind == "irreducible_def" else kind
+            rest = _PRIORITY.sub("", m.group(3)) if kind == "instance" else m.group(3)
+            found = _NAME.match(rest)
+            name = found.group(1).rstrip(".") if found else ""
             namespaces = [c for scope in stack for c in scope]
-            parts = namespaces + name.split(".")
-            if any(c.endswith(("Example", "Examples")) for c in parts[:-1]):
-                continue
-            out.append((number, kind, ".".join(parts)))
+            if name.startswith("_root_."):
+                namespaces, name = [], name.removeprefix("_root_.")
+            parts = namespaces + (name or "instance").split(".")
+            out.append(
+                Declaration(
+                    line=number,
+                    kind=kind,
+                    name=".".join(parts),
+                    modifiers=frozenset(m.group(1).split()),
+                    named=bool(name),
+                    in_examples=any(
+                        c.endswith(("Example", "Examples")) for c in parts[:-1]
+                    ),
+                )
+            )
     return out
+
+
+def definitions_in(text: str) -> list[tuple[int, str, str]]:
+    """``(line, kind, qualified name)`` of the public definitions of a source text that the
+    ``Defs.lean`` rule covers (unnamed instances get the name ``instance``)."""
+    return [
+        (d.line, d.kind, d.name)
+        for d in declarations_in(text)
+        if d.kind in DEFINITION_KINDS
+        and not {"private", "scoped", "local"} & d.modifiers
+        and not d.in_examples
+    ]
 
 
 def defs_findings(root: Path = ROOT) -> list[tuple[str, int, str, str]]:

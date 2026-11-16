@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import json
 import shutil
 import subprocess
@@ -22,6 +23,15 @@ SCRIPT = next(
     HERE.parent / "scripts/enqueue.sh",
 )
 KEYS = [f"S{i:02d}" for i in range(13)]
+# The Python helpers that the script runs (the name check and what it imports).
+HELPERS = (
+    "name_clash.py",
+    "core_checks.py",
+    "core.py",
+    "rolling.py",
+    "fidelity.py",
+    "hashdiff.py",
+)
 
 pytestmark = pytest.mark.skipif(
     shutil.which("zsh") is None or shutil.which("uv") is None, reason="needs zsh and uv"
@@ -36,6 +46,8 @@ class Tree:
         self.ready = root / "wip/ready"
         (root / "scripts").mkdir()
         shutil.copy(SCRIPT, root / "scripts/enqueue.sh")
+        for helper in HELPERS:
+            shutil.copy(SCRIPT.parent / helper, root / "scripts" / helper)
         (root / "wip").mkdir()
         table = {k: {"target": f"LeanDLRA/Literature/{k}.lean"} for k in KEYS}
         (root / "wip/manifest.json").write_text(json.dumps(table, indent=2))
@@ -43,6 +55,23 @@ class Tree:
             (root / f"wip/{k}.lean").write_text(
                 f"theorem {k.lower()} : True := trivial\n"
             )
+        self.dump([])
+
+    def dump(self, entries: list[tuple[str, str]]) -> None:
+        """The rolling dump: these ``(module, name)`` entries, each module with a source."""
+        path = self.root / ".lake/hashdiff/rolling.jsonl.gz"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        lines = [json.dumps({"format": "leandlra-hashdiff/1"})]
+        for module, name in entries:
+            source = self.root / (module.replace(".", "/") + ".lean")
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.touch()
+            entry = {"kind": "theorem", "module": module, "name": name}
+            lines.append(
+                json.dumps(entry, separators=(",", ":"))
+            )  # as the dumper writes
+        with gzip.open(path, "wt", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
 
     def start(self, *args: str) -> subprocess.Popen[str]:
         return subprocess.Popen(
@@ -283,3 +312,44 @@ def test_groups_queued_at_the_same_time_stay_whole(tree: Tree) -> None:
     assert selection.bad == []
     assert sorted(g.id for g in selection.groups) == ["p0", "p1", "p2", "p3"]
     assert sum(len(g.files) for g in selection.groups) == 12
+
+
+# -- names ----------------------------------------------------------------------------------------
+
+
+def test_public_name_of_another_module_queues_nothing(tree: Tree) -> None:
+    tree.dump([("LeanDLRA.Core.Other", "s00"), ("LeanDLRA.Literature.S01", "s01")])
+    code, out, err = tree.run("--id", "clash", "wip/S00.lean")
+    assert (code, out) == (2, "")
+    assert (
+        "enqueue: name clash: wip/S00.lean:1 declares s00; "
+        "LeanDLRA.Core.Other (catalogue) declares it already"
+    ) in err
+    assert "--allow-name NAME" in err
+    assert tree.queue() == []
+    assert not (tree.root / "wip/enqueue.lock").exists()
+    # The slice's own target declares its name today: an update.
+    code, _, err = tree.run("--id", "update", "wip/S01.lean")
+    assert (code, err) == (0, "")
+    assert tree.queue() == ["S01.lean", "update.group"]
+
+
+def test_allow_name_lets_an_intended_clash_through(tree: Tree) -> None:
+    tree.dump([("LeanDLRA.Core.Other", "s00")])
+    code, _, err = tree.run("--allow-name", "s00", "--id", "ok", "wip/S00.lean")
+    assert (code, err) == (0, "")
+    assert tree.queue() == ["S00.lean", "ok.group"]
+    code, _, err = tree.run("--allow-name=a,b", "wip/S01.lean")
+    assert code == 2
+    assert "--allow-name: not a declaration name: a,b" in err
+
+
+def test_two_slices_of_a_call_with_one_name(tree: Tree) -> None:
+    (tree.root / "wip/S01.lean").write_text("theorem s00 : True := trivial\n")
+    code, _, err = tree.run("wip/S00.lean", "wip/S01.lean")
+    assert code == 2
+    assert (
+        "wip/S00.lean:1 declares s00; wip/S01.lean of the same call declares it too"
+        in err
+    )
+    assert tree.queue() == []

@@ -16,6 +16,14 @@
 #                         hash diff under the rename map); 0 for a group that only moves or renames
 #   --promote MODULE      add this module to the core library (docs/promoted.txt); repeatable
 #   --id ID               name of the group (default: time and process number)
+#   --allow-name NAME     accept that the group declares NAME although the library or a queued
+#                         slice declares it too (see below); repeatable
+#
+# Before anything is queued, scripts/name_clash.py looks up every public declaration name of the
+# slices in the declaration index of the rolling dump (.lake/hashdiff/rolling.jsonl.gz), among the
+# other slices of the call and among the slices queued by earlier groups; the names that a slice's
+# own target module declares today do not count (an update keeps its names). A clash queues nothing:
+# neither scripts/fc nor the gate would see it, the catalogue build would fail.
 #
 # It returns as soon as the group is queued; the gate log (wip/gate.log) has the verdict: one line
 # `PUSHED <title>` for the round or `REJECT <slice>: <reason>` for every file of the group. It
@@ -32,7 +40,7 @@ cd "${0:A:h}/.." || exit 2
 max=12
 usage() {
   print -u2 "usage: scripts/enqueue.sh [--renames FILE.json] [--expect-changed N] [--promote MODULE]..." \
-    "[--id ID] SLICE.lean ...   (1 to $max files, one gate round)"
+    "[--id ID] [--allow-name NAME]... SLICE.lean ...   (1 to $max files, one gate round)"
   exit 2
 }
 fail() {
@@ -42,22 +50,25 @@ fail() {
 
 renames="" expect="" id=""
 promote=()
+allow=()
 files=()
 while (( $# )); do
   case "$1" in
-    --renames|--expect-changed|--promote|--id)
+    --renames|--expect-changed|--promote|--id|--allow-name)
       (( $# >= 2 )) || usage
       case "$1" in
         --renames) renames="$2" ;;
         --expect-changed) expect="$2" ;;
         --promote) promote+=("$2") ;;
         --id) id="$2" ;;
+        --allow-name) allow+=("$2") ;;
       esac
       shift 2 ;;
     --renames=*) renames="${1#*=}"; shift ;;
     --expect-changed=*) expect="${1#*=}"; shift ;;
     --promote=*) promote+=("${1#*=}"); shift ;;
     --id=*) id="${1#*=}"; shift ;;
+    --allow-name=*) allow+=("${1#*=}"); shift ;;
     --) shift; files+=("$@"); break ;;
     -*) print -u2 "enqueue: unknown option $1"; usage ;;
     *) files+=("$1"); shift ;;
@@ -81,6 +92,13 @@ done
 [[ -n "$id" ]] || id="$(date '+%Y%m%d-%H%M%S')-$$"
 [[ "$id" =~ "^[A-Za-z0-9][A-Za-z0-9_.-]*$" && "$id" != legacy ]] || fail "--id: not a group name: $id"
 [[ ! -e "wip/ready/$id.group" ]] || fail "--id: a group $id is already queued"
+for n in "${allow[@]}"; do
+  [[ -n "$n" && "$n" != *[,\"\\[:space:]]* ]] || fail "--allow-name: not a declaration name: $n"
+done
+
+# Public names that the library or a queued slice declares already (scripts/name_clash.py). The
+# names go to fire as one quoted string, so that it does not read them as Python.
+uv run -q scripts/name_clash.py check "${files[@]}" --allow="\"${(j:,:)allow}\"" || exit 2
 
 # The marker, complete before anything is queued.
 marker="$(uv run -q --no-project python - "$id" "$expect" "$renames" "${(j:,:)promote}" "${names[@]}" <<'PY'
