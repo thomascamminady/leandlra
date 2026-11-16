@@ -110,6 +110,7 @@ import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.SameMinibatchAugmentation
 import LeanDLRA.Research.StiffGlobalCycle
 import LeanDLRA.Research.StiffOrderReduction
+import LeanDLRA.Research.TwoSidedLeak
 import LeanDLRA.Stability.Conservation
 import LeanDLRA.Stability.Energy
 import LeanDLRA.Stiff.CouplingLocalError
