@@ -379,7 +379,32 @@ the core has no step structure for the schemes of these files.
 | transport `D(f) = -v·∇ₓ f - E·∇ᵥ f` with frozen field (`P2608_00397.Grid.transport`) | `Kinetic.streaming` | minus an instance with `2 d` terms, the discrete derivatives (linear maps) written as matrices: `Grid.transport_eq_neg_streaming` |
 | moment `∫ ζ f dv` (`Literature/Kinetic/P2101_12571b`, `Grid.density`) | `Kinetic.quadMoment`, `Kinetic.density` | the core moment at the field `q.wv`, stays (the name occurs on 78 lines of the file); `Grid.density_eq_quadMoment`, `Grid.density_one_eq_density` by `rfl` |
 | discrete Vlasov right-hand side `-v ∂ₓ f + E[f] ∂ᵥ f` (`P2101_12571.vlasovRHS`) | `Kinetic.streaming` | value at `f` with the field value `E f`: `vlasovRHS_eq_streaming` (two terms `(-dx, diag v)`, `(diag (E f), dvᵀ)`); not a statement of linearity in `f` |
+| stencils `Dx`, `Dxx`, `Dp` on grid functions, with the spacing `dx` as argument (`Literature/Kinetic/P2411_06844a`) | `Kinetic.centralDiff`, `Kinetic.secondDiff`, `Kinetic.fwdDiff` | actions on grid functions of the core matrices, stay: `Dx_eq_centralDiff_mulVec`, `Dxx_eq_secondDiff_mulVec`, `Dp_eq_fwdDiff_mulVec` (the core lemmas `Kinetic.centralDiff_mulVec`, `Kinetic.secondDiff_mulVec`, `Kinetic.fwdDiff_mulVec` read backwards); the upwind combination `upw dx a` is the action of `a • Kinetic.centralDiff N dx - (dx / 2 * |a|) • Kinetic.secondDiff N dx`: `upw_eq_mulVec` |
+| column space, orthogonal projector onto a subspace, hyperplane `u^⊥` and its projector (`Literature/Kinetic/P2411_06844a`) | none in the core | the local copies are replaced by the definitions `Novel.BGKEntropy.colSpace`, `IsOrthProjOnto`, `hyperplane`, `hyperProj` of the catalogue file `Novel/BGKEntropy.lean` (rename map `docs/renames.json`); not related to a projector of the core |
+| `D^x` on `ZMod N`, divided by `2 Δx` (`Literature/Kinetic/P2502_03008a`) | `Kinetic.centralDiff` | equal (same body), **replaced** (rename map `docs/renames.json`); `Dx_mulVec` states the stencil at one cell (`Kinetic.centralDiff_mulVec`) and `Dx_transpose` is `Kinetic.centralDiff_transpose` |
+| `Dxx`, `Dplus` with the scalings `1 / (2 Δx)` and `1 / √(2 Δx)` (`P2502_03008a`) | `Kinetic.secondDiff`, `Kinetic.fwdDiff` | multiples, stay: `Dxx_eq_smul_secondDiff : Dxx Δx = (Δx / 2) • Kinetic.secondDiff N Δx`, `Dplus_eq_smul_fwdDiff : Dplus Δx = (Δx / √(2 * Δx)) • Kinetic.fwdDiff N Δx` |
+| `dPlus`, `dMinus` on grid functions and `DP`, `DM` on matrices (`Literature/Kinetic/P2402_16746b`) | `Kinetic.fwdDiff`, `Kinetic.bwdDiff` | actions of the core matrices, stay: `dPlus_eq_fwdDiff_mulVec`, `dMinus_eq_bwdDiff_mulVec`, `DP_eq_fwdDiff_mul`, `DM_eq_bwdDiff_mul` (the last two through `Kinetic.fwdDiff_mul_apply`, `Kinetic.bwdDiff_mul_apply`) |
+| flux `flux` and its adjoint `fluxAdj` of the staggered `P_N` scheme (`P2402_16746b`) | `Kinetic.streaming` | instances with two terms: `flux_eq_streaming` (terms `(bwdDiff, A⁺)`, `(fwdDiff, A⁻)`), `fluxAdj_eq_streaming` (terms `(fwdDiff, A⁺)`, `(bwdDiff, A⁻)`) |
 | centred difference `vpDx` on `Fin 4` (`P2101_12571b`), `Fin`-indexed stencils of `P2307_07538b`, `P1907_04247a.transport` | `Kinetic.centralDiff`, `Kinetic.streaming` | not bridged; the core stencils are indexed by `ZMod N`, and the core form for cells numbered by `Fin N` is the submatrix along `ZMod.finEquiv N` (`Kinetic.fwdDiff_submatrix_finEquiv` and the three analogues, `Kinetic/Stencils.lean`), to which these local stencils can be compared |
+
+## DLRA solutions and the equations for the factors
+
+Core files: `LeanDLRA/DLRA/Defs.lean` (`IsDLRASolution`) and `LeanDLRA/DLRA/DynamicallyOrthogonal.lean`
+(the three systems of equations for the factors and their relation to `IsDLRASolution`); the product
+rule for the factors is in `LeanDLRA/Matrix/GaugeODE.lean`. A DLRA solution is a solution of the
+projected equation `Y' = P(Y) F(t, Y)`, `P(Y) = tangentProjAt Y`, with rank exactly `r` on the
+closed interval. The factor systems are the dynamically orthogonal (DO) system for `Y = U Zᵀ` with
+`Uᵀ U = 1`, its dual (DDO) for `Y = Z Vᵀ` with `Vᵀ V = 1`, and the bi-orthogonal (BO) system with
+`Zᵀ Z = 1`.
+
+| Concept | Core | Relation (lemma) |
+|---|---|---|
+| Solution of the projected equation with rank `r` on `[a, b]`: an `ODESolution` of `fun t x => tangentProjAt x (F t x)` with `(Y t).rank = r` on `Icc a b` | `IsDLRASolution r F Y a b` | defining; the rank condition at `b` is part of it; for factors of full column rank `U`, `Z` it is equivalent to continuity on `[a, b]` and the right derivative `tangentProjAt (Y t) (F t (Y t))` on `[a, b)`: `DynamicallyOrthogonal.isDLRASolution_iff_hasDerivWithinAt` |
+| Right derivative of a DLRA solution through an orthonormal factorization `Y t = Q S Vᵀ`, `S` invertible | `tangentProj Q V (F t (Y t))` | `DynamicallyOrthogonal.IsDLRASolution.hasDerivWithinAt_tangentProj`; conversely from such factorizations at every `t ∈ [a, b)` and rank `r` at `b`: `DynamicallyOrthogonal.isDLRASolution_of_factorization` |
+| DO system `Uᵀ U̇ = 0`, `Ż = (F t Y)ᵀ U`, `U̇ (Zᵀ Z) = (1 - U Uᵀ) F t Y Z` | none (stated as hypotheses and conclusions) | equivalent to `IsDLRASolution r F (fun t => U t * (Z t)ᵀ) a b` together with the gauge `Uᵀ U̇ = 0` on `[a, b)`: `DynamicallyOrthogonal.doSystem_iff_isDLRASolution`; pointwise: `DynamicallyOrthogonal.hasDerivWithinAt_do_iff`, `DynamicallyOrthogonal.hasDerivAt_do_iff` |
+| DDO system for `Y = Z Vᵀ` | none | `DynamicallyOrthogonal.ddoSystem_iff_isDLRASolution`; pointwise: `DynamicallyOrthogonal.hasDerivWithinAt_ddo_iff` |
+| BO factors `U`, `Z` with `Zᵀ Z = 1`, skew `Ω`, `U̇ = F Z + U Ω`, `Ż = Z Ω + (1 - Z Zᵀ) Fᵀ U (Uᵀ U)⁻¹` | none | imply `IsDLRASolution r F (fun t => U t * (Z t)ᵀ) a b`: `DynamicallyOrthogonal.isDLRASolution_of_bo`; the converse is not stated in the core |
+| Tangent projector at `U Zᵀ` for factors of full rank | `tangentProjAt` | `DynamicallyOrthogonal.tangentProjAt_mul_transpose_apply : P(Y) A = Π_U A + A Π_Z - Π_U A Π_Z` with the Gram projectors `Matrix.colProj`; the transpose commutes: `DynamicallyOrthogonal.tangentProjAt_transpose`; rank of `U Zᵀ`: `DynamicallyOrthogonal.rank_mul_transpose` |
 
 ## Time grids, step relations, runs and the local error
 

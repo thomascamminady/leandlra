@@ -309,6 +309,56 @@ The constant `β` contains the lower bound `ρ` of the `r`-th singular value. Th
 Source: the module docstring says that a bound of this kind is in [KochLubich2007] and that the
 constants `ρ / 16`, `β = 8 μ / ρ` and the factor 2 are those of its own proof.
 
+### 3.5 DLRA solutions and the equations for the factors
+
+@stmt LeanDLRA/DLRA/Defs.lean IsDLRASolution IsDLRASolution
+
+A DLRA solution of rank `r` is a solution of the projected equation `Y' = P(Y) F(t, Y)` in the
+sense of `ODESolution` (section 3.1), with `P(Y) = tangentProjAt Y` the orthogonal projector onto
+the tangent space of the matrices of rank `r` at `Y`, together with the condition that `Y t` has
+rank exactly `r` for all `t` in `[a, b]`. The rank condition at the endpoint `b` is part of the
+definition: a limit of matrices of rank `r` can have smaller rank, and there `tangentProjAt` is
+not the projector of the manifold of rank `r`. The definition does not mention a factorization.
+The file
+[`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean) relates
+it to the systems of equations for factors `Y = U Zᵀ` that the module docstring names: the
+dynamically orthogonal (DO) system, its dual (DDO) and the bi-orthogonal (BO) system. For a
+product of factors of full rank the file also computes the tangent projector
+(`DynamicallyOrthogonal.tangentProjAt_mul_transpose_apply`).
+
+@stmt LeanDLRA/DLRA/DynamicallyOrthogonal.lean isDLRASolution_iff_hasDerivWithinAt DynamicallyOrthogonal.isDLRASolution_iff_hasDerivWithinAt
+
+If `U t` and `Z t` have full column rank on `[a, b]`, then `U Zᵀ` is a DLRA solution of rank `r`
+if and only if it is continuous on `[a, b]` and has the right derivative
+`tangentProjAt (U Zᵀ) (F t (U Zᵀ))` on `[a, b)`: the rank condition is automatic for factors of
+full rank.
+
+@stmt LeanDLRA/DLRA/DynamicallyOrthogonal.lean doSystem_iff_isDLRASolution DynamicallyOrthogonal.doSystem_iff_isDLRASolution
+
+@stmt LeanDLRA/DLRA/DynamicallyOrthogonal.lean ddoSystem_iff_isDLRASolution DynamicallyOrthogonal.ddoSystem_iff_isDLRASolution
+
+The DO formulation: let `U`, `Z` be continuous on `[a, b]` with right derivatives `U̇`, `Ż` on
+`[a, b)`, `Uᵀ U = 1` and `Zᵀ Z` invertible on `[a, b]`. The DO system (`Uᵀ U̇ = 0`,
+`Ż = (F(t, Y))ᵀ U`, `U̇ (Zᵀ Z) = (1 - U Uᵀ) F(t, Y) Z`, `Y = U Zᵀ`) holds on `[a, b)` if and only
+if `Y` is a DLRA solution of rank `r` that satisfies the gauge condition `Uᵀ U̇ = 0` on `[a, b)`.
+The DDO statement is the mirror image for `Y = Z Vᵀ` with `Vᵀ V = 1`. In both, the hypotheses on
+the factors are required on the closed interval `[a, b]`, because `IsDLRASolution` asks for rank
+`r` at `b` too. The factors are given and differentiable: the theorems translate between two
+descriptions of a given pair of factors and do not construct them.
+
+@stmt LeanDLRA/DLRA/DynamicallyOrthogonal.lean isDLRASolution_of_bo DynamicallyOrthogonal.isDLRASolution_of_bo
+
+Bi-orthogonal factors give a DLRA solution: with `Zᵀ Z = 1`, `Uᵀ U` invertible, a skew-symmetric
+`Ω t` and the two equations for `U̇` and `Ż` above, `U Zᵀ` is a DLRA solution of rank `r`. Only
+this direction is stated: the module docstring says that the converse needs differentiable
+eigendecompositions of `Uᵀ U`. The file ends with three `example`s with `1 × 1` matrices in
+which the DO, the BO and the DDO system hold.
+
+Source: the module docstring names Koch and Lubich 2007 [KochLubich2007], Musharbash, Nobile and
+Zhou 2015, and Cheng, Hou and Zhang 2013 for the three formulations. It states what is proved
+here, that the first two are the same thing as the projected equation and that the BO system gives
+a solution of it.
+
 ## 4. Steps, runs and the global error
 
 This section is independent of low rank. It contains the argument that turns a bound for the
@@ -772,6 +822,68 @@ module docstring. The docstring of the theorem lists the differences: the paper 
 bounds in a neighbourhood of the exact solution and a bound of the third derivative of exact
 solutions; here the bounds on `F` are global and the third derivative is bounded through `M₁`
 and `M₂`.
+
+### 6.6 The explicit midpoint update in augmented bases
+
+A step from the factored point `Y₀ = U₀ S₀ V₀ᵀ` with step size `h`, defined in the module docstring
+of
+[`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean):
+the predictor `Z = Y₀ + (h/2) P₀ F(t₀, Y₀)` with `P₀ = tangentProj U₀ V₀` (no differential equation
+is solved for it), one evaluation `G = F(t₀ + h/2, Z)`, augmented bases `Ua`, `Va` with
+orthonormal columns that contain `U₀`, `V₀` and whose ranges contain those of `G V₀` and
+`Gᵀ U₀`, and then either the Galerkin flow of `galerkinProj Ua Va` over the step or the explicit
+update `Y₁ = Y₀ + h • galerkinProj Ua Va G`. The file proves local errors for both. The
+quantities
+`θ = ‖(1 - Ua Uaᵀ) G (1 - V₀ V₀ᵀ)‖` and `θ' = ‖(1 - U₀ U₀ᵀ) G (1 - Va Vaᵀ)‖`, the capture defects,
+are hypotheses (`hθ`, `hθ'`) of every statement: the bases are given, and nothing is proved about
+the size of `θ` and `θ'`.
+
+@stmt LeanDLRA/Research/ExplicitMidpointGalerkin.lean ODESolution.norm_midpoint_defect_le ODESolution.norm_midpoint_defect_le
+
+Midpoint-rule defect of an exact solution: if `A` solves `y' = F(t, y)` on `[t₀, t₀ + h]`, is of
+class `C³` there and its third derivative is bounded by `M₃`, then the defect is at most
+`M₃ h³ / 24`. The constant is the sharp one of `MidpointBUG.midpoint_defect_le_sharp`. The
+companion `ODESolution.norm_half_step_sub_le` gives, for `C²` and the bound `M₂` of the second
+derivative, `‖A(t₀ + h/2) - A t₀ - (h/2) F(t₀, A t₀)‖ ≤ M₂ h² / 8`.
+
+@stmt LeanDLRA/Research/ExplicitMidpointGalerkin.lean norm_one_sub_galerkinProj_le_of_capture ExplicitMidpoint.norm_one_sub_galerkinProj_le_of_capture
+
+@stmt LeanDLRA/Research/ExplicitMidpointGalerkin.lean norm_predictor_sub_le ExplicitMidpoint.norm_predictor_sub_le
+
+Two ingredients. If `Ua`, `Va` capture `G V₀` and `Gᵀ U₀` and the capture defects are at most `θ`
+and `θ'`, then `G` is at most `θ + θ'` away from the Galerkin space of `Ua`, `Va`; the identity
+behind it splits `G - galerkinProj Ua Va G` into one term for each defect
+(`ExplicitMidpoint.sub_galerkin_eq_of_capture`). If the normal component of `F` is at most `ε` at
+the factored point `Y₀`, the predictor is within `M₂ h² / 8 + (h/2) ε` of the exact solution at
+the midpoint of the step.
+
+@stmt LeanDLRA/Research/ExplicitMidpointGalerkin.lean galerkin_local_error ExplicitMidpoint.galerkin_local_error
+
+The local error of the Galerkin step. With `η = M₂ h² / 8 + (h/2) ε` it is at most
+`(e^{L h} - 1) h ((L B + Lₜ) h / 2 + L η + θ + θ') + h (L η + θ + θ') + M₃ h³ / 24`. The
+hypotheses on the field are those of section 6.5: `F` is `L`-Lipschitz, bounded by `B` and
+`Lₜ`-Lipschitz in time. The statement is an instance of `MidpointBUG.midpointGalerkin_local_error`
+with the predictor of this section in place of a half step of the BUG integrator.
+
+@stmt LeanDLRA/Research/ExplicitMidpointGalerkin.lean norm_update_sub_le ExplicitMidpoint.norm_update_sub_le
+
+The local error of the explicit update, with two evaluations of `F` and no differential equation:
+
+`‖Y₁ - A(t₀ + h)‖ ≤ h (θ + θ') + L h² ε / 2 + h³ (M₃ / 24 + L M₂ / 8)`.
+
+Here `F` is `L`-Lipschitz only on a region `D` that contains `(t₀, Y₀)`, `(t₀ + h/2, Z)` and
+`(t₀ + h/2, A(t₀ + h/2))` (`IsLipschitzFieldOn`, `hDZ`, `hDA`), and the normal component is
+bounded on `D` (`FactoredNormalBoundOn`, section 3.3). The terms are of order `h`
+(the capture defects), `h²` (the normal component at the start) and `h³`. These are local errors
+of one step. The page states no global error for this step: the file contains none.
+
+Source: the module docstring cites Ceruti, Einkemmer, Kusch and Lubich, arXiv 2402.08607, for the
+Galerkin step (the docstring of `galerkin_local_error` names its Theorem 1). The explicit update
+has no source line in the docstrings. The file ends with `example`s that satisfy the hypotheses of
+`norm_midpoint_defect_le`, `norm_half_step_sub_le`, `norm_predictor_sub_le`,
+`galerkin_local_error` (a constant field, every `h > 0`) and `norm_update_sub_le` (a field for
+which every rank-adaptive BUG step with a two-column left basis has error at least h²/2,
+with `h = 3/2`).
 
 ## 7. Stiff problems and the primal–dual error representation
 
