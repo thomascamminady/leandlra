@@ -111,6 +111,7 @@ import LeanDLRA.Research.FederatedDescentThreshold
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.SameMinibatchAugmentation
 import LeanDLRA.Research.StiffGlobalCycle
+import LeanDLRA.Research.StiffGlobalVariation
 import LeanDLRA.Research.StiffOrderReduction
 import LeanDLRA.Research.TwoSidedLeak
 import LeanDLRA.Stability.Conservation
