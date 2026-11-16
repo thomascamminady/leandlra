@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit 57c916b (2026-11-16). A theorem is quoted from its
+files and were compared with them at commit 145298b (2026-11-16). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -521,6 +521,111 @@ The constant `β` contains the lower bound `ρ` of the `r`-th singular value. Th
 
 Source: the module docstring says that a bound of this kind is in [KochLubich2007] and that the
 constants `ρ / 16`, `β = 8 μ / ρ` and the factor 2 are those of its own proof.
+
+### 3.5 DLRA solutions and the equations for the factors
+
+`IsDLRASolution` in [`LeanDLRA/DLRA/Defs.lean`, lines 218–220](../LeanDLRA/DLRA/Defs.lean#L218-L220):
+
+```lean
+def IsDLRASolution (r : ℕ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (Y : ℝ → Matrix m n ℝ)
+    (a b : ℝ) : Prop :=
+  ODESolution (fun t x => tangentProjAt x (F t x)) Y a b ∧ ∀ t ∈ Icc a b, (Y t).rank = r
+```
+
+A DLRA solution of rank `r` is a solution of the projected equation `Y' = P(Y) F(t, Y)` in the
+sense of `ODESolution` (section 3.1), with `P(Y) = tangentProjAt Y` the orthogonal projector onto
+the tangent space of the matrices of rank `r` at `Y`, together with the condition that `Y t` has
+rank exactly `r` for all `t` in `[a, b]`. The rank condition at the endpoint `b` is part of the
+definition: a limit of matrices of rank `r` can have smaller rank, and there `tangentProjAt` is
+not the projector of the manifold of rank `r`. The definition does not mention a factorization.
+The file
+[`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean) relates
+it to the systems of equations for factors `Y = U Zᵀ` that the module docstring names: the
+dynamically orthogonal (DO) system, its dual (DDO) and the bi-orthogonal (BO) system. For a
+product of factors of full rank the file also computes the tangent projector
+(`DynamicallyOrthogonal.tangentProjAt_mul_transpose_apply`).
+
+`DynamicallyOrthogonal.isDLRASolution_iff_hasDerivWithinAt` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 244–251](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L244-L251):
+
+```lean
+theorem isDLRASolution_iff_hasDerivWithinAt {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {a b : ℝ} {U : ℝ → Matrix m (Fin r) ℝ} {Z : ℝ → Matrix n (Fin r) ℝ}
+    (hUG : ∀ t ∈ Icc a b, IsUnit ((U t)ᵀ * U t).det)
+    (hZG : ∀ t ∈ Icc a b, IsUnit ((Z t)ᵀ * Z t).det) :
+    IsDLRASolution r F (fun t => U t * (Z t)ᵀ) a b ↔
+      ContinuousOn (fun t => U t * (Z t)ᵀ) (Icc a b) ∧ ∀ t ∈ Ico a b,
+        HasDerivWithinAt (fun t => U t * (Z t)ᵀ)
+          (tangentProjAt (U t * (Z t)ᵀ) (F t (U t * (Z t)ᵀ))) (Ici t) t
+```
+
+If `U t` and `Z t` have full column rank on `[a, b]`, then `U Zᵀ` is a DLRA solution of rank `r`
+if and only if it is continuous on `[a, b]` and has the right derivative
+`tangentProjAt (U Zᵀ) (F t (U Zᵀ))` on `[a, b)`: the rank condition is automatic for factors of
+full rank.
+
+`DynamicallyOrthogonal.doSystem_iff_isDLRASolution` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 306–314](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L306-L314):
+
+```lean
+theorem doSystem_iff_isDLRASolution [DecidableEq m] {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {a b : ℝ} {U U' : ℝ → Matrix m (Fin r) ℝ}
+    {Z Z' : ℝ → Matrix n (Fin r) ℝ} (hUc : ContinuousOn U (Icc a b))
+    (hZc : ContinuousOn Z (Icc a b)) (hU : ∀ t ∈ Ico a b, HasDerivWithinAt U (U' t) (Ici t) t)
+    (hZ : ∀ t ∈ Ico a b, HasDerivWithinAt Z (Z' t) (Ici t) t)
+    (hUo : ∀ t ∈ Icc a b, (U t)ᵀ * U t = 1) (hG : ∀ t ∈ Icc a b, IsUnit ((Z t)ᵀ * Z t).det) :
+    (∀ t ∈ Ico a b, (U t)ᵀ * U' t = 0 ∧ Z' t = (F t (U t * (Z t)ᵀ))ᵀ * U t ∧
+        U' t * ((Z t)ᵀ * Z t) = (1 - U t * (U t)ᵀ) * F t (U t * (Z t)ᵀ) * Z t) ↔
+      IsDLRASolution r F (fun t => U t * (Z t)ᵀ) a b ∧ ∀ t ∈ Ico a b, (U t)ᵀ * U' t = 0
+```
+
+`DynamicallyOrthogonal.ddoSystem_iff_isDLRASolution` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 332–340](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L332-L340):
+
+```lean
+theorem ddoSystem_iff_isDLRASolution [DecidableEq n] {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {a b : ℝ} {Z Z' : ℝ → Matrix m (Fin r) ℝ}
+    {V V' : ℝ → Matrix n (Fin r) ℝ} (hZc : ContinuousOn Z (Icc a b))
+    (hVc : ContinuousOn V (Icc a b)) (hZ : ∀ t ∈ Ico a b, HasDerivWithinAt Z (Z' t) (Ici t) t)
+    (hV : ∀ t ∈ Ico a b, HasDerivWithinAt V (V' t) (Ici t) t)
+    (hVo : ∀ t ∈ Icc a b, (V t)ᵀ * V t = 1) (hG : ∀ t ∈ Icc a b, IsUnit ((Z t)ᵀ * Z t).det) :
+    (∀ t ∈ Ico a b, (V t)ᵀ * V' t = 0 ∧ Z' t = F t (Z t * (V t)ᵀ) * V t ∧
+        V' t * ((Z t)ᵀ * Z t) = (1 - V t * (V t)ᵀ) * (F t (Z t * (V t)ᵀ))ᵀ * Z t) ↔
+      IsDLRASolution r F (fun t => Z t * (V t)ᵀ) a b ∧ ∀ t ∈ Ico a b, (V t)ᵀ * V' t = 0
+```
+
+The DO formulation: let `U`, `Z` be continuous on `[a, b]` with right derivatives `U̇`, `Ż` on
+`[a, b)`, `Uᵀ U = 1` and `Zᵀ Z` invertible on `[a, b]`. The DO system (`Uᵀ U̇ = 0`,
+`Ż = (F(t, Y))ᵀ U`, `U̇ (Zᵀ Z) = (1 - U Uᵀ) F(t, Y) Z`, `Y = U Zᵀ`) holds on `[a, b)` if and only
+if `Y` is a DLRA solution of rank `r` that satisfies the gauge condition `Uᵀ U̇ = 0` on `[a, b)`.
+The DDO statement is the mirror image for `Y = Z Vᵀ` with `Vᵀ V = 1`. In both, the hypotheses on
+the factors are required on the closed interval `[a, b]`, because `IsDLRASolution` asks for rank
+`r` at `b` too. The factors are given and differentiable: the theorems translate between two
+descriptions of a given pair of factors and do not construct them.
+
+`DynamicallyOrthogonal.isDLRASolution_of_bo` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 359–369](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L359-L369):
+
+```lean
+theorem isDLRASolution_of_bo [DecidableEq n] {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {a b : ℝ} {U U' : ℝ → Matrix m (Fin r) ℝ} {Z Z' : ℝ → Matrix n (Fin r) ℝ}
+    {Ω : ℝ → Matrix (Fin r) (Fin r) ℝ} (hUc : ContinuousOn U (Icc a b))
+    (hZc : ContinuousOn Z (Icc a b)) (hU : ∀ t ∈ Ico a b, HasDerivWithinAt U (U' t) (Ici t) t)
+    (hZ : ∀ t ∈ Ico a b, HasDerivWithinAt Z (Z' t) (Ici t) t)
+    (hZo : ∀ t ∈ Icc a b, (Z t)ᵀ * Z t = 1) (hD : ∀ t ∈ Icc a b, IsUnit ((U t)ᵀ * U t).det)
+    (hΩ : ∀ t ∈ Ico a b, (Ω t)ᵀ = -Ω t)
+    (hU' : ∀ t ∈ Ico a b, U' t = F t (U t * (Z t)ᵀ) * Z t + U t * Ω t)
+    (hZ' : ∀ t ∈ Ico a b, Z' t = Z t * Ω t +
+      (1 - Z t * (Z t)ᵀ) * (F t (U t * (Z t)ᵀ))ᵀ * U t * ((U t)ᵀ * U t)⁻¹) :
+    IsDLRASolution r F (fun t => U t * (Z t)ᵀ) a b
+```
+
+Bi-orthogonal factors give a DLRA solution: with `Zᵀ Z = 1`, `Uᵀ U` invertible, a skew-symmetric
+`Ω t` and the two equations for `U̇` and `Ż` above, `U Zᵀ` is a DLRA solution of rank `r`. Only
+this direction is stated: the module docstring says that the converse needs differentiable
+eigendecompositions of `Uᵀ U`. The file ends with three `example`s with `1 × 1` matrices in
+which the DO, the BO and the DDO system hold.
+
+Source: the module docstring names Koch and Lubich 2007 [KochLubich2007], Musharbash, Nobile and
+Zhou 2015, and Cheng, Hou and Zhang 2013 for the three formulations. It states what is proved
+here, that the first two are the same thing as the projected equation and that the BO system gives
+a solution of it.
 
 ## 4. Steps, runs and the global error
 
@@ -1506,6 +1611,143 @@ module docstring. The docstring of the theorem lists the differences: the paper 
 bounds in a neighbourhood of the exact solution and a bound of the third derivative of exact
 solutions; here the bounds on `F` are global and the third derivative is bounded through `M₁`
 and `M₂`.
+
+### 6.6 The explicit midpoint update in augmented bases
+
+A step from the factored point `Y₀ = U₀ S₀ V₀ᵀ` with step size `h`, defined in the module docstring
+of
+[`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean):
+the predictor `Z = Y₀ + (h/2) P₀ F(t₀, Y₀)` with `P₀ = tangentProj U₀ V₀` (no differential equation
+is solved for it), one evaluation `G = F(t₀ + h/2, Z)`, augmented bases `Ua`, `Va` with
+orthonormal columns that contain `U₀`, `V₀` and whose ranges contain those of `G V₀` and
+`Gᵀ U₀`, and then either the Galerkin flow of `galerkinProj Ua Va` over the step or the explicit
+update `Y₁ = Y₀ + h • galerkinProj Ua Va G`. The file proves local errors for both. The
+quantities
+`θ = ‖(1 - Ua Uaᵀ) G (1 - V₀ V₀ᵀ)‖` and `θ' = ‖(1 - U₀ U₀ᵀ) G (1 - Va Vaᵀ)‖`, the capture defects,
+are hypotheses (`hθ`, `hθ'`) of every statement: the bases are given, and nothing is proved about
+the size of `θ` and `θ'`.
+
+`ODESolution.norm_midpoint_defect_le` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 80–84](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L80-L84):
+
+```lean
+theorem ODESolution.norm_midpoint_defect_le [InnerProductSpace ℝ E] {F : ℝ → E → E}
+    {A : ℝ → E} {t₀ h M₃ : ℝ} (hh : 0 < h) (hA : ODESolution F A t₀ (t₀ + h))
+    (hA3 : ContDiffOn ℝ 3 A (Icc t₀ (t₀ + h)))
+    (hM₃ : ∀ t ∈ Icc t₀ (t₀ + h), ‖iteratedDerivWithin 3 A (Icc t₀ (t₀ + h)) t‖ ≤ M₃) :
+    ‖A (t₀ + h) - A t₀ - h • F (t₀ + h / 2) (A (t₀ + h / 2))‖ ≤ M₃ * h ^ 3 / 24
+```
+
+Midpoint-rule defect of an exact solution: if `A` solves `y' = F(t, y)` on `[t₀, t₀ + h]`, is of
+class `C³` there and its third derivative is bounded by `M₃`, then the defect is at most
+`M₃ h³ / 24`. The constant is the sharp one of `MidpointBUG.midpoint_defect_le_sharp`. The
+companion `ODESolution.norm_half_step_sub_le` gives, for `C²` and the bound `M₂` of the second
+derivative, `‖A(t₀ + h/2) - A t₀ - (h/2) F(t₀, A t₀)‖ ≤ M₂ h² / 8`.
+
+`ExplicitMidpoint.norm_one_sub_galerkinProj_le_of_capture` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 173–177](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L173-L177):
+
+```lean
+theorem norm_one_sub_galerkinProj_le_of_capture [DecidableEq k] (hUa : Uaᵀ * Ua = 1)
+    (kCap : Ua * Uaᵀ * (G * V₀) = G * V₀) (lCap : Va * Vaᵀ * (Gᵀ * U₀) = Gᵀ * U₀) {θ θ' : ℝ}
+    (hθ : ‖(1 - Ua * Uaᵀ) * G * (1 - V₀ * V₀ᵀ)‖ ≤ θ)
+    (hθ' : ‖(1 - U₀ * U₀ᵀ) * G * (1 - Va * Vaᵀ)‖ ≤ θ') :
+    ‖(1 - galerkinProj Ua Va) G‖ ≤ θ + θ'
+```
+
+`ExplicitMidpoint.norm_predictor_sub_le` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 195–204](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L195-L204):
+
+```lean
+theorem norm_predictor_sub_le {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {D : Set (ℝ × Matrix m n ℝ)} {ε M₂ : ℝ} (hN : FactoredNormalBoundOn F r D ε)
+    {S₀ : Matrix (Fin r) (Fin r) ℝ} (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1) {t₀ h : ℝ}
+    (hh : 0 < h) (hD₀ : (t₀, U₀ * S₀ * V₀ᵀ) ∈ D) {A : ℝ → Matrix m n ℝ}
+    (hA : ODESolution F A t₀ (t₀ + h)) (hA₀ : A t₀ = U₀ * S₀ * V₀ᵀ)
+    (hA2 : ContDiffOn ℝ 2 A (Icc t₀ (t₀ + h)))
+    (hM₂ : ∀ t ∈ Icc t₀ (t₀ + h), ‖iteratedDerivWithin 2 A (Icc t₀ (t₀ + h)) t‖ ≤ M₂)
+    {Z : Matrix m n ℝ}
+    (hZ : Z = U₀ * S₀ * V₀ᵀ + (h / 2) • tangentProj U₀ V₀ (F t₀ (U₀ * S₀ * V₀ᵀ))) :
+    ‖Z - A (t₀ + h / 2)‖ ≤ M₂ * h ^ 2 / 8 + h / 2 * ε
+```
+
+Two ingredients. If `Ua`, `Va` capture `G V₀` and `Gᵀ U₀` and the capture defects are at most `θ`
+and `θ'`, then `G` is at most `θ + θ'` away from the Galerkin space of `Ua`, `Va`; the identity
+behind it splits `G - galerkinProj Ua Va G` into one term for each defect
+(`ExplicitMidpoint.sub_galerkin_eq_of_capture`). If the normal component of `F` is at most `ε` at
+the factored point `Y₀`, the predictor is within `M₂ h² / 8 + (h/2) ε` of the exact solution at
+the midpoint of the step.
+
+`ExplicitMidpoint.galerkin_local_error` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 230–252](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L230-L252):
+
+```lean
+theorem galerkin_local_error [DecidableEq k] [DecidableEq k']
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {D : Set (ℝ × Matrix m n ℝ)}
+    {L Lₜ B ε M₂ M₃ θ θ' : ℝ} (hF : IsLipschitzField F L) (hL : 0 ≤ L)
+    (hB : IsBoundedField F B) (hFt : ∀ s t x, ‖F s x - F t x‖ ≤ Lₜ * |s - t|)
+    (hN : FactoredNormalBoundOn F r D ε) {S₀ : Matrix (Fin r) (Fin r) ℝ}
+    (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1) {t₀ h : ℝ} (hh : 0 < h)
+    (hD₀ : (t₀, U₀ * S₀ * V₀ᵀ) ∈ D) {A : ℝ → Matrix m n ℝ} (hA : ODESolution F A t₀ (t₀ + h))
+    (hA₀ : A t₀ = U₀ * S₀ * V₀ᵀ) (hA3 : ContDiffOn ℝ 3 A (Icc t₀ (t₀ + h)))
+    (hM₂ : ∀ t ∈ Icc t₀ (t₀ + h), ‖iteratedDerivWithin 2 A (Icc t₀ (t₀ + h)) t‖ ≤ M₂)
+    (hM₃ : ∀ t ∈ Icc t₀ (t₀ + h), ‖iteratedDerivWithin 3 A (Icc t₀ (t₀ + h)) t‖ ≤ M₃)
+    {Z : Matrix m n ℝ}
+    (hZ : Z = U₀ * S₀ * V₀ᵀ + (h / 2) • tangentProj U₀ V₀ (F t₀ (U₀ * S₀ * V₀ᵀ)))
+    (hG : G = F (t₀ + h / 2) Z) (hUa : Uaᵀ * Ua = 1) (hVa : Vaᵀ * Va = 1)
+    (augU : Ua * Uaᵀ * U₀ = U₀) (augV : Va * Vaᵀ * V₀ = V₀)
+    (kCap : Ua * Uaᵀ * (G * V₀) = G * V₀) (lCap : Va * Vaᵀ * (Gᵀ * U₀) = Gᵀ * U₀)
+    (hθ : ‖(1 - Ua * Uaᵀ) * G * (1 - V₀ * V₀ᵀ)‖ ≤ θ)
+    (hθ' : ‖(1 - U₀ * U₀ᵀ) * G * (1 - Va * Vaᵀ)‖ ≤ θ') {YS : ℝ → Matrix m n ℝ}
+    (hS : ODESolution (fun t X => galerkinProj Ua Va (F t X)) YS t₀ (t₀ + h))
+    (hS₀ : YS t₀ = U₀ * S₀ * V₀ᵀ) :
+    ‖YS (t₀ + h) - A (t₀ + h)‖ ≤
+      (Real.exp (L * h) - 1) *
+          (h * ((L * B + Lₜ) * h / 2 + L * (M₂ * h ^ 2 / 8 + h / 2 * ε) + (θ + θ'))) +
+        (h * (L * (M₂ * h ^ 2 / 8 + h / 2 * ε) + (θ + θ')) + M₃ * h ^ 3 / 24)
+```
+
+The local error of the Galerkin step. With `η = M₂ h² / 8 + (h/2) ε` it is at most
+`(e^{L h} - 1) h ((L B + Lₜ) h / 2 + L η + θ + θ') + h (L η + θ + θ') + M₃ h³ / 24`. The
+hypotheses on the field are those of section 6.5: `F` is `L`-Lipschitz, bounded by `B` and
+`Lₜ`-Lipschitz in time. The statement is an instance of `MidpointBUG.midpointGalerkin_local_error`
+with the predictor of this section in place of a half step of the BUG integrator.
+
+`ExplicitMidpoint.norm_update_sub_le` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 273–289](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L273-L289):
+
+```lean
+theorem norm_update_sub_le [DecidableEq k] {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {D : Set (ℝ × Matrix m n ℝ)} {L ε M₂ M₃ θ θ' : ℝ} (hF : IsLipschitzFieldOn F D L)
+    (hL : 0 ≤ L) (hN : FactoredNormalBoundOn F r D ε) {S₀ : Matrix (Fin r) (Fin r) ℝ}
+    (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1) {t₀ h : ℝ} (hh : 0 < h)
+    (hD₀ : (t₀, U₀ * S₀ * V₀ᵀ) ∈ D) {A : ℝ → Matrix m n ℝ} (hA : ODESolution F A t₀ (t₀ + h))
+    (hA₀ : A t₀ = U₀ * S₀ * V₀ᵀ) (hA3 : ContDiffOn ℝ 3 A (Icc t₀ (t₀ + h)))
+    (hM₂ : ∀ t ∈ Icc t₀ (t₀ + h), ‖iteratedDerivWithin 2 A (Icc t₀ (t₀ + h)) t‖ ≤ M₂)
+    (hM₃ : ∀ t ∈ Icc t₀ (t₀ + h), ‖iteratedDerivWithin 3 A (Icc t₀ (t₀ + h)) t‖ ≤ M₃)
+    {Z : Matrix m n ℝ}
+    (hZ : Z = U₀ * S₀ * V₀ᵀ + (h / 2) • tangentProj U₀ V₀ (F t₀ (U₀ * S₀ * V₀ᵀ)))
+    (hDZ : (t₀ + h / 2, Z) ∈ D) (hDA : (t₀ + h / 2, A (t₀ + h / 2)) ∈ D)
+    (hG : G = F (t₀ + h / 2) Z) (hUa : Uaᵀ * Ua = 1)
+    (kCap : Ua * Uaᵀ * (G * V₀) = G * V₀) (lCap : Va * Vaᵀ * (Gᵀ * U₀) = Gᵀ * U₀)
+    (hθ : ‖(1 - Ua * Uaᵀ) * G * (1 - V₀ * V₀ᵀ)‖ ≤ θ)
+    (hθ' : ‖(1 - U₀ * U₀ᵀ) * G * (1 - Va * Vaᵀ)‖ ≤ θ') :
+    ‖U₀ * S₀ * V₀ᵀ + h • galerkinProj Ua Va G - A (t₀ + h)‖ ≤
+      h * (θ + θ') + L * h ^ 2 * ε / 2 + h ^ 3 * (M₃ / 24 + L * M₂ / 8)
+```
+
+The local error of the explicit update, with two evaluations of `F` and no differential equation:
+
+`‖Y₁ - A(t₀ + h)‖ ≤ h (θ + θ') + L h² ε / 2 + h³ (M₃ / 24 + L M₂ / 8)`.
+
+Here `F` is `L`-Lipschitz only on a region `D` that contains `(t₀, Y₀)`, `(t₀ + h/2, Z)` and
+`(t₀ + h/2, A(t₀ + h/2))` (`IsLipschitzFieldOn`, `hDZ`, `hDA`), and the normal component is
+bounded on `D` (`FactoredNormalBoundOn`, section 3.3). The terms are of order `h`
+(the capture defects), `h²` (the normal component at the start) and `h³`. These are local errors
+of one step. The page states no global error for this step: the file contains none.
+
+Source: the module docstring cites Ceruti, Einkemmer, Kusch and Lubich, arXiv 2402.08607, for the
+Galerkin step (the docstring of `galerkin_local_error` names its Theorem 1). The explicit update
+has no source line in the docstrings. The file ends with `example`s that satisfy the hypotheses of
+`norm_midpoint_defect_le`, `norm_half_step_sub_le`, `norm_predictor_sub_le`,
+`galerkin_local_error` (a constant field, every `h > 0`) and `norm_update_sub_le` (a field for
+which every rank-adaptive BUG step with a two-column left basis has error at least h²/2,
+with `h = 3/2`).
 
 ## 7. Stiff problems and the primal–dual error representation
 
