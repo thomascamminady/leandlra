@@ -15,7 +15,7 @@ The page describes the core library, the modules imported by `LeanDLRA.lean`. Th
 * [Conventions](CONVENTIONS.md): the rules for names, statements and docstrings.
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit 145298b (2026-11-16).
+block links to the lines. The blocks were compared with the files at commit 2a551aa (2026-11-16).
 Installation is described in the [README](../README.md#using-leandlra-in-your-project).
 
 ## Contents
@@ -437,7 +437,7 @@ declarations.
 
 The Lean sources below `LeanDLRA/` form two libraries ([STRUCTURE.md](STRUCTURE.md)).
 
-* The **core** is the set of modules imported by `LeanDLRA.lean`, 138 modules at the commit
+* The **core** is the set of modules imported by `LeanDLRA.lean`, 141 modules at the commit
   named above. Its theorems are stated in shared definitions, so they can be combined: the
   solution of one theorem is the solution of the next, a run is a run. This page,
   [Main results](MAIN_RESULTS.md) and [Definitions](DEFINITIONS.md) describe the core only.
@@ -459,7 +459,7 @@ import LeanDLRACatalogue                     -- the core and the catalogue
 A single module can be imported in the same way; the theorem of section 3 is in the module that
 the root file of the core imports with the line
 
-[`LeanDLRA.lean`, line 41](../LeanDLRA.lean#L41):
+[`LeanDLRA.lean`, line 42](../LeanDLRA.lean#L42):
 
 ```lean
 import LeanDLRA.Integrators.Matrix.BUGRun

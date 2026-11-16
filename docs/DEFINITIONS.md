@@ -10,7 +10,7 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 138 modules with 480 definitions (0 of them without a docstring) and 44 private definitions, which are helpers of one file and are not listed.
+The core has 141 modules with 483 definitions (0 of them without a docstring) and 44 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 
@@ -24,7 +24,7 @@ The core has 138 modules with 480 definitions (0 of them without a docstring) an
 | `Foundations` | 1 | 2 | 0 |
 | `HighOrder` | 2 | 11 | 0 |
 | `Integrators` | 12 | 60 | 0 |
-| `Integrators/Matrix` | 10 | 41 | 0 |
+| `Integrators/Matrix` | 12 | 44 | 0 |
 | `Kinetic` | 1 | 14 | 0 |
 | `LinearAlgebra/Factorization` | 1 | 18 | 0 |
 | `LinearAlgebra/Frobenius` | 1 | 13 | 0 |
@@ -239,6 +239,9 @@ The core has 138 modules with 480 definitions (0 of them without a docstring) an
 | `LeanDLRA.MatrixParallelBUG.IsStep` | structure | [Integrators/Matrix/ParallelBUG.lean:235](../LeanDLRA/Integrators/Matrix/ParallelBUG.lean#L235) | **One step of the matrix parallel BUG integrator** from `Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to `t₁` (arXiv:2304.05660, §3.1, step 1), at the factor level: the K-, L- and S-steps (3.1)–(3.3) and the new directions `Ũ₁` (`Ũ₁ᵀ U₀ = 0`, capturing `(I - U₀U₀ᵀ) K(t₁)`) and `Ṽ₁` (`Ṽ₁ᵀ V₀ = 0`, capturing `(I - V₀V₀ᵀ) L(t₁)`). |
 | `LeanDLRA.MatrixParallelBUG.augmentedRel` | def | [Integrators/Matrix/ParallelBUGStep.lean:176](../LeanDLRA/Integrators/Matrix/ParallelBUGStep.lean#L176) | **The parallel BUG step without truncation, as a relation between matrices.** `augmentedRel F r t₀ t₁ Y₀ Ŷ₁` holds if `Y₀ = U₀ S₀ V₀ᵀ` for some factors with `r` orthonormal columns `U₀`, `V₀`, and `Ŷ₁` is the result assembled from a K-, L- and S-step for the field `F` over `[t₀, t₁]` started from these factors (`MatrixParallelBUG.IsStep`, `MatrixParallelBUG.augmented`). |
 | `LeanDLRA.MatrixParallelBUG.stepRel` | def | [Integrators/Matrix/ParallelBUGStep.lean:189](../LeanDLRA/Integrators/Matrix/ParallelBUGStep.lean#L189) | **The step of the fixed-rank parallel BUG integrator, as a relation between matrices.** `stepRel F r t₀ t₁ Y₀ Y₁` holds if `Y₁` is a best approximation of rank at most `r` to a result `Ŷ₁` of the step without truncation from `Y₀` (`MatrixParallelBUG.augmentedRel`): `Y₁` has rank at most `r`, and `‖Y₁ - Ŷ₁‖` is the distance `distLR r Ŷ₁` of `Ŷ₁` to the matrices of rank at most `r`. |
+| `LeanDLRA.MatrixParallelBUG.adaptiveStepRel` | def | [Integrators/Matrix/ParallelBUGTolRun.lean:114](../LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean#L114) | **The step of the parallel rank-adaptive BUG integrator, as a relation between matrices** [CerutiKuschLubich2024, §3]. |
+| `LeanDLRA.MatrixProjEuler.tangentRel` | def | [Integrators/Matrix/ProjectedEuler.lean:103](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean#L103) | **The projected Euler step before the retraction.** `tangentRel F r t₀ t₁ Y₀ X` holds if `Y₀ = U S Vᵀ` for some `U : m × r`, `V : n × r` with orthonormal columns and `S : r × r`, and `X = Y₀ + (t₁ - t₀) P F(t₀, Y₀)` with the tangent projector `P = tangentProj U V` at `Y₀` (the argument of the retraction in Kieri–Vandereycken 2019, eq. (21)). |
+| `LeanDLRA.MatrixProjEuler.stepRel` | def | [Integrators/Matrix/ProjectedEuler.lean:113](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean#L113) | **The projected Euler step** (Kieri–Vandereycken 2019, eq. (21)) with a `κ`-quasi-optimal retraction (their eq. (13), `C_ℛ = κ`): `stepRel F r κ t₀ t₁ Y₀ Y₁` holds if `Y₁` has rank at most `r` and `‖Y₁ - X‖ ≤ κ dist(X, M_{≤ r})` for a result `X` of `tangentRel F r` from `Y₀`. |
 | `LeanDLRA.MatrixKSL.radial` | def | [Integrators/Matrix/ProjectorSplitting.lean:175](../LeanDLRA/Integrators/Matrix/ProjectorSplitting.lean#L175) | The radial retraction `x ↦ x / max(‖x‖, 1)` onto the closed unit ball. |
 | `LeanDLRA.MatrixKSL.kField` | def | [Integrators/Matrix/ProjectorSplitting.lean:253](../LeanDLRA/Integrators/Matrix/ProjectorSplitting.lean#L253) | The K-step field `K ↦ F(t, K V₀ᵀ) V₀` (arXiv 1301.1058, §3.1, step 1; arXiv 2010.02022, §2). |
 | `LeanDLRA.MatrixKSL.sField` | def | [Integrators/Matrix/ProjectorSplitting.lean:259](../LeanDLRA/Integrators/Matrix/ProjectorSplitting.lean#L259) | The backward S-step field `S ↦ -U₁ᵀ F(t, U₁ S V₀ᵀ) V₀` (arXiv 1301.1058, §3.1, step 2; arXiv 2010.02022, §2). |
