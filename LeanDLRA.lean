@@ -28,6 +28,8 @@ import LeanDLRA.Foundations.OneSided
 import LeanDLRA.Foundations.Projector
 import LeanDLRA.HighOrder.MidpointBUG
 import LeanDLRA.HighOrder.MidpointBUGGlobal
+import LeanDLRA.HighOrder.MidpointBUGRun
+import LeanDLRA.HighOrder.MidpointBUGStep
 import LeanDLRA.HighOrder.ProjectedRK
 import LeanDLRA.HighOrder.RungeKuttaBUG
 import LeanDLRA.Integrators.BUG
