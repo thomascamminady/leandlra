@@ -100,6 +100,7 @@ import LeanDLRA.Randomized.ObliqueBUG
 import LeanDLRA.Randomized.RandomizedBUG
 import LeanDLRA.Research.AugmentationRank
 import LeanDLRA.Research.DataDrivenErrorRecursion
+import LeanDLRA.Research.ExplicitMidpointCapture
 import LeanDLRA.Research.ExplicitMidpointGalerkin
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.SameMinibatchAugmentation
