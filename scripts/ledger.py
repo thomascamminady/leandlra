@@ -8,6 +8,11 @@ Each tracked module contributes its title (the first heading of the module docst
 of theorems and definitions, and the arXiv ids it cites.  Paper titles come from
 ``docs/survey/papers.json`` and ``papers/catalogue.json``.  ``docs/ledger.json`` lists curated main
 results with their source.
+
+The status block has one line for the core library (the modules imported by ``LeanDLRA.lean``,
+read with ``scripts/core.py``) and one line for the catalogue (the other tracked modules).
+
+    uv run -q scripts/ledger.py
 """
 
 from __future__ import annotations
@@ -20,7 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import fire
+import core
 
 ROOT = Path(__file__).resolve().parent.parent
 START, END = "<!-- status:start -->", "<!-- status:end -->"
@@ -33,13 +38,25 @@ ARXIV = re.compile(r"\b(\d{4}\.\d{4,5})\b")
 SLICE = re.compile(r"P(\d{4})_(\d{4,5})[a-z]?\.lean$")
 FOLDERS = {
     "Foundations": "Foundations",
+    "Analysis": "Analysis",
+    "LinearAlgebra": "Linear algebra",
     "Matrix": "Matrices",
     "Classical": "Classical matrix analysis",
+    "FixedRank": "The fixed-rank manifold",
+    "DLRA": "The DLRA problem",
     "Dynamics": "Dynamics",
     "Integrators": "Integrators",
-    "Stability": "Stability and structure",
+    "HighOrder": "Integrators of higher order",
+    "Randomized": "Randomized and interpolatory integrators",
     "Stiff": "Stiff problems",
+    "Stability": "Stability and structure",
+    "Tensor": "Tensors",
     "Training": "Low-rank training",
+    "Stochastic": "Stochastic problems",
+    "Filtering": "Filtering",
+    "Kinetic": "Kinetic equations",
+    "Control": "Optimal control",
+    "Research": "Research",
     "OpenProblems": "Open problems of the survey",
     "Literature": "Published theorems",
     "Novel": "Novel results",
@@ -64,11 +81,11 @@ class Module:
         return parts[1] if len(parts) > 2 else "Other"
 
 
-def tracked() -> list[str]:
+def tracked(root: Path = ROOT) -> list[str]:
     """Paths of all committed Lean modules of the library."""
     out = subprocess.run(
         ["git", "ls-files", "LeanDLRA"],
-        cwd=ROOT,
+        cwd=root,
         capture_output=True,
         text=True,
         check=True,
@@ -76,9 +93,16 @@ def tracked() -> list[str]:
     return sorted(p for p in out.split() if p.endswith(".lean"))
 
 
-def summary(path: str) -> Module:
+def core_paths(root: Path = ROOT) -> frozenset[str]:
+    """Paths of the modules of the core library: the imports of ``LeanDLRA.lean``."""
+    return frozenset(
+        core.source_of(module, Path()).as_posix() for module in core.core_modules(root)
+    )
+
+
+def summary(path: str, root: Path = ROOT) -> Module:
     """Title, counts and cited papers of one module."""
-    text = (ROOT / path).read_text(encoding="utf-8")
+    text = (root / path).read_text(encoding="utf-8")
     title = re.search(r"/-!\s*\n#\s*(.+)", text)
     kinds = collections.Counter(m.group(1) for m in DECL.finditer(text))
     papers = set(ARXIV.findall(text))
@@ -138,8 +162,10 @@ def curated(entries: list[dict[str, Any]]) -> list[str]:
     return rows
 
 
-def proven(mods: list[Module], ledger: list[dict[str, Any]]) -> str:
-    """Text of docs/PROVEN.md."""
+def proven(
+    mods: list[Module], ledger: list[dict[str, Any]], names: dict[str, str]
+) -> str:
+    """Text of docs/PROVEN.md; ``names`` gives the titles of the cited papers."""
     lines = [
         "# Proven",
         "",
@@ -156,35 +182,53 @@ def proven(mods: list[Module], ledger: list[dict[str, Any]]) -> str:
         lines += module_table(groups[folder])
     lines += ["", "## Curated main results", ""]
     lines += curated(ledger)
-    names = titles()
     cited = sorted({p for mod in mods for p in mod.papers if p in names})
     lines += ["", "## Cited papers", ""]
     lines += [f"* {arxiv(p)}: {names[p]}" for p in cited]
     return "\n".join(lines) + "\n"
 
 
-def status(mods: list[Module]) -> str:
-    """The README status block."""
+def count_line(label: str, mods: list[Module]) -> str:
+    """One line of the status block: the counts of a list of modules."""
     papers = {p for mod in mods for p in mod.papers}
-    line = (
-        f"{len(mods)} modules, {sum(m.theorems for m in mods)} theorems and lemmas, "
-        f"{len(papers)} cited papers."
+    return (
+        f"* {label}: {len(mods)} modules, {sum(m.theorems for m in mods)} theorems and lemmas, "
+        f"{len(papers)} papers cited by arXiv identifier."
     )
-    return f"{START}\n\n{line}\n\n{END}"
+
+
+def status(mods: list[Module], core_files: frozenset[str]) -> str:
+    """The README status block: one line for the core library and one for the catalogue."""
+    lines = [
+        count_line("Core library", [m for m in mods if m.path in core_files]),
+        count_line("Catalogue", [m for m in mods if m.path not in core_files]),
+    ]
+    return f"{START}\n\n" + "\n".join(lines) + f"\n\n{END}"
+
+
+def replace_status(text: str, block: str) -> str:
+    """``text`` with the part between the two status marks replaced by ``block``."""
+    head, rest = text.split(START, 1)
+    _, tail = rest.split(END, 1)
+    return head + block + tail
 
 
 def main() -> None:
     """Rewrite docs/PROVEN.md and the status block of README.md."""
     mods = [summary(p) for p in tracked()]
+    core_files = core_paths()
     ledger = json.loads((ROOT / "docs" / "ledger.json").read_text(encoding="utf-8"))
-    (ROOT / "docs" / "PROVEN.md").write_text(proven(mods, ledger), encoding="utf-8")
+    (ROOT / "docs" / "PROVEN.md").write_text(
+        proven(mods, ledger, titles()), encoding="utf-8"
+    )
     readme = ROOT / "README.md"
     text = readme.read_text(encoding="utf-8")
-    head, rest = text.split(START, 1)
-    _, tail = rest.split(END, 1)
-    readme.write_text(head + status(mods) + tail, encoding="utf-8")
-    print(f"{len(mods)} modules")
+    readme.write_text(replace_status(text, status(mods, core_files)), encoding="utf-8")
+    in_core = sum(m.path in core_files for m in mods)
+    print(f"{len(mods)} modules, {in_core} of them in the core library")
 
 
 if __name__ == "__main__":
+    import fire  # imported here so that the tests need only pytest
+
     fire.Fire(main)

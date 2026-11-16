@@ -889,5 +889,38 @@
   "novelty": "literature",
   "novelty_note": "Caveat: only the final Galerkin bookkeeping of Thm 6 is proved. Lemma 1 on the matricizations, the multilinear-rank and overlap hypotheses, and the identification of Qᵢ, Pᵢ, Tᵢ are not formalized, and the Tᵢ-hypotheses are equivalent to assuming Pᵢ A(t₁) = A(t₁).",
   "file": "LeanDLRA/Integrators/Exactness.lean"
+ },
+ {
+  "area": "Integrators / step methods (existence of a run, error bound)",
+  "result": "One theorem for all one-step methods M (maps from fields to step relations, `StepMethod E`). If M has existence of a step for globally Lipschitz fields, invariance of a predicate Adm, and locality with margin constant κ ≥ 2 (`StepMethod.IsTubeLocal M Adm κ`), and every step from a value with Adm within the error bound of A has local error h c, then for F L-Lipschitz and bounded by B on the tube of radius ρ around a solution A on [t₀, t₀+Nh], jointly continuous there, N h ≤ T, Adm Y₀, ‖Y₀ − A(t₀)‖ ≤ δ and e^{LT}δ + T e^{LT}c + κBh < ρ, there is a run Y 0 = Y₀, …, Y N of M F on the grid t₀ + n h with Adm (Y n) and ‖Y n − A(t₀+nh)‖ ≤ e^{LT}δ + T e^{LT}c for all n ≤ N. Nothing is assumed about F outside the tube.",
+  "lean_names": "StepMethod.IsTubeLocal.exists_run_norm_sub_le, StepMethod.IsTubeLocal, StepMethod, StepMethod.IsTubeLocal.mono, HasLocalError.of_tubeExt",
+  "source": "No paper is cited in the file. The error bound is the tube form of Lady Windermere's fan (`IsRun.norm_sub_le_of_tube_uniformGrid`, Integrators/Tube.lean); the steps are constructed with the globally Lipschitz extension `tubeExt` of the field.",
+  "novelty": "standard",
+  "file": "LeanDLRA/Integrators/Method.lean"
+ },
+ {
+  "area": "Integrators / step methods (runs of a step relation with an invariant)",
+  "result": "Tube theorem for the runs of a step relation with a predicate Adm n that may depend on the step index: if every step from a value with Adm n near A ends at a value with Adm (n+1) and has the given local error, every run from a start value with Adm 0 keeps Adm and satisfies the global error bound; if in addition steps exist from values with Adm near A, a run exists. General grid with local errors δ n and radii R n, and the uniform grid t₀ + n h with local error h c and bound e^{LT}δ + T e^{LT}c.",
+  "lean_names": "IsRun.adm_and_norm_sub_le_of_tube, exists_isRun_norm_sub_le_of_tube, IsRun.adm_and_norm_sub_le_of_tube_uniformGrid, exists_isRun_norm_sub_le_of_tube_uniformGrid",
+  "source": "No paper is cited in the file. Built on the tube theorem `IsRun.norm_sub_le_of_tube` of Integrators/Tube.lean.",
+  "novelty": "standard",
+  "file": "LeanDLRA/Integrators/Method.lean"
+ },
+ {
+  "area": "Integrators / BUG (matrix form: existence of a run and global error)",
+  "result": "The fixed-rank BUG integrator can be run, and the run satisfies the robust error bound. Let A solve Y' = F(t, Y) on [t₀, t₀+Nh], F be L-Lipschitz and bounded by B on the tube of radius ρ around A (`DLRAProblem`), jointly continuous there, with normal component at most ε at the rank-r matrices of the tube (`FactoredNormalBoundOn`); let r ≤ m, r ≤ n, 0 ≤ h ≤ H, N h ≤ T, rank Y₀ ≤ r, ‖Y₀ − A(t₀)‖ ≤ δ. If e^{LT}δ + T e^{LT}(c₁ε + c₂h) + 4Bh < ρ with c₁ = bugC₁ L H, c₂ = bugC₂ L B H, there are Y 0 = Y₀, …, Y N, each a BUG step of size h from the previous one, of rank at most r, with ‖Y n − A(t₀+nh)‖ ≤ e^{LT}δ + T e^{LT}(c₁ε + c₂h) for all n ≤ N. The constants do not depend on singular values; the bound holds for every run; the smallness condition can be met by small δ and h if T e^{LT} c₁ ε < ρ.",
+  "lean_names": "MatrixBUG.exists_run_norm_sub_le, MatrixBUG.IsRun.norm_sub_le, exists_bugGlobalBound_lt, MatrixBUG.norm_sub_le_of_isStep, MatrixBUG.isTubeLocal_stepRel",
+  "source": "[CerutiLubich2022] G. Ceruti, Ch. Lubich, An unconventional robust integrator for dynamical low-rank approximation, BIT Numer. Math. 62 (2022), Theorem 4 (as cited in the file)",
+  "novelty": "literature",
+  "novelty_note": "Stated for matrices and for the step relation `MatrixBUG.stepRel`; the hypotheses on F are required only on the tube around A, and the existence of the run is part of the statement. The constants are those of `bug_local_error_le` (see the entries of Integrators/BUG.lean).",
+  "file": "LeanDLRA/Integrators/Matrix/BUGRun.lean"
+ },
+ {
+  "area": "Integrators / BUG (matrix form: existence of steps and runs)",
+  "result": "A BUG step exists for every Lipschitz field that is continuous in time on the step interval (no bound on the field is needed). A step of `MatrixBUG.stepRel F r` from Y₀ exists if and only if Y₀ has rank at most r (for r ≤ m, r ≤ n), and for a globally Lipschitz field there is a run on every grid from every start value of rank at most r.",
+  "lean_names": "MatrixBUG.exists_stepRel_iff, MatrixBUG.exists_run, MatrixBUG.exists_isStep_of_lipschitz, MatrixBUG.exists_stepRel",
+  "source": "[CerutiLubich2022] G. Ceruti, Ch. Lubich, BIT Numer. Math. 62 (2022) (algorithm; as cited in the file)",
+  "novelty": "standard",
+  "file": "LeanDLRA/Integrators/Matrix/BUGRun.lean"
  }
 ]
