@@ -420,9 +420,15 @@ def check_span(root: Path, names: Names, span: str, verbose: bool) -> tuple[str,
         return "", False
     if hits:
         return f"`{span}` is recorded only in the catalogue: {sorted(hits)[:2]}", True
-    if re.search(r"(?<![\w.'])" + re.escape(last) + r"(?![\w'])", names.core_text):
-        note = f"note: `{span}` is not in the record; '{last}' occurs in the core text"
-        return (note if verbose else ""), False
+    # Without the record (CI): the name, or a dotted tail of it as the source writes it after a
+    # namespace (`theorem HasLocalError.of_tubeExt`), occurs in the core text.
+    parts = span.split(".")
+    for tail in (".".join(parts[i:]) for i in range(len(parts))):
+        if re.search(r"(?<![\w.'])" + re.escape(tail) + r"(?![\w'])", names.core_text):
+            note = (
+                f"note: `{span}` is not in the record; '{tail}' occurs in the core text"
+            )
+            return (note if verbose else ""), False
     return f"`{span}` not found in the core", True
 
 

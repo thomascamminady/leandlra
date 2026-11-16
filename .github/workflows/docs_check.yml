@@ -1,0 +1,30 @@
+name: Docs check
+
+# The generated pages that quote Lean statements (GETTING_STARTED, MAIN_RESULTS, GUIDE; `make
+# docs-check`, scripts/docgen.py): every quoted block equals the source lines it links to, every
+# backticked name exists. No Lean, a minute of Python. A gate round that changes a quoted file
+# makes a page stale; this workflow then stays red until `make docs` regenerates the pages. It is a
+# workflow of its own, not a step of Lean Action CI, so that a stale page is visible without
+# holding back anything that waits for the core workflow to be green.
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v6
+      - name: Generated pages agree with the sources
+        run: make docs-check

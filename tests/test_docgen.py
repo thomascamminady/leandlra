@@ -345,3 +345,18 @@ def test_citation_keys(tmp_path: Path) -> None:
     with pytest.raises(SystemExit) as done:
         docgen.keys(str(page), root=str(root))
     assert done.value.code == 1
+
+
+def test_without_the_record_dotted_names_are_found_in_the_core_text(
+    tmp_path: Path,
+) -> None:
+    text = "namespace LeanDLRA\n\ntheorem HasLocalError.of_tubeExt : True := trivial\n"
+    names = docgen.Names(frozenset(), frozenset(), {}, text)
+    for span in ("HasLocalError.of_tubeExt", "LeanDLRA.HasLocalError.of_tubeExt"):
+        assert docgen.check_span(tmp_path, names, span, False) == ("", False)
+    assert docgen.check_span(tmp_path, names, "Other.of_tubeExtra", False) == (
+        "`Other.of_tubeExtra` not found in the core",
+        True,
+    )
+    message, error = docgen.check_span(tmp_path, names, "Missing.of_tube", True)
+    assert error and "not found" in message
