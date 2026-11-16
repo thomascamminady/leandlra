@@ -55,6 +55,7 @@ docs: ## Regenerate the generated pages of docs/ and the README status block (qu
 	uv run -q scripts/docgen.py expand $(TEMPLATES)/MAIN_RESULTS.md docs/MAIN_RESULTS.md --prefix ../
 	uv run -q scripts/docgen.py expand $(TEMPLATES)/GUIDE.md docs/GUIDE.md --prefix ../
 	uv run -q scripts/definitions.py write
+	uv run -q scripts/open_problems.py write
 	uv run -q scripts/docgen.py check $(DOC_PAGES)
 
 docs-check: ## Compare the pages that quote Lean statements with the sources (writes nothing)
