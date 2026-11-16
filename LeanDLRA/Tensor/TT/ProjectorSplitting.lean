@@ -64,8 +64,10 @@ Eqs. (4.23), (4.25), (4.26), (4.27)).
   TT projector-splitting step is the matrix KSL step, so the robust error bound
   `IsKSLStep.local_error` applies).
 
-The second-order Strang variant (arXiv 2512.14950, §3.2) and the robust error bound of arXiv
-1407.2042 for `d > 2` are not formalized. Everything is real: complex tensor trains (quantum
+The exactness property (arXiv 1407.2042, Theorem 5.1) is proved in
+`Tensor/TT/ProjectorSplittingExactness.lean`, the robust error bound for every number of cores
+in `Tensor/TT/ProjectorSplittingError.lean`. The second-order Strang variant (arXiv 2512.14950,
+§3.2) is not formalized. Everything is real: complex tensor trains (quantum
 states) enter only through a realification, which is not done at the level of cores.
 -/
 

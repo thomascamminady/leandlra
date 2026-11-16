@@ -78,7 +78,8 @@ become small.
 ## Open-problem status (see `docs/survey/open-problems.json`)
 
 * OP-RA-03: the sandwich is proved for the distance-defined `ε`-rank.  The identification of
-  `epsRank` with the singular-value tolerance rule needs Eckart–Young, which is not formalised.
+  `epsRank` with the singular-value tolerance rule is `epsRank_eq_sInf_tailNorm` in
+  `Classical/WeylSingular.lean`.
 * OP-EX-02: the robust capture statement is proved as stated (local `ε`, any rank `≤ r`).
   Re-deriving each cited paper's convergence theorem from it is not done here.
 * OP-RA-07: the gap-free truncation inequality, the robust bound

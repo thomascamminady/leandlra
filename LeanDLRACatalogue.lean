@@ -29,6 +29,7 @@ import LeanDLRA.Literature.Foundations.P2008_07427b
 import LeanDLRA.Literature.Foundations.P2107_09207a
 import LeanDLRA.Literature.Foundations.P2309_06125a
 import LeanDLRA.Literature.Foundations.P2309_06125b
+import LeanDLRA.Literature.HighOrder.P2402_08607Bridge
 import LeanDLRA.Literature.HighOrder.P2402_08607a
 import LeanDLRA.Literature.HighOrder.P2402_08607b
 import LeanDLRA.Literature.HighOrder.P2403_02834a

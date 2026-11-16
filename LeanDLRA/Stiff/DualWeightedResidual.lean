@@ -53,6 +53,13 @@ one-sided Lipschitz, inequality at the pair of points that occurs.
   Galerkin stages `X_k`.  `inner_consTrunc_sub_eq_zero`: the conservative truncation `consTrunc`
   with respect to directions that contain `ψ_{k+1}` is dual-consistent;
   `implicitBUG_dualConsistent_output_error` is the statement for implicit BUG steps.
+* `dualWeighted_balance`, `dualWeighted_output_error`,
+  `abs_output_error_le_of_dualWeighted_tolerance`,
+  `implicitBUG_abs_output_error_le_of_dualWeighted_tolerance`: the tolerance version.  A
+  truncation that keeps the pairing with the next dual iterate only up to `τ_k`,
+  `|⟪ψ_{k+1}, Y_{k+1} - X_k⟫| ≤ τ_k`, adds `∑ τ_k` to the bound:
+  `|⟪ψ_N, e_N⟫| ≤ ‖ψ_0‖ ‖e_0‖ + ∑ τ_k + ∑ ‖ρ_k‖ ‖X_k - A_{k+1}‖`.  This is the guarantee of a
+  rank control that truncates by the dual-weighted error instead of the norm.
 * `dualConsistent_inner_eq`, `dualConsistent_output_error_of_dual`,
   `dualConsistent_inner_eq_of_stationary`: for the exact discrete adjoint the integrator has the
   balance law `⟪ψ_N, Y_N⟫ = ⟪ψ_0, Y_0⟫ + h ∑ ⟪ψ_k, q_k⟫` of the full-rank scheme for every rank and
@@ -78,7 +85,14 @@ Galerkin steps of BUG type: a basis that is enriched by the dual iterate makes t
 vanish.  The dual-consistent truncation is the conservative truncation of Einkemmer, Ostermann
 and Scalone (arXiv 2206.09374; `consTrunc` in `Stability/Conservation.lean`) with the dual
 iterate in place of the conserved directions: conserved quantities are stationary adjoint
-solutions, and a time-dependent adjoint solution is kept in the same way.
+solutions, and a time-dependent adjoint solution is kept in the same way.  The tolerance version
+(`abs_output_error_le_of_dualWeighted_tolerance`) is the guarantee for truncations chosen by
+their dual-weighted error.  A compression that penalises the change of the pairing with a
+backward propagated observable, together with a norm term, is used for tensor-network circuit
+simulation by Kim, Jeong and Oh (arXiv 2609.18246, Eq. (1)), whose error relation (2) is the
+same summation by parts for a sequence of gates; the choice of the size of a reduced basis by
+dual weighted residuals is due to Meyer and Matthies (Comput. Mech. 31, 2003), as cited in
+arXiv 1901.05343.
 -/
 
 open Set Finset
@@ -623,6 +637,165 @@ theorem implicitBUG_dualConsistent_output_error {ε τ ϑ t : ℕ → ℝ}
     (fun k hk => by
       rw [hY k hk]
       exact inner_consTrunc_sub_eq_zero (hC k hk) (hT k hk) (hCψ k hk))
+
+/-! ### Dual-weighted truncation with a tolerance -/
+
+/-- **Balance law with a dual-weighted truncation defect.**  Let the stage `X k` of step `k`
+satisfy the implicit Euler equation tested with the dual iterate,
+`⟪ψ_k, X_k - Y_k - h (𝓛_k X_k + q_k)⟫ = 0` (a Galerkin stage in a space that contains `ψ_k`).
+For an arbitrary truncation `X_k ↦ Y_{k+1}` the pairing obeys
+`⟪ψ_n, Y_n⟫ = ⟪ψ_0, Y_0⟫ + h ∑ ⟪ψ_k, q_k⟫ + ∑ ⟪ψ_{k+1}, Y_{k+1} - X_k⟫ - ∑ ⟪ρ_k, X_k⟫` with the
+dual residual `ρ_k = ψ_k - h 𝓛'_k ψ_k - ψ_{k+1}`: each truncation enters only through its pairing
+with the next dual iterate.  `dualConsistent_balance` is the case of vanishing pairings. -/
+theorem dualWeighted_balance (hadj : ∀ k x y, ⟪𝓛 k x, y⟫ = ⟪x, 𝓛' k y⟫)
+    (hgal : ∀ k < N, ⟪ψ k, X k - Y k - h • (𝓛 k (X k) + q k)⟫ = 0) :
+    ∀ n ≤ N, ⟪ψ n, Y n⟫ = ⟪ψ 0, Y 0⟫ + h * ∑ k ∈ range n, ⟪ψ k, q k⟫
+      + ∑ k ∈ range n, ⟪ψ (k + 1), Y (k + 1) - X k⟫
+      - ∑ k ∈ range n, ⟪ψ k - h • 𝓛' k (ψ k) - ψ (k + 1), X k⟫ := by
+  intro n
+  induction n with
+  | zero => intro _; simp
+  | succ n ih =>
+    intro hn
+    have hn' : n < N := by omega
+    have a1 : ⟪ψ n, 𝓛 n (X n)⟫ = ⟪𝓛' n (ψ n), X n⟫ :=
+      (real_inner_comm _ _).trans ((hadj n (X n) (ψ n)).trans (real_inner_comm _ _))
+    have g := hgal n hn'
+    rw [inner_sub_right, inner_sub_right, real_inner_smul_right, inner_add_right, a1] at g
+    have t : ⟪ψ (n + 1), Y (n + 1) - X n⟫ = ⟪ψ (n + 1), Y (n + 1)⟫ - ⟪ψ (n + 1), X n⟫ :=
+      inner_sub_right _ _ _
+    have r : ⟪ψ n - h • 𝓛' n (ψ n) - ψ (n + 1), X n⟫
+        = ⟪ψ n, X n⟫ - h * ⟪𝓛' n (ψ n), X n⟫ - ⟪ψ (n + 1), X n⟫ := by
+      rw [inner_sub_left, inner_sub_left, real_inner_smul_left]
+    rw [Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_succ]
+    linarith [ih (by omega)]
+
+/-- **Output error of a low-rank integrator with dual-weighted truncation.**  This is the discrete
+dual-weighted residual identity for a low-rank time integrator whose Galerkin stages are tested
+with the dual iterate.  Under the hypothesis of `dualWeighted_balance`, against the full-rank
+implicit Euler reference `A`:
+`⟪ψ_N, Y_N - A_N⟫ = ⟪ψ_0, Y_0 - A_0⟫ + ∑_k ⟪ψ_{k+1}, Y_{k+1} - X_k⟫ - ∑_k ⟪ρ_k, X_k - A_{k+1}⟫`.
+The first sum is the dual-weighted truncation error, computable from the low-rank factors; the
+second pairs the dual residual with the error of the Galerkin stage. -/
+theorem dualWeighted_output_error (hadj : ∀ k x y, ⟪𝓛 k x, y⟫ = ⟪x, 𝓛' k y⟫)
+    (hA : ∀ k < N, A (k + 1) - h • 𝓛 k (A (k + 1)) = A k + h • q k)
+    (hgal : ∀ k < N, ⟪ψ k, X k - Y k - h • (𝓛 k (X k) + q k)⟫ = 0) :
+    ⟪ψ N, Y N - A N⟫ = ⟪ψ 0, Y 0 - A 0⟫ + ∑ k ∈ range N, ⟪ψ (k + 1), Y (k + 1) - X k⟫
+      - ∑ k ∈ range N, ⟪ψ k - h • 𝓛' k (ψ k) - ψ (k + 1), X k - A (k + 1)⟫ := by
+  have hYb := dualWeighted_balance hadj hgal N le_rfl
+  have hA0 : ∀ k < N, ⟪ψ k, A (k + 1) - A k - h • (𝓛 k (A (k + 1)) + q k)⟫ = 0 := by
+    intro k hk
+    have e : A (k + 1) - A k - h • (𝓛 k (A (k + 1)) + q k)
+        = A (k + 1) - h • 𝓛 k (A (k + 1)) - (A k + h • q k) := by module
+    rw [e, hA k hk, sub_self, inner_zero_right]
+  have hAb : ⟪ψ N, A N⟫ = ⟪ψ 0, A 0⟫ + h * ∑ k ∈ range N, ⟪ψ k, q k⟫
+      - ∑ k ∈ range N, ⟪ψ k - h • 𝓛' k (ψ k) - ψ (k + 1), A (k + 1)⟫ :=
+    dualConsistent_balance (X := fun k => A (k + 1)) (Y := A) hadj hA0
+      (fun k _ => by simp) N le_rfl
+  have hsum : ∑ k ∈ range N, ⟪ψ k - h • 𝓛' k (ψ k) - ψ (k + 1), X k - A (k + 1)⟫
+      = ∑ k ∈ range N, ⟪ψ k - h • 𝓛' k (ψ k) - ψ (k + 1), X k⟫
+        - ∑ k ∈ range N, ⟪ψ k - h • 𝓛' k (ψ k) - ψ (k + 1), A (k + 1)⟫ := by
+    rw [← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun k _ => inner_sub_right _ _ _
+  have h1 : ⟪ψ N, Y N - A N⟫ = ⟪ψ N, Y N⟫ - ⟪ψ N, A N⟫ := inner_sub_right _ _ _
+  have h0 : ⟪ψ 0, Y 0 - A 0⟫ = ⟪ψ 0, Y 0⟫ - ⟪ψ 0, A 0⟫ := inner_sub_right _ _ _
+  linarith
+
+/-- **Tolerance version.**  If every truncation keeps the pairing with the next dual iterate up to
+a tolerance, `|⟪ψ_{k+1}, Y_{k+1} - X_k⟫| ≤ τ_k`, the output error is at most
+`‖ψ_0‖ ‖Y_0 - A_0‖ + ∑ τ_k + ∑ ‖ρ_k‖ ‖X_k - A_{k+1}‖`: the tolerances add up, and the remaining
+term is a product of the dual residual and the error of the Galerkin stage.  For `τ = 0` this is
+`abs_dualConsistent_output_error_le`. -/
+theorem abs_output_error_le_of_dualWeighted_tolerance {τ : ℕ → ℝ}
+    (hadj : ∀ k x y, ⟪𝓛 k x, y⟫ = ⟪x, 𝓛' k y⟫)
+    (hA : ∀ k < N, A (k + 1) - h • 𝓛 k (A (k + 1)) = A k + h • q k)
+    (hgal : ∀ k < N, ⟪ψ k, X k - Y k - h • (𝓛 k (X k) + q k)⟫ = 0)
+    (htr : ∀ k < N, |⟪ψ (k + 1), Y (k + 1) - X k⟫| ≤ τ k) :
+    |⟪ψ N, Y N - A N⟫| ≤ ‖ψ 0‖ * ‖Y 0 - A 0‖ + ∑ k ∈ range N, τ k
+      + ∑ k ∈ range N, ‖ψ k - h • 𝓛' k (ψ k) - ψ (k + 1)‖ * ‖X k - A (k + 1)‖ := by
+  rw [dualWeighted_output_error hadj hA hgal]
+  have h0 := abs_real_inner_le_norm (ψ 0) (Y 0 - A 0)
+  have hT : |∑ k ∈ range N, ⟪ψ (k + 1), Y (k + 1) - X k⟫| ≤ ∑ k ∈ range N, τ k :=
+    (Finset.abs_sum_le_sum_abs _ _).trans
+      (Finset.sum_le_sum fun k hk => htr k (Finset.mem_range.1 hk))
+  have hS : |∑ k ∈ range N, ⟪ψ k - h • 𝓛' k (ψ k) - ψ (k + 1), X k - A (k + 1)⟫|
+      ≤ ∑ k ∈ range N, ‖ψ k - h • 𝓛' k (ψ k) - ψ (k + 1)‖ * ‖X k - A (k + 1)‖ :=
+    (Finset.abs_sum_le_sum_abs _ _).trans
+      (Finset.sum_le_sum fun k _ => abs_real_inner_le_norm _ _)
+  rw [abs_le] at h0 hT hS ⊢
+  constructor <;> linarith [h0.1, h0.2, hT.1, hT.2, hS.1, hS.2]
+
+/-- **Tolerance version for implicit BUG steps.**  Every step is an implicit BUG step for
+`F x = 𝓛_k x + q_k` whose (augmented) bases contain the dual iterate `ψ_k`, and the truncation of
+step `k` keeps the pairing with `ψ_{k+1}` up to `τ_k`.  Then the output error is at most
+`‖ψ_0‖ ‖Y_0 - A_0‖ + ∑ τ_k + ∑ ‖ρ_k‖ ‖X_k - A_{k+1}‖` with the Galerkin stages `X_k`; the
+reduction tolerances `σ k`, the normal components `ε k` and the norm tolerances `ϑ k` of the steps
+do not occur. -/
+theorem implicitBUG_abs_output_error_le_of_dualWeighted_tolerance {ε σ ϑ t τ : ℕ → ℝ}
+    {P₀ Q₀ P₁ Q₁ : ℕ → E →L[ℝ] E} {YK YL : ℕ → E}
+    (hadj : ∀ k x y, ⟪𝓛 k x, y⟫ = ⟪x, 𝓛' k y⟫)
+    (hA : ∀ k < N, A (k + 1) - h • 𝓛 k (A (k + 1)) = A k + h • q k)
+    (hs : ∀ k < N, IsImplicitBUGStep (fun _ x => 𝓛 k x + q k) (ε k) (σ k) (ϑ k) (P₀ k) (Q₀ k)
+      (P₁ k) (Q₁ k) (t k) h (Y k) (YK k) (YL k) (X k) (Y (k + 1)))
+    (hψ : ∀ k < N, (P₁ k * Q₁ k) (ψ k) = ψ k)
+    (htr : ∀ k < N, |⟪ψ (k + 1), Y (k + 1) - X k⟫| ≤ τ k) :
+    |⟪ψ N, Y N - A N⟫| ≤ ‖ψ 0‖ * ‖Y 0 - A 0‖ + ∑ k ∈ range N, τ k
+      + ∑ k ∈ range N, ‖ψ k - h • 𝓛' k (ψ k) - ψ (k + 1)‖ * ‖X k - A (k + 1)‖ :=
+  abs_output_error_le_of_dualWeighted_tolerance hadj hA
+    (fun k hk => (hs k hk).inner_sstep_residual_eq_zero (hψ k hk)) htr
+
+/-- `abs_output_error_le_of_dualWeighted_tolerance` with all three terms nonzero, and attained:
+on `ℝ`, `𝓛 = 0`, `h = 1`, no source, reference `A = 0`, an inexact dual `ψ = (1, 2)` (dual
+residual `ρ₀ = -1`), `Y₀ = X₀ = 1`, `Y₁ = 5/4` (truncation pairing `1/2`), tolerance
+`τ₀ = 1/2`: the output error `5/2` equals the bound `1 + 1/2 + 1`. -/
+example : |⟪(fun k : ℕ => (k : ℝ) + 1) 1,
+      (fun k : ℕ => 1 + (k : ℝ) / 4) 1 - (fun _ : ℕ => (0 : ℝ)) 1⟫| ≤
+    ‖(fun k : ℕ => (k : ℝ) + 1) 0‖ * ‖(fun k : ℕ => 1 + (k : ℝ) / 4) 0 - (fun _ : ℕ => (0 : ℝ)) 0‖
+      + ∑ k ∈ range 1, (fun _ : ℕ => (1 / 2 : ℝ)) k
+      + ∑ k ∈ range 1, ‖(fun k : ℕ => (k : ℝ) + 1) k
+          - (1 : ℝ) • (fun _ : ℕ => (0 : ℝ →ₗ[ℝ] ℝ)) k ((fun k : ℕ => (k : ℝ) + 1) k)
+          - (fun k : ℕ => (k : ℝ) + 1) (k + 1)‖
+        * ‖(fun _ : ℕ => (1 : ℝ)) k - (fun _ : ℕ => (0 : ℝ)) (k + 1)‖ :=
+  abs_output_error_le_of_dualWeighted_tolerance (E := ℝ) (N := 1) (h := 1)
+    (𝓛 := fun _ => 0) (𝓛' := fun _ => 0) (q := fun _ => 0) (A := fun _ => 0)
+    (X := fun _ => 1) (Y := fun k => 1 + (k : ℝ) / 4) (ψ := fun k => (k : ℝ) + 1)
+    (τ := fun _ => 1 / 2)
+    (fun _ _ _ => by simp) (fun _ _ => by simp)
+    (fun k hk => by
+      obtain rfl : k = 0 := by omega
+      norm_num [Real.inner_apply])
+    (fun k hk => by
+      obtain rfl : k = 0 := by omega
+      norm_num [Real.inner_apply])
+
+/-- `implicitBUG_abs_output_error_le_of_dualWeighted_tolerance` on `ℝ` with all projectors equal
+to the identity and the data of the previous example: the implicit BUG step from `Y₀ = 1` for
+`F = 0` has stage `X₀ = 1`, the truncated value `Y₁ = 5/4` (norm tolerance `ϑ₀ = 1/4`), and the
+inexact dual `ψ = (1, 2)` gives the attained bound `5/2 ≤ 1 + 1/2 + 1`. -/
+example : |⟪(fun k : ℕ => (k : ℝ) + 1) 1,
+      (fun k : ℕ => 1 + (k : ℝ) / 4) 1 - (fun _ : ℕ => (0 : ℝ)) 1⟫| ≤
+    ‖(fun k : ℕ => (k : ℝ) + 1) 0‖ * ‖(fun k : ℕ => 1 + (k : ℝ) / 4) 0 - (fun _ : ℕ => (0 : ℝ)) 0‖
+      + ∑ k ∈ range 1, (fun _ : ℕ => (1 / 2 : ℝ)) k
+      + ∑ k ∈ range 1, ‖(fun k : ℕ => (k : ℝ) + 1) k
+          - (1 : ℝ) • (fun _ : ℕ => (0 : ℝ →ₗ[ℝ] ℝ)) k ((fun k : ℕ => (k : ℝ) + 1) k)
+          - (fun k : ℕ => (k : ℝ) + 1) (k + 1)‖
+        * ‖(fun _ : ℕ => (1 : ℝ)) k - (fun _ : ℕ => (0 : ℝ)) (k + 1)‖ :=
+  implicitBUG_abs_output_error_le_of_dualWeighted_tolerance (E := ℝ) (N := 1) (h := 1)
+    (𝓛 := fun _ => 0) (𝓛' := fun _ => 0) (q := fun _ => 0)
+    (ε := fun _ => 0) (σ := fun _ => 0) (ϑ := fun _ => 1 / 4) (t := fun _ => 1)
+    (P₀ := fun _ => 1) (Q₀ := fun _ => 1) (P₁ := fun _ => 1) (Q₁ := fun _ => 1)
+    (YK := fun _ => 1) (YL := fun _ => 1) (A := fun _ => 0) (X := fun _ => 1)
+    (Y := fun k => 1 + (k : ℝ) / 4) (ψ := fun k => (k : ℝ) + 1) (τ := fun _ => 1 / 2)
+    (fun _ _ _ => by simp) (fun _ _ => by simp)
+    (fun k hk => by
+      obtain rfl : k = 0 := by omega
+      exact ⟨IsOrthProj.one, IsOrthProj.one, IsOrthProj.one, IsOrthProj.one, fun _ => rfl,
+        by norm_num, by norm_num, by norm_num, by norm_num, by norm_num, by norm_num,
+        by norm_num, by norm_num⟩)
+    (fun _ _ => by simp)
+    (fun k hk => by
+      obtain rfl : k = 0 := by omega
+      norm_num [Real.inner_apply])
 
 end DualConsistent
 

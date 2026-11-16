@@ -1,4 +1,3 @@
-import Mathlib
 import LeanDLRA.DLRA.Defs
 import LeanDLRA.FixedRank.TangentSpace
 import LeanDLRA.Matrix.GaugeODE

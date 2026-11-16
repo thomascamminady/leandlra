@@ -41,6 +41,7 @@ import LeanDLRA.Integrators.EulerBUG
 import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Integrators.GlobalError
 import LeanDLRA.Integrators.InexactSubsteps
+import LeanDLRA.Integrators.InexactSubstepsTube
 import LeanDLRA.Integrators.KStep
 import LeanDLRA.Integrators.Matrix.AdaptiveBUGRun
 import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
@@ -69,6 +70,7 @@ import LeanDLRA.Integrators.MethodGrid
 import LeanDLRA.Integrators.MethodTolerance
 import LeanDLRA.Integrators.ParallelBUG
 import LeanDLRA.Integrators.PerturbedField
+import LeanDLRA.Integrators.PerturbedFieldRun
 import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Integrators.Tube
@@ -114,12 +116,14 @@ import LeanDLRA.Research.ExplicitMidpointCapture
 import LeanDLRA.Research.ExplicitMidpointGalerkin
 import LeanDLRA.Research.FederatedConvexThreshold
 import LeanDLRA.Research.FederatedDescentThreshold
+import LeanDLRA.Research.FederatedTwoSteps
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.SameMinibatchAugmentation
 import LeanDLRA.Research.StiffEnergyGalerkin
 import LeanDLRA.Research.StiffGlobalCycle
 import LeanDLRA.Research.StiffGlobalVariation
 import LeanDLRA.Research.StiffOrderReduction
+import LeanDLRA.Research.SylvesterFlows
 import LeanDLRA.Research.TwoSidedLeak
 import LeanDLRA.Stability.Conservation
 import LeanDLRA.Stability.Energy
@@ -136,6 +140,8 @@ import LeanDLRA.Tensor.TT.Basic
 import LeanDLRA.Tensor.TT.ObliqueProjector
 import LeanDLRA.Tensor.TT.Operations
 import LeanDLRA.Tensor.TT.ProjectorSplitting
+import LeanDLRA.Tensor.TT.ProjectorSplittingError
+import LeanDLRA.Tensor.TT.ProjectorSplittingExactness
 import LeanDLRA.Tensor.TT.TangentProjector
 import LeanDLRA.Tensor.TTN.Abstract.BUG
 import LeanDLRA.Tensor.TTN.Abstract.ParallelBUG

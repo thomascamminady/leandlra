@@ -115,11 +115,18 @@ section TTNKSL
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- One step of the **recursive TTN projector-splitting integrator** (Ceruti–Lubich–Walach,
-arXiv 2002.11392, §4; for comb trees the TT/MPS integrator of Lubich–Oseledets–Vandereycken,
-arXiv 1407.2042) with tree shape `τ`, field `F` and doubly-normal bound `ε`, from `(t₀, Y₀)` to
-`(t₁, Y₁)`: exact flow at a leaf; at an inner node a nested Tucker KSL step (`IsTuckerKSLStep`)
-whose `K`-values are computed by the same integrator applied to the subtree problems (fields
-`kslModeField Q₀ P₁ F i`, started at `X i`). -/
+arXiv 2002.11392, §4) with tree shape `τ`, field `F` and doubly-normal bound `ε`, from `(t₀, Y₀)`
+to `(t₁, Y₁)`: exact flow at a leaf; at an inner node a nested Tucker KSL step
+(`IsTuckerKSLStep`) whose `K`-values are computed by the same integrator applied to the subtree
+problems (fields `kslModeField Q₀ P₁ F i`, started at `X i`).
+
+On a comb tree the step has the structure of the tensor-train projector-splitting step of
+Lubich–Oseledets–Vandereycken (arXiv 1407.2042; `Tensor.IsTTKSLStep`), but as a step relation
+it is a different one: at every inner node the substeps of the last child are followed by a
+backward substep and the core step, whose fields are `-P F` and `P F` with the same projector
+`P` when the co-range projector of the last child is the product of the new basis projectors
+of the other children. This pair of substeps cancels for autonomous fields only, so for a
+time-dependent `F` the two step relations are not the same. -/
 def IsTTNKSLStep : TreeShape → (ℝ → E → E) → ℝ → ℝ → ℝ → E → E → Prop
   | .leaf, F, _, t₀, t₁, Y₀, Y₁ => ∃ y : ℝ → E, ODESolution F y t₀ t₁ ∧ y t₀ = Y₀ ∧ y t₁ = Y₁
   | .node m cs, F, ε, t₀, t₁, Y₀, Y₁ =>
