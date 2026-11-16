@@ -157,9 +157,9 @@ grid times is at most `bugGlobalBound L B H T δ ε h`:
 
 @stmt LeanDLRA/Foundations/Localization.lean bugGlobalBound bugGlobalBound
 
-@stmt LeanDLRA/Integrators/BUG.lean bugC₁ bugC₁
+@stmt LeanDLRA/Integrators/Defs.lean bugC₁ bugC₁
 
-@stmt LeanDLRA/Integrators/BUG.lean bugC₂ bugC₂
+@stmt LeanDLRA/Integrators/Defs.lean bugC₂ bugC₂
 
 The bound is `e^{L T} δ + T e^{L T} (c₁ ε + c₂ h)`. It contains `L`, `B`, `H` and `T` and no
 singular value of `Y n` or of `A`. The hypothesis `hsmall` is what a bound on a tube costs: the

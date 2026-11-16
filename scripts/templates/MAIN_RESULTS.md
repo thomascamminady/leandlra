@@ -557,9 +557,9 @@ Source: [CerutiLubich2022, §3.1].
 
 @stmt LeanDLRA/Foundations/Localization.lean bugGlobalBound bugGlobalBound
 
-@stmt LeanDLRA/Integrators/BUG.lean bugC₁ bugC₁
+@stmt LeanDLRA/Integrators/Defs.lean bugC₁ bugC₁
 
-@stmt LeanDLRA/Integrators/BUG.lean bugC₂ bugC₂
+@stmt LeanDLRA/Integrators/Defs.lean bugC₂ bugC₂
 
 This is the main theorem of the library on the BUG integrator. Hypotheses: `hP`, the field is
 `L`-Lipschitz and bounded by `B` on the tube of radius `ρ` around the exact solution `A` over
@@ -964,7 +964,7 @@ of one step. The page states no global error for this step: the file contains no
 Source: the module docstring cites Ceruti, Einkemmer, Kusch and Lubich, arXiv 2402.08607, for the
 Galerkin step (the docstring of `galerkin_local_error` names its Theorem 1). The explicit update
 has no source line in the docstrings. The file ends with `example`s that satisfy the hypotheses of
-`norm_midpoint_defect_le`, `norm_half_step_sub_le`, `norm_predictor_sub_le`,
+`ODESolution.norm_midpoint_defect_le`, `ODESolution.norm_half_step_sub_le`, `norm_predictor_sub_le`,
 `galerkin_local_error` (a constant field, every `h > 0`) and `norm_update_sub_le` (a field for
 which every rank-adaptive BUG step with a two-column left basis has error at least h²/2,
 with `h = 3/2`).
