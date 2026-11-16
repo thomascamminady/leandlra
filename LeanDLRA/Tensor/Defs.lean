@@ -195,7 +195,7 @@ def unfold (p : κ → Prop) [DecidablePred p] (X : Tensor ι) :
   Matrix.of fun a b => X (merge p a b)
 
 /-- The **tensorization** `Ten_p`, inverse of `unfold p`. -/
-def fold (p : κ → Prop) [DecidablePred p]
+def fold (p : κ → Prop)
     (A : Matrix (∀ k : Subtype p, ι k) (∀ k : {k // ¬ p k}, ι k) ℝ) : Tensor ι :=
   WithLp.toLp 2 fun x => A (Subtype.restrict p x) (Subtype.restrict (fun k => ¬ p k) x)
 

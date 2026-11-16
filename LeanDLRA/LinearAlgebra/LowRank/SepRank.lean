@@ -105,7 +105,7 @@ theorem HasSepRankLE.rank_le [CommRing R] [StrongRankCondition R] {p q : Type*} 
 
 /-- Over a field, the entries of a matrix of rank at most `r` have separation rank at most `r`:
 the columns are expanded in a basis of the column space. -/
-theorem hasSepRankLE_of_rank_le {m n K : Type*} [Finite m] [Fintype n] [Field K]
+theorem hasSepRankLE_of_rank_le {m n K : Type*} [Fintype n] [Field K]
     {A : Matrix m n K} {r : ℕ} (h : A.rank ≤ r) : HasSepRankLE K (fun i j => A i j) r := by
   classical
   let W : Submodule K (m → K) := LinearMap.range A.mulVecLin

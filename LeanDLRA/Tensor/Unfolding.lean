@@ -54,6 +54,7 @@ variable (p : κ → Prop) [DecidablePred p]
 @[simp] lemma unfold_apply (X : Tensor ι) (a : ∀ k : Subtype p, ι k)
     (b : ∀ k : {k // ¬ p k}, ι k) : unfold p X a b = X (merge p a b) := rfl
 
+omit [DecidablePred p] in
 /-- The entries of the tensorization. -/
 @[simp] lemma fold_apply (A : Matrix (∀ k : Subtype p, ι k) (∀ k : {k // ¬ p k}, ι k) ℝ)
     (x : ∀ k, ι k) :
