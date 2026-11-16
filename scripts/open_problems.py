@@ -27,9 +27,12 @@ Usage::
 
 from __future__ import annotations
 
+import gzip
 import json
 import re
+import subprocess
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -128,21 +131,117 @@ def core_todos(root: Path) -> dict[str, list[tuple[str, str]]]:
     return {k: grouped[k] for k in sorted(grouped)}
 
 
-def linkify(text: str, root: Path) -> str:
-    """Turn ``.lean`` paths that exist into links (relative to ``docs/``); mark names as code."""
-
-    def repl(m: re.Match[str]) -> str:
-        rel = m.group(0)
-        full = rel if rel.startswith("LeanDLRA/") else "LeanDLRA/" + rel
-        if (root / full).exists():
-            return f"[`{rel}`](../{full})"
-        return f"`{rel}`"
-
-    return _PATH.sub(repl, text)
+Index = dict[str, list[tuple[str, str]]]
+_NAME_KEY = re.compile(r'"name":"((?:[^"\\]|\\.)*)"')
+_MODULE_KEY = re.compile(r'"module":"([^"\\]*)"')
+_TOKEN = re.compile(r"[A-Za-z_][A-Za-z0-9_'.]*[A-Za-z0-9_']")
+NOT_IN_LIBRARY = "(not in the library)"
 
 
-def render(root: Path = ROOT) -> str:
-    """The page, as text."""
+@dataclass
+class Tally:
+    """Counts of the Lean names of a page."""
+
+    resolved: int = 0
+    unresolved: int = 0
+    proved_without_name: list[str] = field(default_factory=list)
+
+
+def default_dump(root: Path = ROOT) -> Path:
+    """The rolling dump of the main checkout (the worktrees share one ``.lake`` of the main)."""
+    local = root / ".lake" / "hashdiff" / "rolling.jsonl.gz"
+    if local.exists():
+        return local
+    common = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-common-dir",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    return Path(common).parent / ".lake" / "hashdiff" / "rolling.jsonl.gz"
+
+
+def load_index(dump: Path) -> Index:
+    """Declaration index of a rolling dump: every dotted suffix of a name to ``(name, module)``."""
+    index: Index = {}
+    with gzip.open(dump, "rt", encoding="utf-8") as handle:
+        next(handle)  # header
+        for line in handle:
+            mod = _MODULE_KEY.search(line)
+            nam = _NAME_KEY.search(line)
+            if not mod or not nam:
+                continue
+            name = nam.group(1)
+            if name.startswith("_priv.") or "._" in name:
+                continue
+            parts = name.split(".")
+            for i in range(len(parts)):
+                index.setdefault(".".join(parts[i:]), []).append((name, mod.group(1)))
+    return index
+
+
+def is_candidate(token: str) -> bool:
+    """Whether a word of the free text can be the name of a declaration."""
+    if token.startswith("OP-") or any(len(seg) < 2 for seg in token.split(".")):
+        return False
+    return bool(re.search(r"[_.]|[a-z][A-Z]", token))
+
+
+def resolve(token: str, index: Index, context: str | None) -> tuple[str, str] | None:
+    """``(full name, module file)`` of a name, preferring the module named in the context."""
+    hits = index.get(token)
+    if not hits:
+        return None
+    for name, module in hits:
+        if context and module.replace(".", "/") + ".lean" == context:
+            return name, module
+    exact = [h for h in hits if h[0] == token]
+    name, module = (exact or hits)[0]
+    return name, module
+
+
+def render_lean(text: str, root: Path, index: Index, tally: Tally) -> str:
+    """Link existing ``.lean`` paths and resolved names; mark the other names."""
+    out: list[str] = []
+    context: str | None = None
+    pos = 0
+    for m in [*_PATH.finditer(text), None]:
+        end = m.start() if m else len(text)
+        chunk = text[pos:end]
+
+        def repl(t: re.Match[str], ctx: str | None = context) -> str:
+            token = t.group(0)
+            if not is_candidate(token):
+                return token
+            hit = resolve(token, index, ctx)
+            if hit is None:
+                tally.unresolved += 1
+                return f"`{token}` {NOT_IN_LIBRARY}"
+            tally.resolved += 1
+            return f"[`{token}`](../{hit[1].replace('.', '/')}.lean)"
+
+        out.append(_TOKEN.sub(repl, chunk))
+        if m:
+            rel = m.group(0)
+            full = rel if rel.startswith("LeanDLRA/") else "LeanDLRA/" + rel
+            context = full
+            out.append(
+                f"[`{rel}`](../{full})" if (root / full).exists() else f"`{rel}`"
+            )
+            pos = m.end()
+    return "".join(out)
+
+
+def render(root: Path, index: Index) -> tuple[str, Tally]:
+    """The page, as text, and the counts of its Lean names."""
+    tally = Tally()
     problems: list[dict[str, Any]] = load_json(root, "docs/survey/open-problems.json")
     synthesis: dict[str, Any] = load_json(root, "docs/survey/synthesis.json")
     titles: dict[str, str] = {o["key"]: o["category_title"] for o in synthesis["open"]}
@@ -207,7 +306,12 @@ def render(root: Path = ROOT) -> str:
         )
         for p in items:
             src = ", ".join(dict.fromkeys(cite(s["paper"], keys) for s in p["sources"]))
-            lean = linkify(p.get("lean_ref") or "", root).replace("|", "\\|")
+            before = tally.resolved
+            lean = render_lean(
+                (p.get("lean_ref") or "").replace("`", ""), root, index, tally
+            ).replace("|", "\\|")
+            if status(p) == "proved" and tally.resolved == before:
+                tally.proved_without_name.append(p["id"])
             mods = ", ".join(
                 f"[`{Path(m).name}`](../{m})" for m in modules.get(p["id"], [])
             )
@@ -227,24 +331,47 @@ def render(root: Path = ROOT) -> str:
         for rel, item in items:
             out.append(f"* [`{rel.removeprefix('LeanDLRA/')}`](../{rel}): {item}")
         out.append("")
-    return "\n".join(out).rstrip("\n") + "\n"
+    return "\n".join(out).rstrip("\n") + "\n", tally
 
 
 class Cli:
-    """Command line entry points."""
+    """Command line entry points; ``dump`` is the rolling dump (default: that of the main checkout)."""
 
-    def write(self) -> None:
+    @staticmethod
+    def _build(dump: str | None) -> tuple[str, Tally]:
+        return render(ROOT, load_index(Path(dump) if dump else default_dump()))
+
+    @staticmethod
+    def _report(tally: Tally) -> None:
+        print(
+            f"lean names: {tally.resolved} resolved, {tally.unresolved} unresolved; "
+            f"proved rows without a resolved name: {len(tally.proved_without_name)}"
+        )
+
+    def write(self, dump: str | None = None) -> None:
         """Write ``docs/OPEN_PROBLEMS.md``."""
-        text = render()
+        text, tally = self._build(dump)
         PAGE.write_text(text, encoding="utf-8")
         print(f"wrote {PAGE.relative_to(ROOT)} ({len(text.splitlines())} lines)")
+        self._report(tally)
 
-    def check(self) -> None:
-        """Exit with status 1 if the page differs from what the sources produce."""
-        if not PAGE.exists() or PAGE.read_text(encoding="utf-8") != render():
+    def check(self, dump: str | None = None) -> None:
+        """Exit 1 if the page is out of date or a proved row has no resolved Lean name."""
+        text, tally = self._build(dump)
+        self._report(tally)
+        failed = False
+        if tally.proved_without_name:
+            print(
+                "proved without a resolved name: "
+                + ", ".join(tally.proved_without_name)
+            )
+            failed = True
+        if not PAGE.exists() or PAGE.read_text(encoding="utf-8") != text:
             print(
                 "docs/OPEN_PROBLEMS.md is out of date: run make docs", file=sys.stderr
             )
+            failed = True
+        if failed:
             sys.exit(1)
         print("docs/OPEN_PROBLEMS.md is up to date")
 

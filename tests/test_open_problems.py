@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import open_problems as op
+import pytest
 
 BIB = """@article{AliceBob2020,
   eprint = {2001.00001},
@@ -66,7 +67,7 @@ def make_repo(root: Path) -> None:
 
     problems = [
         rec(1, "open", "building blocks: LeanDLRA/A/B.lean foo"),
-        rec(2, "resolved in LeanDLRA", "A/B.lean: bar"),
+        rec(2, "resolved in LeanDLRA", "A/B.lean: bar_baz"),
         rec(3, "partially addressed", None),
     ]
     (root / "docs" / "survey" / "open-problems.json").write_text(json.dumps(problems))
@@ -76,9 +77,40 @@ def make_repo(root: Path) -> None:
     )
 
 
+INDEX: op.Index = {
+    "foo": [("LeanDLRA.A.foo", "LeanDLRA.A.B")],
+    "A.foo": [("LeanDLRA.A.foo", "LeanDLRA.A.B")],
+    "LeanDLRA.A.foo": [("LeanDLRA.A.foo", "LeanDLRA.A.B")],
+    "bar_baz": [("LeanDLRA.A.bar_baz", "LeanDLRA.A.B")],
+}
+
+
+def test_resolve_and_render_lean(tmp_path: Path) -> None:
+    make_repo(tmp_path)
+    assert op.resolve("bar_baz", INDEX, None) == ("LeanDLRA.A.bar_baz", "LeanDLRA.A.B")
+    assert op.resolve("nope_x", INDEX, None) is None
+    assert op.is_candidate("bar_baz") and not op.is_candidate("blocks")
+    assert not op.is_candidate("t1") and not op.is_candidate("e.g")
+    tally = op.Tally()
+    text = op.render_lean(
+        "A/B.lean: bar_baz, ghost_lemma (one case)", tmp_path, INDEX, tally
+    )
+    assert "[`bar_baz`](../LeanDLRA/A/B.lean)" in text
+    assert "`ghost_lemma` (not in the library)" in text
+    assert (tally.resolved, tally.unresolved) == (1, 1)
+
+
+def test_proved_without_resolved_name(tmp_path: Path) -> None:
+    make_repo(tmp_path)
+    _, tally = op.render(tmp_path, {})
+    assert tally.proved_without_name == ["OP-XX-02"]
+    _, tally = op.render(tmp_path, INDEX)
+    assert tally.proved_without_name == []
+
+
 def test_render(tmp_path: Path) -> None:
     make_repo(tmp_path)
-    page = op.render(tmp_path)
+    page = op.render(tmp_path, INDEX)[0]
     assert "1 proved, 1 partly addressed, 1 open" in page
     assert "| [xx](#xx) | 3 | 1 | 1 | 1 | 2 |" in page
     rows = [ln for ln in page.splitlines() if ln.startswith("| OP-XX")]
@@ -91,8 +123,13 @@ def test_render(tmp_path: Path) -> None:
     assert "[`A/B.lean`](../LeanDLRA/A/B.lean)" in rows[0]
     assert "modules: [`M.lean`](../LeanDLRA/OpenProblems/M.lean)" in rows[2]
     assert "* [`A/B.lean`](../LeanDLRA/A/B.lean): do it" in page
-    assert op.render(tmp_path) == page
+    assert op.render(tmp_path, INDEX)[0] == page
 
 
 def test_committed_page_is_current() -> None:
-    assert op.PAGE.read_text(encoding="utf-8") == op.render()
+    dump = op.default_dump()
+    if not dump.exists():
+        pytest.skip("no rolling dump")
+    text, tally = op.render(op.ROOT, op.load_index(dump))
+    assert op.PAGE.read_text(encoding="utf-8") == text
+    assert not tally.proved_without_name
