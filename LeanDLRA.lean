@@ -35,6 +35,7 @@ import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Integrators.GlobalError
 import LeanDLRA.Integrators.InexactSubsteps
 import LeanDLRA.Integrators.KStep
+import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
 import LeanDLRA.Integrators.Matrix.BUG
 import LeanDLRA.Integrators.Matrix.BUGRun
 import LeanDLRA.Integrators.Matrix.BUGStep
@@ -50,6 +51,7 @@ import LeanDLRA.Integrators.Matrix.ParallelBUGRun
 import LeanDLRA.Integrators.Matrix.ParallelBUGStep
 import LeanDLRA.Integrators.Matrix.ProjectorSplitting
 import LeanDLRA.Integrators.Matrix.Symmetry
+import LeanDLRA.Integrators.Matrix.TruncBUGRun
 import LeanDLRA.Integrators.Method
 import LeanDLRA.Integrators.MethodGrid
 import LeanDLRA.Integrators.MethodTolerance
@@ -59,6 +61,7 @@ import LeanDLRA.Integrators.ProjectorSplitting
 import LeanDLRA.Integrators.RankAdaptiveBUG
 import LeanDLRA.Integrators.Tube
 import LeanDLRA.Integrators.TuckerBUG
+import LeanDLRA.Integrators.TuckerBUGCore
 import LeanDLRA.Kinetic.Defs
 import LeanDLRA.Kinetic.LowRank
 import LeanDLRA.Kinetic.Stencils
