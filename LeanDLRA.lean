@@ -125,5 +125,6 @@ import LeanDLRA.Tensor.Unfolding
 import LeanDLRA.Training.Defs
 import LeanDLRA.Training.Descent
 import LeanDLRA.Training.FactorizedDynamics
+import LeanDLRA.Training.FederatedDescent
 import LeanDLRA.Training.GradientFlowConvergence
 import LeanDLRA.Training.InexactGradient
