@@ -306,9 +306,11 @@ view=""
 view_owned=" " # the modules that the view replaces, as paths
 view_open() { # $1: a folder of modules relative to the view, e.g. LeanDLRA/Integrators
   local rel="$1" parent e
-  if [ -d "$view/$rel" ] && [ ! -L "$view/$rel" ]; then return 0; fi
+  # The parents first: a folder below a link into the installed library is itself a real folder
+  # of the library (`-d` holds, `-L` does not), but it is not a folder of the view.
   parent="$(dirname "$rel")"
   [ "$parent" = "." ] || view_open "$parent"
+  if [ -d "$view/$rel" ] && [ ! -L "$view/$rel" ]; then return 0; fi
   rm -f "$view/$rel"
   mkdir "$view/$rel"
   if [ -d "$LIB/$rel" ]; then
@@ -339,7 +341,12 @@ view_add() { # $1: a module as a path, $2: the folder with its compiled files
   for e in "$view/$rel".*; do [ -L "$e" ] && rm -f "$e"; done
   view_owned="$view_owned$rel "
   for e in "$from/$rel".*; do
-    [ -e "$e" ] && ln -s "$e" "$view/$dir/$(basename "$e")"
+    [ -e "$e" ] || continue
+    # A link that cannot be made would leave the installed file in the view: stop, do not mix.
+    ln -s "$e" "$view/$dir/$(basename "$e")" || {
+      echo "fc: cannot put $(basename "$e") into the view of the prerequisites; not checked"
+      exit 2
+    }
   done
   return 0
 }

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Axiom audit: builds the given targets, then checks that every constant of their `LeanDLRA` modules
-# (private and generated ones included, whatever their namespace) depends only on propext,
-# Classical.choice, Quot.sound, and that no source file contains placeholders.
+# Axiom audit: warns about private names defined in two modules, builds the given targets,
+# then checks that every constant of their `LeanDLRA` modules (private and generated ones
+# included, whatever their namespace) depends only on propext, Classical.choice, Quot.sound,
+# and that no source file contains placeholders.
 #
 #   scripts/audit.sh                      the core library (target LeanDLRA)
 #   scripts/audit.sh LeanDLRACatalogue    everything: the core and the catalogue
@@ -20,6 +21,9 @@ done
 if grep -rnE '\bsorry\b|\bsorryAx\b|\badmit\b|^\s*(@\[[^]]*\]\s*)?((private|protected|noncomputable|scoped|local)\s+)*axiom\b|native_decide|implemented_by|\bextern\b|\bunsafe\b|debug\.skipKernelTC|\bdecide\s*:=\s*true' LeanDLRA; then
   echo "AUDIT FAIL: placeholder or custom axiom in sources"; exit 1
 fi
+# A private name defined in two modules makes the rolling record ambiguous (`_priv.<name>` has no
+# module): a warning, not a failure (scripts/private_dups.py).
+uv run -q scripts/private_dups.py LeanDLRA || echo "AUDIT WARN: scripts/private_dups.py did not run"
 lake build "$@" || { echo "AUDIT FAIL: build"; exit 1; }
 mkdir -p .lake/check
 {

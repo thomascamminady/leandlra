@@ -144,7 +144,11 @@ def repo(tmp_path: Path) -> Repo:
     (root / ".lake" / "build" / "lib" / "lean").mkdir(parents=True)
     (root / ".lake" / "build" / "marker").write_text("x")
     for name in ("fc", "warm.sh"):
-        shutil.copy(SCRIPTS / name, root / "scripts" / name)
+        # A copy of a script next to this test (a replacement under review) comes first.
+        shutil.copy(
+            next(d / name for d in (HERE, SCRIPTS) if (d / name).exists()),
+            root / "scripts" / name,
+        )
     (root / "scripts" / "axiom_check.lean").write_text("#eval axiomCheck\n")
     (root / "lakefile.toml").write_text(LAKEFILE)
     (root / "lean-toolchain").write_text("leanprover/lean4:test\n")
@@ -845,3 +849,32 @@ def test_lock_taken_away_is_said_and_no_further_lean_starts(repo: Repo) -> None:
     res = repo.run("fc", "A.lean")
     assert "LOCK LOST [A.lean]" in res.stderr
     assert (lock_of(repo) / "owner").read_text() == "1\n"
+
+
+def test_with_two_prerequisites_in_different_folder_trees(repo: Repo) -> None:
+    """Two installed modules are replaced, in folders that the view first shows as links into
+    the library (``LeanDLRA/Tensor`` is a link when ``LeanDLRA/Tensor/TT`` is opened): the
+    second link used to fail with "File exists" and the installed text of the module stayed."""
+    lib = repo.root / ".lake" / "build" / "lib" / "lean" / "LeanDLRA"
+    for rel in ("OpenProblems/TensorNetworks/Old.olean", "Tensor/TT/Basic.olean"):
+        (lib / rel).parent.mkdir(parents=True, exist_ok=True)
+        (lib / rel).write_text("installed")
+    (lib / "Tensor" / "Other.olean").write_text("other")
+    (lib / "Tensor" / "TT" / "Rest.olean").write_text("rest")
+    a = new_slice(repo, "SliceA", "LeanDLRA/OpenProblems/TensorNetworks/Old.lean", [])
+    b = new_slice(repo, "SliceB", "LeanDLRA/Tensor/TT/Basic.lean", [])
+    (repo.root / "A.lean").write_text(
+        "import LeanDLRA.OpenProblems.TensorNetworks.Old\nimport LeanDLRA.Tensor.TT.Basic\n"
+    )
+    for order in ((a, b), (b, a)):
+        res = repo.run("fc", "--with", order[0], "--with", order[1], "A.lean")
+        assert res.returncode == 0, res.stdout + res.stderr
+        assert "File exists" not in res.stdout + res.stderr
+        view = repo.views()[-1]
+        assert (
+            view["LeanDLRA/OpenProblems/TensorNetworks/Old.olean"][0] == "olean of Old"
+        )
+        assert view["LeanDLRA/Tensor/TT/Basic.olean"][0] == "olean of Basic"
+        # What is not replaced stays visible.
+        assert view["LeanDLRA/Tensor/Other.olean"][0] == "other"
+        assert view["LeanDLRA/Tensor/TT/Rest.olean"][0] == "rest"
