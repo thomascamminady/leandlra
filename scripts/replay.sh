@@ -6,10 +6,13 @@
 #                                      LeanDLRA.lean); use "" as commit for the whole core
 set -euo pipefail
 cd "$(dirname "$0")/.."
-# leanchecker overflows the default 8 MB stack of the Linux runners on some modules (exit 139
-# on FixedRank.TangentSpace since 2026-11-10). Raise the soft limit to 1 GiB, or to the hard
-# limit where that is lower (macOS: 64 MiB); threads created by glibc inherit it.
-ulimit -s 1048576 2>/dev/null || ulimit -s "$(ulimit -Hs)" 2>/dev/null || true
+# `leanchecker M` replays every module whose name has M as a prefix, one task each, in one process.
+# After one task has freed the .olean regions of its imports, the toolchain's findOLean cache can
+# still hold a module name stored in them, and the next import reads it from unmapped memory
+# (SIGSEGV, exit 139, on the Linux runners). A module whose name is a prefix of another module's
+# name is therefore replayed alone by scripts/replay_module.lean (leanchecker's code, one module).
+all_modules=$(git ls-files 'LeanDLRA/*.lean' 'LeanDLRA/**/*.lean' \
+  | sed 's/\.lean$//; s/^/@/' | tr '/' '.')
 base="${1:-}"
 scope="${2:-all}"
 case "$scope" in
@@ -28,7 +31,11 @@ for f in $files; do
     continue
   fi
   echo "replaying $module"
-  lake env leanchecker "$module"
+  if grep -qF -- "@$module." <<<"$all_modules"; then
+    lake env lean --run scripts/replay_module.lean "$module"
+  else
+    lake env leanchecker "$module"
+  fi
   count=$((count + 1))
 done
 echo "kernel replay OK: $count modules ($scope)"
