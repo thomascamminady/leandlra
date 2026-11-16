@@ -119,6 +119,8 @@ import LeanDLRA.Research.FederatedConvexThreshold
 import LeanDLRA.Research.FederatedDescentThreshold
 import LeanDLRA.Research.FederatedTwoSteps
 import LeanDLRA.Research.IntegratorErrorOrder
+import LeanDLRA.Research.PerturbedSylvester
+import LeanDLRA.Research.RankOneGalerkinBarrier
 import LeanDLRA.Research.SameMinibatchAugmentation
 import LeanDLRA.Research.StiffEnergyGalerkin
 import LeanDLRA.Research.StiffGlobalCycle
