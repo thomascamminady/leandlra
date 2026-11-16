@@ -68,8 +68,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          base=$(gh run list --workflow lean_action_ci.yml --branch main --status success \
-            --limit 1 --json headSha -q '.[0].headSha')
+          # Since the last green run of this branch if it is staging (the gate pushes there when
+          # staging is on, and main then moves without runs of its own), else of main.
+          last() {
+            gh run list --workflow lean_action_ci.yml --branch "$1" --status success \
+              --limit 1 --json headSha -q '.[0].headSha'
+          }
+          base=""
+          if [ "$GITHUB_REF_NAME" = staging ]; then base=$(last staging); fi
+          if [ -z "$base" ]; then base=$(last main); fi
           scripts/replay.sh "$base" core
       - name: Python scripts (ruff, ty, tests)
         run: make lint-py test-py

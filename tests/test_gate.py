@@ -326,3 +326,10 @@ def test_module_names() -> None:
     assert gate.module_name("LeanDLRA/Literature/A.lean") == "LeanDLRA.Literature.A"
     assert gate.module_path("LeanDLRA.Literature.A") == "LeanDLRA/Literature/A.lean"
     assert gate.key("A.lean") == "A"
+
+
+@pytest.mark.parametrize("branch", ["", "a b", "-x", "x.lock", "x..y/", "x:y"])
+def test_push_branch_must_be_a_branch_name(branch: str) -> None:
+    with pytest.raises(SystemExit) as done:
+        gate.main(push_branch=branch, dry_run=True)
+    assert done.value.code == 2

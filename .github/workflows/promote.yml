@@ -1,0 +1,70 @@
+name: Promote staging
+
+# Staging (off until the repository variable STAGING_PROMOTE is 1, and inert while no branch
+# `staging` exists): the gate pushes its rounds to `staging` (`scripts/gate.py
+# --push-branch=staging`), Lean Action CI builds them there, and this workflow fast-forwards `main`
+# to each `staging` commit on which Lean Action CI finished green. So `main` only ever points to a
+# commit with a green core workflow; a red `staging` holds back `main` and nothing else (the gate
+# goes on pushing to `staging`, and the next green commit takes `main` past the red ones).
+#
+# The push is a plain fast-forward: if `main` has a commit that `staging` lacks (a push to `main`
+# that did not come from here), it is refused and this workflow fails until `staging` contains
+# `main` again. A push with the token of a workflow starts no workflow, so the workflows of `main`
+# that a push would start are started here.
+on:
+  workflow_run:
+    workflows: ["Lean Action CI"]
+    types: [completed]
+    branches: [staging]
+
+permissions:
+  contents: write
+  actions: write
+
+# One promotion at a time, in order; an older commit that `main` contains already is skipped.
+concurrency:
+  group: promote-staging
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: >-
+      vars.STAGING_PROMOTE == '1'
+      && github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push'
+      && github.event.workflow_run.head_branch == 'staging'
+      && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Fast-forward main to the green staging commit
+        id: forward
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          git fetch -q origin main staging
+          if git merge-base --is-ancestor "$SHA" origin/main; then
+            echo "main contains $SHA already"
+            echo "moved=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! git merge-base --is-ancestor origin/main "$SHA"; then
+            echo "::error::main ($(git rev-parse --short origin/main)) is not an ancestor of $SHA:" \
+              "main has commits that staging lacks; merge main into staging (see the run log)"
+            git log --oneline "$SHA..origin/main" | head -20
+            exit 1
+          fi
+          git push origin "$SHA:refs/heads/main"
+          echo "main fast-forwarded to $SHA"
+          echo "moved=true" >> "$GITHUB_OUTPUT"
+      - name: Start the workflows of main
+        if: steps.forward.outputs.moved == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for workflow in catalogue.yml apidocs.yml pages.yml; do
+            gh workflow run "$workflow" --ref main
+          done

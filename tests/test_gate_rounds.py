@@ -215,7 +215,7 @@ class World:
                 self.ratchet_code,
                 "RATCHET duplicates: 4, more than the 3 of the baseline\n",
             )
-        if cmd == gate.PUSH:
+        if cmd[:4] == gate.PUSH[:4]:  # a push, to main or to staging
             return (
                 self.push_code,
                 "" if self.push_code == 0 else "fatal: no route to host",
@@ -270,9 +270,10 @@ class World:
         legacy_max: int = 6,
         grace: float = 0.0,
         ratchets: bool = False,
+        push_branch: str = "main",
     ) -> int:
         """One pass of the gate over the queue (as `gate.py --once`, until the queue is empty)."""
-        runner = gate.Gate(self.root, self, ratchets=ratchets)
+        runner = gate.Gate(self.root, self, ratchets=ratchets, push_branch=push_branch)
         return runner.loop(batch, True, legacy_max, grace)
 
 
@@ -1201,6 +1202,7 @@ def test_dry_run_prints_the_round_and_changes_nothing(
         "group legacy: 1 file(s), 0 rename(s), expect_changed=None, promote=[]",
         f"  L1 -> {LIT}/L1.lean (add)",
         "commit: Add 4 slices (A, B, D, L1)",
+        "push: HEAD to main",
         "left in the queue: 2 slice file(s)",
     ]
     assert snapshot(world.root) == before
@@ -1272,3 +1274,30 @@ def test_ratchet_that_cannot_run_stops_the_gate(world: World) -> None:
     assert world.run_gate(ratchets=True) == 1
     assert world.commands(*gate.PUSH) == []
     assert any("STOP: ratchet could not run" in line for line in world.log())
+
+
+# -- staging --------------------------------------------------------------------------------------
+
+
+def test_round_pushed_to_staging(world: World) -> None:
+    world.group("g1", ["A"])
+    assert world.run_gate(push_branch="staging") == 0
+    staging = ("git", "push", "-q", gate.REMOTE, "HEAD:staging")
+    assert gate.push_command("staging") == staging
+    assert world.commands("git", "push") == [staging]
+    log = [line[9:] for line in world.log()]
+    assert log[0] == "gate started (pushes to staging)"
+    assert log[-1] == "PUSHED Add 1 slice (A)"  # the line agents wait for is the same
+    assert world.folder("done") == ["A.lean", "g1.group"]
+
+
+def test_failed_push_to_staging_stops_and_recovery_pushes_there(world: World) -> None:
+    world.group("g1", ["A"])
+    world.push_code = 1
+    assert world.run_gate(push_branch="staging") == 1
+    assert (world.root / "wip/gate.round.json").exists()
+    world.push_code = 0
+    assert world.run_gate(push_branch="staging") == 0
+    pushes = world.commands("git", "push")
+    assert pushes == [gate.push_command("staging")] * 2
+    assert world.lines("PUSHED") == ["PUSHED Add 1 slice (A)"]

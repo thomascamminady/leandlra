@@ -18,7 +18,9 @@ a marker ``<id>.group`` that names them.  A round takes whole groups in the orde
    on the core modules and the slices; with ``AUDIT_RATCHETS=1`` in its environment the gate also
    runs the ratchets of ``scripts/core_checks.py`` (the audit those on the sources, the round the
    one on duplicate statements, after its dump);
-4. commits exactly its own files and pushes.
+4. commits exactly its own files and pushes them to ``main`` (with ``--push-branch=staging`` to
+   ``staging``, from which ``.github/workflows/promote.yml`` fast-forwards ``main`` when Lean Action
+   CI is green on a commit).
 
 A failure in 1 rejects the group of the failing slice (a legacy slice alone) and the round goes on.
 A failure in 2-3 restores the tree; a round of several groups is then repeated group by group, so
@@ -52,7 +54,18 @@ FORBIDDEN = re.compile(
     r"|\bextern\b|\bunsafe\b|debug\.skipKernelTC|\bdecide\s*:=\s*true",
     re.MULTILINE,
 )
-PUSH = ("git", "push", "-q", "git@github.com:thomascamminady/leandlra.git", "HEAD:main")
+REMOTE = "git@github.com:thomascamminady/leandlra.git"
+# A branch name for `--push-branch` (`main`, or `staging`: then `.github/workflows/promote.yml`
+# fast-forwards `main` to each `staging` commit on which Lean Action CI is green).
+BRANCH = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)*")
+
+
+def push_command(branch: str) -> tuple[str, ...]:
+    """The push of a round to a branch of GitHub (always a fast-forward: no force)."""
+    return ("git", "push", "-q", REMOTE, f"HEAD:{branch}")
+
+
+PUSH = push_command("main")
 ROOTS = ("LeanDLRA.lean", "LeanDLRACatalogue.lean")
 # The core build: with `--wfail`, so a core module that a slice of the round makes warn fails too.
 CORE_BUILD = ("lake", "build", "--wfail", "LeanDLRA")
@@ -381,9 +394,16 @@ class Gate:
     """The gate on one repository; every command goes through ``run`` (a fake one in the tests)."""
 
     def __init__(
-        self, root: Path, run: Run, dry: bool = False, ratchets: bool | None = None
+        self,
+        root: Path,
+        run: Run,
+        dry: bool = False,
+        ratchets: bool | None = None,
+        push_branch: str = "main",
     ) -> None:
         self.root, self.run, self.dry = root, run, dry
+        self.push_branch = push_branch
+        self.push = push_command(push_branch)
         if ratchets is None:
             ratchets = os.environ.get("AUDIT_RATCHETS") == "1"
         self.ratchets = ratchets
@@ -852,7 +872,7 @@ class Gate:
 
     def publish(self, journal: dict[str, Any]) -> bool:
         """Push a committed round and close it; False if the gate must stop.  Safe to repeat."""
-        code, out = self.run(*PUSH)
+        code, out = self.run(*self.push)
         if code != 0:
             self.log(f"STOP: push failed {out[-800:]}")
             return False
@@ -943,13 +963,15 @@ class Gate:
             return
         updated = all(self.tracked(table[key(f)]["target"]) for f in names)
         print(f"commit: {commit_title([key(f) for f in names], updated)}")
+        print(f"push: HEAD to {self.push_branch}")
         queued, _ = self.scan()
         print(f"left in the queue: {len(queued) - len(names)} slice file(s)")
 
     def loop(self, batch: int, once: bool, legacy_max: int, grace: float) -> int:
         """Process `wip/ready/` forever (or one round with ``once``); the exit status."""
         self.ready.mkdir(parents=True, exist_ok=True)
-        self.log("gate started")
+        to = "" if self.push_branch == "main" else f" (pushes to {self.push_branch})"
+        self.log(f"gate started{to}")
         problem = None if self.recover() else "recovery failed"
         problem = problem or self.preflight()
         while problem is None:
@@ -986,6 +1008,7 @@ def main(
     legacy_max: int = 6,
     grace: int = 120,
     root: str = "",
+    push_branch: str = "main",
 ) -> None:
     """Process `wip/ready/` forever (or one round with `--once`).
 
@@ -993,9 +1016,15 @@ def main(
     ``--legacy-max`` the largest number of slices without a marker taken per round, ``--grace`` the
     age in seconds from which such a slice is taken.  ``--dry-run`` prints the next round and
     changes nothing.  ``--root`` is the repository (default: the parent of this script's folder).
+    ``--push-branch`` is the branch of GitHub that a round is pushed to (default ``main``); with
+    ``staging``, ``main`` follows by the workflow ``promote.yml`` once CI is green on a commit.
     """
+    push_branch = str(push_branch)  # fire reads a number as a number
+    if not BRANCH.fullmatch(push_branch) or push_branch.endswith((".lock", ".")):
+        print(f"gate: --push-branch: not a branch name: {push_branch}", file=sys.stderr)
+        sys.exit(2)
     base = Path(root).resolve() if root else ROOT
-    gate = Gate(base, shell(base), dry=dry_run)
+    gate = Gate(base, shell(base), dry=dry_run, push_branch=push_branch)
     if dry_run:
         gate.plan(batch, legacy_max, grace)
         return
