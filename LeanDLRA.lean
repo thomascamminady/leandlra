@@ -116,6 +116,7 @@ import LeanDLRA.Research.FederatedConvexThreshold
 import LeanDLRA.Research.FederatedDescentThreshold
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.SameMinibatchAugmentation
+import LeanDLRA.Research.StiffEnergyGalerkin
 import LeanDLRA.Research.StiffGlobalCycle
 import LeanDLRA.Research.StiffGlobalVariation
 import LeanDLRA.Research.StiffOrderReduction
