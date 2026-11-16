@@ -16,6 +16,7 @@ import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.Filtering.Defs
 import LeanDLRA.FixedRank.Defs
 import LeanDLRA.FixedRank.TangentSpace
+import LeanDLRA.FixedRank.TangentSpace.Curvature
 import LeanDLRA.FixedRank.TangentSpace.Defs
 import LeanDLRA.Foundations.ConjugatedField
 import LeanDLRA.Foundations.Existence
@@ -78,6 +79,7 @@ import LeanDLRA.LinearAlgebra.LowRank.Defs
 import LeanDLRA.LinearAlgebra.LowRank.SepRank
 import LeanDLRA.LinearAlgebra.Projection.Defs
 import LeanDLRA.LinearAlgebra.SVD.Defs
+import LeanDLRA.LinearAlgebra.SVD.MinMax
 import LeanDLRA.Literature.Applications.P2503_18271a
 import LeanDLRA.Literature.Applications.P2508_04484a
 import LeanDLRA.Literature.Randomized.P2402_18721a
