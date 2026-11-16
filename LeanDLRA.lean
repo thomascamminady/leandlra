@@ -25,6 +25,7 @@ import LeanDLRA.Foundations.ODE
 import LeanDLRA.Foundations.OneSided
 import LeanDLRA.Foundations.Projector
 import LeanDLRA.HighOrder.MidpointBUG
+import LeanDLRA.HighOrder.MidpointBUGGlobal
 import LeanDLRA.HighOrder.RungeKuttaBUG
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.BUGCore

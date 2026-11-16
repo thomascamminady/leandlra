@@ -56,10 +56,10 @@ trapezoidal variant (arXiv 2402.08607, Remark 2), in the abstract projector fram
 ## What is not claimed
 
 Endpoint-only interior bounds for order `p ≥ 4` (OP-HO-11 (b)) are not claimed here.
-Still open: the global midpoint-BUG bound `midpointBUG_global_error` (it needs
-the `C²`-to-`M₃` derivative bound `ODESolution.norm_iteratedDerivWithin_three_le`, OP-HO-03 for
-`k = 2`, and a fan argument with a non-`h g` truncation term); a bundled trapezoidal BUG step;
-and the Tucker versions (arXiv 2610.11747, Lemmas 3.4 and 3.7 with mode projectors).
+The global second-order error bound with explicit constants, for `F` of class `C²` with bounded
+first and second derivatives, is `midpointBUG_global_error_le` in
+`LeanDLRA.HighOrder.MidpointBUGGlobal`. Still open: a bundled trapezoidal BUG step, and the
+Tucker versions (arXiv 2610.11747, Lemmas 3.4 and 3.7 with mode projectors).
 -/
 
 open Set LeanDLRA
