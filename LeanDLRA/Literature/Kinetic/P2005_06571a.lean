@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Defs
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
 
@@ -10,13 +11,13 @@ method for the multi-scale multi-dimensional linear transport equation* (read in
 macro-micro system (3.3), (3.4) is discretized on arbitrary finite nodes: `Model` holds the weights
 of `⟨·, ·⟩ₓ` and of the quadrature (3.46), the discrete gradient and divergence, and arbitrary
 linear transport operators, so it covers the fully discrete scheme of Sec. 3.5, while the continuum
-`L²(Ω)`, `L²(𝕊²)` of Sec. 3 is replaced by finite nodes.  `IsStep` is the scheme (3.15)-(3.20) and
-its reorderings of Sec. 3.3, in which a QR factorization may be any factorization with orthonormal
-factor; `IsStep2` is the second order scheme of Sec. 3.4.  The paper's limits are formal (`ε = 0`
-in the equations).  Here they are true limits as `ε → 0` along any filter, of the scheme itself,
-with data that may depend on `ε`: **Prop. 3.1** is `prop_3_1_step` (one step) and `prop_3_1` (all
-steps), with the limit of rank at most three in `rank_gLim_le`; **Sec. 3.3** is the same two
-theorems for `K-S-L`, `S-K-L`, and `sec_3_3_step`, `sec_3_3` for `L-K-S`, `L-S-K`, `S-L-K`;
+`L²(Ω)`, `L²(𝕊²)` of Sec. 3 is replaced by finite nodes.  `IsMicroMacroStep` is the scheme
+(3.15)-(3.20) and its reorderings of Sec. 3.3, in which a QR factorization may be any factorization
+with orthonormal factor; `IsStep2` is the second order scheme of Sec. 3.4.  The paper's limits are
+formal (`ε = 0` in the equations).  Here they are true limits as `ε → 0` along any filter, of the
+scheme itself, with data that may depend on `ε`: **Prop. 3.1** is `prop_3_1_step` (one step) and
+`prop_3_1` (all steps), with the limit of rank at most three in `rank_gLim_le`; **Sec. 3.3** is the
+same two theorems for `K-S-L`, `S-K-L`, and `sec_3_3_step`, `sec_3_3` for `L-K-S`, `L-S-K`, `S-L-K`;
 **Sec. 3.4** is `sec_3_4` with (3.43), (3.44), and `sec_3_4_recursion` for (3.45); **Sec. 3.5.3** is
 `sec_3_5_3`, on the staggered grid, for (3.57) and (3.58), at vertices and cell centers; **Sec. 4**
 is `sec_4_mode_ode` for (4.4), `sec_4_band_limited` for (4.5) and `sec_4_rank_le`, for classical
@@ -529,8 +530,9 @@ structure Model (I J W ι : Type*) where
 variable {I J W ι r : Type*} [Fintype I] [Fintype J] [Fintype W] [Fintype ι] [Fintype r]
   [DecidableEq I] [DecidableEq W] [DecidableEq r] [DecidableEq ι]
 
-/-- The assumptions of the paper that the limit uses: positive weights, `σ^S > 0`, and the moments
-`(4π)⁻¹ ⟨v ⊗ v⟩ᵥ = I / 3` of (2.5).  Neither `σ^A ≥ 0` nor any property of the `T`s is needed. -/
+/-- The standing assumptions of the paper that the limit uses: positive weights, `σ^S > 0`, and the
+moments `(4π)⁻¹ ⟨v ⊗ v⟩ᵥ = I / 3` of (2.5).  Neither `σ^A ≥ 0` nor any property of the `T`s is
+needed. -/
 structure Model.Admissible (M : Model I J W ι) : Prop where
   ωx_pos : ∀ x, 0 < M.ωx x
   ωv_pos : ∀ w, 0 < M.ωv w
@@ -562,6 +564,12 @@ noncomputable def gLim (ρ : J → ℝ) : Matrix I W ℝ :=
 
 /-- The moment `⟨v_m g⟩ᵥ`. -/
 def moment (g : Matrix I W ℝ) (m : ι) : I → ℝ := fun x => ∑ w, M.ωv w * M.vel m w * g x w
+
+/-- The moment `⟨v_m g⟩ᵥ` is the core quadrature moment with the weights `ωᵥ` and the velocity
+component `v_m` as test function. -/
+theorem moment_eq_quadMoment (g : Matrix I W ℝ) (m : ι) :
+    M.moment g m = Kinetic.quadMoment M.ωv (M.vel m) g :=
+  rfl
 
 /-- `∇ₓ · ⟨v g⟩ᵥ`. -/
 def divFlux (g : Matrix I W ℝ) : J → ℝ := ∑ m, M.dvg m (M.moment g m)
@@ -1000,7 +1008,7 @@ def IsMicro (o : Order) (dt ε : ℝ) (Φ : Matrix I W ℝ) (X : Matrix I r ℝ)
 
 /-- One step of the first order scheme: the substeps, in the given order, with `ρⁿ` frozen, then
 the `ρ`-step (3.20).  For `o = .KLS` this is the `K`-`L`-`S`-`ρ` scheme (3.15)-(3.20). -/
-structure IsStep (o : Order) (dt ε : ℝ) (ρ : J → ℝ) (X : Matrix I r ℝ) (S : Matrix r r ℝ)
+structure IsMicroMacroStep (o : Order) (dt ε : ℝ) (ρ : J → ℝ) (X : Matrix I r ℝ) (S : Matrix r r ℝ)
     (V : Matrix W r ℝ) (ρ₁ : J → ℝ) (X₁ : Matrix I r ℝ) (S₁ : Matrix r r ℝ)
     (V₁ : Matrix W r ℝ) : Prop where
   hX : X.transpose * M.Wx * X = 1
@@ -1389,7 +1397,8 @@ private theorem micro_kFirst {o : Order} (ho : o = .KLS ∨ o = .KSL ∨ o = .SK
     (hGb : Bd l fun a => M.Gh (ρ a))
     (hdef : Tendsto (fun a => ‖M.Gh (ρ a) - rightProj (M.Vh (V a)) (M.Gh (ρ a))‖) l (𝓝 0))
     (hu₀ : Bd l fun a => M.liftS (X a) (V a) (S a))
-    (h : ∀ᶠ a in l, M.IsStep o dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a) (V₁ a)) :
+    (h : ∀ᶠ a in l, M.IsMicroMacroStep o dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a)
+      (V₁ a)) :
     MicroConv l M ρ X₁ S₁ V₁ := by
   obtain ⟨σ₀, σ₁, h0, hlow, hup⟩ := hM.bounds
   have hXa := h.mono fun a ha => ha.hX
@@ -1516,7 +1525,8 @@ omit hc in
 private theorem micro_lFirst {o : Order} (ho : o = .LKS ∨ o = .LSK ∨ o = .SLK) (hdt : 0 < dt)
     (hGb : Bd l fun a => M.Gh (ρ a)) (hB : Bd l fun a => M.Bh (ρ a))
     (hu₀ : Bd l fun a => M.liftS (X a) (V a) (S a))
-    (h : ∀ᶠ a in l, M.IsStep o dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a) (V₁ a))
+    (h : ∀ᶠ a in l, M.IsMicroMacroStep o dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a)
+      (V₁ a))
     (hnd : ∃ C, ∀ᶠ a in l, ∃ Λ : Matrix ι r ℝ,
       Λ * ((X a).transpose * M.Wx * M.gradMat (ρ a)) = 1 ∧ ‖Λ‖ ≤ C) :
     MicroConv l M ρ X₁ S₁ V₁ := by
@@ -1696,7 +1706,8 @@ private theorem one_step_kFirst (hM : M.Admissible) {o : Order} (ho : o = .KLS �
     (hε : Tendsto ε l (𝓝[>] 0)) (hdt : 0 < dt) (hρ : Tendsto ρ l (𝓝 ρs))
     (hu₀ : Bd l fun a => M.liftS (X a) (V a) (S a))
     (hv : Tendsto (fun a => M.vdef (V a)) l (𝓝 0))
-    (h : ∀ᶠ a in l, M.IsStep o dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a) (V₁ a)) :
+    (h : ∀ᶠ a in l, M.IsMicroMacroStep o dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a)
+      (V₁ a)) :
     Tendsto (fun a => X₁ a * S₁ a * (V₁ a).transpose) l (𝓝 (M.gLim ρs)) ∧
       Tendsto ρ₁ l (𝓝 (M.eulerStep dt ρs)) ∧ Bd l (fun a => M.liftS (X₁ a) (V₁ a) (S₁ a)) ∧
       (M.IndepGrad ρs → Tendsto (fun a => M.vdef (V₁ a)) l (𝓝 0)) := by
@@ -1725,7 +1736,8 @@ independence of the components of `∇ₓ ρ / σ^S`; `prop_3_1` does. -/
 theorem prop_3_1_step (hM : M.Admissible) {o : Order} (ho : o = .KLS ∨ o = .KSL ∨ o = .SKL)
     (hε : Tendsto ε l (𝓝[>] 0)) (hdt : 0 < dt) (hρ : Tendsto ρ l (𝓝 ρs)) (hS : Bd l S)
     (hV : ∀ᶠ a in l, M.VelInSpan (V a))
-    (h : ∀ᶠ a in l, M.IsStep o dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a) (V₁ a)) :
+    (h : ∀ᶠ a in l, M.IsMicroMacroStep o dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a)
+      (V₁ a)) :
     Tendsto (fun a => X₁ a * S₁ a * (V₁ a).transpose) l (𝓝 (M.gLim ρs)) ∧
       Tendsto ρ₁ l (𝓝 (M.eulerStep dt ρs)) := by
   have hu₀ : Bd l fun a => M.liftS (X a) (V a) (S a) := by
@@ -1753,8 +1765,8 @@ the defect `vdef`, which tends to zero. -/
 theorem prop_3_1 (hM : M.Admissible) {o : Order} (ho : o = .KLS ∨ o = .KSL ∨ o = .SKL)
     (hε : Tendsto ε l (𝓝[>] 0)) (hdt : 0 < dt) {ρ : α → ℕ → J → ℝ} {X : α → ℕ → Matrix I r ℝ}
     {S : α → ℕ → Matrix r r ℝ} {V : α → ℕ → Matrix W r ℝ} {ρ₀ : J → ℝ}
-    (hrun : ∀ᶠ a in l, ∀ n, M.IsStep o dt (ε a) (ρ a n) (X a n) (S a n) (V a n) (ρ a (n + 1))
-      (X a (n + 1)) (S a (n + 1)) (V a (n + 1)))
+    (hrun : ∀ᶠ a in l, ∀ n, M.IsMicroMacroStep o dt (ε a) (ρ a n) (X a n) (S a n) (V a n)
+      (ρ a (n + 1)) (X a (n + 1)) (S a (n + 1)) (V a (n + 1)))
     (hρ₀ : Tendsto (fun a => ρ a 0) l (𝓝 ρ₀)) (hS₀ : Bd l fun a => S a 0)
     (hV₀ : ∀ᶠ a in l, M.VelInSpan (V a 0))
     (hind : ∀ n, M.IndepGrad ((M.eulerStep dt)^[n] ρ₀)) (n : ℕ) :
@@ -1794,7 +1806,8 @@ theorem sec_3_3_step (hM : M.Admissible) {o : Order} (ho : o = .LKS ∨ o = .LSK
     (hε : Tendsto ε l (𝓝[>] 0)) (hdt : 0 < dt) (hρ : Tendsto ρ l (𝓝 ρs)) (hS : Bd l S)
     (hnd : ∃ C, ∀ᶠ a in l, ∃ Λ : Matrix ι r ℝ,
       Λ * ((X a).transpose * M.Wx * M.gradMat (ρ a)) = 1 ∧ ‖Λ‖ ≤ C)
-    (h : ∀ᶠ a in l, M.IsStep o dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a) (V₁ a)) :
+    (h : ∀ᶠ a in l, M.IsMicroMacroStep o dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a)
+      (V₁ a)) :
     Tendsto (fun a => X₁ a * S₁ a * (V₁ a).transpose) l (𝓝 (M.gLim ρs)) ∧
       Tendsto ρ₁ l (𝓝 (M.eulerStep dt ρs)) := by
   have hGb : Bd l fun a => M.Gh (ρ a) :=
@@ -1813,8 +1826,8 @@ the rank hypothesis of `sec_3_3_step` at every step, the limit is forward Euler 
 theorem sec_3_3 (hM : M.Admissible) {o : Order} (ho : o = .LKS ∨ o = .LSK ∨ o = .SLK)
     (hε : Tendsto ε l (𝓝[>] 0)) (hdt : 0 < dt) {ρ : α → ℕ → J → ℝ} {X : α → ℕ → Matrix I r ℝ}
     {S : α → ℕ → Matrix r r ℝ} {V : α → ℕ → Matrix W r ℝ} {ρ₀ : J → ℝ}
-    (hrun : ∀ᶠ a in l, ∀ n, M.IsStep o dt (ε a) (ρ a n) (X a n) (S a n) (V a n) (ρ a (n + 1))
-      (X a (n + 1)) (S a (n + 1)) (V a (n + 1)))
+    (hrun : ∀ᶠ a in l, ∀ n, M.IsMicroMacroStep o dt (ε a) (ρ a n) (X a n) (S a n) (V a n)
+      (ρ a (n + 1)) (X a (n + 1)) (S a (n + 1)) (V a (n + 1)))
     (hρ₀ : Tendsto (fun a => ρ a 0) l (𝓝 ρ₀)) (hS₀ : Bd l fun a => S a 0)
     (hnd : ∀ n, ∃ C, ∀ᶠ a in l, ∃ Λ : Matrix ι r ℝ,
       Λ * ((X a n).transpose * M.Wx * M.gradMat (ρ a n)) = 1 ∧ ‖Λ‖ ≤ C) (n : ℕ) :
@@ -2357,8 +2370,8 @@ centers.  The transport operators of the `K`-, `L`- and `S`-steps are arbitrary 
 covers (3.49), (3.52) and (3.54), (3.55). -/
 theorem sec_3_5_3 (hD : D.Admissible) (hε : Tendsto ε l (𝓝[>] 0)) (hdt : 0 < dt)
     (hρ : Tendsto ρ l (𝓝 ρs)) (hS : Bd l S) (hV : ∀ᶠ a in l, D.model.VelInSpan (V a))
-    (h : ∀ᶠ a in l, D.model.IsStep .KLS dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a) (S₁ a)
-      (V₁ a)) (k : ZMod Nx) (j : ZMod Ny) (w : W) :
+    (h : ∀ᶠ a in l, D.model.IsMicroMacroStep .KLS dt (ε a) (ρ a) (X a) (S a) (V a) (ρ₁ a) (X₁ a)
+      (S₁ a) (V₁ a)) (k : ZMod Nx) (j : ZMod Ny) (w : W) :
     Tendsto (fun a => (X₁ a * S₁ a * (V₁ a).transpose) (.inl (k, j)) w) l
         (𝓝 (-(1 / D.σS (.inl (k, j)) *
           (D.ξ w * ((ρs (.inl (k + 1, j)) - ρs (.inl (k, j))) / D.dx) +
@@ -2717,7 +2730,7 @@ with a source.  The transport operators are arbitrary here, so this is the schem
 theorem prop_3_1_false_without_independence {dt : ℝ} (hdt : 0 < dt) :
     ∃ (ρ : ℕ → Fin 4 → ℝ) (X : ℕ → Matrix (Fin 4) (Fin 3) ℝ) (S : ℕ → Matrix (Fin 3) (Fin 3) ℝ)
       (V : ℕ → Matrix Oct (Fin 3) ℝ), (octModel TK TL TS).VelInSpan (V 0) ∧
-      (∀ ε n, (octModel TK TL TS).IsStep .KLS dt ε (ρ n) (X n) (S n) (V n) (ρ (n + 1))
+      (∀ ε n, (octModel TK TL TS).IsMicroMacroStep .KLS dt ε (ρ n) (X n) (S n) (V n) (ρ (n + 1))
         (X (n + 1)) (S (n + 1)) (V (n + 1))) ∧
       (∀ n, X (n + 1) * S (n + 1) * (V (n + 1)).transpose = 0) ∧
       ρ 1 = (octModel TK TL TS).eulerStep dt (ρ 0) ∧ (octModel TK TL TS).gLim (ρ 1) ≠ 0 ∧
@@ -2790,7 +2803,7 @@ for all `ε`, not `-v · ∇ₓ ρⁿ / σ^S`.  The claim needs the rank hypothe
 theorem sec_3_3_false_without_rank {dt : ℝ} (hdt : 0 < dt) {o : Order}
     (ho : o = .LKS ∨ o = .LSK ∨ o = .SLK) :
     (octModel TK TL TS).VelInSpan V0 ∧
-      (∀ ε, (octModel TK TL TS).IsStep o dt ε chk Xo 0 V0 (chk + dt • chk) Xo 0 Vz) ∧
+      (∀ ε, (octModel TK TL TS).IsMicroMacroStep o dt ε chk Xo 0 V0 (chk + dt • chk) Xo 0 Vz) ∧
       Xo * (0 : Matrix (Fin 3) (Fin 3) ℝ) * Vz.transpose = 0 ∧
       (octModel TK TL TS).gLim chk ≠ 0 ∧
       chk + dt • chk ≠ (octModel TK TL TS).eulerStep dt chk := by
@@ -3024,7 +3037,7 @@ theorem exists_step (M : Model I J W ι) (hM : M.Admissible) (hI : k ≤ Fintype
     ∃ ε₀ > 0, ∀ ε, 0 < ε → ε < ε₀ → ∀ (ρ : J → ℝ) (X : Matrix I (Fin k) ℝ)
       (S : Matrix (Fin k) (Fin k) ℝ) (V : Matrix W (Fin k) ℝ), X.transpose * M.Wx * X = 1 →
       V.transpose * M.Wv * V = 1 → ∃ (X₁ : Matrix I (Fin k) ℝ) (S₁ : Matrix (Fin k) (Fin k) ℝ)
-        (V₁ : Matrix W (Fin k) ℝ), M.IsStep o dt ε ρ X S V
+        (V₁ : Matrix W (Fin k) ℝ), M.IsMicroMacroStep o dt ε ρ X S V
           (ρ + dt • M.rhoRHS (X₁ * S₁ * V₁.transpose) ρ) X₁ S₁ V₁ := by
   obtain ⟨σ₀, hσ₀, hlo⟩ := exists_lower M hM
   refine ⟨√(dt * σ₀), by positivity, fun ε hε hε₀ ρ X S V hX hV => ?_⟩
@@ -3101,14 +3114,14 @@ theorem exists_run (M : Model I J W ι) (hM : M.Admissible) (hI : k ≤ Fintype.
       (S₀ : Matrix (Fin k) (Fin k) ℝ) (V₀ : Matrix W (Fin k) ℝ), X₀.transpose * M.Wx * X₀ = 1 →
       V₀.transpose * M.Wv * V₀ = 1 → ∃ (ρ : ℕ → J → ℝ) (X : ℕ → Matrix I (Fin k) ℝ)
         (S : ℕ → Matrix (Fin k) (Fin k) ℝ) (V : ℕ → Matrix W (Fin k) ℝ),
-        ρ 0 = ρ₀ ∧ X 0 = X₀ ∧ S 0 = S₀ ∧ V 0 = V₀ ∧ ∀ n, M.IsStep o dt ε (ρ n) (X n) (S n) (V n)
-          (ρ (n + 1)) (X (n + 1)) (S (n + 1)) (V (n + 1)) := by
+        ρ 0 = ρ₀ ∧ X 0 = X₀ ∧ S 0 = S₀ ∧ V 0 = V₀ ∧ ∀ n, M.IsMicroMacroStep o dt ε (ρ n) (X n) (S n)
+          (V n) (ρ (n + 1)) (X (n + 1)) (S (n + 1)) (V (n + 1)) := by
   obtain ⟨ε₀, hε₀, h⟩ := exists_step M hM hI hW hdt o
   refine ⟨ε₀, hε₀, fun ε hε hε' ρ₀ X₀ S₀ V₀ hX hV => ?_⟩
   let St := {p : (J → ℝ) × Matrix I (Fin k) ℝ × Matrix (Fin k) (Fin k) ℝ × Matrix W (Fin k) ℝ //
     p.2.1.transpose * M.Wx * p.2.1 = 1 ∧ p.2.2.2.transpose * M.Wv * p.2.2.2 = 1}
-  have hs : ∀ p : St, ∃ q : St, M.IsStep o dt ε p.1.1 p.1.2.1 p.1.2.2.1 p.1.2.2.2 q.1.1 q.1.2.1
-      q.1.2.2.1 q.1.2.2.2 := by
+  have hs : ∀ p : St, ∃ q : St, M.IsMicroMacroStep o dt ε p.1.1 p.1.2.1 p.1.2.2.1 p.1.2.2.2 q.1.1
+      q.1.2.1 q.1.2.2.1 q.1.2.2.2 := by
     intro p
     obtain ⟨X₁, S₁, V₁, hstep⟩ := h ε hε hε' p.1.1 p.1.2.1 p.1.2.2.1 p.1.2.2.2 p.2.1 p.2.2
     exact ⟨⟨(_, X₁, S₁, V₁), hstep.hX₁, hstep.hV₁⟩, hstep⟩
@@ -3258,8 +3271,8 @@ theorem prop_3_1_hypotheses_hold {dt : ℝ} (hdt : 0 < dt) (hdt3 : dt < 3) :
     ∃ (ρ : ℝ → ℕ → Fin 3 → ℝ) (X : ℝ → ℕ → Matrix (Fin 3) (Fin 3) ℝ)
       (S : ℝ → ℕ → Matrix (Fin 3) (Fin 3) ℝ) (V : ℝ → ℕ → Matrix Oct (Fin 3) ℝ)
       (ρ₀ : Fin 3 → ℝ),
-      (∀ᶠ ε in 𝓝[>] (0 : ℝ), ∀ n, (diagModel TK TL TS).IsStep .KLS dt ε (ρ ε n) (X ε n) (S ε n)
-        (V ε n) (ρ ε (n + 1)) (X ε (n + 1)) (S ε (n + 1)) (V ε (n + 1))) ∧
+      (∀ᶠ ε in 𝓝[>] (0 : ℝ), ∀ n, (diagModel TK TL TS).IsMicroMacroStep .KLS dt ε (ρ ε n) (X ε n)
+        (S ε n) (V ε n) (ρ ε (n + 1)) (X ε (n + 1)) (S ε (n + 1)) (V ε (n + 1))) ∧
       Tendsto (fun ε => ρ ε 0) (𝓝[>] 0) (𝓝 ρ₀) ∧ Bd (𝓝[>] (0 : ℝ)) (fun ε => S ε 0) ∧
       (∀ᶠ ε in 𝓝[>] (0 : ℝ), (diagModel TK TL TS).VelInSpan (V ε 0)) ∧
       ∀ n, (diagModel TK TL TS).IndepGrad (((diagModel TK TL TS).eulerStep dt)^[n] ρ₀) := by
@@ -3275,8 +3288,8 @@ theorem prop_3_1_hypotheses_hold {dt : ℝ} (hdt : 0 < dt) (hdt3 : dt < 3) :
   obtain ⟨ε₀, hε₀, hrun⟩ := exists_run (k := 3) M hM (by simp) (by simp) hdt .KLS
   have hc : ∀ ε : ℝ, ∃ (ρ : ℕ → Fin 3 → ℝ) (X : ℕ → Matrix (Fin 3) (Fin 3) ℝ)
       (S : ℕ → Matrix (Fin 3) (Fin 3) ℝ) (V : ℕ → Matrix Oct (Fin 3) ℝ), 0 < ε → ε < ε₀ →
-      ρ 0 = (fun _ => 1) ∧ S 0 = 0 ∧ V 0 = V0 ∧ ∀ n, M.IsStep .KLS dt ε (ρ n) (X n) (S n) (V n)
-        (ρ (n + 1)) (X (n + 1)) (S (n + 1)) (V (n + 1)) := by
+      ρ 0 = (fun _ => 1) ∧ S 0 = 0 ∧ V 0 = V0 ∧ ∀ n, M.IsMicroMacroStep .KLS dt ε (ρ n) (X n) (S n)
+        (V n) (ρ (n + 1)) (X (n + 1)) (S (n + 1)) (V (n + 1)) := by
     intro ε
     by_cases h : 0 < ε ∧ ε < ε₀
     · obtain ⟨ρ, X, S, V, h0, -, h2, h3, h4⟩ := hrun ε h.1 h.2 (fun _ => 1) 1 0 V0 hX₀ hV₀

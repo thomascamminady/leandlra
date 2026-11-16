@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Stencils
 import LeanDLRA.Matrix.Orthonormal
 import LeanDLRA.Matrix.Projectors
 
@@ -56,6 +57,15 @@ one-dimensional grid; the abstract variant with the macro equation for the low-r
   through `X¹ᵀ X¹ = 1`, `K¹ = X¹ T`, so that rank-deficient `K¹` are covered.
 * Not formalized: the low-rank scheme IMEX-BUG with explicit `ρⁿ` and the values `C_B^{(j)} = 1/2`,
   which are properties of the Chebyshev-Legendre quadrature.
+
+## Core vocabulary
+
+The weights divided by `|D_Ω|` form a core velocity quadrature (`Grid.toQuadrature`); on the
+periodic grid `ZMod N` with the shift `i ↦ i + 1` the difference matrices are the core stencils
+(`Grid.Dp_eq_fwdDiff`, `Grid.Dm_eq_bwdDiff`); `𝒜` and `𝒜*` are instances of the core streaming
+operator with `2 d` terms (`Grid.A_eq_streaming`, `Grid.Astar_eq_neg_streaming`). The energy `E_θ`
+stays local: at `θ = 1` it is `‖ρ‖² + ε² ‖G‖²` in the inner products `⟨·,·⟩`, `⟨·,·⟩_w` of the grid
+(times `|D_Ω|` in the first term), the energy of arXiv 2212.12012 up to these weights.
 -/
 
 open Set Filter Topology Finset
@@ -2514,5 +2524,68 @@ theorem slab_cfl (N : ℕ) [NeZero N] :
   · intro j
     rw [hCb]
     norm_num [unitCoeff, slab]
+
+/-! ### The grid in the core vocabulary -/
+
+section KineticCore
+
+variable {d : ℕ} {μ : Type*} [Fintype μ]
+
+/-- The weights of the ordinates divided by `|D_Ω|`, with the ordinates `Ω^{(j)}` of direction `j`
+as nodes, are a core velocity quadrature (positive weights of total mass one). -/
+noncomputable def Grid.toQuadrature {ι : Type*} (P : Grid d ι μ) (j : Fin d) :
+    Kinetic.Quadrature μ where
+  μ := P.Om j
+  w := fun k => P.w k / P.DOm
+  w_pos := fun k => div_pos (P.w_pos k) P.DOm_pos
+  sum_w := by rw [← Finset.sum_div, P.sum_w, div_self P.DOm_pos.ne']
+
+variable [DecidableEq μ]
+
+/-- On the periodic grid `ZMod N` with the shift `i ↦ i + 1` in direction `j`, the forward
+difference `𝒟^{(j),+}` is the core forward difference. -/
+theorem Grid.Dp_eq_fwdDiff {N : ℕ} [NeZero N] (P : Grid d (ZMod N) μ) (j : Fin d)
+    (hs : P.shift j = Equiv.addRight 1) : P.Dp j = Kinetic.fwdDiff N (P.dx j) := by
+  ext i i'
+  simp only [Grid.Dp, Kinetic.fwdDiff, Matrix.of_apply, hs, Equiv.coe_addRight,
+    @eq_comm _ (i + 1) i', @eq_comm _ i i']
+
+/-- On the periodic grid `ZMod N` with the shift `i ↦ i + 1` in direction `j`, the backward
+difference `𝒟^{(j),-}` is the core backward difference. -/
+theorem Grid.Dm_eq_bwdDiff {N : ℕ} [NeZero N] (P : Grid d (ZMod N) μ) (j : Fin d)
+    (hs : P.shift j = Equiv.addRight 1) : P.Dm j = Kinetic.bwdDiff N (P.dx j) := by
+  ext i i'
+  simp only [Grid.Dm, Kinetic.bwdDiff, Matrix.of_apply, hs, Equiv.addRight_symm_apply,
+    ← sub_eq_add_neg, @eq_comm _ (i - 1) i', @eq_comm _ i i']
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+/-- **The upwind operator through the core**: `𝒜(G) = ∑_j (𝒟^{(j),-} G Q^{(j),+} +
+𝒟^{(j),+} G Q^{(j),-})` is the core streaming operator with the `2 d` terms
+`(𝒟^{(j),-}, Q^{(j),+})` and `(𝒟^{(j),+}, Q^{(j),-})`. -/
+theorem Grid.A_eq_streaming (P : Grid d ι μ) (G : Matrix ι μ ℝ) :
+    P.A G = Kinetic.streaming (Sum.elim P.Dm P.Dp) (Sum.elim P.Qp P.Qm) G := by
+  rw [Kinetic.streaming_apply, Fintype.sum_sum_type, Grid.A, Finset.sum_add_distrib]
+  rfl
+
+/-- The adjoint `𝒜*` is minus the core streaming operator with the terms
+`(𝒟^{(j),-}, Q^{(j),-})` and `(𝒟^{(j),+}, Q^{(j),+})`. -/
+theorem Grid.Astar_eq_neg_streaming (P : Grid d ι μ) (G : Matrix ι μ ℝ) :
+    P.Astar G = -Kinetic.streaming (Sum.elim P.Dm P.Dp) (Sum.elim P.Qm P.Qp) G := by
+  rw [Kinetic.streaming_apply, Fintype.sum_sum_type, Grid.Astar, Finset.sum_add_distrib]
+  rfl
+
+/-- On the slab grid with three cells and `Δx = 1` the difference matrices are the core stencils,
+the core quadrature of the ordinates `±1` has the weights `1 / 2`, and `𝒜` is additive, as an
+instance of a continuous linear map. -/
+example (G G' : Matrix (ZMod 3) (Fin 2) ℝ) :
+    (slab 3 1 one_pos).Dp 0 = Kinetic.fwdDiff 3 1 ∧ (slab 3 1 one_pos).Dm 0 = Kinetic.bwdDiff 3 1 ∧
+      ((slab 3 1 one_pos).toQuadrature 0).w 0 = 1 / 2 ∧
+      (slab 3 1 one_pos).A (G + G') = (slab 3 1 one_pos).A G + (slab 3 1 one_pos).A G' := by
+  refine ⟨Grid.Dp_eq_fwdDiff _ 0 rfl, Grid.Dm_eq_bwdDiff _ 0 rfl, ?_, ?_⟩
+  · simp [Grid.toQuadrature, slab]
+  · simp only [Grid.A_eq_streaming, map_add]
+
+end KineticCore
 
 end LeanDLRA.Literature.P2602_12337

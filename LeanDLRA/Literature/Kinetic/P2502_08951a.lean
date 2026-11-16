@@ -22,14 +22,14 @@ Maxwellian (5.2), Hermite functions, and all of Steps 1–6 with their QR decomp
   an XL step whose result is not `A(1)`.
 * `euler_lstep`, `sxl_step`, `sxl_capture_iff`: Section 2, (2.6)–(2.11).  The robust error bounds of
   sXL are `sxl_local_error`, `sxl_global_error` in `Integrators/EulerBUG`.
-* `PenalizedSetting.IsStep.mom_eq`, `.mom_update`, `.eq_4_6`, `.eq_4_8`, `.abs_dev_le`,
+* `PenalizedSetting.IsPenalizedBGKStep.mom_eq`, `.mom_update`, `.eq_4_6`, `.eq_4_8`, `.abs_dev_le`,
   `PenalizedSetting.tendsto_collision`, `.abs_dev_le_pow`, `.exists_first_order`:
   (4.4)–(4.12); `bgk_condition_iff`, `bgk_step`, `bgk_moment_update`: the BGK case and (4.14).
 * `hermite_recurrence`, `vIP_hermiteP`: the Hermite basis, (5.13).
 * `theorem_5_1`, `theorem_5_1_rate`: Theorem 5.1.  The steps of its proof are
-  `StepData.IsStep.ctr_Ks_eq` ((5.15)–(5.26), as an exact identity),
+  `StepData.IsLowRankBGKStep.ctr_Ks_eq` ((5.15)–(5.26), as an exact identity),
   `StepData.IsKSStep.L₂_mem`, `.L_star_mem`, `.exists_Ss` (the proper QR decomposition),
-  `StepData.IsStep.max_mem` ((5.28), (5.30)), `.ctr_Lh`, `.fhat_sub_max`, `.moment_hat`
+  `StepData.IsLowRankBGKStep.max_mem` ((5.28), (5.30)), `.ctr_Lh`, `.fhat_sub_max`, `.moment_hat`
   ((5.29)–(5.32), for every `ε ≥ 0`), `.sigma_eq_zero`, `.isEq_next` ((5.33)).
 * `exists_stationary_run`: non-vacuity.
 
@@ -55,14 +55,15 @@ Maxwellian (5.2), Hermite functions, and all of Steps 1–6 with their QR decomp
   `x`-functions.  `ρ* (u*)²` is the field `qs` of `Ex`, characterized pointwise.
 * "As `ε → 0`" is read as in the paper's proof, which sets `ε = 0` in (5.8), (5.10): `theorem_5_1`
   is about the limit scheme.  For `ε > 0` the equations are multiplied by `ε Δt`, and one step gives
-  `f̂ⁿ⁺¹ - M* = ε/(ε + Δt) (f* - M*)` (`IsStep.fhat_sub_max`).  A multi-step statement for `ε > 0`
-  is not claimed by the paper and is not proved: at `ε > 0` the iterates leave the Maxwellians, and
-  the rank `r` does not control the basis in the following steps.
+  `f̂ⁿ⁺¹ - M* = ε/(ε + Δt) (f* - M*)` (`IsLowRankBGKStep.fhat_sub_max`).  A multi-step statement for
+  `ε > 0` is not claimed by the paper and is not proved: at `ε > 0` the iterates leave the
+  Maxwellians, and the rank `r` does not control the basis in the following steps.
 * The paper's "proper QR decomposition" is made explicit: `V*` contains `V₁, V₂, V₃`, and `Vⁿ`
   contains `V₁, …, V₆`.  These are the fields `proper_Vs`, `proper_V`, the latter implies `r ≥ 6`
-  (`IsStep.six_le`), and it holds for the paper's Hermite basis when `r ≥ 6` (`hermite_proper`).  An
-  arbitrary QR decomposition is not covered, by the paper either: `M*` then need not lie in the span
-  of `V*`.  A run may refactorize `f` at the start of each step (`IsRun`), as the paper does.
+  (`IsLowRankBGKStep.six_le`), and it holds for the paper's Hermite basis when `r ≥ 6`
+  (`hermite_proper`).  An arbitrary QR decomposition is not covered, by the paper either: `M*` then
+  need not lie in the span of `V*`.  A run may refactorize `f` at the start of each step (`IsRun`),
+  as the paper does.
 * (5.7) divides by `ρ*`, so non-vanishing of the density is a hypothesis of each step.  Explicit
   Euler does not preserve it in general.
 * `O(Δt)` in (5.12) is an exact formula for the remainder, `theorem_5_1`, and a bound in terms of
@@ -578,7 +579,7 @@ def maxw (f : E) : E := S.mx (S.mom f)
 
 /-- One step of the scheme (4.3): `f* = fⁿ - Δt v·∇ₓfⁿ` and (4.3b) multiplied by `ε Δt`. The limit
 `ε = 0` is included. -/
-structure IsStep (ε lam Δt : ℝ) (f fs f' : E) : Prop where
+structure IsPenalizedBGKStep (ε lam Δt : ℝ) (f fs f' : E) : Prop where
   advect : fs = f - Δt • S.adv f
   collide : ε • (f' - fs) = Δt • (S.coll fs + lam • fs - lam • f')
 
@@ -586,8 +587,8 @@ variable {S}
 variable {ε lam Δt : ℝ} {f fs f' : E}
 
 /-- arXiv 2502.08951, (4.4): the collision step conserves the moments, for every `ε ≥ 0`. -/
-theorem IsStep.mom_eq (h : S.IsStep ε lam Δt f fs f') (hw : ε + lam * Δt ≠ 0) :
-    S.mom f' = S.mom fs := by
+theorem IsPenalizedBGKStep.mom_eq (h : S.IsPenalizedBGKStep ε lam Δt f fs f')
+    (hw : ε + lam * Δt ≠ 0) : S.mom f' = S.mom fs := by
   have h1 := congrArg S.mom h.collide
   simp only [map_smul, map_sub, map_add, S.mom_coll, zero_add] at h1
   have h2 : (ε + lam * Δt) • (S.mom f' - S.mom fs) = 0 := by
@@ -598,13 +599,13 @@ theorem IsStep.mom_eq (h : S.IsStep ε lam Δt f fs f') (hw : ε + lam * Δt ≠
   exact sub_eq_zero.mp h3
 
 /-- arXiv 2502.08951, (4.4): hence `ℳⁿ⁺¹ = ℳ*`. -/
-theorem IsStep.maxw_eq (h : S.IsStep ε lam Δt f fs f') (hw : ε + lam * Δt ≠ 0) :
-    S.maxw f' = S.maxw fs := by
+theorem IsPenalizedBGKStep.maxw_eq (h : S.IsPenalizedBGKStep ε lam Δt f fs f')
+    (hw : ε + lam * Δt ≠ 0) : S.maxw f' = S.maxw fs := by
   rw [maxw, maxw, h.mom_eq hw]
 
 /-- arXiv 2502.08951, (4.5): the moment update `𝒰ⁿ⁺¹ - 𝒰ⁿ = -Δt ∇ₓ·∫ fⁿ v φ dv`. -/
-theorem IsStep.mom_update (h : S.IsStep ε lam Δt f fs f') (hw : ε + lam * Δt ≠ 0) :
-    S.mom f' - S.mom f = -(Δt • S.mom (S.adv f)) := by
+theorem IsPenalizedBGKStep.mom_update (h : S.IsPenalizedBGKStep ε lam Δt f fs f')
+    (hw : ε + lam * Δt ≠ 0) : S.mom f' - S.mom f = -(Δt • S.mom (S.adv f)) := by
   rw [h.mom_eq hw, h.advect]
   simp only [map_sub, map_smul]
   abel
@@ -623,8 +624,8 @@ noncomputable def bracket (S : PenalizedSetting Ξ E G) (Δt : ℝ) (f fs : E) (
 def dev (S : PenalizedSetting Ξ E G) (f : E) (ξ : Ξ) : ℝ := S.val f ξ - S.val (S.maxw f) ξ
 
 /-- The pointwise algebra behind (4.6). -/
-lemma IsStep.dev_star (h : S.IsStep ε lam Δt f fs f') (hw : ε + lam * Δt ≠ 0) {Ds : Ξ → ℝ}
-    (hD : S.IsMultiplier lam fs Ds) (ξ : Ξ) :
+lemma IsPenalizedBGKStep.dev_star (h : S.IsPenalizedBGKStep ε lam Δt f fs f')
+    (hw : ε + lam * Δt ≠ 0) {Ds : Ξ → ℝ} (hD : S.IsMultiplier lam fs Ds) (ξ : Ξ) :
     S.dev f' ξ = (ε + Ds ξ * Δt) / (ε + lam * Δt) * S.dev fs ξ := by
   have hc := congrFun (congrArg S.val h.collide) ξ
   simp only [map_smul, map_sub, map_add, Pi.smul_apply, Pi.sub_apply, Pi.add_apply, smul_eq_mul,
@@ -634,8 +635,8 @@ lemma IsStep.dev_star (h : S.IsStep ε lam Δt f fs f') (hw : ε + lam * Δt ≠
 
 /-- arXiv 2502.08951, The compact form of (4.6): `fⁿ⁺¹ - ℳⁿ⁺¹ = (ε + 𝒟* Δt)/(ε + λ Δt) (fⁿ - ℳⁿ + Δt
 b)`, with `b` the bracket. -/
-theorem IsStep.dev_eq (h : S.IsStep ε lam Δt f fs f') (hw : ε + lam * Δt ≠ 0) (hΔt : Δt ≠ 0)
-    {Ds : Ξ → ℝ} (hD : S.IsMultiplier lam fs Ds) (ξ : Ξ) :
+theorem IsPenalizedBGKStep.dev_eq (h : S.IsPenalizedBGKStep ε lam Δt f fs f')
+    (hw : ε + lam * Δt ≠ 0) (hΔt : Δt ≠ 0) {Ds : Ξ → ℝ} (hD : S.IsMultiplier lam fs Ds) (ξ : Ξ) :
     S.dev f' ξ = (ε + Ds ξ * Δt) / (ε + lam * Δt) * (S.dev f ξ + Δt * S.bracket Δt f fs ξ) := by
   rw [h.dev_star hw hD ξ]
   congr 1
@@ -645,8 +646,8 @@ theorem IsStep.dev_eq (h : S.IsStep ε lam Δt f fs f') (hw : ε + lam * Δt ≠
 
 /-- **The identity (4.6)** of arXiv 2502.08951, literally, with `𝒟*` any multiplier in the sense of
 `IsMultiplier`.  It holds for every `ε ≥ 0` with `ε + λ Δt ≠ 0`. -/
-theorem IsStep.eq_4_6 (h : S.IsStep ε lam Δt f fs f') (hw : ε + lam * Δt ≠ 0) (hΔt : Δt ≠ 0)
-    {Ds : Ξ → ℝ} (hD : S.IsMultiplier lam fs Ds) (ξ : Ξ) :
+theorem IsPenalizedBGKStep.eq_4_6 (h : S.IsPenalizedBGKStep ε lam Δt f fs f')
+    (hw : ε + lam * Δt ≠ 0) (hΔt : Δt ≠ 0) {Ds : Ξ → ℝ} (hD : S.IsMultiplier lam fs Ds) (ξ : Ξ) :
     S.val f' ξ - S.val (S.maxw f') ξ =
       (ε + Ds ξ * Δt) / (ε + lam * Δt) * (S.val f ξ - S.val (S.maxw f) ξ)
       - ε * Δt / (ε + lam * Δt) *
@@ -664,8 +665,8 @@ theorem IsStep.eq_4_6 (h : S.IsStep ε lam Δt f fs f') (hw : ε + lam * Δt ≠
 
 /-- arXiv 2502.08951, **(4.8)**: in the limit `ε = 0`, exactly `fⁿ⁺¹ - ℳⁿ⁺¹ = (𝒟*/λ)(fⁿ - ℳⁿ) +
 (𝒟*/λ) Δt b`, so the remainder is `O(Δt)` when the bracket `b` is `O(1)`. -/
-theorem IsStep.eq_4_8 (h : S.IsStep 0 lam Δt f fs f') (hlam : lam ≠ 0) (hΔt : Δt ≠ 0)
-    {Ds : Ξ → ℝ} (hD : S.IsMultiplier lam fs Ds) (ξ : Ξ) :
+theorem IsPenalizedBGKStep.eq_4_8 (h : S.IsPenalizedBGKStep 0 lam Δt f fs f') (hlam : lam ≠ 0)
+    (hΔt : Δt ≠ 0) {Ds : Ξ → ℝ} (hD : S.IsMultiplier lam fs Ds) (ξ : Ξ) :
     S.dev f' ξ = Ds ξ / lam * S.dev f ξ + Ds ξ / lam * Δt * S.bracket Δt f fs ξ := by
   have hw : (0 : ℝ) + lam * Δt ≠ 0 := by simpa using ⟨hlam, hΔt⟩
   rw [h.dev_eq hw hΔt hD ξ]
@@ -676,7 +677,7 @@ theorem IsStep.eq_4_8 (h : S.IsStep 0 lam Δt f fs f') (hlam : lam ≠ 0) (hΔt 
 pointwise to `ℳ* + (𝒟*/λ)(f* - ℳ*)` as `ε → 0⁺`. -/
 theorem tendsto_collision (hlam : 0 < lam) (hΔt : 0 < Δt) {Ds : Ξ → ℝ}
     (hD : S.IsMultiplier lam fs Ds) {fε : ℝ → E}
-    (h : ∀ ε > 0, S.IsStep ε lam Δt f fs (fε ε)) (ξ : Ξ) :
+    (h : ∀ ε > 0, S.IsPenalizedBGKStep ε lam Δt f fs (fε ε)) (ξ : Ξ) :
     Tendsto (fun ε => S.val (fε ε) ξ) (𝓝[>] 0)
       (𝓝 (S.val (S.maxw fs) ξ + Ds ξ / lam * S.dev fs ξ)) := by
   have hpos : (0 : ℝ) + lam * Δt ≠ 0 := by positivity
@@ -718,8 +719,8 @@ lemma contr_lt_one (hε : 0 ≤ ε) (hlam : 0 < lam) (hΔt : 0 < Δt) (hα1 : α
 
 /-- arXiv 2502.08951, **(4.10)**, with `|𝒟*| ≤ α λ` (condition (4.9)) and bracket bounded by `B`:
 `|fⁿ⁺¹ - ℳⁿ⁺¹| ≤ α_ε (|fⁿ - ℳⁿ| + Δt B)`, `α_ε = (ε + α λ Δt)/(ε + λ Δt)`, so `α₀ = α`. -/
-theorem IsStep.abs_dev_le (h : S.IsStep ε lam Δt f fs f') (hε : 0 ≤ ε) (hlam : 0 < lam)
-    (hΔt : 0 < Δt) {Ds : Ξ → ℝ} (hD : S.IsMultiplier lam fs Ds) {ξ : Ξ}
+theorem IsPenalizedBGKStep.abs_dev_le (h : S.IsPenalizedBGKStep ε lam Δt f fs f') (hε : 0 ≤ ε)
+    (hlam : 0 < lam) (hΔt : 0 < Δt) {Ds : Ξ → ℝ} (hD : S.IsMultiplier lam fs Ds) {ξ : Ξ}
     (hDs : |Ds ξ| ≤ α * lam) (hB : |S.bracket Δt f fs ξ| ≤ B) :
     |S.dev f' ξ| ≤ contr ε lam Δt α * |S.dev f ξ| + contr ε lam Δt α * (Δt * B) := by
   have hw : 0 < ε + lam * Δt := by positivity
@@ -740,7 +741,7 @@ theorem IsStep.abs_dev_le (h : S.IsStep ε lam Δt f fs f') (hε : 0 ≤ ε) (hl
 (ε/λ + α Δt) B / (1 - α)`, for every `ε ≥ 0`. For `ε = 0` this is `αⁿ |f⁰ - ℳ⁰| + O(Δt)`. -/
 theorem abs_dev_le_pow {f fs : ℕ → E} {Ds : ℕ → Ξ → ℝ} (hε : 0 ≤ ε) (hlam : 0 < lam)
     (hΔt : 0 < Δt) (hα : 0 ≤ α) (hα1 : α < 1) (hB0 : 0 ≤ B)
-    (h : ∀ n, S.IsStep ε lam Δt (f n) (fs n) (f (n + 1)))
+    (h : ∀ n, S.IsPenalizedBGKStep ε lam Δt (f n) (fs n) (f (n + 1)))
     (hD : ∀ n, S.IsMultiplier lam (fs n) (Ds n)) (hDs : ∀ n ξ, |Ds n ξ| ≤ α * lam)
     (hB : ∀ n ξ, |S.bracket Δt (f n) (fs n) ξ| ≤ B) (n : ℕ) (ξ : Ξ) :
     |S.dev (f n) ξ| ≤ contr ε lam Δt α ^ n * |S.dev (f 0) ξ|
@@ -778,7 +779,7 @@ dv` is bounded by `C` with respect to the pointwise bound on `g` (this is where 
 `∇ₓ` enters), then `‖(𝒰ⁿ⁺¹ - 𝒰ⁿ)/Δt + ∇ₓ·∫ ℳⁿ v φ dv‖ ≤ C (α_εⁿ E₀ + (ε/λ + α Δt) B / (1 - α))`. -/
 theorem moment_defect_le {f fs : ℕ → E} {Ds : ℕ → Ξ → ℝ} {C E₀ : ℝ} (hε : 0 ≤ ε)
     (hlam : 0 < lam) (hΔt : 0 < Δt) (hα : 0 ≤ α) (hα1 : α < 1) (hB0 : 0 ≤ B)
-    (h : ∀ n, S'.IsStep ε lam Δt (f n) (fs n) (f (n + 1)))
+    (h : ∀ n, S'.IsPenalizedBGKStep ε lam Δt (f n) (fs n) (f (n + 1)))
     (hD : ∀ n, S'.IsMultiplier lam (fs n) (Ds n)) (hDs : ∀ n ξ, |Ds n ξ| ≤ α * lam)
     (hB : ∀ n ξ, |S'.bracket Δt (f n) (fs n) ξ| ≤ B)
     (hadv : ∀ (g : E) (b : ℝ), (∀ ξ, |S'.val g ξ| ≤ b) → ‖S'.mom (S'.adv g)‖ ≤ C * b)
@@ -806,7 +807,7 @@ theorem moment_defect_le {f fs : ℕ → E} {Ds : ℕ → Ξ → ℝ} {C E₀ : 
 `(𝒰ⁿ⁺¹ - 𝒰ⁿ)/Δt + ∇ₓ·∫ ℳⁿ v φ dv = O(Δt)`, with the explicit constant `C (1 + α B / (1 - α))`. -/
 theorem exists_first_order {f fs : ℕ → E} {Ds : ℕ → Ξ → ℝ} {C E₀ : ℝ} (hC : 0 ≤ C)
     (hlam : 0 < lam) (hΔt : 0 < Δt) (hα : 0 ≤ α) (hα1 : α < 1) (hB0 : 0 ≤ B)
-    (h : ∀ n, S'.IsStep 0 lam Δt (f n) (fs n) (f (n + 1)))
+    (h : ∀ n, S'.IsPenalizedBGKStep 0 lam Δt (f n) (fs n) (f (n + 1)))
     (hD : ∀ n, S'.IsMultiplier lam (fs n) (Ds n)) (hDs : ∀ n ξ, |Ds n ξ| ≤ α * lam)
     (hB : ∀ n ξ, |S'.bracket Δt (f n) (fs n) ξ| ≤ B)
     (hadv : ∀ (g : E) (b : ℝ), (∀ ξ, |S'.val g ξ| ≤ b) → ‖S'.mom (S'.adv g)‖ ≤ C * b)
@@ -865,7 +866,7 @@ theorem bgk_condition_iff (hlam : 0 < lam) : |lam - 1| / lam < 1 ↔ 1 / 2 < lam
 /-- arXiv 2502.08951, The stronger AP property for BGK with `λ = 1` and `ε = 0`: `fⁿ⁺¹ = ℳ* = ℳⁿ⁺¹`,
 regardless of the initial condition, so that for `n ≥ 1`, (4.14) holds with no remainder. -/
 theorem bgk_step (hcoll : ∀ f, S.coll f = S.maxw f - f) (hΔt : Δt ≠ 0)
-    (h : S.IsStep 0 1 Δt f fs f') : f' = S.maxw fs ∧ f' = S.maxw f' := by
+    (h : S.IsPenalizedBGKStep 0 1 Δt f fs f') : f' = S.maxw fs ∧ f' = S.maxw f' := by
   have h1 := h.collide
   rw [zero_smul, hcoll] at h1
   have h2 := (smul_eq_zero_iff_right hΔt).mp h1.symm
@@ -882,7 +883,8 @@ theorem bgk_step (hcoll : ∀ f, S.coll f = S.maxw f - f) (hΔt : Δt ≠ 0)
 /-- arXiv 2502.08951, **(4.14)**: for BGK with `λ = 1`, `ε = 0`, `(𝒰ⁿ⁺¹ - 𝒰ⁿ)/Δt + ∇ₓ·∫ ℳⁿ v φ dv =
 0` for `n ≥ 1`. -/
 theorem bgk_moment_update (hcoll : ∀ f, S.coll f = S.maxw f - f) (hΔt : Δt ≠ 0) {f : ℕ → E}
-    {fs : ℕ → E} (h : ∀ n, S.IsStep 0 1 Δt (f n) (fs n) (f (n + 1))) {n : ℕ} (hn : 1 ≤ n) :
+    {fs : ℕ → E} (h : ∀ n, S.IsPenalizedBGKStep 0 1 Δt (f n) (fs n) (f (n + 1))) {n : ℕ}
+      (hn : 1 ≤ n) :
     Δt⁻¹ • (S.mom (f (n + 1)) - S.mom (f n)) + S.mom (S.adv (S.maxw (f n))) = 0 := by
   obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
   have hk := (bgk_step hcoll hΔt (h k)).2
@@ -1057,14 +1059,17 @@ noncomputable def g₁ : ℝ[X] := κ • X
 /-- See `g₀`. -/
 noncomputable def g₂ : ℝ[X] := (κ / 2) • (X ^ 2 - 1)
 
-/-- The simplified Maxwellian (5.2) `ρ e^{-v²/2}/√(2π) (1 + v u + (v² - 1) u² / 2)`. -/
-noncomputable def maxwellian (ρ u v : ℝ) : ℝ :=
+/-- The simplified Maxwellian (5.2) `ρ e^{-v²/2}/√(2π) (1 + v u + (v² - 1) u² / 2)`: the expansion
+of the Maxwellian `ρ e^{-(v-u)²/2}/√(2π)` (the core `Kinetic.maxwellian 1 ρ 1` in one dimension) to
+second order in `u`, not equal to it. -/
+noncomputable def maxwellianExpansion (ρ u v : ℝ) : ℝ :=
   ρ * (rexp (-v ^ 2 / 2) / √(2 * π)) * (1 + v * u + 1 / 2 * (v ^ 2 - 1) * u ^ 2)
 
-lemma maxwellian_eq (ρ u v : ℝ) :
-    maxwellian ρ u v = ρ * gaussFn g₀ v + ρ * u * gaussFn g₁ v + ρ * u ^ 2 * gaussFn g₂ v := by
-  simp only [maxwellian, gaussFn, g₀, g₁, g₂, κ, eval_smul, eval_one, eval_X, eval_sub, eval_pow,
-    smul_eq_mul, div_eq_mul_inv]
+lemma maxwellianExpansion_eq (ρ u v : ℝ) :
+    maxwellianExpansion ρ u v =
+      ρ * gaussFn g₀ v + ρ * u * gaussFn g₁ v + ρ * u ^ 2 * gaussFn g₂ v := by
+  simp only [maxwellianExpansion, gaussFn, g₀, g₁, g₂, κ, eval_smul, eval_one, eval_X, eval_sub,
+    eval_pow, smul_eq_mul, div_eq_mul_inv]
   ring
 
 lemma gauss_half_zero : gaussI (1 / 2) 1 = √(2 * π) := by
@@ -1587,7 +1592,7 @@ structure IsKSStep (d : StepData Ex r t) (D : Ex →ₗ[ℝ] Ex) (Δt : ℝ) (K 
 /-- One step of the low-rank scheme of Section 5 of arXiv 2502.08951 from `f = ∑ⱼ Kⱼ Vⱼ` to
 `f' = ∑ⱼ K'ⱼ V'ⱼ`. `ev` evaluates `x`-functions at points, and `ε ≥ 0` (equations (5.8), (5.10) are
 multiplied by `ε Δt`; `ε = 0` is the limit scheme). -/
-structure IsStep (d : StepData Ex r t) (ev : Ex →ₗ[ℝ] Ω → ℝ) (D : Ex →ₗ[ℝ] Ex) (ε Δt : ℝ)
+structure IsLowRankBGKStep (d : StepData Ex r t) (ev : Ex →ₗ[ℝ] Ω → ℝ) (D : Ex →ₗ[ℝ] Ex) (ε Δt : ℝ)
     (sch : Variant) (K : Fin r → Ex) (V : Fin r → ℝ[X]) (K' : Fin r → Ex) (V' : Fin r → ℝ[X]) :
     Prop extends d.IsKSStep D Δt K V where
   /-- Step 3, (4.18), and the QR decomposition `L* = S* V*`. -/
@@ -1797,7 +1802,7 @@ lemma IsKSStep.ctr_K₂ (h : d.IsKSStep D Δt K V) (hT : Supp (ctr K V) 3)
     hs.vProj h.orth_V ((degreeLT_mono (by norm_num)).trans h.proper_V) ℓ]
 
 /-- Step 3 on functionals. -/
-lemma IsStep.ctr_Ks (h : d.IsStep ev D ε Δt sch K V K' V') (ℓ : ℝ[X] →ₗ[ℝ] ℝ) :
+lemma IsLowRankBGKStep.ctr_Ks (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V') (ℓ : ℝ[X] →ₗ[ℝ] ℝ) :
     ctr d.Ks d.Vs ℓ = ctr d.K₂ V ℓ + (-Δt) • (Px d.Xs ∘ₗ D) (ctr d.K₂ V (shift ℓ)) := by
   have h1 : ctr d.Ks d.Vs ℓ = ctr d.Xs (fun i => ∑ j, d.Ss i j • d.Vs j) ℓ :=
     ctr_factor d.Ss d.Xs d.Vs ℓ
@@ -1820,8 +1825,8 @@ lemma IsStep.ctr_Ks (h : d.IsStep ev D ε Δt sch K V K' V') (ℓ : ℝ[X] →�
 /-- arXiv 2502.08951, **The moment identity behind (5.15)–(5.25)**: for a tensor in `Ex ⊗ span(V₁,
 V₂, V₃)`, Steps 1–3 give exactly `⟨ℓ, f*⟩ = ⟨ℓ, f⟩ - Δt ∂ₓ⟨v ℓ, f⟩ - Δt² P ∂ₓ P ∂ₓ (⟨v² ℓ, f⟩ - Δt
 ∂ₓ ⟨v³ ℓ, f⟩)`, where `P` is the orthogonal projection on `span X*`. -/
-theorem IsStep.ctr_Ks_eq (h : d.IsStep ev D ε Δt sch K V K' V') (hT : Supp (ctr K V) 3)
-    (ℓ : ℝ[X] →ₗ[ℝ] ℝ) :
+theorem IsLowRankBGKStep.ctr_Ks_eq (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V')
+    (hT : Supp (ctr K V) 3) (ℓ : ℝ[X] →ₗ[ℝ] ℝ) :
     ctr d.Ks d.Vs ℓ = ctr K V ℓ - Δt • D (ctr K V (shift ℓ)) -
       Δt ^ 2 • Px d.Xs (D (Px d.Xs (D (ctr K V (shift (shift ℓ)) -
         Δt • D (ctr K V (shift (shift (shift ℓ)))))))) := by
@@ -1871,19 +1876,19 @@ lemma parseval {ι : Type*} [Fintype ι] [DecidableEq ι] {W : ι → ℝ[X]} (h
   simp only [← vIPL_apply, map_sum, map_smul, smul_eq_mul]
 
 /-- `Xs ⊂ X̂`. -/
-lemma IsStep.Xs_mem (h : d.IsStep ev D ε Δt sch K V K' V') (i : Fin r) :
+lemma IsLowRankBGKStep.Xs_mem (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V') (i : Fin r) :
     d.Xs i ∈ Submodule.span ℝ (Set.range d.Xh) :=
   Submodule.subset_span ⟨Fin.castAdd t i, h.Xh_left i⟩
 
 /-- `K*ⱼ` lies in the range of `X̂`: (5.29). -/
-lemma IsStep.Ks_mem (h : d.IsStep ev D ε Δt sch K V K' V') (j : Fin r) :
+lemma IsLowRankBGKStep.Ks_mem (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V') (j : Fin r) :
     d.Ks j ∈ Submodule.span ℝ (Set.range d.Xh) :=
   Submodule.sum_mem _ fun i _ => Submodule.smul_mem _ _ (h.Xs_mem i)
 
 /-- For XL as for sXL, `⟨M* V*ⱼ⟩ᵥ` lies in the range of `X̂`: for every `ε ≥ 0`, not only for the
 `ε → 0` of (5.27), (5.28). -/
-lemma IsStep.MV_mem (h : d.IsStep ev D ε Δt sch K V K' V') (hΔt : Δt ≠ 0) (j : Fin r) :
-    d.MV (d.Vs j) ∈ Submodule.span ℝ (Set.range d.Xh) := by
+lemma IsLowRankBGKStep.MV_mem (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V') (hΔt : Δt ≠ 0)
+    (j : Fin r) : d.MV (d.Vs j) ∈ Submodule.span ℝ (Set.range d.Xh) := by
   cases sch with
   | sXL => exact h.augment j
   | XL =>
@@ -1898,7 +1903,7 @@ lemma IsStep.MV_mem (h : d.IsStep ev D ε Δt sch K V K' V') (hΔt : Δt ≠ 0) 
       (Submodule.smul_mem _ _ (h.Ks_mem j)))
 
 /-- `M*` lies in the range of `X̂`, i.e. (5.30): the three `x`-factors of `M*` do. -/
-lemma IsStep.max_mem (h : d.IsStep ev D ε Δt sch K V K' V') (hΔt : Δt ≠ 0) :
+lemma IsLowRankBGKStep.max_mem (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V') (hΔt : Δt ≠ 0) :
     d.ρs ∈ Submodule.span ℝ (Set.range d.Xh) ∧ d.ms ∈ Submodule.span ℝ (Set.range d.Xh) ∧
       d.qs ∈ Submodule.span ℝ (Set.range d.Xh) := by
   have key : ∀ a ∈ degreeLT ℝ 3, vIP g₀ a • d.ρs + vIP g₁ a • d.ms + vIP g₂ a • d.qs ∈
@@ -1919,8 +1924,8 @@ lemma IsStep.max_mem (h : d.IsStep ev D ε Δt sch K V K' V') (hΔt : Δt ≠ 0)
 
 /-- arXiv 2502.08951, Step 5 on functionals: (5.29)–(5.31) for every `ε ≥ 0`: `(ε + Δt) ⟨ℓ, f̂ⁿ⁺¹⟩ =
 ε ⟨ℓ, f*⟩ + Δt ⟨ℓ, M*⟩`. -/
-theorem IsStep.ctr_Lh (h : d.IsStep ev D ε Δt sch K V K' V') (hΔt : Δt ≠ 0) (ℓ : ℝ[X] →ₗ[ℝ] ℝ) :
-    (ε + Δt) • ctr d.Xh d.Lh ℓ =
+theorem IsLowRankBGKStep.ctr_Lh (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V') (hΔt : Δt ≠ 0)
+    (ℓ : ℝ[X] →ₗ[ℝ] ℝ) : (ε + Δt) • ctr d.Xh d.Lh ℓ =
       ε • ctr d.Ks d.Vs ℓ + Δt • (ℓ g₀ • d.ρs + ℓ g₁ • d.ms + ℓ g₂ • d.qs) := by
   obtain ⟨h1, h2, h3⟩ := h.max_mem hΔt
   have hPM : ∑ i, ℓ (d.MX (d.Xh i)) • d.Xh i = ℓ g₀ • d.ρs + ℓ g₁ • d.ms + ℓ g₂ • d.qs := by
@@ -1961,7 +1966,7 @@ theorem IsStep.ctr_Lh (h : d.IsStep ev D ε Δt sch K V K' V') (hΔt : Δt ≠ 0
 
 /-- Step 6 on functionals: the truncation changes nothing when the discarded singular values vanish.
 -/
-lemma IsStep.ctr_out (h : d.IsStep ev D ε Δt sch K V K' V')
+lemma IsLowRankBGKStep.ctr_out (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V')
     (hσ : ∀ i : Fin t, d.σ (Fin.natAdd r i) = 0) (ℓ : ℝ[X] →ₗ[ℝ] ℝ) :
     ctr K' V' ℓ = ctr d.Xh d.Lh ℓ := by
   have hS : ∀ i j, d.Sh i j = ∑ m, d.Us i m * d.σ m * d.Ws j m := by
@@ -1986,7 +1991,7 @@ lemma IsStep.ctr_out (h : d.IsStep ev D ε Δt sch K V K' V')
   exact Finset.sum_congr rfl fun j _ => by rw [mul_comm]
 
 /-- `r ≥ 6`: the properness of the basis contains the paper's rank condition. -/
-lemma IsStep.six_le (h : d.IsStep ev D ε Δt sch K V K' V') : 6 ≤ r := by
+lemma IsLowRankBGKStep.six_le (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V') : 6 ≤ r := by
   have h1 : Module.finrank ℝ (degreeLT ℝ 6) ≤ Module.finrank ℝ
       (Submodule.span ℝ (Set.range V)) := by
     have : FiniteDimensional ℝ (Submodule.span ℝ (Set.range V)) :=
@@ -2000,7 +2005,7 @@ lemma IsStep.six_le (h : d.IsStep ev D ε Δt sch K V K' V') : 6 ≤ r := by
   omega
 
 /-- For `ε = 0`, `L̂ⁿ⁺¹ = ⟨X̂ M*⟩ₓ`: the display after (5.30). -/
-lemma IsStep.Lh_eq (h : d.IsStep ev D 0 Δt sch K V K' V') (hΔt : Δt ≠ 0)
+lemma IsLowRankBGKStep.Lh_eq (h : d.IsLowRankBGKStep ev D 0 Δt sch K V K' V') (hΔt : Δt ≠ 0)
     (i : Fin (r + t)) : d.Lh i = d.MX (d.Xh i) := by
   induction i using Fin.addCases with
   | left i =>
@@ -2013,7 +2018,7 @@ lemma IsStep.Lh_eq (h : d.IsStep ev D 0 Δt sch K V K' V') (hΔt : Δt ≠ 0)
     exact (sub_eq_zero.mp ((smul_eq_zero_iff_right hΔt).mp h1.symm)).symm
 
 /-- `Ŝⁿ⁺¹` has rank at most `3` for `ε = 0`; so `Σ_s = diag(Σ₃ₓ₃, 0)`: Step 6. -/
-lemma IsStep.sigma_eq_zero (h : d.IsStep ev D 0 Δt sch K V K' V') (hΔt : Δt ≠ 0)
+lemma IsLowRankBGKStep.sigma_eq_zero (h : d.IsLowRankBGKStep ev D 0 Δt sch K V K' V') (hΔt : Δt ≠ 0)
     (m : Fin (r + t)) (hm : 3 ≤ (m : ℕ)) : d.σ m = 0 := by
   have hS : ∀ i j, d.Sh i j = vIP (d.Lh i) (d.Vh j) := by
     intro i j
@@ -2126,9 +2131,9 @@ lemma ev_q (h : IsEq ev K V ρ m q) (x : Ω) :
 
 /-- (5.11) for a state with the structure `IsEq`. -/
 lemma fval_eq (h : IsEq ev K V ρ m q) (x : Ω) (v : ℝ) :
-    fval ev K V x v = maxwellian (density ev K V x) (meanVelocity ev K V x) v := by
+    fval ev K V x v = maxwellianExpansion (density ev K V x) (meanVelocity ev K V x) v := by
   have h1 := h.rho_ne x
-  rw [fval_eq_ev, h.ctr_eq, h.density_eq', h.meanVelocity_eq, maxwellian_eq]
+  rw [fval_eq_ev, h.ctr_eq, h.density_eq', h.meanVelocity_eq, maxwellianExpansion_eq]
   simp only [map_add, map_smul, Pi.add_apply, Pi.smul_apply, pointL_apply, smul_eq_mul]
   rw [h.ev_q]
   field_simp
@@ -2138,7 +2143,7 @@ end IsEq
 /-- A state at equilibrium in the pointwise sense of Theorem 5.1 has the structure `IsEq`. -/
 lemma exists_isEq {ev : Ex →ₗ[ℝ] Ω → ℝ} (hev : Function.Injective ev) {K : Fin r → Ex}
     {V : Fin r → ℝ[X]}
-    (h0 : ∀ x v, fval ev K V x v = maxwellian (density ev K V x) (meanVelocity ev K V x) v)
+    (h0 : ∀ x v, fval ev K V x v = maxwellianExpansion (density ev K V x) (meanVelocity ev K V x) v)
     (hρ : ∀ x, density ev K V x ≠ 0) :
     ∃ ρ m q, IsEq ev K V ρ m q := by
   have hexp : ∀ v : ℝ, Real.exp (-v ^ 2 / 2) ≠ 0 := fun v => (Real.exp_pos _).ne'
@@ -2148,7 +2153,7 @@ lemma exists_isEq {ev : Ex →ₗ[ℝ] Ω → ℝ} (hev : Function.Injective ev)
     intro x
     refine Polynomial.funext fun v => ?_
     have h1 := h0 x v
-    rw [maxwellian_eq, fval] at h1
+    rw [maxwellianExpansion_eq, fval] at h1
     simp only [gaussFn, ← mul_assoc, ← Finset.sum_mul, ← add_mul] at h1
     have h2 := mul_right_cancel₀ (hexp v) h1
     simpa [eval_finsetSum] using h2
@@ -2191,7 +2196,7 @@ variable {d : StepData Ex r t} {ev : Ex →ₗ[ℝ] Ω → ℝ} {D : Ex →ₗ[�
 
 /-- arXiv 2502.08951, **(5.33)**: for `ε = 0`, whatever `f` is, `fⁿ⁺¹ = f̂ⁿ⁺¹ = M*`; the truncation
 is lossless. -/
-theorem IsStep.isEq_next (h : d.IsStep ev D 0 Δt sch K V K' V') (hΔt : 0 < Δt) :
+theorem IsLowRankBGKStep.isEq_next (h : d.IsLowRankBGKStep ev D 0 Δt sch K V K' V') (hΔt : 0 < Δt) :
     IsEq ev K' V' d.ρs d.ms d.qs where
   ctr_eq ℓ := by
     have h6 := h.six_le
@@ -2207,8 +2212,8 @@ theorem IsStep.isEq_next (h : d.IsStep ev D 0 Δt sch K V K' V') (hΔt : 0 < Δt
 /-- arXiv 2502.08951, **(5.26), (5.34) with the exact remainder**: for a Maxwellian `f` and `ε = 0`,
 `j = 0, 1`: `(⟨vʲ fⁿ⁺¹⟩ - ⟨vʲ fⁿ⟩)/Δt = -∂ₓ⟨vʲ⁺¹ fⁿ⟩ - Δt P ∂ₓ P ∂ₓ (⟨vʲ⁺² fⁿ⟩ - Δt ∂ₓ ⟨vʲ⁺³ fⁿ⟩)`.
 -/
-theorem IsStep.moment_update (h : d.IsStep ev D 0 Δt sch K V K' V') (hΔt : 0 < Δt) {ρ m q : Ex}
-    (hE : IsEq ev K V ρ m q) {j : ℕ} (hj : j ≤ 1) :
+theorem IsLowRankBGKStep.moment_update (h : d.IsLowRankBGKStep ev D 0 Δt sch K V K' V')
+    (hΔt : 0 < Δt) {ρ m q : Ex} (hE : IsEq ev K V ρ m q) {j : ℕ} (hj : j ≤ 1) :
     Δt⁻¹ • (moment j K' V' - moment j K V) = -D (moment (j + 1) K V) -
       Δt • Px d.Xs (D (Px d.Xs (D (moment (j + 2) K V - Δt • D (moment (j + 3) K V))))) := by
   have hE' := h.isEq_next hΔt
@@ -2241,7 +2246,7 @@ in the Hermite basis at the start of every step, which Step 6 alone does not pro
 def IsRun (ev : Ex →ₗ[ℝ] Ω → ℝ) (D : Ex →ₗ[ℝ] Ex) (Δt : ℝ) (sch : Variant) (t : ℕ)
     (K : ℕ → Fin r → Ex) (V : ℕ → Fin r → ℝ[X]) : Prop :=
   ∀ n, ∃ (d : StepData Ex r t) (K' : Fin r → Ex) (V' : Fin r → ℝ[X]),
-    d.IsStep ev D 0 Δt sch (K n) (V n) K' V' ∧
+    d.IsLowRankBGKStep ev D 0 Δt sch (K n) (V n) K' V' ∧
       ∀ x v, fval ev (K (n + 1)) (V (n + 1)) x v = fval ev K' V' x v
 
 /-- **Theorem 5.1 of arXiv 2502.08951 (AP property for the 1D1V BGK model).**  For a run of the
@@ -2256,16 +2261,16 @@ limit `ε → 0` of the low-rank scheme, XL or sXL, from equilibrium data `f⁰ 
 
 The differences from the paper are listed in the module docstring.  In short: `x`-functions form an
 abstract inner product space with an operator `D` for `∂ₓ`; `r ≥ 6` is contained in the hypothesis
-that the velocity basis is proper (`IsStep.six_le`, `hermite_proper`); and the density must not
-vanish, which (5.7) needs. -/
+that the velocity basis is proper (`IsLowRankBGKStep.six_le`, `hermite_proper`); and the density
+must not vanish, which (5.7) needs. -/
 theorem theorem_5_1 {ev : Ex →ₗ[ℝ] Ω → ℝ} (hev : Function.Injective ev) {D : Ex →ₗ[ℝ] Ex}
     {Δt : ℝ} (hΔt : 0 < Δt) {sch : Variant} {K : ℕ → Fin r → Ex} {V : ℕ → Fin r → ℝ[X]}
     (hrun : IsRun ev D Δt sch t K V)
     (h0 : ∀ x v, fval ev (K 0) (V 0) x v =
-      maxwellian (density ev (K 0) (V 0) x) (meanVelocity ev (K 0) (V 0) x) v)
+      maxwellianExpansion (density ev (K 0) (V 0) x) (meanVelocity ev (K 0) (V 0) x) v)
     (hρ : ∀ x, density ev (K 0) (V 0) x ≠ 0) :
     (∀ n x v, fval ev (K n) (V n) x v =
-      maxwellian (density ev (K n) (V n) x) (meanVelocity ev (K n) (V n) x) v) ∧
+      maxwellianExpansion (density ev (K n) (V n) x) (meanVelocity ev (K n) (V n) x) v) ∧
     (∀ n x, density ev (K n) (V n) x ≠ 0 ∧
       ev (moment 0 (K n) (V n)) x = density ev (K n) (V n) x ∧
       ev (moment 1 (K n) (V n)) x = density ev (K n) (V n) x * meanVelocity ev (K n) (V n) x ∧
@@ -2333,7 +2338,7 @@ theorem theorem_5_1_rate {ev : Ex →ₗ[ℝ] Ω → ℝ} (hev : Function.Inject
     {Δt Λ : ℝ} (hΔt : 0 < Δt) (hΛ : 0 ≤ Λ) (hD : ∀ y, ‖D y‖ ≤ Λ * ‖y‖) {sch : Variant}
     {K : ℕ → Fin r → Ex} {V : ℕ → Fin r → ℝ[X]} (hrun : IsRun ev D Δt sch t K V)
     (h0 : ∀ x v, fval ev (K 0) (V 0) x v =
-      maxwellian (density ev (K 0) (V 0) x) (meanVelocity ev (K 0) (V 0) x) v)
+      maxwellianExpansion (density ev (K 0) (V 0) x) (meanVelocity ev (K 0) (V 0) x) v)
     (hρ : ∀ x, density ev (K 0) (V 0) x ≠ 0) (n : ℕ) {j : ℕ} (hj : j ≤ 1) :
     ‖Δt⁻¹ • (moment j (K (n + 1)) (V (n + 1)) - moment j (K n) (V n)) +
         D (moment (j + 1) (K n) (V n))‖ ≤
@@ -2371,16 +2376,16 @@ variable {d : StepData Ex r t} {ev : Ex →ₗ[ℝ] Ω → ℝ} {D : Ex →ₗ[�
   {K K' : Fin r → Ex} {V V' : Fin r → ℝ[X]}
 
 /-- The value at `(x, v)` of `M*`, (5.7): `M*` is the Maxwellian (5.2) of `f*`. -/
-lemma IsStep.ev_max (h : d.IsStep ev D ε Δt sch K V K' V') (x : Ω) (v : ℝ) :
+lemma IsLowRankBGKStep.ev_max (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V') (x : Ω) (v : ℝ) :
     gaussFn g₀ v * ev d.ρs x + gaussFn g₁ v * ev d.ms x + gaussFn g₂ v * ev d.qs x =
-      maxwellian (density ev d.Ks d.Vs x) (meanVelocity ev d.Ks d.Vs x) v := by
+      maxwellianExpansion (density ev d.Ks d.Vs x) (meanVelocity ev d.Ks d.Vs x) v := by
   have h1 := h.rho_ne x
   have h2 := h.qs_eq x
   have hq : ev d.qs x = ev d.ρs x * (ev d.ms x / ev d.ρs x) ^ 2 := by
     field_simp
     linarith
   have hd : density ev d.Ks d.Vs x = ev d.ρs x := density_eq ev _ _ x
-  rw [maxwellian_eq, meanVelocity, hd, momentum_eq]
+  rw [maxwellianExpansion_eq, meanVelocity, hd, momentum_eq]
   change _ = ev d.ρs x * gaussFn g₀ v + ev d.ρs x * (ev d.ms x / ev d.ρs x) * gaussFn g₁ v +
     ev d.ρs x * (ev d.ms x / ev d.ρs x) ^ 2 * gaussFn g₂ v
   rw [hq]
@@ -2389,12 +2394,12 @@ lemma IsStep.ev_max (h : d.IsStep ev D ε Δt sch K V K' V') (x : Ω) (v : ℝ) 
 /-- arXiv 2502.08951, **Step 5 for `ε > 0`, (5.29)–(5.31) and the limit `ε → 0`.**  Whatever `f` is,
 one step gives exactly `f̂ⁿ⁺¹ - M* = ε/(ε + Δt) (f* - M*)` before truncation, with `M*` the
 Maxwellian of `f*`. -/
-theorem IsStep.fhat_sub_max (h : d.IsStep ev D ε Δt sch K V K' V') (hε : 0 ≤ ε) (hΔt : 0 < Δt)
-    (x : Ω) (v : ℝ) :
+theorem IsLowRankBGKStep.fhat_sub_max (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V') (hε : 0 ≤ ε)
+    (hΔt : 0 < Δt) (x : Ω) (v : ℝ) :
     fval ev d.Xh d.Lh x v -
-        maxwellian (density ev d.Ks d.Vs x) (meanVelocity ev d.Ks d.Vs x) v =
+        maxwellianExpansion (density ev d.Ks d.Vs x) (meanVelocity ev d.Ks d.Vs x) v =
       ε / (ε + Δt) * (fval ev d.Ks d.Vs x v -
-        maxwellian (density ev d.Ks d.Vs x) (meanVelocity ev d.Ks d.Vs x) v) := by
+        maxwellianExpansion (density ev d.Ks d.Vs x) (meanVelocity ev d.Ks d.Vs x) v) := by
   have hw : ε + Δt ≠ 0 := by positivity
   have h1 := congrFun (congrArg ev (h.ctr_Lh hΔt.ne' (pointL v))) x
   simp only [map_add, map_smul, Pi.add_apply, Pi.smul_apply, pointL_apply, smul_eq_mul,
@@ -2404,8 +2409,8 @@ theorem IsStep.fhat_sub_max (h : d.IsStep ev D ε Δt sch K V K' V') (hε : 0 �
 
 /-- arXiv 2502.08951, **(5.32)**: the collision step conserves `ρ` and `ρ u`, so the Maxwellian does
 not change. -/
-theorem IsStep.moment_hat (h : d.IsStep ev D ε Δt sch K V K' V') (hε : 0 ≤ ε) (hΔt : 0 < Δt)
-    {j : ℕ} (hj : j ≤ 1) : moment j d.Xh d.Lh = moment j d.Ks d.Vs := by
+theorem IsLowRankBGKStep.moment_hat (h : d.IsLowRankBGKStep ev D ε Δt sch K V K' V') (hε : 0 ≤ ε)
+    (hΔt : 0 < Δt) {j : ℕ} (hj : j ≤ 1) : moment j d.Xh d.Lh = moment j d.Ks d.Vs := by
   have hw : ε + Δt ≠ 0 := by positivity
   obtain ⟨⟨h1, h2, h3⟩, ⟨h4, h5, h6⟩, -⟩ := momL_table
   have h7 := h.ctr_Lh hΔt.ne' (momL j)
@@ -2450,7 +2455,7 @@ theorem exists_stationary_run (hr : Module.finrank ℝ Ex = r) (h6 : 6 ≤ r) (e
     ∃ (K : ℕ → Fin r → Ex) (V : ℕ → Fin r → ℝ[X]),
       IsRun ev D Δt sch 0 K V ∧ (∀ n j, V n j = hermiteP j) ∧
       (∀ x v, fval ev (K 0) (V 0) x v =
-        maxwellian (density ev (K 0) (V 0) x) (meanVelocity ev (K 0) (V 0) x) v) ∧
+        maxwellianExpansion (density ev (K 0) (V 0) x) (meanVelocity ev (K 0) (V 0) x) v) ∧
       ∀ x, density ev (K 0) (V 0) x ≠ 0 := by
   have hr0 : 0 < r := by omega
   let i₀ : Fin r := ⟨0, hr0⟩
@@ -2546,7 +2551,7 @@ theorem exists_stationary_run (hr : Module.finrank ℝ Ex = r) (h6 : 6 ≤ r) (e
         rw [hρb, inner_smul_right, b.inner_eq_ite]
         simp [hi]
       simp [h2, S, w, hi]
-  have hstep : d.IsStep ev D 0 Δt sch K₀ V₀ K₀ V₀ :=
+  have hstep : d.IsLowRankBGKStep ev D 0 Δt sch K₀ V₀ K₀ V₀ :=
     { orth_V := hV₀
       proper_V := hprop
       orth_Xs := b.orthonormal
@@ -2634,7 +2639,7 @@ example (Δt : ℝ) (sch : Variant) :
       IsRun (WithLp.linearEquiv 2 ℝ (Fin 6 → ℝ)).toLinearMap 0 Δt sch 0 K V ∧
       (∀ n j, V n j = hermiteP j) ∧
       (∀ x v, fval (WithLp.linearEquiv 2 ℝ (Fin 6 → ℝ)).toLinearMap (K 0) (V 0) x v =
-        maxwellian (density (WithLp.linearEquiv 2 ℝ (Fin 6 → ℝ)).toLinearMap (K 0) (V 0) x)
+        maxwellianExpansion (density (WithLp.linearEquiv 2 ℝ (Fin 6 → ℝ)).toLinearMap (K 0) (V 0) x)
           (meanVelocity (WithLp.linearEquiv 2 ℝ (Fin 6 → ℝ)).toLinearMap (K 0) (V 0) x) v) ∧
       ∀ x, density (WithLp.linearEquiv 2 ℝ (Fin 6 → ℝ)).toLinearMap (K 0) (V 0) x ≠ 0 := by
   let ρ : EuclideanSpace ℝ (Fin 6) := WithLp.toLp 2 fun _ => 1
@@ -2686,7 +2691,7 @@ lemma bgkSetting_coll (f : ℝ[X]) : bgkSetting.coll f = bgkSetting.maxw f - f :
 /-- Non-vacuity of `PenalizedSetting.abs_dev_le_pow` and `PenalizedSetting.exists_first_order`: from
 every `f₀` the limit scheme with `λ = 1` runs, with `𝒟* = 0` (so `α = 0`) and vanishing brackets. -/
 example (Δt : ℝ) (f₀ : ℝ[X]) :
-    ∃ f : ℕ → ℝ[X], f 0 = f₀ ∧ ∀ n, bgkSetting.IsStep 0 1 Δt (f n) (f n) (f (n + 1)) ∧
+    ∃ f : ℕ → ℝ[X], f 0 = f₀ ∧ ∀ n, bgkSetting.IsPenalizedBGKStep 0 1 Δt (f n) (f n) (f (n + 1)) ∧
       bgkSetting.IsMultiplier 1 (f n) (fun _ => 0) ∧
       ∀ ξ, bgkSetting.bracket Δt (f n) (f n) ξ = 0 := by
   refine ⟨fun n => Nat.rec f₀ (fun _ g => bgkSetting.maxw g) n, rfl, fun n => ⟨⟨?_, ?_⟩, ?_, ?_⟩⟩

@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Stencils
 import LeanDLRA.LinearAlgebra.Factorization.Defs
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.OpenProblems.Curated.Classicala
@@ -23,8 +24,10 @@ all data with `4 r + 1 ≤ Nx, Nμ` as long as the new energy stays positive, an
 * `D^x`, `D^xx`, `A`, `|A|`, `σ ≥ 0` are arbitrary in `theorem_4`: the local law uses no property of
   them.  In particular `A` need not be the Legendre matrix `∫ μ P_k P_ℓ`.  The periodic stencils of
   the paper are `stencilCentred`, `stencilStab`, and only the total mass needs them (their columns
-  sum to zero).  `X₀`, `V₀` need not be orthonormal.  `B₀ > 0` is assumed: the paper divides by
-  `B₀` without saying so.
+  sum to zero).  They are the core `Kinetic.centralDiff` and `(Δx / 2) • Kinetic.secondDiff` at
+  `Δx = 1 / Nx`, with the cells numbered by `Fin Nx` (`stencilCentred_eq_submatrix`,
+  `stencilStab_eq_smul_submatrix`).  `X₀`, `V₀` need not be orthonormal.  `B₀ > 0` is assumed: the
+  paper divides by `B₀` without saying so.
 * `qr` is taken with nonnegative diagonal of `R` (`IsGSQR`), and this convention is needed.  Step 5
   of Section 5.4 writes `e₁` instead of the first column of `V̂̂¹`, and that column is `+e₁` only
   with this convention (`IsGSQR.first_column`).  With `R₀₀ = -1` the truncated zeroth moment would
@@ -756,6 +759,42 @@ theorem sum_stencilStab [NeZero Nx] (i : Fin Nx) : ∑ j, stencilStab Nx j i = 0
   simp only [stencilStab, Finset.sum_add_distrib, sum_ite_succ, sum_ite_pred]
   simp only [Finset.sum_ite_eq, Finset.mem_univ, ite_true]
   ring
+
+/-- The periodic `D^x` of arXiv 2502.03008 is the core central difference at `Δx = 1 / Nx`, with the
+cells numbered by `Fin Nx` through `ZMod.finEquiv`. -/
+theorem stencilCentred_eq_submatrix (Nx : ℕ) [NeZero Nx] :
+    stencilCentred Nx =
+      (Kinetic.centralDiff Nx (1 / Nx)).submatrix (ZMod.finEquiv Nx) (ZMod.finEquiv Nx) := by
+  have hN : (Nx : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (NeZero.ne Nx)
+  have key : ∀ t : ℝ, t / (2 * (1 / (Nx : ℝ))) = t * ((Nx : ℝ) / 2) := fun t => by
+    field_simp
+  rw [Kinetic.centralDiff_submatrix_finEquiv]
+  ext j i
+  simp only [stencilCentred, Matrix.of_apply, key]
+  split_ifs <;> ring
+
+/-- The periodic `D^xx` of arXiv 2502.03008 is the core second difference times `Δx / 2` at
+`Δx = 1 / Nx`, with the cells numbered by `Fin Nx` through `ZMod.finEquiv`. -/
+theorem stencilStab_eq_smul_submatrix (Nx : ℕ) [NeZero Nx] :
+    stencilStab Nx = (1 / (Nx : ℝ) / 2) •
+      (Kinetic.secondDiff Nx (1 / Nx)).submatrix (ZMod.finEquiv Nx) (ZMod.finEquiv Nx) := by
+  have hN : (Nx : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (NeZero.ne Nx)
+  have key : ∀ t : ℝ, 1 / (Nx : ℝ) / 2 * (t / (1 / (Nx : ℝ)) ^ 2) = t * ((Nx : ℝ) / 2) :=
+    fun t => by field_simp
+  rw [Kinetic.secondDiff_submatrix_finEquiv]
+  ext j i
+  simp only [stencilStab, Matrix.smul_apply, Matrix.of_apply, smul_eq_mul, key]
+  split_ifs <;> ring
+
+/-- On three cells, read off through the core stencils: `D^x(0, 1) = 3 / 2` and `D^xx(0, 0) = -3`
+(`Δx = 1 / 3`). -/
+example : stencilCentred 3 0 1 = 3 / 2 ∧ stencilStab 3 0 0 = -3 := by
+  rw [stencilCentred_eq_submatrix, stencilStab_eq_smul_submatrix,
+    Kinetic.centralDiff_submatrix_finEquiv, Kinetic.secondDiff_submatrix_finEquiv,
+    Matrix.smul_apply, Matrix.of_apply, Matrix.of_apply]
+  norm_num [show (1 : Fin 3) = 0 + 1 from rfl, show ¬((1 : Fin 3) = 0 - 1) by decide,
+    show ¬((0 : Fin 3) = 0 + 1) by decide, show ¬((0 : Fin 3) = 0 - 1) by decide,
+    show ¬((1 : Fin 3) = -1) by decide]
 
 /-- The total mass `m = Δx ∑_j (√2 B_j Φ_j + B_j)` of the numerical section of arXiv 2502.03008,
 with `Δx = 1 / Nx`. -/

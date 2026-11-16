@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Kinetic.Stencils
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Matrix.Interpolation
 import LeanDLRA.Matrix.Orthonormal
@@ -10,13 +11,13 @@ Li, Jiang, Zhang, Xiong, *Temporal-Stability-Enhanced and Energy-Stable Dynamica
 Approximation for Multiscale Linear Kinetic Transport Equations*.  This module writes out the
 one-dimensional fully discrete scheme of Sec. 3.2 and 4.1 on finite grids (`Disc`, with `𝒜`, `ℋ`,
 `𝒥`, `ℬ`, `R`; the Schur complement update `Disc.IsMacroStep`; the K-, L- and S-step; one step
-`IsStep`) and proves the formal AP property of Sec. 4.2 and a true limit `ε → 0⁺`.  The formal part:
-the oblique projector fixes `Range X` (`oblique_fixes`), the limit equations (4.1a-c)
-(`Disc.IsFormalLimit`) put `-(σˢ)⁻¹ 𝒟^{x,+} ρ¹` in `Range X¹` and `M Qˣ 1` in `Range V¹`
-(`mem_rangeX`, `mem_rangeV`), this gives the flux (4.3) (`flux_eq_of_mem_range`), and the macro
-equation becomes the implicit diffusion scheme (`formal_ap`, `Disc.IsDiffusionStep`), which is well
-posed (`existsUnique_diffusion`) and is the conservative three-point scheme on the periodic grid
-(`periodic_diffusion`).  The limit: the steps reduce to (4.1a-c) (`tendsto_steps`), the density
+`IsSchurIMEXSBUGStep`) and proves the formal AP property of Sec. 4.2 and a true limit
+`ε → 0⁺`.  The formal part: the oblique projector fixes `Range X` (`oblique_fixes`), the limit
+equations (4.1a-c) (`Disc.IsFormalLimit`) put `-(σˢ)⁻¹ 𝒟^{x,+} ρ¹` in `Range X¹` and `M Qˣ 1` in
+`Range V¹` (`mem_rangeX`, `mem_rangeV`), this gives the flux (4.3) (`flux_eq_of_mem_range`), and the
+macro equation becomes the implicit diffusion scheme (`formal_ap`, `Disc.IsDiffusionStep`), which is
+well posed (`existsUnique_diffusion`) and is the conservative three-point scheme on the periodic
+grid (`periodic_diffusion`).  The limit: the steps reduce to (4.1a-c) (`tendsto_steps`), the density
 converges to the diffusion step (`tendsto_rho`) and to the diffusion iterates (`tendsto_iterates`,
 `exists_ap_trajectory`), and the low-rank flux and macro equation converge (`tendsto_flux`,
 `ap_step`, `ap_step_fixed`, `tendsto_flux_iterates`).  `exists_step`, `exists_trajectory`,
@@ -97,6 +98,19 @@ structure Disc.Admissible (D : Disc x a) : Prop where
   σa_nonneg : ∀ i, 0 ≤ D.σa i
   dt_pos : 0 < D.dt
   sbp : D.Dm = -D.Dpᵀ
+
+/-- The measure `|D_Ω|` of an admissible discretisation is positive. -/
+theorem Disc.Admissible.vol_pos [Nonempty a] {D : Disc x a} (h : D.Admissible) : 0 < D.vol :=
+  h.vol_eq ▸ Finset.sum_pos (fun i _ => h.w_pos i) Finset.univ_nonempty
+
+/-- The weights of an admissible discretisation divided by `|D_Ω|`, with the nodes `Ωˣ`, are a core
+velocity quadrature (positive weights of total mass one). -/
+noncomputable def Disc.Admissible.toQuadrature [Nonempty a] {D : Disc x a} (h : D.Admissible) :
+    Kinetic.Quadrature a where
+  μ := D.Ω
+  w := fun i => D.w i / D.vol
+  w_pos := fun i => div_pos (h.w_pos i) h.vol_pos
+  sum_w := by rw [← Finset.sum_div, h.vol_eq, div_self h.vol_pos.ne']
 
 namespace Disc
 
@@ -218,9 +232,12 @@ end Disc
 
 /-- One step of the IMEX-S-BUG scheme of Sec. 4.1, in the order of the paper: `ρ¹` from the Schur
 complement with `G⁰ M = X⁰ S⁰ (V⁰)ᵀ`, then `K¹` and `L¹`, then `X¹`, `V¹` with orthonormal columns
-and `K¹ = X¹ R_K`, `L¹ = V¹ R_L` (all that is used of the QR factorisations), then `S¹`. -/
-structure IsStep (D : Disc x a) (ε : ℝ) (Φ ρ₀ : x → ℝ) (X₀ : Matrix x r ℝ) (S₀ : Matrix r r ℝ)
-    (V₀ : Matrix a r ℝ) (ρ₁ : x → ℝ) (K₁ : Matrix x r ℝ) (L₁ : Matrix a r ℝ)
+and `K¹ = X¹ R_K`, `L¹ = V¹ R_L` (all that is used of the QR factorisations), then `S¹`.  The
+sibling file states the same scheme as `Grid.IsIMEXSBUGStep` on other data (`d` space dimensions
+with periodic shifts, a separate macro absorption, and the zero-density constraint of Sec. 4.3 as a
+further field); the two predicates are not equal as stated and are not compared formally. -/
+structure IsSchurIMEXSBUGStep (D : Disc x a) (ε : ℝ) (Φ ρ₀ : x → ℝ) (X₀ : Matrix x r ℝ)
+    (S₀ : Matrix r r ℝ) (V₀ : Matrix a r ℝ) (ρ₁ : x → ℝ) (K₁ : Matrix x r ℝ) (L₁ : Matrix a r ℝ)
     (X₁ : Matrix x r' ℝ) (S₁ : Matrix r' r' ℝ) (V₁ : Matrix a r' ℝ) : Prop where
   schur : D.IsMacroStep ε Φ ρ₀ (D.lift X₀ S₀ V₀) ρ₁
   kstep : D.IsKStep ε ρ₁ X₀ S₀ V₀ K₁
@@ -1235,17 +1252,17 @@ private theorem capture_right (hρ : Tendsto ρ₁ 𝓕 (𝓝 ρs))
   rw [Matrix.mulVec_neg, h1, h4, neg_sub]
 
 /-- **Sec. 4.2, the AP property of IMEX-S-BUG** (arXiv 2602.12337).  Let one step of the scheme
-(`IsStep`) start from orthonormal `X⁰(ε)`, `V⁰(ε)` and bounded `S⁰(ε)`, with `ρ¹(ε) → ρ*`.  Assume
-the nondegeneracy `|(V⁰)ᵀ M Qˣ 1|² ≥ δ`, `|(X⁰)ᵀ 𝒟^{x,+} ρ¹|² ≥ δ` with `δ > 0` independent of
-`ε`.  Then, as `ε → 0⁺`, the low-rank flux converges to the flux (4.3):
+(`IsSchurIMEXSBUGStep`) start from orthonormal `X⁰(ε)`, `V⁰(ε)` and bounded `S⁰(ε)`, with
+`ρ¹(ε) → ρ*`.  Assume the nondegeneracy `|(V⁰)ᵀ M Qˣ 1|² ≥ δ`, `|(X⁰)ᵀ 𝒟^{x,+} ρ¹|² ≥ δ` with
+`δ > 0` independent of `ε`.  Then, as `ε → 0⁺`, the low-rank flux converges to the flux (4.3):
 `ℋ(G¹(ε)) → -𝒟^{x,-}(⟨Ω ⊗ Ω⟩_Ω (σˢ)⁻¹ 𝒟^{x,+} ρ*)`.  The paper passes to the limit formally and has
 no nondegeneracy; `ap_fails_of_degenerate_right`, `ap_fails_of_degenerate_left` show that it is
 needed.  The bases `X¹(ε)`, `V¹(ε)` need not converge. -/
 theorem tendsto_flux (hD : D.Admissible) {Φ ρ₀ : ℝ → x → ℝ} (hρ : Tendsto ρ₁ 𝓕 (𝓝 ρs))
     (hX₀ : ∀ᶠ ε in 𝓕, (X₀ ε)ᵀ * X₀ ε = 1) (hV₀ : ∀ᶠ ε in 𝓕, (V₀ ε)ᵀ * V₀ ε = 1)
     (hS₀ : EntryBdd 𝓕 S₀)
-    (hs : ∀ᶠ ε in 𝓕, IsStep D ε (Φ ε) (ρ₀ ε) (X₀ ε) (S₀ ε) (V₀ ε) (ρ₁ ε) (K₁ ε) (L₁ ε) (X₁ ε)
-      (S₁ ε) (V₁ ε))
+    (hs : ∀ᶠ ε in 𝓕, IsSchurIMEXSBUGStep D ε (Φ ε) (ρ₀ ε) (X₀ ε) (S₀ ε) (V₀ ε) (ρ₁ ε) (K₁ ε)
+      (L₁ ε) (X₁ ε) (S₁ ε) (V₁ ε))
     (hc : ∃ δ > 0, ∀ᶠ ε in 𝓕, δ ≤ (V₀ ε)ᵀ *ᵥ D.u ⬝ᵥ (V₀ ε)ᵀ *ᵥ D.u)
     (hq : ∃ δ > 0, ∀ᶠ ε in 𝓕, δ ≤ (X₀ ε)ᵀ *ᵥ (D.Dp *ᵥ ρ₁ ε) ⬝ᵥ (X₀ ε)ᵀ *ᵥ (D.Dp *ᵥ ρ₁ ε)) :
     Tendsto (fun ε => D.H (D.lift (X₁ ε) (S₁ ε) (V₁ ε))) 𝓕
@@ -1261,7 +1278,8 @@ theorem tendsto_flux (hD : D.Admissible) {Φ ρ₀ : ℝ → x → ℝ} (hρ : T
   exact tendsto_flux_of_capture hD hρ hXb hVb hS₀ hX₁ hV₁ (hs.mono fun _ h => h.sstep) hz hs'
 
 /-- **Sec. 4.2, the AP property of one step** (arXiv 2602.12337).  Let one step of IMEX-S-BUG
-(`IsStep`) start from orthonormal `X⁰(ε)`, `V⁰(ε)`, bounded `S⁰(ε)`, `ρ⁰(ε) → ρ⁰*`, `Φ(ε) → Φ*`, and
+(`IsSchurIMEXSBUGStep`) start from orthonormal `X⁰(ε)`, `V⁰(ε)`, bounded `S⁰(ε)`, `ρ⁰(ε) → ρ⁰*`,
+`Φ(ε) → Φ*`, and
 let `ρ*` be the implicit diffusion step from `ρ⁰*`.  Under the nondegeneracy of `tendsto_flux`, as
 `ε → 0⁺`: `ρ¹(ε) → ρ*`, `ℋ(G¹(ε))` converges to the flux (4.3), and the macro equation holds for
 the low-rank `G¹(ε)` in the limit, `(ρ¹ - ρ⁰)/Δt + ℋ(G¹) + σᵃ ρ¹ → Φ*`.  For `ε > 0` it holds only
@@ -1271,8 +1289,8 @@ theorem ap_step (hD : D.Admissible) {Φ ρ₀ : ℝ → x → ℝ} {Φs ρ₀s :
     (hΦ : Tendsto Φ 𝓕 (𝓝 Φs)) (hρ₀ : Tendsto ρ₀ 𝓕 (𝓝 ρ₀s)) (hd : D.IsDiffusionStep Φs ρ₀s ρs)
     (hX₀ : ∀ᶠ ε in 𝓕, (X₀ ε)ᵀ * X₀ ε = 1) (hV₀ : ∀ᶠ ε in 𝓕, (V₀ ε)ᵀ * V₀ ε = 1)
     (hS₀ : EntryBdd 𝓕 S₀)
-    (hs : ∀ᶠ ε in 𝓕, IsStep D ε (Φ ε) (ρ₀ ε) (X₀ ε) (S₀ ε) (V₀ ε) (ρ₁ ε) (K₁ ε) (L₁ ε) (X₁ ε)
-      (S₁ ε) (V₁ ε))
+    (hs : ∀ᶠ ε in 𝓕, IsSchurIMEXSBUGStep D ε (Φ ε) (ρ₀ ε) (X₀ ε) (S₀ ε) (V₀ ε) (ρ₁ ε) (K₁ ε)
+      (L₁ ε) (X₁ ε) (S₁ ε) (V₁ ε))
     (hc : ∃ δ > 0, ∀ᶠ ε in 𝓕, δ ≤ (V₀ ε)ᵀ *ᵥ D.u ⬝ᵥ (V₀ ε)ᵀ *ᵥ D.u)
     (hq : ∃ δ > 0, ∀ᶠ ε in 𝓕, δ ≤ (X₀ ε)ᵀ *ᵥ (D.Dp *ᵥ ρ₁ ε) ⬝ᵥ (X₀ ε)ᵀ *ᵥ (D.Dp *ᵥ ρ₁ ε)) :
     Tendsto ρ₁ 𝓕 (𝓝 ρs) ∧
@@ -1300,7 +1318,8 @@ fixed `ρ⁰`, `Φ`, `X⁰`, `S⁰`, `V⁰`; the nondegeneracy reads `(V⁰)ᵀ 
 `(X⁰)ᵀ 𝒟^{x,+} ρ* ≠ 0`. -/
 theorem ap_step_fixed (hD : D.Admissible) {Φ ρ₀ : x → ℝ} {X₀ : Matrix x r ℝ} {S₀ : Matrix r r ℝ}
     {V₀ : Matrix a r ℝ} (hd : D.IsDiffusionStep Φ ρ₀ ρs) (hX₀ : X₀ᵀ * X₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1)
-    (hs : ∀ᶠ ε in 𝓕, IsStep D ε Φ ρ₀ X₀ S₀ V₀ (ρ₁ ε) (K₁ ε) (L₁ ε) (X₁ ε) (S₁ ε) (V₁ ε))
+    (hs : ∀ᶠ ε in 𝓕,
+      IsSchurIMEXSBUGStep D ε Φ ρ₀ X₀ S₀ V₀ (ρ₁ ε) (K₁ ε) (L₁ ε) (X₁ ε) (S₁ ε) (V₁ ε))
     (hc : V₀ᵀ *ᵥ D.u ≠ 0) (hq : X₀ᵀ *ᵥ (D.Dp *ᵥ ρs) ≠ 0) :
     Tendsto ρ₁ 𝓕 (𝓝 ρs) ∧
       Tendsto (fun ε => D.H (D.lift (X₁ ε) (S₁ ε) (V₁ ε))) 𝓕
@@ -1367,14 +1386,15 @@ private theorem tendsto_residual {m n : Type*} {K K₀ b c s p : ℝ → Matrix 
   linear_combination (norm := module) -h2
 
 /-- **Sec. 4.2, Eq. (4.1a-c)** (arXiv 2602.12337).  "In the limit `ε → 0`, the K-, L- and S-step
-reduce to (4.1a-c)", as a theorem: for one step (`IsStep`) from orthonormal `X⁰(ε)`, `V⁰(ε)`,
-bounded `S⁰(ε)` and with `ρ¹(ε) → ρ*`, the residuals of (4.1a-c) tend to zero.  No nondegeneracy
-is needed here.  Since `X¹(ε)`, `V¹(ε)` need not converge, (4.1c) can only hold in this form. -/
+reduce to (4.1a-c)", as a theorem: for one step (`IsSchurIMEXSBUGStep`) from orthonormal `X⁰(ε)`,
+`V⁰(ε)`, bounded `S⁰(ε)` and with `ρ¹(ε) → ρ*`, the residuals of (4.1a-c) tend to zero.  No
+nondegeneracy is needed here.  Since `X¹(ε)`, `V¹(ε)` need not converge, (4.1c) can only hold in
+this form. -/
 theorem tendsto_steps (hD : D.Admissible) {Φ ρ₀ : ℝ → x → ℝ} (hρ : Tendsto ρ₁ 𝓕 (𝓝 ρs))
     (hX₀ : ∀ᶠ ε in 𝓕, (X₀ ε)ᵀ * X₀ ε = 1) (hV₀ : ∀ᶠ ε in 𝓕, (V₀ ε)ᵀ * V₀ ε = 1)
     (hS₀ : EntryBdd 𝓕 S₀)
-    (hs : ∀ᶠ ε in 𝓕, IsStep D ε (Φ ε) (ρ₀ ε) (X₀ ε) (S₀ ε) (V₀ ε) (ρ₁ ε) (K₁ ε) (L₁ ε) (X₁ ε)
-      (S₁ ε) (V₁ ε)) :
+    (hs : ∀ᶠ ε in 𝓕, IsSchurIMEXSBUGStep D ε (Φ ε) (ρ₀ ε) (X₀ ε) (S₀ ε) (V₀ ε) (ρ₁ ε) (K₁ ε)
+      (L₁ ε) (X₁ ε) (S₁ ε) (V₁ ε)) :
     Tendsto (fun ε => K₁ ε + D.sigSInv * (D.J (ρ₁ ε) * D.M * V₀ ε)) 𝓕 (𝓝 0) ∧
       Tendsto (fun ε => L₁ ε * ((X₀ ε)ᵀ * D.sigS * X₀ ε) + D.M * (D.J (ρ₁ ε))ᵀ * X₀ ε) 𝓕 (𝓝 0) ∧
       Tendsto (fun ε => (X₁ ε)ᵀ * D.sigS * X₁ ε * S₁ ε + (X₁ ε)ᵀ * D.J (ρ₁ ε) * D.M * V₁ ε) 𝓕
@@ -1456,8 +1476,8 @@ complement uses the full-rank operator. -/
 theorem tendsto_iterates (hD : D.Admissible) (hX : ∀ᶠ ε in 𝓕, (X 0 ε)ᵀ * X 0 ε = 1)
     (hV : ∀ᶠ ε in 𝓕, (V 0 ε)ᵀ * V 0 ε = 1) (hS : EntryBdd 𝓕 (S 0))
     (hρ : Tendsto (ρ 0) 𝓕 (𝓝 (ρd 0)))
-    (hstep : ∀ n, ∀ᶠ ε in 𝓕, IsStep D ε (Φ n) (ρ n ε) (X n ε) (S n ε) (V n ε) (ρ (n + 1) ε)
-      (K n ε) (L n ε) (X (n + 1) ε) (S (n + 1) ε) (V (n + 1) ε))
+    (hstep : ∀ n, ∀ᶠ ε in 𝓕, IsSchurIMEXSBUGStep D ε (Φ n) (ρ n ε) (X n ε) (S n ε) (V n ε)
+      (ρ (n + 1) ε) (K n ε) (L n ε) (X (n + 1) ε) (S (n + 1) ε) (V (n + 1) ε))
     (hlim : ∀ n, D.IsDiffusionStep (Φ n) (ρd n) (ρd (n + 1))) (n : ℕ) :
     Tendsto (ρ n) 𝓕 (𝓝 (ρd n)) ∧ EntryBdd 𝓕 (S n) ∧
       (∀ᶠ ε in 𝓕, (X n ε)ᵀ * X n ε = 1) ∧ ∀ᶠ ε in 𝓕, (V n ε)ᵀ * V n ε = 1 := by
@@ -1484,8 +1504,8 @@ on `Vⁿ` for `n ≥ 1` is derived: `M Qˣ 1` is captured by `Vⁿ(ε)` in the l
 theorem tendsto_flux_iterates (hD : D.Admissible) (hX : ∀ᶠ ε in 𝓕, (X 0 ε)ᵀ * X 0 ε = 1)
     (hV : ∀ᶠ ε in 𝓕, (V 0 ε)ᵀ * V 0 ε = 1) (hS : EntryBdd 𝓕 (S 0))
     (hρ : Tendsto (ρ 0) 𝓕 (𝓝 (ρd 0)))
-    (hstep : ∀ n, ∀ᶠ ε in 𝓕, IsStep D ε (Φ n) (ρ n ε) (X n ε) (S n ε) (V n ε) (ρ (n + 1) ε)
-      (K n ε) (L n ε) (X (n + 1) ε) (S (n + 1) ε) (V (n + 1) ε))
+    (hstep : ∀ n, ∀ᶠ ε in 𝓕, IsSchurIMEXSBUGStep D ε (Φ n) (ρ n ε) (X n ε) (S n ε) (V n ε)
+      (ρ (n + 1) ε) (K n ε) (L n ε) (X (n + 1) ε) (S (n + 1) ε) (V (n + 1) ε))
     (hlim : ∀ n, D.IsDiffusionStep (Φ n) (ρd n) (ρd (n + 1)))
     (hc : ∃ δ > 0, ∀ᶠ ε in 𝓕, δ ≤ (V 0 ε)ᵀ *ᵥ D.u ⬝ᵥ (V 0 ε)ᵀ *ᵥ D.u)
     (hq : ∀ n, ∃ δ > 0, ∀ᶠ ε in 𝓕,
@@ -1553,7 +1573,7 @@ theorem exists_step (hD : D.Admissible) {ε : ℝ} (hε : 0 < ε) {n : ℕ}
     (hX₀ : X₀ᵀ * X₀ = 1) :
     ∃ (ρ₁ : x → ℝ) (K₁ : Matrix x (Fin n) ℝ) (L₁ : Matrix a (Fin n) ℝ) (X₁ : Matrix x (Fin n) ℝ)
       (S₁ : Matrix (Fin n) (Fin n) ℝ) (V₁ : Matrix a (Fin n) ℝ),
-      IsStep D ε Φ ρ₀ X₀ S₀ V₀ ρ₁ K₁ L₁ X₁ S₁ V₁ := by
+      IsSchurIMEXSBUGStep D ε Φ ρ₀ X₀ S₀ V₀ ρ₁ K₁ L₁ X₁ S₁ V₁ := by
   have hd : ∀ i, 0 < D.scale ε i := scale_pos hD ε
   obtain ⟨ρ₁, hρ, -⟩ := existsUnique_of_det
     (Top_det_ne (D := D) hD (q := fun i => (D.scale ε i)⁻¹) fun i => (inv_pos.2 (hd i)).le)
@@ -1607,12 +1627,13 @@ theorem exists_trajectory (hD : D.Admissible) {ε : ℝ} (hε : 0 < ε) {n : ℕ
     ∃ (ρ : ℕ → x → ℝ) (X : ℕ → Matrix x (Fin n) ℝ) (S : ℕ → Matrix (Fin n) (Fin n) ℝ)
       (V : ℕ → Matrix a (Fin n) ℝ) (K : ℕ → Matrix x (Fin n) ℝ) (L : ℕ → Matrix a (Fin n) ℝ),
       ρ 0 = ρ₀ ∧ X 0 = X₀ ∧ S 0 = S₀ ∧ V 0 = V₀ ∧
-        ∀ k, IsStep D ε (Φ k) (ρ k) (X k) (S k) (V k) (ρ (k + 1)) (K k) (L k) (X (k + 1))
-          (S (k + 1)) (V (k + 1)) := by
+        ∀ k, IsSchurIMEXSBUGStep D ε (Φ k) (ρ k) (X k) (S k) (V k) (ρ (k + 1)) (K k) (L k)
+          (X (k + 1)) (S (k + 1)) (V (k + 1)) := by
   let T := (x → ℝ) × {X : Matrix x (Fin n) ℝ // Xᵀ * X = 1} × Matrix (Fin n) (Fin n) ℝ ×
     Matrix a (Fin n) ℝ
   have hnext : ∀ (k : ℕ) (st : T), ∃ (st' : T) (K : Matrix x (Fin n) ℝ) (L : Matrix a (Fin n) ℝ),
-      IsStep D ε (Φ k) st.1 st.2.1.1 st.2.2.1 st.2.2.2 st'.1 K L st'.2.1.1 st'.2.2.1 st'.2.2.2 := by
+      IsSchurIMEXSBUGStep D ε (Φ k) st.1 st.2.1.1 st.2.2.1 st.2.2.2 st'.1 K L st'.2.1.1 st'.2.2.1
+        st'.2.2.2 := by
     intro k st
     obtain ⟨ρ₁, K₁, L₁, X₁, S₁, V₁, h⟩ :=
       exists_step hD hε hnx hna (Φ k) st.1 st.2.2.1 st.2.2.2 st.2.1.2
@@ -1636,8 +1657,8 @@ theorem exists_ap_trajectory (hD : D.Admissible) {n : ℕ} (hnx : n ≤ Fintype.
       (K : ℕ → ℝ → Matrix x (Fin n) ℝ) (L : ℕ → ℝ → Matrix a (Fin n) ℝ),
       ρd 0 = ρ₀ ∧ (∀ k, D.IsDiffusionStep (Φ k) (ρd k) (ρd (k + 1))) ∧
       (∀ ε > 0, ρ 0 ε = ρ₀ ∧ X 0 ε = X₀ ∧ S 0 ε = S₀ ∧ V 0 ε = V₀) ∧
-      (∀ ε > 0, ∀ k, IsStep D ε (Φ k) (ρ k ε) (X k ε) (S k ε) (V k ε) (ρ (k + 1) ε) (K k ε)
-        (L k ε) (X (k + 1) ε) (S (k + 1) ε) (V (k + 1) ε)) ∧
+      (∀ ε > 0, ∀ k, IsSchurIMEXSBUGStep D ε (Φ k) (ρ k ε) (X k ε) (S k ε) (V k ε) (ρ (k + 1) ε)
+        (K k ε) (L k ε) (X (k + 1) ε) (S (k + 1) ε) (V (k + 1) ε)) ∧
       ∀ k, Tendsto (ρ k) 𝓕 (𝓝 (ρd k)) := by
   obtain ⟨ρd, hρ0, hρd⟩ : ∃ ρd : ℕ → x → ℝ, ρd 0 = ρ₀ ∧
       ∀ k, D.IsDiffusionStep (Φ k) (ρd k) (ρd (k + 1)) := by
@@ -1647,8 +1668,8 @@ theorem exists_ap_trajectory (hD : D.Admissible) {n : ℕ} (hnx : n ≤ Fintype.
       (S : ℕ → Matrix (Fin n) (Fin n) ℝ) (V : ℕ → Matrix a (Fin n) ℝ)
       (K : ℕ → Matrix x (Fin n) ℝ) (L : ℕ → Matrix a (Fin n) ℝ), 0 < ε →
         (ρ 0 = ρ₀ ∧ X 0 = X₀ ∧ S 0 = S₀ ∧ V 0 = V₀) ∧
-          ∀ k, IsStep D ε (Φ k) (ρ k) (X k) (S k) (V k) (ρ (k + 1)) (K k) (L k) (X (k + 1))
-            (S (k + 1)) (V (k + 1)) := by
+          ∀ k, IsSchurIMEXSBUGStep D ε (Φ k) (ρ k) (X k) (S k) (V k) (ρ (k + 1)) (K k) (L k)
+            (X (k + 1)) (S (k + 1)) (V (k + 1)) := by
     intro ε
     by_cases hε : 0 < ε
     · obtain ⟨ρ, X, S, V, K, L, h1, h2, h3, h4, h5⟩ :=
@@ -1690,19 +1711,31 @@ noncomputable def periodicDp (n : ℕ) (h : ℝ) : Matrix (Fin (n + 1)) (Fin (n 
 noncomputable def periodicDm (n : ℕ) (h : ℝ) : Matrix (Fin (n + 1)) (Fin (n + 1)) ℝ :=
   Matrix.of fun i j => ((if j = i then 1 else 0) - (if j = i - 1 then 1 else 0)) / h
 
+/-- `periodicDp` is the core forward difference `Kinetic.fwdDiff` with the cells numbered by
+`Fin (n + 1)` through `ZMod.finEquiv`. -/
+theorem periodicDp_eq_submatrix (n : ℕ) (h : ℝ) :
+    periodicDp n h =
+      (Kinetic.fwdDiff (n + 1) h).submatrix (ZMod.finEquiv (n + 1)) (ZMod.finEquiv (n + 1)) := by
+  rw [Kinetic.fwdDiff_submatrix_finEquiv]
+  rfl
+
+/-- `periodicDm` is the core backward difference `Kinetic.bwdDiff` with the cells numbered by
+`Fin (n + 1)` through `ZMod.finEquiv`. -/
+theorem periodicDm_eq_submatrix (n : ℕ) (h : ℝ) :
+    periodicDm n h =
+      (Kinetic.bwdDiff (n + 1) h).submatrix (ZMod.finEquiv (n + 1)) (ZMod.finEquiv (n + 1)) := by
+  rw [Kinetic.bwdDiff_submatrix_finEquiv]
+  rfl
+
 /-- The stencil of `periodicDp` (arXiv 2602.12337, Sec. 3.2; the paper does not print it). -/
 theorem periodicDp_mulVec (n : ℕ) (h : ℝ) (ρ : Fin (n + 1) → ℝ) (i : Fin (n + 1)) :
     (periodicDp n h *ᵥ ρ) i = (ρ (i + 1) - ρ i) / h := by
-  simp [periodicDp, Matrix.mulVec, dotProduct, sub_div, sub_mul, Finset.sum_sub_distrib, ite_div,
-    ite_mul]
-  ring
+  rw [periodicDp_eq_submatrix, Kinetic.fwdDiff_submatrix_finEquiv_mulVec]
 
 /-- The stencil of `periodicDm` (arXiv 2602.12337, Sec. 3.2; the paper does not print it). -/
 theorem periodicDm_mulVec (n : ℕ) (h : ℝ) (g : Fin (n + 1) → ℝ) (i : Fin (n + 1)) :
     (periodicDm n h *ᵥ g) i = (g i - g (i - 1)) / h := by
-  simp [periodicDm, Matrix.mulVec, dotProduct, sub_div, sub_mul, Finset.sum_sub_distrib, ite_div,
-    ite_mul]
-  ring
+  rw [periodicDm_eq_submatrix, Kinetic.bwdDiff_submatrix_finEquiv_mulVec]
 
 /-- Summation by parts for the periodic stencil (arXiv 2602.12337, Sec. 3.3, the identity behind
 `|D_Ω| ⟨ρ, ℋ(G)⟩ = -⟨𝒥(ρ), G⟩_w`). -/
@@ -1740,6 +1773,21 @@ theorem periodic_diffusion {n : ℕ} {h : ℝ} {w Ω : a → ℝ} {vol : ℝ} {�
   rw [h1, periodicDm_mulVec]
   simp only [Matrix.mulVec_diagonal, periodicDp_mulVec, mul_div_assoc]
   simp
+
+/-- The quadrature of the periodic discretisation on two cells with two unit weights: the core
+quadrature has the weights `1 / 2`, and the periodic stencil is the core one on `Fin 2`, whose
+entry `(0, 1)` is `1 / h = 1`. -/
+example :
+    ((periodic_admissible (n := 1) (h := 1) (w := fun _ : Fin 2 => (1 : ℝ)) (Ω := fun _ => 0)
+      (σs := fun _ => 1) (σa := fun _ => 0) (dt := 1) (fun _ => one_pos) (fun _ => one_pos)
+      (fun _ => le_rfl) one_pos).toQuadrature).w 0 = 1 / 2 ∧
+    (Kinetic.fwdDiff 2 1).submatrix (ZMod.finEquiv 2) (ZMod.finEquiv 2) 0 1 = 1 := by
+  refine ⟨?_, ?_⟩
+  · simp only [Disc.Admissible.toQuadrature, periodic, Finset.sum_const, Finset.card_univ,
+      Fintype.card_fin]
+    norm_num
+  · rw [← periodicDp_eq_submatrix, periodicDp, Matrix.of_apply]
+    norm_num [show (1 : Fin 2) = 0 + 1 from rfl, show ¬((1 : Fin 2) = 0) by decide]
 
 end Periodic
 
@@ -1859,7 +1907,7 @@ private theorem sample_step {ε : ℝ} (hε : 0 < ε) {x₀ v₀ x₁ v₁ : Fin
     (hx₀ : x₀ ⬝ᵥ x₀ = 1) (hx₁ : x₁ ⬝ᵥ x₁ = 1) (hv₁ : v₁ ⬝ᵥ v₁ = 1) {rk rl : ℝ}
     (hrk : (2 * lam ε * (v₀ ⬝ᵥ alt) / (1 + ε ^ 2)) • alt = rk • x₁)
     (hrl : (2 * lam ε * (x₀ ⬝ᵥ alt) / (1 + ε ^ 2)) • alt = rl • v₁) :
-    IsStep sample ε 0 alt (col x₀) 0 (col v₀) (lam ε • alt)
+    IsSchurIMEXSBUGStep sample ε 0 alt (col x₀) 0 (col v₀) (lam ε • alt)
       (col ((2 * lam ε * (v₀ ⬝ᵥ alt) / (1 + ε ^ 2)) • alt))
       (col ((2 * lam ε * (x₀ ⬝ᵥ alt) / (1 + ε ^ 2)) • alt)) (col x₁)
       (Matrix.of fun _ _ => 2 * lam ε * (x₁ ⬝ᵥ alt) * (alt ⬝ᵥ v₁) / (1 + ε ^ 2)) (col v₁) := by
@@ -2053,7 +2101,7 @@ theorem ap_fails_of_degenerate_right :
     ∃ (X₀ V₀ X₁ V₁ : Matrix (Fin 4) Unit ℝ) (ρ₁ : ℝ → Fin 4 → ℝ)
       (K₁ L₁ : ℝ → Matrix (Fin 4) Unit ℝ) (S₁ : ℝ → Matrix Unit Unit ℝ) (ρs : Fin 4 → ℝ),
       X₀ᵀ * X₀ = 1 ∧ V₀ᵀ * V₀ = 1 ∧
-      (∀ ε > 0, IsStep sample ε 0 alt X₀ 0 V₀ (ρ₁ ε) (K₁ ε) (L₁ ε) X₁ (S₁ ε) V₁) ∧
+      (∀ ε > 0, IsSchurIMEXSBUGStep sample ε 0 alt X₀ 0 V₀ (ρ₁ ε) (K₁ ε) (L₁ ε) X₁ (S₁ ε) V₁) ∧
       V₀ᵀ *ᵥ (sample.M *ᵥ fun _ => 1) = 0 ∧ V₁ᵀ *ᵥ (sample.M *ᵥ fun _ => 1) = 0 ∧
       sample.IsDiffusionStep 0 alt ρs ∧ Tendsto ρ₁ 𝓕 (𝓝 ρs) ∧
       V₀ᵀ *ᵥ sample.u = 0 ∧
@@ -2101,7 +2149,7 @@ theorem ap_fails_of_degenerate_left :
     ∃ (X₀ V₀ X₁ V₁ : Matrix (Fin 4) Unit ℝ) (ρ₁ : ℝ → Fin 4 → ℝ)
       (K₁ L₁ : ℝ → Matrix (Fin 4) Unit ℝ) (S₁ : ℝ → Matrix Unit Unit ℝ) (ρs : Fin 4 → ℝ),
       X₀ᵀ * X₀ = 1 ∧ V₀ᵀ * V₀ = 1 ∧
-      (∀ ε > 0, IsStep sample ε 0 alt X₀ 0 V₀ (ρ₁ ε) (K₁ ε) (L₁ ε) X₁ (S₁ ε) V₁) ∧
+      (∀ ε > 0, IsSchurIMEXSBUGStep sample ε 0 alt X₀ 0 V₀ (ρ₁ ε) (K₁ ε) (L₁ ε) X₁ (S₁ ε) V₁) ∧
       V₀ᵀ *ᵥ (sample.M *ᵥ fun _ => 1) = 0 ∧ V₁ᵀ *ᵥ (sample.M *ᵥ fun _ => 1) = 0 ∧
       sample.IsDiffusionStep 0 alt ρs ∧ Tendsto ρ₁ 𝓕 (𝓝 ρs) ∧
       V₀ᵀ *ᵥ sample.u ≠ 0 ∧
@@ -2159,7 +2207,7 @@ theorem nondegenerate_instance :
     ∃ (X₀ V₀ X₁ V₁ : Matrix (Fin 4) Unit ℝ) (ρ₁ : ℝ → Fin 4 → ℝ)
       (K₁ L₁ : ℝ → Matrix (Fin 4) Unit ℝ) (S₁ : ℝ → Matrix Unit Unit ℝ) (ρs : Fin 4 → ℝ),
       X₀ᵀ * X₀ = 1 ∧ V₀ᵀ * V₀ = 1 ∧
-      (∀ ε > 0, IsStep sample ε 0 alt X₀ 0 V₀ (ρ₁ ε) (K₁ ε) (L₁ ε) X₁ (S₁ ε) V₁) ∧
+      (∀ ε > 0, IsSchurIMEXSBUGStep sample ε 0 alt X₀ 0 V₀ (ρ₁ ε) (K₁ ε) (L₁ ε) X₁ (S₁ ε) V₁) ∧
       sample.IsDiffusionStep 0 alt ρs ∧ Tendsto ρ₁ 𝓕 (𝓝 ρs) ∧
       V₀ᵀ *ᵥ sample.u ≠ 0 ∧
       (∃ δ > 0, ∀ ε > 0, δ ≤ X₀ᵀ *ᵥ (sample.Dp *ᵥ ρ₁ ε) ⬝ᵥ X₀ᵀ *ᵥ (sample.Dp *ᵥ ρ₁ ε)) ∧

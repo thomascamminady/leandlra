@@ -11,13 +11,13 @@ macro–micro scheme (3.3) with the Stefan–Boltzmann closure, not an abstract 
 direction of the staggered grid is a `Stencil`, with the operators `δ⁰`, `𝒟⁰`, `𝒟^±` and the upwind
 flux `ℒ`; `periodicX`, `periodicY` are the two directions of the periodic staggered grid, and the
 `example`s after `periodic_inner` check that the operators are those of the paper.  A `Setup` is
-the data of the scheme, `IsStep` one step of (3.3) and `IsMacroStep` its part (3.3b), (3.3c).  The
-module proves local and global mass conservation (`theorem_1`, `theorem_1_mass`, and for `g^{n+1} =
-X S Vᵀ`, `theorem_4`, `theorem_4_mass`), the asymptotic-preserving property of the full-rank scheme
-as a true limit `ε → 0`, for one step and along trajectories (`theorem_2_step`, `theorem_2`) and of
-the parallel BUG scheme (`theorem_5`), nonlinear energy stability under the mixed CFL condition
-(3.9) with the constants of the paper (`theorem_3`, `theorem_3_antitone`), and Lemma 9 (`lemma_9`),
-and it refutes Lemma 7 of the paper (`lemma_7_iff`, `lemma_7_counterexample`).
+the data of the scheme, `IsMacroMicroTRTStep` one step of (3.3) and `IsMacroStep` its part (3.3b),
+(3.3c).  The module proves local and global mass conservation (`theorem_1`, `theorem_1_mass`, and
+for `g^{n+1} = X S Vᵀ`, `theorem_4`, `theorem_4_mass`), the asymptotic-preserving property of the
+full-rank scheme as a true limit `ε → 0`, for one step and along trajectories (`theorem_2_step`,
+`theorem_2`) and of the parallel BUG scheme (`theorem_5`), nonlinear energy stability under the
+mixed CFL condition (3.9) with the constants of the paper (`theorem_3`, `theorem_3_antitone`), and
+Lemma 9 (`lemma_9`), and it refutes Lemma 7 of the paper (`lemma_7_iff`, `lemma_7_counterexample`).
 
 ## Differences from the paper
 
@@ -58,8 +58,8 @@ and it refutes Lemma 7 of the paper (`lemma_7_iff`, `lemma_7_counterexample`).
 * Theorem 6 of the paper, which is not part of this slice, is not formalized.
 
 Non-vacuity: `theorem_3_nonvacuous` (also for Theorem 2, with a step size independent of `ε`),
-`theorem_5_nonvacuous`, and the solvability results `exists_isMacroStep`, `exists_isStep`,
-`exists_isParallelStep`.
+`theorem_5_nonvacuous`, and the solvability results `exists_isMacroStep`,
+`exists_isMacroMicroTRTStep`, `exists_isParallelStep`.
 
 Core vocabulary: a rule with `IsQuadrature` and positive weights gives core quadratures
 `Kinetic.Quadrature` of `LeanDLRA/Kinetic/Defs.lean` with the weights `w_ℓ / (2π)`
@@ -398,8 +398,8 @@ def MicroEq (ε : ℝ) (g : F → ι → ℝ) (h T : C → ℝ) (g' : F → ι �
 
 /-- One step `(g, h, T) ↦ (g', h', T')` of the full-rank macro–micro scheme (3.3).  The equation
 (3.3a) is imposed on inner faces and `g' = 0` on the others (no condition on a periodic grid). -/
-structure IsStep (ε : ℝ) (g : F → ι → ℝ) (h T : C → ℝ) (g' : F → ι → ℝ) (h' T' : C → ℝ) : Prop
-    extends P.IsMacroStep ε h T g' h' T' where
+structure IsMacroMicroTRTStep (ε : ℝ) (g : F → ι → ℝ) (h T : C → ℝ) (g' : F → ι → ℝ)
+    (h' T' : C → ℝ) : Prop extends P.IsMacroStep ε h T g' h' T' where
   g_eq : ∀ f, P.Inner f → ∀ ℓ, P.MicroEq ε g h T g' f ℓ
   wall : ∀ f, ¬ P.Inner f → ∀ ℓ, g' f ℓ = 0
 
@@ -638,8 +638,9 @@ namespace Setup
 
 variable (P : Setup C F ι)
 
-/-- The admissibility of the data: positive constants, and `σ^t ≥ σ₀^t ≥ 0`, `σ^a ≥ 0`. -/
-structure IsAdmissible (σ₀ : ℝ) : Prop where
+/-- The positivity assumptions of arXiv 2502.20883 on the data: positive constants, and
+`σ^t ≥ σ₀^t ≥ 0`, `σ^a ≥ 0`. -/
+structure IsPositive (σ₀ : ℝ) : Prop where
   c_pos : 0 < P.c
   cν_pos : 0 < P.cν
   a_nonneg : 0 ≤ P.a
@@ -719,8 +720,8 @@ variable {P : Setup C F ι} [Fintype ι]
 
 /-- The invariant `⟨g⟩ = wᵀ g = 0` that the proof of Theorem 3 of arXiv 2502.20883 uses for
 `g^{n+1}`: it propagates through (3.3a). -/
-theorem sum_w_step {σ₀ ε : ℝ} (hQ : P.IsQuadrature) (hA : P.IsAdmissible σ₀) (hε : 0 < ε)
-    {g g' : F → ι → ℝ} {h T h' T' : C → ℝ} (hs : P.IsStep ε g h T g' h' T')
+theorem sum_w_step {σ₀ ε : ℝ} (hQ : P.IsQuadrature) (hA : P.IsPositive σ₀) (hε : 0 < ε)
+    {g g' : F → ι → ℝ} {h T h' T' : C → ℝ} (hs : P.IsMacroMicroTRTStep ε g h T g' h' T')
     (hg0 : ∀ f, ∑ ℓ, P.w ℓ * g f ℓ = 0) (f : F) : ∑ ℓ, P.w ℓ * g' f ℓ = 0 := by
   by_cases hf : P.Inner f
   · have hc := hA.c_pos
@@ -749,7 +750,7 @@ theorem sum_w_step {σ₀ ε : ℝ} (hQ : P.IsQuadrature) (hA : P.IsAdmissible �
 
 /-- The face-wise energy identity: (3.3a) tested with `g'ᵀ M²`, using `wᵀ g' = 0`. -/
 theorem micro_face {ε : ℝ} {g g' : F → ι → ℝ} {h T h' T' : C → ℝ}
-    (hs : P.IsStep ε g h T g' h' T') (hg0 : ∀ f, ∑ ℓ, P.w ℓ * g' f ℓ = 0) (f : F) :
+    (hs : P.IsMacroMicroTRTStep ε g h T g' h' T') (hg0 : ∀ f, ∑ ℓ, P.w ℓ * g' f ℓ = 0) (f : F) :
     ε ^ 2 / (P.c * P.Δt) * ∑ ℓ, P.w ℓ * (g' f ℓ * (g' f ℓ - g f ℓ))
       + ε * (∑ ℓ, P.w ℓ * (g' f ℓ * P.x.upwind (P.Ωx ℓ) (fun f => g f ℓ) f)
         + ∑ ℓ, P.w ℓ * (g' f ℓ * P.y.upwind (P.Ωy ℓ) (fun f => g f ℓ) f))
@@ -825,7 +826,7 @@ variable {P : Setup C F ι} [Fintype ι]
 
 /-- The cell-wise bound of the thermal energy: Lemma 9 applied to (3.3c) (the step from (A.20) on in
 arXiv 2502.20883). -/
-theorem thermal_cell {σ₀ : ℝ} (hA : P.IsAdmissible σ₀) {ε : ℝ} {h T h' T' : C → ℝ}
+theorem thermal_cell {σ₀ : ℝ} (hA : P.IsPositive σ₀) {ε : ℝ} {h T h' T' : C → ℝ}
     {g' : F → ι → ℝ} (hs : P.IsMacroStep ε h T g' h' T') {z : C} (hT : 0 ≤ T z) (hT' : 0 ≤ T' z) :
     2 / 5 * (P.a * P.cν / (2 * π) ^ 2) * (T' z ^ 5 - T z ^ 5) ≤
       2 * (P.Δt * (P.σa z * h' z * (P.B (T' z) / P.c))) := by
@@ -859,9 +860,9 @@ places: the transport term is bounded per quadrature direction with `Ω² ≤ |�
 Lemma 7 is replaced by `moment_sq_le`.  The hypotheses `hT`, `hT'` are the positivity of Lemma 9,
 which is not implied by the scheme. -/
 theorem energy_le_of_moderate [Fintype C] [Fintype F] {σ₀ ε : ℝ} (hQ : P.IsQuadrature)
-    (hA : P.IsAdmissible σ₀) (hε : 0 < ε) (hCFL : P.CFL ε σ₀)
+    (hA : P.IsPositive σ₀) (hε : 0 < ε) (hCFL : P.CFL ε σ₀)
     (hpx : ∑ ℓ, P.w ℓ * moderate (P.Ωx ℓ) ≤ π) (hpy : ∑ ℓ, P.w ℓ * moderate (P.Ωy ℓ) ≤ π)
-    {g g' : F → ι → ℝ} {h T h' T' : C → ℝ} (hs : P.IsStep ε g h T g' h' T')
+    {g g' : F → ι → ℝ} {h T h' T' : C → ℝ} (hs : P.IsMacroMicroTRTStep ε g h T g' h' T')
     (hgw : ∀ f, ¬ P.Inner f → ∀ ℓ, g f ℓ = 0) (hg0 : ∀ f, ∑ ℓ, P.w ℓ * g f ℓ = 0)
     (hT : ∀ z, 0 ≤ T z) (hT' : ∀ z, 0 ≤ T' z) :
     P.energy ε g' h' T' ≤ P.energy ε g h T := by
@@ -1043,8 +1044,8 @@ derived (`sum_w_step`); and the proof does not use Lemma 7, which is false for s
 (`lemma_7_counterexample`), but `moment_sq_le`, whose quadrature condition follows from the second
 moments. -/
 theorem theorem_3 [Fintype C] [Fintype F] {σ₀ ε : ℝ} (hQ : P.IsQuadrature)
-    (hQ2 : P.IsSecondOrder) (hA : P.IsAdmissible σ₀) (hε : 0 < ε) (hCFL : P.CFL ε σ₀)
-    {g g' : F → ι → ℝ} {h T h' T' : C → ℝ} (hs : P.IsStep ε g h T g' h' T')
+    (hQ2 : P.IsSecondOrder) (hA : P.IsPositive σ₀) (hε : 0 < ε) (hCFL : P.CFL ε σ₀)
+    {g g' : F → ι → ℝ} {h T h' T' : C → ℝ} (hs : P.IsMacroMicroTRTStep ε g h T g' h' T')
     (hgw : ∀ f, ¬ P.Inner f → ∀ ℓ, g f ℓ = 0) (hg0 : ∀ f, ∑ ℓ, P.w ℓ * g f ℓ = 0)
     (hT : ∀ z, 0 ≤ T z) (hT' : ∀ z, 0 ≤ T' z) :
     P.energy ε g' h' T' ≤ P.energy ε g h T :=
@@ -1056,8 +1057,8 @@ theorem theorem_3 [Fintype C] [Fintype F] {σ₀ ε : ℝ} (hQ : P.IsQuadrature)
 `∑ w |Ω_v| ≤ π` that is equivalent to Lemma 7 of the paper (`lemma_7_iff`). -/
 theorem theorem_3_of_lemma_7 [Fintype C] [Fintype F] {σ₀ ε : ℝ} (hQ : P.IsQuadrature)
     (hx : ∑ ℓ, P.w ℓ * |P.Ωx ℓ| ≤ π) (hy : ∑ ℓ, P.w ℓ * |P.Ωy ℓ| ≤ π)
-    (hA : P.IsAdmissible σ₀) (hε : 0 < ε) (hCFL : P.CFL ε σ₀)
-    {g g' : F → ι → ℝ} {h T h' T' : C → ℝ} (hs : P.IsStep ε g h T g' h' T')
+    (hA : P.IsPositive σ₀) (hε : 0 < ε) (hCFL : P.CFL ε σ₀)
+    {g g' : F → ι → ℝ} {h T h' T' : C → ℝ} (hs : P.IsMacroMicroTRTStep ε g h T g' h' T')
     (hgw : ∀ f, ¬ P.Inner f → ∀ ℓ, g f ℓ = 0) (hg0 : ∀ f, ∑ ℓ, P.w ℓ * g f ℓ = 0)
     (hT : ∀ z, 0 ≤ T z) (hT' : ∀ z, 0 ≤ T' z) :
     P.energy ε g' h' T' ≤ P.energy ε g h T :=
@@ -1070,9 +1071,9 @@ theorem theorem_3_of_lemma_7 [Fintype C] [Fintype F] {σ₀ ε : ℝ} (hQ : P.Is
 /-- **Theorem 3 of arXiv 2502.20883** along a whole trajectory: the energy is nonincreasing.  The
 invariant `⟨gⁿ⟩ = 0` is only needed at `n = 0`. -/
 theorem theorem_3_antitone [Fintype C] [Fintype F] {σ₀ ε : ℝ} (hQ : P.IsQuadrature)
-    (hQ2 : P.IsSecondOrder) (hA : P.IsAdmissible σ₀) (hε : 0 < ε) (hCFL : P.CFL ε σ₀)
+    (hQ2 : P.IsSecondOrder) (hA : P.IsPositive σ₀) (hε : 0 < ε) (hCFL : P.CFL ε σ₀)
     {g : ℕ → F → ι → ℝ} {h T : ℕ → C → ℝ}
-    (hs : ∀ n, P.IsStep ε (g n) (h n) (T n) (g (n + 1)) (h (n + 1)) (T (n + 1)))
+    (hs : ∀ n, P.IsMacroMicroTRTStep ε (g n) (h n) (T n) (g (n + 1)) (h (n + 1)) (T (n + 1)))
     (hgw : ∀ f, ¬ P.Inner f → ∀ ℓ, g 0 f ℓ = 0) (hg0 : ∀ f, ∑ ℓ, P.w ℓ * g 0 f ℓ = 0)
     (hT : ∀ n z, 0 ≤ T n z) : Antitone fun n => P.energy ε (g n) (h n) (T n) := by
   have hm : ∀ n f, ∑ ℓ, P.w ℓ * g n f ℓ = 0 := by
@@ -1409,7 +1410,7 @@ converge, then every family of nonnegative temperatures `T'` converges, and so d
 the second half of the proofs of Theorems 2 and 5 of arXiv 2502.20883.  The limit is the unique
 nonnegative solution of the macro equations with `ε = 0`; the convergence of `T'`, which the paper
 takes for granted, is derived from the monotonicity of `T ↦ c_ν T + a T⁴`. -/
-theorem macro_limit [Fintype C] {σ₀ : ℝ} (hA : P.IsAdmissible σ₀) (hσa : ∀ z, 0 < P.σa z)
+theorem macro_limit [Fintype C] {σ₀ : ℝ} (hA : P.IsPositive σ₀) (hσa : ∀ z, 0 < P.σa z)
     {g' : ℝ → F → ι → ℝ} {h h' T T' : ℝ → C → ℝ} {G : F → ι → ℝ} {h₀ T₀ : C → ℝ}
     (hstep : ∀ᶠ ε in 𝓝[>] (0 : ℝ), P.IsMacroStep ε (h ε) (T ε) (g' ε) (h' ε) (T' ε))
     (hg' : Tendsto g' (𝓝[>] 0) (𝓝 G)) (hh : Tendsto h (𝓝[>] 0) (𝓝 h₀))
@@ -1496,9 +1497,9 @@ theorem tendsto_δ_phi {h : ℝ → C → ℝ} {T : ℝ → C → ℝ} {h₀ T�
   exact ((hφ _).sub (hφ _)).div_const _
 
 /-- The limit of the micro equation (3.3a) as `ε → 0` at fixed `Δt`, for data that converge. -/
-theorem micro_limit {σ₀ : ℝ} (hA : P.IsAdmissible σ₀) (hσ₀ : 0 < σ₀) (hper : ∀ f, P.Inner f)
+theorem micro_limit {σ₀ : ℝ} (hA : P.IsPositive σ₀) (hσ₀ : 0 < σ₀) (hper : ∀ f, P.Inner f)
     {g g' : ℝ → F → ι → ℝ} {h h' T T' : ℝ → C → ℝ} {g₀ : F → ι → ℝ} {h₀ T₀ : C → ℝ}
-    (hstep : ∀ᶠ ε in 𝓝[>] (0 : ℝ), P.IsStep ε (g ε) (h ε) (T ε) (g' ε) (h' ε) (T' ε))
+    (hstep : ∀ᶠ ε in 𝓝[>] (0 : ℝ), P.IsMacroMicroTRTStep ε (g ε) (h ε) (T ε) (g' ε) (h' ε) (T' ε))
     (hg : Tendsto g (𝓝[>] 0) (𝓝 g₀)) (hh : Tendsto h (𝓝[>] 0) (𝓝 h₀))
     (hT : Tendsto T (𝓝[>] 0) (𝓝 T₀)) : Tendsto g' (𝓝[>] 0) (𝓝 (P.limitFlux T₀)) := by
   have hc := hA.c_pos
@@ -1543,10 +1544,10 @@ from the paper, whose proof is formal: `ε → 0` is an actual limit; the only a
 is `T^{n+1} ≥ 0` for small `ε`, and the convergence of `T^{n+1}` and `h^{n+1}` is derived.  The
 hypotheses `σ^t ≥ σ₀ > 0` and `σ^a > 0` are the paper's.  The grid is periodic (all faces inner);
 zero boundary conditions change the limit at the cells next to the boundary. -/
-theorem theorem_2_step [Fintype C] {σ₀ : ℝ} (hQ2 : P.IsSecondOrder) (hA : P.IsAdmissible σ₀)
+theorem theorem_2_step [Fintype C] {σ₀ : ℝ} (hQ2 : P.IsSecondOrder) (hA : P.IsPositive σ₀)
     (hσ₀ : 0 < σ₀) (hσa : ∀ z, 0 < P.σa z) (hper : ∀ f, P.Inner f)
     {g g' : ℝ → F → ι → ℝ} {h h' T T' : ℝ → C → ℝ} {g₀ : F → ι → ℝ} {h₀ T₀ : C → ℝ}
-    (hstep : ∀ᶠ ε in 𝓝[>] (0 : ℝ), P.IsStep ε (g ε) (h ε) (T ε) (g' ε) (h' ε) (T' ε))
+    (hstep : ∀ᶠ ε in 𝓝[>] (0 : ℝ), P.IsMacroMicroTRTStep ε (g ε) (h ε) (T ε) (g' ε) (h' ε) (T' ε))
     (hg : Tendsto g (𝓝[>] 0) (𝓝 g₀)) (hh : Tendsto h (𝓝[>] 0) (𝓝 h₀))
     (hT : Tendsto T (𝓝[>] 0) (𝓝 T₀)) (hpos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ∀ z, 0 ≤ T' ε z) :
     Tendsto g' (𝓝[>] 0) (𝓝 (P.limitFlux T₀)) ∧
@@ -1562,11 +1563,11 @@ theorem theorem_2_step [Fintype C] {σ₀ : ℝ} (hQ2 : P.IsSecondOrder) (hA : P
 /-- **Theorem 2 of arXiv 2502.20883** along a whole trajectory: starting from data that converge
 (for instance data independent of `ε`), the temperatures of the scheme converge at every time level
 to a solution of the explicit discrete Rosseland scheme (3.6). -/
-theorem theorem_2 [Fintype C] {σ₀ : ℝ} (hQ2 : P.IsSecondOrder) (hA : P.IsAdmissible σ₀)
+theorem theorem_2 [Fintype C] {σ₀ : ℝ} (hQ2 : P.IsSecondOrder) (hA : P.IsPositive σ₀)
     (hσ₀ : 0 < σ₀) (hσa : ∀ z, 0 < P.σa z) (hper : ∀ f, P.Inner f)
     {g : ℕ → ℝ → F → ι → ℝ} {h T : ℕ → ℝ → C → ℝ} {g₀ : F → ι → ℝ} {h₀ T₀ : C → ℝ}
     (hstep : ∀ n, ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      P.IsStep ε (g n ε) (h n ε) (T n ε) (g (n + 1) ε) (h (n + 1) ε) (T (n + 1) ε))
+      P.IsMacroMicroTRTStep ε (g n ε) (h n ε) (T n ε) (g (n + 1) ε) (h (n + 1) ε) (T (n + 1) ε))
     (hg : Tendsto (g 0) (𝓝[>] 0) (𝓝 g₀)) (hh : Tendsto (h 0) (𝓝[>] 0) (𝓝 h₀))
     (hT : Tendsto (T 0) (𝓝[>] 0) (𝓝 T₀))
     (hpos : ∀ n, ∀ᶠ ε in 𝓝[>] (0 : ℝ), ∀ z, 0 ≤ T (n + 1) ε z) :
@@ -1804,7 +1805,7 @@ theorem tendsto_rhs (Y : Matrix F ι ℝ) (h T : C → ℝ) :
 containing `(Σᵗ)⁻¹ 𝐝⁰ B`.  The rank condition on `Xᵀ Σᵗ X` that the proof of the paper assumes is
 derived.  The augmented bases may depend on `ε` in any way, and the limit is taken for the matrix
 `Û Ŝ V̂ᵀ`, which by `matrix_parallelBUG_eq` depends on them only through `K'`, `L'`, `S̄`. -/
-theorem tendsto_augmented {σ₀ : ℝ} (hA : P.IsAdmissible σ₀) (hσ₀ : 0 < σ₀) {h T : C → ℝ}
+theorem tendsto_augmented {σ₀ : ℝ} (hA : P.IsPositive σ₀) (hσ₀ : 0 < σ₀) {h T : C → ℝ}
     {X : Matrix F r ℝ} {S : Matrix r r ℝ} {V : Matrix ι r ℝ} (hXV : P.Preserves T X V)
     {K' Xt : ℝ → Matrix F r ℝ} {L' Vt : ℝ → Matrix ι r ℝ} {Sb : ℝ → Matrix r r ℝ}
     (hstep : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
@@ -1904,7 +1905,7 @@ theorem tendsto_augmented {σ₀ : ℝ} (hA : P.IsAdmissible σ₀) (hσ₀ : 0 
 /-- The limit of the truncated solution, under the property of the conservative truncation: `Y`
 differs from `Ŷ = Û Ŝ V̂ᵀ` by at most the part of `Ŷ` outside the preserved directions `A`, `W`.
 No lower bound on the rank of `Y` is involved. -/
-theorem tendsto_truncated {σ₀ : ℝ} (hA : P.IsAdmissible σ₀) (hσ₀ : 0 < σ₀) {h T : C → ℝ}
+theorem tendsto_truncated {σ₀ : ℝ} (hA : P.IsPositive σ₀) (hσ₀ : 0 < σ₀) {h T : C → ℝ}
     {X : Matrix F r ℝ} {S : Matrix r r ℝ} {V : Matrix ι r ℝ} {A : Matrix F p ℝ} {W : Matrix ι q ℝ}
     (hXV : P.Preserves T X V) (hAW : P.Preserves T A W)
     {K' Xt : ℝ → Matrix F r ℝ} {L' Vt : ℝ → Matrix ι r ℝ} {Sb : ℝ → Matrix r r ℝ}
@@ -1961,7 +1962,7 @@ The conservative truncation is not spelled out in the paper; the hypothesis `htr
 that the truncations of its references share, since they keep `Ŷ W Wᵀ` (`A = 1`, see
 `conservative_right`) or `A Aᵀ Ŷ` and modify the complement by a best approximation.  The `V` part
 of `hXV` is not needed: the pre-augmentation of `V` matters through `W` only. -/
-theorem theorem_5 [Fintype C] {σ₀ : ℝ} (hQ2 : P.IsSecondOrder) (hA : P.IsAdmissible σ₀)
+theorem theorem_5 [Fintype C] {σ₀ : ℝ} (hQ2 : P.IsSecondOrder) (hA : P.IsPositive σ₀)
     (hσ₀ : 0 < σ₀) (hσa : ∀ z, 0 < P.σa z) {h T : C → ℝ}
     {X : Matrix F r ℝ} {S : Matrix r r ℝ} {V : Matrix ι r ℝ} {A : Matrix F p ℝ} {W : Matrix ι q ℝ}
     (hXV : P.Preserves T X V) (hAW : P.Preserves T A W)
@@ -2016,7 +2017,7 @@ variable {P : Setup C F ι} [Fintype ι]
 
 /-- The macro equations can be solved, with `T' ≥ 0`, as soon as the right-hand side of the scalar
 equation for `T'` is nonnegative. -/
-theorem exists_isMacroStep {σ₀ ε : ℝ} (hA : P.IsAdmissible σ₀) (hσa : ∀ z, 0 < P.σa z)
+theorem exists_isMacroStep {σ₀ ε : ℝ} (hA : P.IsPositive σ₀) (hσa : ∀ z, 0 < P.σa z)
     (g' : F → ι → ℝ) (h T : C → ℝ)
     (hρ : ∀ z, 0 ≤ P.cν / P.Δt * (1 + ε ^ 2 / (P.c * P.σa z * P.Δt)) * T z
       + P.a / P.Δt * T z ^ 4 + 2 * π * ε ^ 2 / (P.c * P.Δt) * h z
@@ -2045,13 +2046,13 @@ theorem exists_isMacroStep {σ₀ ε : ℝ} (hA : P.IsAdmissible σ₀) (hσa : 
 
 /-- The scheme can be solved on a grid without boundary faces: `g'` is given by an explicit formula
 and `h'`, `T'` by `exists_isMacroStep`. -/
-theorem exists_isStep {σ₀ ε : ℝ} (hA : P.IsAdmissible σ₀) (hσ₀ : 0 < σ₀) (hσa : ∀ z, 0 < P.σa z)
-    (hε : 0 < ε) (hper : ∀ f, P.Inner f) (g : F → ι → ℝ) (h T : C → ℝ) :
+theorem exists_isMacroMicroTRTStep {σ₀ ε : ℝ} (hA : P.IsPositive σ₀) (hσ₀ : 0 < σ₀)
+    (hσa : ∀ z, 0 < P.σa z) (hε : 0 < ε) (hper : ∀ f, P.Inner f) (g : F → ι → ℝ) (h T : C → ℝ) :
     ∃ g' : F → ι → ℝ, (∀ f ℓ, P.MicroEq ε g h T g' f ℓ) ∧
       ((∀ z, 0 ≤ P.cν / P.Δt * (1 + ε ^ 2 / (P.c * P.σa z * P.Δt)) * T z
         + P.a / P.Δt * T z ^ 4 + 2 * π * ε ^ 2 / (P.c * P.Δt) * h z
         - (P.wQD P.x P.Ωx g' z + P.wQD P.y P.Ωy g' z)) →
-      ∃ h' T' : C → ℝ, P.IsStep ε g h T g' h' T' ∧ ∀ z, 0 ≤ T' z) := by
+      ∃ h' T' : C → ℝ, P.IsMacroMicroTRTStep ε g h T g' h' T' ∧ ∀ z, 0 ≤ T' z) := by
   have hc := hA.c_pos
   have hΔt := hA.Δt_pos
   have hσ : ∀ f, 0 < P.σt f := fun f => hσ₀.trans_le (hA.σ₀_le f)
@@ -2140,8 +2141,8 @@ theorem s2Setup_isQuadrature (Nx Ny : ℕ) : (s2Setup Nx Ny).IsQuadrature where
 theorem s2Setup_isSecondOrder (Nx Ny : ℕ) : (s2Setup Nx Ny).IsSecondOrder :=
   ⟨s2_moments.2.2.2.1, s2_moments.2.2.2.2.1, s2_moments.2.2.2.2.2⟩
 
-/-- The data of the first example are admissible. -/
-theorem s2Setup_isAdmissible (Nx Ny : ℕ) : (s2Setup Nx Ny).IsAdmissible 1 where
+/-- The data of the first example satisfy the positivity assumptions. -/
+theorem s2Setup_isPositive (Nx Ny : ℕ) : (s2Setup Nx Ny).IsPositive 1 where
   c_pos := by simp [s2Setup]
   cν_pos := by simp [s2Setup]
   a_nonneg := by simp [s2Setup]
@@ -2172,7 +2173,7 @@ periodic grid, with a nonzero flux: a spatially constant flux of zero mean decay
 `12 ε² / (12 ε² + 1)` while `h = 0` and `T = 1` do not change.  The step size does not depend on
 `ε`, which is the point of the mixed CFL condition. -/
 theorem theorem_3_nonvacuous (Nx Ny : ℕ) {ε : ℝ} (hε : 0 < ε) :
-    (s2Setup Nx Ny).IsStep ε (fun _ ℓ => s2x ℓ) (fun _ => 0) (fun _ => 1)
+    (s2Setup Nx Ny).IsMacroMicroTRTStep ε (fun _ ℓ => s2x ℓ) (fun _ => 0) (fun _ => 1)
       (fun _ ℓ => 12 * ε ^ 2 / (12 * ε ^ 2 + 1) * s2x ℓ) (fun _ => 0) (fun _ => 1) ∧
     (s2Setup Nx Ny).CFL ε 1 ∧ ∑ ℓ, (s2Setup Nx Ny).w ℓ * s2x ℓ = 0 := by
   refine ⟨⟨⟨fun z => ?_, fun z => ?_⟩, fun f _ ℓ => ?_,
@@ -2194,7 +2195,7 @@ theorem theorem_3_nonvacuous (Nx Ny : ℕ) {ε : ℝ} (hε : 0 < ε) :
 example (Nx Ny : ℕ) [NeZero Nx] [NeZero Ny] {ε : ℝ} (hε : 0 < ε) :
     (s2Setup Nx Ny).energy ε (fun _ ℓ => 12 * ε ^ 2 / (12 * ε ^ 2 + 1) * s2x ℓ) (fun _ => 0)
       (fun _ => 1) ≤ (s2Setup Nx Ny).energy ε (fun _ ℓ => s2x ℓ) (fun _ => 0) (fun _ => 1) :=
-  Setup.theorem_3 (s2Setup_isQuadrature _ _) (s2Setup_isSecondOrder _ _) (s2Setup_isAdmissible _ _)
+  Setup.theorem_3 (s2Setup_isQuadrature _ _) (s2Setup_isSecondOrder _ _) (s2Setup_isPositive _ _)
     hε (s2Setup_cfl _ _ hε.le) (theorem_3_nonvacuous Nx Ny hε).1
     (fun f hf => absurd (periodic_inner Nx Ny 1 1 f) hf) (fun _ => s2_moments.2.1)
     (fun _ => zero_le_one) (fun _ => zero_le_one)
@@ -2203,7 +2204,7 @@ example (Nx Ny : ℕ) [NeZero Nx] [NeZero Ny] {ε : ℝ} (hε : 0 < ε) :
 example (Nx Ny : ℕ) [NeZero Nx] [NeZero Ny] :
     Tendsto (fun (ε : ℝ) (_ : Node Nx Ny) ℓ => 12 * ε ^ 2 / (12 * ε ^ 2 + 1) * s2x ℓ) (𝓝[>] 0)
       (𝓝 ((s2Setup Nx Ny).limitFlux fun _ => 1)) :=
-  (Setup.theorem_2_step (s2Setup_isSecondOrder Nx Ny) (s2Setup_isAdmissible Nx Ny) one_pos
+  (Setup.theorem_2_step (s2Setup_isSecondOrder Nx Ny) (s2Setup_isPositive Nx Ny) one_pos
     (fun _ => one_pos) (fun f => periodic_inner Nx Ny 1 1 f)
     (g := fun _ _ ℓ => s2x ℓ) (h := fun _ _ => 0) (T := fun _ _ => 1) (h' := fun _ _ => 0)
     (T' := fun _ _ => 1)
@@ -2340,7 +2341,7 @@ for every `ε > 0` with a nonzero limit flux: a nonconstant temperature on two c
 order-two product rule, `X = 1` and `V` the orthonormal basis of `span(Q_x 𝟙, Q_y 𝟙)`. -/
 theorem theorem_5_nonvacuous :
     miniSetup.Preserves miniT (1 : Matrix Bool Bool ℝ) miniV ∧ miniSetup.fluxMatrix miniT ≠ 0 ∧
-      miniSetup.IsSecondOrder ∧ miniSetup.IsAdmissible 1 ∧ ∀ ε : ℝ, 0 < ε →
+      miniSetup.IsSecondOrder ∧ miniSetup.IsPositive 1 ∧ ∀ ε : ℝ, 0 < ε →
         ∃ (K' : Matrix Bool Bool ℝ) (L' : Matrix (Bool × Bool) Bool ℝ) (Sb : Matrix Bool Bool ℝ),
           miniSetup.IsParallelStep ε (fun _ => 0) miniT 1 0 miniV K' L' Sb 0 0 := by
   have h3 : (√3 : ℝ) ≠ 0 := by positivity
