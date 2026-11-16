@@ -55,6 +55,7 @@ import LeanDLRA.Integrators.Matrix.ParallelBUGRun
 import LeanDLRA.Integrators.Matrix.ParallelBUGStep
 import LeanDLRA.Integrators.Matrix.ParallelBUGTolRun
 import LeanDLRA.Integrators.Matrix.ProjectedEuler
+import LeanDLRA.Integrators.Matrix.ProjectedRK
 import LeanDLRA.Integrators.Matrix.ProjectorSplitting
 import LeanDLRA.Integrators.Matrix.Symmetry
 import LeanDLRA.Integrators.Matrix.TruncBUGRun
