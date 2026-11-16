@@ -182,16 +182,8 @@ def queued_slices(
 
 
 def allowed_names(allow: object) -> frozenset[str]:
-    """The names of ``--allow``: comma-separated in a string, or a sequence of such strings
-    (fire turns ``--allow=a,b`` into a tuple)."""
-    items: list[object] = list(allow) if isinstance(allow, (list, tuple)) else [allow]
-    return frozenset(
-        part.strip()
-        for item in items
-        if item not in (None, "")
-        for part in str(item).split(",")
-        if part.strip()
-    )
+    """The names of ``--allow`` (comma-separated)."""
+    return frozenset(core_checks.split_list(allow))
 
 
 def run_check(root: Path, files: Sequence[str], allowed: frozenset[str]) -> int:

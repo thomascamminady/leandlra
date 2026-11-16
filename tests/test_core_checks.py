@@ -142,3 +142,118 @@ def test_duplicate_statements_in_the_core(
 def test_duplicates_without_a_record_exit_2(tmp_path: Path) -> None:
     tree(tmp_path, {"LeanDLRA/T/A.lean": ""})
     assert cc.run_duplicates(tmp_path, strict=False, list_all=False) == 2
+
+
+# -- vacuity --------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("head", "expected"),
+    [
+        ("(x : ℝ) (hx : 0 ≤ x) : 0 ≤ x ^ 2", True),
+        ("{L : ℝ≥0} (hF : IsLipschitzField F L) : P", True),
+        ("(sol : IsDLRASolution F Y) : P", True),
+        ("(hf : Continuous f) : P", True),  # named like a hypothesis, not data
+        ("{f : ℕ → ℝ} (hA : ∀ u v, ⟪A u, v⟫ = ⟪u, A v⟫) : P", True),
+        ("(x : ℝ) : 0 ≤ x → 0 ≤ x ^ 3", True),
+        ("(h : ℝ) (t : ℝ) : step h t = t + h", False),  # a step size called h
+        ("{h : ℝ} (U : ∀ i, Matrix (ι i) (r i) ℝ) : P U", False),
+        ("(V : Matrix (∀ k : {k // k ∉ τ.modes}, ι k) s ℝ) : Q V", False),
+        ("[Fact (1 < p)] (x : ℝ) : ‖x‖ = |x|", False),
+        ("(f : ℝ → ℝ) (g : (n : ℕ) → Fin n → ℝ) : (fun x => f x) = f", False),
+        ("{x : ℝ≥0∞} : x ≤ ⊤", False),
+        (": ∀ ε > 0, ∃ δ > 0, δ ≤ ε", False),
+    ],
+)
+def test_has_hypotheses(head: str, expected: bool) -> None:
+    assert cc.has_hypotheses(head) is expected
+
+
+VACUITY = """
+namespace LeanDLRA
+
+/-- A docstring that mentions `witnessed_le` does not count. -/
+theorem lonely_le {x : ℝ} (hx : 0 ≤ x) : x ≤ x + 1 := by linarith
+
+theorem witnessed_le {x : ℝ} (hx : 0 ≤ x) :
+    x ≤ 2 * x + 1 := by
+  linarith
+
+theorem dotted.lemma_le {x : ℝ} (hx : 0 ≤ x) : 0 ≤ x := hx
+
+theorem helper_le {x : ℝ} (hx : 0 ≤ x) : 0 ≤ x := hx
+
+theorem noHypotheses (x : ℝ) : x = x := rfl
+
+private theorem hidden_le {x : ℝ} (hx : 0 ≤ x) : 0 ≤ x := hx
+
+example : (1 : ℝ) ≤ 2 * 1 + 1 := witnessed_le (by norm_num)
+
+example (x : ℝ) (hx : 0 ≤ x) : 0 ≤ x := hx.dotted.lemma_le
+
+section Examples
+
+private theorem uses_helper : (0 : ℝ) ≤ 1 := helper_le (x := 1) (by norm_num)
+
+theorem inExamples_le {x : ℝ} (hx : 0 ≤ x) : 0 ≤ x := hx
+
+end Examples
+
+end LeanDLRA
+"""
+
+
+def test_unwitnessed_theorems_of_a_file() -> None:
+    assert cc.unwitnessed(VACUITY) == [(5, "LeanDLRA.lonely_le")]
+    witness, inside = cc.examples_of(VACUITY)
+    assert "witnessed_le (by norm_num)" in witness
+    assert "helper_le" in witness and 27 in inside
+    assert cc.mentions("exact hP.of_global hL", "LeanDLRA.DLRAProblem.of_global")
+    assert not cc.mentions("exact of_global₂", "LeanDLRA.DLRAProblem.of_global")
+    assert not cc.mentions("exact not_of_global", "LeanDLRA.DLRAProblem.of_global")
+
+
+def test_vacuity_ratchet_like_defs(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    tree(
+        tmp_path, {"LeanDLRA/T/A.lean": VACUITY, "LeanDLRA/T/Defs.lean": "def d := 1\n"}
+    )
+    (tmp_path / "docs").mkdir()
+    assert cc.vacuity_findings(tmp_path) == [("LeanDLRA.T.A", 5, "LeanDLRA.lonely_le")]
+    assert cc.run_vacuity(tmp_path, strict=False, list_all=False) == 1
+    assert "NO-EXAMPLE LeanDLRA.T.A:5: LeanDLRA.lonely_le has hypotheses" in (
+        capsys.readouterr().out
+    )
+    assert cc.run_baseline(tmp_path, ["vacuity"]) == 0
+    assert set(cc.read_baseline(tmp_path)) == {
+        "vacuity"
+    }  # --only: the others are not written
+    assert cc.run_vacuity(tmp_path, strict=False, list_all=False) == 0
+    assert cc.run_vacuity(tmp_path, strict=True, list_all=False) == 1
+    (tmp_path / "LeanDLRA/T/A.lean").write_text(
+        VACUITY + "\ntheorem LeanDLRA.more_le {x : ℝ} (hx : 0 < x) : 0 < x := hx\n"
+    )
+    capsys.readouterr()
+    assert cc.run_vacuity(tmp_path, strict=False, list_all=False) == 1
+    out = capsys.readouterr().out
+    assert "LeanDLRA.more_le" in out and "lonely_le" not in out
+
+
+def test_baseline_only_keeps_the_other_entries(tmp_path: Path) -> None:
+    tree(tmp_path, {"LeanDLRA/T/A.lean": "def a := 1\n"})
+    (tmp_path / "docs").mkdir()
+    (tmp_path / cc.BASELINE).write_text(json.dumps({"defs": [], "duplicates": ["x=y"]}))
+    assert cc.run_baseline(tmp_path, ["vacuity"]) == 0
+    assert cc.read_baseline(tmp_path) == {
+        "defs": [],
+        "duplicates": ["x=y"],
+        "vacuity": [],
+    }
+    # Without a record the duplicates entry stays.
+    assert cc.run_baseline(tmp_path) == 0
+    assert cc.read_baseline(tmp_path)["duplicates"] == ["x=y"]
+    assert cc.read_baseline(tmp_path)["defs"] == ["LeanDLRA.T.A:a"]
+    assert cc.run_baseline(tmp_path, ["nope"]) == 2
+    assert cc.split_list(("a", "b,c")) == ["a", "b", "c"]
+    assert cc.split_list("") == []

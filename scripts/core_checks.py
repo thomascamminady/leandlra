@@ -2,9 +2,10 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
-"""Checks of the core library that need no Lean: where definitions stand, and duplicate statements.
+"""Checks of the core library that need no Lean: where definitions stand, duplicate statements,
+theorems without an example.
 
-"Core" is the notion of ``scripts/core.py``: the modules imported by ``LeanDLRA.lean``. Both checks
+"Core" is the notion of ``scripts/core.py``: the modules imported by ``LeanDLRA.lean``. The checks
 compare with a baseline (``docs/core_checks_baseline.json``, written by ``baseline``), so that they
 can block a round on *new* findings while the old ones are being worked off; ``--strict`` ignores
 the baseline.
@@ -12,17 +13,29 @@ the baseline.
 ``defs``: the ``Defs.lean`` rule of ``docs/CONVENTIONS.md`` §3, read from the sources: a public
 ``def``, ``abbrev``, ``structure``, ``class``, ``inductive``, ``opaque`` or non-scoped ``instance``
 in a core file that is not a ``Defs.lean``. Exempt: ``private``, ``scoped`` and ``local``
-declarations, declarations in or below a namespace whose name ends in ``Example`` or ``Examples`` and the ``Corrections`` and
-``Counterexamples`` folders. A source scan, not the elaborated environment: it sees what the
-author wrote (no projections, no ``match_1``), it does not see a definition that a macro makes.
+declarations, declarations in or below a namespace whose name ends in ``Example`` or
+``Examples`` and the ``Corrections`` and ``Counterexamples`` folders. A source scan, not the
+elaborated environment: it sees what the author wrote (no projections, no ``match_1``), it does
+not see a definition that a macro makes.
 
 ``duplicates``: two public theorems of the core whose elaborated statements have the same hash, from
 the rolling record ``.lake/hashdiff/rolling_statements.jsonl.gz`` (``scripts/rolling.py``; the type
 is printed with binder names erased, so it is the statement and nothing else).
 
+``vacuity``: the non-vacuity rule (every general theorem has an ``example`` showing that its
+hypotheses can hold), as a heuristic on the sources: a public ``theorem`` or ``lemma`` of a core
+file that has hypotheses (``has_hypotheses``: a binder with a relation or an ``Is…``/``Has…``
+predicate in its type, or named ``h…`` with a type that is not data, or an implication in the
+statement) and whose name (its last component, as an identifier, also after a dot) occurs in no
+``example`` of the same file and nowhere inside a namespace or section of the file whose name
+ends in ``Example`` or ``Examples``. Not seen: hypotheses from ``variable``, data-like binders
+that are propositions, witnesses in other files; a different declaration with the same last
+component counts as a mention.
+
     uv run -q scripts/core_checks.py defs [--strict] [--list]
     uv run -q scripts/core_checks.py duplicates [--strict] [--list]
-    uv run -q scripts/core_checks.py baseline          # write both baselines from today's findings
+    uv run -q scripts/core_checks.py vacuity [--strict] [--list]
+    uv run -q scripts/core_checks.py baseline [--only=vacuity,...]   # today's findings
 
 Exit 0: no finding beyond the baseline. Exit 1: a new finding (printed). Exit 2: nothing to read
 (no record, no core root file).
@@ -36,6 +49,7 @@ import json
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -179,6 +193,159 @@ def duplicate_groups(root: Path = ROOT) -> list[list[tuple[str, str]]]:
     return sorted(groups, key=lambda g: (-len(g), g))
 
 
+# -- non-vacuity ----------------------------------------------------------------------------------
+
+_OPEN, _CLOSE = "([{⦃⟨", ")]}⦄⟩"
+# Tokens that contain a relation sign without being one: arrows, `fun` arrows, assignments and the
+# types `ℝ≥0`, `ℝ≥0∞`.
+_NOT_RELATION = re.compile(r"=>|->|<-|<;>|:=|ℝ≥0∞?")
+_RELATION = re.compile(r"[=≠≤<≥>∈∉⊆⊂↔∧∨¬∣]")
+_PREDICATE = re.compile(r"^\s*@?(?:[\w.']*\.)?(?:Is|Has)[A-Z]")
+# The head of a type of data: numbers, types, matrices, sets, and type variables (one letter).
+_DATA = re.compile(
+    r"^\s*(?:ℝ|ℕ|ℤ|ℂ|ℚ|Real|Nat|Int|Complex|Type|Sort|Fin|Matrix|Set|Finset|List"
+    r"|[A-Za-zα-ωΑ-Ω𝕜][₀-₉']*)(?![\w.])"
+)
+_ARROW = re.compile(r"→|(?<![<=-])->")
+_SCOPE = re.compile(r"^\s*(?:noncomputable\s+)?(?:namespace|section)\s+(\S+)\s*$")
+_PLAIN_SCOPE = re.compile(r"^\s*(?:(?:noncomputable\s+)?section|mutual)\s*$")
+_EXAMPLE = re.compile(r"^\s*(?:@\[[^\]]*\]\s*)*example\b")
+_THEOREM_KINDS = frozenset(("theorem", "lemma"))
+
+
+def extent(lines: list[str], start: int) -> str:
+    """The command that starts on line ``start`` (0-based): up to the next line that starts in
+    column 0 (a ``|`` of a pattern match does not end it)."""
+    end = start + 1
+    while end < len(lines) and not (lines[end][:1].strip() and lines[end][0] != "|"):
+        end += 1
+    return "\n".join(lines[start:end])
+
+
+def top_level(text: str) -> str:
+    """The characters of a text outside every bracket."""
+    out: list[str] = []
+    depth = 0
+    for ch in text:
+        if ch in _OPEN:
+            depth += 1
+        elif ch in _CLOSE:
+            depth = max(depth - 1, 0)
+        elif depth == 0:
+            out.append(ch)
+    return "".join(out)
+
+
+def binders_and_statement(head: str) -> tuple[list[tuple[str, str]], str]:
+    """The binder groups ``(bracket, content)`` of a declaration head (the text after the name,
+    before ``:=``) and the statement after its colon outside brackets."""
+    groups: list[tuple[str, str]] = []
+    depth, begin = 0, 0
+    for i, ch in enumerate(head):
+        if ch in _OPEN:
+            if depth == 0:
+                begin = i
+            depth += 1
+        elif ch in _CLOSE:
+            depth = max(depth - 1, 0)
+            if depth == 0:
+                groups.append((head[begin], head[begin + 1 : i]))
+        elif ch == ":" and depth == 0:
+            return groups, head[i + 1 :]
+    return groups, ""
+
+
+def is_hypothesis(names: str, kind: str) -> bool:
+    """Whether a binder group ``names : kind`` assumes something."""
+    bare = top_level(_NOT_RELATION.sub(" ", kind))
+    if _RELATION.search(bare) or _PREDICATE.match(kind):
+        return True
+    named = any(n.startswith("h") for n in names.split())
+    return named and not _DATA.match(kind) and not _ARROW.search(bare)
+
+
+def has_hypotheses(head: str) -> bool:
+    """Whether a theorem head (the text after its name, before ``:=``) assumes something.
+
+    A heuristic: an explicit, implicit or strict-implicit binder whose type has a relation
+    (``= ≠ ≤ < ≥ > ∈ ∉ ⊆ ⊂ ↔ ∧ ∨ ¬ ∣``) outside brackets or starts with a predicate ``Is…`` or
+    ``Has…``, or that is named like a hypothesis (``h…``) and whose type is neither data (a number
+    type, ``Type``, ``Fin``, ``Matrix``, ``Set``, a one-letter type variable) nor a function type;
+    or an implication ``→`` outside brackets in the statement. Instance binders ``[…]`` do not
+    count.
+    """
+    groups, statement = binders_and_statement(head)
+    for bracket, content in groups:
+        names, colon, kind = content.partition(":")
+        if bracket in "({⦃" and colon and is_hypothesis(names, kind):
+            return True
+    return bool(_ARROW.search(top_level(_NOT_RELATION.sub(" ", statement))))
+
+
+def examples_of(text: str) -> tuple[str, frozenset[int]]:
+    """The witness text of a source text, and the numbers of the lines inside example scopes.
+
+    The witness text is every ``example`` command and everything inside a namespace or section
+    whose name ends in ``Example`` or ``Examples`` (the helpers of the examples)."""
+    lines = strip_comments(text).splitlines()
+    out: list[str] = []
+    inside: set[int] = set()
+    scopes: list[bool] = []
+    for i, line in enumerate(lines):
+        if m := _SCOPE.match(line):
+            scopes.append(m.group(1).endswith(("Example", "Examples")))
+        elif _PLAIN_SCOPE.match(line):
+            scopes.append(False)
+        elif _END.match(line):
+            if scopes:
+                scopes.pop()
+        elif any(scopes):
+            out.append(line)
+            inside.add(i + 1)
+        elif _EXAMPLE.match(line):
+            out.append(extent(lines, i))
+    return "\n".join(out), frozenset(inside)
+
+
+def mentions(witness: str, name: str) -> bool:
+    """Whether the last component of a name occurs in the witness text as an identifier (also
+    after a dot: dot notation and qualified names count)."""
+    last = re.escape(name.rsplit(".", 1)[-1])
+    return re.search(rf"(?<![\w'!?]){last}(?![\w'!?])", witness) is not None
+
+
+def unwitnessed(text: str) -> list[tuple[int, str]]:
+    """``(line, name)`` of the public theorems of a source text that have hypotheses and that no
+    example of the text mentions (outside example scopes)."""
+    lines = strip_comments(text).splitlines()
+    witness, inside = examples_of(text)
+    out: list[tuple[int, str]] = []
+    for d in declarations_in(text):
+        if d.kind not in _THEOREM_KINDS or "private" in d.modifiers:
+            continue
+        if d.in_examples or d.line in inside:
+            continue
+        command = extent(lines, d.line - 1)
+        m = _DECL.match(command)
+        rest = command[m.start(3) :] if m else ""
+        found = _NAME.match(rest)
+        head = rest[found.end() :] if found else rest
+        if has_hypotheses(head.split(":=", 1)[0]) and not mentions(witness, d.name):
+            out.append((d.line, d.name))
+    return out
+
+
+def vacuity_findings(root: Path = ROOT) -> list[tuple[str, int, str]]:
+    """``(module, line, name)`` of the public core theorems with hypotheses and no example."""
+    out: list[tuple[str, int, str]] = []
+    for module in core.core_modules(root):
+        path = core.source_of(module, root)
+        if path.exists():
+            text = path.read_text(encoding="utf-8")
+            out += [(module, line, name) for line, name in unwitnessed(text)]
+    return out
+
+
 def defs_keys(findings: list[tuple[str, int, str, str]]) -> list[str]:
     return sorted({f"{module}:{name}" for module, _, _, name in findings})
 
@@ -188,9 +355,26 @@ def duplicate_keys(groups: list[list[tuple[str, str]]]) -> list[str]:
     return sorted("=".join(sorted(name for _, name in g)) for g in groups)
 
 
+def vacuity_keys(findings: list[tuple[str, int, str]]) -> list[str]:
+    return sorted({f"{module}:{name}" for module, _, name in findings})
+
+
 def read_baseline(root: Path) -> dict[str, list[str]]:
     path = root / BASELINE
     return json.loads(path.read_text()) if path.exists() else {}
+
+
+def split_list(value: object) -> list[str]:
+    """The items of a comma-separated option: a string, or a sequence of strings (fire turns
+    ``--x=a,b`` into a tuple), in their order, without blanks."""
+    items: list[object] = list(value) if isinstance(value, (list, tuple)) else [value]
+    return [
+        part.strip()
+        for item in items
+        if item not in (None, "")
+        for part in str(item).split(",")
+        if part.strip()
+    ]
 
 
 def run_defs(root: Path, strict: bool, list_all: bool) -> int:
@@ -226,14 +410,53 @@ def run_duplicates(root: Path, strict: bool, list_all: bool) -> int:
     return 1 if new else 0
 
 
-def run_baseline(root: Path) -> int:
-    data = {"defs": defs_keys(defs_findings(root))}
-    if (root / RECORD).exists():
-        data["duplicates"] = duplicate_keys(duplicate_groups(root))
-    (root / BASELINE).write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n")
+def run_vacuity(root: Path, strict: bool, list_all: bool) -> int:
+    findings = vacuity_findings(root)
+    known = set() if strict else set(read_baseline(root).get("vacuity", []))
+    new = [f for f in findings if f"{f[0]}:{f[2]}" not in known]
+    for module, line, name in findings if list_all else new:
+        print(
+            f"NO-EXAMPLE {module}:{line}: {name} has hypotheses, no example mentions it"
+        )
+    files = sorted({f[0] for f in findings})
+    bare = [
+        m
+        for m in files
+        if not examples_of(core.source_of(m, root).read_text(encoding="utf-8"))[
+            0
+        ].strip()
+    ]
     print(
-        f"{BASELINE}: {len(data['defs'])} definitions, {len(data.get('duplicates', []))} groups"
+        f"vacuity: {len(findings)} public core theorems with hypotheses and no example in "
+        f"{len(files)} files ({len(bare)} without any example), {len(new)} not in the baseline"
     )
+    return 1 if new else 0
+
+
+CHECKS = ("defs", "duplicates", "vacuity")
+
+
+def run_baseline(root: Path, only: Sequence[str] = ()) -> int:
+    """Write the baseline of the given checks (default: all) from today's findings; the entries
+    of the other checks stay. Without a record, the duplicates entry stays as it is."""
+    wanted = list(only) or list(CHECKS)
+    if unknown := [c for c in wanted if c not in CHECKS]:
+        print(f"baseline: unknown check {unknown[0]} (known: {', '.join(CHECKS)})")
+        return 2
+    data = read_baseline(root)
+    written: list[str] = []
+    for check in wanted:
+        if check == "defs":
+            data["defs"] = defs_keys(defs_findings(root))
+        elif check == "duplicates":
+            if not (root / RECORD).exists():
+                continue
+            data["duplicates"] = duplicate_keys(duplicate_groups(root))
+        else:
+            data["vacuity"] = vacuity_keys(vacuity_findings(root))
+        written.append(check)
+    (root / BASELINE).write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n")
+    print(f"{BASELINE}: " + ", ".join(f"{c} {len(data[c])}" for c in written))
     return 0
 
 
@@ -248,9 +471,14 @@ class Checks:
         """Public core theorems with one statement hash."""
         sys.exit(run_duplicates(ROOT, strict, list))
 
-    def baseline(self) -> None:
-        """Write docs/core_checks_baseline.json from today's findings."""
-        sys.exit(run_baseline(ROOT))
+    def vacuity(self, strict: bool = False, list: bool = False) -> None:
+        """Public core theorems with hypotheses that no example of their file mentions."""
+        sys.exit(run_vacuity(ROOT, strict, list))
+
+    def baseline(self, only: object = "") -> None:
+        """Write docs/core_checks_baseline.json from today's findings (--only=defs,vacuity:
+        these checks only, the others stay)."""
+        sys.exit(run_baseline(ROOT, split_list(only)))
 
 
 if __name__ == "__main__":
