@@ -117,6 +117,7 @@ import LeanDLRA.Research.ExplicitMidpointCapture
 import LeanDLRA.Research.ExplicitMidpointGalerkin
 import LeanDLRA.Research.FederatedConvexThreshold
 import LeanDLRA.Research.FederatedDescentThreshold
+import LeanDLRA.Research.FederatedThreeSteps
 import LeanDLRA.Research.FederatedTwoSteps
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.PerturbedSylvester

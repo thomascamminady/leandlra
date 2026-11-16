@@ -1,3 +1,4 @@
+import LeanDLRA.Integrators.Defs
 import LeanDLRA.Integrators.KStep
 
 /-!
@@ -86,14 +87,6 @@ lemma exp_sub_one_le_mul_exp (x : ℝ) : Real.exp x - 1 ≤ x * Real.exp x := by
   have hpos := Real.exp_pos x
   have hmul : Real.exp (-x) * Real.exp x = 1 := by rw [← Real.exp_add]; simp
   nlinarith
-
-/-- The constant `c₁ = 2 + 2 L H e^{L H}` in front of `ε` in the local error bound of the BUG
-integrator (step sizes `h ≤ H`). -/
-noncomputable def bugC₁ (L H : ℝ) : ℝ := 2 + 2 * L * H * Real.exp (L * H)
-
-/-- The constant `c₂ = L B (8 + e^{L H} (1 + 8 L H))` in front of `h` in the local error bound of
-the BUG integrator (step sizes `h ≤ H`). -/
-noncomputable def bugC₂ (L B H : ℝ) : ℝ := L * B * (8 + Real.exp (L * H) * (1 + 8 * L * H))
 
 lemma bugC₁_nonneg {L H : ℝ} (hL : 0 ≤ L) (hH : 0 ≤ H) : 0 ≤ bugC₁ L H := by
   unfold bugC₁; positivity

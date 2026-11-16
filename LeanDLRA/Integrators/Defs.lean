@@ -350,4 +350,34 @@ example (P : E →L[ℝ] E) (F : ℝ → E → E) {t₀ h : ℝ} (hh : 0 ≤ h) 
 
 end RunExample
 
+/-! ### Constants of the local error bounds of the BUG integrators -/
+
+section Constants
+
+/-- The constant `c₁ = 2 + 2 L H e^{L H}` in front of `ε` in the local error bound of the BUG
+integrator (step sizes `h ≤ H`). -/
+noncomputable def bugC₁ (L H : ℝ) : ℝ := 2 + 2 * L * H * Real.exp (L * H)
+
+/-- The constant `c₂ = L B (8 + e^{L H} (1 + 8 L H))` in front of `h` in the local error bound of
+the BUG integrator (step sizes `h ≤ H`). -/
+noncomputable def bugC₂ (L B H : ℝ) : ℝ := L * B * (8 + Real.exp (L * H) * (1 + 8 * L * H))
+
+/-- The constant `c₁ = d (1 + L H e^{L H})` in front of `ε` in the local error bound of the
+Tucker BUG integrator with `d` modes (step sizes `h ≤ H`). -/
+noncomputable def tuckerC₁ (d : ℕ) (L H : ℝ) : ℝ := d * (1 + L * H * Real.exp (L * H))
+
+/-- The constant `c₂ = L B (4 d + e^{L H} (1 + 4 d L H))` in front of `h` in the local error
+bound of the Tucker BUG integrator with `d` modes (step sizes `h ≤ H`). -/
+noncomputable def tuckerC₂ (d : ℕ) (L B H : ℝ) : ℝ :=
+  L * B * (4 * d + Real.exp (L * H) * (1 + 4 * d * L * H))
+
+/-- The constant in front of `ε` in the local error of the parallel Tucker BUG integrator. -/
+noncomputable def parTuckerC₁ (d : ℕ) (L H : ℝ) : ℝ := tuckerC₁ d L H + 1
+
+/-- The constant in front of `h` in the local error of the parallel Tucker BUG integrator
+(`Lₜ` is the time-Lipschitz constant of `F`; `Lₜ = 0` for autonomous problems). -/
+noncomputable def parTuckerC₂ (d : ℕ) (L B Lt H : ℝ) : ℝ := tuckerC₂ d L B H + 3 * L * B + Lt
+
+end Constants
+
 end LeanDLRA

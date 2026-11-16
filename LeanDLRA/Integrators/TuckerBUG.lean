@@ -578,15 +578,6 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 section Constants
 
-/-- The constant `c₁ = d (1 + L H e^{L H})` in front of `ε` in the local error bound of the
-Tucker BUG integrator with `d` modes (step sizes `h ≤ H`). -/
-noncomputable def tuckerC₁ (d : ℕ) (L H : ℝ) : ℝ := d * (1 + L * H * Real.exp (L * H))
-
-/-- The constant `c₂ = L B (4 d + e^{L H} (1 + 4 d L H))` in front of `h` in the local error
-bound of the Tucker BUG integrator with `d` modes (step sizes `h ≤ H`). -/
-noncomputable def tuckerC₂ (d : ℕ) (L B H : ℝ) : ℝ :=
-  L * B * (4 * d + Real.exp (L * H) * (1 + 4 * d * L * H))
-
 lemma tuckerC₁_nonneg (d : ℕ) {L H : ℝ} (hL : 0 ≤ L) (hH : 0 ≤ H) : 0 ≤ tuckerC₁ d L H := by
   unfold tuckerC₁; positivity
 
@@ -1268,13 +1259,6 @@ theorem parallel_sub_galerkin_le {F : ℝ → E → E} {L B ε Lt : ℝ} (hF : I
 are zero. -/
 def parTuckerBUG {d : ℕ} (P₀ Pa : Fin d → E →L[ℝ] E) (yC : E) (h : ℝ) (f₀ : E) : E :=
   yC + h • (modeProdLeOne P₀ Pa - modeProd P₀) f₀
-
-/-- The constant in front of `ε` in the local error of the parallel Tucker BUG integrator. -/
-noncomputable def parTuckerC₁ (d : ℕ) (L H : ℝ) : ℝ := tuckerC₁ d L H + 1
-
-/-- The constant in front of `h` in the local error of the parallel Tucker BUG integrator
-(`Lₜ` is the time-Lipschitz constant of `F`; `Lₜ = 0` for autonomous problems). -/
-noncomputable def parTuckerC₂ (d : ℕ) (L B Lt H : ℝ) : ℝ := tuckerC₂ d L B H + 3 * L * B + Lt
 
 lemma parTuckerC₁_nonneg (d : ℕ) {L H : ℝ} (hL : 0 ≤ L) (hH : 0 ≤ H) : 0 ≤ parTuckerC₁ d L H :=
   add_nonneg (tuckerC₁_nonneg d hL hH) zero_le_one
