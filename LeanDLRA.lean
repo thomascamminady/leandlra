@@ -96,6 +96,8 @@ import LeanDLRA.OpenProblems.Curated.RankAdaptivityb
 import LeanDLRA.OpenProblems.Curated.Structurea
 import LeanDLRA.OpenProblems.Curated.Traininga
 import LeanDLRA.OpenProblems.Curated.Trainingb
+import LeanDLRA.Randomized.DRSVDRun
+import LeanDLRA.Randomized.DRSVDStep
 import LeanDLRA.Randomized.ObliqueBUG
 import LeanDLRA.Randomized.RandomizedBUG
 import LeanDLRA.Research.AugmentationRank
