@@ -1,4 +1,5 @@
 import LeanDLRA.Analysis.Defs
+import LeanDLRA.FixedRank.TangentSpace.Defs
 
 /-!
 # Definitions: the DLRA problem and normal-component bounds
@@ -199,5 +200,25 @@ example (c : ℝ) (g : E) :
   rw [h0, map_zero, norm_zero]
 
 end NormalBound
+
+/-! ### DLRA solutions of rank `r` -/
+
+section Solution
+
+open scoped Matrix LeanDLRA.Frobenius
+
+variable {m n : Type*} [Fintype m] [Fintype n]
+
+/-- A **DLRA solution of rank `r`** of `Ẏ = P(Y) F(t, Y)` on `[a, b]`: `Y` solves the projected
+equation, with `P(Y) = tangentProjAt Y` the orthogonal projector onto the tangent space of the
+rank-`r` matrices at `Y` (`ODESolution`: continuity on `[a, b]` and right derivatives on
+`[a, b)`), and `Y t` has rank exactly `r` for every `t ∈ [a, b]`. The rank condition at the
+endpoint `b` is part of the definition: a limit of rank-`r` matrices can have smaller rank, and
+there the tangent projector is not the tangent projector of the rank-`r` manifold. -/
+def IsDLRASolution (r : ℕ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (Y : ℝ → Matrix m n ℝ)
+    (a b : ℝ) : Prop :=
+  ODESolution (fun t x => tangentProjAt x (F t x)) Y a b ∧ ∀ t ∈ Icc a b, (Y t).rank = r
+
+end Solution
 
 end LeanDLRA

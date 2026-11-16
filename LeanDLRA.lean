@@ -10,6 +10,7 @@ import LeanDLRA.Classical.SVD
 import LeanDLRA.Classical.WeylSingular
 import LeanDLRA.Control.AdjointDLRA
 import LeanDLRA.DLRA.Defs
+import LeanDLRA.DLRA.DynamicallyOrthogonal
 import LeanDLRA.DLRA.QuasiOptimality
 import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.Filtering.Defs
