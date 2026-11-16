@@ -1,43 +1,63 @@
 import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Dynamics.ContinuousDLRA
-import LeanDLRA.Matrix.Curvature
+import LeanDLRA.DLRA.DynamicallyOrthogonal
+import LeanDLRA.FixedRank.TangentSpace.Curvature
+import LeanDLRA.LinearAlgebra.SVD.MinMax
 
 /-!
 # Quasi-optimality of dynamical low-rank approximation for matrices
 
-Let `A` be a differentiable curve of matrices and `X t = truncation (A t) r` its best
-approximation of rank `r`. The dynamical low-rank approximation `Y` of rank `r` has the form
-`Y t = U t * S t * (V t)ᵀ` with orthonormal columns of `U t` and `V t`, solves
-`Y' = tangentProj (U t) (V t) (A' t)` and starts at `Y 0 = X 0`. As long as `X` stays close to
-`A` and the `r`-th singular value of `A` stays away from zero, the distance of `Y` to the best
-approximation is bounded by the time integral of the best-approximation error, with explicit
-constants. All norms are Frobenius norms.
+Let `A` be a curve of matrices, `X` a curve of rank-`r` matrices that are critical points of the
+distance to `A` (`P(X) (A - X) = 0`, with `P(X) = tangentProjAt X`), for example best
+approximations of rank `r`, and `Y` the dynamical low-rank approximation of rank `r` of
+`Ȧ = F(t, A)`: `Ẏ = P(Y) F(t, Y)`. As long as the `r`-th singular value of `X` stays above
+`ρ > 0` and `‖X - A‖ ≤ ρ / 4`, the distance of `Y` to `X` is bounded by the time integral of the
+approximation error `‖X - A‖`, with explicit constants. All norms are Frobenius norms.
 
 ## Main results
 
-* `dlra_norm_sub_truncation_le_integral`: assume on `[0, T]` that `‖A' t‖ ≤ μ`, that the `r`-th
-  singular value of `A t` is at least `ρ > 0`, that `‖X t - A t‖ ≤ ρ / 16`, and that `X` is
-  differentiable. Then, with `β = 8 μ / ρ`, for every `t ∈ [0, T]`,
-  `‖Y t - X t‖ ≤ 2 β e^{β t} ∫₀ᵗ ‖X s - A s‖ ds`.
+* `norm_tangentProjAt_sub_le_of_hasDerivWithinAt`: differentiated first-order optimality,
+  `‖P(X t) (A' - X')‖ ≤ 2 ρ⁻¹ ‖X'‖ ‖A t - X t‖`; with `‖A'‖ ≤ μ` and `‖X t - A t‖ ≤ ρ / 4` it
+  gives `‖X'‖ ≤ 2 μ` (`norm_le_of_tangentProjAt_sub_eq_zero`) and
+  `‖X' - P(X t) A'‖ ≤ 4 μ ρ⁻¹ ‖A t - X t‖`
+  (`norm_sub_tangentProjAt_le_of_tangentProjAt_sub_eq_zero`).
+* `dlra_norm_sub_le_integral`: for a factored solution `Y = U S Vᵀ` of
+  `Ẏ = tangentProj U V F(t, Y)` with `F` `L`-Lipschitz and `‖Y a - X a‖ ≤ δ`,
+  `‖Y t - X t‖ ≤ e^{(L + 6 μ/ρ)(t - a)} (δ + (L + 4 μ/ρ) ∫ₐᵗ ‖X - A‖)`.
+* `dlra_norm_sub_le_add_integral`: the bound for `‖Y t - A t‖`, the matrix instance of the
+  abstract `ODESolution.dlra_quasiOptimal_integral` with its hypotheses on the curvature, on the
+  tangency of `Ẋ` and on the best approximation discharged.
+* `IsDLRASolution.norm_sub_le_integral`: the bound for a DLRA solution of rank `r`
+  (`IsDLRASolution`); `IsDLRASolution.norm_sub_le_integral_of_forall_norm_sub_le`: the same for
+  a right-differentiable curve `X` of best approximations of rank at most `r`.
+* `dlra_norm_sub_truncation_le_integral`: the case `F(t, Y) = Ȧ(t)`, `X t = T_r(A t)`, `Y 0 = X 0`:
+  `‖Y t - X t‖ ≤ 2 β e^{β t} ∫₀ᵗ ‖X s - A s‖ ds` with `β = 8 μ / ρ`.
 
 ## Implementation notes
 
-The theorem assumes neither smallness of `‖Y - X‖` nor continuity of the derivative of `X`, and
-the existence of `Y` on `[0, T]` in the factored form is a hypothesis. The Lipschitz bound of
-`tangentProj` in its base point that the proof uses (`Curvature.koch_lubich_tangent_frob`) needs
-the lower bound `ρ` for the singular values at one of the two base points only, here at `X t`.
-The proof is the matrix case of the comparison argument of
-`ODESolution.dlra_norm_sub_le_of_comparison_integral`, with this Lipschitz bound as the
-curvature bound. A bound of this kind, the distance to the best approximation against the time
-integral of the best-approximation error, is in [KochLubich2007]; the constants `ρ / 16`,
-`β = 8 μ / ρ` and the factor `2` are those of this proof.
+No smallness of `‖Y - X‖` is assumed: the Lipschitz bound of the tangent projector
+(`norm_tangentProj_sub_tangentProjAt_le`) needs the lower bound `ρ` at `X` only. The derivative
+of the first-order condition is bounded by a slope argument with the same Lipschitz bound, without
+a Weingarten map. A bound of this kind, the distance to the best approximation against the time
+integral of the best-approximation error, is in [KochLubich2007]; the constants `ρ / 4`, `6 μ / ρ`,
+`4 μ / ρ` (and `ρ / 16`, `8 μ / ρ`, `2` in `dlra_norm_sub_truncation_le_integral`) are those of
+these proofs.
+
+## TODO
+
+* Differentiability of the best approximation `t ↦ T_r(A t)` under the gap `σ_r > σ_{r+1}`: the
+  theorems assume that `X` is a right-differentiable curve.
+* Existence of the DLRA solution: the theorems assume a solution `Y` on `[a, b]`.
+* A tube-local version, with `F` Lipschitz only near `A` (it needs a bootstrap that keeps `Y` in
+  the tube).
 
 ## References
 
 * [KochLubich2007]
 -/
 
-open Set Finset Matrix
+open Set Finset Matrix Filter
+open scoped Topology
 
 namespace LeanDLRA
 
@@ -46,55 +66,386 @@ section QuasiOptimal
 open scoped LeanDLRA.Frobenius
 open EckartYoung
 
-variable {m n : Type*} [Fintype m] [Fintype n]
+variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
 
-/-- A bound for a derivative from a bound for the function: if `φ t = 0` and
-`‖φ s‖ ≤ ‖X s - X t‖ * g s` for `s ∈ [a, b]`, with `g` continuous at `t` within `[a, b]`, then
-the derivatives `d` of `φ` and `X'` of `X` at `t` within `[a, b]` satisfy `‖d‖ ≤ ‖X'‖ * g t`. -/
-private theorem norm_deriv_le_of_slope_bound {G H : Type*} [NormedAddCommGroup G]
-    [NormedSpace ℝ G] [NormedAddCommGroup H] [NormedSpace ℝ H] {a b t : ℝ} (hab : a < b)
-    (ht : t ∈ Icc a b) {φ : ℝ → H} {X : ℝ → G} {d : H} {X' : G} {g : ℝ → ℝ}
-    (hφ : HasDerivWithinAt φ d (Icc a b) t) (hX : HasDerivWithinAt X X' (Icc a b) t)
-    (hφ0 : φ t = 0) (hg : ContinuousWithinAt g (Icc a b) t)
-    (hb : ∀ s ∈ Icc a b, ‖φ s‖ ≤ ‖X s - X t‖ * g s) : ‖d‖ ≤ ‖X'‖ * g t := by
-  have hne : (nhdsWithin t (Icc a b \ {t})).NeBot :=
-    accPt_principal_iff_nhdsWithin.mp (uniqueDiffOn_Icc hab t ht).accPt
-  have h1 := (hasDerivWithinAt_iff_tendsto_slope.1 hφ).norm
-  have h2 := (hasDerivWithinAt_iff_tendsto_slope.1 hX).norm
-  have hg' : Filter.Tendsto g (nhdsWithin t (Icc a b \ {t})) (nhds (g t)) :=
-    hg.tendsto.mono_left (nhdsWithin_mono _ Set.sdiff_subset)
-  refine le_of_tendsto_of_tendsto h1 (h2.mul hg') ?_
-  filter_upwards [self_mem_nhdsWithin] with s hs
-  have hst : s ≠ t := hs.2
-  have hpos : 0 < |s - t|⁻¹ := inv_pos.2 (abs_pos.2 (sub_ne_zero.2 hst))
-  simp only [slope_def_module, norm_smul, hφ0, sub_zero, Real.norm_eq_abs, norm_inv]
-  rw [mul_assoc, mul_comm (‖X s - X t‖), ← mul_assoc]
-  calc |s - t|⁻¹ * ‖φ s‖ ≤ |s - t|⁻¹ * (‖X s - X t‖ * g s) :=
-        mul_le_mul_of_nonneg_left (hb s hs.1) hpos.le
+/-! ### Derivatives of a curve of critical points -/
+
+/-- **Differentiated first-order optimality.** Let `A`, `X` have the derivatives `A'`, `X'` at
+`t ∈ s` within `s` (`t` an accumulation point of `s`), let `X u` have rank `r` and satisfy the
+first-order condition `P(X u) (A u - X u) = 0` for `u ∈ s`, and let `0 < ρ ≤ σ_{r-1}(X t)`. Then
+`‖P(X t) (A' - X')‖ ≤ 2 ρ⁻¹ ‖X'‖ ‖A t - X t‖`. -/
+theorem norm_tangentProjAt_sub_le_of_hasDerivWithinAt {r : ℕ} {A X : ℝ → Matrix m n ℝ}
+    {A' X' : Matrix m n ℝ} {s : Set ℝ} {t ρ : ℝ} (hA : HasDerivWithinAt A A' s t)
+    (hX : HasDerivWithinAt X X' s t) (ht : t ∈ s) (hs : (𝓝[s \ {t}] t).NeBot) (hρ : 0 < ρ)
+    (hrank : ∀ u ∈ s, (X u).rank = r) (hσ : ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hopt : ∀ u ∈ s, tangentProjAt (X u) (A u - X u) = 0) :
+    ‖tangentProjAt (X t) (A' - X')‖ ≤ 2 * ρ⁻¹ * ‖X'‖ * ‖A t - X t‖ := by
+  have hφ : HasDerivWithinAt (fun u => tangentProjAt (X t) (A u - X u - (A t - X t)))
+      (tangentProjAt (X t) (A' - X')) s t :=
+    (tangentProjAt (X t)).hasFDerivAt.comp_hasDerivWithinAt t ((hA.sub hX).sub_const _)
+  have hb : ∀ u ∈ s, ‖tangentProjAt (X t) (A u - X u - (A t - X t))‖ ≤
+      ‖X u - X t‖ * (2 * ρ⁻¹ * ‖A u - X u‖) := fun u hu => by
+    have h := norm_tangentProjAt_sub_le (hrank t ht) (hrank u hu) hρ hσ (A u - X u)
+    have e : tangentProjAt (X t) (A u - X u - (A t - X t)) =
+        -(tangentProjAt (X u) (A u - X u) - tangentProjAt (X t) (A u - X u)) := by
+      rw [hopt u hu, map_sub (tangentProjAt (X t)) (A u - X u) (A t - X t), hopt t ht]
+      simp
+    rw [e, norm_neg]
+    calc _ ≤ _ := h
+      _ = _ := by ring
+  have hg : ContinuousWithinAt (fun u => 2 * ρ⁻¹ * ‖A u - X u‖) s t :=
+    continuousWithinAt_const.mul ((hA.continuousWithinAt.sub hX.continuousWithinAt).norm)
+  have h := norm_deriv_le_of_norm_le_norm_sub_mul hφ hX hs (by simp) hg hb
+  calc _ ≤ _ := h
     _ = _ := by ring
 
-/-- `Curvature.koch_lubich_tangent_frob` written with `tangentProj`: for `Y = U diag(σ) Vᵀ`
-with `σ i ≥ ρ > 0` and `Y' = U' S' V'ᵀ`, `‖P(Y') B - P(Y) B‖ ≤ 2 ρ⁻¹ ‖Y' - Y‖ ‖B‖`. -/
-private theorem tangentProj_sub_le {r : ℕ} {U U' : Matrix m (Fin r) ℝ} {V V' : Matrix n (Fin r) ℝ}
-    {σ : Fin r → ℝ} {S' : Matrix (Fin r) (Fin r) ℝ} {ρ : ℝ} (hρ : 0 < ρ) (hσ : ∀ i, ρ ≤ σ i)
-    (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (hU' : U'ᵀ * U' = 1) (hV' : V'ᵀ * V' = 1)
-    (B : Matrix m n ℝ) :
-    ‖tangentProj U' V' B - tangentProj U V B‖ ≤
-      2 * ρ⁻¹ * ‖U' * S' * V'ᵀ - U * diagonal σ * Vᵀ‖ * ‖B‖ := by
-  have h := Curvature.koch_lubich_tangent_frob (S' := S') hρ hU hV hU' hV'
-    (Curvature.diagonal_bounded_below hρ.le hσ) B
-  rwa [Curvature.tangentProjMat_eq_tangentProj, Curvature.tangentProjMat_eq_tangentProj] at h
+/-- The two estimates behind `norm_le_of_tangentProjAt_sub_eq_zero` and
+`norm_sub_tangentProjAt_le_of_tangentProjAt_sub_eq_zero`. -/
+private theorem deriv_bounds_of_tangentProjAt_sub_eq_zero {r : ℕ} {A X : ℝ → Matrix m n ℝ}
+    {A' X' : Matrix m n ℝ} {s : Set ℝ} {t ρ μ : ℝ} (hA : HasDerivWithinAt A A' s t)
+    (hX : HasDerivWithinAt X X' s t) (ht : t ∈ s) (hs : (𝓝[s \ {t}] t).NeBot) (hρ : 0 < ρ)
+    (hrank : ∀ u ∈ s, (X u).rank = r)
+    (hσ : ∀ u ∈ s, ρ ≤ (toEuclideanLin (X u)).singularValues (r - 1))
+    (hopt : ∀ u ∈ s, tangentProjAt (X u) (A u - X u) = 0) (hμ : ‖A'‖ ≤ μ)
+    (hd : ‖X t - A t‖ ≤ ρ / 4) :
+    ‖X'‖ ≤ 2 * μ ∧ ‖X' - tangentProjAt (X t) A'‖ ≤ 4 * μ / ρ * ‖A t - X t‖ := by
+  have htan : tangentProjAt (X t) X' = X' := tangentProjAt_eq_self_iff.mpr
+    (mem_tangentSpaceAt_of_hasDerivWithinAt hX ht hs hρ hrank hσ)
+  have hdef := norm_tangentProjAt_sub_le_of_hasDerivWithinAt hA hX ht hs hρ hrank (hσ t ht) hopt
+  have hE : ρ⁻¹ * ‖A t - X t‖ ≤ 1 / 4 := by
+    rw [inv_mul_le_iff₀ hρ, norm_sub_rev]
+    linarith
+  have h1 : ‖tangentProjAt (X t) A'‖ ≤ μ := ((isOrthProj_tangentProjAt _).norm_le _).trans hμ
+  have hX' : ‖X'‖ ≤ 2 * μ := by
+    have e : X' = tangentProjAt (X t) A' - tangentProjAt (X t) (A' - X') := by
+      rw [map_sub, htan]
+      abel
+    have h3 : ‖X'‖ ≤ ‖tangentProjAt (X t) A'‖ + ‖tangentProjAt (X t) (A' - X')‖ := by
+      conv_lhs => rw [e]
+      exact norm_sub_le _ _
+    have h4 : 2 * ρ⁻¹ * ‖X'‖ * ‖A t - X t‖ ≤ ‖X'‖ / 2 := by
+      have := mul_le_mul_of_nonneg_left hE (norm_nonneg X')
+      nlinarith
+    linarith
+  refine ⟨hX', ?_⟩
+  have e : X' - tangentProjAt (X t) A' = -tangentProjAt (X t) (A' - X') := by
+    rw [map_sub, htan]
+    abel
+  rw [e, norm_neg]
+  refine hdef.trans ?_
+  have hρ' : 0 ≤ 2 * ρ⁻¹ := by positivity
+  calc 2 * ρ⁻¹ * ‖X'‖ * ‖A t - X t‖ ≤ 2 * ρ⁻¹ * (2 * μ) * ‖A t - X t‖ := by gcongr
+    _ = 4 * μ / ρ * ‖A t - X t‖ := by rw [div_eq_mul_inv]; ring
 
-variable [DecidableEq n]
+/-- **Speed of a curve of critical points.** Under the hypotheses of
+`norm_tangentProjAt_sub_le_of_hasDerivWithinAt`, with `ρ ≤ σ_{r-1}(X u)` on `s`, `‖A'‖ ≤ μ` and
+`‖X t - A t‖ ≤ ρ / 4`: `‖X'‖ ≤ 2 μ`. -/
+theorem norm_le_of_tangentProjAt_sub_eq_zero {r : ℕ} {A X : ℝ → Matrix m n ℝ}
+    {A' X' : Matrix m n ℝ} {s : Set ℝ} {t ρ μ : ℝ} (hA : HasDerivWithinAt A A' s t)
+    (hX : HasDerivWithinAt X X' s t) (ht : t ∈ s) (hs : (𝓝[s \ {t}] t).NeBot) (hρ : 0 < ρ)
+    (hrank : ∀ u ∈ s, (X u).rank = r)
+    (hσ : ∀ u ∈ s, ρ ≤ (toEuclideanLin (X u)).singularValues (r - 1))
+    (hopt : ∀ u ∈ s, tangentProjAt (X u) (A u - X u) = 0) (hμ : ‖A'‖ ≤ μ)
+    (hd : ‖X t - A t‖ ≤ ρ / 4) : ‖X'‖ ≤ 2 * μ :=
+  (deriv_bounds_of_tangentProjAt_sub_eq_zero hA hX ht hs hρ hrank hσ hopt hμ hd).1
+
+/-- **The velocity of a curve of critical points is the projected velocity, up to the
+approximation error.** Under the hypotheses of `norm_le_of_tangentProjAt_sub_eq_zero`:
+`‖X' - P(X t) A'‖ ≤ 4 μ ρ⁻¹ ‖A t - X t‖`. This is the best-approximation hypothesis `hbest` of
+`ODESolution.dlra_quasiOptimal` with `c = 4 μ / ρ`. -/
+theorem norm_sub_tangentProjAt_le_of_tangentProjAt_sub_eq_zero {r : ℕ}
+    {A X : ℝ → Matrix m n ℝ} {A' X' : Matrix m n ℝ} {s : Set ℝ} {t ρ μ : ℝ}
+    (hA : HasDerivWithinAt A A' s t) (hX : HasDerivWithinAt X X' s t) (ht : t ∈ s)
+    (hs : (𝓝[s \ {t}] t).NeBot) (hρ : 0 < ρ) (hrank : ∀ u ∈ s, (X u).rank = r)
+    (hσ : ∀ u ∈ s, ρ ≤ (toEuclideanLin (X u)).singularValues (r - 1))
+    (hopt : ∀ u ∈ s, tangentProjAt (X u) (A u - X u) = 0) (hμ : ‖A'‖ ≤ μ)
+    (hd : ‖X t - A t‖ ≤ ρ / 4) :
+    ‖X' - tangentProjAt (X t) A'‖ ≤ 4 * μ / ρ * ‖A t - X t‖ :=
+  (deriv_bounds_of_tangentProjAt_sub_eq_zero hA hX ht hs hρ hrank hσ hopt hμ hd).2
+
+/-! ### Quasi-optimality along a curve of critical points -/
+
+/-- The derivative bounds of `norm_le_of_tangentProjAt_sub_eq_zero` and
+`norm_sub_tangentProjAt_le_of_tangentProjAt_sub_eq_zero` at a time `t ∈ [a, b)`, from right
+derivatives on `[t, b]`, together with the tangency of `X' t`. -/
+private theorem deriv_bounds_on_Ico {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {A X X' : ℝ → Matrix m n ℝ} {a b μ ρ : ℝ} (hρ : 0 < ρ) (hA : ODESolution F A a b)
+    (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ)
+    (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = r)
+    (hσ : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hopt : ∀ t ∈ Icc a b, tangentProjAt (X t) (A t - X t) = 0)
+    (hd : ∀ t ∈ Icc a b, ‖X t - A t‖ ≤ ρ / 4) {t : ℝ} (ht : t ∈ Ico a b) :
+    tangentProjAt (X t) (X' t) = X' t ∧ ‖X' t‖ ≤ 2 * μ ∧
+      ‖X' t - tangentProjAt (X t) (F t (A t))‖ ≤ 4 * μ / ρ * ‖A t - X t‖ := by
+  have hsub : Icc t b ⊆ Icc a b := Icc_subset_Icc_left ht.1
+  have hts : t ∈ Icc t b := ⟨le_rfl, ht.2.le⟩
+  have hs : (𝓝[Icc t b \ {t}] t).NeBot := by
+    rw [Icc_sdiff_left]
+    exact left_nhdsWithin_Ioc_neBot ht.2
+  have hA' := (hA.deriv t ht).mono (Icc_subset_Ici_self : Icc t b ⊆ Ici t)
+  have hX' := (hX t ht).mono (Icc_subset_Ici_self : Icc t b ⊆ Ici t)
+  have hrank : ∀ u ∈ Icc t b, (X u).rank = r := fun u hu => hXr u (hsub hu)
+  have hσ' : ∀ u ∈ Icc t b, ρ ≤ (toEuclideanLin (X u)).singularValues (r - 1) :=
+    fun u hu => hσ u (hsub hu)
+  have hopt' : ∀ u ∈ Icc t b, tangentProjAt (X u) (A u - X u) = 0 := fun u hu => hopt u (hsub hu)
+  exact ⟨tangentProjAt_eq_self_iff.mpr
+      (mem_tangentSpaceAt_of_hasDerivWithinAt hX' hts hs hρ hrank hσ'),
+    deriv_bounds_of_tangentProjAt_sub_eq_zero hA' hX' hts hs hρ hrank hσ' hopt' (hμ t ht)
+      (hd t (Ico_subset_Icc_self ht))⟩
+
+omit [DecidableEq n] in
+/-- A continuous function on `ℝ` that equals `‖X s - A s‖` on `[a, b]`. -/
+private theorem exists_continuous_eq_norm_sub {X A : ℝ → Matrix m n ℝ} {a b : ℝ} (hab : a ≤ b)
+    (hX : ContinuousOn X (Icc a b)) (hA : ContinuousOn A (Icc a b)) :
+    ∃ η : ℝ → ℝ, Continuous η ∧ ∀ s ∈ Icc a b, η s = ‖X s - A s‖ := by
+  refine ⟨fun s => ‖X (projIcc a b hab s) - A (projIcc a b hab s)‖, ?_, fun s hs => by
+    simp only [projIcc_of_mem _ hs]⟩
+  exact (hX.sub hA).norm.comp_continuous (continuous_subtype_val.comp continuous_projIcc)
+    fun s => (projIcc a b hab s).2
+
+/-- **Quasi-optimality of matrix DLRA along a curve of critical points.** Let `A` solve
+`Ȧ = F(t, A)` on `[a, b]` with `F` `L`-Lipschitz and `‖Ȧ‖ ≤ μ`; let `X` be continuous on `[a, b]`
+with right derivatives `X'`, of rank `r` with `0 < ρ ≤ σ_{r-1}(X t)`, a critical point of the
+distance to `A` (`P(X t) (A t - X t) = 0`) with `‖X t - A t‖ ≤ ρ / 4`; and let `Y = U S Vᵀ`
+(`r` orthonormal columns in `U`, `V`, any core `S`) solve `Ẏ = tangentProj U V F(t, Y)` with
+`‖Y a - X a‖ ≤ δ`. Then for `t ∈ [a, b]`
+`‖Y t - X t‖ ≤ e^{(L + 6 μ/ρ)(t - a)} (δ + (L + 4 μ/ρ) ∫ₐᵗ ‖X s - A s‖ ds)`.
+No smallness of `‖Y - X‖` is assumed. A bound of this kind is in [KochLubich2007]; the constants
+are those of this proof. -/
+theorem dlra_norm_sub_le_integral {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {A X X' Y : ℝ → Matrix m n ℝ} {a b L μ ρ δ : ℝ} (hρ : 0 < ρ) (hL : 0 ≤ L)
+    (hF : IsLipschitzField F L) (hA : ODESolution F A a b)
+    (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ) (hXc : ContinuousOn X (Icc a b))
+    (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = r)
+    (hσ : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hopt : ∀ t ∈ Icc a b, tangentProjAt (X t) (A t - X t) = 0)
+    (hd : ∀ t ∈ Icc a b, ‖X t - A t‖ ≤ ρ / 4)
+    {U : ℝ → Matrix m (Fin r) ℝ} {S : ℝ → Matrix (Fin r) (Fin r) ℝ} {V : ℝ → Matrix n (Fin r) ℝ}
+    (hUV : ∀ t ∈ Icc a b, (U t)ᵀ * U t = 1 ∧ (V t)ᵀ * V t = 1 ∧ Y t = U t * S t * (V t)ᵀ)
+    (hY : ODESolution (fun t x => tangentProj (U t) (V t) (F t x)) Y a b)
+    (hδ : ‖Y a - X a‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖Y t - X t‖ ≤
+      Real.exp ((L + 6 * μ / ρ) * (t - a)) * (δ + (L + 4 * μ / ρ) * ∫ s in a..t, ‖X s - A s‖) := by
+  intro t0 ht0
+  rcases eq_or_lt_of_le ht0.1 with h0 | hpos
+  · subst h0
+    simpa using hδ
+  have hab : a < b := hpos.trans_le ht0.2
+  have hμ0 : 0 ≤ μ := (norm_nonneg _).trans (hμ a ⟨le_rfl, hab⟩)
+  have hIcc : Icc a t0 ⊆ Icc a b := Icc_subset_Icc_right ht0.2
+  have hIco : ∀ s ∈ Ico a t0, s ∈ Ico a b := fun s hs => ⟨hs.1, hs.2.trans_le ht0.2⟩
+  obtain ⟨ηc, hηc, hηeq⟩ := exists_continuous_eq_norm_sub hab.le hXc hA.cont
+  have hb := fun s (hs : s ∈ Ico a b) => deriv_bounds_on_Ico hρ hA hμ hX hXr hσ hopt hd hs
+  have hP : ∀ s ∈ Icc a b,
+      IsOrthProj (tangentProj (U s) (V s) : Matrix m n ℝ →L[ℝ] Matrix m n ℝ) :=
+    fun s hs => isOrthProj_tangentProj (hUV s hs).1 (hUV s hs).2.1
+  have hLip : ∀ s ∈ Icc a b, ∀ B : Matrix m n ℝ,
+      ‖tangentProj (U s) (V s) B - tangentProjAt (X s) B‖ ≤ 2 * ρ⁻¹ * ‖Y s - X s‖ * ‖B‖ :=
+    fun s hs B => by
+      obtain ⟨hU, hV, hYs⟩ := hUV s hs
+      rw [hYs]
+      exact norm_tangentProj_sub_tangentProjAt_le (hXr s hs) hρ (hσ s hs) hU hV (S s) B
+  have h₁ : ∀ s ∈ Ico a t0, ‖tangentProj (U s) (V s) (F s (X s) - X' s)‖ ≤
+      2 * μ / ρ * ‖Y s - X s‖ + (L + 4 * μ / ρ) * ηc s := fun s hs => by
+    have hsb := hIco s hs
+    have hsI := Ico_subset_Icc_self hsb
+    obtain ⟨-, -, hbest⟩ := hb s hsb
+    have hsplit : F s (X s) - X' s = (F s (X s) - F s (A s)) +
+        (F s (A s) - tangentProjAt (X s) (F s (A s))) -
+        (X' s - tangentProjAt (X s) (F s (A s))) := by abel
+    have e1 : ‖tangentProj (U s) (V s) (F s (X s) - F s (A s))‖ ≤ L * ηc s :=
+      ((hP s hsI).norm_le _).trans ((hF s _ _).trans (le_of_eq (by rw [hηeq s hsI])))
+    have e2 : ‖tangentProj (U s) (V s) (F s (A s) - tangentProjAt (X s) (F s (A s)))‖ ≤
+        2 * μ / ρ * ‖Y s - X s‖ := by
+      have hQ0 : tangentProjAt (X s) (F s (A s) - tangentProjAt (X s) (F s (A s))) = 0 := by
+        rw [map_sub, (isOrthProj_tangentProjAt _).idem, sub_self]
+      have e : tangentProj (U s) (V s) (F s (A s) - tangentProjAt (X s) (F s (A s))) =
+          tangentProj (U s) (V s) (F s (A s) - tangentProjAt (X s) (F s (A s))) -
+            tangentProjAt (X s) (F s (A s) - tangentProjAt (X s) (F s (A s))) := by
+        rw [hQ0, sub_zero]
+      rw [e]
+      refine (hLip s hsI _).trans ?_
+      have hn : ‖F s (A s) - tangentProjAt (X s) (F s (A s))‖ ≤ μ := by
+        have := (isOrthProj_tangentProjAt (X s)).compl.norm_le (F s (A s))
+        simp only [sub_apply, one_apply_eq_self] at this
+        exact this.trans (hμ s hsb)
+      have := norm_nonneg (Y s - X s)
+      calc 2 * ρ⁻¹ * ‖Y s - X s‖ * ‖F s (A s) - tangentProjAt (X s) (F s (A s))‖ ≤
+          2 * ρ⁻¹ * ‖Y s - X s‖ * μ := by gcongr
+        _ = 2 * μ / ρ * ‖Y s - X s‖ := by rw [div_eq_mul_inv]; ring
+    have e3 : ‖tangentProj (U s) (V s) (X' s - tangentProjAt (X s) (F s (A s)))‖ ≤
+        4 * μ / ρ * ηc s :=
+      ((hP s hsI).norm_le _).trans (by rw [hηeq s hsI, norm_sub_rev (X s)]; exact hbest)
+    rw [hsplit, map_sub, map_add]
+    calc _ ≤ ‖tangentProj (U s) (V s) (F s (X s) - F s (A s))‖ +
+          ‖tangentProj (U s) (V s) (F s (A s) - tangentProjAt (X s) (F s (A s)))‖ +
+          ‖tangentProj (U s) (V s) (X' s - tangentProjAt (X s) (F s (A s)))‖ :=
+          (norm_sub_le _ _).trans (add_le_add (norm_add_le _ _) le_rfl)
+      _ ≤ L * ηc s + 2 * μ / ρ * ‖Y s - X s‖ + 4 * μ / ρ * ηc s :=
+          add_le_add (add_le_add e1 e2) e3
+      _ = _ := by ring
+  have h₂ : ∀ s ∈ Ico a t0, ‖(1 - tangentProj (U s) (V s)) (X' s)‖ ≤
+      4 * μ / ρ * ‖Y s - X s‖ + (fun _ : ℝ => (0 : ℝ)) s := fun s hs => by
+    have hsb := hIco s hs
+    have hsI := Ico_subset_Icc_self hsb
+    obtain ⟨htan, hX's, -⟩ := hb s hsb
+    have e : (1 - tangentProj (U s) (V s)) (X' s) =
+        -(tangentProj (U s) (V s) (X' s) - tangentProjAt (X s) (X' s)) := by
+      rw [sub_apply, one_apply_eq_self, htan]
+      abel
+    rw [e, norm_neg, add_zero]
+    refine (hLip s hsI _).trans ?_
+    have := norm_nonneg (Y s - X s)
+    calc 2 * ρ⁻¹ * ‖Y s - X s‖ * ‖X' s‖ ≤ 2 * ρ⁻¹ * ‖Y s - X s‖ * (2 * μ) := by gcongr
+      _ = 4 * μ / ρ * ‖Y s - X s‖ := by rw [div_eq_mul_inv]; ring
+  have hYsol : ODESolution (fun t x => tangentProj (U t) (V t) (F t x)) Y a t0 :=
+    ⟨hY.cont.mono hIcc, fun s hs => hY.deriv s (hIco s hs)⟩
+  have hcmp := ODESolution.dlra_norm_sub_le_of_comparison_integral
+    (P := fun t => tangentProj (U t) (V t)) (F := F) (Y := Y) (a := a) (b := t0) (L := L)
+    (κ₁ := 2 * μ / ρ) (κ₂ := 4 * μ / ρ) (δ := δ)
+    (η₁ := fun s => (L + 4 * μ / ρ) * ηc s) (η₂ := fun _ => 0)
+    (continuous_const.mul hηc) continuous_const hF hYsol
+    (fun s hs => hP s (hIcc (Ico_subset_Icc_self hs))) (hXc.mono hIcc)
+    (fun s hs => hX s (hIco s hs)) h₁ h₂ hδ t0 ⟨ht0.1, le_rfl⟩
+  have hK : 0 ≤ L + 2 * μ / ρ + 4 * μ / ρ := by positivity
+  have hgb := gronwallIntegralBound_le (δ := δ)
+    (η := fun s => (L + 4 * μ / ρ) * ηc s + (fun _ : ℝ => (0 : ℝ)) s)
+    ((continuous_const.mul hηc).add continuous_const) hK ht0.1 (fun s hs => by
+      have : 0 ≤ ηc s := by rw [hηeq s (hIcc hs)]; exact norm_nonneg _
+      simp only [add_zero]
+      positivity)
+  have hJ : ∫ s in a..t0, ((L + 4 * μ / ρ) * ηc s + (fun _ : ℝ => (0 : ℝ)) s) =
+      (L + 4 * μ / ρ) * ∫ s in a..t0, ‖X s - A s‖ := by
+    simp only [add_zero]
+    rw [intervalIntegral.integral_const_mul]
+    congr 1
+    refine intervalIntegral.integral_congr fun s hs => ?_
+    rw [uIcc_of_le ht0.1] at hs
+    exact hηeq s (hIcc hs)
+  have hKe : L + 2 * μ / ρ + 4 * μ / ρ = L + 6 * μ / ρ := by ring
+  refine hcmp.trans (hgb.trans (le_of_eq ?_))
+  rw [hJ, hKe]
+
+/-- **Quasi-optimality of matrix DLRA, error against `A`.** Under the hypotheses of
+`dlra_norm_sub_le_integral`, for `t ∈ [a, b]`
+`‖Y t - A t‖ ≤ ‖X t - A t‖ + e^{(L + 6 μ/ρ)(t - a)} (δ + (L + 4 μ/ρ) ∫ₐᵗ ‖X s - A s‖ ds)`.
+This is the matrix instance of the abstract `ODESolution.dlra_quasiOptimal_integral`, with its
+three hypotheses discharged: the curvature bound `hcurv` (with `γ = 2 / ρ`, by
+`norm_tangentProj_sub_tangentProjAt_le`), the tangency `hXtan` of `Ẋ`
+(`mem_tangentSpaceAt_of_hasDerivWithinAt`) and the best-approximation property `hbest` (with
+`c = 4 μ / ρ`, by `norm_sub_tangentProjAt_le_of_tangentProjAt_sub_eq_zero`). -/
+theorem dlra_norm_sub_le_add_integral {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {A X X' Y : ℝ → Matrix m n ℝ} {a b L μ ρ δ : ℝ} (hρ : 0 < ρ) (hL : 0 ≤ L)
+    (hF : IsLipschitzField F L) (hA : ODESolution F A a b)
+    (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ) (hXc : ContinuousOn X (Icc a b))
+    (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = r)
+    (hσ : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hopt : ∀ t ∈ Icc a b, tangentProjAt (X t) (A t - X t) = 0)
+    (hd : ∀ t ∈ Icc a b, ‖X t - A t‖ ≤ ρ / 4)
+    {U : ℝ → Matrix m (Fin r) ℝ} {S : ℝ → Matrix (Fin r) (Fin r) ℝ} {V : ℝ → Matrix n (Fin r) ℝ}
+    (hUV : ∀ t ∈ Icc a b, (U t)ᵀ * U t = 1 ∧ (V t)ᵀ * V t = 1 ∧ Y t = U t * S t * (V t)ᵀ)
+    (hY : ODESolution (fun t x => tangentProj (U t) (V t) (F t x)) Y a b)
+    (hδ : ‖Y a - X a‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖Y t - A t‖ ≤ ‖X t - A t‖ +
+      Real.exp ((L + 6 * μ / ρ) * (t - a)) * (δ + (L + 4 * μ / ρ) * ∫ s in a..t, ‖X s - A s‖) := by
+  intro t ht
+  rcases eq_or_lt_of_le ht.1 with h0 | hpos
+  · rw [← h0]
+    simp only [sub_self, mul_zero, Real.exp_zero, intervalIntegral.integral_same, add_zero,
+      one_mul]
+    calc ‖Y a - A a‖ ≤ ‖Y a - X a‖ + ‖X a - A a‖ := norm_sub_le_norm_sub_add_norm_sub _ _ _
+      _ ≤ _ := by linarith
+  have hab : a < b := hpos.trans_le ht.2
+  have hμ0 : 0 ≤ μ := (norm_nonneg _).trans (hμ a ⟨le_rfl, hab⟩)
+  obtain ⟨ηc, hηc, hηeq⟩ := exists_continuous_eq_norm_sub hab.le hXc hA.cont
+  have hb := fun s (hs : s ∈ Ico a b) => deriv_bounds_on_Ico hρ hA hμ hX hXr hσ hopt hd hs
+  have h := ODESolution.dlra_quasiOptimal_integral (P := fun t => tangentProj (U t) (V t))
+    (PX := fun t => tangentProjAt (X t)) (η := ηc) (L := L) (γ := 2 * ρ⁻¹) (μ := μ)
+    (μ' := 2 * μ) (c := 4 * μ / ρ) (δ := δ) hηc hF hL hY
+    (fun s hs => isOrthProj_tangentProj (hUV s (Ico_subset_Icc_self hs)).1
+      (hUV s (Ico_subset_Icc_self hs)).2.1)
+    (fun s _ => isOrthProj_tangentProjAt _) hXc hX (fun s hs => (hb s hs).1) (by positivity)
+    (fun s hs z => by
+      obtain ⟨hU, hV, hYs⟩ := hUV s (Ico_subset_Icc_self hs)
+      rw [sub_apply, hYs]
+      exact norm_tangentProj_sub_tangentProjAt_le (hXr s (Ico_subset_Icc_self hs)) hρ
+        (hσ s (Ico_subset_Icc_self hs)) hU hV (S s) z)
+    (by positivity) (fun s hs => (hb s hs).2.2) hμ (fun s hs => (hb s hs).2.1)
+    (fun s hs => by rw [hηeq s hs, norm_sub_rev]) hδ t ht
+  have hγ : L + 2 * ρ⁻¹ * (μ + 2 * μ) = L + 6 * μ / ρ := by rw [div_eq_mul_inv]; ring
+  have hI : ∫ s in a..t, ηc s = ∫ s in a..t, ‖X s - A s‖ :=
+    intervalIntegral.integral_congr fun s hs => by
+      rw [uIcc_of_le ht.1] at hs
+      exact hηeq s ⟨hs.1, hs.2.trans ht.2⟩
+  rwa [hγ, hI, hηeq t ht] at h
+
+/-- **Quasi-optimality for a DLRA solution of rank `r`.** The bound of
+`dlra_norm_sub_le_integral` for a DLRA solution `Y` of rank `r` of `Ẏ = P(Y) F(t, Y)`
+(`IsDLRASolution`) in place of a factored solution:
+`‖Y t - X t‖ ≤ e^{(L + 6 μ/ρ)(t - a)} (δ + (L + 4 μ/ρ) ∫ₐᵗ ‖X s - A s‖ ds)`. -/
+theorem IsDLRASolution.norm_sub_le_integral {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {A X X' Y : ℝ → Matrix m n ℝ} {a b L μ ρ δ : ℝ} (hY : IsDLRASolution r F Y a b)
+    (hρ : 0 < ρ) (hL : 0 ≤ L) (hF : IsLipschitzField F L) (hA : ODESolution F A a b)
+    (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ) (hXc : ContinuousOn X (Icc a b))
+    (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = r)
+    (hσ : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hopt : ∀ t ∈ Icc a b, tangentProjAt (X t) (A t - X t) = 0)
+    (hd : ∀ t ∈ Icc a b, ‖X t - A t‖ ≤ ρ / 4) (hδ : ‖Y a - X a‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖Y t - X t‖ ≤
+      Real.exp ((L + 6 * μ / ρ) * (t - a)) * (δ + (L + 4 * μ / ρ) * ∫ s in a..t, ‖X s - A s‖) := by
+  have hfac : ∀ t ∈ Icc a b, ∃ (U : Matrix m (Fin r) ℝ) (S : Matrix (Fin r) (Fin r) ℝ)
+      (V : Matrix n (Fin r) ℝ), Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ IsUnit S.det ∧ Y t = U * S * Vᵀ :=
+    fun t ht => (SVD.rank_eq_iff_exists_factor (Y t)).1 (hY.2 t ht)
+  choose! U S V hU hV hS hYeq using hfac
+  have hY' : ODESolution (fun t x => tangentProj (U t) (V t) (F t x)) Y a b :=
+    ⟨hY.1.cont, fun t ht => have ht' := Ico_subset_Icc_self ht
+      DynamicallyOrthogonal.IsDLRASolution.hasDerivWithinAt_tangentProj hY ht (hU t ht')
+        (hV t ht') (hS t ht') (hYeq t ht')⟩
+  exact dlra_norm_sub_le_integral hρ hL hF hA hμ hXc hX hXr hσ hopt hd
+    (fun t ht => ⟨hU t ht, hV t ht, hYeq t ht⟩) hY' hδ
+
+/-- **Quasi-optimality of matrix DLRA for a curve of best approximations** [KochLubich2007].
+Let `Y` be a DLRA solution of rank `r` of `Ẏ = P(Y) F(t, Y)` on `[a, b]` (`IsDLRASolution`),
+`A` a solution of `Ȧ = F(t, A)` with `F` `L`-Lipschitz and `‖Ȧ‖ ≤ μ`, and `X` a curve of best
+approximations of `A` of rank at most `r` (`‖A t - X t‖ ≤ ‖A t - Z‖` for every `Z` of rank at
+most `r`) with `0 < ρ ≤ σ_{r-1}(X t)` and `‖X t - A t‖ ≤ ρ / 4`. If `‖Y a - X a‖ ≤ δ`, then
+for `t ∈ [a, b]`
+`‖Y t - X t‖ ≤ e^{(L + 6 μ/ρ)(t - a)} (δ + (L + 4 μ/ρ) ∫ₐᵗ ‖X s - A s‖ ds)`.
+The single remaining hypothesis on `X` is that it is a curve of best approximations that is
+continuous on `[a, b]` and has right derivatives on `[a, b)`; that this holds under a gap
+`σ_r(A) > σ_{r+1}(A)` is not shown here. The constants are those of this proof. -/
+theorem IsDLRASolution.norm_sub_le_integral_of_forall_norm_sub_le {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A X X' Y : ℝ → Matrix m n ℝ} {a b L μ ρ δ : ℝ}
+    (hY : IsDLRASolution r F Y a b) (hρ : 0 < ρ) (hL : 0 ≤ L) (hF : IsLipschitzField F L)
+    (hA : ODESolution F A a b) (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ)
+    (hXc : ContinuousOn X (Icc a b)) (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hbest : ∀ t ∈ Icc a b, (X t).rank ≤ r ∧
+      ∀ Z : Matrix m n ℝ, Z.rank ≤ r → ‖A t - X t‖ ≤ ‖A t - Z‖)
+    (hσ : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hd : ∀ t ∈ Icc a b, ‖X t - A t‖ ≤ ρ / 4) (hδ : ‖Y a - X a‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖Y t - X t‖ ≤
+      Real.exp ((L + 6 * μ / ρ) * (t - a)) * (δ + (L + 4 * μ / ρ) * ∫ s in a..t, ‖X s - A s‖) := by
+  have hXr : ∀ t ∈ Icc a b, (X t).rank = r := fun t ht => by
+    have hpos : 0 < (toEuclideanLin (X t)).singularValues (r - 1) := hρ.trans_le (hσ t ht)
+    rw [LinearMap.singularValues_pos_iff_lt_finrank_range, ← SVD.rank_eq_finrank_range] at hpos
+    have := (hbest t ht).1
+    omega
+  exact hY.norm_sub_le_integral hρ hL hF hA hμ hXc hX hXr hσ
+    (fun t ht => tangentProjAt_sub_eq_zero_of_forall_norm_sub_le (hbest t ht).1 (hbest t ht).2)
+    hd hδ
+
+/-! ### The truncated SVD -/
 
 /-- If the `r`-th singular value of `A` is at least `ρ > 0`, then `truncation A r` is
-`U diag(σ) Vᵀ` with orthonormal columns of `U` and `V` and `σ i ≥ ρ`, and the tangent projector
-at these factors maps `A - truncation A r` to zero. -/
+`U diag(σ) Vᵀ` with orthonormal columns of `U` and `V` and `σ i ≥ ρ`. -/
 private theorem truncation_factor {r : ℕ} (hr : 0 < r) {A : Matrix m n ℝ} {ρ : ℝ} (hρ : 0 < ρ)
     (hσ : ρ ≤ (toEuclideanLin A).singularValues (r - 1)) :
     ∃ (U : Matrix m (Fin r) ℝ) (V : Matrix n (Fin r) ℝ) (σ : Fin r → ℝ),
-      Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ (∀ i, ρ ≤ σ i) ∧ truncation A r = U * diagonal σ * Vᵀ ∧
-      tangentProj U V (A - truncation A r) = 0 := by
+      Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ (∀ i, ρ ≤ σ i) ∧ truncation A r = U * diagonal σ * Vᵀ := by
   have hd : r ≤ Module.finrank ℝ (EuclideanSpace ℝ n) := by
     have h0 : 0 < (toEuclideanLin A).singularValues (r - 1) := lt_of_lt_of_le hρ hσ
     rw [LinearMap.singularValues_pos_iff_lt_finrank_range] at h0
@@ -129,9 +480,6 @@ private theorem truncation_factor {r : ℕ} (hr : 0 < r) {A : Matrix m n ℝ} {�
       rfl
     rw [h', h, Matrix.mul_diagonal]
     simp [V, σ, mul_comm]
-  have h1T : Vᵀ * (Aᵀ * A) = diagonal (fun j => σ j ^ 2) * Vᵀ := by
-    have := congrArg Matrix.transpose h1
-    simpa [Matrix.transpose_mul, Matrix.mul_assoc] using this
   let D' : Matrix (Fin r) (Fin r) ℝ := diagonal fun j => (σ j)⁻¹
   have hD : D' * diagonal σ = 1 := by
     simp only [D', diagonal_mul_diagonal]
@@ -146,9 +494,7 @@ private theorem truncation_factor {r : ℕ} (hr : 0 < r) {A : Matrix m n ℝ} {�
     funext j
     have := hσpos j
     field_simp
-  have hT : truncation A r = A * V * Vᵀ := by
-    rw [truncation, Matrix.mul_assoc, ← hVV, Matrix.mul_assoc]
-  refine ⟨A * V * D', V, σ, ?_, hV, hσr, ?_, ?_⟩
+  refine ⟨A * V * D', V, σ, ?_, hV, hσr, ?_⟩
   · have : (A * V * D')ᵀ * (A * V * D') = D' * (Vᵀ * (Aᵀ * A * V)) * D' := by
       simp [D', Matrix.transpose_mul, Matrix.mul_assoc]
     rw [this, h1, ← Matrix.mul_assoc Vᵀ, hV, Matrix.one_mul]
@@ -156,32 +502,14 @@ private theorem truncation_factor {r : ℕ} (hr : 0 < r) {A : Matrix m n ℝ} {�
   · have h3 : A * V * D' * diagonal σ * Vᵀ = A * (V * Vᵀ) := by
       rw [Matrix.mul_assoc (A * V), hD, Matrix.mul_one, Matrix.mul_assoc]
     rw [h3, hVV, truncation, Matrix.mul_assoc]
-  · have hEV : (A - A * V * Vᵀ) * V = 0 := by
-      rw [Matrix.sub_mul, Matrix.mul_assoc (A * V), hV, Matrix.mul_one, sub_self]
-    have hVE : Vᵀ * Aᵀ * (A - A * V * Vᵀ) = 0 := by
-      calc Vᵀ * Aᵀ * (A - A * V * Vᵀ)
-          = Vᵀ * (Aᵀ * A) - Vᵀ * (Aᵀ * A * V) * Vᵀ := by
-            simp only [Matrix.mul_sub, Matrix.mul_assoc]
-        _ = 0 := by
-            rw [h1, h1T, ← Matrix.mul_assoc Vᵀ V, hV, Matrix.one_mul, sub_self]
-    have hUE : (A * V * D')ᵀ * (A - A * V * Vᵀ) = 0 := by
-      have : (A * V * D')ᵀ = D' * (Vᵀ * Aᵀ) := by
-        simp [D', Matrix.transpose_mul, Matrix.mul_assoc]
-      rw [this, Matrix.mul_assoc D', hVE, Matrix.mul_zero]
-    have t1 : A * V * D' * (A * V * D')ᵀ * (A - A * V * Vᵀ) = 0 := by
-      rw [Matrix.mul_assoc, hUE, Matrix.mul_zero]
-    have t2 : (A - A * V * Vᵀ) * V * Vᵀ = 0 := by rw [hEV, Matrix.zero_mul]
-    have t3 : A * V * D' * (A * V * D')ᵀ * (A - A * V * Vᵀ) * V * Vᵀ = 0 := by
-      rw [t1, Matrix.zero_mul, Matrix.zero_mul]
-    rw [hT, tangentProj_apply, t3, t1, t2]
-    simp
 
 /-- **Quasi-optimality of matrix DLRA.** Let `X(t) = T_r(A(t))` be a differentiable best
 rank-`r` approximation with `σ_r(A(t)) ≥ ρ`, `‖X(t) - A(t)‖_F ≤ ρ/16` and `‖Ȧ‖_F ≤ μ`, and let
 `Y = U S Vᵀ` solve the DLRA equation `Ẏ = P(Y) Ȧ` with `Y(0) = X(0)`. Then, for every
 `t ∈ [0, T]`, `‖Y(t) - X(t)‖_F ≤ 2 β e^{β t} ∫₀ᵗ ‖X(s) - A(s)‖_F ds`, `β = 8 μ / ρ`. Neither
-continuity of the derivative of `X` nor smallness of `‖Y - X‖_F` is assumed. A bound of this
-kind is in [KochLubich2007]; the constants `1/16`, `8` and `2` are those of this proof. -/
+continuity of the derivative of `X` nor smallness of `‖Y - X‖_F` is assumed. It is the case
+`F(t, Y) = Ȧ(t)` of `dlra_norm_sub_le_integral`. A bound of this kind is in [KochLubich2007]; the
+constants `1/16`, `8` and `2` are those of this proof. -/
 theorem dlra_norm_sub_truncation_le_integral {r : ℕ} (hr : 0 < r)
     {A A' X X' Y : ℝ → Matrix m n ℝ} {T μ ρ : ℝ} (hρ : 0 < ρ)
     (hA : ∀ t ∈ Icc 0 T, HasDerivAt A (A' t) t)
@@ -194,223 +522,338 @@ theorem dlra_norm_sub_truncation_le_integral {r : ℕ} (hr : 0 < r)
     (hY : ODESolution (fun t _ => tangentProj (U t) (V t) (A' t)) Y 0 T) (hY₀ : Y 0 = X 0) :
     ∀ t ∈ Icc 0 T, ‖Y t - X t‖ ≤
       2 * (8 * μ / ρ) * Real.exp (8 * μ / ρ * t) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖ := by
-  classical
-  intro t0 ht0
-  rcases eq_or_lt_of_le ht0.1 with h0 | hpos
-  · subst h0
-    simp [hY₀]
-  have hT : 0 < T := hpos.trans_le ht0.2
-  have hμ0 : 0 ≤ μ := (norm_nonneg _).trans (hμ 0 ⟨le_rfl, hT.le⟩)
-  have hfac : ∀ t ∈ Icc (0 : ℝ) T, ∃ (U₀ : Matrix m (Fin r) ℝ) (V₀ : Matrix n (Fin r) ℝ)
-      (σ₀ : Fin r → ℝ), U₀ᵀ * U₀ = 1 ∧ V₀ᵀ * V₀ = 1 ∧ (∀ i, ρ ≤ σ₀ i) ∧
-      X t = U₀ * diagonal σ₀ * V₀ᵀ ∧ tangentProj U₀ V₀ (A t - X t) = 0 := fun t ht => by
-    obtain ⟨U₀, V₀, σ₀, h1, h2, h3, h4, h5⟩ := truncation_factor hr hρ (hσ t ht)
-    rw [← hXbest t ht] at h4 h5
-    exact ⟨U₀, V₀, σ₀, h1, h2, h3, h4, h5⟩
-  choose! UX VX σX hUX hVX hσX hXeq hPE using hfac
-  obtain ⟨PX, hPXdef⟩ : ∃ PX : ℝ → Matrix m n ℝ →L[ℝ] Matrix m n ℝ,
-      ∀ t, PX t = tangentProj (UX t) (VX t) := ⟨_, fun _ => rfl⟩
-  obtain ⟨PY, hPYdef⟩ : ∃ PY : ℝ → Matrix m n ℝ →L[ℝ] Matrix m n ℝ,
-      ∀ t, PY t = tangentProj (U t) (V t) := ⟨_, fun _ => rfl⟩
-  have hPXproj : ∀ t ∈ Icc (0 : ℝ) T, IsOrthProj (PX t) := fun t ht => by
-    rw [hPXdef]; exact isOrthProj_tangentProj (hUX t ht) (hVX t ht)
-  have hPYproj : ∀ t ∈ Icc (0 : ℝ) T, IsOrthProj (PY t) := fun t ht => by
-    rw [hPYdef]; exact isOrthProj_tangentProj (hUV t ht).1 (hUV t ht).2.1
-  have hPXE : ∀ t ∈ Icc (0 : ℝ) T, PX t (A t - X t) = 0 := fun t ht => by
-    rw [hPXdef]; exact hPE t ht
-  have hLipXX : ∀ s ∈ Icc (0 : ℝ) T, ∀ t ∈ Icc (0 : ℝ) T, ∀ B : Matrix m n ℝ,
-      ‖PX s B - PX t B‖ ≤ 2 * ρ⁻¹ * ‖X s - X t‖ * ‖B‖ := fun s hs t ht B => by
-    rw [hPXdef, hPXdef]
-    have h := tangentProj_sub_le hρ (hσX t ht) (hUX t ht) (hVX t ht) (hUX s hs) (hVX s hs)
-      (S' := diagonal (σX s)) B
-    rwa [← hXeq s hs, ← hXeq t ht] at h
-  have hLipYX : ∀ s ∈ Icc (0 : ℝ) T, ∀ B : Matrix m n ℝ,
-      ‖PY s B - PX s B‖ ≤ 2 * ρ⁻¹ * ‖Y s - X s‖ * ‖B‖ := fun s hs B => by
-    rw [hPXdef, hPYdef]
-    obtain ⟨hU1, hV1, hYe⟩ := hUV s hs
-    have h := tangentProj_sub_le hρ (hσX s hs) (hUX s hs) (hVX s hs) hU1 hV1
-      (S' := S s) B
-    rwa [← hXeq s hs, ← hYe] at h
-  have htan : ∀ t ∈ Icc (0 : ℝ) T, PX t (X' t) = X' t := fun t ht => by
-    have hXd : HasDerivWithinAt X (X' t) (Icc 0 T) t := (hX t ht).hasDerivWithinAt
-    have hφ : HasDerivWithinAt (fun s => (1 - PX t) (X s - X t)) ((1 - PX t) (X' t))
-        (Icc 0 T) t :=
-      (1 - PX t).hasFDerivAt.comp_hasDerivWithinAt t (hXd.sub_const (X t))
-    have hb : ∀ s ∈ Icc (0 : ℝ) T,
-        ‖(1 - PX t) (X s - X t)‖ ≤ ‖X s - X t‖ * (ρ⁻¹ * ‖X s - X t‖) := fun s hs => by
-      have hn := Curvature.koch_lubich_normal hρ (hUX s hs) (hVX s hs) (hUX t ht) (hVX t ht)
-        (Curvature.diagonal_bounded_below hρ.le (hσX s hs)) (S' := diagonal (σX t))
-      rw [← hXeq s hs, ← hXeq t ht] at hn
-      have hz0 : (1 - PX t) (X s - X t) =
-          (1 - UX t * (UX t)ᵀ) * (X s - X t) * (1 - VX t * (VX t)ᵀ) := by
-        rw [sub_apply, one_apply_eq_self, hPXdef]
-        exact sub_eq_iff_eq_add'.mpr (tangentProj_add_normal (UX t) (VX t) (X s - X t)).symm
-      have hz : (1 - PX t) (X s - X t) =
-          -((1 - UX t * (UX t)ᵀ) * (X t - X s) * (1 - VX t * (VX t)ᵀ)) := by
-        rw [hz0, ← neg_sub (X t) (X s), Matrix.mul_neg, Matrix.neg_mul]
-      rw [hz, norm_neg, norm_sub_rev (X s) (X t)]
-      calc _ ≤ _ := hn
-        _ = _ := by ring
-    have hg : ContinuousWithinAt (fun s => ρ⁻¹ * ‖X s - X t‖) (Icc 0 T) t :=
-      continuousWithinAt_const.mul ((hXd.continuousWithinAt.sub continuousWithinAt_const).norm)
-    have h := norm_deriv_le_of_slope_bound hT ht hφ hXd (by simp) hg hb
-    simp only [sub_self, norm_zero, mul_zero] at h
-    have h0 : (1 - PX t) (X' t) = 0 := norm_le_zero_iff.mp h
-    rw [sub_apply, one_apply_eq_self, sub_eq_zero] at h0
-    exact h0.symm
-  have hdef : ∀ t ∈ Icc (0 : ℝ) T,
-      ‖PX t (A' t - X' t)‖ ≤ 2 * ρ⁻¹ * ‖X' t‖ * ‖A t - X t‖ := fun t ht => by
-    have hXd : HasDerivWithinAt X (X' t) (Icc 0 T) t := (hX t ht).hasDerivWithinAt
-    have hAd : HasDerivWithinAt A (A' t) (Icc 0 T) t := (hA t ht).hasDerivWithinAt
-    have hφ : HasDerivWithinAt (fun s => PX t (A s - X s - (A t - X t))) (PX t (A' t - X' t))
-        (Icc 0 T) t :=
-      (PX t).hasFDerivAt.comp_hasDerivWithinAt t ((hAd.sub hXd).sub_const (A t - X t))
-    have hb : ∀ s ∈ Icc (0 : ℝ) T, ‖PX t (A s - X s - (A t - X t))‖ ≤
-        ‖X s - X t‖ * (2 * ρ⁻¹ * ‖A s - X s‖) := fun s hs => by
-      have e1 : PX t (A s - X s - (A t - X t)) = PX t (A s - X s) - PX s (A s - X s) := by
-        rw [map_sub, hPXE t ht, hPXE s hs, sub_zero]
-      rw [e1, norm_sub_rev (X s) (X t)]
-      calc _ ≤ _ := hLipXX t ht s hs _
-        _ = _ := by ring
-    have hg : ContinuousWithinAt (fun s => 2 * ρ⁻¹ * ‖A s - X s‖) (Icc 0 T) t :=
-      continuousWithinAt_const.mul ((hAd.continuousWithinAt.sub hXd.continuousWithinAt).norm)
-    have h := norm_deriv_le_of_slope_bound hT ht hφ hXd (by simp) hg hb
-    calc _ ≤ _ := h
-      _ = _ := by ring
-  -- velocity bound for `X'`
-  have hX'b : ∀ t ∈ Icc (0 : ℝ) T, ‖X' t‖ ≤ 8 * μ / 7 := fun t ht => by
-    have hE : ρ⁻¹ * ‖A t - X t‖ ≤ 1 / 16 := by
-      rw [inv_mul_le_iff₀ hρ, norm_sub_rev]
-      linarith [hd t ht]
-    have h1 : X' t = PX t (A' t) - PX t (A' t - X' t) := by
-      rw [map_sub, htan t ht]; abel
-    have h2 : ‖PX t (A' t)‖ ≤ μ := ((hPXproj t ht).norm_le _).trans (hμ t ht)
-    have h3 := hdef t ht
-    have h4 : 2 * ρ⁻¹ * ‖X' t‖ * ‖A t - X t‖ ≤ ‖X' t‖ / 8 := by
-      have := mul_le_mul_of_nonneg_left hE (norm_nonneg (X' t))
-      nlinarith
-    have h5 : ‖X' t‖ ≤ ‖PX t (A' t)‖ + ‖PX t (A' t - X' t)‖ := by
-      calc ‖X' t‖ = ‖PX t (A' t) - PX t (A' t - X' t)‖ := by rw [← h1]
-        _ ≤ _ := norm_sub_le _ _
-    linarith
-  have hbest : ∀ t ∈ Icc (0 : ℝ) T,
-      ‖PX t (A' t - X' t)‖ ≤ 16 * μ / (7 * ρ) * ‖X t - A t‖ := fun t ht => by
-    refine (hdef t ht).trans ?_
-    rw [norm_sub_rev (A t)]
-    have h1 := hX'b t ht
-    have h2 : 2 * ρ⁻¹ * ‖X' t‖ ≤ 2 * ρ⁻¹ * (8 * μ / 7) :=
-      mul_le_mul_of_nonneg_left h1 (by positivity)
-    calc _ ≤ 2 * ρ⁻¹ * (8 * μ / 7) * ‖X t - A t‖ :=
-          mul_le_mul_of_nonneg_right h2 (norm_nonneg _)
-      _ = _ := by field_simp; ring
-  -- the comparison on `[0, t0]`
-  have hT0 : t0 ≤ T := ht0.2
-  have hIcc : Icc (0 : ℝ) t0 ⊆ Icc 0 T := Icc_subset_Icc_right hT0
-  obtain ⟨ηc, hηc⟩ : ∃ ηc : ℝ → ℝ, ∀ s, ηc s = ‖X (Set.projIcc 0 T hT.le s) -
-      A (Set.projIcc 0 T hT.le s)‖ := ⟨_, fun _ => rfl⟩
-  have hηcont : Continuous ηc := by
-    have hc : ContinuousOn (fun x => ‖X x - A x‖) (Icc 0 T) := fun x hx =>
-      ((hX x hx).continuousAt.continuousWithinAt.sub
-        (hA x hx).continuousAt.continuousWithinAt).norm
-    have := hc.comp_continuous (continuous_subtype_val.comp (continuous_projIcc (h := hT.le)))
-      (fun s => (Set.projIcc 0 T hT.le s).2)
-    have e : ηc = fun s => ‖X (Set.projIcc 0 T hT.le s) - A (Set.projIcc 0 T hT.le s)‖ :=
-      funext hηc
-    rw [e]
-    exact this
-  have hηeq : ∀ s ∈ Icc (0 : ℝ) T, ηc s = ‖X s - A s‖ := fun s hs => by
-    rw [hηc, Set.projIcc_of_mem _ hs]
-  have hmemT : ∀ s ∈ Ico (0 : ℝ) t0, s ∈ Icc 0 T := fun s hs => ⟨hs.1, hs.2.le.trans hT0⟩
-  have hYsol : ODESolution (fun t _ => PY t (A' t)) Y 0 t0 :=
-    ⟨hY.cont.mono hIcc, fun s hs => by
-      have := hY.deriv s ⟨hs.1, hs.2.trans_le hT0⟩
-      rwa [← hPYdef] at this⟩
-  have hF : IsLipschitzField (fun t (_ : Matrix m n ℝ) => A' t) 0 := fun t x y => by simp
-  have hXc : ContinuousOn X (Icc 0 t0) := fun x hx =>
-    (hX x (hIcc hx)).continuousAt.continuousWithinAt
-  have h₁ : ∀ s ∈ Ico (0 : ℝ) t0, ‖PY s (A' s - X' s)‖ ≤
-      2 * ρ⁻¹ * μ * ‖Y s - X s‖ + 16 * μ / (7 * ρ) * ηc s := fun s hs => by
-    have hsT := hmemT s hs
-    rw [hηeq s hsT]
-    have hsplit : A' s - X' s = (A' s - PX s (A' s)) + PX s (A' s - X' s) := by
-      rw [map_sub, htan s hsT]; abel
-    have hz : PX s (A' s - PX s (A' s)) = 0 := by
-      rw [map_sub, (hPXproj s hsT).idem, sub_self]
-    have t1 : ‖PY s (A' s - PX s (A' s))‖ ≤ 2 * ρ⁻¹ * μ * ‖Y s - X s‖ := by
-      have e : PY s (A' s - PX s (A' s)) =
-          PY s (A' s - PX s (A' s)) - PX s (A' s - PX s (A' s)) := by rw [hz, sub_zero]
-      rw [e]
-      refine (hLipYX s hsT _).trans ?_
-      have hn : ‖A' s - PX s (A' s)‖ ≤ μ := by
-        have := (hPXproj s hsT).compl.norm_le (A' s)
-        simp only [sub_apply, one_apply_eq_self] at this
-        exact this.trans (hμ s hsT)
-      have := norm_nonneg (Y s - X s)
-      have := inv_pos.2 hρ
-      calc 2 * ρ⁻¹ * ‖Y s - X s‖ * ‖A' s - PX s (A' s)‖
-          ≤ 2 * ρ⁻¹ * ‖Y s - X s‖ * μ := by gcongr
-        _ = _ := by ring
-    have t2 : ‖PY s (PX s (A' s - X' s))‖ ≤ 16 * μ / (7 * ρ) * ‖X s - A s‖ :=
-      ((hPYproj s hsT).norm_le _).trans (hbest s hsT)
-    rw [hsplit, map_add]
-    refine (norm_add_le _ _).trans ?_
-    linarith
-  have h₂ : ∀ s ∈ Ico (0 : ℝ) t0, ‖(1 - PY s) (X' s)‖ ≤
-      2 * ρ⁻¹ * (8 * μ / 7) * ‖Y s - X s‖ + (fun _ : ℝ => (0 : ℝ)) s := fun s hs => by
-    have hsT := hmemT s hs
-    have e : (1 - PY s) (X' s) = -(PY s (X' s) - PX s (X' s)) := by
-      rw [sub_apply, one_apply_eq_self, neg_sub, htan s hsT]
-    rw [e, norm_neg, add_zero]
-    refine (hLipYX s hsT _).trans ?_
-    have := norm_nonneg (Y s - X s)
-    have := inv_pos.2 hρ
-    calc 2 * ρ⁻¹ * ‖Y s - X s‖ * ‖X' s‖ ≤ 2 * ρ⁻¹ * ‖Y s - X s‖ * (8 * μ / 7) := by
-          gcongr; exact hX'b s hsT
-      _ = _ := by ring
-  have hcmp := ODESolution.dlra_norm_sub_le_of_comparison_integral (P := PY)
-    (F := fun t (_ : Matrix m n ℝ) => A' t) (Y := Y) (a := 0) (b := t0) (L := 0)
-    (κ₁ := 2 * ρ⁻¹ * μ) (κ₂ := 2 * ρ⁻¹ * (8 * μ / 7)) (δ := 0)
-    (η₁ := fun s => 16 * μ / (7 * ρ) * ηc s) (η₂ := fun _ => 0)
-    (continuous_const.mul hηcont) continuous_const hF hYsol
-    (fun s hs => hPYproj s (hmemT s hs)) hXc (fun s hs => (hX s (hmemT s hs)).hasDerivWithinAt)
-    h₁ h₂ (by rw [hY₀, sub_self, norm_zero]) t0 ⟨ht0.1, le_rfl⟩
-  have hρμ : 0 ≤ ρ⁻¹ * μ := by positivity
-  have hK : 0 ≤ 0 + 2 * ρ⁻¹ * μ + 2 * ρ⁻¹ * (8 * μ / 7) := by positivity
-  have hc0 : 0 ≤ 16 * μ / (7 * ρ) := by positivity
-  have hgb := gronwallIntegralBound_le (δ := 0)
-    (η := fun s => 16 * μ / (7 * ρ) * ηc s + (fun _ : ℝ => (0 : ℝ)) s)
-    ((continuous_const.mul hηcont).add continuous_const) hK ht0.1 (fun s hs => by
-      have : 0 ≤ ηc s := by rw [hηeq s (hIcc hs)]; exact norm_nonneg _
-      simp only [add_zero]
-      positivity)
-  have hI : 0 ≤ ∫ s in (0 : ℝ)..t0, ‖X s - A s‖ :=
-    intervalIntegral.integral_nonneg ht0.1 (fun _ _ => norm_nonneg _)
-  have hJ : ∫ s in (0 : ℝ)..t0, (16 * μ / (7 * ρ) * ηc s + (fun _ : ℝ => (0 : ℝ)) s) =
-      16 * μ / (7 * ρ) * ∫ s in (0 : ℝ)..t0, ‖X s - A s‖ := by
-    simp only [add_zero]
-    rw [intervalIntegral.integral_const_mul]
-    congr 1
-    refine intervalIntegral.integral_congr fun s hs => ?_
-    rw [uIcc_of_le ht0.1] at hs
-    exact hηeq s (hIcc hs)
-  have hKle : 0 + 2 * ρ⁻¹ * μ + 2 * ρ⁻¹ * (8 * μ / 7) ≤ 8 * μ / ρ := by
-    have e1 : 8 * μ / ρ = 8 * (ρ⁻¹ * μ) := by field_simp
-    rw [e1]; linarith
-  have hcle : 16 * μ / (7 * ρ) ≤ 2 * (8 * μ / ρ) := by
-    have : 16 * μ / (7 * ρ) = 16 / 7 * (ρ⁻¹ * μ) := by field_simp
-    rw [this, div_eq_inv_mul]; linarith
-  have hexp : Real.exp ((0 + 2 * ρ⁻¹ * μ + 2 * ρ⁻¹ * (8 * μ / 7)) * (t0 - 0)) ≤
-      Real.exp (8 * μ / ρ * t0) := by
-    apply Real.exp_le_exp.2
-    rw [sub_zero]
-    exact mul_le_mul_of_nonneg_right hKle ht0.1
-  refine hcmp.trans (hgb.trans ?_)
-  rw [hJ]
-  calc _ ≤ Real.exp (8 * μ / ρ * t0) * (2 * (8 * μ / ρ) * ∫ s in (0 : ℝ)..t0, ‖X s - A s‖) :=
-        mul_le_mul hexp (by rw [zero_add]; exact mul_le_mul_of_nonneg_right hcle hI)
-          (by rw [zero_add]; positivity) (Real.exp_pos _).le
+  intro t ht
+  have hT : 0 ≤ T := ht.1.trans ht.2
+  have hμ0 : 0 ≤ μ := (norm_nonneg _).trans (hμ 0 ⟨le_rfl, hT⟩)
+  have hfac : ∀ s ∈ Icc (0 : ℝ) T,
+      (X s).rank = r ∧ ρ ≤ (toEuclideanLin (X s)).singularValues (r - 1) := fun s hs => by
+    obtain ⟨U₀, V₀, σ₀, hU₀, hV₀, hσ₀, hXeq⟩ := truncation_factor hr hρ (hσ s hs)
+    rw [← hXbest s hs] at hXeq
+    refine ⟨(SVD.rank_eq_iff_exists_factor _).2 ⟨U₀, diagonal σ₀, V₀, hU₀, hV₀, ?_, hXeq⟩,
+      SVD.le_singularValues_of_eq_mul hr hU₀ hV₀ hXeq
+        (Curvature.diagonal_bounded_below hρ.le hσ₀)⟩
+    rw [det_diagonal, isUnit_iff_ne_zero]
+    exact Finset.prod_ne_zero_iff.mpr fun i _ => (lt_of_lt_of_le hρ (hσ₀ i)).ne'
+  have hA' : ODESolution (fun t (_ : Matrix m n ℝ) => A' t) A 0 T :=
+    ⟨fun s hs => (hA s hs).continuousAt.continuousWithinAt,
+      fun s hs => (hA s (Ico_subset_Icc_self hs)).hasDerivWithinAt⟩
+  have h := dlra_norm_sub_le_integral (F := fun t _ => A' t) (L := 0) (δ := 0) hρ le_rfl
+    (fun t x y => by simp) hA' (fun s hs => hμ s (Ico_subset_Icc_self hs))
+    (fun s hs => (hX s hs).continuousAt.continuousWithinAt)
+    (fun s hs => (hX s (Ico_subset_Icc_self hs)).hasDerivWithinAt)
+    (fun s hs => (hfac s hs).1) (fun s hs => (hfac s hs).2)
+    (fun s hs => by rw [hXbest s hs]; exact tangentProjAt_truncation_sub_eq_zero _ _)
+    (fun s hs => (hd s hs).trans (by linarith)) hUV hY (by rw [hY₀, sub_self, norm_zero]) t ht
+  have hI : 0 ≤ ∫ s in (0 : ℝ)..t, ‖X s - A s‖ :=
+    intervalIntegral.integral_nonneg ht.1 fun _ _ => norm_nonneg _
+  have hq : 0 ≤ μ / ρ := div_nonneg hμ0 hρ.le
+  have hexp : Real.exp ((0 + 6 * μ / ρ) * (t - 0)) ≤ Real.exp (8 * μ / ρ * t) := by
+    refine Real.exp_le_exp.2 ?_
+    have e1 : (0 + 6 * μ / ρ) * (t - 0) = 6 * (μ / ρ) * t := by ring
+    have e2 : 8 * μ / ρ * t = 8 * (μ / ρ) * t := by ring
+    rw [e1, e2]
+    exact mul_le_mul_of_nonneg_right (by linarith) ht.1
+  have hc : 0 + (0 + 4 * μ / ρ) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖ ≤
+      2 * (8 * μ / ρ) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖ := by
+    have e1 : 0 + (0 + 4 * μ / ρ) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖ =
+        4 * (μ / ρ) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖ := by ring
+    have e2 : 2 * (8 * μ / ρ) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖ =
+        16 * (μ / ρ) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖ := by ring
+    rw [e1, e2]
+    exact mul_le_mul_of_nonneg_right (by linarith) hI
+  calc ‖Y t - X t‖ ≤ _ := h
+    _ ≤ Real.exp (8 * μ / ρ * t) * (2 * (8 * μ / ρ) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖) :=
+        mul_le_mul hexp hc (by positivity) (Real.exp_pos _).le
     _ = _ := by ring
 
 end QuasiOptimal
+
+/-! ### Examples -/
+
+section Examples
+
+open scoped LeanDLRA.Frobenius
+
+/-- The first unit column of `ℝ²`. -/
+local notation "e₁" => (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)
+
+/-- The normal part `diag(0, 1/8)` of the examples. -/
+local notation "N₈" => (!![0, 0; 0, 1 / 8] : Matrix (Fin 2) (Fin 2) ℝ)
+
+/-- The curve `X t = (1 + t) e₁ e₁ᵀ` of the examples. -/
+local notation "Xₑ" => fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)
+
+/-- The curve `A t = X t + diag(0, 1/8)` of the examples. -/
+local notation "Aₑ" => fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₈
+
+/-- The field `F(t, Y) = e₁ e₁ᵀ` of the examples. -/
+local notation "Fₑ" => fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => e₁ * e₁ᵀ
+
+private theorem e₁_transpose_mul_self : e₁ᵀ * e₁ = 1 := by
+  ext i j
+  fin_cases i
+  fin_cases j
+  simp [Matrix.mul_apply, Fin.sum_univ_two]
+
+private theorem smul_e₁_mul (c : ℝ) :
+    c • (e₁ * e₁ᵀ) = e₁ * (c • (1 : Matrix (Fin 1) (Fin 1) ℝ)) * e₁ᵀ := by
+  rw [Matrix.mul_smul, Matrix.mul_one, Matrix.smul_mul]
+
+private theorem isUnit_det_smul_one {c : ℝ} (hc : c ≠ 0) :
+    IsUnit (c • (1 : Matrix (Fin 1) (Fin 1) ℝ)).det := by
+  rw [det_smul, det_one, mul_one, Fintype.card_fin, pow_one]
+  exact isUnit_iff_ne_zero.mpr hc
+
+private theorem rank_smul_e₁ {c : ℝ} (hc : c ≠ 0) : (c • (e₁ * e₁ᵀ)).rank = 1 :=
+  (SVD.rank_eq_iff_exists_factor _).2 ⟨e₁, c • 1, e₁, e₁_transpose_mul_self,
+    e₁_transpose_mul_self, isUnit_det_smul_one hc, smul_e₁_mul c⟩
+
+private theorem one_le_singularValues_smul_e₁ {c : ℝ} (hc : 1 ≤ c) :
+    (1 : ℝ) ≤ (toEuclideanLin (c • (e₁ * e₁ᵀ))).singularValues (1 - 1) := by
+  refine SVD.le_singularValues_of_eq_mul one_pos e₁_transpose_mul_self e₁_transpose_mul_self
+    (smul_e₁_mul c) fun w => ?_
+  rw [LinearEquiv.map_smul, toLpLin_one]
+  change 1 * ‖w‖ ≤ ‖c • w‖
+  rw [norm_smul, Real.norm_eq_abs, abs_of_pos (by linarith)]
+  nlinarith [norm_nonneg w]
+
+private theorem tangentProjAt_smul_e₁ {c : ℝ} (hc : c ≠ 0) :
+    tangentProjAt (c • (e₁ * e₁ᵀ)) = tangentProj e₁ e₁ := by
+  rw [smul_e₁_mul]
+  exact tangentProjAt_eq_tangentProj e₁_transpose_mul_self e₁_transpose_mul_self
+    (isUnit_det_smul_one hc)
+
+private theorem tangentProjAt_smul_e₁_apply {c : ℝ} (hc : c ≠ 0) :
+    tangentProjAt (c • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ) = e₁ * e₁ᵀ := by
+  have h := tangentProjAt_self (c • (e₁ * e₁ᵀ))
+  rw [map_smul] at h
+  exact smul_right_injective _ hc h
+
+private theorem tangentProjAt_smul_e₁_normal {c : ℝ} (hc : c ≠ 0) :
+    tangentProjAt (c • (e₁ * e₁ᵀ)) N₈ = 0 := by
+  have h1 : e₁ᵀ * N₈ = 0 := by
+    ext i j
+    fin_cases i
+    fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
+  have h2 : N₈ * e₁ = 0 := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
+  rw [tangentProjAt_smul_e₁ hc, tangentProj_apply, Matrix.mul_assoc e₁ e₁ᵀ N₈, h1, h2]
+  simp
+
+private theorem norm_e₁_mul_le : ‖e₁ * e₁ᵀ‖ ≤ 1 := by
+  have h : ‖e₁ * e₁ᵀ‖ ^ 2 = 1 := by
+    rw [Curvature.frob_sq]
+    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+  nlinarith [norm_nonneg (e₁ * e₁ᵀ)]
+
+private theorem norm_N₈_le : ‖N₈‖ ≤ 1 / 8 := by
+  have h : ‖N₈‖ ^ 2 = (1 / 8) ^ 2 := by
+    rw [Curvature.frob_sq]
+    norm_num [Fin.sum_univ_two]
+  exact (pow_le_pow_iff_left₀ (norm_nonneg _) (by norm_num) two_ne_zero).mp h.le
+
+private theorem smul_e₁_add_eq (t : ℝ) :
+    (1 + t) • (e₁ * e₁ᵀ) + N₈ = !![1 + t, 0; 0, 1 / 8] := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+
+/-- `A t = (1 + t) • e₁ e₁ᵀ + diag(0, 1/8)` is bounded below by `1/8`. -/
+private theorem norm_mul_ge (t : ℝ) (ht : 0 ≤ t) (B : Matrix (Fin 2) Unit ℝ) :
+    1 / 8 * ‖B‖ ≤ ‖((1 + t) • (e₁ * e₁ᵀ) + N₈) * B‖ := by
+  rw [smul_e₁_add_eq]
+  have hsq : (1 / 8 * ‖B‖) ^ 2 ≤ ‖!![1 + t, 0; 0, 1 / 8] * B‖ ^ 2 := by
+    rw [mul_pow, Curvature.frob_sq, Curvature.frob_sq]
+    simp [Matrix.mul_apply, Fin.sum_univ_two]
+    nlinarith [sq_nonneg (B 0 ()), sq_nonneg (B 1 ()), sq_nonneg t,
+      mul_nonneg ht (sq_nonneg (B 0 ())), mul_nonneg (mul_nonneg ht ht) (sq_nonneg (B 0 ()))]
+  exact (pow_le_pow_iff_left₀ (by positivity) (norm_nonneg _) two_ne_zero).mp hsq
+
+/-- `X t = (1 + t) • e₁ e₁ᵀ` is a best approximation of rank at most `1` of
+`A t = X t + diag(0, 1/8)`: `‖A t - X t‖ ≤ 1/8 ≤ σ₁(A t) ≤ ‖A t - Z‖` (Eckart–Young). -/
+private theorem isBest_example (t : ℝ) (ht : 0 ≤ t) (Z : Matrix (Fin 2) (Fin 2) ℝ)
+    (hZ : Z.rank ≤ 1) :
+    ‖(1 + t) • (e₁ * e₁ᵀ) + N₈ - (1 + t) • (e₁ * e₁ᵀ)‖ ≤
+      ‖(1 + t) • (e₁ * e₁ᵀ) + N₈ - Z‖ := by
+  rw [add_sub_cancel_left]
+  have h2 : (1 / 8 : ℝ) ≤ (toEuclideanLin ((1 + t) • (e₁ * e₁ᵀ) + N₈)).singularValues 1 := by
+    have h := (SVD.forall_mul_norm_le_iff ((1 + t) • (e₁ * e₁ᵀ) + N₈) (ρ := 1 / 8)).mp
+      fun v => by
+        rw [Curvature.norm_toEuclideanLin_eq_frob, Curvature.norm_eq_frob_replicateCol v]
+        exact norm_mul_ge t ht _
+    rw [Fintype.card_fin] at h
+    exact h
+  have h3 := EckartYoung.singularValues_le_specNorm_sub ((1 + t) • (e₁ * e₁ᵀ) + N₈) Z hZ
+  have h4 := Curvature.specNorm_le_frob ((1 + t) • (e₁ * e₁ᵀ) + N₈ - Z)
+  linarith [norm_N₈_le]
+
+private theorem hasDerivAt_smul_e₁ (t : ℝ) :
+    HasDerivAt (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ) t := by
+  simpa using ((hasDerivAt_id t).const_add 1).smul_const (e₁ * e₁ᵀ)
+
+private theorem hasDerivAt_smul_e₁_add (t : ℝ) :
+    HasDerivAt (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₈) (e₁ * e₁ᵀ) t := by
+  simpa using (hasDerivAt_smul_e₁ t).add_const N₈
+
+private theorem odeSolution_smul_e₁_add :
+    ODESolution (fun _ _ => e₁ * e₁ᵀ) (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₈) 0 1 :=
+  ⟨fun s _ => (hasDerivAt_smul_e₁_add s).continuousAt.continuousWithinAt,
+    fun s _ => (hasDerivAt_smul_e₁_add s).hasDerivWithinAt⟩
+
+private theorem hyps_smul_e₁ {t : ℝ} (ht : 0 ≤ t) :
+    ((1 + t) • (e₁ * e₁ᵀ)).rank = 1 ∧
+    (1 : ℝ) ≤ (toEuclideanLin ((1 + t) • (e₁ * e₁ᵀ))).singularValues (1 - 1) ∧
+    tangentProjAt ((1 + t) • (e₁ * e₁ᵀ)) ((1 + t) • (e₁ * e₁ᵀ) + N₈ - (1 + t) • (e₁ * e₁ᵀ)) = 0 ∧
+    ‖(1 + t) • (e₁ * e₁ᵀ) - ((1 + t) • (e₁ * e₁ᵀ) + N₈)‖ ≤ 1 / 4 ∧
+    tangentProjAt ((1 + t) • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ) = e₁ * e₁ᵀ := by
+  have hc : (1 + t) ≠ 0 := ne_of_gt (by linarith)
+  refine ⟨rank_smul_e₁ hc, one_le_singularValues_smul_e₁ (by linarith), ?_, ?_,
+    tangentProjAt_smul_e₁_apply hc⟩
+  · rw [add_sub_cancel_left]
+    exact tangentProjAt_smul_e₁_normal hc
+  · rw [sub_add_cancel_left, norm_neg]
+    linarith [norm_N₈_le]
+
+/-- `norm_tangentProjAt_sub_le_of_hasDerivWithinAt`, `norm_le_of_tangentProjAt_sub_eq_zero` and
+`norm_sub_tangentProjAt_le_of_tangentProjAt_sub_eq_zero` for the curves
+`X t = (1 + t) e₁ e₁ᵀ` and `A t = X t + diag(0, 1/8)` (`r = 1`, `ρ = μ = 1`, `A ≠ X`) at `t = 0`
+within `[0, 1]`. -/
+example :
+    ‖tangentProjAt (((1 : ℝ) + 0) • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ - e₁ * e₁ᵀ)‖ ≤
+      2 * 1⁻¹ * ‖e₁ * e₁ᵀ‖ * ‖((1 : ℝ) + 0) • (e₁ * e₁ᵀ) + N₈ - ((1 : ℝ) + 0) • (e₁ * e₁ᵀ)‖ ∧
+    ‖e₁ * e₁ᵀ‖ ≤ 2 * 1 ∧
+    ‖e₁ * e₁ᵀ - tangentProjAt (((1 : ℝ) + 0) • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ)‖ ≤
+      4 * 1 / 1 * ‖((1 : ℝ) + 0) • (e₁ * e₁ᵀ) + N₈ - ((1 : ℝ) + 0) • (e₁ * e₁ᵀ)‖ := by
+  have hs : (𝓝[Set.Icc (0 : ℝ) 1 \ {0}] 0).NeBot := by
+    rw [Icc_sdiff_left]
+    exact left_nhdsWithin_Ioc_neBot one_pos
+  have h0 : (0 : ℝ) ∈ Set.Icc (0 : ℝ) 1 := ⟨le_rfl, zero_le_one⟩
+  have hA := (hasDerivAt_smul_e₁_add 0).hasDerivWithinAt (s := Set.Icc (0 : ℝ) 1)
+  have hX := (hasDerivAt_smul_e₁ 0).hasDerivWithinAt (s := Set.Icc (0 : ℝ) 1)
+  have hr : ∀ u ∈ Set.Icc (0 : ℝ) 1, ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) u).rank = 1 :=
+    fun u hu => (hyps_smul_e₁ hu.1).1
+  have hσ : ∀ u ∈ Set.Icc (0 : ℝ) 1, (1 : ℝ) ≤
+      (toEuclideanLin ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) u)).singularValues (1 - 1) :=
+    fun u hu => (hyps_smul_e₁ hu.1).2.1
+  have ho : ∀ u ∈ Set.Icc (0 : ℝ) 1, tangentProjAt ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) u)
+      ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₈) u - (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) u) = 0 :=
+    fun u hu => (hyps_smul_e₁ hu.1).2.2.1
+  have hd := (hyps_smul_e₁ (le_refl (0 : ℝ))).2.2.2.1
+  have r1 := norm_tangentProjAt_sub_le_of_hasDerivWithinAt hA hX h0 hs one_pos hr (hσ 0 h0) ho
+  have r2 := norm_le_of_tangentProjAt_sub_eq_zero hA hX h0 hs one_pos hr hσ ho norm_e₁_mul_le hd
+  have r3 := norm_sub_tangentProjAt_le_of_tangentProjAt_sub_eq_zero hA hX h0 hs one_pos hr hσ ho
+    norm_e₁_mul_le hd
+  exact ⟨r1, r2, r3⟩
+
+/-- The hypotheses of the four quasi-optimality theorems for `X t = Y t = (1 + t) e₁ e₁ᵀ` (factors
+`U = V = e₁`, `S t = 1 + t`), `A t = X t + diag(0, 1/8)` (`A ≠ X`), `F(t, Y) = e₁ e₁ᵀ` (`L = 0`),
+`r = 1`, `ρ = μ = 1`, `δ = 0` on `[0, 1]`; `X t` is a best approximation of rank `1` of `A t`. -/
+example :
+    (∀ t ∈ Set.Icc (0 : ℝ) 1, ‖(1 + t) • (e₁ * e₁ᵀ) - (1 + t) • (e₁ * e₁ᵀ)‖ ≤
+      Real.exp ((0 + 6 * 1 / 1) * (t - 0)) * (0 + (0 + 4 * 1 / 1) *
+        ∫ s in (0 : ℝ)..t, ‖(1 + s) • (e₁ * e₁ᵀ) - ((1 + s) • (e₁ * e₁ᵀ) + N₈)‖)) ∧
+    (∀ t ∈ Set.Icc (0 : ℝ) 1, ‖(1 + t) • (e₁ * e₁ᵀ) - ((1 + t) • (e₁ * e₁ᵀ) + N₈)‖ ≤
+      ‖(1 + t) • (e₁ * e₁ᵀ) - ((1 + t) • (e₁ * e₁ᵀ) + N₈)‖ +
+      Real.exp ((0 + 6 * 1 / 1) * (t - 0)) * (0 + (0 + 4 * 1 / 1) *
+        ∫ s in (0 : ℝ)..t, ‖(1 + s) • (e₁ * e₁ᵀ) - ((1 + s) • (e₁ * e₁ᵀ) + N₈)‖)) ∧
+    (∀ t ∈ Set.Icc (0 : ℝ) 1, ‖(1 + t) • (e₁ * e₁ᵀ) - (1 + t) • (e₁ * e₁ᵀ)‖ ≤
+      Real.exp ((0 + 6 * 1 / 1) * (t - 0)) * (0 + (0 + 4 * 1 / 1) *
+        ∫ s in (0 : ℝ)..t, ‖(1 + s) • (e₁ * e₁ᵀ) - ((1 + s) • (e₁ * e₁ᵀ) + N₈)‖)) ∧
+    (∀ t ∈ Set.Icc (0 : ℝ) 1, ‖(1 + t) • (e₁ * e₁ᵀ) - (1 + t) • (e₁ * e₁ᵀ)‖ ≤
+      Real.exp ((0 + 6 * 1 / 1) * (t - 0)) * (0 + (0 + 4 * 1 / 1) *
+        ∫ s in (0 : ℝ)..t, ‖(1 + s) • (e₁ * e₁ᵀ) - ((1 + s) • (e₁ * e₁ᵀ) + N₈)‖)) := by
+  have hF : IsLipschitzField (fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => e₁ * e₁ᵀ) 0 :=
+    fun _ _ _ => by simp
+  have hμ : ∀ t ∈ Ico (0 : ℝ) 1, ‖(fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => e₁ * e₁ᵀ) t
+      ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₈) t)‖ ≤ 1 := fun _ _ => norm_e₁_mul_le
+  have hXc : ContinuousOn (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) (Set.Icc 0 1) :=
+    fun s _ => (hasDerivAt_smul_e₁ s).continuousAt.continuousWithinAt
+  have hX : ∀ t ∈ Ico (0 : ℝ) 1, HasDerivWithinAt (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ))
+      ((fun _ : ℝ => e₁ * e₁ᵀ) t) (Ici t) t := fun s _ => (hasDerivAt_smul_e₁ s).hasDerivWithinAt
+  have hXr : ∀ t ∈ Set.Icc (0 : ℝ) 1, ((1 + t) • (e₁ * e₁ᵀ)).rank = 1 :=
+    fun t ht => (hyps_smul_e₁ ht.1).1
+  have hσ : ∀ t ∈ Set.Icc (0 : ℝ) 1,
+      (1 : ℝ) ≤ (toEuclideanLin ((1 + t) • (e₁ * e₁ᵀ))).singularValues (1 - 1) :=
+    fun t ht => (hyps_smul_e₁ ht.1).2.1
+  have ho : ∀ t ∈ Set.Icc (0 : ℝ) 1, tangentProjAt ((1 + t) • (e₁ * e₁ᵀ))
+      ((1 + t) • (e₁ * e₁ᵀ) + N₈ - (1 + t) • (e₁ * e₁ᵀ)) = 0 :=
+    fun t ht => (hyps_smul_e₁ ht.1).2.2.1
+  have hd : ∀ t ∈ Set.Icc (0 : ℝ) 1,
+      ‖(1 + t) • (e₁ * e₁ᵀ) - ((1 + t) • (e₁ * e₁ᵀ) + N₈)‖ ≤ 1 / 4 :=
+    fun t ht => (hyps_smul_e₁ ht.1).2.2.2.1
+  have hUV : ∀ t ∈ Set.Icc (0 : ℝ) 1, (e₁)ᵀ * e₁ = 1 ∧ (e₁)ᵀ * e₁ = 1 ∧
+      (1 + t) • (e₁ * e₁ᵀ) = e₁ * ((1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ)) * e₁ᵀ :=
+    fun t _ => ⟨e₁_transpose_mul_self, e₁_transpose_mul_self, smul_e₁_mul _⟩
+  have hYf : ODESolution (fun t x => tangentProj ((fun _ : ℝ => e₁) t) ((fun _ : ℝ => e₁) t)
+      ((fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => e₁ * e₁ᵀ) t x))
+      (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) 0 1 := by
+    refine ⟨hXc, fun s hs => ?_⟩
+    have h := (hasDerivAt_smul_e₁ s).hasDerivWithinAt (s := Ici s)
+    convert h using 1
+    change tangentProj e₁ e₁ (e₁ * e₁ᵀ) = e₁ * e₁ᵀ
+    rw [← tangentProjAt_smul_e₁ (ne_of_gt (by linarith [hs.1] : (0 : ℝ) < 1 + s))]
+    exact (hyps_smul_e₁ hs.1).2.2.2.2
+  have hYd : IsDLRASolution 1 (fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => e₁ * e₁ᵀ)
+      (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) 0 1 := by
+    refine ⟨⟨hXc, fun s hs => ?_⟩, hXr⟩
+    have h := (hasDerivAt_smul_e₁ s).hasDerivWithinAt (s := Ici s)
+    convert h using 1
+    exact (hyps_smul_e₁ hs.1).2.2.2.2
+  have hbest : ∀ t ∈ Set.Icc (0 : ℝ) 1, ((1 + t) • (e₁ * e₁ᵀ)).rank ≤ 1 ∧
+      ∀ Z : Matrix (Fin 2) (Fin 2) ℝ, Z.rank ≤ 1 →
+        ‖(1 + t) • (e₁ * e₁ᵀ) + N₈ - (1 + t) • (e₁ * e₁ᵀ)‖ ≤
+          ‖(1 + t) • (e₁ * e₁ᵀ) + N₈ - Z‖ :=
+    fun t ht => ⟨(hXr t ht).le, isBest_example t ht.1⟩
+  have h0 : ‖(fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) 0 - (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) 0‖
+      ≤ 0 := by simp
+  exact ⟨dlra_norm_sub_le_integral (F := Fₑ) (A := Aₑ) (X := Xₑ) (X' := fun _ => e₁ * e₁ᵀ)
+      (Y := Xₑ) (U := fun _ => e₁) (S := fun t => (1 + t) • 1) (V := fun _ => e₁) one_pos le_rfl
+      hF odeSolution_smul_e₁_add hμ hXc hX hXr hσ ho hd hUV hYf h0,
+    dlra_norm_sub_le_add_integral (F := Fₑ) (A := Aₑ) (X := Xₑ) (X' := fun _ => e₁ * e₁ᵀ)
+      (Y := Xₑ) (U := fun _ => e₁) (S := fun t => (1 + t) • 1) (V := fun _ => e₁) one_pos le_rfl
+      hF odeSolution_smul_e₁_add hμ hXc hX hXr hσ ho hd hUV hYf h0,
+    hYd.norm_sub_le_integral (A := Aₑ) (X := Xₑ) (X' := fun _ => e₁ * e₁ᵀ) one_pos le_rfl hF
+      odeSolution_smul_e₁_add hμ hXc hX hXr hσ ho hd h0,
+    hYd.norm_sub_le_integral_of_forall_norm_sub_le (A := Aₑ) (X := Xₑ)
+      (X' := fun _ => e₁ * e₁ᵀ) one_pos le_rfl hF odeSolution_smul_e₁_add hμ hXc hX hbest hσ hd
+      h0⟩
+
+/-- `dlra_norm_sub_truncation_le_integral` for `m = n = Fin 1`, `r = 1`, `A t = (1 + t) • 1`,
+`X = Y = A`, `U = V = 1`, `S = A`, `μ = ρ = 1` on `[0, 1]`: the truncation of a `1 × 1` matrix to
+rank `1` is the matrix itself, and `σ₀(A t) = 1 + t ≥ 1`. -/
+example : ∀ t ∈ Set.Icc (0 : ℝ) 1,
+    ‖(1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ) - (1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ)‖ ≤
+      2 * (8 * 1 / 1) * Real.exp (8 * 1 / 1 * t) * ∫ s in (0 : ℝ)..t,
+        ‖(1 + s) • (1 : Matrix (Fin 1) (Fin 1) ℝ) - (1 + s) • (1 : Matrix (Fin 1) (Fin 1) ℝ)‖ := by
+  have hA : ∀ t : ℝ, HasDerivAt (fun t : ℝ => (1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ)) 1 t :=
+    fun t => by
+      have h1 : HasDerivAt (fun x : ℝ => (1 : ℝ) + x) 1 t := (hasDerivAt_id t).const_add 1
+      simpa using h1.smul_const (1 : Matrix (Fin 1) (Fin 1) ℝ)
+  have hbound : ∀ t : ℝ, 0 ≤ t → ∀ w : EuclideanSpace ℝ (Fin 1),
+      1 * ‖w‖ ≤ ‖toEuclideanLin ((1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ)) w‖ := fun t ht w => by
+    rw [LinearEquiv.map_smul, toLpLin_one]
+    change 1 * ‖w‖ ≤ ‖(1 + t) • w‖
+    rw [norm_smul, Real.norm_eq_abs, abs_of_pos (by linarith)]
+    nlinarith [norm_nonneg w]
+  have hone : ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖ ≤ 1 := by
+    have h : ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖ ^ 2 = 1 := by
+      rw [Curvature.frob_sq]
+      simp
+    nlinarith [norm_nonneg (1 : Matrix (Fin 1) (Fin 1) ℝ)]
+  refine dlra_norm_sub_truncation_le_integral (r := 1)
+    (A := fun t => (1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ))
+    (X := fun t => (1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ))
+    (Y := fun t => (1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ)) (A' := fun _ => 1) (X' := fun _ => 1)
+    (U := fun _ => 1) (V := fun _ => 1) (S := fun t => (1 + t) • 1) one_pos one_pos
+    (fun t _ => hA t) (fun _ _ => hone) (fun t _ => ?_) (fun t _ => hA t)
+    (fun t ht => (SVD.forall_mul_norm_le_iff_fin one_pos _).mp (hbound t ht.1))
+    (fun _ _ => by norm_num) (fun t _ => ⟨by simp, by simp, by simp⟩)
+    ⟨fun s _ => (hA s).continuousAt.continuousWithinAt, fun s _ => ?_⟩ rfl
+  · exact (EckartYoung.truncation_eq_self ((rank_le_card_width _).trans (by simp))).symm
+  · have h := (hA s).hasDerivWithinAt (s := Ici s)
+    convert h using 1
+    simp [tangentProj_apply]
+
+end Examples
 
 end LeanDLRA

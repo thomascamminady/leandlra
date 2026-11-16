@@ -13,6 +13,7 @@ import LeanDLRA.DLRA.Defs
 import LeanDLRA.DLRA.DynamicallyOrthogonal
 import LeanDLRA.DLRA.Existence
 import LeanDLRA.DLRA.QuasiOptimality
+import LeanDLRA.DLRA.QuasiOptimalityTube
 import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.Filtering.Defs
 import LeanDLRA.FixedRank.Defs
