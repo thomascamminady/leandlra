@@ -136,6 +136,8 @@ import LeanDLRA.Tensor.TTN.ProjectorSplitting
 import LeanDLRA.Tensor.TTN.ProjectorSplittingExactness
 import LeanDLRA.Tensor.TTN.Prolongation
 import LeanDLRA.Tensor.TTN.RankAdaptiveBUG
+import LeanDLRA.Tensor.Tucker.BUGRun
+import LeanDLRA.Tensor.Tucker.BUGStep
 import LeanDLRA.Tensor.Tucker.Basic
 import LeanDLRA.Tensor.Tucker.Tangent
 import LeanDLRA.Tensor.Unfolding
