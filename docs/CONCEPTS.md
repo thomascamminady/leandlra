@@ -551,7 +551,7 @@ hypothesis is `FactoredNormalBoundOn F r (tubeSet A t₀ (t₀ + N * h) ρ) ε`.
 | Euler BUG is tube-local | `MatrixEulerBUG.isTubeLocal_stepRel` | instance of `StepMethod.IsTubeLocal` with `κ = 0` and `Adm Y = (Y.rank ≤ r)`; the run theorem uses it with `κ = 2` (`StepMethod.IsTubeLocal.mono`) |
 | Euler BUG: existence of a run and error bound | `MatrixEulerBUG.exists_run_norm_sub_le` | instance of `StepMethod.IsTubeLocal.exists_run_norm_sub_le`: bound `Real.exp (L * T) * δ + T * Real.exp (L * T) * ((11 * L * B + Lt) * h + 3 * ε)` under `… + 2 * B * h < ρ`, with the Lipschitz condition in time `‖F t x - F s x‖ ≤ Lt * (t - s)` for `s ≤ t` and `x` in the tube at both times; every run: `MatrixEulerBUG.IsRun.norm_sub_le` |
 | BUG with augmented bases, step relation without truncation (result of rank at most `2 r`) | `MatrixBUG.augmentedRel F r` (`Integrators/Matrix/AdaptiveBUGStep.lean`) | a step `MatrixBUG.IsRankAdaptiveStep` from a factorization with `r` columns; rank: `MatrixBUG.augmentedRel.rank_le`; local error on a tube: `MatrixBUG.augmentedRel.hasLocalError_of_tube` |
-| BUG with augmented bases and truncation by a tolerance `ϑ` (rank-adaptive) | `MatrixBUG.adaptiveStepRel F R ϑ` | from an augmented step: `MatrixBUG.augmentedRel.adaptiveStepRel`; local error on a tube: `MatrixBUG.adaptiveStepRel.hasLocalError_of_tube`; no run theorem in the core |
+| BUG with augmented bases and truncation by a tolerance `ϑ` (rank-adaptive) | `MatrixBUG.adaptiveStepRel F R ϑ` | from an augmented step: `MatrixBUG.augmentedRel.adaptiveStepRel`; local error on a tube: `MatrixBUG.adaptiveStepRel.hasLocalError_of_tube`; runs: next section |
 | BUG with augmented bases and truncation to rank `r` | `MatrixBUG.truncStepRel F r κ` (`∃ Yh, augmentedRel F r t₀ t₁ Y₀ Yh ∧ Y₁.rank ≤ r ∧ ‖Y₁ - Yh‖ ≤ κ * distLR r Yh`) | every augmented step can be completed for `1 ≤ κ`: `MatrixBUG.augmentedRel.exists_truncStepRel`; rank: `MatrixBUG.truncStepRel.rank_le`; step near the solution: `MatrixBUG.truncStepRel_tubeExt_iff_of_near`; local error on a tube: `MatrixBUG.truncStepRel.hasLocalError_of_tube` |
 | Truncated BUG is tube-local; existence of a run and error bound | `MatrixBUG.isTubeLocal_truncStepRel`, `MatrixBUG.trunc_exists_run_norm_sub_le` (`Integrators/Matrix/TruncBUGRun.lean`) | instance of `StepMethod.IsTubeLocal` with `κ = 4` (the margin constant; the factor of the truncation is a different `κ`) and `Adm Y = (Y.rank ≤ r)`; bound `Real.exp (L * T) * δ + T * Real.exp (L * T) * (κ * (10 * L * B * h + ε) + (1 + κ) * (bugC₁ L H * ε + bugC₂ L B H * h))` under `… + 4 * B * h < ρ`, `h ≤ H`, `1 ≤ κ`; every run: `MatrixBUG.IsRun.norm_sub_le_of_truncStepRel` |
 
@@ -563,14 +563,44 @@ takes it as `FactoredNormalBoundOn F r univ ε`. The two are equivalent by
 **Not bridged yet (finding, 2026-11-16).** The core files that use `StepRel` and `IsRun` are the
 six files of the generic theory (`Integrators/Defs.lean`, `Integrators/GlobalError.lean`,
 `Integrators/Tube.lean`, `Integrators/Method.lean`, `Integrators/MethodGrid.lean`,
-`Integrators/MethodTolerance.lean`) and the ten files of the five matrix integrators above.
-The other step predicates of the core are predicates on the data of one step (bases, substep
-solutions) and have no step relation of type `StepRel`: among them `IsTuckerBUGStep`,
-`IsParTuckerBUGStep`, `IsAugTuckerBUGStep`, `IsRankAdaptiveBUGStep`, `IsParallelBUGStep`,
-`IsMidpointBUGStep`, `IsImplicitBUGStep`, and the tensor-train steps `IsTTKSLStep`,
-`IsTTAugBUGStep`. The error bounds of the core for these
-steps are stated for chains of steps and are not instances of
-`StepMethod.IsTubeLocal.exists_run_norm_sub_le`.
+`Integrators/MethodTolerance.lean`), the files of the matrix integrators above, and the files of
+the next section. The other step predicates of the core are predicates on the data of one step
+(bases, substep solutions) and have no step relation of type `StepRel`: among them
+`IsTuckerBUGStep` (the step relation of the Tucker integrator is `TuckerBUG.stepRel`, next
+section), `IsParTuckerBUGStep`, `IsAugTuckerBUGStep`, `IsRankAdaptiveBUGStep`,
+`IsParallelBUGStep`, `IsMidpointBUGStep`, `IsImplicitBUGStep`, and the tensor-train steps
+`IsTTKSLStep`, `IsTTAugBUGStep`. The error bounds of the core for these steps are stated for
+chains of steps and are not instances of `StepMethod.IsTubeLocal.exists_run_norm_sub_le`.
+
+## Further step methods: tolerance, sketches, retractions, Tucker tensors
+
+Core files: `LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean` (rank-adaptive BUG, runs),
+`LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean` (parallel BUG with a tolerance),
+`LeanDLRA/Randomized/DRSVDStep.lean`, `LeanDLRA/Randomized/DRSVDRun.lean` (dynamical randomized
+SVD, Carrel, arXiv 2410.17091), `LeanDLRA/Integrators/Matrix/ProjectedEuler.lean`,
+`LeanDLRA/Integrators/Matrix/ProjectedRK.lean`, `LeanDLRA/HighOrder/ProjectedRK.lean` (projected
+Euler and Runge–Kutta methods, Kieri and Vandereycken, Comput. Methods Appl. Math. 19 (2019)),
+`LeanDLRA/Tensor/Tucker/BUGStep.lean`, `LeanDLRA/Tensor/Tucker/BUGRun.lean` (BUG for Tucker
+tensors, [CerutiLubich2022]). All are instances of `StepMethod.IsTubeLocal`; the table gives the
+step relation, the margin constant and the run theorem. The hypotheses on `F` and `A` of the run
+theorems are those of the previous section; the integrators with a tolerance use the form with a
+tolerance for every step (`StepMethod.IsTubeLocal.exists_run_norm_sub_le_of_tol`).
+
+| Concept | Core | Relation (lemma) |
+|---|---|---|
+| Rank-adaptive BUG with truncation by `ϑ`: tube-local method | `MatrixBUG.isTubeLocal_adaptiveStepRel_Ici` | `R = Set.Ici r₀`, every matrix admissible, `κ = 4`; a step exists from every matrix: `MatrixBUG.exists_adaptiveStepRel_Ici` |
+| Rank-adaptive BUG: existence of a run and error bound | `MatrixBUG.adaptive_exists_run_norm_sub_le` | bound `bugGlobalBound L B H T δ ε h + Real.exp (L * T) * (n * ϑ)`; every run: `MatrixBUG.IsRun.norm_sub_le_of_adaptiveStepRel` (term `T * Real.exp (L * T) * ϑ / h`); local error of a uniform step: `MatrixBUG.adaptiveStepRel.hasLocalError_uniformGrid` |
+| Parallel BUG with truncation by `ϑ`, step relation | `MatrixParallelBUG.adaptiveStepRel F R ϑ` | from the augmented step: `MatrixParallelBUG.augmentedRel.adaptiveStepRel`; truncated singular value decomposition: `MatrixParallelBUG.augmentedRel.adaptiveStepRel_truncation`; chains of factor steps: `MatrixParallelBUG.isRun_adaptiveStepRel_of_isStep`; local error: `MatrixParallelBUG.adaptiveStepRel.hasLocalError_of_tube` |
+| Parallel BUG with truncation by `ϑ`: tube-local, run and error bound | `MatrixParallelBUG.isTubeLocal_adaptiveStepRel_Ici`, `MatrixParallelBUG.adaptive_exists_run_norm_sub_le` | `κ = 2`; bound `Real.exp (L * T) * (δ + n * ϑ) + T * Real.exp (L * T) * (7 * L * B * h + ε)`; every run: `MatrixParallelBUG.IsRun.norm_sub_le_of_adaptiveStepRel`; chain of factor steps: `MatrixParallelBUG.adaptive_norm_sub_le_of_isStep` |
+| Dynamical randomized SVD: step relation without and with truncation to rank `r` | `MatrixDRSVD.augmentedRel F k l`, `MatrixDRSVD.stepRel F r k l` | sketch basis with `k` columns, range basis with `l` columns; bridge to the BUG step with one mode: `MatrixDRSVD.isTuckerBUGStepCore_of_factors`; to the step of the older analysis: `MatrixDRSVD.isDRSVDStep_of_factors` (`RandomizedBUG.IsDRSVDStep`); local error: `MatrixDRSVD.stepRel.hasLocalError_of_tube` |
+| Dynamical randomized SVD: tube-local, run and error bound | `MatrixDRSVD.isTubeLocal_stepRel`, `MatrixDRSVD.exists_run_norm_sub_le` | `κ = 3`, admissible `Y.rank ≤ r`; bound `Real.exp (L * T) * δ + T * Real.exp (L * T) * ((2 * bugC₁ L H + 1) * ε + (2 * bugC₂ L B H + 10 * L * B) * h)`; every run: `MatrixDRSVD.IsRun.norm_sub_le`; the older global form `RandomizedBUG.drsvd_global_error_le` has given exact solutions |
+| Projected Euler step: before and after the retraction | `MatrixProjEuler.tangentRel F r`, `MatrixProjEuler.stepRel F r κ` | `Y₁ = ℛ(Y₀ + (t₁ - t₀) P(Y₀) F₀)`; `‖Y₁ - X‖ ≤ κ * distLR r X`; a step exists for `1 ≤ κ`: `MatrixProjEuler.exists_stepRel`; the retraction by a truncated singular value decomposition: `MatrixProjEuler.tangentRel.stepRel_truncation`; `Z - P Z = (1 - U Uᵀ) Z (1 - V Vᵀ)`: `sub_tangentProj_apply` |
+| Projected Euler: tube-local, local error, run and error bound | `MatrixProjEuler.isTubeLocal_stepRel`, `MatrixProjEuler.stepRel.hasLocalError_of_tube`, `MatrixProjEuler.exists_run_norm_sub_le` | `κ = 0` (margin constant; the factor of the retraction is a different `κ`); for `κ = 1` the constant of `MatrixEulerBUG.exists_run_norm_sub_le`; every run: `MatrixProjEuler.IsRun.norm_sub_le` |
+| Projected Runge–Kutta step | `MatrixPRK.stepRel F r κ a b c`, stage derivative `MatrixPRK.stageDeriv` | stages `η_j = ℛ(Y₀ + h ∑ a_{jl} P(η_l) F(t₀ + c_l h, η_l))`; abstract analysis (stage growth, local error constant): `ProjectedRK.stageGrowth`, `ProjectedRK.localErrorConst`, `ProjectedRK.norm_sub_le_of_stages` |
+| Projected Runge–Kutta: tube-local, run and error bound | `MatrixPRK.isTubeLocal_stepRel`, `MatrixPRK.exists_run_norm_sub_le` | margin constant `(1 + κ) * tabWeight a b + 1`; the order of the classical scheme is a hypothesis (`hRK`); every run: `MatrixPRK.IsRun.norm_sub_le` |
+| Tucker BUG step relation | `TuckerBUG.stepRel F r` | admissible: `Tensor.ModeRankLE r`; the data are a step `IsTuckerBUGStepCore` (`Tensor.isTuckerBUGStepCore_of_orthonormal`); step near the solution and local error: `TuckerBUG.stepRel_tubeExt_iff_of_near`, `TuckerBUG.stepRel.hasLocalError_of_tube` |
+| Tucker BUG: tube-local, run and error bound | `TuckerBUG.isTubeLocal_stepRel`, `TuckerBUG.exists_run_norm_sub_le` | margin constant `d + 2`; normal bound at `TuckerBUG.normalTriples r`; bound with `tuckerC₁ d L H`, `tuckerC₂ d L B H`; every run: `TuckerBUG.IsRun.norm_sub_le` |
+| Distance of an exact solution to the matrices of rank at most `r`, bound without a term `h²` | `distLR_flow_le_exp` (global field), `distLR_flow_le_exp_of_tube` (field controlled on a tube) | both `dist ≤ h * ε * Real.exp (L * h)` with constant 1; the older tube bound `distLR_flow_le_of_tube` has `h * (10 * L * B * h + ε)` |
 
 ## Normal-component bounds on regions
 

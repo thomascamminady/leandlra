@@ -10,7 +10,7 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 141 modules with 483 definitions (0 of them without a docstring) and 44 private definitions, which are helpers of one file and are not listed.
+The core has 171 modules with 530 definitions (0 of them without a docstring) and 63 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 
@@ -22,9 +22,9 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `FixedRank` | 1 | 6 | 0 |
 | `FixedRank/TangentSpace` | 1 | 2 | 0 |
 | `Foundations` | 1 | 2 | 0 |
-| `HighOrder` | 2 | 11 | 0 |
+| `HighOrder` | 4 | 16 | 0 |
 | `Integrators` | 12 | 60 | 0 |
-| `Integrators/Matrix` | 12 | 44 | 0 |
+| `Integrators/Matrix` | 13 | 47 | 0 |
 | `Kinetic` | 1 | 14 | 0 |
 | `LinearAlgebra/Factorization` | 1 | 18 | 0 |
 | `LinearAlgebra/Frobenius` | 1 | 13 | 0 |
@@ -33,15 +33,15 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LinearAlgebra/SVD` | 1 | 6 | 0 |
 | `Matrix` | 3 | 16 | 0 |
 | `Novel` | 1 | 3 | 0 |
-| `Randomized` | 2 | 16 | 0 |
-| `Research` | 5 | 71 | 0 |
+| `Randomized` | 3 | 18 | 0 |
+| `Research` | 10 | 103 | 0 |
 | `Stability` | 2 | 13 | 0 |
 | `Stiff` | 3 | 25 | 0 |
 | `Stochastic` | 1 | 2 | 0 |
 | `Tensor` | 2 | 50 | 0 |
-| `Tensor/TT` | 4 | 20 | 0 |
+| `Tensor/TT` | 5 | 22 | 0 |
 | `Tensor/TTN` | 7 | 12 | 0 |
-| `Tensor/Tucker` | 1 | 6 | 0 |
+| `Tensor/Tucker` | 2 | 9 | 0 |
 | `Training` | 2 | 13 | 0 |
 
 ## `LeanDLRA/Analysis`
@@ -133,6 +133,11 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 |---|---|---|---|
 | `LeanDLRA.MidpointBUG.IsMidpointBUGStep` | structure | [HighOrder/MidpointBUG.lean:904](../LeanDLRA/HighOrder/MidpointBUG.lean#L904) | One step of the **midpoint BUG integrator** (Ceruti–Einkemmer–Kusch–Lubich, arXiv 2402.08607, Algorithm 1) from `(t₀, Y₀)` to `t₀ + h`: a first-order BUG half step (`half`, `IsBUGStep` on `[t₀, t₀ + h/2]`, result `Yh = YH (t₀ + h/2)`), an augmented Galerkin projector `R` (bases `[U₀, U_{1/2}, F(Yh) V_{1/2}]` and `[V₀, V_{1/2}, F(Yh)ᵀ U_{1/2}]`) that fixes `Y₀` and captures the tangent part of `F(t₀ + h/2, Yh)` up to `ε₂` (the doubly normal component at the rank-`2r` point `Yh`), the Galerkin S-step on the full step started at `Y₀`, and a truncation to the tolerance `ϑ`. |
 | `LeanDLRA.MidpointBUG.midpointBUGConst` | def | [HighOrder/MidpointBUG.lean:921](../LeanDLRA/HighOrder/MidpointBUG.lean#L921) | The robust constant of the midpoint BUG local error (`h ≤ H`), with `L, Lₜ, B, M₃, H` already made nonnegative: `C = a + b + c` for the coefficients of `h³`, `h² ε` and `h ε₂`. |
+| `LeanDLRA.MatrixMidpointBUG.IsStep` | structure | [HighOrder/MidpointBUGStep.lean:126](../LeanDLRA/HighOrder/MidpointBUGStep.lean#L126) | **One step of the midpoint BUG integrator at the level of the factors** (Ceruti, Einkemmer, Kusch and Lubich, arXiv:2402.08607, §3, Algorithm 1, steps 1 and 2) from `Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to `t₁`, without truncation. |
+| `LeanDLRA.MatrixMidpointBUG.augmentedRel` | def | [HighOrder/MidpointBUGStep.lean:330](../LeanDLRA/HighOrder/MidpointBUGStep.lean#L330) | **The midpoint BUG step without truncation, as a relation between matrices.** `augmentedRel F r t₀ t₁ Y₀ Ȳ` holds if `Y₀ = U₀ S₀ V₀ᵀ` for factors with `r` columns and orthonormal `U₀`, `V₀`, and `Ȳ = Ub Sb(t₁) Vbᵀ` for a step `MatrixMidpointBUG.IsStep` of these factors over `[t₀, t₁]` in which the half step has exactly `2 r` columns and the Galerkin bases `Ub`, `Vb` have at most `4 r` columns (arXiv:2402.08607, §3, Algorithm 1 (4r), before the truncation). |
+| `LeanDLRA.MatrixMidpointBUG.stepRel` | def | [HighOrder/MidpointBUGStep.lean:347](../LeanDLRA/HighOrder/MidpointBUGStep.lean#L347) | **The step of the fixed-rank midpoint BUG integrator, as a relation between matrices** (arXiv:2402.08607, §3, Algorithm 1 (4r), with truncation to rank `r`). |
+| `LeanDLRA.ProjectedRK.stageGrowth` | def | [HighOrder/ProjectedRK.lean:83](../LeanDLRA/HighOrder/ProjectedRK.lean#L83) | The growth factor `γ = 1 + L κ + L (1 + κ) α` of the stage errors of a projected Runge–Kutta step, `α = tabWeight a b` (a bound for the row sums `∑_l \|a_{jl}\|` and for `∑_j \|b_j\|`), `κ` the quasi-optimality constant of the retraction. |
+| `LeanDLRA.ProjectedRK.localErrorConst` | def | [HighOrder/ProjectedRK.lean:88](../LeanDLRA/HighOrder/ProjectedRK.lean#L88) | The constant `(1 + κ) (α γ^s + 2)` of the local error of a projected Runge–Kutta step (`ProjectedRK.norm_sub_le_of_stages`), `α = tabWeight a b`, `γ = stageGrowth a b L κ`. |
 | `LeanDLRA.RungeKuttaBUG.IsGalerkinRKStep` | def | [HighOrder/RungeKuttaBUG.lean:102](../LeanDLRA/HighOrder/RungeKuttaBUG.lean#L102) | A (Galerkin) **Runge–Kutta step** in relational form: tableau `(a, b, c)` with `s` stages, stage projectors `R i`, final projector `Rf`, stages `Y i = R i (y + h ∑ⱼ aᵢⱼ F(t + cⱼ h, Y j))` and result `y₁ = Rf (y + h ∑ᵢ bᵢ F(t + cᵢ h, Y i))`. |
 | `LeanDLRA.RungeKuttaBUG.IsRKBUGStep` | structure | [HighOrder/RungeKuttaBUG.lean:181](../LeanDLRA/HighOrder/RungeKuttaBUG.lean#L181) | One step of the **Runge–Kutta BUG integrator** (Nobile–Riffaud, arXiv 2502.07040, Algorithm 2) in abstract form: Galerkin Runge–Kutta stages on augmented bases (projectors `R i`, `Rf` fixing `y` and capturing the stage derivatives with nonzero weight up to `ε`), each stage and the result computed up to a truncation error `h γ`. |
 | `LeanDLRA.RungeKuttaBUG.tabWeight` | def | [HighOrder/RungeKuttaBUG.lean:196](../LeanDLRA/HighOrder/RungeKuttaBUG.lean#L196) | Total absolute weight `∑ᵢⱼ \|aᵢⱼ\| + ∑ᵢ \|bᵢ\|` of a tableau. |
@@ -141,7 +146,7 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LeanDLRA.RungeKuttaBUG.rkGlobalConst` | def | [HighOrder/RungeKuttaBUG.lean:356](../LeanDLRA/HighOrder/RungeKuttaBUG.lean#L356) | The explicit constant of `rkBUG_global_error_le`: `e^{L T} (1 + T⁺ (rkConst + 1))`. |
 | `LeanDLRA.RungeKuttaBUG.rk4Lin` | def | [HighOrder/RungeKuttaBUG.lean:644](../LeanDLRA/HighOrder/RungeKuttaBUG.lean#L644) | One step of the classical **RK4 method** for the linear ODE `x' = B x`: `k₁ = Bx`, `k₂ = B(x + h/2 k₁)`, `k₃ = B(x + h/2 k₂)`, `k₄ = B(x + h k₃)`, `x₁ = x + h/6 (k₁ + 2k₂ + 2k₃ + k₄)`. |
 | `LeanDLRA.RungeKuttaBUG.eulerLin` | def | [HighOrder/RungeKuttaBUG.lean:652](../LeanDLRA/HighOrder/RungeKuttaBUG.lean#L652) | The forward-Euler map `G x = x + h B x` of the linear ODE. |
-| `LeanDLRA.RungeKuttaBUG.IsShuOsherStep` | def | [HighOrder/RungeKuttaBUG.lean:1028](../LeanDLRA/HighOrder/RungeKuttaBUG.lean#L1028) | An explicit Runge–Kutta step in **Shu–Osher form** with Galerkin projections: stages `u₀ = y`, `uᵢ = Rᵢ (∑ₖ αᵢₖ uₖ + h βᵢₖ F(t + cₖ h, uₖ))` (`Rᵢ = 1`: the full method). |
+| `LeanDLRA.RungeKuttaBUG.IsShuOsherStep` | def | [HighOrder/RungeKuttaBUG.lean:1018](../LeanDLRA/HighOrder/RungeKuttaBUG.lean#L1018) | An explicit Runge–Kutta step in **Shu–Osher form** with Galerkin projections: stages `u₀ = y`, `uᵢ = Rᵢ (∑ₖ αᵢₖ uₖ + h βᵢₖ F(t + cₖ h, uₖ))` (`Rᵢ = 1`: the full method). |
 
 ## `LeanDLRA/Integrators`
 
@@ -242,6 +247,9 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LeanDLRA.MatrixParallelBUG.adaptiveStepRel` | def | [Integrators/Matrix/ParallelBUGTolRun.lean:114](../LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean#L114) | **The step of the parallel rank-adaptive BUG integrator, as a relation between matrices** [CerutiKuschLubich2024, §3]. |
 | `LeanDLRA.MatrixProjEuler.tangentRel` | def | [Integrators/Matrix/ProjectedEuler.lean:103](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean#L103) | **The projected Euler step before the retraction.** `tangentRel F r t₀ t₁ Y₀ X` holds if `Y₀ = U S Vᵀ` for some `U : m × r`, `V : n × r` with orthonormal columns and `S : r × r`, and `X = Y₀ + (t₁ - t₀) P F(t₀, Y₀)` with the tangent projector `P = tangentProj U V` at `Y₀` (the argument of the retraction in Kieri–Vandereycken 2019, eq. (21)). |
 | `LeanDLRA.MatrixProjEuler.stepRel` | def | [Integrators/Matrix/ProjectedEuler.lean:113](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean#L113) | **The projected Euler step** (Kieri–Vandereycken 2019, eq. (21)) with a `κ`-quasi-optimal retraction (their eq. (13), `C_ℛ = κ`): `stepRel F r κ t₀ t₁ Y₀ Y₁` holds if `Y₁` has rank at most `r` and `‖Y₁ - X‖ ≤ κ dist(X, M_{≤ r})` for a result `X` of `tangentRel F r` from `Y₀`. |
+| `LeanDLRA.MatrixPRK.stageDeriv` | def | [Integrators/Matrix/ProjectedRK.lean:78](../LeanDLRA/Integrators/Matrix/ProjectedRK.lean#L78) | The **projected stage derivative** `P(η_l) F(t₀ + c_l h, η_l)` at the stage `η_l = U_l S_l V_lᵀ`, with the tangent projector `P(η_l) = tangentProj U_l V_l`. |
+| `LeanDLRA.MatrixPRK.stageSum` | def | [Integrators/Matrix/ProjectedRK.lean:85](../LeanDLRA/Integrators/Matrix/ProjectedRK.lean#L85) | The **argument of a retraction** in a projected Runge–Kutta step: `Y₀ + h ∑_l w_l P(η_l) F(t₀ + c_l h, η_l)` with weights `w` (a row of `a`, or `b`). |
+| `LeanDLRA.MatrixPRK.stepRel` | def | [Integrators/Matrix/ProjectedRK.lean:99](../LeanDLRA/Integrators/Matrix/ProjectedRK.lean#L99) | **One step of the projected Runge–Kutta method** (Kieri–Vandereycken 2019, eqs. (26), (27)) with tableau `(a, b, c)` and a `κ`-quasi-optimal retraction to rank `r`: `stepRel F r κ a b c t₀ t₁ Y₀ Y₁` holds if there are stages `η_j = U_j S_j V_jᵀ` with orthonormal `U_j`, `V_j` such that, with `h = t₁ - t₀` and the projected stage derivatives `d_l = stageDeriv F c t₀ h U S V l`, each `η_j` is `κ`-quasi-optimal for `Y₀ + h ∑_l a_{jl} d_l` (`stageSum F c t₀ h Y₀ (a j) U S V`), and `Y₁` has rank at most `r` and is `κ`-quasi-optimal for `Y₀ + h ∑_j b_j d_j`. |
 | `LeanDLRA.MatrixKSL.radial` | def | [Integrators/Matrix/ProjectorSplitting.lean:175](../LeanDLRA/Integrators/Matrix/ProjectorSplitting.lean#L175) | The radial retraction `x ↦ x / max(‖x‖, 1)` onto the closed unit ball. |
 | `LeanDLRA.MatrixKSL.kField` | def | [Integrators/Matrix/ProjectorSplitting.lean:253](../LeanDLRA/Integrators/Matrix/ProjectorSplitting.lean#L253) | The K-step field `K ↦ F(t, K V₀ᵀ) V₀` (arXiv 1301.1058, §3.1, step 1; arXiv 2010.02022, §2). |
 | `LeanDLRA.MatrixKSL.sField` | def | [Integrators/Matrix/ProjectorSplitting.lean:259](../LeanDLRA/Integrators/Matrix/ProjectorSplitting.lean#L259) | The backward S-step field `S ↦ -U₁ᵀ F(t, U₁ S V₀ᵀ) V₀` (arXiv 1301.1058, §3.1, step 2; arXiv 2010.02022, §2). |
@@ -312,21 +320,21 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LeanDLRA.Frobenius.sandwichCLM` | def | [LinearAlgebra/Frobenius/Defs.lean:246](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L246) | The two-sided multiplication `X ↦ M X N` as a continuous linear map. |
 | `LeanDLRA.Frobenius.sandwichTransposeCLM` | def | [LinearAlgebra/Frobenius/Defs.lean:258](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L258) | The two-sided multiplication of the transpose, `X ↦ M Xᵀ N`, as a continuous linear map. |
 | `LeanDLRA.Frobenius.weightedInner` | def | [LinearAlgebra/Frobenius/Defs.lean:287](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L287) | The weighted inner product `∑ᵢ ∑ⱼ wxᵢ wvⱼ Xᵢⱼ Yᵢⱼ` of two matrices, with row weights `wx` and column weights `wv`: the discrete `L²` inner product of phase-space functions `f(xᵢ, vⱼ)` for a quadrature with weights `wx` in space and `wv` in velocity. |
-| `LeanDLRA.WeightedMatrix` | def | [LinearAlgebra/Frobenius/Defs.lean:346](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L346) | **The weighted matrix space**: `Matrix m n ℝ` with the weighted (quadrature) inner product `Frobenius.weightedInner wx wv`, `⟪X, Y⟫ = ∑ᵢ ∑ⱼ wxᵢ wvⱼ Xᵢⱼ Yᵢⱼ`, as a type synonym. |
-| `LeanDLRA.WeightedMatrix.toWeighted` | def | [LinearAlgebra/Frobenius/Defs.lean:357](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L357) | A matrix as an element of the weighted space (the identity map). |
-| `LeanDLRA.WeightedMatrix.ofWeighted` | def | [LinearAlgebra/Frobenius/Defs.lean:360](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L360) | The matrix underlying an element of the weighted space (the identity map). |
-| `LeanDLRA.WeightedMatrix.toFrobenius` | def | [LinearAlgebra/Frobenius/Defs.lean:442](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L442) | **Isometry to the Frobenius space** (decision Q5): for positive weights, `X ↦ diag(√wx) X diag(√wv)` is a linear isometric equivalence of the weighted space onto `Matrix m n ℝ` with the Frobenius inner product (`Frobenius.weightedInner_eq_inner`). |
+| `LeanDLRA.WeightedMatrix` | def | [LinearAlgebra/Frobenius/Defs.lean:343](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L343) | **The weighted matrix space**: `Matrix m n ℝ` with the weighted (quadrature) inner product `Frobenius.weightedInner wx wv`, `⟪X, Y⟫ = ∑ᵢ ∑ⱼ wxᵢ wvⱼ Xᵢⱼ Yᵢⱼ`, as a type synonym. |
+| `LeanDLRA.WeightedMatrix.toWeighted` | def | [LinearAlgebra/Frobenius/Defs.lean:354](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L354) | A matrix as an element of the weighted space (the identity map). |
+| `LeanDLRA.WeightedMatrix.ofWeighted` | def | [LinearAlgebra/Frobenius/Defs.lean:357](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L357) | The matrix underlying an element of the weighted space (the identity map). |
+| `LeanDLRA.WeightedMatrix.toFrobenius` | def | [LinearAlgebra/Frobenius/Defs.lean:439](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L439) | **Isometry to the Frobenius space** (decision Q5): for positive weights, `X ↦ diag(√wx) X diag(√wv)` is a linear isometric equivalence of the weighted space onto `Matrix m n ℝ` with the Frobenius inner product (`Frobenius.weightedInner_eq_inner`). |
 
 ## `LeanDLRA/LinearAlgebra/LowRank`
 
 | Name | Kind | File and line | First sentence of the docstring |
 |---|---|---|---|
-| `LeanDLRA.colSpan` | def | [LinearAlgebra/LowRank/Defs.lean:58](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L58) | The span of the columns of `A`, as a subspace of `EuclideanSpace ℝ m`. |
-| `LeanDLRA.ofCols` | def | [LinearAlgebra/LowRank/Defs.lean:62](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L62) | The matrix whose `j`-th column is the Euclidean vector `u j`. |
-| `LeanDLRA.lowRankSet` | def | [LinearAlgebra/LowRank/Defs.lean:79](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L79) | The set `M_{≤ r} = {Y ∈ ℝ^{m×n} : rank Y ≤ r}` of matrices of rank at most `r`. |
-| `LeanDLRA.distLR` | def | [LinearAlgebra/LowRank/Defs.lean:90](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L90) | The Frobenius distance `dist(X, M_{≤ r}) = inf {‖X - Y‖ : rank Y ≤ r}` of `X` to the set of matrices of rank at most `r`. |
-| `LeanDLRA.epsRank` | def | [LinearAlgebra/LowRank/Defs.lean:97](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L97) | The **`ε`-rank** `rank_ε(X) = min {k : dist(X, M_{≤ k}) ≤ ε}`. |
-| `LeanDLRA.WeylSingular.tailNorm` | def | [LinearAlgebra/LowRank/Defs.lean:117](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L117) | The **singular-value tail** `τ_r(A) = (∑_{r ≤ l < n} σ_l(A)²)^{1/2}`, the Frobenius error of the best rank-`r` approximation. |
+| `LeanDLRA.colSpan` | def | [LinearAlgebra/LowRank/Defs.lean:62](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L62) | The span of the columns of `A`, as a subspace of `EuclideanSpace ℝ m`. |
+| `LeanDLRA.ofCols` | def | [LinearAlgebra/LowRank/Defs.lean:66](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L66) | The matrix whose `j`-th column is the Euclidean vector `u j`. |
+| `LeanDLRA.lowRankSet` | def | [LinearAlgebra/LowRank/Defs.lean:83](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L83) | The set `M_{≤ r} = {Y ∈ ℝ^{m×n} : rank Y ≤ r}` of matrices of rank at most `r`. |
+| `LeanDLRA.distLR` | def | [LinearAlgebra/LowRank/Defs.lean:94](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L94) | The Frobenius distance `dist(X, M_{≤ r}) = inf {‖X - Y‖ : rank Y ≤ r}` of `X` to the set of matrices of rank at most `r`. |
+| `LeanDLRA.epsRank` | def | [LinearAlgebra/LowRank/Defs.lean:101](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L101) | The **`ε`-rank** `rank_ε(X) = min {k : dist(X, M_{≤ k}) ≤ ε}`. |
+| `LeanDLRA.WeylSingular.tailNorm` | def | [LinearAlgebra/LowRank/Defs.lean:121](../LeanDLRA/LinearAlgebra/LowRank/Defs.lean#L121) | The **singular-value tail** `τ_r(A) = (∑_{r ≤ l < n} σ_l(A)²)^{1/2}`, the Frobenius error of the best rank-`r` approximation. |
 | `LeanDLRA.HasSepRankLE` | def | [LinearAlgebra/LowRank/SepRank.lean:64](../LeanDLRA/LinearAlgebra/LowRank/SepRank.lean#L64) | `f` has separation rank at most `r` over the semiring `R`: it is a sum of `r` products of a function of the first variable and a function of the second variable, `f x y = ∑ k : Fin r, U k x * V k y`. |
 | `LeanDLRA.fixedRankSet` | def | [LinearAlgebra/LowRank/SepRank.lean:161](../LeanDLRA/LinearAlgebra/LowRank/SepRank.lean#L161) | The set of real `m × n` matrices of rank exactly `r`. |
 
@@ -368,13 +376,13 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LeanDLRA.GaugeODEExample.Adf` | def | [Matrix/GaugeODE.lean:767](../LeanDLRA/Matrix/GaugeODE.lean#L767) | `Ȧ(t)` for `A(t) = eᵗ U(t) V0ᵀ`, of rank one in `ℝ^{2 × 2}`. |
 | `LeanDLRA.GaugeODEExample.E₂₂` | def | [Matrix/GaugeODE.lean:770](../LeanDLRA/Matrix/GaugeODE.lean#L770) | The matrix `e₂ e₂ᵀ`. |
 | `LeanDLRA.sketchCLM` | def | [Matrix/Interpolation.lean:1431](../LeanDLRA/Matrix/Interpolation.lean#L1431) | The two-sided sketch `Z ↦ Θ Z Ωᵀ` as a continuous linear map (Frobenius norms). |
-| `LeanDLRA.swapMat` | def | [Matrix/LowRankDistance.lean:659](../LeanDLRA/Matrix/LowRankDistance.lean#L659) | The constant field `F ≡ [[0, 1], [1, 0]]` of the counterexample (`L = 0`). |
-| `LeanDLRA.cxY₀` | def | [Matrix/LowRankDistance.lean:662](../LeanDLRA/Matrix/LowRankDistance.lean#L662) | The starting value `Y₀ = diag(δ, 0) = e₁ (δ) e₁ᵀ` of rank `≤ 1`. |
-| `LeanDLRA.cxS₀` | def | [Matrix/LowRankDistance.lean:712](../LeanDLRA/Matrix/LowRankDistance.lean#L712) | The coefficient of the counterexample starting value, `S₀ = (δ)`. |
-| `LeanDLRA.rgU` | def | [Matrix/LowRankDistance.lean:817](../LeanDLRA/Matrix/LowRankDistance.lean#L817) | The first unit vector of `ℝ³` as a `3 × 1` matrix. |
-| `LeanDLRA.rgY₀` | def | [Matrix/LowRankDistance.lean:820](../LeanDLRA/Matrix/LowRankDistance.lean#L820) | The three-dimensional example of OP-RA-16 (ii): `Y₀ = e₁ e₁ᵀ` (rank one) and `F ≡ I₃`. |
-| `LeanDLRA.fixedRankDefect` | def | [Matrix/LowRankDistance.lean:1157](../LeanDLRA/Matrix/LowRankDistance.lean#L1157) | The truncation defect of one fixed-rank truncated augmented BUG step: `κ (2 h ε e^{L h} + h (c₁ ε + c₂ h))`. |
-| `LeanDLRA.exSm` | def | [Matrix/LowRankDistance.lean:1328](../LeanDLRA/Matrix/LowRankDistance.lean#L1328) | The ranks/coefficients of the one-step fixed-rank example: `S₀ = 1`, `S₁ = 2`. |
+| `LeanDLRA.swapMat` | def | [Matrix/LowRankDistance.lean:676](../LeanDLRA/Matrix/LowRankDistance.lean#L676) | The constant field `F ≡ [[0, 1], [1, 0]]` of the counterexample (`L = 0`). |
+| `LeanDLRA.cxY₀` | def | [Matrix/LowRankDistance.lean:679](../LeanDLRA/Matrix/LowRankDistance.lean#L679) | The starting value `Y₀ = diag(δ, 0) = e₁ (δ) e₁ᵀ` of rank `≤ 1`. |
+| `LeanDLRA.cxS₀` | def | [Matrix/LowRankDistance.lean:729](../LeanDLRA/Matrix/LowRankDistance.lean#L729) | The coefficient of the counterexample starting value, `S₀ = (δ)`. |
+| `LeanDLRA.rgU` | def | [Matrix/LowRankDistance.lean:834](../LeanDLRA/Matrix/LowRankDistance.lean#L834) | The first unit vector of `ℝ³` as a `3 × 1` matrix. |
+| `LeanDLRA.rgY₀` | def | [Matrix/LowRankDistance.lean:837](../LeanDLRA/Matrix/LowRankDistance.lean#L837) | The three-dimensional example of OP-RA-16 (ii): `Y₀ = e₁ e₁ᵀ` (rank one) and `F ≡ I₃`. |
+| `LeanDLRA.fixedRankDefect` | def | [Matrix/LowRankDistance.lean:1417](../LeanDLRA/Matrix/LowRankDistance.lean#L1417) | The truncation defect of one fixed-rank truncated augmented BUG step: `κ (h ε e^{L h} + h (c₁ ε + c₂ h))`. |
+| `LeanDLRA.exSm` | def | [Matrix/LowRankDistance.lean:1588](../LeanDLRA/Matrix/LowRankDistance.lean#L1588) | The ranks/coefficients of the one-step fixed-rank example: `S₀ = 1`, `S₁ = 2`. |
 
 ## `LeanDLRA/Novel`
 
@@ -388,6 +396,8 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 
 | Name | Kind | File and line | First sentence of the docstring |
 |---|---|---|---|
+| `LeanDLRA.MatrixDRSVD.augmentedRel` | def | [Randomized/DRSVDStep.lean:96](../LeanDLRA/Randomized/DRSVDStep.lean#L96) | **The DRSVD step without truncation, as a relation between matrices** (arXiv:2410.17091, Algorithm 3, before the truncation, with an augmented sketch). |
+| `LeanDLRA.MatrixDRSVD.stepRel` | def | [Randomized/DRSVDStep.lean:111](../LeanDLRA/Randomized/DRSVDStep.lean#L111) | **The DRSVD step with truncation to rank `r`, as a relation between matrices** (arXiv:2410.17091, Algorithm 3, with an augmented sketch). |
 | `LeanDLRA.ObliqueBUG.IsObliqueBUGStep` | structure | [Randomized/ObliqueBUG.lean:365](../LeanDLRA/Randomized/ObliqueBUG.lean#L365) | All hypotheses of one step of the **interpolatory (DEIM / CUR) BUG integrator** with Lebesgue constant `η` (arXiv 2411.15990, eqs. (27)–(29) for BUC; arXiv 2510.19518 for the interpolatory tangent projector). |
 | `LeanDLRA.ObliqueBUG.obC₁` | def | [Randomized/ObliqueBUG.lean:411](../LeanDLRA/Randomized/ObliqueBUG.lean#L411) | Local-error constant of the interpolatory BUG step in front of `ε`: `C₁ = (1 + η² L H e^{η² L H}) (η + η²) η`. |
 | `LeanDLRA.ObliqueBUG.obC₂` | def | [Randomized/ObliqueBUG.lean:416](../LeanDLRA/Randomized/ObliqueBUG.lean#L416) | Local-error constant of the interpolatory BUG step in front of `h`: `C₂ = η² L e^{η² L H} (1 + η²) B + (1 + η² L H e^{η² L H}) (η + η²)(1 + η + η²) L B`. |
@@ -440,6 +450,13 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LeanDLRA.ErrorOrder.Examples.G₁` | def | [Research/IntegratorErrorOrder.lean:555](../LeanDLRA/Research/IntegratorErrorOrder.lean#L555) | The new right projector `V₁V₁ᵀ = v vᵀ / 101`, `v = (10, 1, 0)`, of example 3. |
 | `LeanDLRA.ErrorOrder.Examples.F₁₂` | def | [Research/IntegratorErrorOrder.lean:559](../LeanDLRA/Research/IntegratorErrorOrder.lean#L559) | The augmented right projector onto `span(e₁, e₂) ⊂ ℝ³` of example 3. |
 | `LeanDLRA.ErrorOrder.Examples.ex₃` | def | [Research/IntegratorErrorOrder.lean:563](../LeanDLRA/Research/IntegratorErrorOrder.lean#L563) | **Example 3** (`2 × 3`): `Y₀ = e₁e₁ᵀ`, `A₁ = [[1, 1/10, 0], [1, 0, 1]]`. |
+| `LeanDLRA.AugmentationRank.Examples.pertDir` | def | [Research/PerturbedSylvester.lean:602](../LeanDLRA/Research/PerturbedSylvester.lean#L602) | The direction `E₃₂` of the perturbation. |
+| `LeanDLRA.AugmentationRank.Examples.pertMap` | def | [Research/PerturbedSylvester.lean:606](../LeanDLRA/Research/PerturbedSylvester.lean#L606) | The perturbation `G(Y) = Y₁₁ E₃₂`: Lipschitz with constant `‖E₃₂‖`, not constant, and nonzero at `Y₀ = e₁ e₁ᵀ`. |
+| `LeanDLRA.AugmentationRank.Examples.pertField` | def | [Research/PerturbedSylvester.lean:611](../LeanDLRA/Research/PerturbedSylvester.lean#L611) | The field `F(Y) = E₂₁ Y + Y E₁₂ + Y₁₁ E₃₂`: `sylField` with the perturbation `pertMap`. |
+| `LeanDLRA.AugmentationRank.Examples.pertSolution` | def | [Research/PerturbedSylvester.lean:625](../LeanDLRA/Research/PerturbedSylvester.lean#L625) | The exact solution `A(t) = [[1, t], [t, t²], [0, t]]` of `A' = pertField A`, `A(0) = e₁ e₁ᵀ`. |
+| `LeanDLRA.AugmentationRank.Examples.rotStart` | def | [Research/RankOneGalerkinBarrier.lean:51](../LeanDLRA/Research/RankOneGalerkinBarrier.lean#L51) | The starting value `Y₀ = e₁ e₁ᵀ`. |
+| `LeanDLRA.AugmentationRank.Examples.rotVelocity` | def | [Research/RankOneGalerkinBarrier.lean:54](../LeanDLRA/Research/RankOneGalerkinBarrier.lean#L54) | The matrix `W Y₀ = e₂ e₁ᵀ`. |
+| `LeanDLRA.AugmentationRank.Examples.rotSolution` | def | [Research/RankOneGalerkinBarrier.lean:57](../LeanDLRA/Research/RankOneGalerkinBarrier.lean#L57) | The exact solution `A(t) = (cos t, sin t)ᵀ e₁ᵀ` of `A' = W A`, `A(0) = e₁ e₁ᵀ`. |
 | `LeanDLRA.StochasticDescent.augBasis` | def | [Research/SameMinibatchAugmentation.lean:238](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L238) | The same-minibatch augmentation `[U₀, A V₀]` of a rank-one basis by the (minibatch) gradient `A`, as in `Û = orth[U₀, G_ξ V₀]`. |
 | `LeanDLRA.StochasticDescent.SameBatchExample.W₀` | def | [Research/SameMinibatchAugmentation.lean:294](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L294) | The current weight `W₀ = e₁ e₁ᵀ`. |
 | `LeanDLRA.StochasticDescent.SameBatchExample.G` | def | [Research/SameMinibatchAugmentation.lean:297](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L297) | The full gradient `∇ℒ(W₀) = G`. |
@@ -458,6 +475,26 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LeanDLRA.StochasticDescent.SameBatchExample.Pd` | def | [Research/SameMinibatchAugmentation.lean:336](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L336) | The projector onto `span{e₁, (e₂ + e₃)/√2}`. |
 | `LeanDLRA.StochasticDescent.SameBatchExample.loss` | def | [Research/SameMinibatchAugmentation.lean:459](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L459) | The quadratic loss `ℒ(W) = ½ ‖W - W₀ + G‖²` (identity Hessian, `β = 1`). |
 | `LeanDLRA.StochasticDescent.SameBatchExample.grad` | def | [Research/SameMinibatchAugmentation.lean:462](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L462) | Its gradient `∇ℒ(W) = W - W₀ + G`. |
+| `LeanDLRA.StiffGlobalCycle.N` | def | [Research/StiffGlobalCycle.lean:60](../LeanDLRA/Research/StiffGlobalCycle.lean#L60) | The stiff operator `N = -diag(0, λ)`. |
+| `LeanDLRA.StiffGlobalCycle.U₀` | def | [Research/StiffGlobalCycle.lean:63](../LeanDLRA/Research/StiffGlobalCycle.lean#L63) | The left basis `w = e₁` of the start of a cycle. |
+| `LeanDLRA.StiffGlobalCycle.S₀` | def | [Research/StiffGlobalCycle.lean:66](../LeanDLRA/Research/StiffGlobalCycle.lean#L66) | A `1 × 1` coefficient matrix. |
+| `LeanDLRA.StiffGlobalCycle.V₀` | def | [Research/StiffGlobalCycle.lean:69](../LeanDLRA/Research/StiffGlobalCycle.lean#L69) | The right basis `v = (c, s)`. |
+| `LeanDLRA.StiffGlobalCycle.U₁` | def | [Research/StiffGlobalCycle.lean:72](../LeanDLRA/Research/StiffGlobalCycle.lean#L72) | A unit vector `(a, b)` as a left basis. |
+| `LeanDLRA.StiffGlobalCycle.state` | def | [Research/StiffGlobalCycle.lean:76](../LeanDLRA/Research/StiffGlobalCycle.lean#L76) | The state with rows `σ v` and `(a, b)`. |
+| `LeanDLRA.StiffGlobalCycle.forcing` | def | [Research/StiffGlobalCycle.lean:79](../LeanDLRA/Research/StiffGlobalCycle.lean#L79) | The forcing with lower row `(p, q)`. |
+| `LeanDLRA.StiffGlobalCycle.gain` | def | [Research/StiffGlobalCycle.lean:83](../LeanDLRA/Research/StiffGlobalCycle.lean#L83) | `α = g(h) c` with `g = damp (λ s²)`: what the active step produces in the direction `u vᵀ`. |
+| `LeanDLRA.StiffGlobalCycle.kill` | def | [Research/StiffGlobalCycle.lean:86](../LeanDLRA/Research/StiffGlobalCycle.lean#L86) | The forcing in the entry `(u, f)` during the free step; it brings that entry to zero. |
+| `LeanDLRA.StiffGlobalCycle.cycleForcing` | def | [Research/StiffGlobalCycle.lean:91](../LeanDLRA/Research/StiffGlobalCycle.lean#L91) | **The forcing of the cycle**: step `k` of the integration uses `cycleForcing … (k mod 3)`. |
+| `LeanDLRA.StiffGlobalCycle.rowTraj` | def | [Research/StiffGlobalCycle.lean:96](../LeanDLRA/Research/StiffGlobalCycle.lean#L96) | The solution of `X' = X N + forcing … p q` that starts at `state c s σ a₀ b₀`. |
+| `LeanDLRA.StiffGlobalCycle.rowEnd` | def | [Research/StiffGlobalCycle.lean:100](../LeanDLRA/Research/StiffGlobalCycle.lean#L100) | The entry `(u, f)` after a step of size `h` with forcing `q` in that entry. |
+| `LeanDLRA.StiffGlobalCycle.D` | def | [Research/StiffGlobalCycle.lean:147](../LeanDLRA/Research/StiffGlobalCycle.lean#L147) | The derivative `u eᵀ` of the exact solution in the active step. |
+| `LeanDLRA.StiffGlobalCycle.kFree` | def | [Research/StiffGlobalCycle.lean:205](../LeanDLRA/Research/StiffGlobalCycle.lean#L205) | The K-step of the free step. |
+| `LeanDLRA.StiffGlobalCycle.lFree` | def | [Research/StiffGlobalCycle.lean:209](../LeanDLRA/Research/StiffGlobalCycle.lean#L209) | The L-step of the free step. |
+| `LeanDLRA.StiffGlobalCycle.retTraj` | def | [Research/StiffGlobalCycle.lean:310](../LeanDLRA/Research/StiffGlobalCycle.lean#L310) | The return step: all three substeps are the exact flow `t ↦ state + t p u eᵀ`. |
+| `LeanDLRA.StiffGlobalCycle.lRet` | def | [Research/StiffGlobalCycle.lean:314](../LeanDLRA/Research/StiffGlobalCycle.lean#L314) | The L-step of the return step, the transpose of `retTraj`. |
+| `LeanDLRA.StiffGlobalCycle.exactE` | def | [Research/StiffGlobalCycle.lean:451](../LeanDLRA/Research/StiffGlobalCycle.lean#L451) | The entry `(u, e)` of the exact solution after `j` cycles. |
+| `LeanDLRA.StiffGlobalCycle.exactF` | def | [Research/StiffGlobalCycle.lean:454](../LeanDLRA/Research/StiffGlobalCycle.lean#L454) | The entry `(u, f)` of the exact solution after `j` cycles. |
+| `LeanDLRA.StiffGlobalCycle.exactState` | def | [Research/StiffGlobalCycle.lean:459](../LeanDLRA/Research/StiffGlobalCycle.lean#L459) | The exact solution after `j` cycles, started at `σ w vᵀ`. |
 | `LeanDLRA.StiffOrderReduction.damp` | def | [Research/StiffOrderReduction.lean:113](../LeanDLRA/Research/StiffOrderReduction.lean#L113) | `g(t) = (1 - e^{-μ t}) / μ`, the solution of `g' = 1 - μ g`, `g(0) = 0`. |
 | `LeanDLRA.StiffOrderReduction.field` | def | [Research/StiffOrderReduction.lean:153](../LeanDLRA/Research/StiffOrderReduction.lean#L153) | The field `F(t, Y) = Y N + C`: a stiff linear part acting from the right and a constant forcing. |
 | `LeanDLRA.StiffOrderReduction.Data` | structure | [Research/StiffOrderReduction.lean:157](../LeanDLRA/Research/StiffOrderReduction.lean#L157) | The assumptions on the data. |
@@ -480,6 +517,11 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LeanDLRA.StiffOrderReduction.Example.U₁` | def | [Research/StiffOrderReduction.lean:590](../LeanDLRA/Research/StiffOrderReduction.lean#L590) | A vector `(a, b)` as new left basis of the fixed-rank step. |
 | `LeanDLRA.StiffOrderReduction.Example.result` | def | [Research/StiffOrderReduction.lean:640](../LeanDLRA/Research/StiffOrderReduction.lean#L640) | The result of the augmented step of size `h`, before truncation. |
 | `LeanDLRA.StiffOrderReduction.Example.normalDefect` | def | [Research/StiffOrderReduction.lean:776](../LeanDLRA/Research/StiffOrderReduction.lean#L776) | The normal component of the field at the start value, `ε = ‖(1 - P₀) (1 - Q₀) F(0, Y₀)‖`, with the projectors `P₀`, `Q₀` onto the old column and row spaces. |
+| `LeanDLRA.AugmentationRank.Examples.sylSolution` | def | [Research/SylvesterFlows.lean:220](../LeanDLRA/Research/SylvesterFlows.lean#L220) | The exact solution `A(t) = (1, t, 0)ᵀ (1, t)` of `A' = sylField A`, `A(0) = e₁ e₁ᵀ`. |
+| `LeanDLRA.AugmentationRank.Examples.leakLeft` | def | [Research/TwoSidedLeak.lean:748](../LeanDLRA/Research/TwoSidedLeak.lean#L748) | The left factor `C = E₂₁` on `ℝ²`; it maps `e₁` to `e₂`, so the range of `e₁` leaks. |
+| `LeanDLRA.AugmentationRank.Examples.leakStart` | def | [Research/TwoSidedLeak.lean:751](../LeanDLRA/Research/TwoSidedLeak.lean#L751) | The starting basis `e₁ ∈ ℝ²`. |
+| `LeanDLRA.AugmentationRank.Examples.leakDir` | def | [Research/TwoSidedLeak.lean:754](../LeanDLRA/Research/TwoSidedLeak.lean#L754) | The leak direction `e₂ ∈ ℝ²`. |
+| `LeanDLRA.AugmentationRank.Examples.leakCurve` | def | [Research/TwoSidedLeak.lean:758](../LeanDLRA/Research/TwoSidedLeak.lean#L758) | The curve `t ↦ (1, t)ᵀ`: exact solution, K-step solution and Galerkin solution of the field `Y ↦ E₂₁ Y` from `e₁`. |
 
 ## `LeanDLRA/Stability`
 
@@ -584,12 +626,12 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LeanDLRA.kslModeField` | def | [Tensor/Steps.lean:49](../LeanDLRA/Tensor/Steps.lean#L49) | The field of the mode-`i` `K`-substep of the nested Tucker projector-splitting integrator: `x ↦ Q₀ i (P₁ 0 ⋯ P₁ (i-1)) F(t, x)`, i.e. the `K`-step projector of mode `i` applied to the field already projected onto the new bases of the modes `< i`. |
 | `LeanDLRA.IsTuckerKSLStep` | structure | [Tensor/Steps.lean:63](../LeanDLRA/Tensor/Steps.lean#L63) | One step of the **nested Tucker projector-splitting integrator** (Lubich–Vandereycken–Walach, arXiv 1709.02594, §4) from `(t₀, Y₀)` to `(t₁, YC t₁)`, with the `K`-values `K i` *given* (exact or computed by a sub-integrator). |
 | `LeanDLRA.IsExactKSteps` | def | [Tensor/Steps.lean:83](../LeanDLRA/Tensor/Steps.lean#L83) | The `K`-values of a nested Tucker KSL step are the **exact** `K`-substep values: `K i` is the value at `t₁` of the mode-`i` `K`-step trajectory started at `X i`. |
-| `LeanDLRA.IsTTNKSLStep` | def | [Tensor/Steps.lean:123](../LeanDLRA/Tensor/Steps.lean#L123) | One step of the **recursive TTN projector-splitting integrator** (Ceruti–Lubich–Walach, arXiv 2002.11392, §4; for comb trees the TT/MPS integrator of Lubich–Oseledets–Vandereycken, arXiv 1407.2042) with tree shape `τ`, field `F` and doubly-normal bound `ε`, from `(t₀, Y₀)` to `(t₁, Y₁)`: exact flow at a leaf; at an inner node a nested Tucker KSL step (`IsTuckerKSLStep`) whose `K`-values are computed by the same integrator applied to the subtree problems (fields `kslModeField Q₀ P₁ F i`, started at `X i`). |
-| `LeanDLRA.IsTTNBUGStep` | def | [Tensor/Steps.lean:151](../LeanDLRA/Tensor/Steps.lean#L151) | One step of the **(fixed-rank) TTN BUG integrator** (the rank-adaptive TTN integrator of Ceruti–Lubich–Sulz, SINUM 2023, without augmentation and truncation; recursive structure of the projector-splitting TTN integrator of Ceruti–Lubich–Walach, arXiv 2002.11392, §4) for the field `G` from `(t₀, Y₀)` to `(t₁, Y₁)` with frame `fr` and doubly-normal bound `ε`, as a recursive predicate: |
-| `LeanDLRA.IsAugTTNBUGStep` | def | [Tensor/Steps.lean:171](../LeanDLRA/Tensor/Steps.lean#L171) | One step of the **rank-adaptive TTN BUG integrator** (Ceruti–Lubich–Sulz, *Rank-adaptive time integration of tree tensor networks*, SINUM 2023, Algorithms 4–6) with truncation tolerance `ϑ` at every inner node: as `IsTTNBUGStep`, but the new bases contain the old ones (`P₁ i P₀ i = P₀ i`, the QR of `(K i, U⁰ᵢ)`), the subtree steps are again rank-adaptive, the Galerkin step starts at `Y₀` itself, and the result `Y₁` is any truncation of the Galerkin result with `‖Y₁ - YS t₁‖ ≤ ϑ`. |
-| `LeanDLRA.IsParTTNBUGStep` | def | [Tensor/Steps.lean:195](../LeanDLRA/Tensor/Steps.lean#L195) | One step of the **parallel TTN BUG integrator** (Ceruti–Kusch–Lubich–Sulz, arXiv 2412.00858, §4, Algorithms 3–4) with truncation tolerance `ϑ` at every inner node. |
-| `LeanDLRA.IsTTNRecoverable` | def | [Tensor/Steps.lean:217](../LeanDLRA/Tensor/Steps.lean#L217) | **Recursive recoverability** of `x` along a frame: at every inner node, `x` is recoverable from its `K`-step projection `Q₀ i x` modulo the mode class `𝓛 i` (`Exactness.IsRecoverable`, the abstract form of the overlap condition `Uᵢ(t₁)ᵀUᵢ(t₀)` invertible), and recursively so for `Q₀ i x` along the subtree. |
-| `LeanDLRA.modeTangentProj` | def | [Tensor/Steps.lean:227](../LeanDLRA/Tensor/Steps.lean#L227) | The **tangent projector of the Tucker manifold** at `Y₀ = C ×ᵢ U⁰ᵢ`: `T = ∏ᵢ P₀ i + ∑ᵢ (1 - P₀ i) Q₀ i`. |
+| `LeanDLRA.IsTTNKSLStep` | def | [Tensor/Steps.lean:130](../LeanDLRA/Tensor/Steps.lean#L130) | One step of the **recursive TTN projector-splitting integrator** (Ceruti–Lubich–Walach, arXiv 2002.11392, §4) with tree shape `τ`, field `F` and doubly-normal bound `ε`, from `(t₀, Y₀)` to `(t₁, Y₁)`: exact flow at a leaf; at an inner node a nested Tucker KSL step (`IsTuckerKSLStep`) whose `K`-values are computed by the same integrator applied to the subtree problems (fields `kslModeField Q₀ P₁ F i`, started at `X i`). |
+| `LeanDLRA.IsTTNBUGStep` | def | [Tensor/Steps.lean:158](../LeanDLRA/Tensor/Steps.lean#L158) | One step of the **(fixed-rank) TTN BUG integrator** (the rank-adaptive TTN integrator of Ceruti–Lubich–Sulz, SINUM 2023, without augmentation and truncation; recursive structure of the projector-splitting TTN integrator of Ceruti–Lubich–Walach, arXiv 2002.11392, §4) for the field `G` from `(t₀, Y₀)` to `(t₁, Y₁)` with frame `fr` and doubly-normal bound `ε`, as a recursive predicate: |
+| `LeanDLRA.IsAugTTNBUGStep` | def | [Tensor/Steps.lean:178](../LeanDLRA/Tensor/Steps.lean#L178) | One step of the **rank-adaptive TTN BUG integrator** (Ceruti–Lubich–Sulz, *Rank-adaptive time integration of tree tensor networks*, SINUM 2023, Algorithms 4–6) with truncation tolerance `ϑ` at every inner node: as `IsTTNBUGStep`, but the new bases contain the old ones (`P₁ i P₀ i = P₀ i`, the QR of `(K i, U⁰ᵢ)`), the subtree steps are again rank-adaptive, the Galerkin step starts at `Y₀` itself, and the result `Y₁` is any truncation of the Galerkin result with `‖Y₁ - YS t₁‖ ≤ ϑ`. |
+| `LeanDLRA.IsParTTNBUGStep` | def | [Tensor/Steps.lean:202](../LeanDLRA/Tensor/Steps.lean#L202) | One step of the **parallel TTN BUG integrator** (Ceruti–Kusch–Lubich–Sulz, arXiv 2412.00858, §4, Algorithms 3–4) with truncation tolerance `ϑ` at every inner node. |
+| `LeanDLRA.IsTTNRecoverable` | def | [Tensor/Steps.lean:224](../LeanDLRA/Tensor/Steps.lean#L224) | **Recursive recoverability** of `x` along a frame: at every inner node, `x` is recoverable from its `K`-step projection `Q₀ i x` modulo the mode class `𝓛 i` (`Exactness.IsRecoverable`, the abstract form of the overlap condition `Uᵢ(t₁)ᵀUᵢ(t₀)` invertible), and recursively so for `Q₀ i x` along the subtree. |
+| `LeanDLRA.modeTangentProj` | def | [Tensor/Steps.lean:234](../LeanDLRA/Tensor/Steps.lean#L234) | The **tangent projector of the Tucker manifold** at `Y₀ = C ×ᵢ U⁰ᵢ`: `T = ∏ᵢ P₀ i + ∑ᵢ (1 - P₀ i) Q₀ i`. |
 
 ## `LeanDLRA/Tensor/TT`
 
@@ -607,14 +649,16 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LeanDLRA.Tensor.ttObliqueTangentProj` | def | [Tensor/TT/ObliqueProjector.lean:309](../LeanDLRA/Tensor/TT/ObliqueProjector.lean#L309) | The **oblique TT tangent projector** of arXiv 2402.18721, Eq. (24), `P_Y = ∑_{k=1}^{d} P_{≤k-1} P_{>k} - ∑_{k=1}^{d-1} P_{≤k} P_{>k}`, i.e. the core alternating sum `ttTangentSum` of the oblique interface projectors. |
 | `LeanDLRA.Tensor.ttMix` | def | [Tensor/TT/Operations.lean:326](../LeanDLRA/Tensor/TT/Operations.lean#L326) | The cores `A i` for `i < k` followed by the cores `B i` for `i ≥ k` (the mixed canonical form with left-orthogonal `A` and right-orthogonal `B`, arXiv 2603.13990, Eq. (4.4)). |
 | `LeanDLRA.Tensor.ttBond` | def | [Tensor/TT/Operations.lean:341](../LeanDLRA/Tensor/TT/Operations.lean#L341) | The **bond-centred tensor train** (arXiv 2603.13990, Eq. (4.12); the forms (II) and (IV) of arXiv 2512.14950, Eq. (3.6)): `Y⟨k⟩ = X_{≤k} S X_{>k}ᵀ` with left interface of `A`, bond matrix `S` and right interface of `B`. |
-| `LeanDLRA.Tensor.assemble` | def | [Tensor/TT/ProjectorSplitting.lean:84](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L84) | The multi-index with first `k` modes `w`, mode `k` equal to `c` and remaining modes `v`. |
-| `LeanDLRA.Tensor.ttCoreCoeff` | def | [Tensor/TT/ProjectorSplitting.lean:136](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L136) | The **core coefficient** of a tensor `Z` at core `k` with respect to the left interface of `A` and the right interface of `B`: `C̃(α, c, α') = ∑_{w, v} X_{≤k}(w, α) Z(w, c, v) X_{>k+1}(v, α')` (arXiv 2512.14950, Eqs. (3.7), (3.15), (3.23); the core-centred contraction of arXiv 2603.13990, Eqs. (4.22)–(4.23)). |
-| `LeanDLRA.Tensor.ttBondCoeff` | def | [Tensor/TT/ProjectorSplitting.lean:142](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L142) | The **bond coefficient** `S̃ = X_{≤k}ᵀ Z⟨k⟩ X_{>k}` of a tensor `Z` at bond `k` (arXiv 2512.14950, Eqs. (3.11), (3.19); the bond-centred contraction of arXiv 2603.13990, Eq. (4.26)). |
-| `LeanDLRA.Tensor.ttKProj` | def | [Tensor/TT/ProjectorSplitting.lean:262](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L262) | The **forward substep projector** of core `k`: `P_{≤k} P_{>k+1}` (the paper's `P_{≤k-1} P_{>k}` for its core `k + 1`; arXiv 2603.13990, Eq. (4.29), first line). |
-| `LeanDLRA.Tensor.ttSProj` | def | [Tensor/TT/ProjectorSplitting.lean:268](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L268) | The **backward substep projector** of bond `k + 1`: `P_{≤k+1} P_{>k+1}` (arXiv 2603.13990, Eq. (4.29), second line). |
-| `LeanDLRA.Tensor.ttKSLOp` | def | [Tensor/TT/ProjectorSplitting.lean:282](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L282) | The `j`-th signed substep operator of one sweep: `ttKProj A B (j / 2)` for even `j` and `-ttSProj A B (j / 2)` for odd `j`. |
-| `LeanDLRA.Tensor.IsTTKSLDiscreteStep` | structure | [Tensor/TT/ProjectorSplitting.lean:471](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L471) | **One step of the fully discrete TT projector-splitting scheme** (Wang–Hu, arXiv 2512.14950, §3, Steps 1–5, discretize-then-project). |
-| `LeanDLRA.Tensor.IsTTKSLStep` | structure | [Tensor/TT/ProjectorSplitting.lean:658](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L658) | **One step of the TT projector-splitting integrator** (Lubich–Oseledets–Vandereycken, arXiv 1407.2042, §4; the one-site TDVP sweep, arXiv 2603.13990, Eqs. (4.29)–(4.30)), from `Y₀` in form (I) (right-orthogonal old cores `B i`, `i ≥ 1`): for `k < d` the forward K-substep `YK k' = P_{≤k} P_{>k+1} F(t, YK k)`, for `k + 1 < d` the QR step (`kCap`, the new left core `A k` spans `YK k t₁`) and the backward substep `YS k' = -P_{≤k+1} P_{>k+1} F(t, YS k)`, started from the end values of the previous substep. |
+| `LeanDLRA.Tensor.assemble` | def | [Tensor/TT/ProjectorSplitting.lean:86](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L86) | The multi-index with first `k` modes `w`, mode `k` equal to `c` and remaining modes `v`. |
+| `LeanDLRA.Tensor.ttCoreCoeff` | def | [Tensor/TT/ProjectorSplitting.lean:138](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L138) | The **core coefficient** of a tensor `Z` at core `k` with respect to the left interface of `A` and the right interface of `B`: `C̃(α, c, α') = ∑_{w, v} X_{≤k}(w, α) Z(w, c, v) X_{>k+1}(v, α')` (arXiv 2512.14950, Eqs. (3.7), (3.15), (3.23); the core-centred contraction of arXiv 2603.13990, Eqs. (4.22)–(4.23)). |
+| `LeanDLRA.Tensor.ttBondCoeff` | def | [Tensor/TT/ProjectorSplitting.lean:144](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L144) | The **bond coefficient** `S̃ = X_{≤k}ᵀ Z⟨k⟩ X_{>k}` of a tensor `Z` at bond `k` (arXiv 2512.14950, Eqs. (3.11), (3.19); the bond-centred contraction of arXiv 2603.13990, Eq. (4.26)). |
+| `LeanDLRA.Tensor.ttKProj` | def | [Tensor/TT/ProjectorSplitting.lean:264](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L264) | The **forward substep projector** of core `k`: `P_{≤k} P_{>k+1}` (the paper's `P_{≤k-1} P_{>k}` for its core `k + 1`; arXiv 2603.13990, Eq. (4.29), first line). |
+| `LeanDLRA.Tensor.ttSProj` | def | [Tensor/TT/ProjectorSplitting.lean:270](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L270) | The **backward substep projector** of bond `k + 1`: `P_{≤k+1} P_{>k+1}` (arXiv 2603.13990, Eq. (4.29), second line). |
+| `LeanDLRA.Tensor.ttKSLOp` | def | [Tensor/TT/ProjectorSplitting.lean:284](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L284) | The `j`-th signed substep operator of one sweep: `ttKProj A B (j / 2)` for even `j` and `-ttSProj A B (j / 2)` for odd `j`. |
+| `LeanDLRA.Tensor.IsTTKSLDiscreteStep` | structure | [Tensor/TT/ProjectorSplitting.lean:473](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L473) | **One step of the fully discrete TT projector-splitting scheme** (Wang–Hu, arXiv 2512.14950, §3, Steps 1–5, discretize-then-project). |
+| `LeanDLRA.Tensor.IsTTKSLStep` | structure | [Tensor/TT/ProjectorSplitting.lean:660](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean#L660) | **One step of the TT projector-splitting integrator** (Lubich–Oseledets–Vandereycken, arXiv 1407.2042, §4; the one-site TDVP sweep, arXiv 2603.13990, Eqs. (4.29)–(4.30)), from `Y₀` in form (I) (right-orthogonal old cores `B i`, `i ≥ 1`): for `k < d` the forward K-substep `YK k' = P_{≤k} P_{>k+1} F(t, YK k)`, for `k + 1 < d` the QR step (`kCap`, the new left core `A k` spans `YK k t₁`) and the backward substep `YS k' = -P_{≤k+1} P_{>k+1} F(t, YS k)`, started from the end values of the previous substep. |
+| `LeanDLRA.Tensor.TTKSLExample.cores` | def | [Tensor/TT/ProjectorSplittingExactness.lean:286](../LeanDLRA/Tensor/TT/ProjectorSplittingExactness.lean#L286) | The cores `C(α, x, α') = 1` of the all-ones tensor train on `d` one-element modes with one-element bonds. |
+| `LeanDLRA.Tensor.TTKSLExample.c` | def | [Tensor/TT/ProjectorSplittingExactness.lean:289](../LeanDLRA/Tensor/TT/ProjectorSplittingExactness.lean#L289) | The all-ones tensor `c = tt (cores d)`. |
 
 ## `LeanDLRA/Tensor/TTN`
 
@@ -637,6 +681,9 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 
 | Name | Kind | File and line | First sentence of the docstring |
 |---|---|---|---|
+| `LeanDLRA.Tensor.ModeRankLE` | def | [Tensor/Tucker/BUGStep.lean:195](../LeanDLRA/Tensor/Tucker/BUGStep.lean#L195) | **Multilinear rank at most `r`**, without unfoldings: for every mode `i` there is a matrix with `r i` orthonormal columns whose mode-`i` projector fixes `Y`. |
+| `LeanDLRA.TuckerBUG.stepRel` | def | [Tensor/Tucker/BUGStep.lean:253](../LeanDLRA/Tensor/Tucker/BUGStep.lean#L253) | **The Tucker BUG step with multilinear rank `r`, as a relation between tensors** (arXiv:2010.02022, §5.1). |
+| `LeanDLRA.TuckerBUG.normalTriples` | def | [Tensor/Tucker/BUGStep.lean:268](../LeanDLRA/Tensor/Tucker/BUGStep.lean#L268) | The triples (new mode projector, old co-range projector, tensor) at which the Tucker BUG step evaluates the normal part of the field: for some mode `i`, `U` with `r i` orthonormal columns, `V` with `r i` orthonormal columns indexed by the multi-indices of the other modes, and a tensor fixed by both projectors. |
 | `LeanDLRA.Tensor.compEquiv` | def | [Tensor/Tucker/Tangent.lean:134](../LeanDLRA/Tensor/Tucker/Tangent.lean#L134) | The multi-indices of the complement of the complement of mode `μ` are the indices of mode `μ` (the column index set of the co-range unfolding `unfold (· ≠ μ)`). |
 | `LeanDLRA.Tensor.tuckerCLM` | def | [Tensor/Tucker/Tangent.lean:189](../LeanDLRA/Tensor/Tucker/Tangent.lean#L189) | The multilinear product `C ↦ C ×ₖ Uₖ` as a continuous linear map. |
 | `LeanDLRA.Tensor.tuckerTangentGen` | def | [Tensor/Tucker/Tangent.lean:206](../LeanDLRA/Tensor/Tucker/Tangent.lean#L206) | The tangent vectors (4.5) of Bachmayr–Eisenmann–Uschmajew (arXiv 2308.16720, Thm 4.1(iii)) at `X = C ×ₖ Uₖ`: `Ċ ×ₖ Uₖ + ∑ₖ C ×ₖ U̇ₖ ×_{j ≠ k} Uⱼ` with `Ċ` in the tangent space `{Ċ \| P_C Ċ = Ċ}` of the core manifold and `Uₖᵀ U̇ₖ = 0`. |
@@ -660,7 +707,7 @@ The core has 141 modules with 483 definitions (0 of them without a docstring) an
 | `LeanDLRA.FactorizedDynamics.loraPrecond` | def | [Training/Defs.lean:139](../LeanDLRA/Training/Defs.lean#L139) | The operator of factor-wise (LoRA-style) gradient descent on `W = U S Vᵀ`: simultaneous gradient flow in `(U, S, V)` induces `Ẇ = -P̂ ∇L(W)` with `P̂ Z = Z V SᵀS Vᵀ + U Uᵀ Z V Vᵀ + U S Sᵀ Uᵀ Z` (OP-TR-14; from `U̇ = -Z V Sᵀ`, `Ṡ = -Uᵀ Z V`, `V̇ = -Zᵀ U S` and the product rule; arXiv 2410.18720, Sec. 3, prints the middle term with a minus sign). |
 | `LeanDLRA.InexactGradient.ArmijoTest` | def | [Training/Defs.lean:159](../LeanDLRA/Training/Defs.lean#L159) | The inexact Armijo sufficient-decrease test `ℒ̃(x - s d) ≤ ℒ̃(x) - c s ‖d‖²` used by the backtracking line searches of arXiv 2506.21405 (Alg. 2) and arXiv 2409.14938 (Algs. 2–3), with inexact values `ℒ̃` and an inexact search direction `d = g̃`. |
 | `LeanDLRA.InexactGradient.IsDiscreteGradient` | def | [Training/Defs.lean:164](../LeanDLRA/Training/Defs.lean#L164) | A **discrete gradient** of `ℒ` (Gonzalez, McLachlan–Quispel–Robidoux): a map `∇̄ℒ(x, y)` with `ℒ(y) - ℒ(x) = ⟪∇̄ℒ(x, y), y - x⟫` for all `x, y`. |
-| `LeanDLRA.GradientFlowConvergence.precondM` | def | [Training/GradientFlowConvergence.lean:204](../LeanDLRA/Training/GradientFlowConvergence.lean#L204) | The symmetric positive definite matrix `[[1, 2], [2, 5]]` as an operator on `ℝ²`. |
+| `LeanDLRA.GradientFlowConvergence.precondM` | def | [Training/GradientFlowConvergence.lean:169](../LeanDLRA/Training/GradientFlowConvergence.lean#L169) | The symmetric positive definite matrix `[[1, 2], [2, 5]]` as an operator on `ℝ²`. |
 
 ## Definitions without a docstring
 
@@ -675,9 +722,5 @@ Old names that still compile, with a deprecation warning. Use the new name.
 | `LeanDLRA.Exactness.sandwichCLM` | `Frobenius.sandwichCLM` | [LinearAlgebra/Frobenius/Defs.lean:319](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L319) |
 | `LeanDLRA.Exactness.sandwichTransposeCLM` | `Frobenius.sandwichTransposeCLM` | [LinearAlgebra/Frobenius/Defs.lean:320](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L320) |
 | `LeanDLRA.GaugeODE.mulBilin` | `Frobenius.mulCLM` | [LinearAlgebra/Frobenius/Defs.lean:322](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L322) |
-| `LeanDLRA.GaugeODE.mulBilin_apply` | `Frobenius.mulCLM_apply` | [LinearAlgebra/Frobenius/Defs.lean:323](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L323) |
-| `LeanDLRA.GaugeODE.transposeCLM` | `Frobenius.transposeCLM` | [LinearAlgebra/Frobenius/Defs.lean:324](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L324) |
-| `LeanDLRA.GaugeODE.transposeCLM_apply` | `Frobenius.transposeCLM_apply` | [LinearAlgebra/Frobenius/Defs.lean:325](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L325) |
+| `LeanDLRA.GaugeODE.transposeCLM` | `Frobenius.transposeCLM` | [LinearAlgebra/Frobenius/Defs.lean:323](../LeanDLRA/LinearAlgebra/Frobenius/Defs.lean#L323) |
 | `LeanDLRA.StochasticDescent.galerkinProj` | `LeanDLRA.galerkinProj` | [Research/SameMinibatchAugmentation.lean:754](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L754) |
-| `LeanDLRA.StochasticDescent.galerkinProj_apply` | `LeanDLRA.galerkinProj_apply` | [Research/SameMinibatchAugmentation.lean:757](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L757) |
-| `LeanDLRA.StochasticDescent.isOrthProj_galerkinProj` | `LeanDLRA.isOrthProj_galerkinProj` | [Research/SameMinibatchAugmentation.lean:760](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L760) |

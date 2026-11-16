@@ -22,8 +22,8 @@ merge checks that only the standard axioms `propext`, `Classical.choice` and `Qu
 
 <!-- status:start -->
 
-* Core library: 141 modules, 3600 theorems and lemmas, 104 papers cited by arXiv identifier.
-* Catalogue: 361 modules, 13389 theorems and lemmas, 180 papers cited by arXiv identifier.
+* Core library: 171 modules, 4022 theorems and lemmas, 106 papers cited by arXiv identifier.
+* Catalogue: 362 modules, 13391 theorems and lemmas, 180 papers cited by arXiv identifier.
 
 <!-- status:end -->
 

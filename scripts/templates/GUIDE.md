@@ -63,12 +63,27 @@ The theorems of the other fixed-rank integrators have the same hypotheses `hP`, 
 | parallel BUG, fixed rank | `MatrixParallelBUG.exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean) | none; no `hhH` |
 | BUG with explicit Euler substeps | `MatrixEulerBUG.exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/EulerBUGRun.lean) | the field is Lipschitz in time with constant `Lt` |
 | BUG with augmented bases, truncated to rank `r` | `MatrixBUG.trunc_exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/TruncBUGRun.lean) | `hκ : 1 ≤ κ`, the quality of the truncation |
+| rank-adaptive BUG, truncated by a tolerance | `MatrixBUG.adaptive_exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean) | the tolerance `ϑ`, the normal bound for every `r ≥ r₀`, `r₀` below the matrix sizes; the bound has the term `e^{L T} n ϑ` |
+| parallel BUG, truncated by a tolerance | `MatrixParallelBUG.adaptive_exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean) | as the previous row; no `hhH` |
+| dynamical randomized SVD | `MatrixDRSVD.exists_run_norm_sub_le` | @file(LeanDLRA/Randomized/DRSVDRun.lean) | sketch and range bases with `k` and `l` columns, `r ≤ k ≤ l`; the normal bound at `r` and at `k` columns |
+| projected Euler method | `MatrixProjEuler.exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/ProjectedEuler.lean) | the field is Lipschitz in time with `Lt`; `hκ : 1 ≤ κ`, the quality of the retraction |
+| projected Runge–Kutta methods | `MatrixPRK.exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/ProjectedRK.lean) | a Butcher tableau, `hκ`, and as a hypothesis (`hRK`) the order of the classical scheme |
+| BUG for Tucker tensors | `TuckerBUG.exists_run_norm_sub_le` | @file(LeanDLRA/Tensor/Tucker/BUGRun.lean) | the field is on `Tensor ι`; the normal bound is at the triples `TuckerBUG.normalTriples r`; margin `(d + 2) B h` |
 
 The table with the error bounds and the margins is in
 [Getting started, section 3.4](GETTING_STARTED.md#34-other-integrators). A rank that changes from
-step to step, with a truncation to a tolerance, is treated by the step relations of
-@file(LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean) and the grids of
-@file(LeanDLRA/Integrators/MethodTolerance.lean).
+step to step, with a truncation to a tolerance, is treated by the rows for the rank-adaptive
+and the parallel integrator; their step relations are in
+@file(LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean) and the run theorem with a tolerance for
+every step is in @file(LeanDLRA/Integrators/MethodTolerance.lean). For the rows with a
+tolerance, a Tucker tensor or a retraction, the hypotheses on `F` and `A` are the same `hP`,
+`hc`, `hε`; the page [Main results, section 4.3](MAIN_RESULTS.md#43-one-run-theorem-many-methods)
+lists the margin constants.
+
+**If your method is not in the table**, show that it is tube-local (section 4) and apply the same
+theorem; the integrators of the table are the examples, and the shortest ones to read are
+@file(LeanDLRA/Integrators/Matrix/ProjectedEuler.lean) and
+@file(LeanDLRA/Randomized/DRSVDRun.lean).
 
 **Worked case.** @file(Examples/RankAdaptive.lean) runs the BUG integrator with augmented bases
 and truncation to rank one on the problem of the first example, and compares the two bounds:

@@ -15,7 +15,7 @@ The page describes the core library, the modules imported by `LeanDLRA.lean`. Th
 * [Conventions](CONVENTIONS.md): the rules for names, statements and docstrings.
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit 2a551aa (2026-11-16).
+block links to the lines. The blocks were compared with the files at commit b2ba1c6 (2026-11-16).
 Installation is described in the [README](../README.md#using-leandlra-in-your-project).
 
 ## Contents
@@ -390,7 +390,17 @@ others have no hypothesis `hhH`. The bounds and margins differ:
 
 All five are instances of one theorem, `StepMethod.IsTubeLocal.exists_run_norm_sub_le` in
 [`Integrators/Method.lean`](../LeanDLRA/Integrators/Method.lean); see
-[Main results, section 4.3](MAIN_RESULTS.md#43-tube-local-methods-one-theorem-for-all-integrators).
+[Main results, section 4.3](MAIN_RESULTS.md#43-one-run-theorem-many-methods).
+
+Six more methods have run theorems of this kind, with the same hypotheses `hP`, `hc`, `hε` on
+`F` and `A`: the rank-adaptive BUG integrator and the parallel BUG integrator with truncation by
+a tolerance `ϑ` (`MatrixBUG.adaptive_exists_run_norm_sub_le`,
+`MatrixParallelBUG.adaptive_exists_run_norm_sub_le`; the bound has the extra term
+`e^{L T} n ϑ` for `n` steps), the dynamical randomized SVD (`MatrixDRSVD.exists_run_norm_sub_le`),
+the BUG integrator for Tucker tensors (`TuckerBUG.exists_run_norm_sub_le`), the projected Euler
+method (`MatrixProjEuler.exists_run_norm_sub_le`) and the projected Runge–Kutta methods
+(`MatrixPRK.exists_run_norm_sub_le`, which assumes the order of the classical scheme). The table
+of section 4.3 of the page on main results lists them with their margins.
 
 ## 4. Where do I find what
 
@@ -415,15 +425,16 @@ All five are instances of one theorem, `StepMethod.IsTubeLocal.exists_run_norm_s
 | the theorem to instantiate for a new integrator | [`Integrators/Method.lean`](../LeanDLRA/Integrators/Method.lean); for a grid with variable step sizes [`Integrators/MethodGrid.lean`](../LeanDLRA/Integrators/MethodGrid.lean), for steps that end with a truncation to a tolerance [`Integrators/MethodTolerance.lean`](../LeanDLRA/Integrators/MethodTolerance.lean) |
 | the BUG integrator | [`Integrators/Matrix/BUGRun.lean`](../LeanDLRA/Integrators/Matrix/BUGRun.lean) (start here), [`Integrators/Matrix/BUGStep.lean`](../LeanDLRA/Integrators/Matrix/BUGStep.lean), [`Integrators/Matrix/BUG.lean`](../LeanDLRA/Integrators/Matrix/BUG.lean); on a general state space [`Integrators/BUGCore.lean`](../LeanDLRA/Integrators/BUGCore.lean), [`Integrators/BUG.lean`](../LeanDLRA/Integrators/BUG.lean) |
 | the projector-splitting integrator | [`Integrators/Matrix/KSLRun.lean`](../LeanDLRA/Integrators/Matrix/KSLRun.lean), [`Integrators/Matrix/KSLStep.lean`](../LeanDLRA/Integrators/Matrix/KSLStep.lean), [`Integrators/Matrix/ProjectorSplitting.lean`](../LeanDLRA/Integrators/Matrix/ProjectorSplitting.lean); on a general state space [`Integrators/ProjectorSplitting.lean`](../LeanDLRA/Integrators/ProjectorSplitting.lean) |
-| the parallel BUG integrator | [`Integrators/Matrix/ParallelBUGRun.lean`](../LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean), [`Integrators/Matrix/ParallelBUGStep.lean`](../LeanDLRA/Integrators/Matrix/ParallelBUGStep.lean), [`Integrators/Matrix/ParallelBUG.lean`](../LeanDLRA/Integrators/Matrix/ParallelBUG.lean); on a general state space [`Integrators/ParallelBUG.lean`](../LeanDLRA/Integrators/ParallelBUG.lean) |
-| the rank-adaptive BUG integrator | [`Integrators/RankAdaptiveBUG.lean`](../LeanDLRA/Integrators/RankAdaptiveBUG.lean), [`Integrators/Matrix/BUG.lean`](../LeanDLRA/Integrators/Matrix/BUG.lean); as step relations with a truncation by a tolerance or to a fixed rank [`Integrators/Matrix/AdaptiveBUGStep.lean`](../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean), runs with truncation to a fixed rank [`Integrators/Matrix/TruncBUGRun.lean`](../LeanDLRA/Integrators/Matrix/TruncBUGRun.lean); a lower bound and two upper bounds for one step in [`Research/AugmentationRank.lean`](../LeanDLRA/Research/AugmentationRank.lean) |
+| the parallel BUG integrator | [`Integrators/Matrix/ParallelBUGRun.lean`](../LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean), [`Integrators/Matrix/ParallelBUGStep.lean`](../LeanDLRA/Integrators/Matrix/ParallelBUGStep.lean), [`Integrators/Matrix/ParallelBUG.lean`](../LeanDLRA/Integrators/Matrix/ParallelBUG.lean); with truncation by a tolerance [`Integrators/Matrix/ParallelBUGTolRun.lean`](../LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean); on a general state space [`Integrators/ParallelBUG.lean`](../LeanDLRA/Integrators/ParallelBUG.lean) |
+| the rank-adaptive BUG integrator | [`Integrators/RankAdaptiveBUG.lean`](../LeanDLRA/Integrators/RankAdaptiveBUG.lean), [`Integrators/Matrix/BUG.lean`](../LeanDLRA/Integrators/Matrix/BUG.lean); as step relations with a truncation by a tolerance or to a fixed rank [`Integrators/Matrix/AdaptiveBUGStep.lean`](../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean), runs with truncation by a tolerance [`Integrators/Matrix/AdaptiveBUGRun.lean`](../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean), runs with truncation to a fixed rank [`Integrators/Matrix/TruncBUGRun.lean`](../LeanDLRA/Integrators/Matrix/TruncBUGRun.lean); a lower bound and two upper bounds for one step in [`Research/AugmentationRank.lean`](../LeanDLRA/Research/AugmentationRank.lean), a bound for a field with a two-sided term in [`Research/TwoSidedLeak.lean`](../LeanDLRA/Research/TwoSidedLeak.lean) |
 | the BUG integrator with explicit Euler substeps | [`Integrators/Matrix/EulerBUGRun.lean`](../LeanDLRA/Integrators/Matrix/EulerBUGRun.lean) (start here), [`Integrators/Matrix/EulerBUGStep.lean`](../LeanDLRA/Integrators/Matrix/EulerBUGStep.lean); on a general state space [`Integrators/EulerBUG.lean`](../LeanDLRA/Integrators/EulerBUG.lean) |
 | stiff problems: one-sided Lipschitz fields, implicit steps, the primal–dual error representation | [`Foundations/OneSided.lean`](../LeanDLRA/Foundations/OneSided.lean), [`Stiff/ImplicitBUG.lean`](../LeanDLRA/Stiff/ImplicitBUG.lean), [`Stiff/ImplicitSolvability.lean`](../LeanDLRA/Stiff/ImplicitSolvability.lean), [`Stiff/DualWeightedResidual.lean`](../LeanDLRA/Stiff/DualWeightedResidual.lean) |
-| stiff problems: one step for a field with a stiff linear part | [`Stiff/CouplingLocalError.lean`](../LeanDLRA/Stiff/CouplingLocalError.lean) (a local error bound with coupling numbers), [`Research/StiffOrderReduction.lean`](../LeanDLRA/Research/StiffOrderReduction.lean) (a family of problems without a uniform constant) |
-| steps of higher order | [`HighOrder/MidpointBUG.lean`](../LeanDLRA/HighOrder/MidpointBUG.lean), [`HighOrder/MidpointBUGGlobal.lean`](../LeanDLRA/HighOrder/MidpointBUGGlobal.lean) (the global error bound of second order), [`HighOrder/RungeKuttaBUG.lean`](../LeanDLRA/HighOrder/RungeKuttaBUG.lean); local errors of an explicit midpoint update in augmented bases in [`Research/ExplicitMidpointGalerkin.lean`](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean) |
-| steps with interpolation or random sketches | [`Randomized/ObliqueBUG.lean`](../LeanDLRA/Randomized/ObliqueBUG.lean), [`Randomized/RandomizedBUG.lean`](../LeanDLRA/Randomized/RandomizedBUG.lean) |
+| stiff problems: one step for a field with a stiff linear part | [`Stiff/CouplingLocalError.lean`](../LeanDLRA/Stiff/CouplingLocalError.lean) (a local error bound with coupling numbers), [`Research/StiffOrderReduction.lean`](../LeanDLRA/Research/StiffOrderReduction.lean) (a family of problems without a uniform constant for one step), [`Research/StiffGlobalCycle.lean`](../LeanDLRA/Research/StiffGlobalCycle.lean) (a family of problems without a uniform constant for the global error) |
+| steps of higher order | [`HighOrder/MidpointBUG.lean`](../LeanDLRA/HighOrder/MidpointBUG.lean), [`HighOrder/MidpointBUGGlobal.lean`](../LeanDLRA/HighOrder/MidpointBUGGlobal.lean) (the global error bound of second order), [`HighOrder/RungeKuttaBUG.lean`](../LeanDLRA/HighOrder/RungeKuttaBUG.lean); local errors of an explicit midpoint update in augmented bases in [`Research/ExplicitMidpointGalerkin.lean`](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean), the size of its capture defects in [`Research/ExplicitMidpointCapture.lean`](../LeanDLRA/Research/ExplicitMidpointCapture.lean) |
+| projected Euler and projected Runge–Kutta methods | [`Integrators/Matrix/ProjectedEuler.lean`](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean), [`Integrators/Matrix/ProjectedRK.lean`](../LeanDLRA/Integrators/Matrix/ProjectedRK.lean) (runs and global error), [`HighOrder/ProjectedRK.lean`](../LeanDLRA/HighOrder/ProjectedRK.lean) (stage analysis), [`Integrators/Matrix/FlowDistance.lean`](../LeanDLRA/Integrators/Matrix/FlowDistance.lean) (distance of the exact solution to the matrices of rank at most `r`) |
+| steps with interpolation or random sketches | [`Randomized/ObliqueBUG.lean`](../LeanDLRA/Randomized/ObliqueBUG.lean), [`Randomized/RandomizedBUG.lean`](../LeanDLRA/Randomized/RandomizedBUG.lean); the dynamical randomized SVD as a step relation [`Randomized/DRSVDStep.lean`](../LeanDLRA/Randomized/DRSVDStep.lean) and its runs [`Randomized/DRSVDRun.lean`](../LeanDLRA/Randomized/DRSVDRun.lean) |
 | conservation and energy stability | [`Stability/Conservation.lean`](../LeanDLRA/Stability/Conservation.lean), [`Stability/Energy.lean`](../LeanDLRA/Stability/Energy.lean) |
-| tensors: Tucker format, tensor trains, tree tensor networks | [`Tensor/Defs.lean`](../LeanDLRA/Tensor/Defs.lean), [`Tensor/Tucker/`](../LeanDLRA/Tensor/Tucker/), [`Tensor/TT/`](../LeanDLRA/Tensor/TT/), [`Tensor/TTN/`](../LeanDLRA/Tensor/TTN/), [`Integrators/TuckerBUG.lean`](../LeanDLRA/Integrators/TuckerBUG.lean), [`Integrators/TuckerBUGCore.lean`](../LeanDLRA/Integrators/TuckerBUGCore.lean); the step predicates of the tensor integrators on a general state space in [`Tensor/Steps.lean`](../LeanDLRA/Tensor/Steps.lean), the theorems about them in [`Tensor/TTN/Abstract/`](../LeanDLRA/Tensor/TTN/Abstract/) |
+| tensors: Tucker format, tensor trains, tree tensor networks | [`Tensor/Defs.lean`](../LeanDLRA/Tensor/Defs.lean), [`Tensor/Tucker/`](../LeanDLRA/Tensor/Tucker/), [`Tensor/TT/`](../LeanDLRA/Tensor/TT/), [`Tensor/TTN/`](../LeanDLRA/Tensor/TTN/), [`Integrators/TuckerBUG.lean`](../LeanDLRA/Integrators/TuckerBUG.lean), [`Integrators/TuckerBUGCore.lean`](../LeanDLRA/Integrators/TuckerBUGCore.lean); the Tucker BUG step as a step relation and its runs [`Tensor/Tucker/BUGStep.lean`](../LeanDLRA/Tensor/Tucker/BUGStep.lean), [`Tensor/Tucker/BUGRun.lean`](../LeanDLRA/Tensor/Tucker/BUGRun.lean); the step predicates of the tensor integrators on a general state space in [`Tensor/Steps.lean`](../LeanDLRA/Tensor/Steps.lean), the theorems about them in [`Tensor/TTN/Abstract/`](../LeanDLRA/Tensor/TTN/Abstract/) |
 | kinetic equations | [`Kinetic/Defs.lean`](../LeanDLRA/Kinetic/Defs.lean) (definitions), [`Kinetic/LowRank.lean`](../LeanDLRA/Kinetic/LowRank.lean) (the rank of the low-rank ansatz) and [`Kinetic/Stencils.lean`](../LeanDLRA/Kinetic/Stencils.lean) (products and transposes of the periodic difference matrices). The core has no error theorem for kinetic equations; results of single papers are in the catalogue folder [`Literature/Kinetic/`](../LeanDLRA/Literature/Kinetic/). |
 | low-rank training | [`Training/Defs.lean`](../LeanDLRA/Training/Defs.lean), [`Training/Descent.lean`](../LeanDLRA/Training/Descent.lean), [`Training/GradientFlowConvergence.lean`](../LeanDLRA/Training/GradientFlowConvergence.lean), [`Training/FederatedDescent.lean`](../LeanDLRA/Training/FederatedDescent.lean) |
 | filtering | [`Filtering/Defs.lean`](../LeanDLRA/Filtering/Defs.lean), [`Stochastic/KalmanBucy.lean`](../LeanDLRA/Stochastic/KalmanBucy.lean) |
@@ -437,7 +448,7 @@ declarations.
 
 The Lean sources below `LeanDLRA/` form two libraries ([STRUCTURE.md](STRUCTURE.md)).
 
-* The **core** is the set of modules imported by `LeanDLRA.lean`, 141 modules at the commit
+* The **core** is the set of modules imported by `LeanDLRA.lean`, 171 modules at the commit
   named above. Its theorems are stated in shared definitions, so they can be combined: the
   solution of one theorem is the solution of the next, a run is a run. This page,
   [Main results](MAIN_RESULTS.md) and [Definitions](DEFINITIONS.md) describe the core only.
@@ -459,7 +470,7 @@ import LeanDLRACatalogue                     -- the core and the catalogue
 A single module can be imported in the same way; the theorem of section 3 is in the module that
 the root file of the core imports with the line
 
-[`LeanDLRA.lean`, line 42](../LeanDLRA.lean#L42):
+[`LeanDLRA.lean`, line 50](../LeanDLRA.lean#L50):
 
 ```lean
 import LeanDLRA.Integrators.Matrix.BUGRun
