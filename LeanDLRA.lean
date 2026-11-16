@@ -27,6 +27,7 @@ import LeanDLRA.Foundations.OneSided
 import LeanDLRA.Foundations.Projector
 import LeanDLRA.HighOrder.MidpointBUG
 import LeanDLRA.HighOrder.MidpointBUGGlobal
+import LeanDLRA.HighOrder.ProjectedRK
 import LeanDLRA.HighOrder.RungeKuttaBUG
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.BUGCore
@@ -104,8 +105,10 @@ import LeanDLRA.Research.AugmentationRank
 import LeanDLRA.Research.DataDrivenErrorRecursion
 import LeanDLRA.Research.ExplicitMidpointCapture
 import LeanDLRA.Research.ExplicitMidpointGalerkin
+import LeanDLRA.Research.FederatedDescentThreshold
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.SameMinibatchAugmentation
+import LeanDLRA.Research.StiffGlobalCycle
 import LeanDLRA.Research.StiffOrderReduction
 import LeanDLRA.Stability.Conservation
 import LeanDLRA.Stability.Energy
