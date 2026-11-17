@@ -483,6 +483,29 @@ example {lam h : ℝ} (hlam : 0 ≤ lam) (hh : 0 < h) :
     sub_self, norm_zero, left_galerkin_sub_lstep, norm_forcing_sub_left] at key
   linarith
 
+/-- Non-vacuity of `IsRankAdaptiveBUGStep.of_field_eqOn` with nonzero data: the step `step` of
+the example, for every stiffness `λ` and every `h > 0`, is also a step for the field that agrees
+with `field λ` up to the time `h` and has the additional forcing `(t - h) D` after it. -/
+example (lam : ℝ) {h : ℝ} (hh : 0 < h) :
+    IsRankAdaptiveBUGStep (fun t x => field lam t x + (max t h - h) • D) 4 0 (leftProj U₀)
+      (rightProj V₀) (leftProj U₀) (rightProj Va) 0 h Y₀ (fun _ => Y₀) (fun t => Y₀ + t • W)
+      (fun t => Y₀ + t • W) (Y₀ + h • W) :=
+  (step lam h).of_field_eqOn hh
+    (fun t ht x => by simp only [max_eq_right ht.2.le, sub_self, zero_smul, add_zero])
+    (fun t ht x => show field lam t x + (max t h - h) • D = field lam 0 x + (max 0 h - h) • D from
+      congrArg₂ (· + ·) rfl (by rw [max_eq_right ht.2, max_eq_right hh.le]))
+
+/-- Non-vacuity of `IsRankAdaptiveBUGStep.norm_forcing_sub_augLeft_le_of_eqOn` with nonzero
+data: for the step `step` of the example and every stiffness `λ`, the constant forcing
+`D - Y₀ (λ N₁)` lies in the augmented column space up to `ε = 4`. By `norm_forcing_sub_left`
+the bound is attained. -/
+example (lam : ℝ) {h : ℝ} (hh : 0 < h) :
+    ‖(D - Y₀ * (lam • N₁))
+      - (leftProj U₀ : Matrix (Fin 2) (Fin 3) ℝ →L[ℝ] Matrix (Fin 2) (Fin 3) ℝ)
+        (D - Y₀ * (lam • N₁))‖ ≤ 4 :=
+  (step lam h).norm_forcing_sub_augLeft_le_of_eqOn (𝓛 := stiffOp lam) (fun _ _ _ => rfl)
+    (stiffOp_symm lam) (leftProj_stiffOp lam) (fun x => leftProj_rightProj_comm U₀ V₀ x) hh
+
 end StiffCouplingExample
 
 end LeanDLRA

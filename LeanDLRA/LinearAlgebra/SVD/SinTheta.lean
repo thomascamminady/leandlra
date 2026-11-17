@@ -562,4 +562,97 @@ theorem davisKahan {d r : ℕ} (hn : finrank ℝ E = d) {T T' : E →ₗ[ℝ] E}
     _ ≤ ε / δ * ‖x‖ := mul_le_mul hCn hξn (norm_nonneg _) (by positivity)
     _ = ε * ‖x‖ / δ := by ring
 
+/-! ### Examples -/
+
+section Examples
+
+/-- The `2 × 2` matrix `e₁ e₁ᵀ`. -/
+local notation "A₂" => (!![1, 0; 0, 0] : Matrix (Fin 2) (Fin 2) ℝ)
+
+/-- A `2 × 2` matrix with first column `e₁` that is not a multiple of `e₁ e₁ᵀ`. -/
+local notation "B₂" => (!![1, 1 / 2; 0, 1 / 4] : Matrix (Fin 2) (Fin 2) ℝ)
+
+/-- `σ₁(e₁ e₁ᵀ) = 0`: the matrix has rank one. -/
+private theorem singularValues_one_le_zero : (toEuclideanLin A₂).singularValues (0 + 1) ≤ 0 := by
+  have hA : A₂ = !![(1 : ℝ); 0] * (!![(1 : ℝ); 0])ᵀ := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply]
+  have hr : (A₂).rank ≤ 0 + 1 := by
+    rw [hA]
+    exact (rank_mul_le_left _ _).trans ((rank_le_width _).trans (by simp))
+  have h := singularValues_le_specNorm_sub A₂ _ hr
+  rw [sub_self] at h
+  simpa [specNorm] using h
+
+/-- `σ₀(B₂) ≥ 1`: `B₂ e₁ = e₁`. -/
+private theorem one_le_singularValues_zero : (1 : ℝ) ≤ (toEuclideanLin B₂).singularValues 0 := by
+  rw [← specNorm_eq_singularValues_zero]
+  have hs : toEuclideanLin B₂ (EuclideanSpace.single 0 1) = EuclideanSpace.single 0 1 := by
+    ext i
+    fin_cases i <;> simp [Matrix.toEuclideanLin, Matrix.toLpLin_apply]
+  have h := norm_toEuclideanLin_le B₂ (EuclideanSpace.single 0 1)
+  rw [hs] at h
+  simpa using h
+
+/-- `wedin_frobenius`, `wedin_specNorm` and `norm_truncation_sub_le_of_gap` for the `2 × 2`
+matrices `A = e₁ e₁ᵀ` and `B = [1, 1/2; 0, 1/4]` with `r = 0`: `σ₁(A) = 0` and `σ₀(B) ≥ 1`, so
+the gap holds with `δ = 1`. -/
+example :
+    ‖(1 - topRightSingularVectors A₂ (0 + 1) * (topRightSingularVectors A₂ (0 + 1))ᵀ) *
+        topRightSingularVectors B₂ (0 + 1)‖ ≤ √2 * ‖B₂ - A₂‖ / 1 ∧
+    specNorm ((1 - topRightSingularVectors A₂ (0 + 1) * (topRightSingularVectors A₂ (0 + 1))ᵀ) *
+        topRightSingularVectors B₂ (0 + 1)) ≤ specNorm (B₂ - A₂) / 1 ∧
+    ‖truncation B₂ (0 + 1) - truncation A₂ (0 + 1)‖ ≤
+      (1 + √2 * ((toEuclideanLin A₂).singularValues 0 +
+        (toEuclideanLin A₂).singularValues (0 + 1)) / 1) * ‖B₂ - A₂‖ := by
+  have hgap : (toEuclideanLin A₂).singularValues (0 + 1) + 1 ≤
+      (toEuclideanLin B₂).singularValues 0 := by
+    linarith [singularValues_one_le_zero, one_le_singularValues_zero]
+  exact ⟨wedin_frobenius _ _ 0 one_pos hgap, wedin_specNorm _ _ 0 one_pos hgap,
+    norm_truncation_sub_le_of_gap _ _ 0 one_pos hgap⟩
+
+/-- `davisKahan` on `ℝ²` with `r = 0`: `T = diag(1, 0)` and `T' = T + (1/10) id` are symmetric,
+`‖T' x - T x‖ = ‖x‖ / 10`, `λ₁(T) ≤ 0` and `λ₀(T') ≥ 11/10`, so the gap holds with `δ = 1`. The
+top eigenvector of `T'` has a squared component of at most `1/100` in the bottom eigenspace
+of `T`. -/
+example :
+    let T := toEuclideanLin A₂
+    let T' := T + (1 / 10 : ℝ) • LinearMap.id
+    ∃ (hT : T.IsSymmetric) (hT' : T'.IsSymmetric) (hn : finrank ℝ (EuclideanSpace ℝ (Fin 2)) = 2),
+      ∑ j ∈ univ.filter (fun j : Fin 2 ↦ 0 < (j : ℕ)),
+          ⟪hT.eigenvectorBasis hn j, hT'.eigenvectorBasis hn 0⟫ ^ 2 ≤
+        (1 / 10 * ‖hT'.eigenvectorBasis hn 0‖ / 1) ^ 2 := by
+  intro T T'
+  have hT : T.IsSymmetric := by
+    refine Matrix.isSymmetric_toEuclideanLin_iff.mpr ?_
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp
+  have hT' : T'.IsSymmetric := hT.add (LinearMap.IsSymmetric.id.smul (by simp))
+  have hn : finrank ℝ (EuclideanSpace ℝ (Fin 2)) = 2 := by simp
+  refine ⟨hT, hT', hn, ?_⟩
+  have hε : ∀ x, ‖T' x - T x‖ ≤ 1 / 10 * ‖x‖ := fun x => by
+    have e : T' x - T x = (1 / 10 : ℝ) • x := by simp [T']
+    rw [e, norm_smul]
+    norm_num
+  have hu : ∀ i : Fin 2, ‖EuclideanSpace.single i (1 : ℝ)‖ = 1 := fun i => by simp
+  have e1 : T (EuclideanSpace.single 1 1) = 0 := by
+    ext i
+    fin_cases i <;> simp [T, Matrix.toEuclideanLin, Matrix.toLpLin_apply]
+  have e0 : T' (EuclideanSpace.single 0 1) = (11 / 10 : ℝ) • EuclideanSpace.single 0 1 := by
+    ext i
+    fin_cases i <;> simp [T', T, Matrix.toEuclideanLin, Matrix.toLpLin_apply]
+    norm_num
+  have hr : 0 + 1 < 2 := by norm_num
+  have h1 := hT.le_re_inner_of_repr_eq_zero hn ⟨0 + 1, hr⟩ (x := EuclideanSpace.single 1 1)
+    (fun i hi => by fin_cases i <;> simp at hi)
+  have h0 := hT'.re_inner_le_of_repr_eq_zero hn ⟨0, by omega⟩ (x := EuclideanSpace.single 0 1)
+    (fun i hi => by fin_cases i <;> simp at hi)
+  rw [e1, inner_zero_left, hu, one_pow, mul_one, RCLike.re_to_real] at h1
+  rw [e0, real_inner_smul_left, real_inner_self_eq_norm_sq, hu, one_pow, mul_one, mul_one,
+    RCLike.re_to_real] at h0
+  exact davisKahan hn hT hT' one_pos hε hr (by linarith)
+    (Submodule.subset_span (Set.mem_image_of_mem _ (by simp)))
+
+end Examples
+
 end LeanDLRA.SinTheta

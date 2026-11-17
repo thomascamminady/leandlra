@@ -379,6 +379,70 @@ example {h : ℝ} (hh : 0 < h) :
     by rw [map_dyadicTrajectory_add hh h𝓛 hc, norm_dyadicVelocity_zero he],
     sqrt_mul_norm_le_sum_norm_map_sub hh he h𝓛 hc⟩
 
+/-- Non-vacuity of `hasDerivAt_dyadicTrajectory` with nonzero data: on `ℂ` with the two modes
+`1` and `i`, the stationary point `1` and the step size `h = 1`, the trajectory has the velocity
+`dyadicVelocity` at every time. -/
+example (t : ℝ) :
+    HasDerivAt (dyadicTrajectory (fun k => Complex.I ^ k) 1 1 2)
+      (dyadicVelocity (fun k => Complex.I ^ k) 1 2 t) t :=
+  hasDerivAt_dyadicTrajectory one_pos t
+
+/-- Non-vacuity of `sqrt_mul_norm_le_sum_of_forall_norm_map_sub_le` with nonzero data: in the
+example of `sqrt_mul_norm_le_sum_norm_map_sub` (two modes on `ℂ`, four steps of size `h`) the
+velocity has norm at most `2` at every time `t ≥ 0`, so `μₙ = 4` bounds the change of the
+velocity on every step. The velocity at the start has norm `√2`, and the bound reads
+`(√2 / 4) √2 ≤ 16`. -/
+example {h : ℝ} (hh : 0 < h) :
+    ∃ (𝓛 : ℂ →L[ℝ] ℂ) (x : ℝ → ℂ), (∀ z, ⟪𝓛 z, z⟫ ≤ 0) ∧ ‖𝓛 (x 0) + 0‖ = √(2 : ℕ) ∧
+      (∀ n : ℕ, n < 2 ^ 2 → ∀ t ∈ Icc ((n : ℝ) * h) ((n + 1) * h),
+        ‖𝓛 (x t - x (n * h))‖ ≤ 4) ∧
+      √(2 : ℕ) / 4 * ‖𝓛 (x 0) + 0‖ ≤ ∑ _n ∈ Finset.range (2 ^ 2), (4 : ℝ) := by
+  obtain ⟨𝓛, h𝓛def⟩ : ∃ 𝓛 : ℂ →L[ℝ] ℂ, 𝓛 = -(dyadicRate h 0) • Complex.reCLM.smulRight (1 : ℂ)
+      - dyadicRate h 1 • Complex.imCLM.smulRight Complex.I := ⟨_, rfl⟩
+  obtain ⟨e, hedef⟩ : ∃ e : ℕ → ℂ, e = fun k => if k = 0 then 1 else Complex.I := ⟨_, rfl⟩
+  have he : ∀ j < 2, ∀ k < 2, ⟪e j, e k⟫ = if j = k then 1 else 0 := by
+    intro j hj k hk
+    interval_cases j <;> interval_cases k <;> simp [hedef, Complex.inner]
+  have h𝓛 : ∀ k < 2, 𝓛 (e k) = -(dyadicRate h k) • e k := by
+    intro k hk
+    interval_cases k <;> simp [hedef, h𝓛def]
+  have hc : 𝓛 0 + 0 = 0 := by simp
+  have hdiss : ∀ z, ⟪𝓛 z, z⟫ ≤ 0 := by
+    intro z
+    have key : ⟪𝓛 z, z⟫ = -(dyadicRate h 0 * z.re ^ 2 + dyadicRate h 1 * z.im ^ 2) := by
+      simp [h𝓛def, Complex.inner]
+      ring
+    rw [key]
+    have h0 := mul_nonneg (dyadicRate_pos hh 0).le (sq_nonneg z.re)
+    have h1 := mul_nonneg (dyadicRate_pos hh 1).le (sq_nonneg z.im)
+    linarith
+  have hF : ∀ t, 𝓛 (dyadicTrajectory e 0 h 2 t) = dyadicVelocity e h 2 t := fun t => by
+    simpa using map_dyadicTrajectory_add hh h𝓛 hc t
+  have hv : ∀ t : ℝ, 0 ≤ t → ‖dyadicVelocity e h 2 t‖ ≤ 2 := by
+    intro t ht
+    have hk : ∀ k ∈ Finset.range 2, ‖Real.exp (-(dyadicRate h k * t)) • e k‖ ≤ 1 := by
+      intro k hk
+      have he1 : ‖e k‖ = 1 := by
+        have hk2 := Finset.mem_range.1 hk
+        interval_cases k <;> simp [hedef]
+      rw [norm_smul, Real.norm_of_nonneg (Real.exp_pos _).le, he1, mul_one, Real.exp_le_one_iff]
+      have := mul_nonneg (dyadicRate_pos hh k).le ht
+      linarith
+    calc ‖dyadicVelocity e h 2 t‖ ≤ ∑ k ∈ Finset.range 2, (1 : ℝ) :=
+          (norm_sum_le _ _).trans (Finset.sum_le_sum hk)
+      _ = 2 := by simp
+  have hμ : ∀ n : ℕ, n < 2 ^ 2 → ∀ t ∈ Icc ((n : ℝ) * h) ((n + 1) * h),
+      ‖𝓛 (dyadicTrajectory e 0 h 2 t - dyadicTrajectory e 0 h 2 (n * h))‖ ≤ 4 := by
+    intro n _ t ht
+    have h0 : 0 ≤ (n : ℝ) * h := mul_nonneg n.cast_nonneg hh.le
+    rw [map_sub, hF, hF]
+    calc _ ≤ ‖dyadicVelocity e h 2 t‖ + ‖dyadicVelocity e h 2 (n * h)‖ := norm_sub_le _ _
+      _ ≤ 2 + 2 := add_le_add (hv t (h0.trans ht.1)) (hv _ h0)
+      _ = 4 := by norm_num
+  exact ⟨𝓛, dyadicTrajectory e 0 h 2, hdiss,
+    by rw [map_dyadicTrajectory_add hh h𝓛 hc, norm_dyadicVelocity_zero he], hμ,
+    sqrt_mul_norm_le_sum_of_forall_norm_map_sub_le hh he h𝓛 hc hμ⟩
+
 end StiffVelocityVariation
 
 end LeanDLRA
