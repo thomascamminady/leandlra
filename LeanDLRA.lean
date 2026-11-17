@@ -40,6 +40,7 @@ import LeanDLRA.HighOrder.MidpointBUGStep
 import LeanDLRA.HighOrder.ProjectedRK
 import LeanDLRA.HighOrder.RungeKuttaBUG
 import LeanDLRA.Integrators.BUG
+import LeanDLRA.Integrators.BUGCapture
 import LeanDLRA.Integrators.BUGCore
 import LeanDLRA.Integrators.Defs
 import LeanDLRA.Integrators.EulerBUG
@@ -52,6 +53,7 @@ import LeanDLRA.Integrators.Matrix.AdaptiveBUGRun
 import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
 import LeanDLRA.Integrators.Matrix.BUG
 import LeanDLRA.Integrators.Matrix.BUGRun
+import LeanDLRA.Integrators.Matrix.BUGRunOneSided
 import LeanDLRA.Integrators.Matrix.BUGStep
 import LeanDLRA.Integrators.Matrix.BUGTube
 import LeanDLRA.Integrators.Matrix.Defs
@@ -114,8 +116,10 @@ import LeanDLRA.Research.AugmentationRank
 import LeanDLRA.Research.DataDrivenErrorRecursion
 import LeanDLRA.Research.ExplicitMidpointCapture
 import LeanDLRA.Research.ExplicitMidpointGalerkin
+import LeanDLRA.Research.ExplicitMidpointRun
 import LeanDLRA.Research.FederatedConvexThreshold
 import LeanDLRA.Research.FederatedDescentThreshold
+import LeanDLRA.Research.FederatedManySteps
 import LeanDLRA.Research.FederatedThreeSteps
 import LeanDLRA.Research.FederatedTwoSteps
 import LeanDLRA.Research.IntegratorErrorOrder

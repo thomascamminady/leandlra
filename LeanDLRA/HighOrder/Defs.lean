@@ -7,8 +7,9 @@ import LeanDLRA.LinearAlgebra.LowRank.Defs
 
 The step of the midpoint basis-update & Galerkin (BUG) integrator for matrices, at the level
 of the factors and as a relation between the old and the new value, and the step of the
-projected Runge–Kutta methods for matrices. The theorems on these definitions are in
-`LeanDLRA/HighOrder/MidpointBUGStep.lean` and `LeanDLRA/Integrators/Matrix/ProjectedRK.lean`.
+projected Runge–Kutta methods and of the explicit midpoint method in augmented bases for
+matrices. The theorems on these definitions are in `LeanDLRA/HighOrder/MidpointBUGStep.lean`,
+`LeanDLRA/Integrators/Matrix/ProjectedRK.lean` and `LeanDLRA/Research/ExplicitMidpointRun.lean`.
 
 ## Main definitions
 
@@ -19,6 +20,10 @@ projected Runge–Kutta methods for matrices. The theorems on these definitions 
 * `LeanDLRA.MatrixPRK.stageDeriv`, `LeanDLRA.MatrixPRK.stageSum`, `LeanDLRA.MatrixPRK.stepRel`:
   the projected stage derivative, the argument of a retraction and the step relation of the
   projected Runge–Kutta methods.
+* `LeanDLRA.ExplicitMidpoint.augmentedRel`: the explicit midpoint step in bases with `2 r`
+  columns, without truncation, as a `StepRel`.
+* `LeanDLRA.ExplicitMidpoint.stepRel`: the same step followed by a best approximation of rank
+  `r`.
 
 ## References
 
@@ -158,5 +163,48 @@ def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) (κ : ℝ)
 end Rel
 
 end MatrixPRK
+
+namespace ExplicitMidpoint
+
+section Rel
+
+variable {m n : Type*} [Fintype m] [Fintype n]
+
+/-- **The explicit midpoint step in augmented bases, without truncation, as a relation between
+matrices.** `augmentedRel F r t₀ t₁ Y₀ Ȳ` holds if, with `h = t₁ - t₀`,
+
+* `Y₀ = U₀ S₀ V₀ᵀ` with `r` orthonormal columns in `U₀` and in `V₀`;
+* `Z = Y₀ + (h/2) P₀ F(t₀, Y₀)` is the explicit predictor, with the tangent projector
+  `P₀ = tangentProj U₀ V₀`, and `G = F(t₀ + h/2, Z)`;
+* `Ua`, `Va` have `2 r` orthonormal columns, the range of `Ua` contains the columns of `U₀` and
+  of `G V₀`, and the range of `Va` those of `V₀` and of `Gᵀ U₀`;
+* `Ȳ = Y₀ + h Ua Uaᵀ G Va Vaᵀ` (`galerkinProj Ua Va`).
+
+The step evaluates `F` twice and solves no differential equation; `Ȳ` has rank at most `2 r`.
+The bases are any orthonormal bases with these properties, and the factorization of `Y₀` is any
+factorization with orthonormal `U₀`, `V₀`. -/
+def augmentedRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
+  fun t₀ t₁ Y₀ Y₁ =>
+    ∃ (U₀ : Matrix m (Fin r) ℝ) (S₀ : Matrix (Fin r) (Fin r) ℝ) (V₀ : Matrix n (Fin r) ℝ)
+      (Ua : Matrix m (Fin (2 * r)) ℝ) (Va : Matrix n (Fin (2 * r)) ℝ) (Z G : Matrix m n ℝ),
+      U₀ᵀ * U₀ = 1 ∧ V₀ᵀ * V₀ = 1 ∧ Y₀ = U₀ * S₀ * V₀ᵀ ∧
+      Z = Y₀ + ((t₁ - t₀) / 2) • tangentProj U₀ V₀ (F t₀ Y₀) ∧
+      G = F (t₀ + (t₁ - t₀) / 2) Z ∧
+      Uaᵀ * Ua = 1 ∧ Vaᵀ * Va = 1 ∧ Ua * Uaᵀ * U₀ = U₀ ∧ Va * Vaᵀ * V₀ = V₀ ∧
+      Ua * Uaᵀ * (G * V₀) = G * V₀ ∧ Va * Vaᵀ * (Gᵀ * U₀) = Gᵀ * U₀ ∧
+      Y₁ = Y₀ + (t₁ - t₀) • galerkinProj Ua Va G
+
+/-- **The step of the explicit midpoint method with rank `r`, as a relation between matrices.**
+`stepRel F r t₀ t₁ Y₀ Y₁` holds if `Y₁` is a best approximation of rank at most `r` to a result
+`Ȳ` of the explicit midpoint step in augmented bases from `Y₀` over `[t₀, t₁]`
+(`ExplicitMidpoint.augmentedRel`): `Y₁` has rank at most `r`, and `‖Y₁ - Ȳ‖` is at most the
+distance `distLR r Ȳ` of `Ȳ` to the matrices of rank at most `r`. -/
+def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
+  fun t₀ t₁ Y₀ Y₁ => ∃ Yh : Matrix m n ℝ, augmentedRel F r t₀ t₁ Y₀ Yh ∧ Y₁.rank ≤ r ∧
+    ‖Y₁ - Yh‖ ≤ distLR r Yh
+
+end Rel
+
+end ExplicitMidpoint
 
 end LeanDLRA
