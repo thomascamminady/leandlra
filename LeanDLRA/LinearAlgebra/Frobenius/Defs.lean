@@ -97,7 +97,7 @@ example : (frobeniusTopologicalSpace : TopologicalSpace (Matrix m n ℝ)) =
 
 /-- `Matrix m n ℝ` is complete for the Frobenius norm. -/
 scoped instance completeSpace : CompleteSpace (Matrix m n ℝ) :=
-  FiniteDimensional.complete ℝ _
+  FiniteDimensional.completeSpace ℝ _
 
 /-! ### The Frobenius norm and inner product -/
 

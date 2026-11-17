@@ -1652,7 +1652,8 @@ example : ∃ U S : Matrix (Fin 2) (Fin 1) ℝ, Uᵀ * U = 1 ∧ Sᵀ * S = 1 �
   have h1 := transpose_mul_obliqueProj hdet
   rw [h] at h1
   have h2 := congrFun (congrFun h1 0) 0
-  simp [U, S, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct] at h2
+  simp [U, S, Matrix.mul_apply, Fin.sum_univ_two, Function.swap,
+    Matrix.vecHead, Matrix.vecTail] at h2
   norm_num at h2
 
 open Matrix in
@@ -1684,12 +1685,14 @@ example :
   have hT0 : tangentProj e e Z = 0 := by
     rw [tangentProj_apply]
     ext i j; fin_cases i <;> fin_cases j <;>
-      simp [e, Z, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+      simp [e, Z, Function.swap,
+        Matrix.vecHead, Matrix.vecTail]
   have hδ : δ = !![-1 / 4, 1 / 2; 1 / 2, 0] := by
     change sketchTangentProj Θ Θ P P Z - tangentProj e e Z = _
     rw [hT0, sub_zero, sketchTangentProj, obliqueTangentProj_sketch_eq hP hP]
     ext i j; fin_cases i <;> fin_cases j <;>
-      norm_num [Θ, P, R, e, Z, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+      norm_num [Θ, P, R, e, Z, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
   have hσδ : Θ * δ * Θᵀ = !![1 / 4] := by
     rw [hδ]; ext i j; fin_cases i; fin_cases j
     simp [Θ, Matrix.mul_apply, Fin.sum_univ_two]; norm_num

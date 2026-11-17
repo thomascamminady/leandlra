@@ -706,7 +706,7 @@ private lemma exE₂_orth : exE₂ᵀ * exE₂ = 1 := by
 private lemma exE₂_proj : 1 - exE₁ * exE₁ᵀ = exE₂ * exE₂ᵀ := by
   ext i j
   fin_cases i <;> fin_cases j <;>
-    simp [exE₁, exE₂, Matrix.mul_apply, Matrix.vecMul, dotProduct]
+    simp [exE₁, exE₂, Matrix.mul_apply, Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 private lemma exE₂_cap (X : Matrix (Fin 2) (Fin 1) ℝ) :
     exE₂ * exE₂ᵀ * ((1 - exE₁ * exE₁ᵀ) * X) = (1 - exE₁ * exE₁ᵀ) * X := by
@@ -721,8 +721,8 @@ private noncomputable def exε : ℝ := ‖(1 - exE₁ * exE₁ᵀ) * exC * (1 -
 private lemma exNormal_ne_zero : (1 - exE₁ * exE₁ᵀ) * exC * (1 - exE₁ * exE₁ᵀ) ≠ 0 := by
   intro h
   have h11 := congrFun (congrFun h 1) 1
-  simp [exE₁, exC, Matrix.mul_apply, Fin.sum_univ_two, Matrix.one_apply, Matrix.vecMul,
-    dotProduct] at h11
+  simp [exE₁, exC, Matrix.mul_apply, Fin.sum_univ_two, Matrix.one_apply, Function.swap,
+    Matrix.vecHead, Matrix.vecTail] at h11
 
 /-- `e₁ e₁ᵀ = [[1, 0], [0, 0]]`. -/
 private lemma exE₁E₁ : exE₁ * exE₁ᵀ = !![1, 0; 0, 0] := by
@@ -877,7 +877,8 @@ private lemma exTr₀ (c : ℝ) (hc : c = 1) :
   rw [augmented_eq_sum]
   ext i j
   fin_cases i <;> fin_cases j <;>
-    simp [exE₁, exE₂, exC, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+    simp [exE₁, exE₂, exC, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 private lemma exTr₁ (c : ℝ) (hc : c = 1) :
     ‖(1 : Matrix (Fin 2) (Fin 2) ℝ) * !![1, 2; 2, 1] * (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ -

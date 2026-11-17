@@ -694,12 +694,12 @@ example : IsDRSVDStep (fun _ _ => Gm) 0 0 (rightProj W) (leftProj Q) 0 1 0
     (Exactness.odeSolution_add_smul_of_const (fun _ _ => rfl) _ 0 1) (by simp [Bs])
     (by simp)
     (by ext i j; fin_cases i <;> fin_cases j <;>
-      simp [Bs, Gm, W, Q, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct])
+      simp [Bs, Gm, W, Q, Matrix.mul_apply, Fin.sum_univ_two, Function.swap, Matrix.vecHead,
+        Matrix.vecTail])
     (fun _ _ => by
       have h0 : Gm - Gm * W * Wᵀ - Q * Qᵀ * (Gm - Gm * W * Wᵀ) = 0 := by
         ext i j; fin_cases i <;> fin_cases j <;>
-          simp [Gm, W, Q, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
-            Matrix.vecHead, Matrix.vecTail]
+          simp [Gm, W, Q, Matrix.vecHead, Matrix.vecTail]
       simp [h0])
     (Exactness.odeSolution_add_smul_of_const (fun _ _ => rfl) _ 0 1) (by simp [Cs])
     (by

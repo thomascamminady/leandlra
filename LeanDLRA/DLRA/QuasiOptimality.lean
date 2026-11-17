@@ -689,7 +689,7 @@ private theorem norm_N₈_le : ‖N₈‖ ≤ 1 / 8 := by
 private theorem smul_e₁_add_eq (t : ℝ) :
     (1 + t) • (e₁ * e₁ᵀ) + N₈ = !![1 + t, 0; 0, 1 / 8] := by
   ext i j
-  fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+  fin_cases i <;> fin_cases j <;> simp [Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 /-- `A t = (1 + t) • e₁ e₁ᵀ + diag(0, 1/8)` is bounded below by `1/8`. -/
 private theorem norm_mul_ge (t : ℝ) (ht : 0 ≤ t) (B : Matrix (Fin 2) Unit ℝ) :
@@ -858,11 +858,11 @@ local notation "N₁₆" => (!![0, 0; 0, 1 / 16] : Matrix (Fin 2) (Fin 2) ℝ)
 private theorem smul_e₁_add_N₁₆ (t : ℝ) :
     (1 + t) • (e₁ * e₁ᵀ) + N₁₆ = !![1 + t, 0; 0, 1 / 16] := by
   ext i j
-  fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+  fin_cases i <;> fin_cases j <;> simp [Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 private theorem smul_e₁_eq (t : ℝ) : (1 + t) • (e₁ * e₁ᵀ) = !![1 + t, 0; 0, 0] := by
   ext i j
-  fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+  fin_cases i <;> fin_cases j <;> simp [Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 private theorem norm_N₁₆_le : ‖N₁₆‖ ≤ 1 / 16 := by
   have h : ‖N₁₆‖ ^ 2 = (1 / 16) ^ 2 := by

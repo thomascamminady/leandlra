@@ -1483,7 +1483,7 @@ theorem u_orth : uᵀ * u = 1 := by
 
 theorem isUnit_u_e₁ : IsUnit (uᵀ * e₁) := by
   rw [Matrix.isUnit_iff_isUnit_det, Matrix.det_unique, isUnit_iff_ne_zero]
-  simp [u, e₁, Matrix.mul_apply]
+  simp [u, e₁, Matrix.mul_apply, Function.swap]
 
 theorem Y₀_eq : e₁ * S₀ * e₁ᵀ = A₀ := by rw [S₀, Matrix.mul_one]; rfl
 

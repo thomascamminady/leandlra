@@ -650,7 +650,7 @@ private theorem one_le_singularValues_smul_c₁ {c : ℝ} (hc : 1 ≤ c) :
     (1 : ℝ) ≤ (toEuclideanLin (c • (c₁ * c₁ᵀ))).singularValues (1 - 1) := by
   have hm : c • (c₁ * c₁ᵀ) = !![c, 0; 0, 0] := by
     ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+    fin_cases i <;> fin_cases j <;> simp [Function.swap, Matrix.vecHead, Matrix.vecTail]
   rw [hm, Nat.sub_self, ← EckartYoung.specNorm_eq_singularValues_zero]
   have hs : toEuclideanLin (!![c, 0; 0, 0] : Matrix (Fin 2) (Fin 2) ℝ)
       (EuclideanSpace.single 0 1) = EuclideanSpace.single 0 c := by
@@ -679,14 +679,16 @@ private theorem tangentProj_v₁_Nᵥ : tangentProj v₁ v₁ Nᵥ = 0 := by
   rw [tangentProj_apply]
   ext i j
   fin_cases i <;> fin_cases j <;>
-    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 /-- `e₂ e₂ᵀ` is normal at `e₁ e₁ᵀ`. -/
 private theorem tangentProjAt_c₁_N₂ : tangentProjAt ((1 : ℝ) • (c₁ * c₁ᵀ)) N₂ = 0 := by
   rw [tangentProjAt_c₁, tangentProj_apply]
   ext i j
   fin_cases i <;> fin_cases j <;>
-    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 /-- `P(e₁ e₁ᵀ) (w wᵀ)` in entries. -/
 private theorem tangentProjAt_c₁_Nᵥ : tangentProjAt ((1 : ℝ) • (c₁ * c₁ᵀ)) Nᵥ =
@@ -694,14 +696,16 @@ private theorem tangentProjAt_c₁_Nᵥ : tangentProjAt ((1 : ℝ) • (c₁ * c
   rw [tangentProjAt_c₁, tangentProj_apply]
   ext i j
   fin_cases i <;> fin_cases j <;>
-    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 /-- `(9/25) v vᵀ - e₁ e₁ᵀ` in entries. -/
 private theorem sub_eq : v₁ * S₉ * v₁ᵀ - (1 : ℝ) • (c₁ * c₁ᵀ) =
     !![-544 / 625, 108 / 625; 108 / 625, 144 / 625] := by
   ext i j
   fin_cases i <;> fin_cases j <;>
-    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 /-- **The constant `1` is attained.** `norm_tangentProjAt_apply_le_of_tangentProj_eq_zero` at
 `X = e₁ e₁ᵀ` (`2 × 2`, `r = 1`, `ρ = 1`), `Y = (9/25) v vᵀ` with `v = (3/5, 4/5)ᵀ` and
@@ -790,7 +794,8 @@ example (B : Matrix (Fin 2) (Fin 2) ℝ) :
     rw [Curvature.tangentProjMat_eq_tangentProj, tangentProj_apply]
     ext i j
     fin_cases i <;> fin_cases j <;>
-      norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+      norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+          Function.swap, Matrix.vecHead, Matrix.vecTail]
   exact ⟨Curvature.norm_tangentProjMat_le_of_tangentProjMat_eq_zero one_pos
       c₁_transpose_mul_self c₁_transpose_mul_self v₁_transpose_mul_self v₁_transpose_mul_self
       one_mul_norm_le_core hNv,

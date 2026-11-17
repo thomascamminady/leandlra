@@ -593,7 +593,8 @@ def U₁ (a b : ℝ) : Matrix (Fin 2) (Fin 1) ℝ := !![a; b]
 local macro "entries" : tactic =>
   `(tactic| (ext i j; fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Matrix.vecMul, Matrix.mulVec, dotProduct, Fin.sum_univ_two,
-      Fin.sum_univ_three, U₀, S₀, V₀, N, C, D, Va, Qm, Rm, C', D', U₁] <;> try ring1))
+      Fin.sum_univ_three, U₀, S₀, V₀, N, C, D, Va, Qm, Rm, C', D', U₁, Function.swap,
+      Matrix.vecHead, Matrix.vecTail] <;> try ring1))
 
 variable {c s lam σ : ℝ}
 

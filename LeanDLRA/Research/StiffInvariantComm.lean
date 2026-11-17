@@ -230,7 +230,8 @@ noncomputable def exact (t : ℝ) : Matrix (Fin 1) (Fin 3) ℝ := a + t • w
 local macro "entries" : tactic =>
   `(tactic| (ext i j; fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Matrix.vecMul, Matrix.mulVec, dotProduct, Fin.sum_univ_two,
-      Fin.sum_univ_three, N, V₀, c, e₂, a, w] <;> try ring))
+      Fin.sum_univ_three, N, V₀, c, e₂, a, w, Function.swap, Matrix.vecHead, Matrix.vecTail] <;>
+      try ring))
 
 lemma orthV₀ : V₀ᵀ * V₀ = 1 := by entries
 

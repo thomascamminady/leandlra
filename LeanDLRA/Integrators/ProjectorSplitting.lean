@@ -906,8 +906,8 @@ theorem normal_le_of_invertible_core {G : Matrix m n ℝ → Matrix m n ℝ} (hG
   set g : ℝ → ℝ := fun η =>
     ‖(1 - leftProj U) ((1 - rightProj V) (G (U * S * Vᵀ + η • (U * Vᵀ))))‖ with hg
   have hgc : Continuous g :=
-    (((1 - leftProj U).comp (1 - rightProj V)).continuous.comp
-      (hG.comp (continuous_const.add (continuous_id.smul continuous_const)))).norm
+    ((1 - leftProj U).continuous.comp ((1 - rightProj V).continuous.comp
+      (hG.comp (continuous_const.add (continuous_id.smul continuous_const))))).norm
   have hmat : ∀ η : ℝ, U * (S + η • 1) * Vᵀ = U * S * Vᵀ + η • (U * Vᵀ) := fun η => by
     rw [Matrix.mul_add, Matrix.add_mul, Matrix.mul_smul, Matrix.smul_mul, Matrix.mul_one]
   have hN : ∀ Z, (1 - tangentProj U V) Z = (1 - U * Uᵀ) * Z * (1 - V * Vᵀ) := fun Z =>

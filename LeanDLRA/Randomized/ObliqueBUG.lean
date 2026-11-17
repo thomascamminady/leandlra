@@ -775,8 +775,8 @@ example : IsObliqueProj (leftOblique !![(1 : ℝ); 0] !![1; 1] :
   refine ⟨isObliqueProj_leftOblique hU hdet, fun h => ?_⟩
   have h1 := congrArg (fun T => T !![(0 : ℝ); 1] 0 0) h
   simp only [leftOblique_apply, leftProj_apply, obliqueProj, hSU, inv_one, Matrix.mul_one] at h1
-  simp [Matrix.mul_apply] at h1
-  simp [Matrix.vecMul, dotProduct] at h1
+  simp [Matrix.mul_apply, Function.swap, Matrix.vecHead,
+    Matrix.vecTail] at h1
 
 end ObliqueExample
 
@@ -871,11 +871,13 @@ example : ∃ η : ℝ, IsObliqueBUGStep (E := Matrix (Fin 2) (Fin 2) ℝ) (fun 
   · intro h
     have h1 := congrArg (fun T => T !![(0 : ℝ), 1; 0, 0] 0 0) h
     simp only [rightOblique_apply, rightProj_apply', ex_obliqueProj] at h1
-    simp [exU, exS, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct] at h1
+    simp [exU, exS, Matrix.mul_apply, Fin.sum_univ_two, Function.swap, Matrix.vecHead,
+      Matrix.vecTail] at h1
   · intro h
     have h1 := congrArg (fun T => T !![(0 : ℝ), 0; 1, 0] 0 0) h
     simp only [leftOblique_apply, leftProj_apply, ex_obliqueProj] at h1
-    simp [exU, exS, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct] at h1
+    simp [exU, exS, Matrix.mul_apply, Fin.sum_univ_two, Function.swap, Matrix.vecHead,
+      Matrix.vecTail] at h1
   · intro h
     have h1 := congrArg (fun T => T 0 0) h
     rw [hC] at h1

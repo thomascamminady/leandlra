@@ -603,7 +603,7 @@ theorem exists_leftProj_ne_tangentProj_of_capture :
   · intro h
     have := congrFun (congrFun h 1) 1
     norm_num [tangentProj_apply, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul,
-      dotProduct, Matrix.transpose_apply] at this
+      dotProduct, Matrix.transpose_apply, Function.swap, Matrix.vecHead, Matrix.vecTail] at this
 
 /-! ### Augmentation by the K-step derivative equals gradient augmentation -/
 

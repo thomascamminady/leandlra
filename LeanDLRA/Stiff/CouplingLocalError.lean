@@ -539,7 +539,8 @@ noncomputable def M₂ : Matrix (Fin 3) (Fin 3) ℝ :=
 local macro "entries" : tactic =>
   `(tactic| (ext i j; fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Matrix.vecMul, Matrix.mulVec, dotProduct, Fin.sum_univ_two,
-      Fin.sum_univ_three, U₀, V₀, Va, N₁, Y₀, D, W, M₁, M₂] <;> try norm_num))
+      Fin.sum_univ_three, U₀, V₀, Va, N₁, Y₀, D, W, M₁, M₂, Function.swap, Matrix.vecHead,
+      Matrix.vecTail] <;> try norm_num))
 
 lemma orthU₀ : U₀ᵀ * U₀ = 1 := by entries
 
@@ -885,7 +886,8 @@ noncomputable def X₂ : Matrix (Fin 2) (Fin 3) ℝ := !![36 / 125, 48 / 125, 0;
 local macro "entries'" : tactic =>
   `(tactic| (ext i j; fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Matrix.vecMul, Matrix.mulVec, dotProduct, Fin.sum_univ_two,
-      Fin.sum_univ_three, V₀, N₁, X₁, X₂] <;> try norm_num))
+      Fin.sum_univ_three, V₀, N₁, X₁, X₂, Function.swap, Matrix.vecHead, Matrix.vecTail] <;>
+      try norm_num))
 
 lemma X₁_mul_V₀ : X₁ * (V₀ * V₀ᵀ) = 0 := by entries'
 

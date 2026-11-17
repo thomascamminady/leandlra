@@ -171,13 +171,15 @@ private theorem krylov_tail {M : E →L[ℝ] E} {a h : ℝ} (ha : ‖M‖ ≤ a)
       z s - ∑ j ∈ range (k + 1), ((s ^ j / (j.factorial : ℝ)) • (M ^ j) (z 0))
     let B : ℝ → ℝ := fun s => (s * a) ^ (k + 1) / ((k + 1).factorial : ℝ) * Real.exp (s * a) * c
     have hfc : ContinuousOn f (Icc 0 h) := by
-      refine hz.cont.sub ?_
-      fun_prop
+      refine hz.cont.sub (continuous_finsetSum _ fun j _ => ?_).continuousOn
+      exact ((continuous_pow j).div_const _).smul continuous_const
     have hf' : ∀ s ∈ Ico 0 h, HasDerivWithinAt f
         (M (z s - ∑ j ∈ range k, ((s ^ j / (j.factorial : ℝ)) • (M ^ j) (z 0)))) (Ici s) s := by
       intro s hs
-      have := (hz.deriv s hs).sub (krylov_poly_deriv M (z 0) k s).hasDerivWithinAt
-      rwa [map_sub]
+      have h1 : HasDerivWithinAt z (M (z s)) (Ici s) s := hz.deriv s hs
+      have h2 := h1.sub (krylov_poly_deriv M (z 0) k s).hasDerivWithinAt
+      rw [← map_sub] at h2
+      exact h2
     have hB : ∀ x, HasDerivAt B ((((k + 1 : ℕ) : ℝ) * (x * a) ^ k * a / ((k + 1).factorial : ℝ)
         * Real.exp (x * a) + (x * a) ^ (k + 1) / ((k + 1).factorial : ℝ) * (Real.exp (x * a) * a))
         * c) x := by
@@ -255,6 +257,17 @@ theorem galerkin_krylov_error {𝒜 R : E →L[ℝ] E} (hR : IsOrthProj R) {k : 
       refine this.trans (le_of_eq ?_)
       ring
 
+attribute [-instance] ContinuousLinearMap.instNPowId in
+/-- The statement of `galerkin_krylov_error` as recorded on v4.36.0-rc2, where `𝒜 ^ j`
+elaborated with `Monoid.toNPow`; Mathlib v4.36.0 elaborates `ContinuousLinearMap.instNPowId`.
+Both forms are the same proposition: this one follows from the theorem by `exact`. -/
+example {𝒜 R : E →L[ℝ] E} (hR : IsOrthProj R) {k : ℕ} {y₀ : E}
+    (hK : ∀ j ≤ k, R ((𝒜 ^ j) y₀) = (𝒜 ^ j) y₀) {h : ℝ} (hh : 0 ≤ h) {x y : ℝ → E}
+    (hx : ODESolution (fun _ v => 𝒜 v) x 0 h) (hx₀ : x 0 = y₀)
+    (hy : ODESolution (fun _ v => R (𝒜 v)) y 0 h) (hy₀ : y 0 = y₀) :
+    ‖y h - x h‖ ≤
+      2 * Real.exp (h * ‖𝒜‖) * (h * ‖𝒜‖) ^ (k + 1) / (k + 1).factorial * ‖y₀‖ := by
+  exact galerkin_krylov_error hR hK hh hx hx₀ hy hy₀
 
 end Galerkin
 

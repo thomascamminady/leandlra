@@ -250,7 +250,7 @@ private theorem one_le_singularValues_smul_col₁ {c : ℝ} (hc : 1 ≤ c) :
     (1 : ℝ) ≤ (toEuclideanLin (c • (col₁ * col₁ᵀ))).singularValues (1 - 1) := by
   have hm : c • (col₁ * col₁ᵀ) = !![c, 0; 0, 0] := by
     ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+    fin_cases i <;> fin_cases j <;> simp [Function.swap, Matrix.vecHead, Matrix.vecTail]
   rw [hm, Nat.sub_self, ← EckartYoung.specNorm_eq_singularValues_zero]
   have hs : toEuclideanLin (!![c, 0; 0, 0] : Matrix (Fin 2) (Fin 2) ℝ)
       (EuclideanSpace.single 0 1) = EuclideanSpace.single 0 c := by
@@ -286,11 +286,12 @@ example : col₁ * col₁ᵀ ∈ tangentSpaceAt (((1 : ℝ) + 0) • (col₁ * c
       (Icc 0 1) 0 := by
     have := (((hasDerivAt_id (0 : ℝ)).const_add 1).smul_const (col₁ * col₁ᵀ)).hasDerivWithinAt
       (s := Icc 0 1)
-    simpa using this
+    simpa only [id_eq, one_smul] using this
   have hs : (𝓝[Icc (0 : ℝ) 1 \ {0}] 0).NeBot := by
     rw [Icc_sdiff_left]
     exact left_nhdsWithin_Ioc_neBot one_pos
-  exact mem_tangentSpaceAt_of_hasDerivWithinAt (r := 1) hX ⟨le_rfl, zero_le_one⟩ hs one_pos
+  exact mem_tangentSpaceAt_of_hasDerivWithinAt (r := 1)
+    (X := fun u : ℝ => (1 + u) • (col₁ * col₁ᵀ)) (t := 0) hX ⟨le_rfl, zero_le_one⟩ hs one_pos
     (fun u hu => rank_smul_col₁ (by linarith [hu.1]))
     (fun u hu => one_le_singularValues_smul_col₁ (by linarith [hu.1]))
 

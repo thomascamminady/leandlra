@@ -1217,11 +1217,10 @@ example :
     koch_lubich_tangent one_pos hU hU hU' hU' hS 1⟩
   · have h00 := congrFun (congrFun h 0) 0
     simp [U, U', S, Matrix.mul_apply, Fin.sum_univ_two, Matrix.sub_apply, Matrix.one_apply,
-      Matrix.vecMul, dotProduct] at h00
+      Matrix.vecHead, Matrix.vecTail, Function.swap] at h00
     norm_num at h00
   · have h00 := congrFun (congrFun h 0) 0
-    simp [tangentProjMat, U, U', Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul,
-      dotProduct] at h00
+    simp [tangentProjMat, U, U', Matrix.vecHead, Matrix.vecTail, Function.swap] at h00
     norm_num at h00
 
 end Frobenius

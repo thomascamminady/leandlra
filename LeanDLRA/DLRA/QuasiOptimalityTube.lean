@@ -232,7 +232,7 @@ private theorem norm_smul_E₂₂_le : ‖(1 / 8 : ℝ) • E₂₂‖ ≤ 1 / 8
 private theorem smul_e₁_add_eq (t : ℝ) :
     (1 + t) • (e₁ * e₁ᵀ) + (1 / 8 : ℝ) • E₂₂ = !![1 + t, 0; 0, 1 / 8] := by
   ext i j
-  fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+  fin_cases i <;> fin_cases j <;> simp [Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 private theorem smul_e₁_add_apply (t : ℝ) :
     ((1 + t) • (e₁ * e₁ᵀ) + (1 / 8 : ℝ) • E₂₂) 1 1 = 1 / 8 := by

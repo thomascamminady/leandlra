@@ -531,8 +531,8 @@ example : ∃ L M₂ M₃ : ℝ,
     all_goals first
       | (simp; done)
       | (norm_num at ht; done)
-      | exact hLZ
-      | (rw [norm_sub_rev, norm_sub_rev (exactSolution _)]; exact hLZ)
+      | with_reducible exact hLZ
+      | (rw [norm_sub_rev, norm_sub_rev (exactSolution _)]; with_reducible exact hLZ)
   refine ⟨L, M₂, M₃, norm_update_sub_le (F := fun _ => rowField) (D := D) (t₀ := 0) (h := 3 / 2)
     (A := exactSolution) (Z := rowPredictor) (G := rowField rowPredictor) (Ua := rowLeft)
     (Va := (1 : Matrix (Fin 2) (Fin 2) ℝ)) hLip

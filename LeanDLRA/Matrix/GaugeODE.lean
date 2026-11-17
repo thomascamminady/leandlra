@@ -790,8 +790,8 @@ lemma factorU_eq (t : ℝ) : (1 - Uf t * (Uf t)ᵀ) * Adf t * V0 * (Sf t)⁻¹ =
   have hs := Real.sin_sq_add_cos_sq t
   ext i j
   fin_cases i <;> fin_cases j <;>
-    simp [Uf, Ud, Adf, V0, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
-      Matrix.transpose_apply, Matrix.of_apply, Matrix.one_apply, Matrix.vecHead, Pi.smul_apply,
+    simp [Uf, Ud, Adf, V0, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply,
+      Matrix.one_apply, Matrix.vecHead, Pi.smul_apply,
       smul_eq_mul, Matrix.sub_apply] <;>
     field_simp <;> ring_nf <;>
     first
@@ -801,23 +801,24 @@ lemma factorU_eq (t : ℝ) : (1 - Uf t * (Uf t)ᵀ) * Adf t * V0 * (Sf t)⁻¹ =
 lemma factorS_eq (t : ℝ) : (Uf t)ᵀ * Adf t * V0 = Real.exp t • 1 := by
   ext i j
   fin_cases i; fin_cases j
-  simp [Uf, Ud, Adf, V0, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
-    Matrix.transpose_apply, Matrix.of_apply]
+  simp [Uf, Ud, Adf, V0, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply,
+    Function.swap, Matrix.vecHead, Matrix.vecTail]
   linear_combination (Real.exp t) * Real.sin_sq_add_cos_sq t
 
 lemma factorV_eq (t : ℝ) : (1 - V0 * V0ᵀ) * (Adf t)ᵀ * Uf t * ((Sf t)⁻¹)ᵀ = 0 := by
   ext i j
   fin_cases i <;> fin_cases j <;>
-    simp [Uf, Ud, Adf, V0, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
-      Matrix.transpose_apply, Matrix.of_apply, Matrix.one_apply]
+    simp [Uf, Ud, Adf, V0, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply,
+      Matrix.one_apply, Function.swap, Matrix.vecHead,
+      Matrix.vecTail]
 
 lemma boundU_eq (t : ℝ) : (Uf t)ᵀ * (Adf t * V0 * (Sf t)⁻¹) = 1 := by
   rw [Sf_inv]
   have e := (Real.exp_pos t).ne'
   ext i j
   fin_cases i; fin_cases j
-  simp [Uf, Ud, Adf, V0, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
-    Matrix.transpose_apply, Matrix.of_apply, Matrix.vecHead, Matrix.smul_vecMul, smul_eq_mul]
+  simp [Uf, Ud, Adf, V0, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply,
+    Matrix.vecHead, Matrix.smul_vecMul, smul_eq_mul]
   field_simp
   linear_combination Real.sin_sq_add_cos_sq t
 
@@ -826,22 +827,21 @@ lemma boundV_eq (t : ℝ) : V0ᵀ * ((Adf t)ᵀ * Uf t * ((Sf t)⁻¹)ᵀ) = 1 :
   have e := (Real.exp_pos t).ne'
   ext i j
   fin_cases i; fin_cases j
-  simp [Uf, Ud, Adf, V0, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
-    Matrix.transpose_apply, Matrix.of_apply, Matrix.vecHead, Pi.smul_apply, smul_eq_mul]
+  simp [Uf, Ud, Adf, V0, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply,
+    Matrix.vecHead, Pi.smul_apply, smul_eq_mul]
   field_simp
   linear_combination Real.sin_sq_add_cos_sq t
 
 lemma gauge_Uf (t : ℝ) : (Uf t)ᵀ * Ud t = 0 := by
   ext i j
   fin_cases i; fin_cases j
-  simp [Uf, Ud, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.transpose_apply,
-    Matrix.of_apply]
+  simp [Uf, Ud, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply]
   ring
 
 lemma orthonormal_Uf (t : ℝ) : (Uf t)ᵀ * Uf t = 1 := by
   ext i j
   fin_cases i; fin_cases j
-  simp [Uf, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.transpose_apply, Matrix.of_apply]
+  simp [Uf, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply]
   linear_combination Real.cos_sq_add_sin_sq t
 
 lemma orthonormal_V0 : V0ᵀ * V0 = 1 := by
@@ -854,8 +854,7 @@ lemma proj_E₂₂ :
     Uf 0 * (Uf 0)ᵀ * E₂₂ + E₂₂ * V0 * V0ᵀ - Uf 0 * (Uf 0)ᵀ * E₂₂ * V0 * V0ᵀ = 0 := by
   ext i j
   fin_cases i <;> fin_cases j <;>
-    simp [Uf, V0, E₂₂, u₁, u₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
-      Matrix.transpose_apply, Matrix.of_apply]
+    simp [Uf, V0, E₂₂, u₁, u₂, Matrix.of_apply, Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 /-- `e₂ e₂ᵀ ≠ 0`. -/
 lemma E₂₂_ne : (0 : Matrix (Fin 2) (Fin 2) ℝ) ≠ E₂₂ := by

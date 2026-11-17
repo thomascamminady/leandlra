@@ -139,15 +139,19 @@ example (h : ℝ) (hh : 0 ≤ h) : ∃ M₂ : ℝ,
   have eN : (0 : ℝ) + ((1 : ℕ) : ℝ) * h = h := by simp
   have hsol := odeSolution_sylSolution h
   have hcont1 : ContinuousOn
-      (fun s => rowFieldLeft 0 * sylSolution s + sylSolution s * rowFieldRight) (Icc 0 h) :=
-    ((Frobenius.leftMulCLM (rowFieldLeft 0)).continuous.comp_continuousOn hsol.cont).add
-      ((Frobenius.rightMulCLM rowFieldRight).continuous.comp_continuousOn hsol.cont)
+      (fun s => rowFieldLeft 0 * sylSolution s + sylSolution s * rowFieldRight) (Icc 0 h) := by
+    have h1 := (Frobenius.leftMulCLM (rowFieldLeft 0)).continuous.comp_continuousOn hsol.cont
+    have h2 := (Frobenius.rightMulCLM rowFieldRight).continuous.comp_continuousOn hsol.cont
+    simpa only [Function.comp_def, Frobenius.leftMulCLM_apply, Frobenius.rightMulCLM_apply,
+      Pi.add_def] using h1.add h2
   have hcont : ContinuousOn
       (fun s => rowFieldLeft 0 * (rowFieldLeft 0 * sylSolution s + sylSolution s * rowFieldRight)
         + (rowFieldLeft 0 * sylSolution s + sylSolution s * rowFieldRight) * rowFieldRight)
-      (Icc 0 h) :=
-    ((Frobenius.leftMulCLM (rowFieldLeft 0)).continuous.comp_continuousOn hcont1).add
-      ((Frobenius.rightMulCLM rowFieldRight).continuous.comp_continuousOn hcont1)
+      (Icc 0 h) := by
+    have h1 := (Frobenius.leftMulCLM (rowFieldLeft 0)).continuous.comp_continuousOn hcont1
+    have h2 := (Frobenius.rightMulCLM rowFieldRight).continuous.comp_continuousOn hcont1
+    simpa only [Function.comp_def, Frobenius.leftMulCLM_apply, Frobenius.rightMulCLM_apply,
+      Pi.add_def] using h1.add h2
   obtain ⟨C, hC⟩ := isCompact_Icc.exists_bound_of_continuousOn hcont
   obtain ⟨Y, hY0, hY1⟩ : ∃ Y : ℕ → Matrix (Fin 3) (Fin 2) ℝ,
       Y 0 = startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ ∧
