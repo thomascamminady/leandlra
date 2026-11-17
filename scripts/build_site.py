@@ -54,8 +54,24 @@ class Decl:
 
     @property
     def api(self) -> str:
-        """Site-relative link to the doc-gen4 entry."""
+        """Site-relative link to the doc-gen4 entry ("" for a catalogue module: the API reference
+        documents the core only)."""
+        if not has_api(self.module):
+            return ""
         return f"docs/{self.module.replace('.', '/')}.html#{self.name}"
+
+
+# The catalogue folders; the API reference (workflow "API docs") documents only the modules
+# outside them, so links into it are written for core modules only.
+CATALOGUE_PREFIXES = tuple(
+    f"LeanDLRA.{folder}."
+    for folder in ("Literature", "OpenProblems", "Novel", "Corrections")
+)
+
+
+def has_api(module: str) -> bool:
+    """Whether the API reference has a page for the module (core modules only)."""
+    return not module.startswith(CATALOGUE_PREFIXES)
 
 
 class Index:
@@ -108,8 +124,9 @@ def load_index() -> Index:
 
 
 def decl_link(d: Decl, label: str | None = None) -> str:
-    """Markdown for a declaration: code link to source plus a small API link."""
-    return f"[`{label or d.name.removeprefix('LeanDLRA.')}`]({d.src}) <sup>[api]({d.api})</sup>"
+    """Markdown for a declaration: code link to source plus a small API link (core only)."""
+    code = f"[`{label or d.name.removeprefix('LeanDLRA.')}`]({d.src})"
+    return f"{code} <sup>[api]({d.api})</sup>" if d.api else code
 
 
 def linkify_names(text: str, index: Index, module: str | None = None) -> str:
@@ -274,7 +291,12 @@ def page_library(index: Index) -> str:
             "",
             (
                 f"{module_title(ROOT / path) if (ROOT / path).exists() else ''} — "
-                f"[source]({REPO_URL}/blob/main/{path}) · [api](docs/{mod.replace('.', '/')}.html)"
+                f"[source]({REPO_URL}/blob/main/{path})"
+                + (
+                    f" · [api](docs/{mod.replace('.', '/')}.html)"
+                    if has_api(mod)
+                    else ""
+                )
             ),
             "",
             '<details markdown="1"><summary>'
