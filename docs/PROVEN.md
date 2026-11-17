@@ -71,6 +71,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`FixedRank/TangentSpace/Curvature`](../LeanDLRA/FixedRank/TangentSpace/Curvature.lean) | Curvature bounds at a matrix, tangent velocities and first-order optimality | 12 |  |
 | [`FixedRank/TangentSpace/Defs`](../LeanDLRA/FixedRank/TangentSpace/Defs.lean) | Definitions: tangent projector and tangent space at a point of the fixed-rank manifold | 2 |  |
 | [`FixedRank/TangentSpace/ProjectorLipschitz`](../LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean) | The Lipschitz constant `1` of the tangent projector | 31 |  |
+| [`FixedRank/TangentSpace/ProjectorSpectral`](../LeanDLRA/FixedRank/TangentSpace/ProjectorSpectral.lean) | The tangent projector on normal vectors, with the spectral norm of the normal vector | 12 |  |
 | [`FixedRank/TangentStepTruncation`](../LeanDLRA/FixedRank/TangentStepTruncation.lean) | Truncating a tangent step: the distance to rank `r` is of second order | 2 | [2111.14540](https://arxiv.org/abs/2111.14540) |
 
 ## The DLRA problem
@@ -86,6 +87,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`DLRA/QuasiOptimalityMargin`](../LeanDLRA/DLRA/QuasiOptimalityMargin.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ / 2` | 10 |  |
 | [`DLRA/QuasiOptimalityNormal`](../LeanDLRA/DLRA/QuasiOptimalityNormal.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ` | 11 |  |
 | [`DLRA/QuasiOptimalitySharp`](../LeanDLRA/DLRA/QuasiOptimalitySharp.lean) | Quasi-optimality of matrix DLRA with the Lipschitz constant `1` of the tangent projector | 11 |  |
+| [`DLRA/QuasiOptimalitySpectral`](../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) | Quasi-optimality of matrix DLRA with the spectral norm of the tail | 11 |  |
 | [`DLRA/QuasiOptimalityTruncation`](../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean) | Quasi-optimality of matrix DLRA against the truncated SVD with a margin below `ρ` | 3 |  |
 | [`DLRA/QuasiOptimalityTube`](../LeanDLRA/DLRA/QuasiOptimalityTube.lean) | Quasi-optimality of dynamical low-rank approximation for a field Lipschitz near the solution | 18 |  |
 
