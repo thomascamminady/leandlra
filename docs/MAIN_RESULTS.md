@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit e362c7c (2026-11-17). A theorem is quoted from its
+files and were compared with them at commit c95ebe0 (2026-11-17). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -2663,21 +2663,19 @@ numerical solution is `3 h`-periodic (`StiffGlobalCycle.exists_cycle`); the exac
 a part that is not damped in every cycle (`StiffGlobalCycle.exists_exact_cycle`). The first
 theorem: if `lam s² h ≥ 2`, the error after `J` cycles is at least `J h / 2`, one sixth of the
 elapsed time `3 J h`. The second theorem: there is no constant `K` such that for all admissible
-parameters, all step sizes `h` and all `J` with `3 J h ≤ 1`, the error after `3 J` steps is at
-most `K (h (1 + |log h|) + s)`. In the proof `s = h`, `lam = 2 / h³` and `3 J h = 1`.
+parameters with `0 < σ` and `σ lam ≤ 1`, all step sizes `h` and all `J` with `3 J h ≤ 1`, the
+error after `J` cycles is at most `K (h (1 + |log h|) + s)`. In the proof `s = h`, `lam = 2 / h³`,
+`σ = h³ / 2` and `3 J h = 1`.
 
 What the family satisfies: the forcing does not depend on the solution, `N` is symmetric negative
 semidefinite, the normal component at the start of the active step is `|s|`, and the truncation
-tolerance is zero. For fixed parameters the forcing is bounded (`StiffGlobalCycle.norm_sq_forcing`),
-but not uniformly over the family used in the second theorem: its proof takes `σ = 1` and
-`lam = 2 / h³`, so the forcing grows like `σ lam s = 2 / h²` as `h → 0`. As stated, the second
-theorem therefore excludes only bounds that do not grow with the size of the forcing; a version with
-`σ lam ≤ 1` (forcing bounded uniformly) is not in the library yet. What the family does not
-satisfy either: regularity of the forcing in time that is uniform in `h`; the forcing jumps at the
-grid points. So the theorem concerns forcing that may vary on the scale of the step. It says
-nothing about forcing with regularity bounded independently of `h`, and nothing about other
-integrators. It concerns the global error and complements section
-7.4, which concerns one step.
+tolerance is zero. Under `σ lam ≤ 1` the forcing is bounded uniformly over the family:
+`StiffGlobalCycle.norm_sq_cycleForcing_le` gives `‖G‖² ≤ 1 + 2 s² ≤ 3` on every step of a cycle.
+What the family does not satisfy: regularity of the forcing in time that is uniform in `h`; the
+forcing jumps at the grid points. So the theorem concerns forcing that may vary on the scale of the
+step. It says nothing about forcing with regularity bounded independently of `h`, and nothing about
+other integrators. It concerns the global error and complements section 7.4, which concerns one
+step.
 
 Source: the theorem cites no theorem of a paper. The module docstring refers to the smoothing
 estimates of arXiv 1803.10473, Assumption 1(a).
