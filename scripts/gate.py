@@ -55,6 +55,10 @@ FORBIDDEN = re.compile(
     re.MULTILINE,
 )
 REMOTE = "git@github.com:thomascamminady/leandlra.git"
+# The pages that quote the library (checked against the sources by the Docs check workflow) are
+# regenerated after each round and committed on top of it, so that every push carries them.
+DOCS = ("make", "docs")
+DOCS_PATHS = ("README.md", "docs")
 # A branch name for `--push-branch` (`main`, or `staging`: then `.github/workflows/promote.yml`
 # fast-forwards `main` to each `staging` commit on which Lean Action CI is green).
 BRANCH = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)*")
@@ -338,6 +342,11 @@ def commit_title(keys: Sequence[str], all_updated: bool) -> str:
 def commit_message(title: str, ops: Sequence[str]) -> str:
     """The commit message of a round."""
     return f"{title}\n\n{' '.join(ops)}\n\n{TRAILER}\n"
+
+
+def docs_message() -> str:
+    """The commit message of the regenerated pages on top of a round."""
+    return f"Docs: regenerate the pages\n\n{TRAILER}\n"
 
 
 def parse_stats(output: str) -> Stats | None:
@@ -633,6 +642,11 @@ class Gate:
         journal: dict[str, Any] = json.loads(self.journal.read_text(encoding="utf-8"))
         if journal["stage"] == "committing" and self.round_commit(journal):
             self.log(f"RECOVER publishing the committed round: {journal['title']}")
+            if (
+                self.round_commit(journal)
+                == self.git("rev-parse", "--short", "HEAD").strip()
+            ):
+                self.regenerate_docs()
             return self.publish(journal)
         self.log(
             f"RECOVER restoring {len(journal['targets'])} targets of an interrupted round "
@@ -871,7 +885,36 @@ class Gate:
                 return self.stop(f"commit failed {out[-800:]}")
             reason = "nothing to commit: every slice is identical to main\n"
             return self.fail(journal, live, "commit", reason)
+        self.regenerate_docs()
         return Attempt("pushed" if self.publish(journal) else "stop")
+
+    def regenerate_docs(self) -> None:
+        """Regenerate the pages of `docs/` from the committed round and commit them on top of it
+        (`round_commit` finds the round below them). Only when the pages are as committed: the gate
+        commits nothing it did not write. A failure is logged and holds nothing back: the round
+        is pushed with the pages as they were, and the pages are as committed again."""
+        paths = [rel for rel in DOCS_PATHS if (self.root / rel).exists()]
+        if not paths:
+            return
+        if self.run("git", "status", "--porcelain", "--", *paths)[1].strip():
+            self.log("DOCSSKIP the pages differ from HEAD; they are not regenerated")
+            return
+        code, out = self.run(*DOCS, timeout=1800)
+        if code == 0:
+            self.run("git", "add", "--", *paths)
+            if self.run("git", "diff", "--cached", "--quiet", "--", *paths)[0] == 0:
+                return
+            code, out = self.run(
+                "git", "commit", "-q", "-m", docs_message(), "--", *paths
+            )
+            if code == 0:
+                return
+        lines = out.strip().splitlines()
+        self.log(f"DOCSFAIL {lines[-1][:160] if lines else f'exit {code}'}")
+        # The pages were as committed before `make docs`, so everything new in them is its own.
+        self.run("git", "reset", "-q", "--", *paths)
+        self.run("git", "checkout", "-q", "--", *paths)
+        self.run("git", "clean", "-fdq", "--", *paths)
 
     def publish(self, journal: dict[str, Any]) -> bool:
         """Push a committed round and close it; False if the gate must stop.  Safe to repeat."""

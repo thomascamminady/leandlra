@@ -42,6 +42,8 @@ class World:
         self.changed: dict[str, int] = {}  # module -> declarations it changes
         self.removed: dict[str, int] = {}  # module -> declarations it removes
         self.push_code = 0
+        self.docs_code = 0  # exit status of `make docs`
+        self.docs_text = ""  # what `make docs` writes into docs/PAGES.md ("" = nothing)
         self.ratchet_code = 0  # exit status of the duplicates ratchet after the dump
         self.environments: list[str] = []  # assignments of `env VAR=... command`
         self.tool_broken = ""  # a rolling.py command that cannot run
@@ -222,6 +224,13 @@ class World:
             )
         if cmd[0] == "git":
             return self.real(*cmd)
+        if cmd == gate.DOCS:
+            if self.docs_text:
+                self.write("docs/PAGES.md", self.docs_text)
+            return (
+                self.docs_code,
+                "" if self.docs_code == 0 else "docs: block differs\n",
+            )
         if cmd[:3] == ("lake", "build", "--wfail") and cmd != gate.CORE_BUILD:
             failed = [m for m in cmd[3:] if m in self.bad_slices]
             if failed:
@@ -334,10 +343,54 @@ def test_stages_run_in_order(world: World) -> None:
         (*gate.TOOL, "fidelity"),
         (*gate.TOOL, "diff"),
         ("git", "commit", "-q", "-m", gate.commit_message("Add 1 slice (A)", ["OP-A"])),
+        gate.DOCS,
         gate.PUSH,
         (*gate.TOOL, "accept"),
     ]
     assert world.commands(*gate.TOOL, "dump") == [(*gate.TOOL, "dump", module)]
+
+
+def test_pages_are_regenerated_on_top_of_the_round(world: World) -> None:
+    world.group("g1", ["A"])
+    world.docs_text = "regenerated\n"
+    assert world.run_gate() == 0
+    assert world.subjects()[:2] == ["Docs: regenerate the pages", "Add 1 slice (A)"]
+    assert world.real("git", "show", "--name-only", "--format=", "HEAD")[1].split() == [
+        "docs/PAGES.md"
+    ]
+    work = [c for c in world.calls if c in (gate.DOCS, gate.PUSH)]
+    assert work == [gate.DOCS, gate.PUSH]
+    assert "PUSHED Add 1 slice (A)" in (world.root / "wip/gate.log").read_text()
+    assert world.real("git", "status", "--porcelain")[1].strip() == ""
+
+
+def test_unchanged_pages_add_no_commit(world: World) -> None:
+    world.group("g1", ["A"])
+    assert world.run_gate() == 0
+    assert world.subjects()[0] == "Add 1 slice (A)"
+
+
+def test_failed_pages_do_not_hold_the_round_back(world: World) -> None:
+    world.group("g1", ["A"])
+    world.docs_text = "half written\n"
+    world.docs_code = 2
+    assert world.run_gate() == 0
+    assert world.subjects()[0] == "Add 1 slice (A)"
+    log = (world.root / "wip/gate.log").read_text()
+    assert "DOCSFAIL docs: block differs" in log
+    assert "PUSHED Add 1 slice (A)" in log
+    assert world.real("git", "status", "--porcelain", "--", "docs")[1].strip() == ""
+
+
+def test_pages_with_local_changes_are_left_alone(world: World) -> None:
+    world.group("g1", ["A"])
+    world.write("docs/draft.md", "mine\n")
+    world.docs_text = "regenerated\n"
+    assert world.run_gate() == 0
+    assert world.subjects()[0] == "Add 1 slice (A)"
+    assert gate.DOCS not in world.calls
+    assert "DOCSSKIP" in (world.root / "wip/gate.log").read_text()
+    assert (world.root / "docs/draft.md").read_text() == "mine\n"
 
 
 def test_several_groups_share_a_round_and_a_commit(world: World) -> None:
