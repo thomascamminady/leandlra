@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit c2f21c1 (2026-11-17). A theorem is quoted from its
+files and were compared with them at commit b5e86df (2026-11-17). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -1072,6 +1072,38 @@ differentiable (section 2.7), so `t ↦ truncation (A t) r` has right derivative
 approximation (section 2.2), and `σ_{r-1}(truncation (A t) r) ≥ ρ` (Weyl). The variant on a tube
 is `IsDLRASolution.norm_sub_truncation_le_integral_of_gap_of_isLipschitzOnTube`.
 
+`IsDLRASolution.norm_sub_le_integral_of_margin` in [`LeanDLRA/DLRA/QuasiOptimalityMargin.lean`, lines 284–295](../LeanDLRA/DLRA/QuasiOptimalityMargin.lean#L284-L295):
+
+```lean
+theorem IsDLRASolution.norm_sub_le_integral_of_margin {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A X X' Y : ℝ → Matrix m n ℝ} {a b L μ ρ θ δ : ℝ}
+    (hY : IsDLRASolution r F Y a b) (hρ : 0 < ρ) (hL : 0 ≤ L) (hF : IsLipschitzField F L)
+    (hA : ODESolution F A a b) (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ)
+    (hXc : ContinuousOn X (Icc a b)) (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = r)
+    (hσ : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hopt : ∀ t ∈ Icc a b, tangentProjAt (X t) (A t - X t) = 0) (hθ : 2 * θ < 1)
+    (hd : ∀ t ∈ Icc a b, ‖X t - A t‖ ≤ θ * ρ) (hδ : ‖Y a - X a‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖Y t - X t‖ ≤
+      Real.exp ((L + 2 * μ / ρ + 2 * μ / ((1 - 2 * θ) * ρ)) * (t - a)) *
+        (δ + (L + 2 * μ / ((1 - 2 * θ) * ρ)) * ∫ s in a..t, ‖X s - A s‖)
+```
+
+The margin `‖X t - A t‖ ≤ ρ / 4` of the first theorem is used once in its proof, to absorb the
+differentiated first-order condition into the left-hand side of `‖X'‖ ≤ ‖P(X) A'‖ +
+‖P(X) (A' - X')‖`. The theorem above replaces it by `‖X t - A t‖ ≤ θ ρ` with any `θ < 1 / 2`
+(`hθ`, `hd`). Then `‖X'‖ ≤ μ / (1 - 2 θ)`
+(`norm_le_div_of_tangentProjAt_sub_eq_zero`), and with `κ = 2 μ / ((1 - 2 θ) ρ)` the bound is
+
+`‖Y t - X t‖ ≤ e^{(L + 2 μ/ρ + κ)(t - a)} (δ + (L + κ) ∫ₐᵗ ‖X s - A s‖ ds)`.
+
+For `θ = 1 / 4` these are the constants of the first theorem of this section, and they are smaller
+for `θ < 1 / 4`; the `example`s at the end of the file restate `dlra_norm_sub_le_integral` and
+`IsDLRASolution.norm_sub_le_integral` and prove them from this theorem with `θ = 1 / 4`. What is
+not shown: the argument stops at `θ < 1 / 2`, since at `θ = 1 / 2` the absorbed inequality says
+nothing; whether a margin up to `ρ` suffices would need a curvature bound for normal directions
+with a constant below the `2` of section 2.4, and the core does not have it.
+
 What is not shown. A DLRA solution `Y` is a hypothesis of all of these theorems; section 3.6
 gives existence only on intervals with `B (b - a) < σ_{r-1}(Y a)`, and the two are not combined
 here. The bound is quasi-optimality in the sense of the time integral of the best-approximation
@@ -1288,37 +1320,45 @@ Instances in the core at the time of writing:
 | projected Euler method | `MatrixProjEuler.isTubeLocal_stepRel` | 0 | `MatrixProjEuler.exists_run_norm_sub_le` | 6.8 |
 | projected Runge–Kutta methods | `MatrixPRK.isTubeLocal_stepRel` | `(1 + κ) α + 1` | `MatrixPRK.exists_run_norm_sub_le` | 6.8 |
 | midpoint BUG with fixed rank (the 4r variant) | `MatrixMidpointBUG.isTubeLocal_stepRel` | 2 | `MatrixMidpointBUG.exists_run_norm_sub_le` | 6.5 |
+| explicit midpoint method in bases with `2 r` columns, truncation to rank `r` | `ExplicitMidpoint.isTubeLocal_stepRel` | 2 | `ExplicitMidpoint.exists_run_norm_sub_le` | 6.6 |
 | BUG for Tucker tensors, fixed multilinear rank | `TuckerBUG.isTubeLocal_stepRel` | `d + 2` | `TuckerBUG.exists_run_norm_sub_le` | 8.2 |
 
-In the first five rows and in the rows for the midpoint BUG integrator, the dynamical randomized
+In the first five rows and in the rows for the two midpoint methods, the dynamical randomized
 SVD and the projected methods the admissible values are the matrices of rank at most `r`; for the
 integrators with a truncation tolerance every matrix is admissible (the set of the numbers of
 columns of a start factorization is `Set.Ici r₀`); for the Tucker integrator they are the tensors
 of multilinear rank at most `r`. The hypotheses on `F` and `A` are the same in all rows, in the
 same order: a `DLRAProblem` on the tube, joint continuity of `F` there, and a bound `ε` on the
 normal part of `F` at the factored points of the tube. The theorems of sections 6.4 and 6.8 have
-more, on the dependence of the field on time; the theorem for the midpoint BUG integrator takes a
-field of class `C²` with bounds on its derivatives (section 6.5); the theorem for the projected
+more, on the dependence of the field on time; the theorems for the two midpoint methods take a
+field of class `C²` with bounds on its derivatives (sections 6.5 and 6.6); the theorem for the
+projected
 Runge–Kutta methods has hypotheses on the order of the classical scheme (section 6.8). The run
 theorem asks for a margin constant of at least 2 (`hκ`). For the integrators whose constant is
-smaller (sections 6.4, 6.5 and 6.8, constant 0, 2 or `(1 + κ) α + 1`), it is used with a larger
+smaller (sections 6.4, 6.5, 6.6 and 6.8, constant 0, 2 or `(1 + κ) α + 1`), it is used with a larger
 constant (`StepMethod.IsTubeLocal.mono`; the midpoint BUG integrator with 3). The integrators with
 a truncation tolerance are instances of the form of the theorem with a tolerance for every step,
 the second theorem below (`StepMethod.IsTubeLocal.exists_run_norm_sub_le_of_tol`), because the
 local error of a step is `h c + ϑ`.
 
-The integrators of sections 6 to 8 that are not rows of the table (the implicit BUG integrator,
-the integrators for tree tensor networks, the midpoint BUG integrator in projector form) and the
+The integrators of sections 6 to 8 that are not rows of the table (the implicit BUG integrator
+in projector form, the integrators for tree tensor networks, the midpoint BUG integrator in
+projector form) and the
 tensor theorems `tucker_global_error_le`, `tucker_global_error_le_of_tube` have error theorems of
 an older form, in which the field satisfies global assumptions or the steps and the exact
 solutions through the numerical values are hypotheses.
+
+The implicit BUG integrator on matrices (section 7.1) is not a row either, for a different
+reason: property (E) asks for a step of every globally Lipschitz field and every step size, and
+a backward Euler stage need not exist for `h L ≥ 1`. Its run theorem is proved directly from the
+form for the uniform grid (`exists_isRun_norm_sub_le_of_tube_uniformGrid`).
 
 **To get an error bound for a method** that is a row of the table, apply its run theorem; the
 guide ([GUIDE.md](GUIDE.md), sections 1 and 2) lists the steps. A method that is not a row has to
 be shown to be tube-local first: existence of a step from every admissible value, invariance of
 the admissible set, and locality (the three fields of `StepMethod.IsTubeLocal`).
 
-Two more forms of the run theorem are in files of their own.
+Three more forms of the run theorem are in files of their own.
 
 `StepMethod.IsTubeLocal.exists_run_norm_sub_le_of_isGrid` in [`LeanDLRA/Integrators/MethodGrid.lean`, lines 62–74](../LeanDLRA/Integrators/MethodGrid.lean#L62-L74):
 
@@ -1355,6 +1395,40 @@ theorem StepMethod.IsTubeLocal.exists_run_norm_sub_le_of_tol [CompleteSpace E]
       ‖Y n - A (t₀ + n * h)‖ ≤ Real.exp (L * T) * (δ + n * ϑ) + T * Real.exp (L * T) * c
 ```
 
+`StepMethod.IsTubeLocal.exists_run_norm_sub_le_of_oneSided` in [`LeanDLRA/Integrators/MethodOneSided.lean`, lines 427–439](../LeanDLRA/Integrators/MethodOneSided.lean#L427-L439):
+
+```lean
+theorem StepMethod.IsTubeLocal.exists_run_norm_sub_le_of_oneSided [CompleteSpace E]
+    (hM : M.IsTubeLocal Adm κ) (hκ : 2 ≤ κ) (hP : DLRAProblem F A t₀ (t₀ + N * h) ρ L B)
+    (hc : ContinuousOn (Function.uncurry F) (tubeSet A t₀ (t₀ + N * h) ρ))
+    (hℓ : IsOneSidedLipschitzFieldOn F (tubeSet A t₀ (t₀ + N * h) ρ) ℓ) (hℓ₀ : 0 ≤ ℓ)
+    (hloc : ∀ n < N, ∀ Y₀ Y₁, Adm Y₀ →
+      ‖Y₀ - A (t₀ + n * h)‖ ≤ Real.exp (ℓ * T) * δ + T * Real.exp (ℓ * T) * c →
+      M F (t₀ + n * h) (t₀ + (n + 1) * h) Y₀ Y₁ →
+      HasLocalError F (t₀ + n * h) (t₀ + (n + 1) * h) Y₀ Y₁ (h * c))
+    (hc₀ : 0 ≤ c) (hh : 0 ≤ h) (hNT : N * h ≤ T) {Y₀ : E} (hY₀ : Adm Y₀)
+    (hδ : ‖Y₀ - A t₀‖ ≤ δ)
+    (hsmall : Real.exp (ℓ * T) * δ + T * Real.exp (ℓ * T) * c + κ * B * h < ρ) :
+    ∃ Y : ℕ → E, Y 0 = Y₀ ∧ IsRun (M F) (uniformGrid t₀ h) N Y ∧ ∀ n ≤ N, Adm (Y n) ∧
+      ‖Y n - A (t₀ + n * h)‖ ≤ Real.exp (ℓ * T) * δ + T * Real.exp (ℓ * T) * c
+```
+
+`StepMethod.IsTubeLocal.exists_run_norm_sub_le_of_oneSided_neg` in [`LeanDLRA/Integrators/MethodOneSided.lean`, lines 466–476](../LeanDLRA/Integrators/MethodOneSided.lean#L466-L476):
+
+```lean
+theorem StepMethod.IsTubeLocal.exists_run_norm_sub_le_of_oneSided_neg [CompleteSpace E]
+    (hM : M.IsTubeLocal Adm κ) (hκ : 2 ≤ κ) (hP : DLRAProblem F A t₀ (t₀ + N * h) ρ L B)
+    (hc : ContinuousOn (Function.uncurry F) (tubeSet A t₀ (t₀ + N * h) ρ))
+    (hℓ : IsOneSidedLipschitzFieldOn F (tubeSet A t₀ (t₀ + N * h) ρ) ℓ) (hℓ₀ : ℓ < 0)
+    (hloc : ∀ n < N, ∀ Y₀ Y₁, Adm Y₀ → ‖Y₀ - A (t₀ + n * h)‖ ≤ δ + (h - ℓ⁻¹) * c →
+      M F (t₀ + n * h) (t₀ + (n + 1) * h) Y₀ Y₁ →
+      HasLocalError F (t₀ + n * h) (t₀ + (n + 1) * h) Y₀ Y₁ (h * c))
+    (hc₀ : 0 ≤ c) (hh : 0 ≤ h) {Y₀ : E} (hY₀ : Adm Y₀) (hδ : ‖Y₀ - A t₀‖ ≤ δ)
+    (hsmall : δ + (h - ℓ⁻¹) * c + κ * B * h < ρ) :
+    ∃ Y : ℕ → E, Y 0 = Y₀ ∧ IsRun (M F) (uniformGrid t₀ h) N Y ∧ ∀ n ≤ N, Adm (Y n) ∧
+      ‖Y n - A (t₀ + n * h)‖ ≤ Real.exp (ℓ * (n * h)) * δ + (h - ℓ⁻¹) * c
+```
+
 The first is the run theorem for a grid `τ 0 ≤ τ 1 ≤ ⋯ ≤ τ N` with variable step sizes
 (`IsGrid τ N`) and a local error bound `δ n` that may depend on the step. The numbers `R n` are
 upper bounds of the error bound at step `n` (`hR`). The local error has to be shown only for
@@ -1371,6 +1445,27 @@ for every step taken. Both theorems cite no paper. The last `example` of
 [`LeanDLRA/Integrators/Matrix/TruncBUGRun.lean`](../LeanDLRA/Integrators/Matrix/TruncBUGRun.lean)
 applies the second to a truncation that is computed only up to an error `ϑ`; the core has no
 other use of the two theorems at the time of writing.
+
+The third form is in
+[`LeanDLRA/Integrators/MethodOneSided.lean`](../LeanDLRA/Integrators/MethodOneSided.lean) (the
+last two statements above). In the proof of the run theorem the Lipschitz constant `L` of the
+field on the tube has two parts: it gives the exact solutions started at the numerical values
+and the steps of the globally Lipschitz extension, and it bounds the distance of two exact
+solutions in the tube. For the second part a one-sided Lipschitz constant `ℓ` of `F` on the tube
+(`IsOneSidedLipschitzFieldOn`, with `ℓ ≤ L`) is enough. For `0 ≤ ℓ` the run satisfies
+
+`‖Y n - A (t₀ + n h)‖ ≤ e^{ℓ T} δ + T e^{ℓ T} c`,
+
+with `ℓ` in place of `L` in the exponent and in the smallness condition. For `ℓ < 0` the first
+theorem is replaced by the second: runs of every length `N` exist, with
+`‖Y n - A (t₀ + n h)‖ ≤ e^{ℓ n h} δ + (h - ℓ⁻¹) c`, and the smallness condition
+`δ + (h - ℓ⁻¹) c + κ B h < ρ` does not contain the final time. What is not shown: `L` stays in the
+hypotheses (`DLRAProblem`) and in the local error constant `c` of the method; it gives existence
+and does not enter the propagation of errors. The theorems do not make an integrator uniform in
+the stiffness (section 7). The `example`s at the end of the file derive
+`StepMethod.IsTubeLocal.exists_run_norm_sub_le` from the first theorem with `ℓ = L` and show that
+the hypotheses can hold with `ℓ < L`. The file cites no paper. Section 5.3 applies the two
+theorems to the BUG integrator.
 
 ## 5. The BUG integrator
 
@@ -1533,6 +1628,123 @@ and bounded everywhere and for a given sequence of steps; the form quoted here a
 properties on a tube only and also proves that the steps exist. The form with global
 assumptions is `MatrixBUG.global_error_le` in
 [`LeanDLRA/Integrators/Matrix/BUG.lean`](../LeanDLRA/Integrators/Matrix/BUG.lean).
+
+### 5.3 The BUG integrator with smaller local constants and a one-sided Lipschitz constant
+
+Two files improve the bound of section 5.2 in two independent ways. The statements are about the
+same step and the same hypotheses on `F` and `A`; the older theorems stay as they are.
+
+`kstep_capture_two_mul` in [`LeanDLRA/Integrators/BUGCapture.lean`, lines 67–73](../LeanDLRA/Integrators/BUGCapture.lean#L67-L73):
+
+```lean
+theorem kstep_capture_two_mul (hF : IsLipschitzField F L) (hL : 0 ≤ L)
+    (hB : IsBoundedField F B) (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀) (ht₁ : t₁ = t₀ + h)
+    (hh : 0 ≤ h) (hA : ODESolution F A t₀ t₁)
+    (hK : ODESolution (fun t x => Q₀ (F t x)) YK t₀ t₁) (hK₀ : YK t₀ = A t₀)
+    (hKcap : P₁ (YK t₁) = YK t₁)
+    (hε : ∀ t ∈ Icc t₀ t₁, ‖(1 - P₁) ((1 - Q₀) (F t (YK t₁)))‖ ≤ ε) :
+    ‖(1 - P₁) (A t₁)‖ ≤ h * (2 * L * B * h + ε)
+```
+
+`bug_capture_two_mul` in [`LeanDLRA/Integrators/BUGCapture.lean`, lines 135–145](../LeanDLRA/Integrators/BUGCapture.lean#L135-L145):
+
+```lean
+theorem bug_capture_two_mul {P₀ Q₁ : E →L[ℝ] E} {YL : ℝ → E} (hF : IsLipschitzField F L)
+    (hL : 0 ≤ L) (hB : IsBoundedField F B) (hP₀ : IsOrthProj P₀) (hQ₀ : IsOrthProj Q₀)
+    (hP₁ : IsOrthProj P₁) (hQ₁ : IsOrthProj Q₁) (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
+    (hA : ODESolution F A t₀ t₁)
+    (hK : ODESolution (fun t x => Q₀ (F t x)) YK t₀ t₁) (hK₀ : YK t₀ = A t₀)
+    (hKcap : P₁ (YK t₁) = YK t₁)
+    (hεK : ∀ t ∈ Icc t₀ t₁, ‖(1 - P₁) ((1 - Q₀) (F t (YK t₁)))‖ ≤ ε)
+    (hLs : ODESolution (fun t x => P₀ (F t x)) YL t₀ t₁) (hL₀ : YL t₀ = A t₀)
+    (hLcap : Q₁ (YL t₁) = YL t₁)
+    (hεL : ∀ t ∈ Icc t₀ t₁, ‖(1 - Q₁) ((1 - P₀) (F t (YL t₁)))‖ ≤ ε) :
+    ‖A t₁ - P₁ (Q₁ (A t₁))‖ ≤ √2 * (h * (2 * L * B * h + ε))
+```
+
+`IsBUGStep.local_error_two_mul` in [`LeanDLRA/Integrators/BUGCapture.lean`, lines 179–183](../LeanDLRA/Integrators/BUGCapture.lean#L179-L183):
+
+```lean
+theorem local_error_two_mul (hs : IsBUGStep F ε P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS)
+    (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h)
+    (hh : 0 ≤ h) (hA : ODESolution F A t₀ t₁) (hA₀ : A t₀ = Y₀) :
+    ‖YS t₁ - A t₁‖ ≤ (Real.exp (L * h) - 1) * (B * h + √2 * (h * (2 * L * B * h + ε)))
+      + √2 * (h * (2 * L * B * h + ε))
+```
+
+*Smaller constants*
+([`LeanDLRA/Integrators/BUGCapture.lean`](../LeanDLRA/Integrators/BUGCapture.lean)).
+The K-step capture estimate behind the robust local error, `‖(1 - P₁) A(t₁)‖ ≤ h (4 L B h + ε)`
+(`kstep_capture`), holds with `2 L B h` in place of `4 L B h` (first theorem). The two capture
+errors, left and right, are combined orthogonally (`IsOrthProj.norm_sub_apply_sq`) and give the
+factor `√2` in place of `2` (second theorem). With `ϑ = h (2 L B h + ε)` the local error of one
+step is then (third theorem)
+
+`‖Y₁ - A(t₁)‖ ≤ (e^{L h} - 1) (B h + √2 ϑ) + √2 ϑ`.
+
+In the `O`-form `h (c₁ ε + c₂ h)` the constants are `c₁ = √2 (1 + L H e^{L H})` and
+`c₂ = L B (e^{L H} + 2 √2 (1 + L H e^{L H}))`, at most `bugC₁ L H` and `bugC₂ L B H`. The file
+has the same for the Tucker integrator with `d` modes
+(`IsTuckerBUGStep.local_error_two_mul`: `√d` in place of `√2`) and the local error of a step
+near a reference solution for a field that is Lipschitz and bounded only on a tube
+(`IsBUGStepCore.hasLocalError_of_tube_two_mul`).
+
+`MatrixBUG.exists_run_norm_sub_le_of_oneSided` in [`LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean`, lines 90–104](../LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean#L90-L104):
+
+```lean
+theorem exists_run_norm_sub_le_of_oneSided
+    (hP : DLRAProblem F A t₀ (t₀ + N * h) ρ L B)
+    (hc : ContinuousOn (Function.uncurry F) (tubeSet A t₀ (t₀ + N * h) ρ))
+    (hℓ : IsOneSidedLipschitzFieldOn F (tubeSet A t₀ (t₀ + N * h) ρ) ℓ) (hℓ₀ : 0 ≤ ℓ)
+    (hε : FactoredNormalBoundOn F r (tubeSet A t₀ (t₀ + N * h) ρ) ε) (hε₀ : 0 ≤ ε)
+    (hh : 0 ≤ h) (hhH : h ≤ H) (hNT : N * h ≤ T)
+    (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n)
+    {Y₀ : Matrix m n ℝ} (hY₀ : Y₀.rank ≤ r) (hδ : ‖Y₀ - A t₀‖ ≤ δ)
+    (hsmall : Real.exp (ℓ * T) * δ + T * Real.exp (ℓ * T) * (√2 * (1 + L * H * Real.exp (L * H))
+      * ε + L * B * (Real.exp (L * H) + 2 * √2 * (1 + L * H * Real.exp (L * H))) * h)
+      + 4 * B * h < ρ) :
+    ∃ Y : ℕ → Matrix m n ℝ, Y 0 = Y₀ ∧ IsRun (stepRel F r) (uniformGrid t₀ h) N Y ∧
+      ∀ n ≤ N, (Y n).rank ≤ r ∧ ‖Y n - A (t₀ + n * h)‖ ≤ Real.exp (ℓ * T) * δ
+        + T * Real.exp (ℓ * T) * (√2 * (1 + L * H * Real.exp (L * H)) * ε
+          + L * B * (Real.exp (L * H) + 2 * √2 * (1 + L * H * Real.exp (L * H))) * h)
+```
+
+`MatrixBUG.exists_run_norm_sub_le_of_oneSided_neg` in [`LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean`, lines 131–144](../LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean#L131-L144):
+
+```lean
+theorem exists_run_norm_sub_le_of_oneSided_neg
+    (hP : DLRAProblem F A t₀ (t₀ + N * h) ρ L B)
+    (hc : ContinuousOn (Function.uncurry F) (tubeSet A t₀ (t₀ + N * h) ρ))
+    (hℓ : IsOneSidedLipschitzFieldOn F (tubeSet A t₀ (t₀ + N * h) ρ) ℓ) (hℓ₀ : ℓ < 0)
+    (hε : FactoredNormalBoundOn F r (tubeSet A t₀ (t₀ + N * h) ρ) ε) (hε₀ : 0 ≤ ε)
+    (hh : 0 ≤ h) (hhH : h ≤ H) (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n)
+    {Y₀ : Matrix m n ℝ} (hY₀ : Y₀.rank ≤ r) (hδ : ‖Y₀ - A t₀‖ ≤ δ)
+    (hsmall : δ + (h - ℓ⁻¹) * (√2 * (1 + L * H * Real.exp (L * H)) * ε
+      + L * B * (Real.exp (L * H) + 2 * √2 * (1 + L * H * Real.exp (L * H))) * h)
+      + 4 * B * h < ρ) :
+    ∃ Y : ℕ → Matrix m n ℝ, Y 0 = Y₀ ∧ IsRun (stepRel F r) (uniformGrid t₀ h) N Y ∧
+      ∀ n ≤ N, (Y n).rank ≤ r ∧ ‖Y n - A (t₀ + n * h)‖ ≤ Real.exp (ℓ * (n * h)) * δ
+        + (h - ℓ⁻¹) * (√2 * (1 + L * H * Real.exp (L * H)) * ε
+          + L * B * (Real.exp (L * H) + 2 * √2 * (1 + L * H * Real.exp (L * H))) * h)
+```
+
+*Runs*
+([`LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean`](../LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean)).
+The hypotheses are those of `MatrixBUG.exists_run_norm_sub_le` (section 5.2) and a one-sided
+Lipschitz constant `ℓ` of `F` on the tube (`hℓ`). For `0 ≤ ℓ` the first theorem gives a run with
+
+`‖Y n - A (t₀ + n h)‖ ≤ e^{ℓ T} δ + T e^{ℓ T} (c₁ ε + c₂ h)`,
+
+with the constants `c₁`, `c₂` above; with `ℓ = L` the bound is at most `bugGlobalBound`. For
+`ℓ < 0` the second theorem gives runs of every length with
+`‖Y n - A (t₀ + n h)‖ ≤ e^{ℓ n h} δ + (h - ℓ⁻¹) (c₁ ε + c₂ h)`, and neither the bound nor the
+smallness condition contains `N`. Both are instances of the theorems of section 4.3 with the BUG
+integrator as the tube-local method. What is not shown: `L` remains in the constants `c₁`, `c₂`
+and in the existence of the steps, and only the propagation from step to step uses `ℓ`; the
+bound is therefore not uniform in the stiffness. The `example`s prove
+`MatrixBUG.exists_run_norm_sub_le` from the first theorem, and satisfy the hypotheses of the
+second for the dissipative field `F(t, Y) = -Y`. The module docstring cites
+[CerutiLubich2022, Thm. 4] for the bound of section 5.2.
 
 ## 6. Projector splitting and variants of the BUG integrator
 
@@ -2270,7 +2482,7 @@ and `M₂`.
 
 **The midpoint BUG step on matrices, and runs.**
 
-`MatrixMidpointBUG.augmentedRel` in [`LeanDLRA/HighOrder/Defs.lean`, lines 87–95](../LeanDLRA/HighOrder/Defs.lean#L87-L95):
+`MatrixMidpointBUG.augmentedRel` in [`LeanDLRA/HighOrder/Defs.lean`, lines 97–105](../LeanDLRA/HighOrder/Defs.lean#L97-L105):
 
 ```lean
 def augmentedRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
@@ -2284,7 +2496,7 @@ def augmentedRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : Ste
         IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sh Ub Vb Sb ∧ Y₁ = Ub * Sb t₁ * Vbᵀ
 ```
 
-`MatrixMidpointBUG.stepRel` in [`LeanDLRA/HighOrder/Defs.lean`, lines 104–106](../LeanDLRA/HighOrder/Defs.lean#L104-L106):
+`MatrixMidpointBUG.stepRel` in [`LeanDLRA/HighOrder/Defs.lean`, lines 114–116](../LeanDLRA/HighOrder/Defs.lean#L114-L116):
 
 ```lean
 def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
@@ -2685,7 +2897,8 @@ with `C₁ = (L + κ + (H/2) L κ) D₁ + √r L̃/2 + κ (L B + Lₜ + B κ)/4`
 contain `‖S₀‖` (through `D₁`) and no inverse of `S₀`: they do not depend on the small singular
 values of `S₀`. This replaces the free parameter `τ` of the two theorems above by the size of the
 step and of the normal component, and it is the form in which the capture defect enters the
-local error of the explicit update. The third theorem inserts both bounds into
+local error of the explicit update (and, below, the runs). The third theorem inserts both bounds
+into
 `norm_update_sub_le`: under the hypotheses of the first two (on a region `D` that contains the
 ball around `Y₀` and the exact solution at the midpoint) and with bounds `M₂`, `M₃` of the second
 and third derivative of the exact solution, the explicit update has the local error
@@ -2694,11 +2907,103 @@ and third derivative of the exact solution, the explicit update has the local er
 
 that is `O(h³ + h ε)`. Two evaluations of `F` and no differential equation are needed, and no
 singular value of `S₀` enters. What is not shown: the Galerkin step (`galerkin_local_error`) is
-not combined with the capture bounds, and no global error bound for a run of explicit updates is
-stated; the constants `C₁`, `C₂` are those of this proof.
+not combined with the capture bounds; the constants `C₁`, `C₂` are those of this proof.
 
 The module docstring of `LeanDLRA/Research/ExplicitMidpointCapture.lean` cites [CerutiEtAl2024b]
 as the source of the integrator; it cites no paper for the bound of the capture defect.
+
+**Runs of the explicit midpoint method.**
+
+`ExplicitMidpoint.stepRel` in [`LeanDLRA/HighOrder/Defs.lean`, lines 202–204](../LeanDLRA/HighOrder/Defs.lean#L202-L204):
+
+```lean
+def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
+  fun t₀ t₁ Y₀ Y₁ => ∃ Yh : Matrix m n ℝ, augmentedRel F r t₀ t₁ Y₀ Yh ∧ Y₁.rank ≤ r ∧
+    ‖Y₁ - Yh‖ ≤ distLR r Yh
+```
+
+`ExplicitMidpoint.exists_stepRel` in [`LeanDLRA/Research/ExplicitMidpointRun.lean`, lines 217–219](../LeanDLRA/Research/ExplicitMidpointRun.lean#L217-L219):
+
+```lean
+theorem exists_stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t₀ t₁ : ℝ)
+    (hrm : 2 * r ≤ Fintype.card m) (hrn : 2 * r ≤ Fintype.card n) (hY₀ : Y₀.rank ≤ r) :
+    ∃ Y₁, stepRel F r t₀ t₁ Y₀ Y₁
+```
+
+`ExplicitMidpoint.isTubeLocal_stepRel` in [`LeanDLRA/Research/ExplicitMidpointRun.lean`, lines 335–337](../LeanDLRA/Research/ExplicitMidpointRun.lean#L335-L337):
+
+```lean
+theorem isTubeLocal_stepRel (hrm : 2 * r ≤ Fintype.card m) (hrn : 2 * r ≤ Fintype.card n) :
+    StepMethod.IsTubeLocal (fun G : ℝ → Matrix m n ℝ → Matrix m n ℝ => stepRel G r)
+      (fun Y => Y.rank ≤ r) 2
+```
+
+`ExplicitMidpoint.exists_run_norm_sub_le` in [`LeanDLRA/Research/ExplicitMidpointRun.lean`, lines 622–646](../LeanDLRA/Research/ExplicitMidpointRun.lean#L622-L646):
+
+```lean
+theorem exists_run_norm_sub_le {N : ℕ} {h T δ : ℝ}
+    (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
+    (hF₂ : ContDiff ℝ 2 (Function.uncurry F))
+    (hM₁ : ∀ p, ‖fderiv ℝ (Function.uncurry F) p‖ ≤ M₁)
+    (hM₂ : ∀ p, ‖iteratedFDeriv ℝ 2 (Function.uncurry F) p‖ ≤ M₂)
+    (hA : ODESolution F A t₀ (t₀ + N * h))
+    (hε : FactoredNormalBoundOn F r (tubeSet A t₀ (t₀ + N * h) ρ) ε) (hε₀ : 0 ≤ ε) (hρ : 0 ≤ ρ)
+    (hr : 0 < r) (hrm : 2 * r ≤ Fintype.card m) (hrn : 2 * r ≤ Fintype.card n)
+    (hh : 0 ≤ h) (hhH : h ≤ H) (hNT : N * h ≤ T)
+    (hσ : 0 < σ) (hκ : Real.sqrt r * (1 / 2 + max L (2 * B / σ)) ≤ κ)
+    (hD₁ : Real.sqrt r * H * max L (2 * B / σ) / 2 +
+      (2 * κ * B + κ ^ 2 * (‖A t₀‖ + B * T + ρ)) / 4 + H * κ ^ 2 * B / 8 ≤ D₁)
+    (hD₂ : Real.sqrt r * H * (1 + max L (2 * B / σ) / 2) ≤ D₂)
+    (hC₁ : 2 * (2 * ((L + κ + H / 2 * L * κ) * D₁ + Real.sqrt r * max L (2 * B / σ) / 2 +
+        κ * (L * B + M₁ + B * κ) / 4) + (M₂ * (1 + B) ^ 2 + M₁ ^ 2 * (1 + B)) / 24 +
+        L * (M₁ * (1 + B)) / 8) ≤ C₁)
+    (hC₂ : Real.exp (L * H) + 2 * (2 * ((L + κ + H / 2 * L * κ) * D₂ + 1 +
+        Real.sqrt r * (1 + max L (2 * B / σ) / 2))) + L * H ≤ C₂)
+    (hstepσ : h / 2 * B + (D₁ * h ^ 2 + D₂ * ε) ≤ σ / 2)
+    {Y₀ : Matrix m n ℝ} (hY₀ : Y₀.rank ≤ r) (hδ : ‖Y₀ - A t₀‖ ≤ δ)
+    (hsmall : Real.exp (L * T) * δ + T * Real.exp (L * T) * (C₁ * h ^ 2 + C₂ * ε) +
+      3 * B * h + σ < ρ) :
+    ∃ Y : ℕ → Matrix m n ℝ, Y 0 = Y₀ ∧ IsRun (stepRel F r) (uniformGrid t₀ h) N Y ∧
+      ∀ n ≤ N, (Y n).rank ≤ r ∧ ‖Y n - A (t₀ + n * h)‖ ≤
+        Real.exp (L * T) * δ + T * Real.exp (L * T) * (C₁ * h ^ 2 + C₂ * ε)
+```
+
+The step relation (`ExplicitMidpoint.stepRel F r`, defined in
+[`LeanDLRA/HighOrder/Defs.lean`](../LeanDLRA/HighOrder/Defs.lean) next to `augmentedRel`, the
+step before truncation) is the explicit update of this section from a factorization with `r`
+columns, followed by a best approximation of rank at most `r`: the result is at most as far from
+the update as the distance of the update to the matrices of rank at most `r`. It is carried out
+with two evaluations of `F` and no differential equation. A step exists from every matrix of
+rank at most `r` for every field, if `2 r` is at most both matrix sizes (second statement). Near
+a reference solution the steps of the tube extension are the steps of `F`, and the method is
+tube-local with margin constant 2 (third statement; section 4.3). The local error of one step
+near the reference solution is `h (C₁ h² + C₂ ε)` (`ExplicitMidpoint.stepRel.hasLocalError`):
+the update of the combined local error above, plus the distance of the exact solution to the
+matrices of rank at most `r`, at most `h ε e^{L h}`, plus the error of the truncation
+(`norm_bestTrunc_sub_le`).
+
+The last statement is the run theorem. The hypotheses are those of
+`MatrixMidpointBUG.exists_run_norm_sub_le` (section 6.5): `F` is `L`-Lipschitz and bounded by
+`B`, the uncurried field is of class `C²` with `‖DF‖ ≤ M₁` and `‖D²F‖ ≤ M₂`, everywhere; the
+normal part of `F` is at most `ε` at the factored points with `r` columns of the tube around a
+solution `A` (`FactoredNormalBoundOn`); no normal bound at rank `2 r` is needed. For constants
+`C₁`, `C₂` that are bounded below by explicit expressions in `r`, `L`, `B`, `M₁`, `M₂`, `H`, a
+radius `σ` of the balls on which the capture is estimated, and `‖A t₀‖ + B T + ρ`, and under two
+smallness conditions, every start value of rank at most `r` within `δ` of `A t₀` starts a run of
+rank at most `r` with
+
+`‖Y n - A (t₀ + n h)‖ ≤ e^{L T} δ + T e^{L T} (C₁ h² + C₂ ε)`.
+
+The same bound holds for every run (`ExplicitMidpoint.IsRun.norm_sub_le`). The error is of second
+order in `h` up to a multiple of `ε`, and no inverse of a singular value enters the constants. The
+derivative bounds of the exact solution come from `M₁`, `M₂`
+(`ODESolution.norm_iteratedDerivWithin_two_le_of_contDiff` and its companion for the third
+derivative). What is not shown: the regularity bounds on `F` are global, as for the midpoint BUG
+integrator, and the constants are those of this proof, not sharp ones; the page makes no
+statement about the Galerkin step of this section in runs. The module docstring cites
+[KieriVandereycken2019, Thm. 6], robust second order of projected explicit Runge–Kutta methods
+of order two at rank `r`, and [CerutiEtAl2024b] for the integrator whose Galerkin space contains
+`U₀` and `G V₀` in the same way.
 
 ### 6.7 The dynamical randomized SVD
 
@@ -2920,7 +3225,7 @@ values is assumed (module docstring).
 Source: Kieri and Vandereycken, Comput. Methods Appl. Math. 19 (2019), §4, Lemma 3 and
 Theorem 4, as cited in the docstrings.
 
-`MatrixPRK.stepRel` in [`LeanDLRA/Integrators/Matrix/ProjectedRK.lean`, lines 99–107](../LeanDLRA/Integrators/Matrix/ProjectedRK.lean#L99-L107):
+`MatrixPRK.stepRel` in [`LeanDLRA/HighOrder/Defs.lean`, lines 153–161](../LeanDLRA/HighOrder/Defs.lean#L153-L161):
 
 ```lean
 def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) (κ : ℝ) (a : Fin s → Fin s → ℝ)
@@ -2934,7 +3239,7 @@ def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) (κ : ℝ)
       κ * distLR r (stageSum F c t₀ (t₁ - t₀) Y₀ b U S V)
 ```
 
-`MatrixPRK.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/ProjectedRK.lean`, lines 558–583](../LeanDLRA/Integrators/Matrix/ProjectedRK.lean#L558-L583):
+`MatrixPRK.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/ProjectedRK.lean`, lines 531–556](../LeanDLRA/Integrators/Matrix/ProjectedRK.lean#L531-L556):
 
 ```lean
 theorem exists_run_norm_sub_le
@@ -3013,7 +3318,7 @@ Theorem 6, as cited in the docstrings.
 
 ### 6.9 A field with a two-sided term: a leak bound for one rank-adaptive step
 
-`AugmentationRank.error_le_of_twoSided` in [`LeanDLRA/Research/TwoSidedLeak.lean`, lines 657–704](../LeanDLRA/Research/TwoSidedLeak.lean#L657-L704):
+`AugmentationRank.error_le_of_twoSided` in [`LeanDLRA/Research/TwoSidedLeak.lean`, lines 660–707](../LeanDLRA/Research/TwoSidedLeak.lean#L660-L707):
 
 ```lean
 theorem error_le_of_twoSided [DecidableEq m] [DecidableEq n] {k k' : Type*} [Fintype k]
@@ -3087,14 +3392,81 @@ sharp in every case (the module docstring gives a case with a vanishing leak of 
 capture is exact while the bound keeps a term `h² ν_C`). The auxiliary flows of the Sylvester
 case (`P`, `Z`, `Q`, `Zr`) and the bounds on the increments of the K- and L-step solutions are
 hypotheses; for `P` and `Q` existence with continuous coefficients is shown in section 6.10
-(`exists_rightFactor_of_sylvester`), while the module docstring of this file still lists them
-and the flows `Z`, `Zr` as hypotheses. The theorem is a bound for one step: it gives no
+(`exists_rightFactor_of_sylvester`), as the module docstring of this file says; the existence
+of the corrections `Z`, `Zr` is not formalised. The theorem is a bound for one step: it gives no
 global error. The file ends with a step on `2 × 2` matrices for which the leak of `C` is 1 and
 the hypotheses hold (`AugmentationRank.isRankAdaptiveStep_leakLeft`,
 `AugmentationRank.leak_leakLeft`).
 
-Source: the module docstring cites Ceruti, Kusch and Lubich, arXiv 2104.05247, and Ceruti,
-Einkemmer, Kusch and Lubich, arXiv 2402.08607, Section 5.2.
+Source: the module docstring cites [CerutiKuschLubich2022] and [CerutiEtAl2024b, Sec. 5.2].
+
+`AugmentationRank.error_le_of_twoSided_of_leaks_eq_zero` in [`LeanDLRA/Research/TwoSidedPadded.lean`, lines 128–173](../LeanDLRA/Research/TwoSidedPadded.lean#L128-L173):
+
+```lean
+theorem error_le_of_twoSided_of_leaks_eq_zero [DecidableEq m] [DecidableEq n] {k k' : Type*}
+    [Fintype k] [Fintype k'] [DecidableEq k] [DecidableEq k'] {Ua : Matrix m k ℝ}
+    {Va : Matrix n k' ℝ} {K : ℝ → Matrix m (Fin r) ℝ} {Lf : ℝ → Matrix n (Fin r) ℝ}
+    {Sa : ℝ → Matrix k k' ℝ} {Y₁ : Matrix m n ℝ} {ϑ L h : ℝ}
+    (hFS : ∀ t Y, F t Y = 𝒜 * Y + Y * ℬ + C * Y * D) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
+    (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
+    (hs : IsRankAdaptiveStep F ϑ t₀ t₁ U₀ S₀ V₀ Ua Va K Lf Sa Y₁)
+    {A : ℝ → Matrix m n ℝ} (hA : ODESolution F A t₀ t₁) (hA₀ : A t₀ = U₀ * S₀ * V₀ᵀ)
+    {P : ℝ → Matrix (Fin r) n ℝ}
+    (hP : ODESolution (fun _ X => X * ℬ - V₀ᵀ * ℬ * V₀ * X) P t₀ t₁) (hP₀ : P t₀ = V₀ᵀ)
+    {Z : ℝ → Matrix (Fin r) n ℝ}
+    (hZ : ODESolution
+      (fun t X => X * ℬ - U₀ᵀ * (C * K t * (V₀ᵀ * D * V₀ * P t - P t * D))) Z t₀ t₁)
+    (hZ₀ : Z t₀ = 0) {Q : ℝ → Matrix m (Fin r) ℝ}
+    (hQ : ODESolution (fun _ X => 𝒜 * X - X * (U₀ᵀ * 𝒜 * U₀)) Q t₀ t₁) (hQ₀ : Q t₀ = U₀)
+    {Zr : ℝ → Matrix m (Fin r) ℝ}
+    (hZr : ODESolution
+      (fun t X => 𝒜 * X - (Q t * (U₀ᵀ * C * U₀) - C * Q t) * (Lf t)ᵀ * D * V₀) Zr t₀ t₁)
+    (hZr₀ : Zr t₀ = 0) {a₂ : ℝ → Matrix m n ℝ} {M₂ : ℝ}
+    (ha : ContinuousOn (fun t => F t (A t)) (Icc t₀ t₁))
+    (ha' : ∀ s ∈ Ico t₀ t₁, HasDerivWithinAt (fun t => F t (A t)) (a₂ s) (Ici s) s)
+    (hM₂ : ∀ s ∈ Ico t₀ t₁, ‖a₂ s‖ ≤ M₂) {a b c δ σ κ κ₂ π ℓC ℓD Γ₁ Γ₂ θ : ℝ}
+    (h𝒜 : ‖𝒜‖ ≤ a) (hℬ : ‖ℬ‖ ≤ b) (hC : ‖C‖ ≤ c) (hD : ‖D‖ ≤ δ) (hσ : ‖S₀‖ ≤ σ)
+    (hκ : 0 ≤ κ) (hκ₂ : 0 ≤ κ₂) (hπ : 0 ≤ π)
+    (hK₁ : ∀ t ∈ Icc t₀ t₁, ‖K t - U₀ * S₀‖ ≤ κ * (t - t₀))
+    (hK₂ : ∀ t ∈ Icc t₀ t₁,
+      ‖K t - U₀ * S₀ - (t - t₀) • kField V₀ F t₀ (U₀ * S₀)‖ ≤ κ₂ * (t - t₀) ^ 2)
+    (hL₁ : ∀ t ∈ Icc t₀ t₁, ‖Lf t - V₀ * S₀ᵀ‖ ≤ κ * (t - t₀))
+    (hL₂ : ∀ t ∈ Icc t₀ t₁,
+      ‖Lf t - V₀ * S₀ᵀ - (t - t₀) • lField U₀ F t₀ (V₀ * S₀ᵀ)‖ ≤ κ₂ * (t - t₀) ^ 2)
+    (hPπ : ∀ t ∈ Icc t₀ t₁, ‖P t - V₀ᵀ‖ ≤ π * (t - t₀))
+    (hQπ : ∀ t ∈ Icc t₀ t₁, ‖Q t - U₀‖ ≤ π * (t - t₀))
+    (hνC : (1 - U₀ * U₀ᵀ) * C * U₀ * S₀ = 0) (hνD : S₀ * V₀ᵀ * D * (1 - V₀ * V₀ᵀ) = 0)
+    (hℓC : ‖(1 - U₀ * U₀ᵀ) * C * U₀‖ ≤ ℓC) (hℓD : ‖V₀ᵀ * D * (1 - V₀ * V₀ᵀ)‖ ≤ ℓD)
+    (hΓ₁ : 2 * δ * π + c * δ ^ 2 + c * a + (a + c * δ) * c * Real.exp (b * h) + κ ≤ Γ₁)
+    (hΓ₂ : 2 * c * δ * π * κ + 2 * c * δ * π * σ * (a + c * δ) + c * κ₂ * δ
+      + (a + c * δ) * Real.exp (b * h) * (2 * c * σ * δ * π + c * κ * δ)
+      + h * (2 * c * κ₂ * δ * π + (a + c * δ) * Real.exp (b * h) * (2 * c * κ * δ * π))
+        ≤ Γ₂)
+    (hΓ₁' : 2 * c * π + δ * c ^ 2 + δ * b + (b + δ * c) * δ * Real.exp (a * h) + κ ≤ Γ₁)
+    (hΓ₂' : 2 * δ * c * π * κ + 2 * δ * c * π * σ * (b + δ * c) + δ * κ₂ * c
+      + (b + δ * c) * Real.exp (a * h) * (2 * δ * σ * c * π + δ * κ * c)
+      + h * (2 * δ * κ₂ * c * π + (b + δ * c) * Real.exp (a * h) * (2 * δ * κ * c * π))
+        ≤ Γ₂)
+    (hθ : θ = 2 * (h * Real.exp (L * h) * (h * Γ₁ * (ℓC * ℓD) + h ^ 2 * Γ₂))) :
+    ‖Y₁ - A t₁‖ ≤ (Real.exp (L * h) - 1) * (θ + M₂ * h ^ 2) + θ + ϑ
+```
+
+**Padded start.** The same matrix `Y₀ = U₀ S₀ V₀ᵀ` can be written in bases `Ũ`, `Ṽ` whose ranges
+contain those of `U₀`, `C U₀` and of `V₀`, `Dᵀ V₀`, with the coefficient matrix
+`S̃ = Ũᵀ U₀ S₀ V₀ᵀ Ṽ`, the old coefficients padded with zeros
+(`AugmentationRank.mul_paddedCoeff_mul_transpose_eq`: `Ũ S̃ Ṽᵀ = U₀ S₀ V₀ᵀ`). For the padded
+factors the weighted leaks and the normal component at the start vanish
+(`leftLeak_paddedCoeff_eq_zero`, `rightLeak_paddedCoeff_eq_zero`). The theorem above is the
+local error of a rank-adaptive step whose start has vanishing weighted leaks:
+
+`‖Y₁ - A(t₁)‖ ≤ (e^{L h} - 1) (θ + M₂ h²) + θ + ϑ`, `θ = 2 h e^{L h} (h Γ₁ ℓ_C ℓ_D + h² Γ₂)`.
+
+What remains is the product `ℓ_C ℓ_D` of the unweighted leaks of the padded bases: the local error
+is of order three in `h` only when that product is `O(h)`, which is a sufficient condition and
+not a characterisation. The auxiliary flows and the increment bounds are hypotheses, as in
+`error_le_of_twoSided`; the padded bases must have the same number of columns; no global error
+is stated. The module docstring cites [CerutiKuschLubich2022] and Appelö and Cheng,
+arXiv 2402.05347, Section 3.1 (bases merged with the column and row spaces of the field).
 
 ### 6.10 Fields of Sylvester type: the rank-adaptive step captures the solution
 
@@ -3340,6 +3712,123 @@ problems for which no bound of the form `K (h ε + h²)` holds with one constant
 Source: the step is the first-order scheme of Nakao, Qiu and Einkemmer, arXiv 2311.15143, §3.1,
 and of Saha, Yang and Yin, arXiv 2610.18419, Algorithm 3.1, as cited in the docstring. The two
 theorems cite no theorem of a paper.
+
+**The step on matrices, and runs.**
+
+`MatrixImplicitBUG.IsStep` in [`LeanDLRA/Stiff/Defs.lean`, lines 64–94](../LeanDLRA/Stiff/Defs.lean#L64-L94):
+
+```lean
+structure IsStep (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t₀ t₁ : ℝ) (U₀ : Matrix m (Fin r) ℝ)
+    (S₀ : Matrix (Fin r) (Fin r) ℝ) (V₀ : Matrix n (Fin r) ℝ) (K₁ : Matrix m (Fin r) ℝ)
+    (L₁ : Matrix n (Fin r) ℝ) (U₁ : Matrix m (Fin r) ℝ) (V₁ : Matrix n (Fin r) ℝ)
+    (S₁ : Matrix (Fin r) (Fin r) ℝ) : Prop where
+  /-- The old column basis is orthonormal. -/
+  orthU₀ : U₀ᵀ * U₀ = 1
+  /-- The old row basis is orthonormal. -/
+  orthV₀ : V₀ᵀ * V₀ = 1
+  /-- Backward Euler K-step. -/
+  kStep : K₁ = U₀ * S₀ + (t₁ - t₀) • (F t₁ (K₁ * V₀ᵀ) * V₀)
+  /-- The K-stage is the limit of the fixed-point iteration started at `U₀ S₀`. -/
+  kIter : Tendsto (fun j => (fun K => U₀ * S₀ + (t₁ - t₀) • (F t₁ (K * V₀ᵀ) * V₀))^[j]
+    (U₀ * S₀)) atTop (𝓝 K₁)
+  /-- Backward Euler L-step. -/
+  lStep : L₁ = V₀ * S₀ᵀ + (t₁ - t₀) • ((F t₁ (U₀ * L₁ᵀ))ᵀ * U₀)
+  /-- The L-stage is the limit of the fixed-point iteration started at `V₀ S₀ᵀ`. -/
+  lIter : Tendsto (fun j => (fun L => V₀ * S₀ᵀ + (t₁ - t₀) • ((F t₁ (U₀ * Lᵀ))ᵀ * U₀))^[j]
+    (V₀ * S₀ᵀ)) atTop (𝓝 L₁)
+  /-- The new column basis is orthonormal. -/
+  orthU₁ : U₁ᵀ * U₁ = 1
+  /-- The range of the new column basis contains the columns of `K₁`. -/
+  kCap : U₁ * U₁ᵀ * K₁ = K₁
+  /-- The new row basis is orthonormal. -/
+  orthV₁ : V₁ᵀ * V₁ = 1
+  /-- The range of the new row basis contains the columns of `L₁`. -/
+  lCap : V₁ * V₁ᵀ * L₁ = L₁
+  /-- Backward Euler Galerkin S-step. -/
+  sStep : S₁ = U₁ᵀ * (U₀ * S₀ * V₀ᵀ + (t₁ - t₀) • F t₁ (U₁ * S₁ * V₁ᵀ)) * V₁
+  /-- The S-stage is the limit of the fixed-point iteration started at `U₁ᵀ U₀ S₀ V₀ᵀ V₁`. -/
+  sIter : Tendsto (fun j => (fun S => U₁ᵀ * (U₀ * S₀ * V₀ᵀ + (t₁ - t₀) •
+    F t₁ (U₁ * S * V₁ᵀ)) * V₁)^[j] (U₁ᵀ * U₀ * S₀ * (V₀ᵀ * V₁))) atTop (𝓝 S₁)
+```
+
+`MatrixImplicitBUG.stepRel` in [`LeanDLRA/Stiff/Defs.lean`, lines 100–105](../LeanDLRA/Stiff/Defs.lean#L100-L105):
+
+```lean
+def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
+  fun t₀ t₁ Y₀ Y₁ =>
+    ∃ (U₀ : Matrix m (Fin r) ℝ) (S₀ : Matrix (Fin r) (Fin r) ℝ) (V₀ : Matrix n (Fin r) ℝ)
+      (K₁ : Matrix m (Fin r) ℝ) (L₁ : Matrix n (Fin r) ℝ) (U₁ : Matrix m (Fin r) ℝ)
+      (V₁ : Matrix n (Fin r) ℝ) (S₁ : Matrix (Fin r) (Fin r) ℝ),
+      Y₀ = U₀ * S₀ * V₀ᵀ ∧ IsStep F t₀ t₁ U₀ S₀ V₀ K₁ L₁ U₁ V₁ S₁ ∧ Y₁ = U₁ * S₁ * V₁ᵀ
+```
+
+`MatrixImplicitBUG.exists_stepRel` in [`LeanDLRA/Stiff/ImplicitBUGStep.lean`, lines 786–788](../LeanDLRA/Stiff/ImplicitBUGStep.lean#L786-L788):
+
+```lean
+theorem exists_stepRel (hG : IsLipschitzField G L) (h01 : t₀ ≤ t₁) (hhL : (t₁ - t₀) * L < 1)
+    (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n) {Y₀ : Matrix m n ℝ}
+    (hY₀ : Y₀.rank ≤ r) : ∃ Y₁, stepRel G r t₀ t₁ Y₀ Y₁
+```
+
+`MatrixImplicitBUG.exists_run_norm_sub_le` in [`LeanDLRA/Stiff/ImplicitBUGRun.lean`, lines 124–138](../LeanDLRA/Stiff/ImplicitBUGRun.lean#L124-L138):
+
+```lean
+theorem exists_run_norm_sub_le
+    (hP : DLRAProblem F A t₀ (t₀ + N * h) ρ L B)
+    (hc : ContinuousOn (Function.uncurry F) (tubeSet A t₀ (t₀ + N * h) ρ))
+    (hε : FactoredNormalBoundOn F r (tubeSet A t₀ (t₀ + N * h) ρ) ε) (hε₀ : 0 ≤ ε)
+    (hLt : 0 ≤ Lt)
+    (hFt : ∀ s t x, s ≤ t → (s, x) ∈ tubeSet A t₀ (t₀ + N * h) ρ →
+      (t, x) ∈ tubeSet A t₀ (t₀ + N * h) ρ → ‖F t x - F s x‖ ≤ Lt * (t - s))
+    (hh : 0 ≤ h) (hhL : h * L ≤ 1 / 2) (hNT : N * h ≤ T)
+    (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n)
+    {Y₀ : Matrix m n ℝ} (hY₀ : Y₀.rank ≤ r) (hδ : ‖Y₀ - A t₀‖ ≤ δ)
+    (hsmall : Real.exp (L * T) * δ + T * Real.exp (L * T) * ((14 * L * B + 8 * Lt) * h + 6 * ε) +
+      4 * B * h < ρ) :
+    ∃ Y : ℕ → Matrix m n ℝ, Y 0 = Y₀ ∧ IsRun (stepRel F r) (uniformGrid t₀ h) N Y ∧
+      ∀ n ≤ N, (Y n).rank ≤ r ∧ ‖Y n - A (t₀ + n * h)‖ ≤
+        Real.exp (L * T) * δ + T * Real.exp (L * T) * ((14 * L * B + 8 * Lt) * h + 6 * ε)
+```
+
+`MatrixImplicitBUG.IsStep` is one step of the fixed-rank integrator at the level of the factors
+([`LeanDLRA/Stiff/Defs.lean`](../LeanDLRA/Stiff/Defs.lean)): backward Euler K-, L- and S-steps,
+and new bases that contain the results of the K- and L-step. The stage equations of a backward
+Euler step can have several solutions, and for a field that is controlled only near a solution a
+solution far away carries no information. The step therefore asks for the solution that the
+fixed-point iteration from the start value reaches. For a field that is Lipschitz with constant
+`L` on the whole space and `h L < 1` the iteration is a contraction, its limit is the only
+solution, and the condition asks nothing beyond the equations
+(`MatrixImplicitBUG.IsStep.of_lipschitz`).
+`MatrixImplicitBUG.stepRel F r` is the step relation (section 4.1).
+
+[`LeanDLRA/Stiff/ImplicitBUGStep.lean`](../LeanDLRA/Stiff/ImplicitBUGStep.lean) shows that a step
+is a step `IsMatrixImplicitBUGStep` of the core with capture tolerance zero and no truncation, so
+the analysis of this section applies to it; that its stages stay within `B h` of the start value
+(the S-stage within `3 B h`), so that a step sees the field only on a ball around the start
+value and near a reference solution the steps of the tube extension are the steps of `F`; the
+local error for a field that is Lipschitz, bounded and Lipschitz in time on a tube
+(`MatrixImplicitBUG.IsStep.hasLocalError_of_tube`); and the existence of a step for a globally
+Lipschitz field with `h L < 1`, by Banach's fixed point theorem and without continuity in time
+(third statement).
+
+The run theorem (fourth statement,
+[`LeanDLRA/Stiff/ImplicitBUGRun.lean`](../LeanDLRA/Stiff/ImplicitBUGRun.lean)): `F` is
+`L`-Lipschitz and bounded by `B` on the tube of radius `ρ` around a solution `A`, jointly
+continuous, `Lt`-Lipschitz in time, with normal part at most `ε` at the rank-`r` matrices of the
+tube, and `h L ≤ 1 / 2`. Every start value of rank at most `r` within `δ` of `A t₀` starts a run
+of rank at most `r` with
+
+`‖Y n - A (t₀ + n h)‖ ≤ e^{L T} δ + T e^{L T} ((14 L B + 8 Lt) h + 6 ε)`,
+
+if `N h ≤ T` and the right-hand side plus `4 B h` is below `ρ`; the bound holds for every run
+(`MatrixImplicitBUG.IsRun.norm_sub_le`). **This is not a stiff error bound.** The constants are
+those of `implicitBUG_global_error_le` and contain `L` through `e^{L T}`, `L B` and the step size
+condition `h L ≤ 1 / 2`; for a stiff field the bound is as poor as for the explicit integrators.
+The integrator is not a row of the table of section 4.3 (see there), so the run theorem is
+proved from the form for the uniform grid. The core has no run theorem for this integrator whose
+constants depend on the one-sided Lipschitz constant only. The module docstrings cite
+[CerutiLubich2022] for the fixed-rank integrator and arXiv 2610.18419, Algorithm 3.1, for the
+backward Euler substeps.
 
 ### 7.2 The primal–dual error representation
 
@@ -3598,7 +4087,7 @@ step. Section 7.6 measures the error of this family against the variation of the
 Source: the theorem cites no theorem of a paper. The module docstring refers to the smoothing
 estimates of arXiv 1803.10473, Assumption 1(a).
 
-### 7.6 Stiff problems with forcing: five results and what stays open
+### 7.6 Stiff problems with forcing: six results and what stays open
 
 The files of this section concern the rank-adaptive BUG integrator for the stiff linear problem
 `Y' = 𝓛 Y + g(t)` with a dissipative operator `𝓛` (`⟪𝓛 x, x⟫ ≤ 0`), for example
@@ -3811,10 +4300,75 @@ quantity to bound in order to prove the question above; it does not show that th
 large. The module docstring says that the square root of the logarithm is the true size for this
 family (an upper bound by the Cauchy–Schwarz inequality), which is not proved in the library.
 
+`IsRankAdaptiveBUGStep.stiff_error_of_invariant_galerkin` in [`LeanDLRA/Research/StiffInvariantGalerkin.lean`, lines 114–121](../LeanDLRA/Research/StiffInvariantGalerkin.lean#L114-L121):
+
+```lean
+theorem stiff_error_of_invariant_galerkin
+    (hs : IsRankAdaptiveBUGStep F ε ϑ P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS Y₁)
+    (hsplit : ∀ t x, F t x = 𝓛 x + f t x) (hdiss : ∀ x, ⟪𝓛 x, x⟫ ≤ 0)
+    (hf : ∀ t ∈ Ico t₀ t₁, ⟪f t (YS t) - f t (A t), YS t - A t⟫ ≤ ℓ * ‖YS t - A t‖ ^ 2)
+    (hinv : ∀ x, P₁ (Q₁ x) = x → P₁ (Q₁ (𝓛 x)) = 𝓛 x) (hle : t₀ ≤ t₁)
+    (hA : ODESolution F A t₀ t₁)
+    (hη : ∀ t ∈ Ico t₀ t₁, ‖f t (YS t) - P₁ (Q₁ (f t (YS t)))‖ ≤ η) :
+    ‖Y₁ - A t₁‖ ≤ gronwallBound ‖Y₀ - A t₀‖ ℓ η (t₁ - t₀) + ϑ
+```
+
+`stiff_global_error_of_invariant_galerkin` in [`LeanDLRA/Research/StiffInvariantGalerkin.lean`, lines 238–249](../LeanDLRA/Research/StiffInvariantGalerkin.lean#L238-L249):
+
+```lean
+theorem stiff_global_error_of_invariant_galerkin {F : ℝ → E → E} {g : ℝ → E} {𝓛 : E →L[ℝ] E}
+    {ε : ℝ} {ϑ η : ℕ → ℝ} {τ : ℕ → ℝ} {N : ℕ} {P Q Pa Qa : ℕ → E →L[ℝ] E} {Y : ℕ → E}
+    {YK YL YS : ℕ → ℝ → E} {A : ℝ → E}
+    (hstep : ∀ n < N, IsRankAdaptiveBUGStep F ε (ϑ n) (P n) (Q n) (Pa n) (Qa n) (τ n)
+      (τ (n + 1)) (Y n) (YK n) (YL n) (YS n) (Y (n + 1)))
+    (hτ : ∀ n < N, τ n ≤ τ (n + 1)) (hsplit : ∀ t x, F t x = 𝓛 x + g t)
+    (hdiss : ∀ x, ⟪𝓛 x, x⟫ ≤ 0)
+    (hinv : ∀ n < N, ∀ x, Pa n (Qa n x) = x → Pa n (Qa n (𝓛 x)) = 𝓛 x)
+    (hA : ∀ n < N, ODESolution F A (τ n) (τ (n + 1)))
+    (hη : ∀ n < N, ∀ t ∈ Ico (τ n) (τ (n + 1)), ‖g t - Pa n (Qa n (g t))‖ ≤ η n) :
+    ‖Y N - A (τ N)‖ ≤ ‖Y 0 - A (τ 0)‖
+      + ∑ n ∈ Finset.range N, (η n * (τ (n + 1) - τ n) + ϑ n)
+```
+
+Invariant Galerkin space. Let the range of `P₁ Q₁`, the Galerkin space of the step, be invariant
+under `𝓛`. For matrices and `𝓛 Y = M Y + Y N` this holds when the augmented column space is
+invariant under `M` and the augmented row space under `N`. The operator need not be symmetric
+and the projectors need not commute with it. On an invariant space the Galerkin step is the
+exact flow of the equation in which the part `f` is replaced by its projection, so its only
+defect is the part of `f` outside the Galerkin space along the Galerkin trajectory: if `f` is
+one-sided Lipschitz with constant `ℓ` along the Galerkin trajectory and the exact solution, and
+`‖f(t, Ŷ(t)) - P₁ Q₁ f(t, Ŷ(t))‖ ≤ η` on the step, then
+
+`‖Y₁ - A(t₁)‖ ≤ gronwallBound ‖Y₀ - A(t₀)‖ ℓ η (t₁ - t₀) + ϑ`.
+
+The bound contains neither `‖𝓛‖` nor a coupling number, no quantity of the exact solution after
+the start, and no quantity of the K- or L-step. For a forcing `g(t)` it reads
+`‖Y₁ - A(t₁)‖ ≤ ‖Y₀ - A(t₀)‖ + η (t₁ - t₀) + ϑ`
+(`IsRankAdaptiveBUGStep.stiff_error_of_invariant_galerkin_forcing`), and for a symmetric `𝓛`
+that commutes with the augmented projectors and a forcing constant on the step it is
+`‖Y₀ - A(t₀)‖ + 2 ε (t₁ - t₀) + ϑ` with the bound `ε` for the normal parts
+(`stiff_error_of_invariant_const`). The second theorem adds this over `N` steps on any grid and
+for an arbitrary forcing: `‖Y_N - A(τ_N)‖ ≤ ‖Y₀ - A(τ₀)‖ + ∑ₙ (ηₙ (τₙ₊₁ - τₙ) + ϑₙ)`. The forcing
+may jump at every grid point; its variation and the columns lost by the truncation do not
+enter, in contrast to `stiff_global_error_of_piecewise_const_uniform`. What is not shown: the
+invariance is a hypothesis on the augmented bases of every step, and the core does not show that
+the integrator produces invariant bases (for `𝓛 Y = Y N` it holds, for example, if the rows of the
+start value and of the forcing seen by the L-step lie in an invariant subspace of `N` whose
+dimension is the rank); no bound for `η` in terms of `ε` is proved for a part `f` that depends on
+the state. For the example at the end of the file the error after the time `t` is `|b| t` for
+every stiffness. This result does not decide the question above: the numbers `ωₙ` of the
+old-column bound do not appear, and no bound for `η` in terms of the data is proved. The module
+docstring cites
+[CerutiKuschLubich2022], whose error bound depends on the Lipschitz constant of the whole
+right-hand side.
+
 **Summary.** Proved: the form `h · Var g` cannot be improved (lower bound with the factor
 `1 / 12`); an energy bound with two unbounded numbers `γₙ`, `θₙ`; a bound for invariant old
 column spaces with the unbounded numbers `ωₙ`, in which the forcing enters through its variation;
-and a family showing that the velocity changes `μₙ` are not controlled by the data. Open: whether
+a family showing that the velocity changes `μₙ` are not controlled by the data; and a bound for
+invariant Galerkin spaces that contains no coupling number and no quantity of the exact solution
+after the start, in which the part `η` of the forcing outside the Galerkin space remains. Open:
+whether
 a bound `C (h (1 + Var g) + ε + n ϑ)` with `C` independent of the stiffness holds, for forcing of
 bounded variation, in any of these classes.
 
@@ -4690,8 +5244,41 @@ Hessian `0`, so `β = 1`) for which a round from `0` does not decrease the loss.
 with averaged gradients. The constant for `5/3 ≤ lr β ≤ 15/8`
 (`loss_fedRound_three_le_of_convex_of_sq`) is the loss change of clients with Hessians `0` and `1`
 for one proportion of the two kinds; the file proves that only at `lr β = 15/8`. For `sstar ≥ 4`
-the threshold with averaged gradients is not determined in the core; quadratic clients bound it
-from above (`FederatedThreshold.loss_le_loss_fedRound_linear`).
+the exact threshold with averaged gradients is not determined in the core; quadratic clients
+bound it from above (`FederatedThreshold.loss_le_loss_fedRound_linear`), and the next file
+bounds it from below.
+
+`loss_fedRound_lt_of_convex_of_mul_lt_four` in [`LeanDLRA/Research/FederatedManySteps.lean`, lines 397–405](../LeanDLRA/Research/FederatedManySteps.lean#L397-L405):
+
+```lean
+theorem loss_fedRound_lt_of_convex_of_mul_lt_four [Fintype ι] [Nonempty ι]
+    (hℒc : ∀ c x, HasFDerivAt (ℒc c) (innerSL ℝ (gc c x)) x)
+    (hgc : ∀ c x y, ‖gc c x - gc c y‖ ≤ β * ‖x - y‖)
+    (hconv : ∀ c x y, ℒc c x + ⟪gc c x, y - x⟫ ≤ ℒc c y)
+    (hP : IsOrthProj P) (hβ : 0 < β)
+    (hℒmean : ∀ y, ℒ y = (Fintype.card ι : ℝ)⁻¹ * ∑ c, ℒc c y)
+    (hmean : ∀ y, g y = (Fintype.card ι : ℝ)⁻¹ • ∑ c, gc c y) (hlr : 0 < lr) {sstar : ℕ}
+    (hs2 : 2 ≤ sstar) (hs : lr * β * sstar < 4) {x : E} (hx : P (g x) ≠ 0) :
+    ℒ (fedRound P gc g lr sstar x) < ℒ x
+```
+
+*Every number of local steps* ([`LeanDLRA/Research/FederatedManySteps.lean`]
+(../LeanDLRA/Research/FederatedManySteps.lean)). In the setting of the previous paragraph (the
+global loss is the average of convex client losses with `β`-Lipschitz gradients) the round
+decreases the loss for every `sstar ≥ 2`, every `0 < lr` and `sstar lr β < 4`, if
+`P (g x) ≠ 0` (the theorem above). Where `lr β ≤ 1` the file gives an amount
+(`loss_fedRound_le_of_convex_of_mul_le_four`): the descent is at least
+`lr (243 + 189 u - 222 u² - 164 u³) / ((9 + 8 u) (9 + 11 u)²) ‖Π ∇ℒ(x)‖²` with `u = lr β`, which
+tends to `lr / 3` as `lr β → 0`; the constant is not the best one. For `sstar = 2` and `sstar = 3`
+the condition `lr β ≤ 1` is not needed, by the two files above. The proof uses three points per
+client, `x`, the last local iterate `z_c` and the average `x⋆`, whatever the number of local
+steps: gradient inequalities for the pairs `x → x⋆`, `z_c → x⋆` and `z_c → x`, and the bounds
+`‖z_c - x‖² ≤ sstar lr² ∑_{j<sstar} ‖G_j‖²` and `‖G_0‖² ≤ ∑_{j<sstar} ‖G_j‖²`
+(`add_sum_norm_sq_proj_le_of_convex` for the descent along the local steps). What is not shown:
+the condition `sstar lr β < 4` is sufficient and not necessary for `sstar ≥ 3`; for `sstar = 3`
+the exact threshold is `sstar lr β < 45/8` (above), and for `sstar ≥ 4` the exact threshold is not
+known to
+the core. The clients are averaged with equal weights, as in `fedRound`.
 
 Source: the setting is that of Schotthöfer and Laiu, arXiv 2406.17887 ([SchotthoferLaiu2024]),
 before truncation, as cited in the module docstrings. The statements cite no theorem of a paper.

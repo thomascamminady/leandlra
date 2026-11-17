@@ -48,7 +48,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Matrix/LowRankDistance`](../LeanDLRA/Matrix/LowRankDistance.lean) | Distance to the low-rank set | 86 |  |
 | [`Matrix/LowRankDistanceFlow`](../LeanDLRA/Matrix/LowRankDistanceFlow.lean) | Growth of the distance to the matrices of rank at most `r` along the exact flow | 1 |  |
 | [`Matrix/Orthonormal`](../LeanDLRA/Matrix/Orthonormal.lean) | Orthonormal bases capturing a column space ("QR / orth" step) | 26 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660) |
-| [`Matrix/Projectors`](../LeanDLRA/Matrix/Projectors.lean) | Left, right and tangent-space projectors on matrices | 36 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Matrix/Projectors`](../LeanDLRA/Matrix/Projectors.lean) | Left, right and tangent-space projectors on matrices | 36 |  |
 
 ## Classical matrix analysis
 
@@ -57,8 +57,8 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Classical/BestApproximation`](../LeanDLRA/Classical/BestApproximation.lean) | Best rank-`≤ r` approximation without the singular value decomposition | 19 |  |
 | [`Classical/CommutingProjectorTelescoping`](../LeanDLRA/Classical/CommutingProjectorTelescoping.lean) | Pythagorean telescoping for orthogonal mode projectors: `√d` instead of `d` | 26 |  |
 | [`Classical/CourantFischer`](../LeanDLRA/Classical/CourantFischer.lean) | Courant–Fischer min-max, Weyl's inequalities and Loewner monotonicity | 30 |  |
-| [`Classical/EckartYoung`](../LeanDLRA/Classical/EckartYoung.lean) | The Eckart–Young–Mirsky theorem for real matrices | 44 | [2104.05247](https://arxiv.org/abs/2104.05247), [2510.19518](https://arxiv.org/abs/2510.19518) |
-| [`Classical/KyFan`](../LeanDLRA/Classical/KyFan.lean) | Ky Fan's maximum principle and the optimality of POD bases | 31 | [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Classical/EckartYoung`](../LeanDLRA/Classical/EckartYoung.lean) | The Eckart–Young–Mirsky theorem for real matrices | 44 |  |
+| [`Classical/KyFan`](../LeanDLRA/Classical/KyFan.lean) | Ky Fan's maximum principle and the optimality of POD bases | 31 |  |
 | [`Classical/SVD`](../LeanDLRA/Classical/SVD.lean) | The thin singular value decomposition | 29 |  |
 | [`Classical/WeylSingular`](../LeanDLRA/Classical/WeylSingular.lean) | Weyl's inequality for singular values | 25 | [2104.05247](https://arxiv.org/abs/2104.05247) |
 
@@ -82,6 +82,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`DLRA/GaugeInvariance`](../LeanDLRA/DLRA/GaugeInvariance.lean) | Results of arXiv 2503.18271: On-the-fly ROM of the filter density function (TDB/DO) | 4 | [2503.18271](https://arxiv.org/abs/2503.18271) |
 | [`DLRA/QuasiOptimality`](../LeanDLRA/DLRA/QuasiOptimality.lean) | Quasi-optimality of dynamical low-rank approximation for matrices | 34 |  |
 | [`DLRA/QuasiOptimalityGap`](../LeanDLRA/DLRA/QuasiOptimalityGap.lean) | Quasi-optimality of dynamical low-rank approximation against the truncated SVD under a gap | 5 |  |
+| [`DLRA/QuasiOptimalityMargin`](../LeanDLRA/DLRA/QuasiOptimalityMargin.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ / 2` | 7 |  |
 | [`DLRA/QuasiOptimalityTube`](../LeanDLRA/DLRA/QuasiOptimalityTube.lean) | Quasi-optimality of dynamical low-rank approximation for a field Lipschitz near the solution | 18 |  |
 
 ## Dynamics
@@ -94,7 +95,8 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
-| [`Integrators/BUG`](../LeanDLRA/Integrators/BUG.lean) | Robust error bound of the basis-update & Galerkin (BUG) integrator | 16 | [2010.02022](https://arxiv.org/abs/2010.02022) |
+| [`Integrators/BUG`](../LeanDLRA/Integrators/BUG.lean) | Robust error bound of the basis-update & Galerkin (BUG) integrator | 16 |  |
+| [`Integrators/BUGCapture`](../LeanDLRA/Integrators/BUGCapture.lean) | The capture estimate of the BUG integrator with smaller constants | 8 |  |
 | [`Integrators/BUGCore`](../LeanDLRA/Integrators/BUGCore.lean) | The basis update and the BUG step without analysis constants | 20 |  |
 | [`Integrators/Defs`](../LeanDLRA/Integrators/Defs.lean) | Definitions: time grids, local errors, step relations and runs | 11 |  |
 | [`Integrators/EulerBUG`](../LeanDLRA/Integrators/EulerBUG.lean) | Explicit-Euler BUG, XL/sXL and GAP integrators | 51 | [2209.00550](https://arxiv.org/abs/2209.00550), [2502.07040](https://arxiv.org/abs/2502.07040), [2502.08951](https://arxiv.org/abs/2502.08951), [2505.19929](https://arxiv.org/abs/2505.19929), [2609.02721](https://arxiv.org/abs/2609.02721) |
@@ -103,14 +105,15 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/InexactSubsteps`](../LeanDLRA/Integrators/InexactSubsteps.lean) | Inexact and incompletely augmented substeps (BUG, Tucker BUG, parallel BUG) | 45 |  |
 | [`Integrators/InexactSubstepsTube`](../LeanDLRA/Integrators/InexactSubstepsTube.lean) | The BUG integrator with inexact substeps near a reference solution | 5 |  |
 | [`Integrators/KStep`](../LeanDLRA/Integrators/KStep.lean) | The K-step capture lemma | 9 |  |
-| [`Integrators/Matrix/AdaptiveBUGRun`](../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean) | Runs of the rank-adaptive BUG integrator with truncation by a tolerance | 6 | [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Integrators/Matrix/AdaptiveBUGRun`](../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean) | Runs of the rank-adaptive BUG integrator with truncation by a tolerance | 6 |  |
 | [`Integrators/Matrix/AdaptiveBUGStep`](../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean) | The augmented BUG step as step relations: truncation by a tolerance or to a fixed rank | 36 |  |
 | [`Integrators/Matrix/BUG`](../LeanDLRA/Integrators/Matrix/BUG.lean) | The BUG integrator for matrices, at the level of the factors | 58 |  |
 | [`Integrators/Matrix/BUGRun`](../LeanDLRA/Integrators/Matrix/BUGRun.lean) | Runs of the fixed-rank BUG integrator: existence and error bound | 9 |  |
+| [`Integrators/Matrix/BUGRunOneSided`](../LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean) | The fixed-rank BUG integrator: runs with a one-sided Lipschitz constant and smaller constants | 4 |  |
 | [`Integrators/Matrix/BUGStep`](../LeanDLRA/Integrators/Matrix/BUGStep.lean) | The matrix BUG step as a step relation | 16 |  |
 | [`Integrators/Matrix/BUGTube`](../LeanDLRA/Integrators/Matrix/BUGTube.lean) | The BUG integrator near the solution: global error from tube hypotheses | 2 |  |
 | [`Integrators/Matrix/Defs`](../LeanDLRA/Integrators/Matrix/Defs.lean) | Definitions: normal-component bounds for matrix integrators | 15 |  |
-| [`Integrators/Matrix/EulerBUGRun`](../LeanDLRA/Integrators/Matrix/EulerBUGRun.lean) | Runs of the fixed-rank explicit Euler BUG integrator: existence and error bound | 9 | [2209.00550](https://arxiv.org/abs/2209.00550), [2502.07040](https://arxiv.org/abs/2502.07040) |
+| [`Integrators/Matrix/EulerBUGRun`](../LeanDLRA/Integrators/Matrix/EulerBUGRun.lean) | Runs of the fixed-rank explicit Euler BUG integrator: existence and error bound | 9 |  |
 | [`Integrators/Matrix/EulerBUGStep`](../LeanDLRA/Integrators/Matrix/EulerBUGStep.lean) | The explicit Euler BUG step as a step relation | 20 |  |
 | [`Integrators/Matrix/FactoredNormalBound`](../LeanDLRA/Integrators/Matrix/FactoredNormalBound.lean) | Mixed components of a field under the factored normal bound | 33 |  |
 | [`Integrators/Matrix/FlowDistance`](../LeanDLRA/Integrators/Matrix/FlowDistance.lean) | Distance of an exact solution to the low-rank matrices, near a reference solution | 2 |  |
@@ -122,11 +125,12 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/Matrix/ParallelBUGTolRun`](../LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean) | The parallel rank-adaptive BUG integrator: step relation, runs and error bound | 16 | [2304.05660](https://arxiv.org/abs/2304.05660) |
 | [`Integrators/Matrix/ProjectedEuler`](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean) | The projected Euler method for matrices | 18 |  |
 | [`Integrators/Matrix/ProjectedRK`](../LeanDLRA/Integrators/Matrix/ProjectedRK.lean) | Projected Runge–Kutta methods for matrices: runs and global error | 12 |  |
-| [`Integrators/Matrix/ProjectorSplitting`](../LeanDLRA/Integrators/Matrix/ProjectorSplitting.lean) | The projector-splitting (KSL) integrator for matrices | 30 | [2010.02022](https://arxiv.org/abs/2010.02022) |
+| [`Integrators/Matrix/ProjectorSplitting`](../LeanDLRA/Integrators/Matrix/ProjectorSplitting.lean) | The projector-splitting (KSL) integrator for matrices | 30 |  |
 | [`Integrators/Matrix/Symmetry`](../LeanDLRA/Integrators/Matrix/Symmetry.lean) | Preservation of symmetry and skew-symmetry by the BUG integrator | 44 |  |
-| [`Integrators/Matrix/TruncBUGRun`](../LeanDLRA/Integrators/Matrix/TruncBUGRun.lean) | Runs of the augmented BUG integrator with truncation to a fixed rank | 8 | [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247) |
+| [`Integrators/Matrix/TruncBUGRun`](../LeanDLRA/Integrators/Matrix/TruncBUGRun.lean) | Runs of the augmented BUG integrator with truncation to a fixed rank | 8 |  |
 | [`Integrators/Method`](../LeanDLRA/Integrators/Method.lean) | Step methods: existence of a run and error bound from four properties of one step | 9 |  |
 | [`Integrators/MethodGrid`](../LeanDLRA/Integrators/MethodGrid.lean) | Tube-local methods on general grids | 3 |  |
+| [`Integrators/MethodOneSided`](../LeanDLRA/Integrators/MethodOneSided.lean) | Runs of a method with a one-sided Lipschitz constant in the error bound | 16 |  |
 | [`Integrators/MethodTolerance`](../LeanDLRA/Integrators/MethodTolerance.lean) | Tube-local methods with a tolerance per step | 5 |  |
 | [`Integrators/ParallelBUG`](../LeanDLRA/Integrators/ParallelBUG.lean) | The parallel rank-adaptive BUG integrator: robust local and global error bounds | 29 |  |
 | [`Integrators/PerturbedField`](../LeanDLRA/Integrators/PerturbedField.lean) | Hyper-reduced, surrogate and frozen-coupling vector fields | 21 |  |
@@ -136,7 +140,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/RankAdaptiveBUGAposteriori`](../LeanDLRA/Integrators/RankAdaptiveBUGAposteriori.lean) | Rank-adaptive BUG: a-posteriori bounds and tolerance schedules | 9 | [2104.05247](https://arxiv.org/abs/2104.05247) |
 | [`Integrators/RankSelection`](../LeanDLRA/Integrators/RankSelection.lean) | Rank selection: retained singular values, basis enrichment, ties, and Galerkin quasi-optimality | 11 |  |
 | [`Integrators/Tube`](../LeanDLRA/Integrators/Tube.lean) | The tube theorem: global error bounds from hypotheses near the solution | 16 |  |
-| [`Integrators/TuckerBUG`](../LeanDLRA/Integrators/TuckerBUG.lean) | The Tucker-tensor (`d`-mode) BUG integrator | 79 | [1709.02594](https://arxiv.org/abs/1709.02594), [2002.11392](https://arxiv.org/abs/2002.11392), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2412.00858](https://arxiv.org/abs/2412.00858) |
+| [`Integrators/TuckerBUG`](../LeanDLRA/Integrators/TuckerBUG.lean) | The Tucker-tensor (`d`-mode) BUG integrator | 79 | [2412.00858](https://arxiv.org/abs/2412.00858) |
 | [`Integrators/TuckerBUGCore`](../LeanDLRA/Integrators/TuckerBUGCore.lean) | The Tucker BUG step without analysis constants, near a reference solution | 15 |  |
 
 ## Integrators of higher order
@@ -149,7 +153,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`HighOrder/MidpointBUGRun`](../LeanDLRA/HighOrder/MidpointBUGRun.lean) | Runs of the fixed-rank midpoint BUG integrator: existence and second-order error bound | 9 | [2402.08607](https://arxiv.org/abs/2402.08607) |
 | [`HighOrder/MidpointBUGStep`](../LeanDLRA/HighOrder/MidpointBUGStep.lean) | The midpoint BUG step for matrices as a step relation | 23 |  |
 | [`HighOrder/ProjectedRK`](../LeanDLRA/HighOrder/ProjectedRK.lean) | Projected Runge–Kutta methods: stage analysis and local error | 7 |  |
-| [`HighOrder/RungeKuttaBUG`](../LeanDLRA/HighOrder/RungeKuttaBUG.lean) | Galerkin–Runge–Kutta BUG: exactness, stage span, robust order `p`, relaxed exactness, SSP/RK4 | 37 | [2311.06399](https://arxiv.org/abs/2311.06399), [2502.07040](https://arxiv.org/abs/2502.07040), [2508.04484](https://arxiv.org/abs/2508.04484), [2602.12337](https://arxiv.org/abs/2602.12337), [2608.27749](https://arxiv.org/abs/2608.27749), [2609.02721](https://arxiv.org/abs/2609.02721) |
+| [`HighOrder/RungeKuttaBUG`](../LeanDLRA/HighOrder/RungeKuttaBUG.lean) | Galerkin–Runge–Kutta BUG: exactness, stage span, robust order `p`, relaxed exactness, SSP/RK4 | 37 | [2502.07040](https://arxiv.org/abs/2502.07040), [2602.12337](https://arxiv.org/abs/2602.12337), [2608.27749](https://arxiv.org/abs/2608.27749), [2609.02721](https://arxiv.org/abs/2609.02721) |
 
 ## Randomized and interpolatory integrators
 
@@ -157,18 +161,21 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 |---|---|---:|---|
 | [`Randomized/CrossInterpolation`](../LeanDLRA/Randomized/CrossInterpolation.lean) | Results of arXiv 2402.18721: Collocation (cross-interpolation) methods on low-rank manifolds | 3 | [2402.18721](https://arxiv.org/abs/2402.18721) |
 | [`Randomized/DRSVDRun`](../LeanDLRA/Randomized/DRSVDRun.lean) | Runs of the dynamical randomized SVD: existence and error bound | 9 |  |
-| [`Randomized/DRSVDStep`](../LeanDLRA/Randomized/DRSVDStep.lean) | The dynamical randomized SVD as a step relation | 14 | [2410.17091](https://arxiv.org/abs/2410.17091) |
+| [`Randomized/DRSVDStep`](../LeanDLRA/Randomized/DRSVDStep.lean) | The dynamical randomized SVD as a step relation | 14 |  |
 | [`Randomized/ObliqueBUG`](../LeanDLRA/Randomized/ObliqueBUG.lean) | Interpolatory (DEIM/CUR) and sketched BUG: oblique capture and Lebesgue-constant bounds | 36 | [2411.15990](https://arxiv.org/abs/2411.15990), [2510.19518](https://arxiv.org/abs/2510.19518) |
-| [`Randomized/RandomizedBUG`](../LeanDLRA/Randomized/RandomizedBUG.lean) | Dynamical randomized SVD and generalized Nyström as BUG-type steps | 37 | [1301.1058](https://arxiv.org/abs/1301.1058), [2001.08599](https://arxiv.org/abs/2001.08599), [2010.02022](https://arxiv.org/abs/2010.02022), [2410.17091](https://arxiv.org/abs/2410.17091), [2506.15259](https://arxiv.org/abs/2506.15259) |
+| [`Randomized/RandomizedBUG`](../LeanDLRA/Randomized/RandomizedBUG.lean) | Dynamical randomized SVD and generalized Nyström as BUG-type steps | 37 |  |
 
 ## Stiff problems
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
 | [`Stiff/CouplingLocalError`](../LeanDLRA/Stiff/CouplingLocalError.lean) | Stiff problems: a local error bound for the rank-adaptive BUG step with coupling numbers | 60 |  |
+| [`Stiff/Defs`](../LeanDLRA/Stiff/Defs.lean) | Implicit low-rank integrators: definitions | 0 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Stiff/DualWeightedResidual`](../LeanDLRA/Stiff/DualWeightedResidual.lean) | Dual-weighted residual identities for low-rank implicit Euler steps | 35 | [1901.05343](https://arxiv.org/abs/1901.05343), [2206.09374](https://arxiv.org/abs/2206.09374), [2609.18246](https://arxiv.org/abs/2609.18246) |
 | [`Stiff/ImplicitBUG`](../LeanDLRA/Stiff/ImplicitBUG.lean) | Implicit BUG integrators: implicit K-step capture, robust first order, B-convergence | 51 | [2010.02022](https://arxiv.org/abs/2010.02022), [2311.15143](https://arxiv.org/abs/2311.15143), [2402.05347](https://arxiv.org/abs/2402.05347), [2410.07465](https://arxiv.org/abs/2410.07465), [2412.09400](https://arxiv.org/abs/2412.09400), [2503.04932](https://arxiv.org/abs/2503.04932), [2609.02721](https://arxiv.org/abs/2609.02721), [2610.18419](https://arxiv.org/abs/2610.18419) |
-| [`Stiff/ImplicitSolvability`](../LeanDLRA/Stiff/ImplicitSolvability.lean) | Unique solvability of projected implicit stages | 59 | [2305.11532](https://arxiv.org/abs/2305.11532) |
+| [`Stiff/ImplicitBUGRun`](../LeanDLRA/Stiff/ImplicitBUGRun.lean) | Runs of the fixed-rank BUG integrator with backward Euler substeps | 3 |  |
+| [`Stiff/ImplicitBUGStep`](../LeanDLRA/Stiff/ImplicitBUGStep.lean) | The BUG integrator with backward Euler substeps as a step relation | 29 | [2610.18419](https://arxiv.org/abs/2610.18419) |
+| [`Stiff/ImplicitSolvability`](../LeanDLRA/Stiff/ImplicitSolvability.lean) | Unique solvability of projected implicit stages | 59 |  |
 
 ## Stability and structure
 
@@ -184,12 +191,12 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 |---|---|---:|---|
 | [`Tensor/Defs`](../LeanDLRA/Tensor/Defs.lean) | Tensors, unfoldings and tensor formats: definitions | 15 |  |
 | [`Tensor/Steps`](../LeanDLRA/Tensor/Steps.lean) | Step predicates of the Tucker and tree tensor network integrators | 0 |  |
-| [`Tensor/TT/AugmentedBUG`](../LeanDLRA/Tensor/TT/AugmentedBUG.lean) | The augmented BUG integrator for tensor trains (MPS-BUG) | 18 | [2104.05247](https://arxiv.org/abs/2104.05247) |
-| [`Tensor/TT/Basic`](../LeanDLRA/Tensor/TT/Basic.lean) | Tensor trains: interfaces, orthonormality and interface projectors | 27 | [2402.18721](https://arxiv.org/abs/2402.18721) |
+| [`Tensor/TT/AugmentedBUG`](../LeanDLRA/Tensor/TT/AugmentedBUG.lean) | The augmented BUG integrator for tensor trains (MPS-BUG) | 18 |  |
+| [`Tensor/TT/Basic`](../LeanDLRA/Tensor/TT/Basic.lean) | Tensor trains: interfaces, orthonormality and interface projectors | 27 |  |
 | [`Tensor/TT/ObliqueProjector`](../LeanDLRA/Tensor/TT/ObliqueProjector.lean) | Oblique TT tangent projectors and the TT tangent space | 42 |  |
-| [`Tensor/TT/Operations`](../LeanDLRA/Tensor/TT/Operations.lean) | Tensor trains: operations on cores, gauge transformations and the bond-centred form | 29 | [1407.2042](https://arxiv.org/abs/1407.2042), [2603.13990](https://arxiv.org/abs/2603.13990) |
-| [`Tensor/TT/ProjectorSplitting`](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean) | The tensor-train projector-splitting integrator (TT-KSL, one-site TDVP) | 41 | [1407.2042](https://arxiv.org/abs/1407.2042), [2512.14950](https://arxiv.org/abs/2512.14950), [2603.13990](https://arxiv.org/abs/2603.13990) |
-| [`Tensor/TT/ProjectorSplittingError`](../LeanDLRA/Tensor/TT/ProjectorSplittingError.lean) | Robust error bound of the tensor-train projector-splitting integrator | 4 | [2010.02022](https://arxiv.org/abs/2010.02022) |
+| [`Tensor/TT/Operations`](../LeanDLRA/Tensor/TT/Operations.lean) | Tensor trains: operations on cores, gauge transformations and the bond-centred form | 29 |  |
+| [`Tensor/TT/ProjectorSplitting`](../LeanDLRA/Tensor/TT/ProjectorSplitting.lean) | The tensor-train projector-splitting integrator (TT-KSL, one-site TDVP) | 41 |  |
+| [`Tensor/TT/ProjectorSplittingError`](../LeanDLRA/Tensor/TT/ProjectorSplittingError.lean) | Robust error bound of the tensor-train projector-splitting integrator | 4 |  |
 | [`Tensor/TT/ProjectorSplittingExactness`](../LeanDLRA/Tensor/TT/ProjectorSplittingExactness.lean) | Exactness of the tensor-train projector-splitting integrator | 34 |  |
 | [`Tensor/TT/TangentProjector`](../LeanDLRA/Tensor/TT/TangentProjector.lean) | The TT tangent projector and cross interpolation | 12 |  |
 | [`Tensor/TTN/Abstract/BUG`](../LeanDLRA/Tensor/TTN/Abstract/BUG.lean) | Error bounds and exactness of the fixed-rank BUG integrator for tree tensor networks | 12 |  |
@@ -198,9 +205,9 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Tensor/TTN/Abstract/ProjectorSplittingExactness`](../LeanDLRA/Tensor/TTN/Abstract/ProjectorSplittingExactness.lean) | Exactness of the nested Tucker projector-splitting integrator | 4 |  |
 | [`Tensor/TTN/Abstract/RankAdaptiveBUG`](../LeanDLRA/Tensor/TTN/Abstract/RankAdaptiveBUG.lean) | Error bounds and exactness of the rank-adaptive BUG integrator for tree tensor networks | 9 |  |
 | [`Tensor/TTN/BUG`](../LeanDLRA/Tensor/TTN/BUG.lean) | The fixed-rank BUG integrator on concrete tree tensor networks | 30 |  |
-| [`Tensor/TTN/Basic`](../LeanDLRA/Tensor/TTN/Basic.lean) | Tree tensor networks: subtree projectors and nested orthonormal bases | 16 | [2002.11392](https://arxiv.org/abs/2002.11392) |
+| [`Tensor/TTN/Basic`](../LeanDLRA/Tensor/TTN/Basic.lean) | Tree tensor networks: subtree projectors and nested orthonormal bases | 16 |  |
 | [`Tensor/TTN/BasisOrthonormality`](../LeanDLRA/Tensor/TTN/BasisOrthonormality.lean) | Results of arXiv 2002.11392: Time integration of tree tensor networks (part b) | 1 | [2002.11392](https://arxiv.org/abs/2002.11392) |
-| [`Tensor/TTN/Integrators`](../LeanDLRA/Tensor/TTN/Integrators.lean) | Tree tensor network integrators on concrete tree tensor networks | 6 | [2002.11392](https://arxiv.org/abs/2002.11392), [2412.00858](https://arxiv.org/abs/2412.00858) |
+| [`Tensor/TTN/Integrators`](../LeanDLRA/Tensor/TTN/Integrators.lean) | Tree tensor network integrators on concrete tree tensor networks | 6 |  |
 | [`Tensor/TTN/ParallelBUG`](../LeanDLRA/Tensor/TTN/ParallelBUG.lean) | Basis frames and the parallel BUG integrator on concrete tree tensor networks | 9 |  |
 | [`Tensor/TTN/ProjectorSplitting`](../LeanDLRA/Tensor/TTN/ProjectorSplitting.lean) | The recursive TTN projector-splitting integrator on concrete tree tensor networks | 6 |  |
 | [`Tensor/TTN/ProjectorSplittingExactness`](../LeanDLRA/Tensor/TTN/ProjectorSplittingExactness.lean) | Exactness of the recursive TTN projector-splitting integrator | 2 | [2002.11392](https://arxiv.org/abs/2002.11392) |
@@ -253,7 +260,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
-| [`Control/AdjointDLRA`](../LeanDLRA/Control/AdjointDLRA.lean) | DLRA in optimal control: gradient errors, adjoints and time reversibility | 14 | [2010.02022](https://arxiv.org/abs/2010.02022), [2409.14938](https://arxiv.org/abs/2409.14938), [2506.21405](https://arxiv.org/abs/2506.21405), [2608.21545](https://arxiv.org/abs/2608.21545), [2610.29554](https://arxiv.org/abs/2610.29554) |
+| [`Control/AdjointDLRA`](../LeanDLRA/Control/AdjointDLRA.lean) | DLRA in optimal control: gradient errors, adjoints and time reversibility | 14 | [2409.14938](https://arxiv.org/abs/2409.14938), [2608.21545](https://arxiv.org/abs/2608.21545), [2610.29554](https://arxiv.org/abs/2610.29554) |
 
 ## Research
 
@@ -263,8 +270,10 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Research/DataDrivenErrorRecursion`](../LeanDLRA/Research/DataDrivenErrorRecursion.lean) | Pythagorean error recursion for data-driven BUG and KSL | 32 | [1507.07953](https://arxiv.org/abs/1507.07953) |
 | [`Research/ExplicitMidpointCapture`](../LeanDLRA/Research/ExplicitMidpointCapture.lean) | The capture defect of the explicit midpoint step | 38 |  |
 | [`Research/ExplicitMidpointGalerkin`](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean) | The explicit midpoint Galerkin step in augmented bases | 20 |  |
+| [`Research/ExplicitMidpointRun`](../LeanDLRA/Research/ExplicitMidpointRun.lean) | Runs of the explicit midpoint method in augmented bases: existence and second-order error | 23 |  |
 | [`Research/FederatedConvexThreshold`](../LeanDLRA/Research/FederatedConvexThreshold.lean) | FeDLRT with convex clients: descent up to `s⋆ λ β < 2` | 5 |  |
 | [`Research/FederatedDescentThreshold`](../LeanDLRA/Research/FederatedDescentThreshold.lean) | The descent threshold of the FeDLRT round | 23 | [2406.17887](https://arxiv.org/abs/2406.17887) |
+| [`Research/FederatedManySteps`](../LeanDLRA/Research/FederatedManySteps.lean) | FeDLRT with averaged gradients: descent for every number of local steps | 5 |  |
 | [`Research/FederatedThreeSteps`](../LeanDLRA/Research/FederatedThreeSteps.lean) | FeDLRT with averaged gradients: three local steps | 13 | [2406.17887](https://arxiv.org/abs/2406.17887) |
 | [`Research/FederatedTwoSteps`](../LeanDLRA/Research/FederatedTwoSteps.lean) | FeDLRT with averaged gradients: two local steps are two global gradient steps | 4 | [2406.17887](https://arxiv.org/abs/2406.17887) |
 | [`Research/IntegratorErrorOrder`](../LeanDLRA/Research/IntegratorErrorOrder.lean) | An error partial order of KSL, BUG, augmented BUG and parallel BUG | 53 |  |
@@ -274,13 +283,16 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Research/StiffEnergyGalerkin`](../LeanDLRA/Research/StiffEnergyGalerkin.lean) | Stiff problems: an energy bound for the Galerkin step without coupling numbers | 10 |  |
 | [`Research/StiffGlobalCycle`](../LeanDLRA/Research/StiffGlobalCycle.lean) | No stiffness-uniform global bound for the rank-adaptive BUG integrator when the forcing may | 35 |  |
 | [`Research/StiffGlobalVariation`](../LeanDLRA/Research/StiffGlobalVariation.lean) | The global error of the rank-adaptive BUG integrator grows with the variation of the forcing | 4 |  |
+| [`Research/StiffInvariantComm`](../LeanDLRA/Research/StiffInvariantComm.lean) | Stiff problems: symmetry of the stiff operator in the invariant-Galerkin bound | 18 |  |
+| [`Research/StiffInvariantGalerkin`](../LeanDLRA/Research/StiffInvariantGalerkin.lean) | Stiff problems: the rank-adaptive BUG integrator when the Galerkin space is invariant | 22 |  |
 | [`Research/StiffOldColumnGalerkin`](../LeanDLRA/Research/StiffOldColumnGalerkin.lean) | Stiff problems: the Galerkin step when the old column space is invariant | 7 |  |
 | [`Research/StiffOldColumnVariation`](../LeanDLRA/Research/StiffOldColumnVariation.lean) | Stiff problems with invariant old column spaces: forcing that is constant on the steps | 8 |  |
 | [`Research/StiffOrderReduction`](../LeanDLRA/Research/StiffOrderReduction.lean) | Order reduction of the BUG step for stiff problems: an exact family | 71 |  |
 | [`Research/StiffVelocityVariation`](../LeanDLRA/Research/StiffVelocityVariation.lean) | Stiff problems: the variation of the velocities of the L-steps is not bounded by the data | 12 |  |
-| [`Research/SylvesterFlows`](../LeanDLRA/Research/SylvesterFlows.lean) | The rank-adaptive BUG step on fields of Sylvester type: the auxiliary flows exist | 12 | [2104.05247](https://arxiv.org/abs/2104.05247) |
-| [`Research/SylvesterGlobal`](../LeanDLRA/Research/SylvesterGlobal.lean) | The rank-adaptive BUG integrator is of global order two on fields of Sylvester type | 1 | [2104.05247](https://arxiv.org/abs/2104.05247) |
-| [`Research/TwoSidedLeak`](../LeanDLRA/Research/TwoSidedLeak.lean) | The rank-adaptive BUG step for fields with a two-sided term: a leak bound | 33 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.08607](https://arxiv.org/abs/2402.08607) |
+| [`Research/SylvesterFlows`](../LeanDLRA/Research/SylvesterFlows.lean) | The rank-adaptive BUG step on fields of Sylvester type: the auxiliary flows exist | 12 |  |
+| [`Research/SylvesterGlobal`](../LeanDLRA/Research/SylvesterGlobal.lean) | The rank-adaptive BUG integrator is of global order two on fields of Sylvester type | 1 |  |
+| [`Research/TwoSidedLeak`](../LeanDLRA/Research/TwoSidedLeak.lean) | The rank-adaptive BUG step for fields with a two-sided term: a leak bound | 33 |  |
+| [`Research/TwoSidedPadded`](../LeanDLRA/Research/TwoSidedPadded.lean) | The rank-adaptive BUG step from a start padded with the images of a two-sided term | 11 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.05347](https://arxiv.org/abs/2402.05347) |
 
 ## Open problems of the survey
 
