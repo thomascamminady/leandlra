@@ -15,6 +15,7 @@ import LeanDLRA.DLRA.Existence
 import LeanDLRA.DLRA.GaugeInvariance
 import LeanDLRA.DLRA.QuasiOptimality
 import LeanDLRA.DLRA.QuasiOptimalityGap
+import LeanDLRA.DLRA.QuasiOptimalityMargin
 import LeanDLRA.DLRA.QuasiOptimalityTube
 import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.Filtering.Defs
