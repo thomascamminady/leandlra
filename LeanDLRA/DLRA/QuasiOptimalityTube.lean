@@ -13,8 +13,6 @@ tube, and the bound holds with the constants of the global case. All norms are F
 
 ## Main results
 
-* `bootstrap_of_continuousOn`: the continuity argument. If a continuous function `e` satisfies
-  `e t ≤ β t < R` at every time `t` up to which it has stayed below `R`, then `e ≤ β` throughout.
 * `IsDLRASolution.norm_sub_lt_of_isLipschitzOnTube`: the DLRA solution stays inside the tube,
   `‖Y t - A t‖ < R` on `[a, b]`.
 * `IsDLRASolution.norm_sub_le_integral_of_isLipschitzOnTube`: for a DLRA solution `Y` of rank `r`
@@ -30,7 +28,8 @@ whole space and agrees with `F` on the tube (`isLipschitzField_tubeExt`, `tubeEx
 interval `[a, t]` on which `Y` has stayed in the tube, `Y` is a DLRA solution of the extended
 field, so the global bound `IsDLRASolution.norm_sub_le_integral` applies there; with
 `‖Y - A‖ ≤ ‖Y - X‖ + ‖X - A‖` it keeps `Y` strictly inside the tube, and the continuity argument
-`bootstrap_of_continuousOn` extends this to `[a, b]`. The tube hypotheses are those of
+`bootstrap_of_continuousOn` of `LeanDLRA/Foundations/Localization.lean` extends this to
+`[a, b]`. The tube hypotheses are those of
 [ZhaoOstermannGu2021]; a bound of this kind for a globally Lipschitz field is in
 [KochLubich2007].
 
@@ -44,30 +43,6 @@ open Set Matrix Filter
 open scoped Topology
 
 namespace LeanDLRA
-
-/-! ### The continuity argument -/
-
-/-- **Continuity argument** (the continuous-time form of `bootstrap_of_global`). Let `e` be
-continuous on `[a, b]` and `β t < R` for `t ∈ [a, b]`. If at every `t ∈ [a, b]` the bound
-`e t ≤ β t` follows from `e s ≤ R` for all `s ∈ [a, t)`, then `e t ≤ β t` for all `t ∈ [a, b]`.
-In particular `e` stays below `R` on `[a, b]`. -/
-theorem bootstrap_of_continuousOn {e β : ℝ → ℝ} {a b R : ℝ} (he : ContinuousOn e (Icc a b))
-    (hβ : ∀ t ∈ Icc a b, β t < R)
-    (hglob : ∀ t ∈ Icc a b, (∀ s ∈ Ico a t, e s ≤ R) → e t ≤ β t) :
-    ∀ t ∈ Icc a b, e t ≤ β t := by
-  have hlt : ∀ t ∈ Icc a b, e t < R := by
-    intro t ht
-    by_contra hRt
-    rw [not_lt] at hRt
-    have hK : IsClosed (Icc a b ∩ e ⁻¹' Ici R) :=
-      he.preimage_isClosed_of_isClosed isClosed_Icc isClosed_Ici
-    obtain ⟨T, ⟨hT, hRT⟩, hmin⟩ :=
-      (isCompact_Icc.of_isClosed_subset hK inter_subset_left).exists_isLeast ⟨t, ht, hRt⟩
-    have hbelow : ∀ s ∈ Ico a T, e s ≤ R := fun s hs => by
-      by_contra h
-      exact absurd (hmin ⟨⟨hs.1, hs.2.le.trans hT.2⟩, (not_le.1 h).le⟩) (not_le.2 hs.2)
-    exact absurd (hglob T hT hbelow) (not_le.2 ((hβ T hT).trans_le hRT))
-  exact fun t ht => hglob t ht fun s hs => (hlt s ⟨hs.1, hs.2.le.trans ht.2⟩).le
 
 /-! ### Quasi-optimality on a tube -/
 
@@ -213,11 +188,6 @@ end Tube
 section Examples
 
 open scoped LeanDLRA.Frobenius
-
-/-- `bootstrap_of_continuousOn` for `e t = t / 2`, `β t = t`, `R = 2` on `[0, 1]`. -/
-example : ∀ t ∈ Set.Icc (0 : ℝ) 1, t / 2 ≤ t :=
-  bootstrap_of_continuousOn (R := 2) (continuous_id.div_const 2).continuousOn
-    (fun t ht => by linarith [ht.2]) fun t ht _ => by linarith [ht.1]
 
 /-- The first unit column of `ℝ²`. -/
 local notation "e₁" => (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)

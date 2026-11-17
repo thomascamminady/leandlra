@@ -6,19 +6,20 @@ import LeanDLRA.Analysis.Defs
 /-!
 # Localisation: tube hypotheses, global extension, bootstrap and continuation
 
-The robust error analyses of dynamical low-rank integrators (Kieri–Lubich–Walach 2016;
-Ceruti–Lubich, arXiv 2010.02022; Ceruti–Kusch–Lubich, arXiv 2104.05247, 2304.05660) assume
-that the right-hand side `F(t, Y)` is Lipschitz and bounded **globally**.  For almost every
-PDE application (cubic nonlinearities, Vlasov, Burgers, ...) these constants only exist on a
-neighbourhood of the exact solution, and the literature delegates the localisation to a
-remark.  This file provides the localisation machinery and addresses the open problems
-**OP-EX-01** (bootstrap keeping iterates in the tube), **OP-OT-10** (cubic nonlinearity) and
-**OP-EX-04** (continuation principle, counterexample to global existence on the manifold).
+The robust error analyses of dynamical low-rank integrators (Kieri–Lubich–Walach
+[KieriLubichWalach2016]; Ceruti–Lubich, [CerutiLubich2022]; Ceruti–Kusch–Lubich,
+[CerutiKuschLubich2022], [CerutiKuschLubich2024]) assume that the right-hand side `F(t, Y)` is
+Lipschitz and bounded **globally**.  For almost every PDE application (cubic nonlinearities,
+Vlasov, Burgers, ...) these constants only exist on a neighbourhood of the exact solution, and
+the literature delegates the localisation to a remark.  This file provides the localisation
+machinery and addresses the open problems **OP-EX-01** (bootstrap keeping iterates in the tube),
+**OP-OT-10** (cubic nonlinearity) and **OP-EX-04** (continuation principle, counterexample to
+global existence on the manifold).
 
 ## Main results
 
 * `IsLipschitzOnTube F A a b ρ L`, `IsBoundedOnTube F A a b ρ B`: Lipschitz/bound hypotheses
-  only on the tube `{(t, x) | t ∈ [a, b], ‖x - A t‖ ≤ ρ}` (arXiv 2010.05249, Property 1(b)).
+  only on the tube `{(t, x) | t ∈ [a, b], ‖x - A t‖ ≤ ρ}` ([ZhaoOstermannGu2021], Property 1(b)).
 * `norm_radialRetract_sub_le`, `norm_ballRetract_sub_le`: the radial retraction onto a closed
   ball is `1`-Lipschitz (metric projection onto a convex set, via its variational inequality).
 * `tubeExt`: the **global extension** `F̃ t x = F t (r_t x)` (`r_t` the retraction onto the
@@ -34,9 +35,11 @@ remark.  This file provides the localisation machinery and addresses the open pr
   solution: a solution of a projected field `Ψ ∘ G` that starts close to the reference solution
   stays in the tube and moves by at most `B (t - t₀)`.
 * `bootstrap_of_global`: the generic bootstrap pattern (reusable for KSL, parallel BUG, Tucker).
+* `bootstrap_of_continuousOn`: the continuous-time form of the bootstrap (the continuity
+  argument).
 * `IsBUGStep.tubeExt`, `bug_global_error_le_of_tube`: **OP-EX-01 for the BUG integrator**:
   if `c₀ δ + c₁ ε + c₂ h + 4 B h < ρ`, every iterate and substep stays in the tube and the
-  robust global bound of Ceruti–Lubich (arXiv 2010.02022, Theorem 4) holds with the same
+  robust global bound of Ceruti–Lubich ([CerutiLubich2022, Thm. 4]) holds with the same
   constants for the locally Lipschitz field.
 * Continuation (OP-EX-04 (b), abstract form): `exists_ODESolution_of_apriori` (an a priori
   bound for the extended problem gives a solution of the original problem on the whole
@@ -45,21 +48,21 @@ remark.  This file provides the localisation machinery and addresses the open pr
   existence for globally Lipschitz **unbounded** fields, which Mathlib's Picard–Lindelöf and
   `Foundations/Existence` do not cover).
 * `isLipschitzField_reducedFlux`, `existsUnique_reducedFlux`: Billaud-Friess–Nouy,
-  arXiv 1604.05706, Remark 1 — the reduced flux with a moving orthonormal basis is
+  [BillaudFriessNouy2017, Remark 1] — the reduced flux with a moving orthonormal basis is
   `(L + sup ‖Vᵀ V'‖)`-Lipschitz, and the reduced system is uniquely solvable on `[a, b]`.
 * `isUnit_det_coeff_of_near`: Weyl-type lemma without SVD (OP-EX-04 (b)): if `A = U S Vᵀ`,
   `‖S⁻¹‖_F ≤ γ` and `γ ‖Y - A‖_F ≤ θ < 1`, then `Uᵀ Y V` is invertible with
   `‖(Uᵀ Y V)⁻¹‖_F ≤ γ / (1 - θ)`, so `Y` keeps rank `≥ k`.
 * `not_exists_odeSolution_mem_manifold`: the counterexample of OP-EX-04: for
   `A(t) = diag(1, 1 - t)` the DLRA solution leaves `M₂` at `t = 1`.
-* Cubic nonlinearity (OP-OT-10, arXiv 2010.05249, Property 1(b)): `norm_cubic_sub_le`
+* Cubic nonlinearity (OP-OT-10, [ZhaoOstermannGu2021], Property 1(b)): `norm_cubic_sub_le`
   (`‖|u|²u - |v|²v‖ ≤ (|u|² + |u||v| + |v|²) ‖u - v‖` in any real normed space),
   `norm_complex_cubic_sub_le`, the Frobenius tube constants `isLipschitzOnTube_entrywiseCubic`,
   `isBoundedOnTube_entrywiseCubic`, and the robust BUG bound for the cubic field
   `bug_global_error_le_entrywiseCubic`.
-* Gram-inverse ball (Kazashi–Nobile–Zoccolan, arXiv 2308.11581, Prop. A.1 = arXiv 2609.20307,
-  Prop. 2.2): `gramMatrix_inv_ball`; with the Frobenius perturbation lemmas
-  `isUnit_det_add_of_norm_le`, `norm_inv_add_le`.
+* Gram-inverse ball (Kazashi–Nobile–Zoccolan, [KazashiNobileZoccolan2025, Prop. A.1] =
+  [KazashiNobileZoccolan2026c], Prop. 2.2): `gramMatrix_inv_ball`; with the Frobenius perturbation
+  lemmas `isUnit_det_add_of_norm_le`, `norm_inv_add_le`.
 
 ## Deviations from the literature and what remains open
 
@@ -409,6 +412,28 @@ theorem bootstrap_of_global {N : ℕ} {e : ℕ → ℝ} {M : ℝ}
   induction n using Nat.strong_induction_on with
   | _ n ih => exact fun hn => hglob n hn fun k hk => ih k hk (hk.le.trans hn)
 
+/-- **Continuity argument** (the continuous-time form of `bootstrap_of_global`). Let `e` be
+continuous on `[a, b]` and `β t < R` for `t ∈ [a, b]`. If at every `t ∈ [a, b]` the bound
+`e t ≤ β t` follows from `e s ≤ R` for all `s ∈ [a, t)`, then `e t ≤ β t` for all `t ∈ [a, b]`.
+In particular `e` stays below `R` on `[a, b]`. -/
+theorem bootstrap_of_continuousOn {e β : ℝ → ℝ} {a b R : ℝ} (he : ContinuousOn e (Icc a b))
+    (hβ : ∀ t ∈ Icc a b, β t < R)
+    (hglob : ∀ t ∈ Icc a b, (∀ s ∈ Ico a t, e s ≤ R) → e t ≤ β t) :
+    ∀ t ∈ Icc a b, e t ≤ β t := by
+  have hlt : ∀ t ∈ Icc a b, e t < R := by
+    intro t ht
+    by_contra hRt
+    rw [not_lt] at hRt
+    have hK : IsClosed (Icc a b ∩ e ⁻¹' Ici R) :=
+      he.preimage_isClosed_of_isClosed isClosed_Icc isClosed_Ici
+    obtain ⟨T, ⟨hT, hRT⟩, hmin⟩ :=
+      (isCompact_Icc.of_isClosed_subset hK inter_subset_left).exists_isLeast ⟨t, ht, hRt⟩
+    have hbelow : ∀ s ∈ Ico a T, e s ≤ R := fun s hs => by
+      by_contra h
+      exact absurd (hmin ⟨⟨hs.1, hs.2.le.trans hT.2⟩, (not_le.1 h).le⟩) (not_le.2 hs.2)
+    exact absurd (hglob T hT hbelow) (not_le.2 ((hβ T hT).trans_le hRT))
+  exact fun t ht => hglob t ht fun s hs => (hlt s ⟨hs.1, hs.2.le.trans ht.2⟩).le
+
 variable {F : ℝ → E → E} {A : ℝ → E} {a b ρ B ε : ℝ}
 
 omit [InnerProductSpace ℝ E] in
@@ -547,7 +572,7 @@ lemma bugGlobalBound_nonneg {L B H T δ ε h : ℝ} (hL : 0 ≤ L) (hB : 0 ≤ B
   positivity
 
 /-- **Robust global error bound of the BUG integrator under tube-localised hypotheses**
-(resolves OP-EX-01 for the BUG integrator; Ceruti–Lubich, arXiv 2010.02022, Theorem 4, with the
+(resolves OP-EX-01 for the BUG integrator; Ceruti–Lubich, [CerutiLubich2022, Thm. 4], with the
 standing global hypotheses replaced by local ones).
 
 Let `F` be `L`-Lipschitz and bounded by `B` **only on the tube** of radius `ρ` around the exact
@@ -754,7 +779,7 @@ section ROM
 variable {E' : Type*} [NormedAddCommGroup E'] [InnerProductSpace ℝ E']
 
 /-- **Lipschitz constant of the reduced flux with a moving basis** (Billaud-Friess–Nouy,
-arXiv 1604.05706, eq. (9) and Remark 1, abstract form).
+[BillaudFriessNouy2017, eq. (9)] and Remark 1, abstract form).
 For a full field `f` that is `L`-Lipschitz, a basis map `V t : E' →L E` and its transpose
 `W t : E →L E'` with `‖V t‖, ‖W t‖ ≤ 1` (orthonormal basis), and the moving-basis term
 `M t = Vᵀ(t) V'(t)` with `‖M t‖ ≤ c`, the reduced flux
@@ -785,10 +810,10 @@ theorem isLipschitzField_reducedFlux {f : ℝ → E → E} {L c : ℝ} (hf : IsL
     _ ≤ L * ‖α - β‖ + c * ‖α - β‖ := add_le_add h1 h2
     _ = (L + c) * ‖α - β‖ := by ring
 
-/-- **Well-posedness of the reduced dynamical system** (Billaud-Friess–Nouy, arXiv 1604.05706,
-Remark 1).  Under the hypotheses of `isLipschitzField_reducedFlux`, if moreover `f` is
-continuous in time, `‖f t 0‖ ≤ K` on `[a, b]`, and `V`, `W`, `M` are continuous on `[a, b]`
-(e.g. `V` continuously differentiable), then the reduced system `α' = f_r(t, α)`,
+/-- **Well-posedness of the reduced dynamical system** (Billaud-Friess–Nouy,
+[BillaudFriessNouy2017], Remark 1). Under the hypotheses of `isLipschitzField_reducedFlux`, if
+moreover `f` is continuous in time, `‖f t 0‖ ≤ K` on `[a, b]`, and `V`, `W`, `M` are continuous on
+`[a, b]` (e.g. `V` continuously differentiable), then the reduced system `α' = f_r(t, α)`,
 `α a = α₀`, has a **unique** solution on the whole interval `[a, b]`.
 
 The reduced flux is unbounded (it grows linearly in `α`), so this uses
@@ -887,7 +912,7 @@ theorem norm_cubic_sub_le {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
     _ ≤ ‖u‖ ^ 2 * ‖u - v‖ + (‖u‖ + ‖v‖) * ‖u - v‖ * ‖v‖ := by gcongr
     _ = _ := by ring
 
-/-- **arXiv 2010.05249, Property 1(b), scalar core** (OP-OT-10 (a)):
+/-- **[ZhaoOstermannGu2021], Property 1(b), scalar core** (OP-OT-10 (a)):
 `‖|u|² u - |v|² v‖ ≤ 3 max(|u|, |v|)² ‖u - v‖`. -/
 theorem norm_cubic_sub_le_max {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
     (u v : V) :
@@ -901,7 +926,7 @@ theorem norm_cubic_sub_le_max {V : Type*} [NormedAddCommGroup V] [NormedSpace �
 
 /-- The complex cubic nonlinearity `u ↦ |u|² u` of the (fractional) Ginzburg–Landau and
 nonlinear Schrödinger equations satisfies `||u|² u - |v|² v| ≤ 3 max(|u|, |v|)² |u - v|`
-(arXiv 2010.05249, Property 1(b), entrywise). -/
+([ZhaoOstermannGu2021], Property 1(b), entrywise). -/
 theorem norm_complex_cubic_sub_le (u v : ℂ) :
     ‖(‖u‖ ^ 2 : ℂ) * u - (‖v‖ ^ 2 : ℂ) * v‖ ≤ 3 * max ‖u‖ ‖v‖ ^ 2 * ‖u - v‖ := by
   have := norm_cubic_sub_le_max (V := ℂ) u v
@@ -958,7 +983,7 @@ theorem norm_entrywiseCubic_le {X : Matrix m n ℝ} {R : ℝ} (hX : ∀ i j, |X 
     rw [show |X i j| ^ 3 = |X i j| ^ 2 * |X i j| by ring]
     exact mul_le_mul_of_nonneg_right (pow_le_pow_left₀ h0 this 2) h0
 
-/-- **arXiv 2010.05249, Property 1(b)** (OP-OT-10 (a)), real-matrix version: if the exact
+/-- **[ZhaoOstermannGu2021], Property 1(b)** (OP-OT-10 (a)), real-matrix version: if the exact
 solution satisfies the entrywise bound `|A(t)ᵢⱼ| ≤ δ` on `[a, b]` (Assumption 1(a) of the paper),
 then the entrywise cubic nonlinearity is Lipschitz on the Frobenius tube of radius `ρ` around `A`
 with constant `3 (δ + ρ)²`.  (Points of the tube have entries bounded by `δ + ρ`, since
@@ -975,7 +1000,7 @@ theorem isLipschitzOnTube_entrywiseCubic {A : ℝ → Matrix m n ℝ} {a b δ ρ
     linarith
   exact norm_entrywiseCubic_sub_le (hent X hX) (hent Y hY)
 
-/-- **arXiv 2010.05249, Property 1(b)**, bound: if moreover `‖A(t)‖_F ≤ R₀`, the cubic
+/-- **[ZhaoOstermannGu2021], Property 1(b)**, bound: if moreover `‖A(t)‖_F ≤ R₀`, the cubic
 nonlinearity is bounded on the tube by `H = (δ + ρ)² (R₀ + ρ)`.  (The paper states that `H`
 depends only on `δ` and `ρ`; in the Frobenius norm it also depends on the size `‖A‖_F` of the
 solution, which grows with the number of grid points unless the norm is grid-scaled.) -/
@@ -995,7 +1020,7 @@ theorem isBoundedOnTube_entrywiseCubic {A : ℝ → Matrix m n ℝ} {a b δ ρ R
   exact (norm_entrywiseCubic_le hent).trans (by gcongr)
 
 /-- **Robust BUG error bound for the cubic nonlinearity** (OP-OT-10 (b), BUG version;
-arXiv 2010.05249, Property 1(b) combined with arXiv 2010.02022, Theorem 4).  Let `A` solve
+[ZhaoOstermannGu2021], Property 1(b) combined with [CerutiLubich2022, Thm. 4]).  Let `A` solve
 `Ȧ = G(A)` with the entrywise cubic `G` on real `m × n` matrices, with entries bounded by `δA`
 and `‖A(t)‖_F ≤ R₀`.  With `L = 3 (δA + ρ)²` and `B = (δA + ρ)² (R₀ + ρ)` (the local constants
 of Property 1(b) on the Frobenius tube of radius `ρ`), the robust global bound of the BUG
@@ -1122,8 +1147,8 @@ lemma norm_gramMatrix_sub_le (Z Z₀ : PiLp 2 fun _ : ι => H) :
         add_le_add (norm_crossGram_le _ _) (norm_crossGram_le _ _)
     _ = _ := by ring
 
-/-- **The Gram-inverse ball** (Kazashi–Nobile–Zoccolan, arXiv 2308.11581, Proposition A.1 =
-arXiv 2609.20307, Proposition 2.2).  Let `Z₀ ∈ [H]^k` with `‖Z₀‖ ≤ ρ`, invertible Gram matrix
+/-- **The Gram-inverse ball** (Kazashi–Nobile–Zoccolan, [KazashiNobileZoccolan2025, Prop. A.1] =
+[KazashiNobileZoccolan2026c, Prop. 2.2]).  Let `Z₀ ∈ [H]^k` with `‖Z₀‖ ≤ ρ`, invertible Gram matrix
 `C_{Z₀}` and `‖C_{Z₀}⁻¹‖_F ≤ γ` (`γ > 0`).  Put `η = -ρ + √(ρ² + 1/(2γ))`.  Then every `Z` with
 `‖Z - Z₀‖ < η` has linearly independent components (invertible Gram matrix) and
 `‖C_Z⁻¹‖_F ≤ 2γ`.  This is the tube on which the dynamically orthogonal (DO) factor field,
@@ -1251,6 +1276,11 @@ example : ∃ y : ℝ → ℝ, ODESolution (fun t x => -x + Real.sin t) y 0 10 �
       rw [show -x + Real.sin t - (-y + Real.sin t) = -(x - y) by ring, abs_neg, one_mul])
     zero_le_one (fun t _ => by simpa [Real.norm_eq_abs] using Real.abs_sin_le_one t)
     (fun x => by fun_prop) (by norm_num) 5
+
+/-- `bootstrap_of_continuousOn` for `e t = t / 2`, `β t = t`, `R = 2` on `[0, 1]`. -/
+example : ∀ t ∈ Set.Icc (0 : ℝ) 1, t / 2 ≤ t :=
+  bootstrap_of_continuousOn (R := 2) (continuous_id.div_const 2).continuousOn
+    (fun t ht => by linarith [ht.2]) fun t ht _ => by linarith [ht.1]
 
 end Examples
 
