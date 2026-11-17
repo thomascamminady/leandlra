@@ -1,12 +1,13 @@
 import LeanDLRA.HighOrder.MidpointBUGGlobal
 import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
 import LeanDLRA.Integrators.Matrix.FlowDistance
+import LeanDLRA.HighOrder.Defs
 
 /-!
 # The midpoint BUG step for matrices as a step relation
 
 This file states the midpoint basis-update & Galerkin (BUG) integrator of Ceruti, Einkemmer,
-Kusch and Lubich (arXiv:2402.08607, §3, Algorithm 1, the 4r variant) for matrices, as a relation
+Kusch and Lubich ([CerutiEtAl2024b, §3], Algorithm 1, the 4r variant) for matrices, as a relation
 between the old value `Y₀` and the new value `Y₁` (`StepRel`), and gives the local error of a
 step. The error analysis at the level of orthogonal projectors is in
 `LeanDLRA/HighOrder/MidpointBUG.lean` and `LeanDLRA/HighOrder/MidpointBUGGlobal.lean`; the local
@@ -33,6 +34,8 @@ field, the Lipschitz constant, the bounds of the field and of its derivatives ar
 the error theorems, not part of the step.
 
 ## Main definitions
+
+The definitions are in `LeanDLRA/HighOrder/Defs.lean`.
 
 * `MatrixMidpointBUG.IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sh Ub Vb Sb`: the half step and the
   Galerkin step at the level of the factors, for any index types of the columns.
@@ -84,16 +87,16 @@ solution to the matrices of rank at most `r` plus twice the error before truncat
 (`norm_bestTrunc_sub_le`). The distance is at most `h ε e^{L h}`, without a term `h²`
 (`distLR_flow_le_exp_of_tube`), which keeps the step of second order.
 
-The catalogue structure `IsMidpoint4rStep` of arXiv:2402.08607 has one number of columns for
+The catalogue structure `IsMidpoint4rStep` of [CerutiEtAl2024b] has one number of columns for
 both Galerkin bases and states the capture of `h F V̂` instead of `F V̂`; for `h > 0` the two
 forms are equivalent.
 
 ## References
 
 * G. Ceruti, L. Einkemmer, J. Kusch, Ch. Lubich, *A robust second-order low-rank BUG integrator
-  based on the midpoint rule*, arXiv:2402.08607.
+  based on the midpoint rule*, [CerutiEtAl2024b].
 * G. Ceruti, J. Kusch, Ch. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
-  approximation*, arXiv:2104.05247 (BIT Numer. Math. 2022), for the augmented half step.
+  approximation*, [CerutiKuschLubich2022] (BIT Numer. Math. 2022), for the augmented half step.
 -/
 
 open Set
@@ -110,43 +113,7 @@ section Step
 variable {m n k k' l l' : Type*} [Fintype m] [Fintype n] [Fintype k] [Fintype k'] [Fintype l]
   [Fintype l'] [DecidableEq k] [DecidableEq k'] [DecidableEq l] [DecidableEq l'] {r : ℕ}
 
-/-- **One step of the midpoint BUG integrator at the level of the factors** (Ceruti, Einkemmer,
-Kusch and Lubich, arXiv:2402.08607, §3, Algorithm 1, steps 1 and 2) from `Y₀ = U₀ S₀ V₀ᵀ` at
-`t₀` to `t₁`, without truncation. With `t½ = (t₀ + t₁) / 2`:
-
-* `half`: an augmented BUG step over `[t₀, t½]` without truncation, with bases `Uh`, `Vh`; its
-  result is the midpoint predictor `Yh = Uh Sh(t½) Vhᵀ`;
-* the bases `Ub`, `Vb` have orthonormal columns, the range of `Ub` contains the columns of `Uh`
-  and of `F(t½, Yh) Vh`, the range of `Vb` those of `Vh` and of `F(t½, Yh)ᵀ Uh`;
-* `Sb` solves the Galerkin equation `Sb' = Ubᵀ F(t, Ub Sb Vbᵀ) Vb` on `[t₀, t₁]` with
-  `Sb(t₀) = Ubᵀ U₀ S₀ V₀ᵀ Vb`.
-
-The result of the step is `Ub Sb(t₁) Vbᵀ`. The bases are any orthonormal bases whose ranges
-contain the named columns; the algorithm takes orthonormal bases of the spans. -/
-structure IsStep (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t₀ t₁ : ℝ) (U₀ : Matrix m (Fin r) ℝ)
-    (S₀ : Matrix (Fin r) (Fin r) ℝ) (V₀ : Matrix n (Fin r) ℝ) (Uh : Matrix m k ℝ)
-    (Vh : Matrix n k' ℝ) (K : ℝ → Matrix m (Fin r) ℝ) (Lf : ℝ → Matrix n (Fin r) ℝ)
-    (Sh : ℝ → Matrix k k' ℝ) (Ub : Matrix m l ℝ) (Vb : Matrix n l' ℝ) (Sb : ℝ → Matrix l l' ℝ) :
-    Prop where
-  /-- The augmented BUG half step over `[t₀, (t₀ + t₁) / 2]`, without truncation. -/
-  half : MatrixBUG.IsRankAdaptiveStep F 0 t₀ ((t₀ + t₁) / 2) U₀ S₀ V₀ Uh Vh K Lf Sh
-    (Uh * Sh ((t₀ + t₁) / 2) * Vhᵀ)
-  orthUb : Ubᵀ * Ub = 1
-  orthVb : Vbᵀ * Vb = 1
-  /-- The range of `Ub` contains the columns of `Uh`. -/
-  capU : Ub * Ubᵀ * Uh = Uh
-  /-- The range of `Vb` contains the columns of `Vh`. -/
-  capV : Vb * Vbᵀ * Vh = Vh
-  /-- The range of `Ub` contains the columns of `F(t½, Yh) Vh`. -/
-  capF : Ub * Ubᵀ * (F ((t₀ + t₁) / 2) (Uh * Sh ((t₀ + t₁) / 2) * Vhᵀ) * Vh) =
-    F ((t₀ + t₁) / 2) (Uh * Sh ((t₀ + t₁) / 2) * Vhᵀ) * Vh
-  /-- The range of `Vb` contains the columns of `F(t½, Yh)ᵀ Uh`. -/
-  capFt : Vb * Vbᵀ * ((F ((t₀ + t₁) / 2) (Uh * Sh ((t₀ + t₁) / 2) * Vhᵀ))ᵀ * Uh) =
-    (F ((t₀ + t₁) / 2) (Uh * Sh ((t₀ + t₁) / 2) * Vhᵀ))ᵀ * Uh
-  /-- The Galerkin step `Sb' = Ubᵀ F(t, Ub Sb Vbᵀ) Vb` on the whole step. -/
-  sSol : ODESolution (MatrixBUG.sField Ub Vb F) Sb t₀ t₁
-  /-- `Sb(t₀) = Ubᵀ U₀ S₀ V₀ᵀ Vb`. -/
-  sStart : Sb t₀ = Ubᵀ * U₀ * S₀ * (V₀ᵀ * Vb)
+/- `MatrixMidpointBUG.IsStep` is defined in `LeanDLRA/HighOrder/Defs.lean`. -/
 
 variable {F G : ℝ → Matrix m n ℝ → Matrix m n ℝ} {t₀ t₁ : ℝ} {U₀ : Matrix m (Fin r) ℝ}
   {S₀ : Matrix (Fin r) (Fin r) ℝ} {V₀ : Matrix n (Fin r) ℝ} {Uh : Matrix m k ℝ}
@@ -178,7 +145,7 @@ theorem IsStep.galerkinProj_start (hs : IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh 
     _ = U₀ * S₀ * V₀ᵀ := by rw [hs.capU₀, hT]
 
 /-- **The Galerkin step starts at `Y₀`**: `Ub Sb(t₀) Vbᵀ = U₀ S₀ V₀ᵀ`, because the ranges of `Ub`
-and `Vb` contain those of `U₀` and `V₀` (arXiv:2402.08607, remark after (8)). -/
+and `Vb` contain those of `U₀` and `V₀` ([CerutiEtAl2024b], remark after (8)). -/
 theorem IsStep.start_eq (hs : IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sh Ub Vb Sb) :
     Ub * Sb t₀ * Vbᵀ = U₀ * S₀ * V₀ᵀ := by
   rw [← hs.galerkinProj_start, galerkinProj_apply, hs.sStart]
@@ -215,7 +182,7 @@ variable [DecidableEq m] [DecidableEq n]
 /-- **Capture of the field at the midpoint predictor.** The Galerkin projector of the step loses
 only the doubly normal part of `G = F(t½, Yh)` with respect to the bases `Uh`, `Vh` of the half
 step: `‖(1 - galerkinProj Ub Vb) G‖ ≤ ‖(I - Uh Uhᵀ) G (I - Vh Vhᵀ)‖`
-(arXiv:2402.08607, proof of Theorem 1; `MidpointBUG.norm_sub_apply_apply_le_normal`). -/
+([CerutiEtAl2024b], proof of Theorem 1; `MidpointBUG.norm_sub_apply_apply_le_normal`). -/
 theorem IsStep.norm_one_sub_galerkinProj_le
     (hs : IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sh Ub Vb Sb) :
     ‖(1 - galerkinProj Ub Vb) (F ((t₀ + t₁) / 2) (Uh * Sh ((t₀ + t₁) / 2) * Vhᵀ))‖ ≤
@@ -283,7 +250,7 @@ theorem IsStep.isMidpointBUGStep (hs : IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K
   · rw [e₂]
     simp
 
-/-- **Local error of the factor step for a field of class `C²`** (arXiv:2402.08607, Theorem 1,
+/-- **Local error of the factor step for a field of class `C²`** ([CerutiEtAl2024b, Thm. 1],
 4r variant). Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B` everywhere, and let the
 uncurried field `(t, x) ↦ F t x` be of class `C²` with `‖DF‖ ≤ M₁` and `‖D²F‖ ≤ M₂` everywhere.
 Under the normal bounds of `MatrixMidpointBUG.IsStep.isMidpointBUGStep`, a step of size
@@ -320,33 +287,8 @@ section Rel
 
 variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ}
 
-/-- **The midpoint BUG step without truncation, as a relation between matrices.**
-`augmentedRel F r t₀ t₁ Y₀ Ȳ` holds if `Y₀ = U₀ S₀ V₀ᵀ` for factors with `r` columns and
-orthonormal `U₀`, `V₀`, and `Ȳ = Ub Sb(t₁) Vbᵀ` for a step `MatrixMidpointBUG.IsStep` of these
-factors over `[t₀, t₁]` in which the half step has exactly `2 r` columns and the Galerkin bases
-`Ub`, `Vb` have at most `4 r` columns (arXiv:2402.08607, §3, Algorithm 1 (4r), before the
-truncation). When the columns of `(K(t½), U₀)` span less than `2 r` dimensions, the bases of the
-half step are completed by further orthonormal columns. -/
-def augmentedRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
-  fun t₀ t₁ Y₀ Y₁ =>
-    ∃ (U₀ : Matrix m (Fin r) ℝ) (S₀ : Matrix (Fin r) (Fin r) ℝ) (V₀ : Matrix n (Fin r) ℝ)
-      (Uh : Matrix m (Fin (2 * r)) ℝ) (Vh : Matrix n (Fin (2 * r)) ℝ)
-      (K : ℝ → Matrix m (Fin r) ℝ) (Lf : ℝ → Matrix n (Fin r) ℝ)
-      (Sh : ℝ → Matrix (Fin (2 * r)) (Fin (2 * r)) ℝ) (l l' : ℕ) (Ub : Matrix m (Fin l) ℝ)
-      (Vb : Matrix n (Fin l') ℝ) (Sb : ℝ → Matrix (Fin l) (Fin l') ℝ),
-      Y₀ = U₀ * S₀ * V₀ᵀ ∧ l ≤ 4 * r ∧ l' ≤ 4 * r ∧
-        IsStep F t₀ t₁ U₀ S₀ V₀ Uh Vh K Lf Sh Ub Vb Sb ∧ Y₁ = Ub * Sb t₁ * Vbᵀ
-
-/-- **The step of the fixed-rank midpoint BUG integrator, as a relation between matrices**
-(arXiv:2402.08607, §3, Algorithm 1 (4r), with truncation to rank `r`). `stepRel F r t₀ t₁ Y₀ Y₁`
-holds if `Y₁` is a best approximation of rank at most `r` to a result `Ȳ` of the step without
-truncation from `Y₀` over `[t₀, t₁]` (`MatrixMidpointBUG.augmentedRel`): `Y₁` has rank at most
-`r`, and `‖Y₁ - Ȳ‖` is at most the distance `distLR r Ȳ` of `Ȳ` to the matrices of rank at most
-`r`. The relation contains every truncation with this property, in particular the truncated
-singular value decomposition of `Ȳ` (`MatrixMidpointBUG.augmentedRel.stepRel_truncation`). -/
-def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
-  fun t₀ t₁ Y₀ Y₁ => ∃ Yh : Matrix m n ℝ, augmentedRel F r t₀ t₁ Y₀ Yh ∧ Y₁.rank ≤ r ∧
-    ‖Y₁ - Yh‖ ≤ distLR r Yh
+/- `MatrixMidpointBUG.augmentedRel` and `MatrixMidpointBUG.stepRel` are defined in
+`LeanDLRA/HighOrder/Defs.lean`. -/
 
 variable {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {t₀ t₁ : ℝ} {U₀ : Matrix m (Fin r) ℝ}
   {S₀ : Matrix (Fin r) (Fin r) ℝ} {V₀ : Matrix n (Fin r) ℝ} {Uh : Matrix m (Fin (2 * r)) ℝ}
@@ -528,7 +470,7 @@ the factored points with `r` columns and at most `ε₂` at the factored points 
 of the tube of radius `ρ` around a solution `A` over `[a, b] ⊇ [t₀, t₁]`. If
 `0 ≤ h = t₁ - t₀ ≤ H` and `‖Y₀ - A t₀‖ + 2 B h < ρ`, then every step of
 `MatrixMidpointBUG.augmentedRel F r` from `Y₀` has local error `C h (h² + h ε + ε₂)` with
-`C = midpointBUGConst L M₁ B (M₂ (1 + B)² + M₁² (1 + B)) H` (arXiv:2402.08607, Theorem 1, 4r
+`C = midpointBUGConst L M₁ B (M₂ (1 + B)² + M₁² (1 + B)) H` ([CerutiEtAl2024b, Thm. 1], 4r
 variant). The margin keeps the results of the K- and L-step and the midpoint predictor in the
 tube, where the normal bounds are evaluated. -/
 theorem augmentedRel.hasLocalError (h : augmentedRel F r t₀ t₁ Y₀ Yh)

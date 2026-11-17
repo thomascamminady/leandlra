@@ -30,6 +30,7 @@ import LeanDLRA.Foundations.Localization
 import LeanDLRA.Foundations.ODE
 import LeanDLRA.Foundations.OneSided
 import LeanDLRA.Foundations.Projector
+import LeanDLRA.HighOrder.Defs
 import LeanDLRA.HighOrder.MidpointBUG
 import LeanDLRA.HighOrder.MidpointBUGGlobal
 import LeanDLRA.HighOrder.MidpointBUGRun
