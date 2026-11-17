@@ -17,6 +17,7 @@ import LeanDLRA.DLRA.QuasiOptimality
 import LeanDLRA.DLRA.QuasiOptimalityGap
 import LeanDLRA.DLRA.QuasiOptimalityMargin
 import LeanDLRA.DLRA.QuasiOptimalityNormal
+import LeanDLRA.DLRA.QuasiOptimalitySharp
 import LeanDLRA.DLRA.QuasiOptimalityTube
 import LeanDLRA.Dynamics.ContinuousDLRA
 import LeanDLRA.Filtering.Defs
