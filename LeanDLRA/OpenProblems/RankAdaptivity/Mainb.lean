@@ -265,6 +265,18 @@ theorem galerkin_krylov_error_skew {𝒜 R : E →L[ℝ] E} (hR : IsOrthProj R)
   calc ‖y h - x h‖ ≤ 2 * (h ^ (k + 1) / ((k + 1).factorial : ℝ) * C) := by linarith
     _ = _ := by rw [hC, mul_pow]; ring
 
+attribute [-instance] ContinuousLinearMap.instNPowId in
+/-- The statement of `galerkin_krylov_error_skew` as recorded on v4.36.0-rc2, where `𝒜 ^ j`
+elaborated with `Monoid.toNPow`; Mathlib v4.36.0 elaborates `ContinuousLinearMap.instNPowId`.
+Both forms are the same proposition: this one follows from the theorem by `exact`. -/
+example {𝒜 R : E →L[ℝ] E} (hR : IsOrthProj R)
+    (hskew : ∀ v, ⟪𝒜 v, v⟫ = 0) {k : ℕ} {y₀ : E}
+    (hK : ∀ j ≤ k, R ((𝒜 ^ j) y₀) = (𝒜 ^ j) y₀) {h : ℝ} (hh : 0 ≤ h) {x y : ℝ → E}
+    (hx : ODESolution (fun _ v => 𝒜 v) x 0 h) (hx₀ : x 0 = y₀)
+    (hy : ODESolution (fun _ v => R (𝒜 v)) y 0 h) (hy₀ : y 0 = y₀) :
+    ‖y h - x h‖ ≤ 2 * (h * ‖𝒜‖) ^ (k + 1) / (k + 1).factorial * ‖y₀‖ := by
+  exact galerkin_krylov_error_skew hR hskew hK hh hx hx₀ hy hy₀
+
 set_option linter.unusedSectionVars false in
 /-- **OP-RA-15 (i): a fixed tolerance gives a plateau, not convergence.**  For an iteration that
 contracts with factor `q < 1` towards the fixed point `x⋆` and is perturbed by truncations of
