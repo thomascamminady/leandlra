@@ -387,6 +387,71 @@ example : ∀ t ∈ Set.Icc (0 : ℝ) 1,
     (fun t ht => one_le_singularValues_smul_e₁ (by linarith [ht.1]))
     (fun t _ => by simp) (by norm_num) (fun t _ => by simp) (by simp)
 
+/-- The perturbation `diag(0, 1/8)`. -/
+local notation "D₈" => (!![0, 0; 0, 1 / 8] : Matrix (Fin 2) (Fin 2) ℝ)
+
+/-- `diag(0, 1/8)` is normal to the rank-one matrices `c e₁ e₁ᵀ`, `c ≠ 0`. -/
+private theorem tangentProjAt_smul_e₁_D₈ {c : ℝ} (hc : c ≠ 0) :
+    tangentProjAt (c • (e₁ * e₁ᵀ)) D₈ = 0 := by
+  have h1 : e₁ᵀ * D₈ = 0 := by
+    ext i j
+    fin_cases i
+    fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
+  have h2 : D₈ * e₁ = 0 := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
+  rw [tangentProjAt_smul_e₁ hc, tangentProj_apply, Matrix.mul_assoc e₁ e₁ᵀ D₈, h1, h2]
+  simp
+
+/-- `‖diag(0, 1/8)‖ ≤ 1/8`. -/
+private theorem norm_D₈_le_eighth : ‖D₈‖ ≤ 1 / 8 := by
+  have h : ‖D₈‖ ^ 2 = (1 / 8) ^ 2 := by
+    rw [Curvature.frob_sq]
+    norm_num [Fin.sum_univ_two]
+  exact (pow_le_pow_iff_left₀ (norm_nonneg _) (by norm_num) two_ne_zero).mp h.le
+
+/-- The curve `t ↦ (1 + t) e₁ e₁ᵀ + diag(0, 1/8)` has the derivative `e₁ e₁ᵀ`. -/
+private theorem hasDerivAt_smul_e₁_add_D₈ (t : ℝ) :
+    HasDerivAt (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + D₈) (e₁ * e₁ᵀ) t := by
+  simpa using (hasDerivAt_smul_e₁ 1 t).add_const D₈
+
+/-- **Non-vacuity of `norm_le_div_of_tangentProjAt_sub_eq_zero` and
+`norm_sub_tangentProjAt_le_div_of_tangentProjAt_sub_eq_zero`** with the margin `θ = 1 / 8`: for
+the curves `X t = (1 + t) e₁ e₁ᵀ` and `A t = X t + diag(0, 1/8)` (`r = 1`, `ρ = μ = 1`, `A ≠ X`,
+`‖X t - A t‖ = 1/8 = θ ρ`) at `t = 0` within `[0, 1]`. The bounds read `‖Ẋ‖ ≤ 4/3` and
+`‖Ẋ - P(X) Ȧ‖ ≤ (8/3) ‖A - X‖`. -/
+example :
+    ‖e₁ * e₁ᵀ‖ ≤ 1 / (1 - 2 * (1 / 8)) ∧
+    ‖e₁ * e₁ᵀ - tangentProjAt (((1 : ℝ) + 0) • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ)‖ ≤
+      2 * 1 / ((1 - 2 * (1 / 8)) * 1) *
+        ‖((1 : ℝ) + 0) • (e₁ * e₁ᵀ) + D₈ - ((1 : ℝ) + 0) • (e₁ * e₁ᵀ)‖ := by
+  have hs : (𝓝[Set.Icc (0 : ℝ) 1 \ {0}] 0).NeBot := by
+    rw [Icc_sdiff_left]
+    exact left_nhdsWithin_Ioc_neBot one_pos
+  have h0 : (0 : ℝ) ∈ Set.Icc (0 : ℝ) 1 := ⟨le_rfl, zero_le_one⟩
+  have hA := (hasDerivAt_smul_e₁_add_D₈ 0).hasDerivWithinAt (s := Set.Icc (0 : ℝ) 1)
+  have hX := (hasDerivAt_smul_e₁ 1 0).hasDerivWithinAt (s := Set.Icc (0 : ℝ) 1)
+  have hc : ∀ u ∈ Set.Icc (0 : ℝ) 1, (1 + u) ≠ 0 := fun u hu => ne_of_gt (by linarith [hu.1])
+  have hr : ∀ u ∈ Set.Icc (0 : ℝ) 1, ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) u).rank = 1 :=
+    fun u hu => rank_smul_e₁ (hc u hu)
+  have hσ : ∀ u ∈ Set.Icc (0 : ℝ) 1, (1 : ℝ) ≤
+      (toEuclideanLin ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) u)).singularValues (1 - 1) :=
+    fun u hu => one_le_singularValues_smul_e₁ (by linarith [hu.1])
+  have ho : ∀ u ∈ Set.Icc (0 : ℝ) 1, tangentProjAt ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) u)
+      ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + D₈) u - (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) u) =
+        0 := fun u hu => by
+    simp only [add_sub_cancel_left]
+    exact tangentProjAt_smul_e₁_D₈ (hc u hu)
+  have hd : ‖((1 : ℝ) + 0) • (e₁ * e₁ᵀ) - (((1 : ℝ) + 0) • (e₁ * e₁ᵀ) + D₈)‖ ≤ 1 / 8 * 1 := by
+    rw [sub_add_cancel_left, norm_neg]
+    linarith [norm_D₈_le_eighth]
+  have hθ : 2 * (1 / 8 : ℝ) < 1 := by norm_num
+  have r1 := norm_le_div_of_tangentProjAt_sub_eq_zero hA hX h0 hs one_pos hr hσ ho
+    norm_e₁_mul_le hθ hd
+  have r2 := norm_sub_tangentProjAt_le_div_of_tangentProjAt_sub_eq_zero hA hX h0 hs one_pos hr
+    hσ ho norm_e₁_mul_le hθ hd
+  exact ⟨r1, r2⟩
+
 end QuasiOptimalityExamples
 
 end LeanDLRA

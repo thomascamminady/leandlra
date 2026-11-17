@@ -223,6 +223,30 @@ example {t₀ h H ρ δ : ℝ} {N : ℕ} (hρ : 0 ≤ ρ) (hh : 0 ≤ h) (hhH : 
     (fun t x y _ _ => isOneSidedLipschitzField_smul_id (-1) t x y) (by norm_num)
     (factoredNormalBoundOn_neg _) le_rfl hh hhH hrm hrn hY₀ (by simpa using hδ) hsmall
 
+/-- **Non-vacuity of `MatrixBUG.stepRel.hasLocalError_of_tube_two_mul`** for the dissipative
+field `F(t, Y) = -Y` on `m × n` matrices with the solution `A = 0` (Lipschitz constant `1`, bound
+`ρ` on the tube of radius `ρ`, no normal component, `ε = 0`): from every `Y₀` of rank at most `r`
+with `‖Y₀‖ + 4 ρ (t₁ - t₀) < ρ` there is a BUG step, and every such step of size `t₁ - t₀ ≤ H` has
+local error at most `(t₁ - t₀)² ρ (e^{H} + 2 √2 (1 + H e^{H}))`. -/
+example {t₀ t₁ H ρ : ℝ} (hρ : 0 ≤ ρ) (h01 : t₀ ≤ t₁) (hH : t₁ - t₀ ≤ H)
+    (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n) {Y₀ : Matrix m n ℝ}
+    (hY₀ : Y₀.rank ≤ r) (hsmall : ‖Y₀‖ + 4 * ρ * (t₁ - t₀) < ρ) :
+    ∃ Y₁, stepRel (fun _ Y => (-1 : ℝ) • Y) r t₀ t₁ Y₀ Y₁ ∧
+      HasLocalError (fun _ Y => (-1 : ℝ) • Y) t₀ t₁ Y₀ Y₁
+        ((t₁ - t₀) * (√2 * (1 + 1 * H * Real.exp (1 * H)) * 0
+          + 1 * ρ * (Real.exp (1 * H) + 2 * √2 * (1 + 1 * H * Real.exp (1 * H))) * (t₁ - t₀))) := by
+  have hP : DLRAProblem (fun _ (Y : Matrix m n ℝ) => (-1 : ℝ) • Y) (fun _ => 0) t₀ t₁ ρ 1 ρ := by
+    refine ⟨⟨continuousOn_const, fun t _ => ?_⟩, zero_le_one, hρ, fun t _ x y _ _ => ?_,
+      fun t _ x hx => ?_⟩
+    · simpa using hasDerivWithinAt_const t (Ici t) (0 : Matrix m n ℝ)
+    · exact le_of_eq (by rw [← smul_sub, norm_smul, norm_neg, norm_one, one_mul])
+    · simpa [norm_smul] using hx
+  have hlip : IsLipschitzField (fun _ (Y : Matrix m n ℝ) => (-1 : ℝ) • Y) 1 := fun _ x y =>
+    le_of_eq (by rw [← smul_sub, norm_smul, norm_neg, norm_one, one_mul])
+  obtain ⟨Y₁, hstep⟩ := exists_stepRel hlip (fun _ => continuousOn_const) h01 hrm hrn hY₀
+  exact ⟨Y₁, hstep, hstep.hasLocalError_of_tube_two_mul (factoredNormalBoundOn_neg _)
+    hP.lipschitz zero_le_one hP.bounded hρ le_rfl le_rfl h01 hH hP.sol (by simpa using hsmall)⟩
+
 end Examples
 
 end MatrixBUG

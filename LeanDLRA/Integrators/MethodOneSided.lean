@@ -601,6 +601,149 @@ example [CompleteSpace E] (Y₀ : E) {t₀ h c δ ρ T : ℝ} {N : ℕ} (hh : 0 
   refine ⟨Y, hY0, hY, fun n hn => ?_⟩
   simpa using (hbd n hn).2
 
+omit [InnerProductSpace ℝ E] in
+/-- The bound of the tube theorems for `F t x = -x` with `ℓ = -1`, `A = 0` and local errors `0`
+on the uniform grid is `e^{-n h} ‖Y 0‖`. -/
+private theorem norm_le_of_errorBound {y z : E} {t₀ h : ℝ} {n : ℕ}
+    (hz : ‖z - 0‖ ≤ Real.exp (-1 * (uniformGrid t₀ h n - uniformGrid t₀ h 0)) * ‖y - 0‖ +
+      ∑ k ∈ range n, Real.exp (-1 * (uniformGrid t₀ h n - uniformGrid t₀ h (k + 1))) * 0) :
+    ‖z‖ ≤ Real.exp (-(n * h)) * ‖y‖ := by
+  have e : uniformGrid t₀ h n - uniformGrid t₀ h 0 = n * h := by simp [uniformGrid]
+  rw [e, neg_one_mul, sub_zero, sub_zero] at hz
+  simpa only [mul_zero, sum_const_zero, add_zero] using hz
+
+omit [InnerProductSpace ℝ E] in
+/-- The error bound of the tube theorems for `ℓ = -1`, `A = 0` and local errors `0` on the
+uniform grid is at most `‖Y 0‖`. -/
+private theorem errorBound_exp_neg_le (y : E) {t₀ h : ℝ} (hh : 0 ≤ h) (n : ℕ) :
+    Real.exp (-1 * (uniformGrid t₀ h n - uniformGrid t₀ h 0)) * ‖y - 0‖ +
+      ∑ k ∈ range n, Real.exp (-1 * (uniformGrid t₀ h n - uniformGrid t₀ h (k + 1))) * 0 ≤
+      ‖y‖ := by
+  have e : uniformGrid t₀ h n - uniformGrid t₀ h 0 = n * h := by simp [uniformGrid]
+  rw [e, sub_zero]
+  simp only [mul_zero, sum_const_zero, add_zero]
+  refine mul_le_of_le_one_left (norm_nonneg _) (Real.exp_le_one_iff.2 ?_)
+  nlinarith [mul_nonneg (Nat.cast_nonneg (α := ℝ) n) hh]
+
+/-- Values that follow the flow of `y' = -y` on the uniform grid do not grow. -/
+private theorem norm_le_of_exp_neg_step {Y : ℕ → E} {h : ℝ} {N : ℕ} (hh : 0 ≤ h)
+    (hY : ∀ n < N, Y (n + 1) = Real.exp (-h) • Y n) : ∀ n ≤ N, ‖Y n‖ ≤ ‖Y 0‖ := by
+  intro n
+  induction n with
+  | zero => exact fun _ => le_rfl
+  | succ n ih =>
+    intro hn
+    rw [hY n hn, norm_smul, Real.norm_of_nonneg (Real.exp_pos _).le]
+    exact (mul_le_of_le_one_left (norm_nonneg _) (Real.exp_le_one_iff.2 (by linarith))).trans
+      (ih (by omega))
+
+/-- **Non-vacuity of `DLRAProblem.norm_sub_le_of_hasLocalError_of_oneSided`** for `F t x = -x`
+(`L = 1`, `ℓ = -1`, `B = ρ`, `A = 0`): values on the uniform grid that follow the exact flow,
+`Y (n + 1) = e^{-h} Y n`, have local errors `0`, and with the radii `R n = ‖Y 0‖` the hypotheses
+hold if `‖Y 0‖ + 2 ρ h < ρ` (for example `ρ = 1`, `h = 1/4`, `‖Y 0‖ = 1/4`). The theorem gives
+`‖Y n‖ ≤ e^{-n h} ‖Y 0‖`. -/
+example [CompleteSpace E] (Y : ℕ → E) {t₀ h ρ : ℝ} {N : ℕ} (hh : 0 ≤ h) (hρ : 0 ≤ ρ)
+    (hY : ∀ n < N, Y (n + 1) = Real.exp (-h) • Y n) (hsmall : ‖Y 0‖ + 2 * ρ * h < ρ) :
+    ∀ n ≤ N, ‖Y n‖ ≤ Real.exp (-(n * h)) * ‖Y 0‖ := by
+  obtain ⟨hP, hℓ⟩ := dlraProblem_neg (E := E) (a := uniformGrid t₀ h 0)
+    (b := uniformGrid t₀ h N) hρ
+  intro n hn
+  exact norm_le_of_errorBound (hP.norm_sub_le_of_hasLocalError_of_oneSided (Y := Y)
+    (δ := fun _ => 0) (R := fun _ => ‖Y 0‖) (continuous_snd.const_smul (-1 : ℝ)).continuousOn
+    hℓ (isGrid_uniformGrid hh N)
+    (fun k hk _ => hasLocalError_exp_neg ((isGrid_uniformGrid hh N).mono k hk) le_rfl
+      (by rw [uniformGrid_succ_sub]; exact hY k hk))
+    (fun k _ => errorBound_exp_neg_le (Y 0) hh k)
+    (fun k _ => by rw [uniformGrid_succ_sub]; exact hsmall) n hn)
+
+/-- **Non-vacuity of `IsRun.adm_and_norm_sub_le_of_tube_of_oneSided`** for `F t x = -x` and the
+method that multiplies by `e^{-h}`, with the invariant `True`: every run on the uniform grid with
+`‖Y 0‖ + 2 ρ h < ρ` satisfies `‖Y n‖ ≤ e^{-n h} ‖Y 0‖`. -/
+example [CompleteSpace E] (Y : ℕ → E) {t₀ h ρ : ℝ} {N : ℕ} (hh : 0 ≤ h) (hρ : 0 ≤ ρ)
+    (hY : IsRun (fun s₀ s₁ Y₀ Y₁ => Y₁ = Real.exp (-(s₁ - s₀)) • Y₀) (uniformGrid t₀ h) N Y)
+    (hsmall : ‖Y 0‖ + 2 * ρ * h < ρ) :
+    ∀ n ≤ N, ‖Y n‖ ≤ Real.exp (-(n * h)) * ‖Y 0‖ := by
+  obtain ⟨hP, hℓ⟩ := dlraProblem_neg (E := E) (a := uniformGrid t₀ h 0)
+    (b := uniformGrid t₀ h N) hρ
+  intro n hn
+  exact norm_le_of_errorBound (hY.adm_and_norm_sub_le_of_tube_of_oneSided (Adm := fun _ _ => True)
+    (δ := fun _ => 0) (R := fun _ => ‖Y 0‖) hP (continuous_snd.const_smul (-1 : ℝ)).continuousOn
+    hℓ (fun _ _ _ _ _ _ _ => trivial)
+    (fun k hk _ _ _ _ hstep => hasLocalError_exp_neg ((isGrid_uniformGrid hh N).mono k hk) le_rfl
+      hstep)
+    trivial (fun k _ => errorBound_exp_neg_le (Y 0) hh k)
+    (fun k _ => by rw [uniformGrid_succ_sub]; exact hsmall) n hn).2
+
+/-- **Non-vacuity of `exists_isRun_norm_sub_le_of_tube_of_oneSided`** for `F t x = -x` and the
+method that multiplies by `e^{-h}`, with the invariant `True`: from every `Y₀` with
+`‖Y₀‖ + 2 ρ h < ρ` there is a run on the uniform grid with `‖Y n‖ ≤ e^{-n h} ‖Y₀‖`. -/
+example [CompleteSpace E] (Y₀ : E) {t₀ h ρ : ℝ} {N : ℕ} (hh : 0 ≤ h) (hρ : 0 ≤ ρ)
+    (hsmall : ‖Y₀‖ + 2 * ρ * h < ρ) :
+    ∃ Y : ℕ → E, Y 0 = Y₀ ∧
+      IsRun (fun s₀ s₁ Y₀ Y₁ => Y₁ = Real.exp (-(s₁ - s₀)) • Y₀) (uniformGrid t₀ h) N Y ∧
+      ∀ n ≤ N, ‖Y n‖ ≤ Real.exp (-(n * h)) * ‖Y₀‖ := by
+  obtain ⟨hP, hℓ⟩ := dlraProblem_neg (E := E) (a := uniformGrid t₀ h 0)
+    (b := uniformGrid t₀ h N) hρ
+  obtain ⟨Y, hY0, hY, hbd⟩ := exists_isRun_norm_sub_le_of_tube_of_oneSided
+    (isGrid_uniformGrid hh N) hP (continuous_snd.const_smul (-1 : ℝ)).continuousOn hℓ
+    (M := fun s₀ s₁ (Z₀ Z₁ : E) => Z₁ = Real.exp (-(s₁ - s₀)) • Z₀) (Adm := fun _ _ => True)
+    (δ := fun _ => 0) (R := fun _ => ‖Y₀‖) (fun _ _ _ _ _ => ⟨_, rfl⟩)
+    (fun _ _ _ _ _ _ _ => trivial)
+    (fun k hk _ _ _ _ hstep => hasLocalError_exp_neg ((isGrid_uniformGrid hh N).mono k hk) le_rfl
+      hstep)
+    trivial (fun k _ => errorBound_exp_neg_le Y₀ hh k)
+    (fun k _ => by rw [uniformGrid_succ_sub]; exact hsmall)
+  exact ⟨Y, hY0, hY, fun n hn => norm_le_of_errorBound (hbd n hn).2⟩
+
+/-- **Non-vacuity of `IsOneSidedLipschitzFieldOn.norm_sub_le_of_fan`** for `F t x = -x`
+(`ℓ = -1`, `B = ρ`, `A = 0`) with the exact solutions `Φ n t = e^{-(t - t_n)} Y n` on the steps:
+values that follow the exact flow, `Y (n + 1) = e^{-h} Y n`, with `‖Y 0‖ + 2 ρ h < ρ` satisfy
+`‖Y n‖ ≤ e^{-n h} ‖Y 0‖`. -/
+example (Y : ℕ → E) {t₀ h ρ : ℝ} {N : ℕ} (hh : 0 ≤ h) (hρ : 0 ≤ ρ)
+    (hY : ∀ n < N, Y (n + 1) = Real.exp (-h) • Y n) (hsmall : ‖Y 0‖ + 2 * ρ * h < ρ) :
+    ∀ n ≤ N, ‖Y n‖ ≤ Real.exp (-(n * h)) * ‖Y 0‖ := by
+  obtain ⟨hP, hℓ⟩ := dlraProblem_neg (E := E) (a := uniformGrid t₀ h 0)
+    (b := uniformGrid t₀ h N) hρ
+  intro n hn
+  exact norm_le_of_errorBound (hℓ.norm_sub_le_of_fan (δ := fun _ => 0) (R := fun _ => ‖Y 0‖)
+    (Φ := fun n t => Real.exp (-(t - uniformGrid t₀ h n)) • Y n) hP.bounded hρ
+    (isGrid_uniformGrid hh N) hP.sol
+    (fun k hk _ => ⟨odeSolution_exp_neg_smul (Y k) _ _ _, by simp,
+      by rw [uniformGrid_succ_sub, hY k hk, sub_self, norm_zero]⟩)
+    (fun k _ => errorBound_exp_neg_le (Y 0) hh k)
+    (fun k _ => by rw [uniformGrid_succ_sub]; exact hsmall) n hn)
+
+/-- **Non-vacuity of `IsExactFan.norm_sub_le_of_near_of_oneSided`** for `F t x = -x` (`ℓ = -1`,
+`B = ρ`, `A = 0`) and the exact-flow fan `Φ n t = e^{-(t - t_n)} Y n` of values that follow the
+exact flow, `Y (n + 1) = e^{-h} Y n`: they do not grow, so the margin `‖Y 0‖ + 2 ρ h < ρ` holds
+on every step, and `‖Y n‖ ≤ e^{-n h} ‖Y 0‖`. -/
+example (Y : ℕ → E) {t₀ h ρ : ℝ} {N : ℕ} (hh : 0 ≤ h) (hρ : 0 ≤ ρ)
+    (hY : ∀ n < N, Y (n + 1) = Real.exp (-h) • Y n) (hsmall : ‖Y 0‖ + 2 * ρ * h < ρ) :
+    ∀ n ≤ N, ‖Y n‖ ≤ Real.exp (-(n * h)) * ‖Y 0‖ := by
+  obtain ⟨hP, hℓ⟩ := dlraProblem_neg (E := E) (a := uniformGrid t₀ h 0)
+    (b := uniformGrid t₀ h N) hρ
+  have hΦ : IsExactFan (fun _ (x : E) => (-1 : ℝ) • x) (uniformGrid t₀ h) N Y
+      (fun n t => Real.exp (-(t - uniformGrid t₀ h n)) • Y n) :=
+    ⟨fun k _ => odeSolution_exp_neg_smul (Y k) _ _ _, fun k _ => by simp⟩
+  have hbd := norm_le_of_exp_neg_step hh hY
+  intro n hn
+  exact norm_le_of_errorBound (hΦ.norm_sub_le_of_near_of_oneSided (δ := fun _ => 0) hℓ
+    hP.bounded hρ (isGrid_uniformGrid hh N) hP.sol
+    (fun k hk => by
+      simp only [sub_zero, uniformGrid_succ_sub]
+      linarith [hbd k hk.le])
+    (fun k hk => by rw [uniformGrid_succ_sub, hY k hk, sub_self, norm_zero]) n hn)
+
+/-- **Non-vacuity of `uniformGrid_errorBound_le_of_neg`** with `ℓ = -1`, step size `h = 1/10`,
+local errors `h c` with `c = 1` and initial error `1`: the propagated errors are at most
+`e^{-n/10} + 11/10` for every number of steps `n`. -/
+example (t₀ : ℝ) (n : ℕ) :
+    Real.exp (-1 * (uniformGrid t₀ (1 / 10) n - uniformGrid t₀ (1 / 10) 0)) * 1 +
+        ∑ k ∈ range n, Real.exp (-1 * (uniformGrid t₀ (1 / 10) n -
+          uniformGrid t₀ (1 / 10) (k + 1))) * (1 / 10 * 1) ≤
+      Real.exp (-1 * (n * (1 / 10))) * 1 + (1 / 10 - (-1)⁻¹) * 1 :=
+  uniformGrid_errorBound_le_of_neg t₀ n (by norm_num) (by norm_num) zero_le_one le_rfl
+
 end Examples
 
 end LeanDLRA

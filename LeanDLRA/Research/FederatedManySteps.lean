@@ -461,6 +461,69 @@ example {v : E} (hv : v ≠ 0) :
   · simp
   · simpa using hv
 
+/-- Non-vacuity of `add_sum_norm_sq_proj_le_of_convex` with nonzero data: the convex function
+`f(y) = ⟪v, y⟫ + ‖y‖² / 2` (gradient `v + y`, `β = 1`), `Π = 1` and `s` steps of length
+`λ = 3/8` from `0`, `z^j = ((5/8)^j - 1) v`. -/
+example (v : E) (s : ℕ) :
+    let z : ℕ → E := fun j => ((5 / 8 : ℝ) ^ j - 1) • v
+    ⟪v, z s⟫ + ‖z s‖ ^ 2 / 2 + 3 / 8 * ∑ j ∈ range s, ‖v + z j‖ ^ 2 + 3 / 8 / 2 * ‖v + z s‖ ^ 2 ≤
+      ⟪v, z 0⟫ + ‖z 0‖ ^ 2 / 2 + 3 / 8 / 2 * ‖v + z 0‖ ^ 2 := by
+  intro z
+  have h := add_sum_norm_sq_proj_le_of_convex (f := fun y : E => ⟪v, y⟫ + ‖y‖ ^ 2 / 2)
+    (gf := fun y => v + y) (β := 1) (P := 1) (lr := 3 / 8) (z := z)
+    (hasFDerivAt_inner_add_half_norm_sq v) (fun x y => by rw [add_sub_add_left_eq_sub, one_mul])
+    (fun x y => by
+      have h := sq_nonneg ‖y - x‖
+      rw [norm_sub_sq_real] at h
+      simp only [inner_add_left, inner_sub_right, real_inner_self_eq_norm_sq]
+      linarith [real_inner_comm x y])
+    IsOrthProj.one (by norm_num) (by norm_num) (fun j => by
+      simp only [z, one_apply_eq_self]
+      module) s
+  simpa only [one_apply_eq_self] using h
+
+/-- Non-vacuity of `fedMany_client_form_ge` at `u = 1`: the inequality holds for all vectors. -/
+example (D q G Dm qm Gm m : E) := fedMany_client_form_ge D q G Dm qm Gm m (u := 1) zero_le_one
+
+/-- Non-vacuity of `loss_fedRound_le_of_convex_of_mul_le_four` and
+`loss_fedRound_lt_of_convex_of_mul_le_four` with nonzero data: one client with the convex loss
+`⟪v, y⟫ + ‖y‖² / 2` (`β = 1`, `Π = 1`) and eight local steps of length `3/8`, so `λ β = 3/8 ≤ 1`
+and `s⋆ λ β = 3 ≤ 4`. The round from `0` decreases the loss by at least `(3/8) c ‖v‖²` with the
+constant `c` of the theorem, which is positive, and strictly if `v ≠ 0`. -/
+example {v : E} (hv : v ≠ 0) :
+    ⟪v, fedRound (1 : E →L[ℝ] E) (fun _ : Unit => fun z => v + z) (fun y => v + y) (3 / 8) 8 0⟫
+        + ‖fedRound (1 : E →L[ℝ] E) (fun _ : Unit => fun z => v + z) (fun y => v + y) (3 / 8) 8
+          0‖ ^ 2 / 2 ≤
+      ⟪v, (0 : E)⟫ + ‖(0 : E)‖ ^ 2 / 2 - 3 / 8 * ((243 + 189 * (3 / 8 * 1)
+        - 222 * (3 / 8 * 1) ^ 2 - 164 * (3 / 8 * 1) ^ 3)
+          / ((9 + 8 * (3 / 8 * 1)) * (9 + 11 * (3 / 8 * 1)) ^ 2))
+          * ‖(1 : E →L[ℝ] E) (v + 0)‖ ^ 2 ∧
+    ⟪v, fedRound (1 : E →L[ℝ] E) (fun _ : Unit => fun z => v + z) (fun y => v + y) (3 / 8) 8 0⟫
+        + ‖fedRound (1 : E →L[ℝ] E) (fun _ : Unit => fun z => v + z) (fun y => v + y) (3 / 8) 8
+          0‖ ^ 2 / 2 < ⟪v, (0 : E)⟫ + ‖(0 : E)‖ ^ 2 / 2 := by
+  have hgc : ∀ (_ : Unit) (x y : E), ‖v + x - (v + y)‖ ≤ 1 * ‖x - y‖ := fun _ x y => by
+    rw [add_sub_add_left_eq_sub, one_mul]
+  have hconv : ∀ (_ : Unit) (x y : E),
+      ⟪v, x⟫ + ‖x‖ ^ 2 / 2 + ⟪v + x, y - x⟫ ≤ ⟪v, y⟫ + ‖y‖ ^ 2 / 2 := fun _ x y => by
+    have h := sq_nonneg ‖y - x‖
+    rw [norm_sub_sq_real] at h
+    simp only [inner_add_left, inner_sub_right, real_inner_self_eq_norm_sq]
+    linarith [real_inner_comm x y]
+  have hℒ : ∀ y : E, ⟪v, y⟫ + ‖y‖ ^ 2 / 2 =
+      (Fintype.card Unit : ℝ)⁻¹ * ∑ _c : Unit, (⟪v, y⟫ + ‖y‖ ^ 2 / 2) := fun y => by simp
+  have hg : ∀ y : E, v + y = (Fintype.card Unit : ℝ)⁻¹ • ∑ _c : Unit, (v + y) := fun y => by
+    simp
+  exact ⟨loss_fedRound_le_of_convex_of_mul_le_four (ℒ := fun y : E => ⟪v, y⟫ + ‖y‖ ^ 2 / 2)
+      (ℒc := fun _ : Unit => fun y : E => ⟪v, y⟫ + ‖y‖ ^ 2 / 2)
+      (gc := fun _ : Unit => fun z : E => v + z) (g := fun y : E => v + y) (β := 1) (P := 1)
+      (lr := 3 / 8) (fun _ x => hasFDerivAt_inner_add_half_norm_sq v x) hgc hconv IsOrthProj.one
+      one_pos hℒ hg (by norm_num) (by norm_num) (by norm_num) (by norm_num) 0,
+    loss_fedRound_lt_of_convex_of_mul_le_four (ℒ := fun y : E => ⟪v, y⟫ + ‖y‖ ^ 2 / 2)
+      (ℒc := fun _ : Unit => fun y : E => ⟪v, y⟫ + ‖y‖ ^ 2 / 2)
+      (gc := fun _ : Unit => fun z : E => v + z) (g := fun y : E => v + y) (β := 1) (P := 1)
+      (lr := 3 / 8) (fun _ x => hasFDerivAt_inner_add_half_norm_sq v x) hgc hconv IsOrthProj.one
+      one_pos hℒ hg (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by simpa using hv)⟩
+
 end FederatedManySteps
 
 end LeanDLRA

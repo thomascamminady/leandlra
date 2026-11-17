@@ -421,6 +421,51 @@ example {d : ℕ} {Q₀' P₁' : Fin d → E →L[ℝ] E} {YK' : Fin d → ℝ �
   have := mul_nonneg he hd
   nlinarith
 
+/-- The step of the integrator on `ℝ` for `F(t, y) = 1` with all projectors zero (bases of rank
+`0`) on `[0, 1]` from `Y₀ = 0`: the three substeps stay at `0`, and the normal parts have norm
+`ε = 1`. -/
+private theorem isBUGStep_zero_proj :
+    IsBUGStep (E := ℝ) (fun _ _ => 1) 1 0 0 0 0 0 1 0 (fun _ => 0) (fun _ => 0) (fun _ => 0) where
+  projP₀ := IsOrthProj.zero
+  projQ₀ := IsOrthProj.zero
+  projP₁ := IsOrthProj.zero
+  projQ₁ := IsOrthProj.zero
+  comm₁ := fun _ => rfl
+  kSol := ⟨continuousOn_const, fun t _ => by simpa using hasDerivWithinAt_const t (Ici t) (0 : ℝ)⟩
+  kStart := rfl
+  kCap := rfl
+  kNormal := fun _ _ => by simp
+  lSol := ⟨continuousOn_const, fun t _ => by simpa using hasDerivWithinAt_const t (Ici t) (0 : ℝ)⟩
+  lStart := rfl
+  lCap := rfl
+  lNormal := fun _ _ => by simp
+  sSol := ⟨continuousOn_const, fun t _ => by simpa using hasDerivWithinAt_const t (Ici t) (0 : ℝ)⟩
+  sStart := rfl
+
+/-- **Non-vacuity of `bug_capture_two_mul`** with nonzero data: on `ℝ` with `F(t, y) = 1`
+(`L = 0`, `B = 1`), `A t = t` on `[0, 1]` and the zero projectors of the step
+`isBUGStep_zero_proj` (normal parts `ε = 1`). Nothing is captured, `‖A 1 - P₁ Q₁ A 1‖ = 1`, and
+the bound is `√2`. -/
+example : ‖(1 : ℝ) - (0 : ℝ →L[ℝ] ℝ) ((0 : ℝ →L[ℝ] ℝ) 1)‖ ≤ √2 * (1 * (2 * 0 * 1 * 1 + 1)) :=
+  bug_capture_two_mul (E := ℝ) (F := fun _ _ => 1) (A := fun t => t) (YK := fun _ => 0)
+    (YL := fun _ => 0) (fun _ _ _ => by simp) le_rfl (fun _ _ => by simp) IsOrthProj.zero
+    IsOrthProj.zero IsOrthProj.zero IsOrthProj.zero (t₀ := 0) (t₁ := 1) (h := 1) (by norm_num)
+    zero_le_one (odeSolution_id_of_eq_one (fun _ _ => rfl) _ _) isBUGStep_zero_proj.kSol rfl
+    rfl isBUGStep_zero_proj.kNormal isBUGStep_zero_proj.lSol rfl rfl isBUGStep_zero_proj.lNormal
+
+/-- **Non-vacuity of `IsBUGStepCore.hasLocalError_of_tube_two_mul`** with nonzero data: the step
+`isBUGStep_zero_proj` (`F(t, y) = 1`, bases of rank `0`, normal parts `ε = 1`) near the solution
+`A t = t` on `[0, 1]` (`L = 0`, `B = 1`, `ρ = 5`, `H = 1`). The step ends at `0` and the exact
+solution from `0` at `1`, so the local error is `1`; the bound is `√2`. -/
+example : HasLocalError (E := ℝ) (fun _ _ => 1) 0 1 0 0
+    ((1 - 0) * (√2 * (1 + 0 * 1 * Real.exp (0 * 1)) * 1
+      + 0 * 1 * (Real.exp (0 * 1) + 2 * √2 * (1 + 0 * 1 * Real.exp (0 * 1))) * (1 - 0))) :=
+  isBUGStep_zero_proj.isBUGStepCore.hasLocalError_of_tube_two_mul isBUGStep_zero_proj.kNormal
+    isBUGStep_zero_proj.lNormal (A := fun t => t) (a := 0) (b := 1) (ρ := 5) (L := 0) (B := 1)
+    (H := 1) (fun _ _ _ _ _ _ => by simp) le_rfl (fun _ _ _ _ => by simp) zero_le_one le_rfl
+    le_rfl zero_le_one (by norm_num) (odeSolution_id_of_eq_one (fun _ _ => rfl) _ _)
+    (by norm_num)
+
 end Examples
 
 end LeanDLRA
