@@ -63,8 +63,8 @@ margin constant `κ ≥ 2` (`StepMethod.IsTubeLocal`) and whose steps have a loc
 
 ## Using LeanDLRA in your project
 
-LeanDLRA builds with the Lean toolchain in `lean-toolchain` (`leanprover/lean4:v4.36.0-rc2`) and
-Mathlib `v4.36.0-rc2`. Use the same toolchain in your project and add to its `lakefile.toml`:
+LeanDLRA builds with the Lean toolchain in `lean-toolchain` (`leanprover/lean4:v4.36.0`) and
+Mathlib `v4.36.0`. Use the same toolchain in your project and add to its `lakefile.toml`:
 
 ```toml
 [[require]]

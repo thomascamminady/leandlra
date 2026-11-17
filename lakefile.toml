@@ -15,7 +15,7 @@ maxSynthPendingDepth = 3
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.36.0-rc2"
+rev = "v4.36.0"
 
 # The core library: `LeanDLRA.lean` imports the connected theory (docs/STRUCTURE.md).
 # `lake build` and `lake build LeanDLRA` compile these modules and nothing else.
