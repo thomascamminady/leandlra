@@ -17,6 +17,11 @@ Frobenius norms; the lower bound `ρ` is needed at `X` only, and there is no sma
 `Y = U' S' V'ᵀ` with orthonormal columns indexed by any finite type, in the form of
 `Curvature.koch_lubich_tangent_frob`, and then for the tangent projector at a matrix of rank `r`.
 
+The global bound in Frobenius norms, without a smallness condition and with the lower bound at one
+point only, is Lemma 4.1 of [WeiCaiChanLeung2016] with the constant `2`. The constant `1` equals
+the maximal curvature `1/σ_r` of the manifold of rank-`r` matrices (`σ_r` the smallest nonzero
+singular value) [FepponLermusiaux2018, Theorem 24], and it is attained.
+
 ## Main results
 
 * `LeanDLRA.Curvature.norm_sq_tangentProjMat_le_of_normal`: for orthogonal projectors and `N`
@@ -55,6 +60,8 @@ decomposition `P(Y) B - P(X) B = P(Y) (1 - P(X)) B - (1 - P(Y)) P(X) B`.
 ## References
 
 * [KochLubich2007, Lemma 4.2]
+* [WeiCaiChanLeung2016, Lemma 4.1]
+* [FepponLermusiaux2018, Theorem 24]
 -/
 
 open Set Filter Matrix
