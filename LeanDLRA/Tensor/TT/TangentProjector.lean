@@ -5,26 +5,26 @@ import LeanDLRA.Tensor.TT.Basic
 
 For a tensor train with left-orthogonal cores `A` and right-orthogonal cores `B`, the TT tangent
 projector `P_Y = ∑_{k=1}^{d} P_{≤k-1} P_{>k} - ∑_{k=1}^{d-1} P_{≤k} P_{>k}` (`ttTangentProj`) is
-an orthogonal projector (Lubich–Oseledets–Vandereycken, arXiv 1407.2042, Thm 3.1 and Cor. 3.2;
-the TDVP projector of arXiv 2603.13990, Eq. (4.19)). Its summands `P_{≤k-1} P_{>k}` and
-`P_{≤k} P_{>k}` are the orthogonal projectors of the substeps of the TT projector-splitting
-integrator.
+an orthogonal projector (Lubich–Oseledets–Vandereycken, [LubichOseledetsVandereycken2015, Thm. 3.1]
+and Cor. 3.2; the TDVP projector of [PeterssonHodgesHeilmannGunther2026, Eq. (4.19)]). Its summands
+`P_{≤k-1} P_{>k}` and `P_{≤k} P_{>k}` are the orthogonal projectors of the substeps of the TT
+projector-splitting integrator.
 
 With oblique interface operators `P_{≤k} = Ten_k(P_{≤k} ·)`, `P_{>k}` (any matrices acting on the
 first `k`, resp. the last `d - k` modes) that **interpolate** on nested index sets
 `I^{≤k} ⊂ I^{≤k-1} × [n_k]`, `I^{>k-1} ⊂ [n_k] × I^{>k}`, the same alternating sum has the **cross
 interpolation property** `[P_Y Z](I^{≤j-1}, i_j, I^{>j}) = Z(I^{≤j-1}, i_j, I^{>j})`
-(Dektor–Peng–Venturi, arXiv 2402.18721, Lemma 4.1 and Thm 4.1).
+(Dektor–Peng–Venturi, [Dektor2025, Lemma 4.1] and Thm 4.1).
 
 ## Main results
 
 * `ttTangentSum_idem`: the alternating sum of idempotent interface operators with nested
-  left operators is idempotent (arXiv 2402.18721, Prop. 4.1).
+  left operators is idempotent ([Dektor2025, Prop. 4.1]).
 * `ttTangentSum_isOrthProj`: for orthogonal interface projectors it is an orthogonal
-  projector (arXiv 1407.2042, Thm 3.1).
+  projector ([LubichOseledetsVandereycken2015, Thm. 3.1]).
 * `ttTangentSum_isObliqueProj`: for oblique interface operators with the ranges of
   orthogonal ones it is an oblique projector onto the range of the orthogonal alternating
-  sum (arXiv 2510.19518, §6).
+  sum ([CarrelEtAl2025, §6]).
 * `ttTangentSum_two`: for `d = 2` the alternating sum is the matrix tangent projector
   `tangent P_{≤1} P_{>1}`.
 * `isOrthProj_ttTangentProj`: `P_Y` is an orthogonal projector.
@@ -32,8 +32,8 @@ interpolation property** `[P_Y Z](I^{≤j-1}, i_j, I^{>j}) = Z(I^{≤j-1}, i_j, 
 * `isOrthProj_ttLeftProj_mul_ttRightProj`: the substep projectors `P_{≤j} P_{>k}` (`j ≤ k`)
   are orthogonal projectors.
 * `actOn_apply_eq_of_row_eq_one`: an operator whose rows at an index set are unit rows
-  interpolates there (the interpolatory projectors of arXiv 2402.18721, Eq. (37)).
-* `ttTangentSum_actOn_apply_eq_of_interp`: cross interpolation (arXiv 2402.18721, Thm 4.1).
+  interpolates there (the interpolatory projectors of [Dektor2025, Eq. (37)]).
+* `ttTangentSum_actOn_apply_eq_of_interp`: cross interpolation ([Dektor2025, Thm. 4.1]).
 
 The modes are numbered `0, …, d - 1`; the paper's mode `j` is our mode `j - 1`, its `P_{≤k}`
 acts on our modes `< k` and its `P_{>k}` on our modes `≥ k`.
@@ -72,8 +72,8 @@ private theorem ttTangentSum_succ {Pl Pr : ℕ → E →L[ℝ] E} {n : ℕ} (hrd
   simp only [sub_mul, Finset.sum_sub_distrib, mul_one]
   abel
 
-/-- **Idempotence of the alternating sum** (arXiv 2402.18721, Prop. 4.1, idempotence paragraph;
-arXiv 2510.19518, §6). If the interface operators are idempotent, the left ones are nested in
+/-- **Idempotence of the alternating sum** ([Dektor2025, Prop. 4.1], idempotence paragraph;
+[CarrelEtAl2025, §6]). If the interface operators are idempotent, the left ones are nested in
 range and kernel (`P_{≤k} P_{≤k+1} = P_{≤k+1}`, `P_{≤k+1} P_{≤k} = P_{≤k+1}`), the last right one
 is the identity and left and right operators on disjoint mode sets commute, then
 `ttTangentSum Pl Pr d` is idempotent. The nesting and commutation relations are hypotheses on
@@ -253,11 +253,11 @@ section Projector
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- **The alternating sum of orthogonal interface projectors is an orthogonal projector**
-(Lubich–Oseledets–Vandereycken, arXiv 1407.2042, Thm 3.1; arXiv 2002.11392, Introduction). If
-`Ql k`, `Qr k` are orthogonal projectors, the ranges of the left ones are nested
-(`P_{≤k} P_{≤k+1} = P_{≤k+1}`), the last right one is the identity and left and right projectors
-on disjoint mode sets commute, then `ttTangentSum Ql Qr d` is idempotent and symmetric. Its
-summands `± P_{≤k-1} P_{>k}`, `± P_{≤k} P_{>k}` are the substep projectors of the TT
+(Lubich–Oseledets–Vandereycken, [LubichOseledetsVandereycken2015, Thm. 3.1];
+[CerutiLubichWalach2021], Introduction). If `Ql k`, `Qr k` are orthogonal projectors, the ranges of
+the left ones are nested (`P_{≤k} P_{≤k+1} = P_{≤k+1}`), the last right one is the identity and left
+and right projectors on disjoint mode sets commute, then `ttTangentSum Ql Qr d` is idempotent and
+symmetric. Its summands `± P_{≤k-1} P_{>k}`, `± P_{≤k} P_{>k}` are the substep projectors of the TT
 projector-splitting integrator. -/
 theorem ttTangentSum_isOrthProj {Ql Qr : ℕ → E →L[ℝ] E} {d : ℕ}
     (hQl : ∀ k, IsOrthProj (Ql k)) (hQr : ∀ k, IsOrthProj (Qr k)) (hrd : Qr d = 1)
@@ -296,7 +296,7 @@ theorem ttTangentSum_isOrthProj {Ql Qr : ℕ → E →L[ℝ] E} {d : ℕ}
     hP (fun k => k + 1) (fun k => k + 1) (fun k => le_rfl) (range (d - 1)) x y]
 
 /-- **The oblique alternating sum projects onto the range of the orthogonal one**
-(arXiv 2510.19518, §6). Let `Ql k`, `Qr k` be orthogonal interface projectors with nested ranges
+([CarrelEtAl2025, §6]). Let `Ql k`, `Qr k` be orthogonal interface projectors with nested ranges
 (`Q_{≤k} Q_{≤k+1} = Q_{≤k+1}`, `Q_{>k+1} Q_{>k} = Q_{>k}`) that commute across disjoint mode sets,
 and let `Pl k`, `Pr k` be interface operators with the same ranges (`Pl k * Ql k = Ql k`,
 `Ql k * Pl k = Pl k`, likewise on the right) that commute with each other and with the orthogonal
@@ -356,11 +356,12 @@ section Orthogonal
 
 variable [∀ k, DecidableEq (β k)]
 
-/-- **The TT tangent projector is an orthogonal projector** (arXiv 1407.2042, Thm 3.1 and
-Cor. 3.2; arXiv 2603.13990, Eq. (4.19)): for left-orthogonal cores `A` and right-orthogonal cores
-`B` of the ordinary TT format (one-element boundary bonds),
-`P_Y = ∑_{k=1}^{d} P_{≤k-1} P_{>k} - ∑_{k=1}^{d-1} P_{≤k} P_{>k}` is idempotent and symmetric.
-The proof checks the commutation and nesting relations of the interface projectors
+/-- **The TT tangent projector is an orthogonal projector**
+([LubichOseledetsVandereycken2015, Thm. 3.1] and Cor. 3.2;
+[PeterssonHodgesHeilmannGunther2026, Eq. (4.19)]): for left-orthogonal cores `A` and
+right-orthogonal cores `B` of the ordinary TT format (one-element boundary bonds),
+`P_Y = ∑_{k=1}^{d} P_{≤k-1} P_{>k} - ∑_{k=1}^{d-1} P_{≤k} P_{>k}` is idempotent and symmetric. The
+proof checks the commutation and nesting relations of the interface projectors
 (`ttLeftProj_comm_ttRightProj`, `ttLeftProj_mul_succ`) and applies the abstract
 `ttTangentSum_isOrthProj`. -/
 theorem isOrthProj_ttTangentProj [Unique (β 0)] [Unique (β d)] {A B : TTCores ι β}
@@ -449,7 +450,7 @@ section Interpolation
 /-- **Interpolating operators.** If the rows of `M` at the index set `I` are unit rows, then
 `actOn p M` reproduces every tensor at the multi-indices whose `p`-part lies in `I`. For the
 interpolatory projectors `X (Sᵀ X)⁻¹ Sᵀ` of a selection matrix `S` this is the interpolation
-property (37) of arXiv 2402.18721. -/
+property (37) of [Dektor2025]. -/
 theorem actOn_apply_eq_of_row_eq_one {κ : Type*} [Fintype κ] [DecidableEq κ] {ι : κ → Type*}
     [∀ k, Fintype (ι k)] [∀ k, DecidableEq (ι k)] {p : κ → Prop} [DecidablePred p]
     {M : Matrix (∀ k : Subtype p, ι k) (∀ k : Subtype p, ι k) ℝ}
@@ -488,10 +489,10 @@ example : ∑ k ∈ Finset.range 3, (if k = 1 then (5 : ℤ) else 0)
     (fun k h1 _ => by simp [show k ≠ 1 by omega])
 
 /-- **Cross interpolation of the oblique TT tangent projector** (Dektor–Peng–Venturi,
-arXiv 2402.18721, Lemma 4.1 and Thm 4.1). Let `Ml k` act on the first `k` modes and `Mr k` on
+[Dektor2025, Lemma 4.1] and Thm 4.1). Let `Ml k` act on the first `k` modes and `Mr k` on
 the modes `≥ k`, and suppose they interpolate on index sets `Il k`, `Ir k`
 (`[P_{≤k} Z](x) = Z(x)` whenever `x_{<k} ∈ Il k`, and `[P_{>k} Z](x) = Z(x)` whenever
-`x_{≥k} ∈ Ir k`), with nested index sets (arXiv 2402.18721, Eq. (38)):
+`x_{≥k} ∈ Ir k`), with nested index sets ([Dektor2025, Eq. (38)]):
 `y ∈ Il (k + 1) → y_{<k} ∈ Il k` and `y ∈ Ir k → y_{≥k+1} ∈ Ir (k + 1)`. Then for every mode
 `m < d` and every multi-index `x` with `x_{<m} ∈ Il m` and `x_{≥m+1} ∈ Ir (m + 1)`,
 `[P_Y Z](x) = Z(x)` for the alternating sum `P_Y = ∑ P_{≤k-1} P_{>k} - ∑ P_{≤k} P_{>k}`.

@@ -14,10 +14,10 @@ inexact line searches. The theorems about these objects are in `Training/Descent
 
 * `projGradStep P g h x = x - h • P (g x)`: the projected (Galerkin) gradient step.
 * `geoLoRADir`, `geoLoRAStep`, `IsGeoLoRABases`: the GeoLoRA update direction, the GeoLoRA
-  iterate before truncation and the relations between its bases (arXiv 2410.18720).
+  iterate before truncation and the relations between its bases ([SchotthoferEtAl2025]).
 * `fedClientIter`, `fedRound`, `fedDrift`: variance-corrected client iterates, one round and the
-  averaged drift of federated DLRT (FeDLRT, arXiv 2406.17887); `fedAvgClientIter`, `fedAvgRound`:
-  the uncorrected (FedAvg-type) iterates and round.
+  averaged drift of federated DLRT (FeDLRT, [SchotthoferLaiu2024]); `fedAvgClientIter`,
+  `fedAvgRound`: the uncorrected (FedAvg-type) iterates and round.
 * `FactorizedDynamics.loraPrecond U S V`: the operator `P̂` with `Ẇ = -P̂ ∇ℒ(W)` for simultaneous
   gradient flow in the factors `(U, S, V)`.
 * `InexactGradient.ArmijoTest`: the inexact Armijo sufficient-decrease test;
@@ -40,21 +40,21 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 /-! ### Projected gradient steps -/
 
 /-- The projected (Galerkin) gradient step `x ↦ x - h Π ∇ℒ(x)` of dynamical low-rank training
-(the update before truncation, `Ŵ = W - λ P(W) ∇ℒ(W)` in arXiv 2410.18720, eq. (18), and
-`Ŷ₁ = Y₀ - h P_{Û₁} ∇ℓ(Y₀)` in arXiv 2502.03006, proof of Thm 5.8). -/
+(the update before truncation, `Ŵ = W - λ P(W) ∇ℒ(W)` in [SchotthoferEtAl2025, eq. (18)], and
+`Ŷ₁ = Y₀ - h P_{Û₁} ∇ℓ(Y₀)` in [KuschSchotthoferWalter2026], proof of Thm 5.8). -/
 def projGradStep (P : E →L[ℝ] E) (g : E → E) (h : ℝ) (x : E) : E := x - h • P (g x)
 
 /-! ### GeoLoRA -/
 
 /-- The update direction of one GeoLoRA step (Schotthöfer–Zangrando–Ceruti–Tudisco–Kusch,
-arXiv 2410.18720, eqs. (6)–(8)): with the left/right projectors `P₀ = U₀U₀ᵀ(·)`,
+[SchotthoferEtAl2025, eqs. (6)–(8)]): with the left/right projectors `P₀ = U₀U₀ᵀ(·)`,
 `Q₀ = (·)V₀V₀ᵀ` and the projectors `P̃ = ŨŨᵀ(·)`, `Q̃ = (·)ṼṼᵀ` onto the new basis directions,
 the assembled `2r × 2r` coefficient matrix `Ŝ = [[S^new, L^new,ᵀṼ], [Ũᵀ K^new, 0]]` changes the
 weights by `-λ (P₀ Q₀ ∇ℒ + P̃ Q₀ ∇ℒ + P₀ Q̃ ∇ℒ)` (the `S`-, `K`- and `L`-blocks; the lower
 right block is zero), see the proof of Thm 1 (Thm 4 in the appendix) there. -/
 def geoLoRADir (P₀ Q₀ Pt Qt : E →L[ℝ] E) (v : E) : E := P₀ (Q₀ v) + Pt (Q₀ v) + P₀ (Qt v)
 
-/-- The bases of one GeoLoRA step for the gradient `v = ∇ℒ(W₀)` (arXiv 2410.18720, Algorithm 1):
+/-- The bases of one GeoLoRA step for the gradient `v = ∇ℒ(W₀)` ([SchotthoferEtAl2025, Alg. 1]):
 commuting orthogonal left/right projectors `P₀ = U₀U₀ᵀ(·)`, `Q₀ = (·)V₀V₀ᵀ`, new directions
 `P̃ = ŨŨᵀ(·)` with `ŨᵀU₀ = 0` and `Q̃ = (·)ṼṼᵀ` with `ṼᵀV₀ = 0` (left and right multiplications
 commute), and the augmented bases `[U₀, Ũ]`, `[V₀, Ṽ]` capture the gradient directions of the `K`-
@@ -70,7 +70,7 @@ structure IsGeoLoRABases (P₀ Q₀ Pt Qt : E →L[ℝ] E) (v : E) : Prop where
   right_capture : Qt (P₀ v - Q₀ (P₀ v)) = P₀ v - Q₀ (P₀ v)
 
 /-- The GeoLoRA iterate before truncation, `Ŵ = W₀ - λ (P₀ Q₀ + P̃ Q₀ + P₀ Q̃) ∇ℒ(W₀)`
-(arXiv 2410.18720, eq. (8)). -/
+([SchotthoferEtAl2025, eq. (8)]). -/
 def geoLoRAStep (P₀ Q₀ Pt Qt : E →L[ℝ] E) (g : E → E) (lr : ℝ) (w : E) : E :=
   w - lr • geoLoRADir P₀ Q₀ Pt Qt (g w)
 
@@ -80,12 +80,11 @@ section Federated
 
 variable {ι : Type*}
 
-/-- Variance-corrected local iterates of client `c` in FeDLRT (Schotthöfer–Laiu, arXiv 2406.17887,
-eq. (8)), written for the full weights `z = Ũ S̃ Ṽᵀ` in the shared augmented space with Galerkin
-projector `Π = Ũ Ũᵀ (·) Ṽ Ṽᵀ`:
-`z⁰ = x`, `z^{s+1} = z^s - λ Π (∇ℒ_c(z^s) - ∇ℒ_c(x) + ∇ℒ(x))`.
-(In coefficients, `S̃^{s+1} = S̃^s - λ (∇_S̃ ℒ_c(Ũ S̃^s Ṽᵀ) + G_S̃ - G_S̃,c)`, since
-`Ũ (∇_S̃ ℒ) Ṽᵀ = Π ∇ℒ`.) -/
+/-- Variance-corrected local iterates of client `c` in FeDLRT (Schotthöfer–Laiu,
+[SchotthoferLaiu2024], eq. (8)), written for the full weights `z = Ũ S̃ Ṽᵀ` in the shared augmented
+space with Galerkin projector `Π = Ũ Ũᵀ (·) Ṽ Ṽᵀ`: `z⁰ = x`,
+`z^{s+1} = z^s - λ Π (∇ℒ_c(z^s) - ∇ℒ_c(x) + ∇ℒ(x))`. (In coefficients,
+`S̃^{s+1} = S̃^s - λ (∇_S̃ ℒ_c(Ũ S̃^s Ṽᵀ) + G_S̃ - G_S̃,c)`, since `Ũ (∇_S̃ ℒ) Ṽᵀ = Π ∇ℒ`.) -/
 def fedClientIter (P : E →L[ℝ] E) (gc : ι → E → E) (g : E → E) (lr : ℝ) (x : E) (c : ι) :
     ℕ → E
   | 0 => x
@@ -94,7 +93,7 @@ def fedClientIter (P : E →L[ℝ] E) (gc : ι → E → E) (g : E → E) (lr : 
 
 /-- One FeDLRT round before truncation: `s⋆` variance-corrected local steps on every client,
 followed by averaging over the clients (the FedAvg aggregation `S̃⋆ = (1/C) ∑_c S̃_c^{s⋆}`,
-eq. (10) of arXiv 2406.17887). -/
+eq. (10) of [SchotthoferLaiu2024]). -/
 noncomputable def fedRound [Fintype ι] (P : E →L[ℝ] E) (gc : ι → E → E) (g : E → E) (lr : ℝ)
     (sstar : ℕ) (x : E) : E :=
   (Fintype.card ι : ℝ)⁻¹ • ∑ c, fedClientIter P gc g lr x c sstar
@@ -134,8 +133,8 @@ variable {k k' m n : Type*} [Fintype k] [Fintype k'] [Fintype m] [Fintype n]
 /-- The operator of factor-wise (LoRA-style) gradient descent on `W = U S Vᵀ`: simultaneous
 gradient flow in `(U, S, V)` induces `Ẇ = -P̂ ∇L(W)` with
 `P̂ Z = Z V SᵀS Vᵀ + U Uᵀ Z V Vᵀ + U S Sᵀ Uᵀ Z` (OP-TR-14; from `U̇ = -Z V Sᵀ`, `Ṡ = -Uᵀ Z V`,
-`V̇ = -Zᵀ U S` and the product rule; arXiv 2410.18720, Sec. 3, prints the middle term with a minus
-sign).  Unlike `tangentProj U V` it depends on the singular values in `S`. -/
+`V̇ = -Zᵀ U S` and the product rule; [SchotthoferEtAl2025, Sec. 3], prints the middle term with a
+minus sign). Unlike `tangentProj U V` it depends on the singular values in `S`. -/
 noncomputable def loraPrecond (U : Matrix m k ℝ) (S : Matrix k k' ℝ) (V : Matrix n k' ℝ)
     (Z : Matrix m n ℝ) : Matrix m n ℝ :=
   Z * V * (Sᵀ * S) * Vᵀ + U * Uᵀ * Z * V * Vᵀ + U * (S * Sᵀ) * Uᵀ * Z
@@ -154,7 +153,7 @@ open LeanDLRA
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- The inexact Armijo sufficient-decrease test `ℒ̃(x - s d) ≤ ℒ̃(x) - c s ‖d‖²` used by the
-backtracking line searches of arXiv 2506.21405 (Alg. 2) and arXiv 2409.14938 (Algs. 2–3),
+backtracking line searches of [BaumannEtAl2025b] (Alg. 2) and [ScaloneEtAl2025] (Algs. 2–3),
 with inexact values `ℒ̃` and an inexact search direction `d = g̃`. -/
 def ArmijoTest (ℒt : E → ℝ) (c : ℝ) (x d : E) (s : ℝ) : Prop :=
   ℒt (x - s • d) ≤ ℒt x - c * s * ‖d‖ ^ 2

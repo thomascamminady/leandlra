@@ -59,17 +59,16 @@ number of modes `d`), never on singular values.
 
 ## Relation to the literature and what is new
 
-Ceruti–Lubich (arXiv 2010.02022, after Thm 4), Ceruti–Kusch–Lubich (arXiv 2104.05247, §2.2),
-Kieri–Lubich–Walach (2016, §2.6.3, for KSL), the low-rank Strang splitting with BUG2 substeps
-solved by Heun's method (arXiv 2602.07437, "Implementation and further remarks") and the
-high-order robust BUG paper (arXiv 2608.27749, §6-7) state that inexact substeps add `O(η)` to
-the local error but analyse only exact substeps (except KSL).  Here the fixed-rank case
-(S-step started at `P₁ Q₁ Y₀`, no augmentation property `P₁ Y₀ = Y₀`), the capture-defect
-formulation (which unifies inexact solves, incomplete augmentation, thresholds and frozen bonds,
-OP-TN-02), the explicit order statement for substep solvers and the sharpness examples are
-proved.  The defect enters as
-`n η`, not `T η`: the endpoint error of a step is not divided by `h`, which is why an order-`q`
-substep solver must satisfy `η = O(h^{q+1})`.
+Ceruti–Lubich ([CerutiLubich2022], after Thm 4), Ceruti–Kusch–Lubich
+([CerutiKuschLubich2022, §2.2]), Kieri–Lubich–Walach (2016, §2.6.3, for KSL), the low-rank Strang
+splitting with BUG2 substeps solved by Heun's method ([ScaloneGuglielmi2026], "Implementation and
+further remarks") and the high-order robust BUG paper ([HauckKuschSchotthofer2026, §6]-7) state that
+inexact substeps add `O(η)` to the local error but analyse only exact substeps (except KSL). Here
+the fixed-rank case (S-step started at `P₁ Q₁ Y₀`, no augmentation property `P₁ Y₀ = Y₀`), the
+capture-defect formulation (which unifies inexact solves, incomplete augmentation, thresholds and
+frozen bonds, OP-TN-02), the explicit order statement for substep solvers and the sharpness examples
+are proved. The defect enters as `n η`, not `T η`: the endpoint error of a step is not divided by
+`h`, which is why an order-`q` substep solver must satisfy `η = O(h^{q+1})`.
 
 ## What remains
 
@@ -80,10 +79,10 @@ substep solver must satisfy `η = O(h^{q+1})`.
 * The stiff case (substep error constants depending on stiffness, implicit or exponential
   substeps of OP-OT-05 for kinetic equations) is not covered: all constants use the Lipschitz
   constant `L` of the full field.
-* The recursive Tucker KSL integrator of arXiv 1709.02594 (whose `d`-fold recursion OP-SB-01
-  asks to quantify) and the symmetric and anti-symmetric Tucker variants are not treated; the
-  KSL matrix case is `ksl_local_error_inexact` in `Integrators/ProjectorSplitting.lean`.
-* The exact lost-part formula of MPS centre augmentation (arXiv 2608.16994, Prop. 2, OP-TN-02)
+* The recursive Tucker KSL integrator of [LubichVandereyckenWalach2018] (whose `d`-fold recursion
+  OP-SB-01 asks to quantify) and the symmetric and anti-symmetric Tucker variants are not treated;
+  the KSL matrix case is `ksl_local_error_inexact` in `Integrators/ProjectorSplitting.lean`.
+* The exact lost-part formula of MPS centre augmentation ([FrohlichEtAl2026, Prop. 2], OP-TN-02)
   is not formalised; it would enter as a capture defect `η`.
 * Second- and higher-order BUG integrators (`p > 1` in OP-HO-05) are not yet in the library;
   `defectBUG_global_error_order` is the generic real-number mechanism
@@ -379,7 +378,7 @@ theorem local_error_le (hs : IsDefectBUGStep F ε ηK ηL ηS P₀ Q₀ P₁ Q�
   linarith
 
 /-- **Norm conservation up to the lost component and the S-step error** (OP-TN-02; cf.
-arXiv 2104.05247, Theorem 4).  If `⟪F(t, x), x⟫ = 0` on the Galerkin space `range (P₁ Q₁)`,
+[CerutiKuschLubich2022, Thm. 4]).  If `⟪F(t, x), x⟫ = 0` on the Galerkin space `range (P₁ Q₁)`,
 then `|‖Y₁‖ - ‖Y₀‖| ≤ ‖Y₀ - P₁ Q₁ Y₀‖ + ηS`, independently of the step size.  With complete
 augmentation (`P₁ Y₀ = Q₁ Y₀ = Y₀`) the lost component vanishes; in general it is at most
 `‖(1 - P₁) Y₀‖ + ‖(1 - Q₁) Y₀‖` (`norm_sub_apply_apply_le`), e.g. the weight of the directions
@@ -741,7 +740,7 @@ noncomputable def inexactBUGConst (L B T H : ℝ) : ℝ :=
     + (2 * Real.exp (max L 0 * H) + 1))
 
 /-- **Robust global error of the fixed-rank BUG integrator with inexact substeps** (OP-SB-01,
-OP-HO-05; Ceruti–Lubich arXiv 2010.02022, remark on inexact substeps, here proved).  With
+OP-HO-05; Ceruti–Lubich [CerutiLubich2022], remark on inexact substeps, here proved).  With
 substep errors `η` per step, `‖Y n - A tₙ‖ ≤ C (δ + ε + h + n η)` for `n h ≤ T`, where
 `C = inexactBUGConst L B T H` depends only on `L, B, T, H` (never on `E`, the rank, or singular
 values).  No sign condition on `L` is needed (`max L 0` is used). -/
@@ -802,7 +801,7 @@ section Tucker
 
 variable {F : ℝ → E → E} {L B ε : ℝ} {t₀ t₁ h : ℝ} {A : ℝ → E} {d : ℕ}
 
-/-- One step of the **Tucker BUG integrator** (`IsTuckerBUGStep`, arXiv 2010.02022, §5) with
+/-- One step of the **Tucker BUG integrator** (`IsTuckerBUGStep`, [CerutiLubich2022, §5]) with
 **capture defects** and an inexact core step (OP-SB-01, OP-TN-02): the new mode-`i` basis
 captures the exact mode-`i` K-step value only up to `‖(1 - P₁ i) (YK i t₁)‖ ≤ ηK`, and the new
 approximation `Y₁` is within `ηS` of the exact core-step value `YS t₁`. -/
@@ -863,7 +862,7 @@ lemma natCast_mul_etaK_nonneg (hs : IsDefectTuckerBUGStep F ε ηK ηS Q₀ P₁
 lemma etaS_nonneg (hs : IsDefectTuckerBUGStep F ε ηK ηS Q₀ P₁ t₀ t₁ Y₀ YK YS Y₁) : 0 ≤ ηS :=
   (norm_nonneg _).trans hs.sErr
 
-/-- **Tucker capture with defects** (Lemma 6 of arXiv 2010.02022 with capture defects):
+/-- **Tucker capture with defects** (Lemma 6 of [CerutiLubich2022] with capture defects):
 `‖A t₁ - Π A t₁‖ ≤ d (ϑ + ηK)`, `ϑ = h (4 L B h + ε)`: the mode defects add up over the `d`
 modes (`norm_sub_modeProd_apply_le`). -/
 theorem capture (hs : IsDefectTuckerBUGStep F ε ηK ηS Q₀ P₁ t₀ t₁ Y₀ YK YS Y₁)
@@ -998,7 +997,7 @@ noncomputable def inexactTuckerConst (L B T H : ℝ) : ℝ :=
     + Real.exp (max L 0 * H))
 
 /-- **Robust global error of the Tucker BUG integrator with inexact substeps** (OP-SB-01, with
-the explicit dependence on the tensor order `d`; arXiv 2010.02022, Thm 7, here with inexact
+the explicit dependence on the tensor order `d`; [CerutiLubich2022, Thm. 7], here with inexact
 substeps).  `‖Y n - A tₙ‖ ≤ C (δ + (d + 1) (ε + h + n η))` for `n h ≤ T`, with
 `C = inexactTuckerConst L B T H` depending only on `L, B, T, H` (not on `d`, `E` or singular
 values of matricizations): the order-`d` dependence is exactly linear. -/
@@ -1105,7 +1104,7 @@ theorem norm_parallelBUG_sub_le {P₀ Q₀ : E →L[ℝ] E} (hP : IsOrthProj P�
     _ = _ := by ring
 
 /-- **Local error of the parallel BUG integrator with inexact substeps** (OP-SB-01 for parallel
-BUG, arXiv 2304.05660 §4.1 with computed substep values).  If the computed K-, L- and S-step
+BUG, [CerutiKuschLubich2024] §4.1 with computed substep values).  If the computed K-, L- and S-step
 values `K̃`, `L̃`, `S̃` are within `ηK`, `ηL`, `ηS` of the exact ones, then, with `h = t₁ - t₀`,
 
     ‖parallelBUG P₀ Q₀ K̃ L̃ S̃ - A t₁‖ ≤ h (7 L B h + ε) + ηK + ηL + ηS. -/

@@ -5,9 +5,9 @@ import LeanDLRA.Foundations.ODE
 # Preservation of symmetry and skew-symmetry by the BUG integrator
 
 Ceruti–Lubich, *An unconventional robust integrator for dynamical low-rank approximation*
-(arXiv:2010.02022, §3.5, **Theorem 5**) and Ceruti–Kusch–Lubich, *A rank-adaptive robust
-integrator for dynamical low-rank approximation* (arXiv:2104.05247, §2.3, **Theorem 3**) consider
-square matrix ODEs `Ẏ = F(t, Y)` whose right-hand side satisfies
+([CerutiLubich2022, §3.5], **Theorem 5**) and Ceruti–Kusch–Lubich, *A rank-adaptive robust
+integrator for dynamical low-rank approximation* ([CerutiKuschLubich2022, §2.3], **Theorem 3**)
+consider square matrix ODEs `Ẏ = F(t, Y)` whose right-hand side satisfies
 
 * (7) `F(t, Yᵀ)ᵀ = F(t, Y)` (symmetric case), or
 * (8) `F(t, Yᵀ)ᵀ = -F(t, -Y)` (skew-symmetric case),
@@ -83,7 +83,7 @@ projector-splitting integrator".  We define one KSL step (`IsKSLStep`, K-step, b
 L-step with the updated basis `U₁`) and prove:
 
 * `IsKSLStep.eq_const` (structural reason; the computation of Lubich–Oseledets,
-  arXiv:1301.1058, §3.2 and proof of Thm 4.1, with increment `ΔA = h C`): for a constant field
+  [LubichOseledets2014, §3.2] and proof of Thm 4.1, with increment `ΔA = h C`): for a constant field
   `F(t, Y) = C`, `Y₁ = Y₀ + h (C Q₀ + P₁ C (I - Q₀))` with `P₁ = U₁ U₁ᵀ`, `Q₀ = V₀ V₀ᵀ`: the left
   factor is updated before the right one, so the increment is an ordered (non-transpose-invariant)
   splitting;
@@ -203,11 +203,11 @@ def IsTwistSymm (σ : ℝ) (X : Matrix k k ℝ) : Prop := Xᵀ = σ • X
 def IsTwistEquivariant (σ : ℝ) (F : ℝ → Matrix n n ℝ → Matrix n n ℝ) : Prop :=
   ∀ t Y, F t (σ • Yᵀ) = σ • (F t Y)ᵀ
 
-/-- Condition (7) of Ceruti–Lubich (arXiv:2010.02022): `F(t, Yᵀ)ᵀ = F(t, Y)`. -/
+/-- Condition (7) of Ceruti–Lubich ([CerutiLubich2022]): `F(t, Yᵀ)ᵀ = F(t, Y)`. -/
 def SymmCondition (F : ℝ → Matrix n n ℝ → Matrix n n ℝ) : Prop :=
   ∀ t Y, (F t Yᵀ)ᵀ = F t Y
 
-/-- Condition (8) of Ceruti–Lubich (arXiv:2010.02022): `F(t, Yᵀ)ᵀ = -F(t, -Y)`. -/
+/-- Condition (8) of Ceruti–Lubich ([CerutiLubich2022]): `F(t, Yᵀ)ᵀ = -F(t, -Y)`. -/
 def SkewCondition (F : ℝ → Matrix n n ℝ → Matrix n n ℝ) : Prop :=
   ∀ t Y, (F t Yᵀ)ᵀ = -F t (-Y)
 
@@ -250,7 +250,7 @@ theorem IsTwistSymm.mul_mul_transpose [Fintype k] {σ : ℝ} {S : Matrix k k ℝ
 
 /-- The exact flow of a Lipschitz, `τ_σ`-equivariant right-hand side preserves `σ`-symmetry:
 `σ A(t)ᵀ` solves the same ODE with the same initial value (remark after (7)–(8) in
-Ceruti–Lubich, arXiv:2010.02022, §3.5, and Ceruti–Kusch–Lubich, arXiv:2104.05247, §2.3). -/
+Ceruti–Lubich, [CerutiLubich2022, §3.5], and Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, §2.3]). -/
 theorem isTwistSymm_of_odeSolution [Fintype n] {σ L : ℝ} (hσ : σ * σ = 1)
     {F : ℝ → Matrix n n ℝ → Matrix n n ℝ} (hF : IsTwistEquivariant σ F)
     (hL : IsLipschitzField F L) {A : ℝ → Matrix n n ℝ} {t₀ t₁ : ℝ}
@@ -276,17 +276,17 @@ section Factor
 
 variable {k k' m n r : Type*} [Fintype k] [Fintype k'] [Fintype m] [Fintype n] [Fintype r]
 
-/-- The K-step field `K ↦ F(t, K V₀ᵀ) V₀` (Ceruti–Lubich, arXiv:2010.02022, §3.1). -/
+/-- The K-step field `K ↦ F(t, K V₀ᵀ) V₀` (Ceruti–Lubich, [CerutiLubich2022, §3.1]). -/
 def kField (V₀ : Matrix n r ℝ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t : ℝ)
     (K : Matrix m r ℝ) : Matrix m r ℝ :=
   F t (K * V₀ᵀ) * V₀
 
-/-- The L-step field `L ↦ F(t, U₀ Lᵀ)ᵀ U₀` (Ceruti–Lubich, arXiv:2010.02022, §3.1). -/
+/-- The L-step field `L ↦ F(t, U₀ Lᵀ)ᵀ U₀` (Ceruti–Lubich, [CerutiLubich2022, §3.1]). -/
 def lField (U₀ : Matrix m r ℝ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t : ℝ)
     (L : Matrix n r ℝ) : Matrix n r ℝ :=
   (F t (U₀ * Lᵀ))ᵀ * U₀
 
-/-- The S-step (Galerkin) field `S ↦ U₁ᵀ F(t, U₁ S V₁ᵀ) V₁` (Ceruti–Lubich, arXiv:2010.02022,
+/-- The S-step (Galerkin) field `S ↦ U₁ᵀ F(t, U₁ S V₁ᵀ) V₁` (Ceruti–Lubich, [CerutiLubich2022],
 §3.1). -/
 def sField (U₁ : Matrix m k ℝ) (V₁ : Matrix n k' ℝ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ)
     (t : ℝ) (S : Matrix k k' ℝ) : Matrix k k' ℝ :=
@@ -341,7 +341,7 @@ variable {k k' n r : Type*} [Fintype k] [Fintype k'] [Fintype n] [Fintype r]
 
 /-- The map `K ↦ σ K` intertwines the K-step and L-step fields (for `V₀ = U₀`):
 `lField U₀ F t (σ K) = σ kField U₀ F t K`.  This is the identity "the L-step is the K-step for
-the transposed function" of Ceruti–Lubich (arXiv:2010.02022, §3.1 and proof of Thm 5). -/
+the transposed function" of Ceruti–Lubich ([CerutiLubich2022, §3.1] and proof of Thm 5). -/
 theorem lField_smul (hF : IsTwistEquivariant σ F) (U₀ : Matrix n r ℝ) (t : ℝ)
     (K : Matrix n r ℝ) : lField U₀ F t (σ • K) = σ • kField U₀ F t K := by
   have h1 : U₀ * (σ • K)ᵀ = σ • (K * U₀ᵀ)ᵀ := by
@@ -356,7 +356,7 @@ theorem odeSolution_lField_smul (hF : IsTwistEquivariant σ F) {U₀ : Matrix n 
   odeSolution_map hK (σ • ContinuousLinearMap.id ℝ (Matrix n r ℝ)) fun t x =>
     lField_smul hF U₀ t x
 
-/-- **The L-step coincides with the K-step** (proof of Ceruti–Lubich, arXiv:2010.02022, Thm 5).
+/-- **The L-step coincides with the K-step** (proof of Ceruti–Lubich, [CerutiLubich2022, Thm. 5]).
 For `Y₀ = U₀ S₀ U₀ᵀ` with `S₀ᵀ = σ S₀` and a `τ_σ`-equivariant Lipschitz `F`, the solutions of
 `K' = F(t, K U₀ᵀ) U₀`, `K(t₀) = U₀ S₀` and `L' = F(t, U₀ Lᵀ)ᵀ U₀`, `L(t₀) = U₀ S₀ᵀ` satisfy
 `L(t) = σ K(t)`. -/
@@ -390,7 +390,7 @@ theorem galField_isTwistEquivariant (hF : IsTwistEquivariant σ F) (P : Matrix n
   simp only [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_smul,
     Matrix.smul_mul, Matrix.mul_assoc]
 
-/-- **The S-step preserves `σ`-symmetry** (proof of Ceruti–Lubich, arXiv:2010.02022, Thm 5):
+/-- **The S-step preserves `σ`-symmetry** (proof of Ceruti–Lubich, [CerutiLubich2022, Thm. 5]):
 if `S' = U₁ᵀ F(t, U₁ S U₁ᵀ) U₁` and `S(t₀)` is `σ`-symmetric, then so is `S(t)`. -/
 theorem sStep_isTwistSymm (hσ : σ * σ = 1) (hF : IsTwistEquivariant σ F)
     (hL : IsLipschitzField F L) {U₁ : Matrix n k ℝ} {S : ℝ → Matrix k k ℝ}
@@ -427,7 +427,7 @@ theorem isTwistSymm_of_mul_mul_transpose [DecidableEq r] {U₀ : Matrix n r ℝ}
     show U₀ᵀ * (U₀ * S₀ * U₀ᵀ) * U₀ = (U₀ᵀ * U₀) * S₀ * (U₀ᵀ * U₀) by
       simp only [Matrix.mul_assoc], hU₀, Matrix.one_mul, Matrix.mul_one] at h
 
-/-- **Symmetry preservation of the BUG integrator** (Ceruti–Lubich, arXiv:2010.02022,
+/-- **Symmetry preservation of the BUG integrator** (Ceruti–Lubich, [CerutiLubich2022],
 **Theorem 5**, unified for `σ = ±1`).  Let `F` be Lipschitz and `τ_σ`-equivariant
 (`F(t, σ Yᵀ) = σ F(t, Y)ᵀ`, equivalent to (7) for `σ = 1` and to (8) for `σ = -1`), and let
 `Y₀ = U₀ S₀ U₀ᵀ` with `S₀ᵀ = σ S₀` (so `V₀ = U₀`).  Run one step of the BUG integrator:
@@ -507,7 +507,7 @@ theorem proj_eq_of_mul_eq [DecidableEq r] {U₁ V₁ : Matrix n r ℝ} {R₁ R�
   have hW' : W * Wᵀ = 1 := mul_eq_one_comm.1 hW
   rw [hU', Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc W, hW', Matrix.one_mul]
 
-/-- **Ceruti–Lubich, Theorem 5, with arbitrary QR factors** (arXiv:2010.02022, Thm 5).  In the
+/-- **Ceruti–Lubich, Theorem 5, with arbitrary QR factors** ([CerutiLubich2022, Thm. 5]).  In the
 setting of `bug_isTwistSymm` with `r`-column bases, let `K(t₁) = U₁ R₁` and `L(t₁) = V₁ R̃₁` be
 *independently computed* factorizations with orthonormal `U₁`, `V₁`, and assume `R₁` invertible,
 i.e. `K(t₁)` has full column rank.  Then `V₁ V₁ᵀ = U₁ U₁ᵀ` and the BUG result
@@ -533,14 +533,14 @@ theorem bug_isTwistSymm_qr [DecidableEq r] (hσ : σ * σ = 1) (hF : IsTwistEqui
   exact ⟨hUV, bug_isTwistSymm_of_proj_eq hσ hF hL hS₀ hUV hS hS0 ht⟩
 
 /-- **Symmetry preservation of the rank-adaptive BUG integrator** (Ceruti–Kusch–Lubich,
-arXiv:2104.05247, **Theorem 3**, augmented Galerkin step *before truncation*).  In the setting of
-`bug_isTwistSymm`, the L-step result is `L(t₁) = σ K(t₁)` and `V₀ = U₀`, so (as `σ ≠ 0`) the
-matrices `(L(t₁), V₀)` and `(K(t₁), U₀)` have the same range: an orthonormal basis `Û` of the
-latter is also one of the former, i.e. `V̂ = Û` is an admissible augmented basis for the L-step.
-(When `(K(t₁), U₀)` has full rank `2r`, `Û` is determined up to an orthogonal change of basis,
-which does not affect `Û Ŝ Ûᵀ`; when it is rank-deficient, independently computed bases may
-differ, as in `bug_not_symm_of_rank_deficient`.)  We record the first point as `L(t₁) = σ K(t₁)`
-and, if `Û` captures `K(t₁)`, `Û Ûᵀ L(t₁) = L(t₁)`.
+[CerutiKuschLubich2022], **Theorem 3**, augmented Galerkin step *before truncation*). In the setting
+of `bug_isTwistSymm`, the L-step result is `L(t₁) = σ K(t₁)` and `V₀ = U₀`, so (as `σ ≠ 0`) the
+matrices `(L(t₁), V₀)` and `(K(t₁), U₀)` have the same range: an orthonormal basis `Û` of the latter
+is also one of the former, i.e. `V̂ = Û` is an admissible augmented basis for the L-step. (When
+`(K(t₁), U₀)` has full rank `2r`, `Û` is determined up to an orthogonal change of basis, which does
+not affect `Û Ŝ Ûᵀ`; when it is rank-deficient, independently computed bases may differ, as in
+`bug_not_symm_of_rank_deficient`.) We record the first point as `L(t₁) = σ K(t₁)` and, if `Û`
+captures `K(t₁)`, `Û Ûᵀ L(t₁) = L(t₁)`.
 
 The augmented S-step `Ŝ' = Ûᵀ F(t, Û Ŝ Ûᵀ) Û`, `Ŝ(t₀) = M̂ S₀ M̂ᵀ`, `M̂ = Ûᵀ U₀`, then yields
 `σ`-symmetric `Ŝ(t₁)` and `Ŷ₁ = Û Ŝ(t₁) Ûᵀ`; this part holds for *any* `Û` (it does not use the
@@ -614,7 +614,7 @@ variable {k n r : Type*} [Fintype k] [Fintype n] [Fintype r]
 columns, `T` is invertible and the number of columns is odd, then `P T Qᵀ` is not
 skew-symmetric.  (Proof: skewness gives `Tᵀ = -(Qᵀ P) T (Qᵀ P)`; taking determinants,
 `det T (1 + det(Qᵀ P)²) = 0`.)  This is the obstruction to the skew-symmetric case of
-Ceruti–Kusch–Lubich (arXiv:2104.05247), Theorem 3, after truncation to odd rank; see
+Ceruti–Kusch–Lubich ([CerutiKuschLubich2022]), Theorem 3, after truncation to odd rank; see
 `augBug_trunc_not_skew`. -/
 theorem not_isTwistSymm_neg_one_of_odd [DecidableEq r] (hr : Odd (Fintype.card r))
     {P Q : Matrix n r ℝ}
@@ -981,7 +981,7 @@ theorem bug_not_symm_of_rank_deficient : ∃ (C : Matrix (Fin 2) (Fin 2) ℝ)
     norm_num at h01
 
 /-- **Counterexample: CKL Theorem 3 with truncation fails in the skew-symmetric case**
-(Ceruti–Kusch–Lubich, arXiv:2104.05247, Thm 3, read with the truncation step 3 of §2.1).
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 3], read with the truncation step 3 of §2.1).
 `n = 4`, `r = 2`, `U₀ = [e₁, e₂]`, `S₀ = [[0, 1], [-1, 0]]` (invertible), constant skew
 `F ≡ C` (condition (8)), `h = 1`.  Then `(K(1), U₀)` has full rank `4` (we exhibit `W₁`, `W₂` with
 `K(1) W₁ + U₀ W₂ = I`), so `Û = I` is the augmented basis (and `V̂ = Û` by `augBug_isTwistSymm`),
@@ -1054,7 +1054,7 @@ section KSL
 variable {m n r : Type*} [Fintype m] [Fintype n] [Fintype r] [DecidableEq r]
 
 /-- One step of the **projector-splitting (KSL) integrator** of Lubich–Oseledets, as recalled in
-Ceruti–Lubich (arXiv:2010.02022, §2), from `Y₀ = U₀ S₀ V₀ᵀ` to `Y₁ = U₁ S₁ V₁ᵀ`:
+Ceruti–Lubich ([CerutiLubich2022, §2]), from `Y₀ = U₀ S₀ V₀ᵀ` to `Y₁ = U₁ S₁ V₁ᵀ`:
 
 1. K-step: `K' = F(t, K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`, QR factorization `K(t₁) = U₁ Ŝ₁`;
 2. S-step (backward): `S' = -U₁ᵀ F(t, U₁ S V₀ᵀ) V₀`, `S(t₀) = Ŝ₁`, `S̃₀ = S(t₁)`;
@@ -1073,7 +1073,7 @@ def IsKSLStep (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t₀ t₁ : ℝ) 
 /-- **Structure of the KSL step for a constant field** `F(t, Y) = C`: with `P₁ = U₁ U₁ᵀ`,
 `Q₀ = V₀ V₀ᵀ`, one step gives
 `Y₁ = U₁ S₁ V₁ᵀ = Y₀ + (t₁ - t₀) (C Q₀ + P₁ C (I - Q₀))`.
-This is the computation of Lubich–Oseledets (arXiv:1301.1058, §3.2 and proof of Theorem 4.1),
+This is the computation of Lubich–Oseledets ([LubichOseledets2014, §3.2] and proof of Theorem 4.1),
 `Y₁ = Y₀ + ΔA Q₀ + P₁ ΔA (I - Q₀)`, for the increment `ΔA = (t₁ - t₀) C` of a constant field.
 The increment is the *ordered* splitting `C Q₀ + P₁ C (I - Q₀)` of the tangent projection, built
 with the old basis on the right and the new basis on the left.  Its transpose (for `V₀ = U₀`,
@@ -1113,7 +1113,7 @@ theorem isKSLStep_const {C : Matrix m n ℝ} {t₀ t₁ : ℝ} {U₀ U₁ : Matr
     hL⟩
 
 /-- **The projector-splitting integrator does not preserve symmetry** (remark before Theorem 5
-of Ceruti–Lubich, arXiv:2010.02022, §3.5).  There are a symmetric, constant (hence Lipschitz)
+of Ceruti–Lubich, [CerutiLubich2022, §3.5]).  There are a symmetric, constant (hence Lipschitz)
 right-hand side satisfying (7) and a symmetric initial value `Y₀ = U₀ S₀ U₀ᵀ` (`U₀ᵀ U₀ = 1`,
 `S₀` symmetric, `V₀ = U₀`) for which a KSL step exists, and **every** KSL step (for every choice of
 the QR factors and substep solutions) produces a non-symmetric `Y₁ = U₁ S₁ V₁ᵀ`.
@@ -1170,7 +1170,7 @@ theorem ksl_not_symm : ∃ (C : Matrix (Fin 2) (Fin 2) ℝ) (U₀ : Matrix (Fin 
     norm_num at e1
 
 /-- **The projector-splitting integrator does not preserve skew-symmetry** (remark before
-Theorem 5 of Ceruti–Lubich, arXiv:2010.02022, §3.5).  There are a skew-symmetric, constant (hence
+Theorem 5 of Ceruti–Lubich, [CerutiLubich2022, §3.5]).  There are a skew-symmetric, constant (hence
 Lipschitz) right-hand side satisfying (8) and a skew-symmetric initial value `Y₀ = U₀ S₀ U₀ᵀ`
 (`U₀ᵀ U₀ = 1`, `S₀ᵀ = -S₀`, `V₀ = U₀`) for which a KSL step exists, and every KSL step produces a
 `Y₁ = U₁ S₁ V₁ᵀ` that is not skew-symmetric.
@@ -1227,7 +1227,7 @@ theorem ksl_not_skew : ∃ (C : Matrix (Fin 2) (Fin 2) ℝ) (U₀ : Matrix (Fin 
       norm_num at e2
 
 /-- **The projector-splitting integrator does not preserve skew-symmetry, non-degenerate
-witness** (remark before Theorem 5 of Ceruti–Lubich, arXiv:2010.02022, §3.5).  `n = 4`, `r = 2`,
+witness** (remark before Theorem 5 of Ceruti–Lubich, [CerutiLubich2022, §3.5]).  `n = 4`, `r = 2`,
 `U₀ = [e₁, e₂]`, invertible skew `S₀ = [[0, 4], [-4, 0]]`,
 `C = 3 (e₃e₁ᵀ - e₁e₃ᵀ) + 3 (e₄e₂ᵀ - e₂e₄ᵀ)` (condition (8)), `h = 1`.  Then
 `K(1) = [[0, 4], [-4, 0], [3, 0], [0, 3]]` has full column rank with `K(1)ᵀ K(1) = 25 I`, so for

@@ -17,7 +17,7 @@ integrator (`LeanDLRA/Integrators/BUG.lean`) and of its rank-adaptive variant
 ## The algorithms
 
 **BUG integrator** (Ceruti–Lubich, *An unconventional robust integrator for dynamical low-rank
-approximation*, BIT 2022, arXiv 2010.02022, §3.1).  One step from `Y₀ = U₀ S₀ V₀ᵀ`
+approximation*, BIT 2022, [CerutiLubich2022, §3.1]).  One step from `Y₀ = U₀ S₀ V₀ᵀ`
 (`U₀ᵀ U₀ = I`, `V₀ᵀ V₀ = I`) at `t₀` to `t₁ = t₀ + h`:
 
 * K-step `K' = F(t, K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`; QR step: `U₁` with `U₁ᵀ U₁ = I` and
@@ -29,7 +29,7 @@ approximation*, BIT 2022, arXiv 2010.02022, §3.1).  One step from `Y₀ = U₀ 
 
 The factor fields are `kField`, `lField`, `sField`; one step is bundled in `IsStep`.
 
-**Rank-adaptive BUG integrator** (Ceruti–Kusch–Lubich, BIT 2022, arXiv 2104.05247, §2.1): the
+**Rank-adaptive BUG integrator** (Ceruti–Kusch–Lubich, BIT 2022, [CerutiKuschLubich2022, §2.1]): the
 same K- and L-steps, augmented bases `Û`, `V̂` (`2r` columns) capturing `(K(t₁), U₀)` and
 `(L(t₁), V₀)`, the S-step in the augmented bases with `Ŝ(t₀) = M̂ S₀ N̂ᵀ`, and a truncation
 `‖Y₁ - Û Ŝ(t₁) V̂ᵀ‖ ≤ ϑ`; bundled in `IsRankAdaptiveStep` (with `Û = Ua`, `V̂ = Va` in the code).
@@ -83,7 +83,7 @@ same K- and L-steps, augmented bases `Û`, `V̂` (`2r` columns) capturing `(K(t�
   `c₀ = e^{L T}` etc.; see `Integrators/BUG.lean` for the comparison with the paper's proof.
 * The QR factorizations enter only through `Uᵀ U = I` and the capture `U Uᵀ K(t₁) = K(t₁)`
   (equivalent to `K(t₁) = U₁ R₁`, `kCap_of_qr`); rank-deficient `K(t₁)` is allowed.
-* The normal-component assumption (condition 2 of Theorem 2 of arXiv 2010.02022: for `Y ∈ M_r`
+* The normal-component assumption (condition 2 of Theorem 2 of [CerutiLubich2022]: for `Y ∈ M_r`
   near `A(t)`) is imposed in the factored global form for all `U S Vᵀ` with orthonormal `U`, `V`
   (also for singular `S`, i.e. rank `≤ r`); only its instances at `YK(t₁)` and `YL(t₁)` are used,
   and `IsStep.isBUGStep_of_normal` states the result with just these two instances.
@@ -121,18 +121,18 @@ section Fields
 
 variable {m n k k' : Type*} [Fintype m] [Fintype n] [Fintype k] [Fintype k']
 
-/-- The K-step field `K ↦ F(t, K V₀ᵀ) V₀` (arXiv 2010.02022, §3.1). -/
+/-- The K-step field `K ↦ F(t, K V₀ᵀ) V₀` ([CerutiLubich2022, §3.1]). -/
 def kField (V₀ : Matrix n k ℝ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t : ℝ)
     (K : Matrix m k ℝ) : Matrix m k ℝ :=
   F t (K * V₀ᵀ) * V₀
 
-/-- The L-step field `L ↦ F(t, U₀ Lᵀ)ᵀ U₀` (arXiv 2010.02022, §3.1). -/
+/-- The L-step field `L ↦ F(t, U₀ Lᵀ)ᵀ U₀` ([CerutiLubich2022, §3.1]). -/
 def lField (U₀ : Matrix m k ℝ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t : ℝ)
     (L : Matrix n k ℝ) : Matrix n k ℝ :=
   (F t (U₀ * Lᵀ))ᵀ * U₀
 
-/-- The Galerkin S-step field `S ↦ U₁ᵀ F(t, U₁ S V₁ᵀ) V₁` (arXiv 2010.02022, §3.1; with the
-augmented bases `Û`, `V̂` this is the S-step (5) of arXiv 2104.05247). -/
+/-- The Galerkin S-step field `S ↦ U₁ᵀ F(t, U₁ S V₁ᵀ) V₁` ([CerutiLubich2022, §3.1]; with the
+augmented bases `Û`, `V̂` this is the S-step (5) of [CerutiKuschLubich2022]). -/
 def sField (U₁ : Matrix m k ℝ) (V₁ : Matrix n k' ℝ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ)
     (t : ℝ) (S : Matrix k k' ℝ) : Matrix k k' ℝ :=
   U₁ᵀ * F t (U₁ * S * V₁ᵀ) * V₁
@@ -230,7 +230,7 @@ theorem norm_normal_le [DecidableEq k] [DecidableEq k'] {U : Matrix m k ℝ} {V 
 omit [DecidableEq m] [DecidableEq n] in
 /-- The factor-level coefficient error is bounded by the full-matrix error:
 `‖S - U₁ᵀ A V₁‖ ≤ ‖U₁ S V₁ᵀ - A‖` for `U₁`, `V₁` with orthonormal columns (the first step of
-the proof of Lemma 4 of arXiv 2010.02022, read backwards). -/
+the proof of Lemma 4 of [CerutiLubich2022], read backwards). -/
 theorem norm_coeff_sub_le [DecidableEq k] [DecidableEq k'] {U₁ : Matrix m k ℝ}
     {V₁ : Matrix n k' ℝ} (hU : U₁ᵀ * U₁ = 1) (hV : V₁ᵀ * V₁ = 1) (S : Matrix k k' ℝ)
     (A : Matrix m n ℝ) : ‖S - U₁ᵀ * A * V₁‖ ≤ ‖U₁ * S * V₁ᵀ - A‖ := by
@@ -359,7 +359,7 @@ section StepDef
 
 variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ}
 
-/-- **One step of the matrix BUG integrator** of Ceruti–Lubich (arXiv 2010.02022, §3.1) from
+/-- **One step of the matrix BUG integrator** of Ceruti–Lubich ([CerutiLubich2022, §3.1]) from
 `Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to `t₁`, at the level of the factors:
 
 * K-step `K' = F(t, K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`, and a new basis `U₁` with `U₁ᵀ U₁ = I` capturing
@@ -512,7 +512,7 @@ section Errors
 
 variable {L B ε h : ℝ} {A : ℝ → Matrix m n ℝ}
 
-/-- **Lemma 2 of arXiv 2010.02022 (matrix form, explicit constant).**  The new left basis
+/-- **Lemma 2 of [CerutiLubich2022] (matrix form, explicit constant).**  The new left basis
 captures the exact solution: `‖(I - U₁ U₁ᵀ) A(t₁)‖ ≤ ϑ`, `ϑ = h (4 L B h + ε)`. -/
 theorem capture_left (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf S)
     (hε : FactoredNormalBound F r ε) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
@@ -524,7 +524,7 @@ theorem capture_left (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf S)
     (hb.kStart.trans hA₀.symm) hb.kCap hb.kNormal
   rwa [one_sub_leftProj_apply] at h1
 
-/-- **Lemma 2 of arXiv 2010.02022 for the L-step (matrix form).**  The new right basis captures
+/-- **Lemma 2 of [CerutiLubich2022] for the L-step (matrix form).**  The new right basis captures
 the exact solution: `‖A(t₁) (I - V₁ V₁ᵀ)‖ ≤ ϑ`, `ϑ = h (4 L B h + ε)`. -/
 theorem capture_right (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf S)
     (hε : FactoredNormalBound F r ε) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
@@ -536,7 +536,7 @@ theorem capture_right (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf S)
     (hb.lStart.trans hA₀.symm) hb.lCap hb.lNormal
   rwa [one_sub_rightProj_apply] at h1
 
-/-- **Lemma 3 of arXiv 2010.02022 (matrix form).**
+/-- **Lemma 3 of [CerutiLubich2022] (matrix form).**
 `‖U₁ U₁ᵀ A(t₁) V₁ V₁ᵀ - A(t₁)‖ ≤ 2ϑ`, `ϑ = h (4 L B h + ε)`. -/
 theorem capture (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf S)
     (hε : FactoredNormalBound F r ε) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
@@ -550,7 +550,7 @@ theorem capture (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf S)
   rw [norm_sub_rev]
   simpa [Matrix.mul_assoc] using h1
 
-/-- **Robust local error of the matrix BUG integrator** (Ceruti–Lubich, arXiv 2010.02022,
+/-- **Robust local error of the matrix BUG integrator** (Ceruti–Lubich, [CerutiLubich2022],
 Lemma 4, explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B` in the
 Frobenius norm and satisfy the factored normal-component assumption at rank `r`.  If
 `A' = F(t, A)` on `[t₀, t₁]`, `t₁ = t₀ + h`, `h ≥ 0`, with `A(t₀) = Y₀ = U₀ S₀ V₀ᵀ`, then
@@ -566,7 +566,7 @@ theorem local_error (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf S)
   (hs.isBUGStep hε).local_error hF hL hB ht₁ hh hA hA₀
 
 /-- **Robust local error of the matrix BUG integrator, `O`-form** (Ceruti–Lubich,
-arXiv 2010.02022, Lemma 4): for `0 ≤ h ≤ H`,
+[CerutiLubich2022, Lemma 4]): for `0 ≤ h ≤ H`,
 `‖U₁ S(t₁) V₁ᵀ - A(t₁)‖ ≤ h (c₁ ε + c₂ h)` with `c₁ = bugC₁ L H`, `c₂ = bugC₂ L B H`, independent
 of the singular values of `A` and of the factors. -/
 theorem local_error_le (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf S)
@@ -577,7 +577,7 @@ theorem local_error_le (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf S)
   (hs.isBUGStep hε).local_error_le hF hL hB ht₁ hh hhH hA hA₀
 
 /-- **Factor-level local error** (the quantity `‖S₁ - U₁ᵀ A₁ V₁‖` estimated in the proof of
-Lemma 4 of arXiv 2010.02022): for `0 ≤ h ≤ H`,
+Lemma 4 of [CerutiLubich2022]): for `0 ≤ h ≤ H`,
 `‖S(t₁) - U₁ᵀ A(t₁) V₁‖ ≤ h (c₁ ε + c₂ h)`. -/
 theorem coeff_error_le (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf S)
     (hε : FactoredNormalBound F r ε) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
@@ -596,7 +596,7 @@ section Global
 variable {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {L B ε : ℝ}
 
 /-- **Robust global error bound of the matrix BUG integrator** (Ceruti–Lubich,
-arXiv 2010.02022, Theorem 4, explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and
+[CerutiLubich2022, Thm. 4], explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and
 bounded by `B` and satisfy the factored normal-component assumption at rank `r`; let
 `tⱼ = t₀ + j h` with `0 ≤ h ≤ H` and let `A` solve `A' = F(t, A)` on `[t₀, t₀ + N h]`.  For
 `j < N` let step `j` of the BUG integrator (`IsStep`) go from `Yⱼ = Uⱼ Sⱼ Vⱼᵀ` to
@@ -627,7 +627,7 @@ theorem global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedF
     (fun j hj => (hstep j hj).isBUGStep hε) (fun j hj => by simp only [hS j hj]) hΦ hΦ₀
 
 /-- **Robust global error bound of the matrix BUG integrator, final form** (Ceruti–Lubich,
-arXiv 2010.02022, Theorem 4 = Theorem 2 verbatim for the new integrator): under the hypotheses
+[CerutiLubich2022, Thm. 4] = Theorem 2 verbatim for the new integrator): under the hypotheses
 of `global_error`, with `‖Y₀ - A(t₀)‖ ≤ δ`, `ε ≥ 0` and `j h ≤ T`,
 
     ‖Yⱼ - A(tⱼ)‖ ≤ c₀ δ + c₁' ε + c₂' h,
@@ -668,8 +668,8 @@ variable {m n k k' : Type*} [Fintype m] [Fintype n] [Fintype k] [Fintype k'] [De
   [DecidableEq k'] {r : ℕ}
 
 /-- **One step of the matrix rank-adaptive BUG integrator** of Ceruti–Kusch–Lubich
-(arXiv 2104.05247, §2.1) from `Y₀ = U₀ S₀ V₀ᵀ` (rank `r`) at `t₀` to `t₁`, at the level of the
-factors:
+([CerutiKuschLubich2022, §2.1]) from `Y₀ = U₀ S₀ V₀ᵀ` (rank `r`) at `t₀` to `t₁`, at the level of
+the factors:
 
 * K-step `K' = F(t, K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`, and L-step `L' = F(t, U₀ Lᵀ)ᵀ U₀`,
   `L(t₀) = V₀ S₀ᵀ` (eqs. (3)–(4));
@@ -710,7 +710,7 @@ structure IsRankAdaptiveStep (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (ϑ
 
 /-- The truncation is measured on the small matrix: if `Y₁ = Û T V̂ᵀ` with `‖T - Ŝ(t₁)‖ ≤ ϑ`
 (e.g. `T = P̂_{r₁} Σ̂_{r₁} Q̂_{r₁}ᵀ` from the truncated SVD of `Ŝ(t₁)`, step 3 of the algorithm of
-arXiv 2104.05247), then `‖Y₁ - Ŷ₁‖ ≤ ϑ`. -/
+[CerutiKuschLubich2022]), then `‖Y₁ - Ŷ₁‖ ≤ ϑ`. -/
 theorem trunc_of_coeff {Ua : Matrix m k ℝ} {Va : Matrix n k' ℝ} (hUa : Uaᵀ * Ua = 1)
     (hVa : Vaᵀ * Va = 1) {T Ŝ : Matrix k k' ℝ} {ϑ : ℝ} (h : ‖T - Ŝ‖ ≤ ϑ) :
     ‖Ua * T * Vaᵀ - Ua * Ŝ * Vaᵀ‖ ≤ ϑ := by
@@ -766,8 +766,8 @@ lemma ys_start (hs : IsRankAdaptiveStep F ϑ t₀ t₁ U₀ S₀ V₀ Ua Va K Lf
   rw [hs.sStart, leftProj_rightProj_apply]
   simp only [Matrix.mul_assoc]
 
-/-- **Lemma 1 of arXiv 2104.05247 (matrix form).**  The augmented Galerkin step starts at `Y₀`:
-`Û Ŝ(t₀) V̂ᵀ = Û M̂ S₀ N̂ᵀ V̂ᵀ = U₀ S₀ V₀ᵀ`. -/
+/-- **Lemma 1 of [CerutiKuschLubich2022] (matrix form).** The augmented Galerkin step starts at
+`Y₀`: `Û Ŝ(t₀) V̂ᵀ = Û M̂ S₀ N̂ᵀ V̂ᵀ = U₀ S₀ V₀ᵀ`. -/
 theorem start_eq (hs : IsRankAdaptiveStep F ϑ t₀ t₁ U₀ S₀ V₀ Ua Va K Lf Sa Y₁) :
     Ua * Sa t₀ * Vaᵀ = U₀ * S₀ * V₀ᵀ := by
   rw [hs.ys_start, hs.aug_right, hs.aug_left]
@@ -818,7 +818,7 @@ theorem isRankAdaptiveBUGStep (hs : IsRankAdaptiveStep F ϑ t₀ t₁ U₀ S₀ 
 variable {L B ε h : ℝ} {A : ℝ → Matrix m n ℝ}
 
 /-- **Robust local error of the matrix rank-adaptive BUG integrator** (Ceruti–Kusch–Lubich,
-arXiv 2104.05247, Theorem 2, local form with explicit constants): for `0 ≤ h ≤ H`,
+[CerutiKuschLubich2022, Thm. 2], local form with explicit constants): for `0 ≤ h ≤ H`,
 `‖Y₁ - A(t₁)‖ ≤ h (c₁ ε + c₂ h) + ϑ` with `c₁ = bugC₁ L H`, `c₂ = bugC₂ L B H`, where `ε` is the
 normal-component bound at the rank `r` of `Y₀`. -/
 theorem local_error_le (hs : IsRankAdaptiveStep F ϑ t₀ t₁ U₀ S₀ V₀ Ua Va K Lf Sa Y₁)
@@ -845,7 +845,7 @@ section Global
 variable [DecidableEq m] [DecidableEq n] {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {L B ε ϑ : ℝ}
 
 /-- **Robust global error bound of the matrix rank-adaptive BUG integrator**
-(Ceruti–Kusch–Lubich, arXiv 2104.05247, Theorem 2, explicit constants).  Let `F` be
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 2], explicit constants).  Let `F` be
 `L`-Lipschitz (`L ≥ 0`) and bounded by `B`, `tⱼ = t₀ + j h` with `0 ≤ h ≤ H`, and `A` a solution
 of `A' = F(t, A)` on `[t₀, t₀ + N h]`.  The rank `rⱼ` may change from step to step: step `j`
 (`IsRankAdaptiveStep`) goes from `Yⱼ = Uⱼ Sⱼ Vⱼᵀ` of rank `rⱼ` (with augmented bases of
@@ -893,13 +893,13 @@ section WellPosed
 variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
   {L B : ℝ}
 
-/-- **The QR step exists** (arXiv 2010.02022, §3.1): for `r ≤ m` and every `K₁ ∈ ℝ^{m×r}`
+/-- **The QR step exists** ([CerutiLubich2022, §3.1]): for `r ≤ m` and every `K₁ ∈ ℝ^{m×r}`
 (also rank-deficient) there is `U₁ ∈ ℝ^{m×r}` with `U₁ᵀ U₁ = I` and `U₁ U₁ᵀ K₁ = K₁`. -/
 theorem exists_qr (hr : r ≤ Fintype.card m) (K₁ : Matrix m (Fin r) ℝ) :
     ∃ U₁ : Matrix m (Fin r) ℝ, U₁ᵀ * U₁ = 1 ∧ U₁ * U₁ᵀ * K₁ = K₁ :=
   exists_orthonormal_capture_of_le_card K₁ hr
 
-/-- **The augmented QR step exists** (arXiv 2104.05247, §2.1): for `2 r ≤ m` there is
+/-- **The augmented QR step exists** ([CerutiKuschLubich2022, §2.1]): for `2 r ≤ m` there is
 `Û ∈ ℝ^{m×2r}` with orthonormal columns capturing `K₁` and `U₀`. -/
 theorem exists_aug_qr (hr : 2 * r ≤ Fintype.card m) (K₁ U₀ : Matrix m (Fin r) ℝ) :
     ∃ Ua : Matrix m (Fin (2 * r)) ℝ, Uaᵀ * Ua = 1 ∧ Ua * Uaᵀ * K₁ = K₁ ∧ Ua * Uaᵀ * U₀ = U₀ :=

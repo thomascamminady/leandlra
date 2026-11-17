@@ -3,8 +3,8 @@ import LeanDLRA.Tensor.TTN.ProjectorSplitting
 /-!
 # Prolongation and restriction for tree tensor network subproblems
 
-The tree tensor network (TTN) integrators of Ceruti–Lubich–Walach (arXiv 2002.11392, §4.2) and
-Ceruti–Kusch–Lubich–Sulz (arXiv 2412.00858, §4.1) pose the subproblem of a child `τᵢ` of a node
+The tree tensor network (TTN) integrators of Ceruti–Lubich–Walach ([CerutiLubichWalach2021, §4.2])
+and Ceruti–Kusch–Lubich–Sulz ([CerutiEtAl2024, §4.1]) pose the subproblem of a child `τᵢ` of a node
 on the reduced space `V_{τᵢ} = ℝ^{r} ⊗ ⨂_{k ∈ τᵢ} ℝ^{n_k}` (an extra root index of dimension
 `r = r_{τᵢ}`), through the prolongation and the restriction
 
@@ -13,10 +13,10 @@ on the reduced space `V_{τᵢ} = ℝ^{r} ⊗ ⨂_{k ∈ τᵢ} ℝ^{n_k}` (an e
 where `V⁰` has orthonormal columns and rows indexed by the modes outside `τᵢ`. This file defines
 them for a subtree `τ` of a tree whose root has rank one, i.e. for maps between the reduced space
 `EuclideanSpace ℝ (s × ∏_{k ∈ τ} ι k)` and the full tensor space `Tensor ι`
-(`(π Y)(x) = ∑ₐ V⁰(x_{∉τ}, a) Y(a, x_τ)`), and proves Lemma 4.1 of arXiv 2002.11392 for them:
-`π† π = 1`, `π† = π*`, `‖π Y‖ = ‖Y‖` and `‖π† Z‖ ≤ ‖Z‖`. Moreover `π π†` is the co-range projector
-`Q₀ = actOn {k ∉ τ} (V⁰ V⁰ᵀ)` of the `K`-step, so the reduced problem `ẏ = π† F(t, π y)` with the
-reduced initial value `π†(Y⁰)` (Definition 4.2) is conjugate to the `K`-step problem
+(`(π Y)(x) = ∑ₐ V⁰(x_{∉τ}, a) Y(a, x_τ)`), and proves Lemma 4.1 of [CerutiLubichWalach2021] for
+them: `π† π = 1`, `π† = π*`, `‖π Y‖ = ‖Y‖` and `‖π† Z‖ ≤ ‖Z‖`. Moreover `π π†` is the co-range
+projector `Q₀ = actOn {k ∉ τ} (V⁰ V⁰ᵀ)` of the `K`-step, so the reduced problem `ẏ = π† F(t, π y)`
+with the reduced initial value `π†(Y⁰)` (Definition 4.2) is conjugate to the `K`-step problem
 `ż = Q₀ F(t, z)` on the full tensor space that the library's TTN integrators use
 (`odeSolution_kStep_of_reduced`, `odeSolution_reduced_of_kStep`). Deeper subtrees are reached by
 composing such maps; their composite prolongations are again of this form with a composite basis
@@ -29,7 +29,7 @@ composing such maps; their composite prolongations are again of this form with a
 ## Main results
 
 * `DimTree.restrict_prolong`, `DimTree.inner_prolong`, `DimTree.adjoint_prolong`,
-  `DimTree.norm_prolong`, `DimTree.norm_restrict_le`: Lemma 4.1 of arXiv 2002.11392.
+  `DimTree.norm_prolong`, `DimTree.norm_restrict_le`: Lemma 4.1 of [CerutiLubichWalach2021].
 * `DimTree.prolong_restrict`, `DimTree.prolong_comp_adjoint`: `π π† = Q₀`.
 * `DimTree.odeSolution_kStep_of_reduced`, `DimTree.odeSolution_reduced_of_kStep`: the reduced
   subproblem and the `K`-step problem are conjugate.
@@ -45,9 +45,9 @@ namespace DimTree
 variable {κ : Type*} [Fintype κ] [DecidableEq κ] {ι : κ → Type*} [∀ k, Fintype (ι k)]
   {s : Type*} [Fintype s]
 
-/-- The **prolongation** `π(Y) = Tenᵢ((V Mat₀(Y))ᵀ)` (arXiv 2002.11392, (4.6)) from the reduced
-space of the subtree `τ` (root index `a : s`, then the modes of `τ`) to the full tensor space:
-`(π Y)(x) = ∑ₐ V(x_{∉τ}, a) Y(a, x_τ)`. -/
+/-- The **prolongation** `π(Y) = Tenᵢ((V Mat₀(Y))ᵀ)` ([CerutiLubichWalach2021], (4.6)) from the
+reduced space of the subtree `τ` (root index `a : s`, then the modes of `τ`) to the full tensor
+space: `(π Y)(x) = ∑ₐ V(x_{∉τ}, a) Y(a, x_τ)`. -/
 noncomputable def prolong (τ : DimTree κ) (V : Matrix (∀ k : {k // k ∉ τ.modes}, ι k) s ℝ) :
     EuclideanSpace ℝ (s × ∀ k : {k // k ∈ τ.modes}, ι k) →L[ℝ] Tensor ι :=
   LinearMap.toContinuousLinearMap
@@ -58,7 +58,7 @@ noncomputable def prolong (τ : DimTree κ) (V : Matrix (∀ k : {k // k ∉ τ.
       map_smul' := fun c Y => by
         ext x; simp [Finset.mul_sum, mul_left_comm] }
 
-/-- The **restriction** `π†(Z) = Ten₀((Matᵢ(Z) V)ᵀ)` (arXiv 2002.11392, (4.7)) from the full
+/-- The **restriction** `π†(Z) = Ten₀((Matᵢ(Z) V)ᵀ)` ([CerutiLubichWalach2021], (4.7)) from the full
 tensor space to the reduced space of the subtree `τ`:
 `(π† Z)(a, y) = ∑_z V(z, a) Z(y, z)`, where `(y, z)` is the multi-index with `τ`-part `y`. -/
 noncomputable def restrict (τ : DimTree κ) (V : Matrix (∀ k : {k // k ∉ τ.modes}, ι k) s ℝ) :
@@ -84,7 +84,8 @@ noncomputable def restrict (τ : DimTree κ) (V : Matrix (∀ k : {k // k ∉ τ
     restrict τ V Z (a, y) = ∑ z, V z a * Z (Tensor.merge (· ∈ τ.modes) y z) :=
   rfl
 
-/-- **Restriction after prolongation is the identity** (arXiv 2002.11392, Lemma 4.1, (4.8)). -/
+/-- **Restriction after prolongation is the identity** ([CerutiLubichWalach2021, Lemma 4.1], (4.8)).
+-/
 theorem restrict_prolong [DecidableEq s] (τ : DimTree κ)
     {V : Matrix (∀ k : {k // k ∉ τ.modes}, ι k) s ℝ} (hV : Vᵀ * V = 1)
     (Y : EuclideanSpace ℝ (s × ∀ k : {k // k ∈ τ.modes}, ι k)) :
@@ -99,8 +100,8 @@ theorem restrict_prolong [DecidableEq s] (τ : DimTree κ)
   simp only [h, Matrix.one_apply, ite_mul, one_mul, zero_mul, Finset.sum_ite_eq,
     Finset.mem_univ, ite_true]
 
-/-- **The restriction is the adjoint of the prolongation** (arXiv 2002.11392, Lemma 4.1, (4.9)):
-`⟪π Y, Z⟫ = ⟪Y, π† Z⟫`. -/
+/-- **The restriction is the adjoint of the prolongation** ([CerutiLubichWalach2021, Lemma 4.1],
+(4.9)): `⟪π Y, Z⟫ = ⟪Y, π† Z⟫`. -/
 theorem inner_prolong (τ : DimTree κ) (V : Matrix (∀ k : {k // k ∉ τ.modes}, ι k) s ℝ)
     (Y : EuclideanSpace ℝ (s × ∀ k : {k // k ∈ τ.modes}, ι k)) (Z : Tensor ι) :
     ⟪prolong τ V Y, Z⟫ = ⟪Y, restrict τ V Z⟫ := by
@@ -124,7 +125,7 @@ theorem adjoint_prolong (τ : DimTree κ) (V : Matrix (∀ k : {k // k ∉ τ.mo
   ((ContinuousLinearMap.eq_adjoint_iff (restrict τ V) (prolong τ V)).2 fun Z Y => by
     rw [real_inner_comm, ← inner_prolong, real_inner_comm]).symm
 
-/-- **The prolongation is an isometry** (arXiv 2002.11392, Lemma 4.1). -/
+/-- **The prolongation is an isometry** ([CerutiLubichWalach2021, Lemma 4.1]). -/
 theorem norm_prolong [DecidableEq s] (τ : DimTree κ)
     {V : Matrix (∀ k : {k // k ∉ τ.modes}, ι k) s ℝ} (hV : Vᵀ * V = 1)
     (Y : EuclideanSpace ℝ (s × ∀ k : {k // k ∈ τ.modes}, ι k)) :
@@ -134,7 +135,7 @@ theorem norm_prolong [DecidableEq s] (τ : DimTree κ)
       restrict_prolong τ hV]
   exact (sq_eq_sq₀ (norm_nonneg _) (norm_nonneg _)).1 h
 
-/-- **The restriction does not increase the norm** (arXiv 2002.11392, Lemma 4.1). -/
+/-- **The restriction does not increase the norm** ([CerutiLubichWalach2021, Lemma 4.1]). -/
 theorem norm_restrict_le [DecidableEq s] (τ : DimTree κ)
     {V : Matrix (∀ k : {k // k ∉ τ.modes}, ι k) s ℝ} (hV : Vᵀ * V = 1) (Z : Tensor ι) :
     ‖restrict τ V Z‖ ≤ ‖Z‖ := by
@@ -173,7 +174,7 @@ theorem prolong_comp_adjoint (τ : DimTree κ) (V : Matrix (∀ k : {k // k ∉ 
   ext1 Z
   rw [ContinuousLinearMap.comp_apply, adjoint_prolong, prolong_restrict]
 
-/-- **Reduced subproblems are `K`-step problems** (arXiv 2002.11392, Definition 4.2 and
+/-- **Reduced subproblems are `K`-step problems** ([CerutiLubichWalach2021, Def. 4.2] and
 (4.3)–(4.5)): if `y` solves the reduced problem `ẏ = π† G(t, π y)`, then `π y` solves the
 `K`-step problem `ż = Q₀ G(t, z)` on the full tensor space, `Q₀ = actOn {k ∉ τ} (V Vᵀ)`. -/
 theorem odeSolution_kStep_of_reduced (τ : DimTree κ)
@@ -185,7 +186,7 @@ theorem odeSolution_kStep_of_reduced (τ : DimTree κ)
   have h := odeSolution_prolong (prolong τ V) (G := G) (by simpa only [adjoint_prolong] using hy)
   simpa only [prolong_comp_adjoint] using h
 
-/-- **`K`-step problems are reduced subproblems** (arXiv 2002.11392, Definition 4.2): let `V` have
+/-- **`K`-step problems are reduced subproblems** ([CerutiLubichWalach2021, Def. 4.2]): let `V` have
 orthonormal columns. If `z` solves the `K`-step problem `ż = Q₀ G(t, z)`,
 `Q₀ = actOn {k ∉ τ} (V Vᵀ)`, from `z t₀ = π y₀`, then `y = π† z` solves the reduced problem
 `ẏ = π† G(t, π y)` with `y t₀ = y₀` (the reduced initial value `π†(Y⁰)`), and `z = π y`

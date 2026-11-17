@@ -12,7 +12,7 @@ analysis of dynamical low-rank approximation for such problems therefore replace
 
     ⟪F t x - F t y, x - y⟫ ≤ ℓ ‖x - y‖²     for all t, x, y,
 
-(Carrel–Vandereycken, arXiv 2312.00172, Definition 1).  It can be much smaller than `L`, and it
+(Carrel–Vandereycken, [CarrelVandereycken2023, Def. 1]).  It can be much smaller than `L`, and it
 is negative for diffusive (dissipative) problems.  For a linear operator it is the logarithmic
 norm `sup ⟪A w, w⟫ / ‖w‖²`.
 
@@ -20,7 +20,7 @@ norm `sup ⟪A w, w⟫ / ‖w‖²`.
 
 * `IsOneSidedLipschitzField F ℓ`, and its localised version `IsOneSidedLipschitzOn F K ℓ`
   (one-sided condition only on a set `K`, the "energy-localised region" of Hu–Yu,
-  arXiv 2610.41606, §3, eq. (3.3)).
+  [HuYu2026, §3], eq. (3.3)).
 * Calculus: Lipschitz with `L` ⇒ one-sided with `ℓ = L`; sums (`ℓ_{F+G} ≤ ℓ_F + ℓ_G`, hence
   `ℓ_{L+G} ≤ ℓ_L + L_G`, Carrel–Vandereycken Remark 1); state-independent forcing terms do not
   change `ℓ`; linear operators (`ℓ` = logarithmic-norm bound `⟪A x, x⟫ ≤ μ ‖x‖²`); dissipative
@@ -33,8 +33,8 @@ norm `sup ⟪A w, w⟫ / ‖w‖²`.
                   = exp (ℓ (t-a)) δ + (t - a) φ₁(ℓ (t - a)) (ηy + ηz),
 
   where `φ₁(z) = (exp z - 1)/z`.  This holds for **every real `ℓ`** (no sign condition), which is
-  exactly the form of Carrel–Vandereycken, arXiv 2312.00172, Theorem 7, and of Hu–Yu,
-  arXiv 2610.41606, §3 (`e(t) ≤ exp (μ t) e(0)`).
+  exactly the form of Carrel–Vandereycken, [CarrelVandereycken2023, Thm. 7], and of Hu–Yu,
+  [HuYu2026, §3] (`e(t) ≤ exp (μ t) e(0)`).
 * Explicit bounds for `gronwallBound` with arbitrary real `ℓ`: `exp(ℓx) δ + η x max 1 (exp(ℓx))`
   for all `ℓ`, `exp(ℓx) (δ + η x)` for `ℓ ≥ 0`, `exp(ℓx) δ + η x` for `ℓ ≤ 0`, and the
   time-uniform bound `exp(ℓx) δ + η / (-ℓ)` for `ℓ < 0`.
@@ -49,10 +49,10 @@ norm `sup ⟪A w, w⟫ / ‖w‖²`.
   `exp(ℓ(t-a)) δ + (t-a) φ₁(ℓ(t-a)) ε` where `ε` bounds the neglected component
   `‖F(Y) - P F(Y)‖` — the basis of robust error bounds for stiff DLRA.
 * **Implicit (Galerkin) Euler steps.**  For `x₁ = P (x₀ + h F(t, x₁))` the one-sided condition
-  gives `(1 - h ℓ) ‖x₁ - y₁‖ ≤ ‖x₀ - y₀‖` (with residuals: Hu–Yu, arXiv 2610.41606, eq. (5.7)
+  gives `(1 - h ℓ) ‖x₁ - y₁‖ ≤ ‖x₀ - y₀‖` (with residuals: Hu–Yu, [HuYu2026, eq. (5.7)]
   and uniqueness argument in Theorem 5.1), uniqueness of the implicit stage when `h ℓ < 1`, and
   norm-nonincrease of the implicit Galerkin step for dissipative fields
-  (Appelö–Cheng, arXiv 2402.05347, Theorem 3.1, Galerkin part).
+  (Appelö–Cheng, [AppeloCheng2025, Thm. 3.1], Galerkin part).
 
 ## Implementation notes
 
@@ -121,7 +121,7 @@ lemma IsLipschitzField.isOneSidedLipschitzField {F : ℝ → E → E} {L : ℝ}
 
 /-- Stiff plus non-stiff splitting `F = A + G`: if `A` is one-sided Lipschitz with `ℓ` and `G` is
 Lipschitz with `L`, then `A + G` is one-sided Lipschitz with `ℓ + L`
-(Carrel–Vandereycken, arXiv 2312.00172, Remark 1: `ℓ_F ≤ ℓ_L + L_G`). -/
+(Carrel–Vandereycken, [CarrelVandereycken2023, Remark 1]: `ℓ_F ≤ ℓ_L + L_G`). -/
 lemma IsOneSidedLipschitzField.add_lipschitz {F G : ℝ → E → E} {ℓ L : ℝ}
     (hF : IsOneSidedLipschitzField F ℓ) (hG : IsLipschitzField G L) :
     IsOneSidedLipschitzField (fun t x => F t x + G t x) (ℓ + L) :=
@@ -129,7 +129,7 @@ lemma IsOneSidedLipschitzField.add_lipschitz {F G : ℝ → E → E} {ℓ L : �
 
 /-- For a (time-dependent) linear field `x ↦ A t x`, the one-sided Lipschitz condition with
 constant `μ` is equivalent to the logarithmic-norm bound `⟪A t x, x⟫ ≤ μ ‖x‖²`
-(Carrel–Vandereycken, arXiv 2312.00172, after Definition 1). -/
+(Carrel–Vandereycken, [CarrelVandereycken2023], after Definition 1). -/
 lemma isOneSidedLipschitzField_linear_iff (A : ℝ → E →L[ℝ] E) (μ : ℝ) :
     IsOneSidedLipschitzField (fun t x => A t x) μ ↔ ∀ t x, ⟪A t x, x⟫ ≤ μ * ‖x‖ ^ 2 := by
   constructor
@@ -229,7 +229,7 @@ trajectories*.  Then
                 = exp(ℓ (t-a)) δ + (ηy + ηz) (exp(ℓ (t-a)) - 1) / ℓ.
 
 No sign condition on `ℓ` is required.  This is the continuous stability estimate behind
-Carrel–Vandereycken, arXiv 2312.00172, Theorem 7, and Hu–Yu, arXiv 2610.41606, §3 (where the
+Carrel–Vandereycken, [CarrelVandereycken2023, Thm. 7], and Hu–Yu, [HuYu2026, §3] (where the
 one-sided condition is only assumed in an energy-localised region); it generalises the
 Lipschitz Grönwall comparison `norm_sub_le_gronwallBound` (which needs `L ≥ 0`). -/
 theorem norm_sub_le_gronwallBound_of_inner_le {F : ℝ → E → E} {ℓ : ℝ}
@@ -280,7 +280,7 @@ theorem norm_sub_le_gronwallBound_of_inner_le {F : ℝ → E → E} {ℓ : ℝ}
 /-- **Stability for one-sided Lipschitz fields (approximate solutions).**  If `F` is one-sided
 Lipschitz with constant `ℓ ∈ ℝ`, `y' = u`, `z' = w` with `‖u - F(y)‖ ≤ ηy`, `‖w - F(z)‖ ≤ ηz`
 and `‖y a - z a‖ ≤ δ`, then `‖y t - z t‖ ≤ gronwallBound δ ℓ (ηy + ηz) (t - a)`
-(Carrel–Vandereycken, arXiv 2312.00172, Theorem 7, in the abstract form). -/
+(Carrel–Vandereycken, [CarrelVandereycken2023, Thm. 7], in the abstract form). -/
 theorem norm_sub_le_gronwallBound_of_oneSided {F : ℝ → E → E} {ℓ : ℝ}
     (hF : IsOneSidedLipschitzField F ℓ) {y z u w : ℝ → E} {a b ηy ηz δ : ℝ}
     (hyc : ContinuousOn y (Icc a b)) (hy : ∀ t ∈ Ico a b, HasDerivWithinAt y (u t) (Ici t) t)
@@ -290,7 +290,7 @@ theorem norm_sub_le_gronwallBound_of_oneSided {F : ℝ → E → E} {ℓ : ℝ}
     ∀ t ∈ Icc a b, ‖y t - z t‖ ≤ gronwallBound δ ℓ (ηy + ηz) (t - a) :=
   norm_sub_le_gronwallBound_of_inner_le (fun t _ => hF t (y t) (z t)) hyc hy hyd hzc hz hzd h0
 
-/-- **Localised stability** (Hu–Yu, arXiv 2610.41606, §3): if `F` is one-sided Lipschitz with
+/-- **Localised stability** (Hu–Yu, [HuYu2026, §3]): if `F` is one-sided Lipschitz with
 constant `ℓ` on a set `K` and both (approximate) trajectories remain in `K`, the stability bound
 `‖y t - z t‖ ≤ gronwallBound δ ℓ (ηy + ηz) (t - a)` holds, without any Lipschitz bound. -/
 theorem norm_sub_le_gronwallBound_of_oneSidedOn {F : ℝ → E → E} {K : Set E} {ℓ : ℝ}
@@ -440,15 +440,15 @@ theorem norm_sub_le_exp_of_inner_le (hy : ODESolution F y a b) (hz : ODESolution
 
 /-- **Stability of the exact flow of a one-sided Lipschitz field** (any real `ℓ`):
 `‖y t - z t‖ ≤ exp (ℓ (t - a)) ‖y a - z a‖`.  For `ℓ < 0` this is exponential contraction,
-independently of the Lipschitz constant (Hu–Yu, arXiv 2610.41606, §3;
-Carrel–Vandereycken, arXiv 2312.00172, Theorem 7 with `ε = 0`). -/
+independently of the Lipschitz constant (Hu–Yu, [HuYu2026, §3];
+Carrel–Vandereycken, [CarrelVandereycken2023, Thm. 7] with `ε = 0`). -/
 theorem norm_sub_le_exp_of_oneSided (hy : ODESolution F y a b) (hz : ODESolution F z a b)
     (hF : IsOneSidedLipschitzField F ℓ) :
     ∀ t ∈ Icc a b, ‖y t - z t‖ ≤ Real.exp (ℓ * (t - a)) * ‖y a - z a‖ :=
   hy.norm_sub_le_exp_of_inner_le hz fun t _ => hF t (y t) (z t)
 
 /-- Localised version: exponential stability for solutions remaining in a set `K` on which `F`
-is one-sided Lipschitz (Hu–Yu, arXiv 2610.41606, §3, `e(t) ≤ exp(μ t) e(0)`). -/
+is one-sided Lipschitz (Hu–Yu, [HuYu2026, §3], `e(t) ≤ exp(μ t) e(0)`). -/
 theorem norm_sub_le_exp_of_oneSidedOn {K : Set E} (hy : ODESolution F y a b)
     (hz : ODESolution F z a b) (hF : IsOneSidedLipschitzOn F K ℓ)
     (hyK : ∀ t ∈ Ico a b, y t ∈ K) (hzK : ∀ t ∈ Ico a b, z t ∈ K) :
@@ -481,7 +481,7 @@ with `F` one-sided Lipschitz with constant `ℓ ∈ ℝ`, and let `Y` solve a pe
 `Y' = G(t, Y)` with `‖G(t, Y t) - F(t, Y t)‖ ≤ ε` along `Y`.  Then
 `‖Y t - A t‖ ≤ gronwallBound ‖Y a - A a‖ ℓ ε (t - a) = e^{ℓ(t-a)} δ + (t-a) φ₁(ℓ(t-a)) ε`.
 For DLRA, `G(t, Y) = P(Y) F(t, Y)` and `ε` bounds the normal component `‖(I - P(Y)) F(t, Y)‖`
-(Carrel–Vandereycken, arXiv 2312.00172, Theorem 7). -/
+(Carrel–Vandereycken, [CarrelVandereycken2023, Thm. 7]). -/
 theorem norm_sub_le_of_perturbed {A Y : ℝ → E} {ε : ℝ} (hA : ODESolution F A a b)
     (hY : ODESolution G Y a b) (hF : IsOneSidedLipschitzField F ℓ)
     (hdef : ∀ t ∈ Ico a b, ‖G t (Y t) - F t (Y t)‖ ≤ ε) :
@@ -573,7 +573,7 @@ theorem ODESolution.galerkin_norm_sub_le_exp (hF : IsOneSidedLipschitzField F �
 with constant `ℓ`, and `Y` the Galerkin trajectory `Y' = P F(t, Y)`.  If the neglected component
 satisfies `‖F(t, Y t) - P F(t, Y t)‖ ≤ ε` along `Y`, then
 `‖Y t - A t‖ ≤ gronwallBound ‖Y a - A a‖ ℓ ε (t - a) = e^{ℓ(t-a)} δ + (t-a) φ₁(ℓ(t-a)) ε`
-(fixed-projector instance of Carrel–Vandereycken, arXiv 2312.00172, Theorem 7). -/
+(fixed-projector instance of Carrel–Vandereycken, [CarrelVandereycken2023, Thm. 7]). -/
 theorem ODESolution.galerkin_norm_sub_le_of_normal {A Y : ℝ → E} {a b ε : ℝ}
     (hF : IsOneSidedLipschitzField F ℓ) (hA : ODESolution F A a b)
     (hY : ODESolution (fun t x => P (F t x)) Y a b)
@@ -615,7 +615,7 @@ theorem proj_implicit_step_stability {P : E →L[ℝ] E} (hP : IsOrthProj P) {h 
   refine one_sub_mul_le_of_sq_le (norm_nonneg _) (norm_nonneg _) ?_
   nlinarith
 
-/-- **Implicit Euler step with residuals** (Hu–Yu, arXiv 2610.41606, eq. (5.7)): if
+/-- **Implicit Euler step with residuals** (Hu–Yu, [HuYu2026, eq. (5.7)]): if
 `x₁ = x₀ + h F(t, x₁) + r` and `y₁ = y₀ + h F(t, y₁) + s` with `h ≥ 0`, and `F(t, ·)` satisfies
 the one-sided inequality with constant `ℓ` at the pair `(x₁, y₁)`, then
 `(1 - h ℓ) ‖x₁ - y₁‖ ≤ ‖x₀ - y₀‖ + ‖r - s‖`. -/
@@ -636,7 +636,7 @@ theorem implicitEuler_stability {F : ℝ → E → E} {ℓ h t : ℝ} (hh : 0 �
   rw [this]
   exact norm_add_le _ _
 
-/-- **Uniqueness of the implicit stage** (Hu–Yu, arXiv 2610.41606, proof of Theorem 5.1): if
+/-- **Uniqueness of the implicit stage** (Hu–Yu, [HuYu2026], proof of Theorem 5.1): if
 `h ℓ < 1`, the equation `x = x₀ + h F(t, x) + r` has at most one solution among states where the
 one-sided inequality holds. -/
 theorem implicitEuler_unique {F : ℝ → E → E} {ℓ h t : ℝ} (hh : 0 ≤ h) (hhℓ : h * ℓ < 1)
@@ -657,7 +657,7 @@ theorem galerkin_implicitEuler_stability {F : ℝ → E → E} {ℓ : ℝ}
     (1 - h * ℓ) * ‖x₁ - y₁‖ ≤ ‖x₀ - y₀‖ :=
   proj_implicit_step_stability hP hh hx hy (hF t x₁ y₁)
 
-/-- **Norm decay of the implicit Galerkin Euler step** (Appelö–Cheng, arXiv 2402.05347,
+/-- **Norm decay of the implicit Galerkin Euler step** (Appelö–Cheng, [AppeloCheng2025],
 Theorem 3.1, Galerkin part, generalised to `⟪F(t, x), x⟫ ≤ ℓ ‖x‖²`): if `x₁ = P (x₀ + h F(t, x₁))`
 then `(1 - h ℓ) ‖x₁‖ ≤ ‖x₀‖`; in particular `‖x₁‖ ≤ ‖x₀‖` for dissipative fields
 (`⟪F(t, X), X⟫ ≤ 0`). -/
@@ -668,7 +668,7 @@ theorem galerkin_implicitEuler_norm_le {F : ℝ → E → E} {ℓ h t : ℝ} {P 
   have := proj_implicit_step_stability (ℓ := ℓ) hP hh hx h0 (by simpa using hF)
   simpa using this
 
-/-- Dissipative case of `galerkin_implicitEuler_norm_le` (Appelö–Cheng, arXiv 2402.05347,
+/-- Dissipative case of `galerkin_implicitEuler_norm_le` (Appelö–Cheng, [AppeloCheng2025],
 Theorem 3.1): if `⟪F(t, X), X⟫ ≤ 0` for all `X`, the implicit Galerkin Euler step
 `x₁ = P (x₀ + h F(t, x₁))` satisfies `‖x₁‖ ≤ ‖x₀‖`. -/
 theorem galerkin_implicitEuler_norm_le_of_dissipative {F : ℝ → E → E} {h t : ℝ}

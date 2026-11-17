@@ -12,9 +12,9 @@ norm, **at the level of the factors** that the algorithm actually computes.
 ## The algorithm
 
 Lubich–Oseledets, *A projector-splitting integrator for dynamical low-rank approximation*
-(BIT 2014, arXiv 1301.1058, §3.1–3.2, steps 1.–3. and (12)); Ceruti–Lubich, arXiv 2010.02022,
-§2 (the "KSL" form for a general right-hand side `F`).  One step from `Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to
-`t₁ = t₀ + h` reads:
+(BIT 2014, [LubichOseledets2014, §3.1]–3.2, steps 1.–3. and (12)); Ceruti–Lubich,
+[CerutiLubich2022], §2 (the "KSL" form for a general right-hand side `F`). One step from
+`Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to `t₁ = t₀ + h` reads:
 
 * **K-step**: `K' = F(t, K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`; QR factorization `K(t₁) = U₁ Ŝ₁` with
   `U₁ᵀ U₁ = I`;
@@ -34,13 +34,13 @@ The factor fields are `kField`, `sField` and `lField`; one step is bundled in `I
 * `IsStep.isKSLStep`: the factor trajectories of one step satisfy all hypotheses of the abstract
   step `IsKSLStep` (including the capture `P₁ (K(t₁) V₀ᵀ) = K(t₁) V₀ᵀ` and the matching initial
   values), given the normal-component bound at the point `U₁ Ŝ₁ V₀ᵀ` of the manifold.
-* `IsStep.local_error` (Kieri–Lubich–Walach 2016, Theorem 2.1; Theorem 2 of arXiv 2010.02022,
+* `IsStep.local_error` (Kieri–Lubich–Walach 2016, Theorem 2.1; Theorem 2 of [CerutiLubich2022],
   local part): under the **factored normal-component assumption**
   `‖(I - U Uᵀ) F(t, U S Vᵀ) (I - V Vᵀ)‖ ≤ ε` for all `t`, all cores `S` and all `U`, `V` with
   orthonormal columns, `‖U₁ L(t₁)ᵀ - A(t₁)‖ ≤ h (11 L B h + ε)`; `IsStep.local_error_sharp`
   gives the constant `10`, `IsStep.proj_error` the bound `‖Y₁ - U₁ U₁ᵀ A(t₁)‖ ≤ 6 L B h²` and
   `IsStep.capture` the K-step capture bound `‖(I - U₁ U₁ᵀ) A(t₁)‖ ≤ h (4 L B h + ε)`.
-* `global_error` (Theorem 2.1 of Kieri–Lubich–Walach, Theorem 2 of arXiv 2010.02022): for the
+* `global_error` (Theorem 2.1 of Kieri–Lubich–Walach, Theorem 2 of [CerutiLubich2022]): for the
   matrix KSL integrator over `n` steps, `‖Yₙ - A(tₙ)‖ ≤ c₀ δ + c₁ ε + c₂ h` with
   `c₀ = e^{L T}`, `c₁ = T e^{L T}`, `c₂ = 11 L B T e^{L T}`.
 * `IsStep.local_error_of_pointwise`, `IsStep.local_error_sharp_of_pointwise`,
@@ -59,7 +59,7 @@ The factor fields are `kField`, `sField` and `lField`; one step is bundled in `I
 * The orthonormality of `U₀` is not needed (only `Y₀ = U₀ S₀ V₀ᵀ` and `Q₀ = V₀ V₀ᵀ·` enter
   the K-step); it is therefore not assumed.  `V₀` and `U₁` have orthonormal columns.
 * **The factored assumption is global, the paper's is local.**  Kieri–Lubich–Walach (Theorem
-  2.1, as quoted in arXiv 2010.02022, Theorem 2, assumption 2) require
+  2.1, as quoted in [CerutiLubich2022, Thm. 2], assumption 2) require
   `‖(I - P(Y)) F(t, Y)‖ ≤ ε` only for `0 ≤ t ≤ T` and for `Y ∈ M_r` *in a neighbourhood of
   `A(t)`*; for `Y = U S Vᵀ ∈ M_r` (`S` invertible) `(I - P(Y)) Z = (I - UUᵀ) Z (I - VVᵀ)`.
   The hypothesis `hε` of `IsStep.local_error`, `IsStep.local_error_sharp`, `IsStep.capture`,
@@ -79,12 +79,12 @@ The factor fields are `kField`, `sField` and `lField`; one step is bundled in `I
   holds, this hypothesis *is* the paper's assumption at that point; we do not prove that the
   iterates stay in such a neighbourhood.  `S` need not be invertible.
 * Kieri–Lubich–Walach 2016 is not available in `papers/txt`; its attribution (including the
-  "local part" of Theorem 2.1) rests on the summary in arXiv 2010.02022 (Theorem 2, eq. (5),
+  "local part" of Theorem 2.1) rests on the summary in [CerutiLubich2022] (Theorem 2, eq. (5),
   §3.4).  The explicit constants (`11` resp. `10` for `L B h²`, coefficient `1` for `ε h`,
   `c₂ = 11 L B T e^{L T}`) are this library's own, from the direct proof in
   `Integrators/ProjectorSplitting.lean`; for `δ = 0` they are sharper than the local bound
   `ϑ = (4 e^{L h} B L + 9 B L) h² + (3 e^{L h} + 4) ε h + e^{L h} δ` quoted in
-  arXiv 2010.02022, eq. (5).
+  [CerutiLubich2022, eq. (5)].
 * As in the abstract file, the exact substep solutions and the exact flows from the numerical
   values are hypotheses (`ODESolution`); their existence for globally Lipschitz, time-continuous
   `F` is `Foundations/Existence.lean`.
@@ -248,19 +248,19 @@ section Fields
 
 variable {m n r : Type*} [Fintype m] [Fintype n] [Fintype r]
 
-/-- The K-step field `K ↦ F(t, K V₀ᵀ) V₀` (arXiv 1301.1058, §3.1, step 1; arXiv 2010.02022,
+/-- The K-step field `K ↦ F(t, K V₀ᵀ) V₀` ([LubichOseledets2014, §3.1], step 1; [CerutiLubich2022],
 §2). -/
 def kField (V₀ : Matrix n r ℝ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t : ℝ)
     (K : Matrix m r ℝ) : Matrix m r ℝ :=
   F t (K * V₀ᵀ) * V₀
 
-/-- The backward S-step field `S ↦ -U₁ᵀ F(t, U₁ S V₀ᵀ) V₀` (arXiv 1301.1058, §3.1, step 2;
-arXiv 2010.02022, §2). -/
+/-- The backward S-step field `S ↦ -U₁ᵀ F(t, U₁ S V₀ᵀ) V₀` ([LubichOseledets2014, §3.1], step 2;
+[CerutiLubich2022, §2]). -/
 def sField (U₁ : Matrix m r ℝ) (V₀ : Matrix n r ℝ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ)
     (t : ℝ) (S : Matrix r r ℝ) : Matrix r r ℝ :=
   -(U₁ᵀ * F t (U₁ * S * V₀ᵀ) * V₀)
 
-/-- The L-step field `L ↦ F(t, U₁ Lᵀ)ᵀ U₁` (arXiv 1301.1058, §3.1, step 3; arXiv 2010.02022,
+/-- The L-step field `L ↦ F(t, U₁ Lᵀ)ᵀ U₁` ([LubichOseledets2014, §3.1], step 3; [CerutiLubich2022],
 §2). -/
 def lField (U₁ : Matrix m r ℝ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t : ℝ)
     (L : Matrix n r ℝ) : Matrix n r ℝ :=
@@ -307,7 +307,7 @@ section Step
 variable {m n r : Type*} [Fintype m] [Fintype n] [Fintype r] [DecidableEq r]
 
 /-- **One step of the matrix projector-splitting (KSL) integrator** from `Y₀ = U₀ S₀ V₀ᵀ` at
-`t₀` to `t₁` (arXiv 1301.1058, §3.1–3.2; arXiv 2010.02022, §2), at the factor level:
+`t₀` to `t₁` ([LubichOseledets2014, §3.1]–3.2; [CerutiLubich2022, §2]), at the factor level:
 
 * K-step `K' = F(t, K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`, and QR factorization `K(t₁) = U₁ Ŝ₁` with
   `U₁ᵀ U₁ = I`;
@@ -431,7 +431,7 @@ theorem capture_of_pointwise (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ Ŝ₁ 
   exact kstep_capture hF hL hB hk.projP₁ hk.projQ₀ ht₁ hh hA hk.kSol (hk.kStart.trans hA₀.symm)
     hk.kCap hk.kNormal
 
-/-- **K-step capture** (the statement of Ceruti–Lubich, arXiv 2010.02022, Lemma 2, in the KSL
+/-- **K-step capture** (the statement of Ceruti–Lubich, [CerutiLubich2022, Lemma 2], in the KSL
 setting, with exact initial value `δ = 0`): under the (global) factored normal-component
 assumption, `‖(I - U₁ U₁ᵀ) A(t₁)‖ ≤ h (4 L B h + ε)`.  Ceruti–Lubich bound this quantity by
 the Kieri–Lubich–Walach local error `ϑ = (4 e^{L h} B L + 9 B L) h² + (3 e^{L h} + 4) ε h`
@@ -477,7 +477,7 @@ theorem local_error_sharp (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ Ŝ₁ K S
 `‖U₁ L(t₁)ᵀ - A(t₁)‖ ≤ h (11 L B h + ε)` of `IsStep.local_error` under the hypothesis that is
 actually used, the normal-component bound at the K-step result `U₁ Ŝ₁ V₀ᵀ` for
 `t ∈ [t₀, t₁]`.  If `Ŝ₁` is invertible this is the assumption of Kieri–Lubich–Walach (as
-quoted in arXiv 2010.02022, Theorem 2, assumption 2) at the single point `Y = U₁ Ŝ₁ V₀ᵀ ∈ M_r`;
+quoted in [CerutiLubich2022, Thm. 2], assumption 2) at the single point `Y = U₁ Ŝ₁ V₀ᵀ ∈ M_r`;
 `Ŝ₁` may also be singular. -/
 theorem local_error_of_pointwise (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ Ŝ₁ K S Lf)
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B) {ε : ℝ}
@@ -488,7 +488,7 @@ theorem local_error_of_pointwise (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ Ŝ
   (hs.isKSLStep hε).local_error hF hL hB ht₁ hh hA hA₀
 
 /-- **Robust local error of the matrix projector-splitting integrator** (Kieri–Lubich–Walach
-2016, Theorem 2.1, local part, as quoted in Theorem 2 of Ceruti–Lubich, arXiv 2010.02022;
+2016, Theorem 2.1, local part, as quoted in Theorem 2 of Ceruti–Lubich, [CerutiLubich2022];
 explicit constants ours).  Let `F : ℝ → ℝ^{m×n} → ℝ^{m×n}` be `L`-Lipschitz (`L ≥ 0`) and
 bounded by `B` in the Frobenius norm, and assume the factored normal-component bound
 `‖(I - U Uᵀ) F(t, U S Vᵀ) (I - V Vᵀ)‖ ≤ ε` for all `t`, all cores `S` and all `U`, `V` with
@@ -577,7 +577,7 @@ theorem global_error [DecidableEq m] [DecidableEq n] {F : ℝ → Matrix m n ℝ
     (fun k hk _ _ => hε _ (U₁ k) (Ŝ k) (V k) (hstep k hk).orthU₁ (hstep k hk).orthV₀) hU hLQR
     hΦ hΦ₀ hδ
 
-/-- **The QR step exists** (arXiv 1301.1058, §3.2, step 1, "using QR or SVD"): for `r ≤ m`,
+/-- **The QR step exists** ([LubichOseledets2014, §3.2], step 1, "using QR or SVD"): for `r ≤ m`,
 every `K₁ ∈ ℝ^{m×r}` factors as `K₁ = U₁ Ŝ₁` with `U₁ᵀ U₁ = I` (also when `K₁` is
 rank-deficient). -/
 theorem exists_qr {m : Type*} [Fintype m] {r : ℕ} (K₁ : Matrix m (Fin r) ℝ)

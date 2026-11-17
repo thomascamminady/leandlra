@@ -9,10 +9,10 @@ Galerkin integrator (`LeanDLRA/Integrators/ParallelBUG.lean`) for real `m × n` 
 the Frobenius norm, **at the level of the factors** computed by the algorithm of
 
 * G. Ceruti, J. Kusch, Ch. Lubich, *A parallel rank-adaptive integrator for dynamical low-rank
-  approximation*, arXiv:2304.05660 (SIAM J. Sci. Comput. 2024), §3.1 (algorithm), (3.4)
+  approximation*, [CerutiKuschLubich2024] (SIAM J. Sci. Comput. 2024), §3.1 (algorithm), (3.4)
   (augmented coefficient matrix), (4.1) (local error) and **Theorem 4.1** (global error).
 
-## The algorithm (arXiv:2304.05660, §3.1)
+## The algorithm ([CerutiKuschLubich2024, §3.1])
 
 From `Y₀ = U₀ S₀ V₀ᵀ` (`U₀ᵀ U₀ = I`, `V₀ᵀ V₀ = I`), a step `t₀ → t₁` computes in parallel
 
@@ -38,16 +38,15 @@ which is then truncated to `Y₁` with `‖Y₁ - Ŷ₁‖ ≤ ϑ`.
   algebraic: only `U₀ᵀ U₀ = I` and `V₀ᵀ V₀ = I` are used).
 * `IsStep.isParallelBUGStep`: the factor trajectories satisfy all hypotheses of the abstract
   step `IsParallelBUGStep`.
-* `IsStep.local_error` (arXiv:2304.05660, (4.1) before truncation, explicit constants): if the
-  normal component at the starting value satisfies
-  `‖(I - U₀U₀ᵀ) F(t, Y₀) (I - V₀V₀ᵀ)‖ ≤ ε` on `[t₀, t₁)`, then
-  `‖Û Ŝ₁ V̂ᵀ - A(t₁)‖ ≤ h (7 L B h + ε)`; `IsStep.local_error_truncated` adds the truncation
-  error `ϑ`; `IsStep.local_error_of_timeLipschitz` needs the bound only at `(t₀, Y₀)`.
+* `IsStep.local_error` ([CerutiKuschLubich2024], (4.1) before truncation, explicit constants): if
+  the normal component at the starting value satisfies `‖(I - U₀U₀ᵀ) F(t, Y₀) (I - V₀V₀ᵀ)‖ ≤ ε` on
+  `[t₀, t₁)`, then `‖Û Ŝ₁ V̂ᵀ - A(t₁)‖ ≤ h (7 L B h + ε)`; `IsStep.local_error_truncated` adds the
+  truncation error `ϑ`; `IsStep.local_error_of_timeLipschitz` needs the bound only at `(t₀, Y₀)`.
 * `IsStep.orthonormal_capture`: with orthonormal `Ũ₁`, the augmented basis `Û` is orthonormal
   and spans `K(t₁)` and `U₀` (as in the paper); `exists_compl_capture`: such `Ũ₁` with `r`
   columns exist if `2 r ≤ m`; `compl_capture_proj`: for every `m`, `Ũ₁ = I - U₀U₀ᵀ` is an
   admissible choice of new directions.
-* `global_error_paper` (**Theorem 4.1** of arXiv:2304.05660, verbatim form): for the
+* `global_error_paper` (**Theorem 4.1** of [CerutiKuschLubich2024], verbatim form): for the
   rank-adaptive parallel integrator with ranks `rₖ` changing from step to step, truncation
   tolerance `ϑ` and Assumption 2 of the paper exactly as stated,
   `‖(I - UₖUₖᵀ) F(tₖ, Yₖ) (I - VₖVₖᵀ)‖ ≤ ε` at the grid points,
@@ -100,7 +99,7 @@ section Fields
 
 variable {m n r : Type*} [Fintype m] [Fintype n] [Fintype r]
 
-/-- The Galerkin S-step field `S̄ ↦ U₀ᵀ F(t, U₀ S̄ V₀ᵀ) V₀` (arXiv:2304.05660, (3.3)). -/
+/-- The Galerkin S-step field `S̄ ↦ U₀ᵀ F(t, U₀ S̄ V₀ᵀ) V₀` ([CerutiKuschLubich2024], (3.3)). -/
 def sField (U₀ : Matrix m r ℝ) (V₀ : Matrix n r ℝ) (F : ℝ → Matrix m n ℝ → Matrix m n ℝ)
     (t : ℝ) (S : Matrix r r ℝ) : Matrix r r ℝ :=
   U₀ᵀ * F t (U₀ * S * V₀ᵀ) * V₀
@@ -125,7 +124,7 @@ section Blocks
 
 variable {m n r s s' : Type*} [Fintype m] [Fintype n] [Fintype r] [Fintype s] [Fintype s']
 
-/-- **The augmented coefficient matrix** (arXiv:2304.05660, (3.4)):
+/-- **The augmented coefficient matrix** ([CerutiKuschLubich2024], (3.4)):
 `Ŝ₁ = [[S̄(t₁), L(t₁)ᵀ Ṽ₁], [Ũ₁ᵀ K(t₁), 0]]`, given `S̄ = S̄(t₁)`, `K₁ = K(t₁)`,
 `L₁ = L(t₁)` and the new directions `Ũ₁`, `Ṽ₁`. -/
 def augCoeff (Sbar : Matrix r r ℝ) (U₁ : Matrix m s ℝ) (V₁ : Matrix n s' ℝ) (K₁ : Matrix m r ℝ)
@@ -133,7 +132,7 @@ def augCoeff (Sbar : Matrix r r ℝ) (U₁ : Matrix m s ℝ) (V₁ : Matrix n s'
   Matrix.fromBlocks Sbar (L₁ᵀ * V₁) (U₁ᵀ * K₁) 0
 
 /-- **The untruncated parallel BUG result** `Ŷ₁ = Û Ŝ₁ V̂ᵀ` with the augmented bases
-`Û = (U₀, Ũ₁)`, `V̂ = (V₀, Ṽ₁)` (arXiv:2304.05660, §3.1, step 2). -/
+`Û = (U₀, Ũ₁)`, `V̂ = (V₀, Ṽ₁)` ([CerutiKuschLubich2024, §3.1], step 2). -/
 def augmented (U₀ : Matrix m r ℝ) (U₁ : Matrix m s ℝ) (V₀ : Matrix n r ℝ) (V₁ : Matrix n s' ℝ)
     (Sbar : Matrix r r ℝ) (K₁ : Matrix m r ℝ) (L₁ : Matrix n r ℝ) : Matrix m n ℝ :=
   Matrix.fromCols U₀ U₁ * augCoeff Sbar U₁ V₁ K₁ L₁ * (Matrix.fromCols V₀ V₁)ᵀ
@@ -151,7 +150,7 @@ theorem augmented_eq_sum (U₀ : Matrix m r ℝ) (U₁ : Matrix m s ℝ) (V₀ :
 
 variable [DecidableEq m] [DecidableEq n]
 
-/-- **The zero block of `Ŝ₁`** (arXiv:2304.05660, (3.4)): if `U₀ᵀ U₀ = I` and `V₀ᵀ V₀ = I`,
+/-- **The zero block of `Ŝ₁`** ([CerutiKuschLubich2024], (3.4)): if `U₀ᵀ U₀ = I` and `V₀ᵀ V₀ = I`,
 the doubly normal component of `Ŷ₁ = Û Ŝ₁ V̂ᵀ` vanishes, `(I - U₀U₀ᵀ) Ŷ₁ (I - V₀V₀ᵀ) = 0`,
 for any new directions `Ũ₁`, `Ṽ₁` and any `S̄`, `K₁`, `L₁` (a purely algebraic fact). -/
 theorem normal_augmented_eq_zero [DecidableEq r] {U₀ : Matrix m r ℝ} {V₀ : Matrix n r ℝ}
@@ -200,13 +199,12 @@ theorem capture_compl_right {V₀ : Matrix n r ℝ} {V₁ : Matrix n s' ℝ} {L�
     Matrix.transpose_one, Matrix.mul_assoc] using h
 
 /-- **The paper's `Û Ŝ₁ V̂ᵀ` is the abstract parallel BUG update** (follows from
-arXiv:2304.05660, §3.1 and (3.4); the paper does not state this identity explicitly, §3.2 only
-compares the blocks of (3.4) with the BUG coefficients up to `O(h²)`).
-If the new directions satisfy `Ũᵀ U₀ = 0`, `Ṽᵀ V₀ = 0` and capture `(I - U₀U₀ᵀ) K₁` and
-`(I - V₀V₀ᵀ) L₁`, then
+[CerutiKuschLubich2024, §3.1] and (3.4); the paper does not state this identity explicitly, §3.2
+only compares the blocks of (3.4) with the BUG coefficients up to `O(h²)`). If the new directions
+satisfy `Ũᵀ U₀ = 0`, `Ṽᵀ V₀ = 0` and capture `(I - U₀U₀ᵀ) K₁` and `(I - V₀V₀ᵀ) L₁`, then
 `Û Ŝ₁ V̂ᵀ = YS(t₁) + (1 - P₀) YK(t₁) + (1 - Q₀) YL(t₁)` with `P₀ = leftProj U₀`,
-`Q₀ = rightProj V₀`, `YK(t₁) = K₁ V₀ᵀ`, `YL(t₁) = U₀ L₁ᵀ`, `YS(t₁) = U₀ S̄ V₀ᵀ`.
-No orthonormality is needed for this identity. -/
+`Q₀ = rightProj V₀`, `YK(t₁) = K₁ V₀ᵀ`, `YL(t₁) = U₀ L₁ᵀ`, `YS(t₁) = U₀ S̄ V₀ᵀ`. No orthonormality
+is needed for this identity. -/
 theorem augmented_eq_parallelBUG {U₀ : Matrix m r ℝ} {U₁ : Matrix m s ℝ} {V₀ : Matrix n r ℝ}
     {V₁ : Matrix n s' ℝ} (Sbar : Matrix r r ℝ) {K₁ : Matrix m r ℝ} {L₁ : Matrix n r ℝ}
     (hpU : U₁ᵀ * U₀ = 0) (hcU : U₁ * U₁ᵀ * ((1 - U₀ * U₀ᵀ) * K₁) = (1 - U₀ * U₀ᵀ) * K₁)
@@ -228,7 +226,7 @@ variable {m n r s s' : Type*} [Fintype m] [Fintype n] [Fintype r] [Fintype s] [F
   [DecidableEq m] [DecidableEq n] [DecidableEq r]
 
 /-- **One step of the matrix parallel BUG integrator** from `Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to `t₁`
-(arXiv:2304.05660, §3.1, step 1), at the factor level: the K-, L- and S-steps (3.1)–(3.3) and
+([CerutiKuschLubich2024, §3.1], step 1), at the factor level: the K-, L- and S-steps (3.1)–(3.3) and
 the new directions `Ũ₁` (`Ũ₁ᵀ U₀ = 0`, capturing `(I - U₀U₀ᵀ) K(t₁)`) and `Ṽ₁` (`Ṽ₁ᵀ V₀ = 0`,
 capturing `(I - V₀V₀ᵀ) L(t₁)`).  The untruncated result is
 `augmented U₀ Ũ₁ V₀ Ṽ₁ (S̄ t₁) (K t₁) (L t₁) = Û Ŝ₁ V̂ᵀ`. -/
@@ -293,7 +291,7 @@ theorem augmented_eq (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf Sb) 
         (U₀ * Sb t₁ * V₀ᵀ) :=
   augmented_eq_parallelBUG _ hs.perpU hs.capU hs.perpV hs.capV
 
-/-- **The zero block of `Ŝ₁`** (arXiv:2304.05660, (3.4)) along a step:
+/-- **The zero block of `Ŝ₁`** ([CerutiKuschLubich2024], (3.4)) along a step:
 `(I - U₀U₀ᵀ) Ŷ₁ (I - V₀V₀ᵀ) = 0` (see `normal_augmented_eq_zero`; no ODE property is used). -/
 theorem normal_eq_zero (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf Sb) :
     (1 - U₀ * U₀ᵀ) * augmented U₀ U₁ V₀ V₁ (Sb t₁) (K t₁) (Lf t₁) * (1 - V₀ * V₀ᵀ) = 0 :=
@@ -307,7 +305,7 @@ theorem tangent_eq (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf Sb) :
   tangent_augmented_eq hs.orthU₀ hs.orthV₀ _ _ _ _ _
 
 /-- With orthonormal new directions `Ũ₁ᵀ Ũ₁ = I`, the augmented basis `Û = (U₀, Ũ₁)` has
-orthonormal columns and spans both `K(t₁)` and `U₀`, as required in arXiv:2304.05660, §3.1. -/
+orthonormal columns and spans both `K(t₁)` and `U₀`, as required in [CerutiKuschLubich2024, §3.1] -/
 theorem orthonormal_capture [DecidableEq s] (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf Sb)
     (hU₁ : U₁ᵀ * U₁ = 1) :
     (Matrix.fromCols U₀ U₁)ᵀ * Matrix.fromCols U₀ U₁ = 1 ∧
@@ -317,8 +315,8 @@ theorem orthonormal_capture [DecidableEq s] (hs : IsStep F t₀ t₁ U₀ S₀ V
 
 variable {L B : ℝ} {A : ℝ → Matrix m n ℝ}
 
-/-- **Robust local error of the matrix parallel BUG integrator** (arXiv:2304.05660, (4.1) before
-truncation, with explicit constants `c₁ = 7 L B`, `c₂ = 1`).  Let `F` be `L`-Lipschitz
+/-- **Robust local error of the matrix parallel BUG integrator** ([CerutiKuschLubich2024], (4.1)
+before truncation, with explicit constants `c₁ = 7 L B`, `c₂ = 1`). Let `F` be `L`-Lipschitz
 (`L ≥ 0`) and bounded by `B` in the Frobenius norm, and let the normal component of `F` at the
 starting value `Y₀ = U₀ S₀ V₀ᵀ` satisfy `‖(I - U₀U₀ᵀ) F(t, Y₀) (I - V₀V₀ᵀ)‖ ≤ ε` for
 `t ∈ [t₀, t₁)`.  If `A' = F(t, A)`, `A(t₀) = Y₀`, then for one parallel BUG step (`IsStep`) on
@@ -338,7 +336,7 @@ theorem local_error (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf Sb) (
     rw [one_sub_leftProj_one_sub_rightProj_apply]
     exact hε t ht'
 
-/-- **Robust local error after truncation** (arXiv:2304.05660, (4.1)): if the truncated
+/-- **Robust local error after truncation** ([CerutiKuschLubich2024], (4.1)): if the truncated
 approximation satisfies `‖Y₁ - Û Ŝ₁ V̂ᵀ‖ ≤ ϑ`, then `‖Y₁ - A(t₁)‖ ≤ h (7 L B h + ε) + ϑ`
 (under the hypotheses of `local_error`). -/
 theorem local_error_truncated (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf Sb)
@@ -355,7 +353,7 @@ theorem local_error_truncated (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ 
         add_le_add htr (hs.local_error hF hL hB hε ht hA hA₀)
     _ = _ := add_comm _ _
 
-/-- **Local error with the normal-component bound only at `(t₀, Y₀)`** (arXiv:2304.05660,
+/-- **Local error with the normal-component bound only at `(t₀, Y₀)`** ([CerutiKuschLubich2024],
 (3.10)): if `‖(I - U₀U₀ᵀ) F(t₀, Y₀) (I - V₀V₀ᵀ)‖ ≤ ε` and `F(·, Y₀)` is `Lₜ`-Lipschitz in time
 on the step, then `‖Û Ŝ₁ V̂ᵀ - A(t₁)‖ ≤ h ((7 L B + Lₜ) h + ε)`, `h = t₁ - t₀`. -/
 theorem local_error_of_timeLipschitz (hs : IsStep F t₀ t₁ U₀ S₀ V₀ U₁ V₁ K Lf Sb)
@@ -380,11 +378,11 @@ end Step
 
 /-! ### Existence of the new directions -/
 
-/-- **Existence of orthonormal new directions** (arXiv:2304.05660, §3.1, "orthonormal basis of
-the range of `(U₀, K(t₁))`"): for `U₀ ∈ ℝ^{m×r}` with orthonormal columns, `K₁ ∈ ℝ^{m×r}` and
+/-- **Existence of orthonormal new directions** ([CerutiKuschLubich2024, §3.1], "orthonormal basis
+of the range of `(U₀, K(t₁))`"): for `U₀ ∈ ℝ^{m×r}` with orthonormal columns, `K₁ ∈ ℝ^{m×r}` and
 `2 r ≤ m`, there is `Ũ₁ ∈ ℝ^{m×r}` with orthonormal columns, `Ũ₁ᵀ U₀ = 0`, capturing
-`(I - U₀U₀ᵀ) K₁`.  (The same lemma applied to `V₀`, `L(t₁)` gives `Ṽ₁`.)  Without `2 r ≤ m`,
-see `compl_capture_proj`. -/
+`(I - U₀U₀ᵀ) K₁`. (The same lemma applied to `V₀`, `L(t₁)` gives `Ṽ₁`.) Without `2 r ≤ m`, see
+`compl_capture_proj`. -/
 theorem exists_compl_capture {m : Type*} [Fintype m] [DecidableEq m] {r : ℕ}
     (U₀ : Matrix m (Fin r) ℝ) (hU₀ : U₀ᵀ * U₀ = 1) (K₁ : Matrix m (Fin r) ℝ)
     (hr : r + r ≤ Fintype.card m) :
@@ -419,8 +417,8 @@ section Global
 
 variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n]
 
-/-- **Global error of the matrix parallel rank-adaptive BUG integrator** (arXiv:2304.05660,
-**Theorem 4.1**, in the form of arXiv:2403.02834, Theorem 2.2, with explicit constants).  Let
+/-- **Global error of the matrix parallel rank-adaptive BUG integrator** ([CerutiKuschLubich2024],
+**Theorem 4.1**, in the form of [Kusch2025, Thm. 2.2], with explicit constants).  Let
 `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B` in the Frobenius norm, and let `A' = F(t, A)`
 on `[t₀, t₀ + N h]`, `h ≥ 0`.  For `k < N` let step `k` start from `Yₖ = Uₖ Sₖ Vₖᵀ` of rank
 `rₖ = rk k` at `tₖ = t₀ + k h` (`IsStep`, with new directions `W k`, `Z k` and factor
@@ -462,7 +460,7 @@ theorem global_error {rk sU sV : ℕ → ℕ} {F : ℝ → Matrix m n ℝ → Ma
     hΦ hΦ₀ hϑ (fun k hk => by rw [← (hstep k hk).augmented_eq]; exact htr k hk)
 
 /-- **Global error with the normal-component assumption at the grid points only**
-(arXiv:2304.05660, Theorem 4.1 with Assumption 2 as stated: `‖P⊥_{rₖ}(Yₖ) F(tₖ, Yₖ)‖ ≤ ε`).
+([CerutiKuschLubich2024, Thm. 4.1] with Assumption 2 as stated: `‖P⊥_{rₖ}(Yₖ) F(tₖ, Yₖ)‖ ≤ ε`).
 Under the hypotheses of `global_error`, but with the normal-component bound
 `‖(I - UₖUₖᵀ) F(tₖ, Yₖ) (I - VₖVₖᵀ)‖ ≤ ε` required only at `(tₖ, Yₖ)`, and with `F`
 additionally `Lₜ`-Lipschitz in time, for `k ≤ N` with `k h ≤ T`
@@ -499,7 +497,7 @@ theorem global_error_of_timeLipschitz {rk sU sV : ℕ → ℕ} {F : ℝ → Matr
       exact hε k hk)
     hΦ hΦ₀ hϑ (fun k hk => by rw [← (hstep k hk).augmented_eq]; exact htr k hk)
 
-/-- **Theorem 4.1 of arXiv:2304.05660, verbatim form** (matrix parallel rank-adaptive BUG
+/-- **Theorem 4.1 of [CerutiKuschLubich2024], verbatim form** (matrix parallel rank-adaptive BUG
 integrator).  Assumptions as in the paper: (1) `F` is bounded by `B` and Lipschitz, with
 constant `L` in the state and `Lₜ` in time; (2) the normal component at the iterates is
 `ε`-small at the grid points, `‖(I - UₖUₖᵀ) F(tₖ, Yₖ) (I - VₖVₖᵀ)‖ ≤ ε` for the rank `rₖ`
@@ -542,10 +540,10 @@ theorem global_error_paper {rk sU sV : ℕ → ℕ} {F : ℝ → Matrix m n ℝ 
     _ ≤ Real.exp (L * T) * (δ + T * ((7 * L * B + Lt) * h + ε) + T * (ϑ / h)) := by gcongr
     _ = _ := by ring
 
-/-- **Theorem 4.1 of arXiv:2304.05660 with the normal-component bound on each step interval.**
-Under the hypotheses of `global_error` (normal-component bound for `t ∈ [tₖ, tₖ₊₁)` at the
-iterates `Yₖ`, no time regularity of `F`) with `h > 0` and `‖Y₀ - A(t₀)‖ ≤ δ`, for
-`0 ≤ k h ≤ T`
+/-- **Theorem 4.1 of [CerutiKuschLubich2024] with the normal-component bound on each step
+interval.** Under the hypotheses of `global_error` (normal-component bound for
+`t ∈ [tₖ, tₖ₊₁)` at the iterates `Yₖ`, no time regularity of `F`) with `h > 0` and
+`‖Y₀ - A(t₀)‖ ≤ δ`, for `0 ≤ k h ≤ T`
 
     ‖Yₖ - A(tₖ)‖ ≤ C₀ δ + C₁ h + C₂ ε + C₃ ϑ / h
 

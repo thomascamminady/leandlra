@@ -7,21 +7,21 @@ import LeanDLRA.Matrix.Projectors
 
 This file formalises the robust error bound of the Lubich–Oseledets projector-splitting
 integrator for dynamical low-rank approximation (Lubich–Oseledets, *A projector-splitting
-integrator for dynamical low-rank approximation*, BIT 2014, arXiv 1301.1058, §3) proved by
+integrator for dynamical low-rank approximation*, BIT 2014, [LubichOseledets2014, §3]) proved by
 Kieri–Lubich–Walach (*Discretized dynamical low-rank approximation in the presence of small
 singular values*, SINUM 2016, Theorem 2.1; quoted as Theorem 2 in Ceruti–Lubich,
-arXiv 2010.02022): the local error is `O(h (h + ε))` and the global error is `O(δ + ε + h)`, with
+[CerutiLubich2022]): the local error is `O(h (h + ε))` and the global error is `O(δ + ε + h)`, with
 constants that only depend on the Lipschitz constant `L`, the bound `B` of the vector field and
 the final time, and **not on singular values**.
 
 ## The integrator as full-space trajectories
 
 As in the rest of the library, the integrator is written abstractly on a real inner product
-space `E` with orthogonal projectors.  The splitting is that of arXiv 1301.1058, §3.1 (abstract
+space `E` with orthogonal projectors. The splitting is that of [LubichOseledets2014, §3.1] (abstract
 formulation) and §3.2 (practical algorithm); the substep differential equations with a general
 right-hand side `F(t, ·)` are those of Kieri–Lubich–Walach 2016, §2, as restated in
-arXiv 2010.02022, §2.  One step from `Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to `t₁ = t₀ + h` consists of,
-with `Q₀ X = X V₀ V₀ᵀ` and `P₁ X = U₁ U₁ᵀ X`:
+[CerutiLubich2022, §2] One step from `Y₀ = U₀ S₀ V₀ᵀ` at `t₀` to `t₁ = t₀ + h` consists of, with
+`Q₀ X = X V₀ V₀ᵀ` and `P₁ X = U₁ U₁ᵀ X`:
 
 * **K-step** `K' = F(t, K V₀ᵀ) V₀`, `K(t₀) = U₀ S₀`, `K(t₁) = U₁ Ŝ₁`: the trajectory
   `YK = K V₀ᵀ` solves `YK' = Q₀ F(t, YK)`, `YK t₀ = Y₀`, and the new basis captures it:
@@ -31,7 +31,7 @@ with `Q₀ X = X V₀ V₀ᵀ` and `P₁ X = U₁ U₁ᵀ X`:
 * **L-step** `L' = F(t, U₁ Lᵀ)ᵀ U₁`, `L(t₀) = V₀ S̃₀ᵀ`: the trajectory `YL = U₁ Lᵀ` solves
   `YL' = P₁ F(t, YL)`, `YL t₀ = YS t₁`, and the new approximation is `Y₁ = YL t₁`.
 
-The normal-component assumption (assumption 2 of Theorem 2 of arXiv 2010.02022) is only used at
+The normal-component assumption (assumption 2 of Theorem 2 of [CerutiLubich2022]) is only used at
 the point `YK t₁ = U₁ Ŝ₁ V₀ᵀ` (which lies on the rank-`r` manifold only if `Ŝ₁` is invertible),
 in the form `‖(1 - P₁) ((1 - Q₀) (F t (YK t₁)))‖ ≤ ε`.  All hypotheses of one step are bundled
 in the predicate `IsKSLStep`.
@@ -49,7 +49,7 @@ With `F` `L`-Lipschitz and bounded by `B`:
   `ksl_S_mem_range_Q₀`: the K- and S-step trajectories stay in the range of `Q₀` (for commuting
   `P₁`, `Q₀`), i.e. `YS = U₁ S V₀ᵀ` lies in the range of `P₁ Q₀`;
 * `ksl_global_error`, `ksl_global_error_le` (global error, Theorem 2.1 of Kieri–Lubich–Walach,
-  Theorem 2 of arXiv 2010.02022): `‖Yₙ - A(tₙ)‖ ≤ c₀ δ + c₁ ε + c₂ h` with `c₀ = e^{L T}`,
+  Theorem 2 of [CerutiLubich2022]): `‖Yₙ - A(tₙ)‖ ≤ c₀ δ + c₁ ε + c₂ h` with `c₀ = e^{L T}`,
   `c₁ = T e^{L T}`, `c₂ = 11 L B T e^{L T}`; the term `c₁ ε` is attained (`KSLExample`);
 * **matrix layer, normal component** (`P₁ = leftProj U₁`, `Q₀ = rightProj V₀`):
   `ksl_normal_le_of_factored` and `ksl_kNormal_of_factored` derive the point hypothesis
@@ -59,7 +59,7 @@ With `F` `L`-Lipschitz and bounded by `B`:
   the factored assumption from the paper's assumption `‖(I - P(Y)) F(t, Y)‖ ≤ ε` on the manifold
   (invertible `S` only) by a density argument, for `F t` continuous; `ksl_kNormal_of_manifold`
   combines both;
-* **inexact substeps** (cf. Kieri–Lubich–Walach 2016, §2.6.3; arXiv 2010.02022 only states, after
+* **inexact substeps** (cf. Kieri–Lubich–Walach 2016, §2.6.3; [CerutiLubich2022] only states, after
   Theorem 2, that the additional error is bounded in terms of the local errors of the inexact
   substeps): if the three substep differential equations are solved only approximately, with
   local errors `ηK`, `ηS`, `ηL` (`IsInexactKSLStep`), then `ksl_local_error_inexact` gives
@@ -93,7 +93,7 @@ added in.
 
 * Kieri–Lubich–Walach (and Ceruti–Lubich) state the global result as `c₀ δ + c₁ ε + c₂ h` with
   constants depending only on `L`, `B`, `T`; we give explicit constants.  The local bound of
-  Kieri–Lubich–Walach does have explicit constants: as quoted in arXiv 2010.02022, eq. (5), it
+  Kieri–Lubich–Walach does have explicit constants: as quoted in [CerutiLubich2022, eq. (5)], it
   is `(4 e^{L h} B L + 9 B L) h² + (3 e^{L h} + 4) ε h + e^{L h} δ`.  For an exact starting value
   (`δ = 0`, the setting of a local error) our bound `h (10 L B h + ε)` improves both constants
   (`10 < 4 e^{L h} + 9` and `1 < 3 e^{L h} + 4`), and the coefficient `1` of `ε h` cannot be
@@ -129,7 +129,7 @@ added in.
   from computed values.  In matrix form the full-space local errors equal the local errors of
   `K`, `S` and `L`, because `U₁` and `V₀` have orthonormal columns.  The explicit form of the
   bounds is ours; Kieri–Lubich–Walach 2016 (§2.6.3) is not available in this repository, so the
-  attribution of these results is by reference to the summary in arXiv 2010.02022.
+  attribution of these results is by reference to the summary in [CerutiLubich2022].
 -/
 
 open Set Filter Topology
@@ -398,7 +398,7 @@ theorem ksl_local_error_inexact_sharp (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     _ = _ := by ring
 
 /-- **Robust local error of the KSL integrator with inexact substeps** (cf. Kieri–Lubich–Walach
-2016, §2.6.3, summarized in arXiv 2010.02022 after Theorem 2; explicit constants ours).  If the
+2016, §2.6.3, summarized in [CerutiLubich2022] after Theorem 2; explicit constants ours).  If the
 K-, S- and L-substeps are solved with local errors `ηK`, `ηS`, `ηL` (see
 `ksl_local_error_inexact_sharp` for the precise hypotheses), then
 
@@ -444,7 +444,7 @@ theorem ksl_proj_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBounde
 /-- **Robust local error of the KSL integrator, sharp form.**  Under the hypotheses of
 `ksl_local_error`, `‖YL t₁ - A t₁‖ ≤ h (10 L B h + ε)`.  This improves the explicit local bound
 `(4 e^{L h} + 9) L B h² + (3 e^{L h} + 4) ε h` of Kieri–Lubich–Walach 2016 (proof of
-Theorem 2.1, quoted in arXiv 2010.02022, eq. (5), with `δ = 0`); the coefficient `1` of `ε h`
+Theorem 2.1, quoted in [CerutiLubich2022, eq. (5)], with `δ = 0`); the coefficient `1` of `ε h`
 is attained for a constant field (`KSLExample`). -/
 theorem ksl_local_error_sharp (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hB : IsBoundedField F B) (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀) (ht₁ : t₁ = t₀ + h)
@@ -460,7 +460,7 @@ theorem ksl_local_error_sharp (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (le_of_eq (by ring))
 
 /-- **Robust local error of the projector-splitting integrator** (cf. Kieri–Lubich–Walach 2016,
-proof of Theorem 2.1, local bound quoted in arXiv 2010.02022, eq. (5); our constants are smaller,
+proof of Theorem 2.1, local bound quoted in [CerutiLubich2022, eq. (5)]; our constants are smaller,
 see `ksl_local_error_sharp`).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and
 bounded by `B`, `A` the exact solution on `[t₀, t₁]`, `t₁ = t₀ + h`, `h ≥ 0`, with `A t₀ = Y₀`,
 and let `P₁`, `Q₀` be orthogonal projectors.  Assume
@@ -589,7 +589,7 @@ section Global
 variable {F : ℝ → E → E} {L B ε : ℝ}
 
 /-- **Robust global error bound of the projector-splitting integrator** (Kieri–Lubich–Walach
-2016, Theorem 2.1; Theorem 2 of arXiv 2010.02022, with explicit constants).  Let `F` be
+2016, Theorem 2.1; Theorem 2 of [CerutiLubich2022], with explicit constants).  Let `F` be
 `L`-Lipschitz (`L ≥ 0`) and bounded by `B`, let `tₙ = t₀ + n h` with `h ≥ 0`, and let `A` solve
 `A' = F(t, A)` on `[t₀, t₀ + N h]`.  For `n < N` let step `n` of the KSL integrator go from
 `(tₙ, Y n)` to `Y (n+1) = YL n tₙ₊₁` with right projector `Q n` and new left projector `P n`, as
@@ -618,7 +618,7 @@ theorem ksl_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoun
     _ = _ := by ring
 
 /-- **Robust global error bound of the projector-splitting integrator, final form**
-(Kieri–Lubich–Walach 2016, Theorem 2.1; Theorem 2 of arXiv 2010.02022): under the hypotheses of
+(Kieri–Lubich–Walach 2016, Theorem 2.1; Theorem 2 of [CerutiLubich2022]): under the hypotheses of
 `ksl_global_error`, with `ε ≥ 0`, an initial error `‖Y 0 - A t₀‖ ≤ δ` and `n h ≤ T`,
 
     ‖Y n - A tₙ‖ ≤ c₀ δ + c₁ ε + c₂ h,
@@ -749,7 +749,7 @@ section GlobalInexact
 variable {F : ℝ → E → E} {L B ε : ℝ}
 
 /-- **Global error of the KSL integrator with inexact substeps** (cf. Kieri–Lubich–Walach 2016,
-§2.6.3, summarized in arXiv 2010.02022 after Theorem 2; explicit constants ours).  Under the
+§2.6.3, summarized in [CerutiLubich2022] after Theorem 2; explicit constants ours).  Under the
 hypotheses of `ksl_global_error`, but with step `n` an inexact KSL step (`IsInexactKSLStep`)
 from `Y n` to `Y (n+1)` with substep errors `ηK n`, `ηS n`, `ηL n`, and `0 ≤ h ≤ H`: for `n ≤ N`
 
@@ -935,7 +935,7 @@ theorem normal_le_of_invertible_core {G : Matrix m n ℝ → Matrix m n ℝ} (hG
 orthonormal columns and invertible `S`, `Y = U S Vᵀ` lies on the manifold `M` of rank-`r`
 matrices and `tangentProj U V` is its tangent-space projector `P(Y)` (independent of the
 factorization, `tangentProj_eq_of_factorization`); every `Y ∈ M` has such a factorization.
-So the hypothesis below is assumption 2 of Theorem 2 of arXiv 2010.02022,
+So the hypothesis below is assumption 2 of Theorem 2 of [CerutiLubich2022],
 `‖(I - P(Y)) F(t, Y)‖ ≤ ε` for `Y ∈ M` (globally, for all `t` and all `Y ∈ M`).  If `F t` is
 continuous for every `t`, it implies the factored assumption for **all** cores `S`, including
 singular ones (`normal_le_of_invertible_core`). -/
@@ -949,7 +949,7 @@ theorem factored_normal_of_manifold {F : ℝ → Matrix m n ℝ → Matrix m n �
 
 omit [DecidableEq m] [DecidableEq n] in
 /-- **The hypothesis `kNormal` of the matrix KSL step from the paper's assumption on the
-manifold** (assumption 2 of Theorem 2 of arXiv 2010.02022, in global form, see
+manifold** (assumption 2 of Theorem 2 of [CerutiLubich2022], in global form, see
 `factored_normal_of_manifold`), for `F t` continuous: under the hypotheses of
 `ksl_kNormal_of_factored`, `kNormal` holds at `YK t₁ = U₁ Ŝ₁ V₀ᵀ` even if `Ŝ₁` is singular, i.e.
 even if `YK t₁` is not on the manifold. -/

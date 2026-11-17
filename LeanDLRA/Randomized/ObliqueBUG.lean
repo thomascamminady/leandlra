@@ -10,11 +10,12 @@ import LeanDLRA.Integrators.Exactness
 # Interpolatory (DEIM/CUR) and sketched BUG: oblique capture and Lebesgue-constant bounds
 
 Interpolatory integrators replace the orthogonal projectors of the BUG integrator by oblique
-ones: DEIM/CUR row and column selection in the K-, L- and S-steps (BUC, arXiv 2411.15990,
-eqs. (27)–(29); interpolatory projector splitting, eqs. (21)–(23); TDB-CUR, arXiv 2408.16591),
-or sketched inner products (sBUG/sKSL, arXiv 2607.03402, §5).  Robustness to small singular
-values was claimed for these methods without proof (OP-RS-02, OP-HO-10).  This file proves it
-with constants depending only on `L`, `B` and the **Lebesgue constants** `η ≥ ‖oblique map‖`.
+ones: DEIM/CUR row and column selection in the K-, L- and S-steps (BUC, [DektorEinkemmer2024],
+eqs. (27)–(29); interpolatory projector splitting, eqs. (21)–(23); TDB-CUR,
+[NaderiAkhavanBabaee2024]), or sketched inner products (sBUG/sKSL, [CarrelGrigori2026, §5]).
+Robustness to small singular values was claimed for these methods without proof (OP-RS-02,
+OP-HO-10). This file proves it with constants depending only on `L`, `B` and the **Lebesgue
+constants** `η ≥ ‖oblique map‖`.
 
 ## Main results
 
@@ -40,7 +41,7 @@ with constants depending only on `L`, `B` and the **Lebesgue constants** `η ≥
 * **OP-RS-05 (resolved).**  `leftOblique_self_mul_right`, `rightOblique_self_mul_right`: for any
   basis `W = V M` (`M` invertible) of the range of an orthonormal `V`, `X ↦ X W (WᵀW)⁻¹ Wᵀ` *is*
   `X ↦ X V Vᵀ` (likewise on the left).  Hence `isBUGStep_of_orthSketch` and
-  `isKSLStep_of_orthSketch`: the orthogonal-sketch integrators sBUG / sKSL of arXiv 2607.03402,
+  `isKSLStep_of_orthSketch`: the orthogonal-sketch integrators sBUG / sKSL of [CarrelGrigori2026],
   §5, written with non-orthonormal (e.g. randomized Gram–Schmidt) bases, satisfy `IsBUGStep` /
   `IsKSLStep` and inherit `bug_global_error_le` / `ksl_global_error_le`; `transfer_eq`: the
   Galerkin transfer through a non-orthonormal new basis realizes `U₁ U₁ᵀ Y₀`.
@@ -49,10 +50,10 @@ with constants depending only on `L`, `B` and the **Lebesgue constants** `η ≥
   below.)
 * `buc_start_eq`: for the augmented BUC bases (`P₁ Y₀ = Y₀`, `Q₁ Y₀ = Y₀`) the oblique start
   value `PA QA Y₀` of `IsObliqueBUGStep` equals the Galerkin transfer `M̂ S(t₀) N̂ᵀ = P₁ Q₁ Y₀ = Y₀`
-  of arXiv 2411.15990, eq. (29), so the structure models BUC faithfully.
+  of [DektorEinkemmer2024, eq. (29)], so the structure models BUC faithfully.
 * Algebraic identities: `transpose_mul_residual_eq_zero` (implicit TDB-CUR is residual
-  collocation, arXiv 2408.16591 §3.3.1), `obliqueConversion` (arXiv 2512.15703 §3.2), and
-  `norm_sq_bounds_of_sketch` (norm equivalence for sketch-orthonormal bases, arXiv 2607.03402
+  collocation, [NaderiAkhavanBabaee2024] §3.3.1), `obliqueConversion` ([YeYang2025] §3.2), and
+  `norm_sq_bounds_of_sketch` (norm equivalence for sketch-orthonormal bases, [CarrelGrigori2026]
   §5.2).
 * Satisfiability: a genuinely oblique `IsObliqueBUGStep` instance on `ℝ^{2×2}` (`U = V = e₁`,
   selection `S = (1, 1)ᵀ`, all four oblique maps different from the orthogonal projectors,
@@ -61,8 +62,8 @@ with constants depending only on `L`, `B` and the **Lebesgue constants** `η ≥
 
 ## Why this is new, and what it implies
 
-The papers prove no robust bound for oblique integrators (arXiv 2411.15990 and 2510.19518 bound
-the continuous interpolatory DLRA or give numerical evidence; arXiv 2607.03402 treats sketched
+The papers prove no robust bound for oblique integrators ([DektorEinkemmer2024] and 2510.19518 bound
+the continuous interpolatory DLRA or give numerical evidence; [CarrelGrigori2026] treats sketched
 *continuous* DLRA).  The proofs here show that only operator norms enter: the error constants
 are polynomial in the Lebesgue constants (`η³` in the capture, `η²` in the Galerkin Lipschitz
 constant), so any index-selection strategy with uniformly bounded Lebesgue constants (e.g.
@@ -72,15 +73,15 @@ propagation uses the exact flow, so the exponential is `e^{L T}` (not `e^{η L T
 
 ## What remains
 
-* **Interpolatory projector splitting** (arXiv 2411.15990, eqs. (21)–(23)): its backward S-step
+* **Interpolatory projector splitting** ([DektorEinkemmer2024, eqs. (21)–(23)]): its backward S-step
   `YS' = -P^a Q^a F` is not covered; the KSL local-error algebra of `ksl_local_error` uses that
   the backward step undoes the K-step on `range P₁ Q₀`, which fails for oblique maps unless the
   K-step and S-step use the *same* oblique co-range map.  Not formalized; the same applies to
-  the oblique (sketched inner product) sKSL variant of arXiv 2607.03402, §5.
+  the oblique (sketched inner product) sKSL variant of [CarrelGrigori2026, §5]
 * **Rank truncation.**  The bounds are for the augmented (rank `≤ 2r`) step before the SVD
   truncation of BUC; truncation with tolerance `ϑ` adds the usual `ϑ` per step (as for the
   rank-adaptive BUG), which is not repeated here.
-* **TDB-CUR as step truncation** (arXiv 2408.16591, §§4–5): the plateau `c σ_{r+1}` of the
+* **TDB-CUR as step truncation** ([NaderiAkhavanBabaee2024], §§4–5): the plateau `c σ_{r+1}` of the
   implicit CUR step needs a perturbation analysis of the CUR truncation; only the algebraic
   residual-collocation identity is formalized here.
 * Uniform bounds on the Lebesgue constants along the trajectory are hypotheses (the field
@@ -217,7 +218,7 @@ lemma opNorm_one_sub_le_one {P : E →L[ℝ] E} (hP : IsOrthProj P) : ‖1 - P�
 
 /-- The doubly-normal identity behind the oblique capture lemma:
 `(1 - P₁)(1 - R) x = (1 - R)(1 - P₁)(1 - Q₀) x` if `R` is an oblique projector onto the
-orthogonal projector `Q₀` (`(1 - R) = (1 - R)(1 - Q₀)`, arXiv 2510.19518 eq. (14)) and `R`
+orthogonal projector `Q₀` (`(1 - R) = (1 - R)(1 - Q₀)`, [CarrelEtAl2025] eq. (14)) and `R`
 commutes with `P₁`. -/
 lemma one_sub_one_sub_eq {Q₀ : E →L[ℝ] E} (hR : IsObliqueProj R Q₀)
     (hc : ∀ x, P₁ (R x) = R (P₁ x)) (x : E) :
@@ -230,12 +231,11 @@ lemma one_sub_one_sub_eq {Q₀ : E →L[ℝ] E} (hR : IsObliqueProj R Q₀)
   abel
 
 /-- **Oblique (interpolatory / DEIM) K-step capture lemma** (OP-RS-02, part (a); the K-step of
-the interpolatory BUG / BUC integrators of arXiv 2411.15990, eqs. (21)–(23), (27)–(29)).  Let the
-K-step use an oblique projector `R` onto the orthogonal projector `Q₀ ≠ 0`
-(`R Q₀ = Q₀`, `Q₀ R = R`; for matrices `X ↦ X S (V₀ᵀ S)⁻¹ V₀ᵀ`), commuting with the orthogonal
-projector `P₁` of the new basis, with Lebesgue constant `‖R‖ ≤ η`.  If `P₁` captures `YK(t₁)` and
-the **orthogonal** doubly-normal component is small,
-`‖(1 - P₁)(1 - Q₀) F(t, YK(t₁))‖ ≤ ε`, then
+the interpolatory BUG / BUC integrators of [DektorEinkemmer2024, eqs. (21)–(23)], (27)–(29)). Let
+the K-step use an oblique projector `R` onto the orthogonal projector `Q₀ ≠ 0` (`R Q₀ = Q₀`,
+`Q₀ R = R`; for matrices `X ↦ X S (V₀ᵀ S)⁻¹ V₀ᵀ`), commuting with the orthogonal projector `P₁` of
+the new basis, with Lebesgue constant `‖R‖ ≤ η`. If `P₁` captures `YK(t₁)` and the **orthogonal**
+doubly-normal component is small, `‖(1 - P₁)(1 - Q₀) F(t, YK(t₁))‖ ≤ ε`, then
 
     ‖(1 - P₁) A(t₁)‖ ≤ h ((1 + η + η²) L B h + η ε).
 
@@ -349,7 +349,7 @@ end Galerkin
 section Step
 
 /-- All hypotheses of one step of the **interpolatory (DEIM / CUR) BUG integrator** with
-Lebesgue constant `η` (arXiv 2411.15990, eqs. (27)–(29) for BUC; arXiv 2510.19518 for the
+Lebesgue constant `η` ([DektorEinkemmer2024, eqs. (27)–(29)] for BUC; [CarrelEtAl2025] for the
 interpolatory tangent projector).  As in `LeanDLRA.IsBUGStep`, the step is written through
 full-space trajectories:
 
@@ -393,7 +393,7 @@ structure IsObliqueBUGStep (F : ℝ → E → E) (ε η : ℝ) (P₀ Q₀ P₁ Q
   sSol : ODESolution (fun t x => PA (QA (F t x))) YS t₀ t₁
   sStart : YS t₀ = PA (QA Y₀)
 
-/-- **The BUC start value** (arXiv 2411.15990, eq. (29)): BUC starts its S-step at the
+/-- **The BUC start value** ([DektorEinkemmer2024, eq. (29)]): BUC starts its S-step at the
 Galerkin transfer `M̂ S(t₀) N̂ᵀ`, i.e. at `P₁ Q₁ Y₀`, and augments the new bases by `X(t₀)`,
 `V(t₀)`, so `P₁ Y₀ = Y₀` and `Q₁ Y₀ = Y₀`.  Then the oblique start `PA QA Y₀` of
 `IsObliqueBUGStep.sStart` coincides with it: `PA QA Y₀ = P₁ Q₁ Y₀ = Y₀`.  (Without augmentation
@@ -471,7 +471,7 @@ lemma eta_nonneg (hs : IsObliqueBUGStep F ε η P₀ Q₀ P₁ Q₁ RK RL PA QA 
   (norm_nonneg _).trans hs.normPA
 
 /-- **Capture by the two-sided interpolatory projector** (oblique analogue of Lemma 3 of
-arXiv 2010.02022): with `ϑ = h ((1 + η + η²) L B h + η ε)`,
+[CerutiLubich2022]): with `ϑ = h ((1 + η + η²) L B h + η ε)`,
 `‖A(t₁) - PA QA A(t₁)‖ ≤ (η + η²) ϑ`. -/
 theorem capture (hs : IsObliqueBUGStep F ε η P₀ Q₀ P₁ Q₁ RK RL PA QA t₀ t₁ Y₀ YK YL YS)
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h)
@@ -595,7 +595,7 @@ theorem rightOblique_self_mul_right {V : Matrix n k ℝ} (hV : Vᵀ * V = 1) {M 
     rw [rightOblique_apply, rightProj_apply', obliqueProj_self_mul_right hV hM,
       Matrix.transpose_mul, Matrix.transpose_transpose]
 
-/-- **OP-RS-05: the orthogonal-sketch BUG step (sBUG, arXiv 2607.03402, §5) is a BUG step.**
+/-- **OP-RS-05: the orthogonal-sketch BUG step (sBUG, [CarrelGrigori2026, §5]) is a BUG step.**
 Write the sBUG substeps in full-space form with non-orthonormal bases: the K-step with the
 sketched co-range basis `W = V₀ M_W`, `YK' = F(t, YK) W (WᵀW)⁻¹ Wᵀ`; the new left basis `P = U₁ M_P`
 (e.g. from randomized Gram–Schmidt) spanning `K(t₁)`, `P (PᵀP)⁻¹ Pᵀ YK(t₁) = YK(t₁)`; the L-step
@@ -628,7 +628,7 @@ theorem isBUGStep_of_orthSketch {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} 
     isOrthProj_rightProj hV₁, fun X => leftProj_rightProj_comm U₁ V₁ X, hK, hK₀, hKcap, hεK, hL,
     hL₀, hLcap, hεL, hS, hS₀⟩
 
-/-- **OP-RS-05: the orthogonal-sketch projector-splitting step (sKSL, arXiv 2607.03402, §5) is a
+/-- **OP-RS-05: the orthogonal-sketch projector-splitting step (sKSL, [CarrelGrigori2026, §5]) is a
 KSL step.**  With the sketched co-range basis `W = V₀ M_W` and the new non-orthonormal left
 basis `P = U₁ M_P`, the K-step `YK' = F(YK) 𝒫_Wᵀ`, the backward S-step
 `YS' = -𝒫_P F(YS) 𝒫_Wᵀ`, `YS(t₀) = YK(t₁)`, and the L-step `YL' = 𝒫_P F(YL)`,
@@ -669,7 +669,7 @@ section SketchBound
 open Matrix
 open scoped LeanDLRA.Frobenius
 
-/-- **OP-RS-05** (sBUG, arXiv 2607.03402, §5; proved): the orthogonal-sketch BUG step in
+/-- **OP-RS-05** (sBUG, [CarrelGrigori2026, §5]; proved): the orthogonal-sketch BUG step in
 raw matrix form, whose K-step uses the right factor `W₀ (W₀ᵀ W₀)⁻¹ W₀ᵀ` of a sketched co-range
 basis `W₀ = V₀ R₀`, whose L-step uses `Z₀ (Z₀ᵀ Z₀)⁻¹ Z₀ᵀ` with `Z₀ = U₀ R₀'`, and whose new
 bases `Uh = U₁ R₁`, `Vh = V₁ R₁'` (only sketch-orthonormal; `R₀, R₀', R₁, R₁'` invertible)
@@ -723,15 +723,15 @@ open Matrix
 
 variable {m n k : Type*} [Fintype m] [Fintype k] [DecidableEq k]
 
-/-- **Implicit TDB-CUR as residual collocation** (arXiv 2408.16591, §3.3.1, algebraic core):
-the residual `X - 𝒫 X` of the interpolatory projection `𝒫 = U (SᵀU)⁻¹ Sᵀ` vanishes on the
-selected rows, `Sᵀ (X - 𝒫 X) = 0`.  Applied to `X = Y₀ + h F(Y₁)` this says that the implicit
-CUR step satisfies the time-discrete equation exactly at the selected rows/columns. -/
+/-- **Implicit TDB-CUR as residual collocation** ([NaderiAkhavanBabaee2024, §3.3.1], algebraic
+core): the residual `X - 𝒫 X` of the interpolatory projection `𝒫 = U (SᵀU)⁻¹ Sᵀ` vanishes on the
+selected rows, `Sᵀ (X - 𝒫 X) = 0`. Applied to `X = Y₀ + h F(Y₁)` this says that the implicit CUR
+step satisfies the time-discrete equation exactly at the selected rows/columns. -/
 theorem transpose_mul_residual_eq_zero {U S : Matrix m k ℝ} (hSU : IsUnit (Sᵀ * U).det)
     (X : Matrix m n ℝ) : Sᵀ * (X - obliqueProj U S * X) = 0 := by
   rw [Matrix.mul_sub, transpose_mul_obliqueProj_mul hSU, sub_self]
 
-/-- **Oblique conversion** (arXiv 2512.15703, §3.2): `E_X = U (SᵀU)⁻¹` is the basis of
+/-- **Oblique conversion** ([YeYang2025, §3.2]): `E_X = U (SᵀU)⁻¹` is the basis of
 `range U` dual to the selection `S` (`Sᵀ E_X = 1`), and `E_X Sᵀ` is the oblique projector
 `𝒫 = U (SᵀU)⁻¹ Sᵀ`. -/
 theorem obliqueConversion {U S : Matrix m k ℝ} (hSU : IsUnit (Sᵀ * U).det) :
@@ -741,7 +741,7 @@ theorem obliqueConversion {U S : Matrix m k ℝ} (hSU : IsUnit (Sᵀ * U).det) :
 
 end Identities
 
-/-- **Norm equivalence for sketch-orthonormal bases** (arXiv 2607.03402, §5.2): if the sketch
+/-- **Norm equivalence for sketch-orthonormal bases** ([CarrelGrigori2026, §5.2]): if the sketch
 `Θ` is an `ε`-embedding at `y = P x` (`(1 - ε)‖y‖² ≤ ‖Θ y‖² ≤ (1 + ε)‖y‖²`, `0 ≤ ε < 1`) and the
 sketched basis `Θ P` has orthonormal columns (`‖Θ P x‖ = ‖x‖`), then
 `‖x‖²/(1 + ε) ≤ ‖P x‖² ≤ ‖x‖²/(1 - ε)` (the Loewner bounds on `PᵀP`, coordinatewise). -/
