@@ -6,7 +6,8 @@ import LeanDLRA.Matrix.Orthonormal
 # Dynamical low-rank approximation at and beyond the loss of rank
 
 Open problems OP-RA-46 (meaning and continuation of DLRA beyond the loss of rank) and OP-EX-20
-(behaviour of DLR solutions at the maximal existence time) of `docs/survey/open-problems.json`.
+(behaviour of DLR solutions at the maximal existence time) of
+`docs/catalogue/survey/open-problems.json`.
 Everything is on actual matrices: a rank-`r` **Dirac–Frenkel solution** of a
 constant field `G` is a curve `Y(t) = U S Vᵀ` (orthonormal `U`, `V`, invertible `S`) with
 `Ẏ = P(Y) G`, `P(Y)` the tangent projector of the rank-`r` manifold (`IsDFSolution`; the

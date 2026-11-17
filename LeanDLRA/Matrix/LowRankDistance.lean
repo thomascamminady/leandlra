@@ -76,7 +76,7 @@ become small.
   (every enrichment of a BUG step is a BUG step with the same `ε`), `bug_bound_mono`,
   `distLR_flow_le_of_le` (rank monotonicity).
 
-## Open-problem status (see `docs/survey/open-problems.json`)
+## Open-problem status (see `docs/catalogue/survey/open-problems.json`)
 
 * OP-RA-03: the sandwich is proved for the distance-defined `ε`-rank.  The identification of
   `epsRank` with the singular-value tolerance rule is `epsRank_eq_sInf_tailNorm` in

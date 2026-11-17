@@ -9,7 +9,8 @@ import LeanDLRA.Stability.Energy
 # Singular values of Sylvester solutions: ADI identity, explicit bounds, counterexample
 
 Open problems OP-RA-44 (a priori ε-rank bounds from structural expansions) and OP-OT-59 (spectral
-separation and singular-value decay of Sylvester solutions) of `docs/survey/open-problems.json`.
+separation and singular-value decay of Sylvester solutions) of
+`docs/catalogue/survey/open-problems.json`.
 Everything is about actual real matrices; singular values are Mathlib's
 `(toEuclideanLin X).singularValues i` (zero-based, decreasing), `specNorm` is `‖·‖₂`, `‖·‖` the
 Frobenius norm, `distLR r X = dist(X, {rank ≤ r})`.

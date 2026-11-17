@@ -8,7 +8,7 @@ import LeanDLRA.Novel.BlindSpotII
 /-!
 # Randomized DLRA without the small-normal-component assumption (OP-RS-34)
 
-Open problem OP-RS-34 of `docs/survey/open-problems.json`: arXiv 2410.17091
+Open problem OP-RS-34 of `docs/catalogue/survey/open-problems.json`: arXiv 2410.17091
 (Sec. 4.1) asserts that the randomized integrators DRSVD/DGN do not need the small-normal-component
 assumption `‖(I - P(Y)) F(Y)‖ ≤ ε` of DLRA error analysis, and asks for an error analysis under a
 weaker hypothesis such as low-rank approximability of the exact flow,

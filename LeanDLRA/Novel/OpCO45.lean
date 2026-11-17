@@ -6,7 +6,7 @@ import LeanDLRA.Matrix.Frobenius
 /-!
 # High-order positivity-preserving and TVD/TVB low-rank methods
 
-Open problem OP-CO-45 of `docs/survey/open-problems.json`.  The
+Open problem OP-CO-45 of `docs/catalogue/survey/open-problems.json`.  The
 survey entry says that no low-order positivity-preserving low-rank scheme exists to limit towards,
 that truncation destroys monotonicity, and proposes as base scheme step-and-truncate forward Euler
 followed by the convex positivity projection, with SSP-RK combinations on top.  This file makes

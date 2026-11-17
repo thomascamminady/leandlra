@@ -6,7 +6,7 @@ import LeanDLRA.Matrix.Projectors
 /-!
 # The Weingarten term of accelerated forward Euler for ambient-linear fields (OP-HO-38)
 
-Open problem OP-HO-38 of `docs/survey/open-problems.json`: in the experiments
+Open problem OP-HO-38 of `docs/catalogue/survey/open-problems.json`: in the experiments
 of arXiv 2309.06125, §5.2, Fig. 4(a), the error curves of the accelerated forward Euler scheme
 (AFE) for different ranks coincide until the modelling plateau, although the acceleration (39)
 contains the Weingarten term `W_Y(Π F, Π⊥ F)`, bounded only by `2 ‖T‖ ‖N‖ / σ_r`

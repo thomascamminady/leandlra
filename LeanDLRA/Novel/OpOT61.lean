@@ -5,7 +5,7 @@ import LeanDLRA.Classical.EckartYoung
 /-!
 # When is free streaming low rank?  Spatial modes, shear times and recurrence
 
-Open problem OP-OT-61 of `docs/survey/open-problems.json` ("when are kinetic solutions
+Open problem OP-OT-61 of `docs/catalogue/survey/open-problems.json` ("when are kinetic solutions
 approximately low rank?").  `LeanDLRA/Novel/EpsRank.lean` treats the
 diffusive scaling.  This file treats the opposite, collisionless end: free streaming and, more
 generally, every linear scheme on a periodic spatial grid that commutes with the spatial shift.

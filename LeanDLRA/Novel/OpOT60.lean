@@ -7,8 +7,8 @@ import LeanDLRA.Matrix.Projectors
 /-!
 # Weak (observable) error of dynamical low-rank approximation
 
-Open problem OP-OT-60 of `docs/survey/open-problems.json` (arXiv 1902.00424, Secs. 8 and 10).  The
-question: for a linear observable `⟪φ, Y(t)⟫` of the DLRA solution
+Open problem OP-OT-60 of `docs/catalogue/survey/open-problems.json` (arXiv 1902.00424, Secs. 8 and
+10).  The question: for a linear observable `⟪φ, Y(t)⟫` of the DLRA solution
 `Ẏ = P(Y) F(t, Y)` of `Ȧ = F(t, A)`, is the error `⟪φ, Y(t) - A(t)⟫` smaller in order than the
 strong error `‖Y(t) - A(t)‖ = O(ε)` (`ε` the normal component of the field), can it be `O(ε²)`,
 or is there a sharp lower bound of order `ε`; and what happens for BUG and KSL.

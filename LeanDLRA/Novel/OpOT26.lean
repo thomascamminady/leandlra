@@ -6,7 +6,7 @@ import LeanDLRA.Classical.WeylSingular
 /-!
 # Quasi-optimality of DLRA with respect to the best rank-`r` approximation (OP-OT-26)
 
-Open problem OP-OT-26 of `docs/survey/open-problems.json` (arXiv 1301.1058 Sec. 5.2,
+Open problem OP-OT-26 of `docs/catalogue/survey/open-problems.json` (arXiv 1301.1058 Sec. 5.2,
 arXiv 2309.06125 Sec. 5.1, arXiv 2402.03586 Sec. 4, arXiv 2608.17157 Sec. 7.1).  The question: is
 the error of the dynamical low-rank approximation
 `Ẏ = P(Y) Ȧ` bounded by a constant times the best rank-`r` error `dist(A(t), M_r)`, presumably
