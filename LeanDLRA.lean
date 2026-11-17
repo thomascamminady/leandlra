@@ -18,6 +18,7 @@ import LeanDLRA.DLRA.QuasiOptimalityGap
 import LeanDLRA.DLRA.QuasiOptimalityMargin
 import LeanDLRA.DLRA.QuasiOptimalityNormal
 import LeanDLRA.DLRA.QuasiOptimalitySharp
+import LeanDLRA.DLRA.QuasiOptimalitySpectral
 import LeanDLRA.DLRA.QuasiOptimalityTruncation
 import LeanDLRA.DLRA.QuasiOptimalityTube
 import LeanDLRA.Dynamics.ContinuousDLRA
@@ -27,6 +28,7 @@ import LeanDLRA.FixedRank.TangentSpace
 import LeanDLRA.FixedRank.TangentSpace.Curvature
 import LeanDLRA.FixedRank.TangentSpace.Defs
 import LeanDLRA.FixedRank.TangentSpace.ProjectorLipschitz
+import LeanDLRA.FixedRank.TangentSpace.ProjectorSpectral
 import LeanDLRA.FixedRank.TangentStepTruncation
 import LeanDLRA.Foundations.AprioriExistence
 import LeanDLRA.Foundations.ConjugatedField
