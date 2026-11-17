@@ -6,8 +6,9 @@ import LeanDLRA.LinearAlgebra.LowRank.Defs
 # Definitions: high-order integrators for matrices
 
 The step of the midpoint basis-update & Galerkin (BUG) integrator for matrices, at the level
-of the factors and as a relation between the old and the new value. The theorems on these
-definitions are in `LeanDLRA/HighOrder/MidpointBUGStep.lean`.
+of the factors and as a relation between the old and the new value, and the step of the
+projected Runge–Kutta methods for matrices. The theorems on these definitions are in
+`LeanDLRA/HighOrder/MidpointBUGStep.lean` and `LeanDLRA/Integrators/Matrix/ProjectedRK.lean`.
 
 ## Main definitions
 
@@ -15,10 +16,14 @@ definitions are in `LeanDLRA/HighOrder/MidpointBUGStep.lean`.
   truncation.
 * `LeanDLRA.MatrixMidpointBUG.augmentedRel`: the step without truncation as a `StepRel`.
 * `LeanDLRA.MatrixMidpointBUG.stepRel`: the step with truncation to rank `r` as a `StepRel`.
+* `LeanDLRA.MatrixPRK.stageDeriv`, `LeanDLRA.MatrixPRK.stageSum`, `LeanDLRA.MatrixPRK.stepRel`:
+  the projected stage derivative, the argument of a retraction and the step relation of the
+  projected Runge–Kutta methods.
 
 ## References
 
 * [CerutiEtAl2024b]
+* [KieriVandereycken2019]
 -/
 
 open Set
@@ -108,5 +113,50 @@ def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel 
 end Rel
 
 end MatrixMidpointBUG
+
+/-! ### The step of the projected Runge–Kutta methods -/
+
+namespace MatrixPRK
+
+section Rel
+
+variable {m n : Type*} [Fintype m] [Fintype n] {r s : ℕ}
+
+/-- The **projected stage derivative** `P(η_l) F(t₀ + c_l h, η_l)` at the stage
+`η_l = U_l S_l V_lᵀ`, with the tangent projector `P(η_l) = tangentProj U_l V_l`. -/
+noncomputable def stageDeriv (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (c : Fin s → ℝ) (t₀ h : ℝ)
+    (U : Fin s → Matrix m (Fin r) ℝ) (S : Fin s → Matrix (Fin r) (Fin r) ℝ)
+    (V : Fin s → Matrix n (Fin r) ℝ) (l : Fin s) : Matrix m n ℝ :=
+  tangentProj (U l) (V l) (F (t₀ + c l * h) (U l * S l * (V l)ᵀ))
+
+/-- The **argument of a retraction** in a projected Runge–Kutta step:
+`Y₀ + h ∑_l w_l P(η_l) F(t₀ + c_l h, η_l)` with weights `w` (a row of `a`, or `b`). -/
+noncomputable def stageSum (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (c : Fin s → ℝ) (t₀ h : ℝ)
+    (Y₀ : Matrix m n ℝ) (w : Fin s → ℝ) (U : Fin s → Matrix m (Fin r) ℝ)
+    (S : Fin s → Matrix (Fin r) (Fin r) ℝ) (V : Fin s → Matrix n (Fin r) ℝ) : Matrix m n ℝ :=
+  Y₀ + h • ∑ l, w l • stageDeriv F c t₀ h U S V l
+
+/-- **One step of the projected Runge–Kutta method** ([KieriVandereycken2019], eqs. (26),
+(27)) with tableau `(a, b, c)` and a `κ`-quasi-optimal retraction to rank `r`:
+`stepRel F r κ a b c t₀ t₁ Y₀ Y₁` holds if there are stages `η_j = U_j S_j V_jᵀ` with orthonormal
+`U_j`, `V_j` such that, with `h = t₁ - t₀` and the projected stage derivatives
+`d_l = stageDeriv F c t₀ h U S V l`, each `η_j` is `κ`-quasi-optimal for
+`Y₀ + h ∑_l a_{jl} d_l` (`stageSum F c t₀ h Y₀ (a j) U S V`), and `Y₁` has rank at most `r` and
+is `κ`-quasi-optimal for `Y₀ + h ∑_j b_j d_j`. For an explicit tableau the stages are
+determined one after the other (`MatrixPRK.exists_stepRel`); the relation allows every choice of
+best approximations and of factorizations. -/
+def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) (κ : ℝ) (a : Fin s → Fin s → ℝ)
+    (b c : Fin s → ℝ) : StepRel (Matrix m n ℝ) :=
+  fun t₀ t₁ Y₀ Y₁ => ∃ (U : Fin s → Matrix m (Fin r) ℝ) (S : Fin s → Matrix (Fin r) (Fin r) ℝ)
+    (V : Fin s → Matrix n (Fin r) ℝ), (∀ j, (U j)ᵀ * U j = 1 ∧ (V j)ᵀ * V j = 1) ∧
+    (∀ j, ‖U j * S j * (V j)ᵀ - stageSum F c t₀ (t₁ - t₀) Y₀ (a j) U S V‖ ≤
+      κ * distLR r (stageSum F c t₀ (t₁ - t₀) Y₀ (a j) U S V)) ∧
+    Y₁.rank ≤ r ∧
+    ‖Y₁ - stageSum F c t₀ (t₁ - t₀) Y₀ b U S V‖ ≤
+      κ * distLR r (stageSum F c t₀ (t₁ - t₀) Y₀ b U S V)
+
+end Rel
+
+end MatrixPRK
 
 end LeanDLRA
