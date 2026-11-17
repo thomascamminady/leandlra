@@ -590,7 +590,8 @@ theorem exists_nonzero_normal :
       Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ (1 - U * Uᵀ) * φ * (1 - V * Vᵀ) ≠ 0 := by
   have h1 : (1 - (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) * (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)ᵀ) =
       !![0, 0; 0, 1] := by
-    ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+    ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
   refine ⟨!![1; 0], !![1; 0], !![0, 0; 0, 1], ?_, ?_, ?_⟩
   · ext i j; fin_cases i; fin_cases j; simp [Matrix.mul_apply]
   · ext i j; fin_cases i; fin_cases j; simp [Matrix.mul_apply]

@@ -1022,7 +1022,8 @@ theorem eq19_false_for_singular_vectors :
   · ext i j; fin_cases i; fin_cases j; simp [w, Matrix.mul_apply]; norm_num
   · ext i j; fin_cases i; fin_cases j; simp [u, w, Matrix.mul_apply]; norm_num
   · ext i j; fin_cases i <;> fin_cases j <;>
-      simp [V, u, w, Matrix.vecMul, dotProduct] <;> norm_num
+      simp [V, u, w, Matrix.vecMul, dotProduct,
+          Function.swap, Matrix.vecHead, Matrix.vecTail] <;> norm_num
   · intro l c hc _ i
     have hl : l = 0 := Subsingleton.elim _ _
     subst hl
@@ -1046,11 +1047,13 @@ theorem eq19_false_for_singular_vectors :
   have hleft : (1 - u * uᵀ) * V = (-225 : ℝ) • (w * wᵀ) := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [V, u, w, Matrix.mul_apply, Matrix.one_apply, Matrix.vecMul, dotProduct] <;> norm_num
+      simp [V, u, w, Matrix.mul_apply, Matrix.one_apply, Matrix.vecMul, dotProduct,
+          Function.swap, Matrix.vecHead, Matrix.vecTail] <;> norm_num
   have hright : V * (1 - u * uᵀ) = (-225 : ℝ) • (w * wᵀ) := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [V, u, w, Matrix.mul_apply, Matrix.one_apply, Matrix.vecMul, dotProduct] <;> norm_num
+      simp [V, u, w, Matrix.mul_apply, Matrix.one_apply, Matrix.vecMul, dotProduct,
+          Function.swap, Matrix.vecHead, Matrix.vecTail] <;> norm_num
   have hproj : specNorm (w * wᵀ) ≤ 1 := (isOrthProjMat_mul_transpose hww).specNorm_le_one
   have hσ : specNorm ((-225 : ℝ) • (w * wᵀ)) ≤ 225 := by
     rw [specNorm_smul]; norm_num; linarith

@@ -93,7 +93,7 @@ theorem galerkinS_misses_moment_law :
   · ext i j
     fin_cases i <;> fin_cases j <;>
       simp [leftProj_apply, rightProj_apply, coE1, coRot, coE11, Matrix.mul_apply,
-        Matrix.vecMul, dotProduct, Fin.sum_univ_succ]
+        Matrix.vecMul, dotProduct, Fin.sum_univ_succ, Function.swap, Matrix.vecHead, Matrix.vecTail]
   · intro h
     have h10 := congrFun (congrFun h 1) 0
     simp [rightProj_apply, coE1, coRot, coE11, Matrix.mul_apply] at h10

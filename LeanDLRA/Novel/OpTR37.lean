@@ -2409,7 +2409,8 @@ theorem rank_loss_family₁ {τ : ℝ} (hτ : τ ≠ 0) :
       simp [eulerMat, ex, G₀, oneBy, Matrix.mul_apply]
   have hL : (eulerMat (fun _ => G₀) 1 ((1 + τ) • (ex * exᵀ)))ᵀ * ex = ex * oneBy τ := by
     ext i j; fin_cases i <;> fin_cases j <;>
-      simp [eulerMat, ex, G₀, oneBy, Matrix.mul_apply]
+      simp [eulerMat, ex, G₀, oneBy, Matrix.mul_apply,
+          Function.swap, Matrix.vecHead, Matrix.vecTail]
   rw [bugStep_eq_of_qr hK hL ex_orth ex_orth (isUnit_oneBy hτ) (isUnit_oneBy hτ)]
   ext i j; fin_cases i <;> fin_cases j <;>
     simp [ex, G₀, Matrix.mul_apply]
@@ -2434,7 +2435,8 @@ theorem rank_loss_family₂ {t : ℝ} (ht : t ≠ 0) :
     · linear_combination t * hc1
   rw [bugStep_eq_of_qr hK hL ey_orth ey_orth (isUnit_oneBy ht2) (isUnit_oneBy ht2)]
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [wt, ey, G₀, Matrix.mul_apply, Fin.sum_univ_two]
+    simp [wt, ey, G₀, Matrix.mul_apply, Fin.sum_univ_two,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
   ring
 
 /-- **Full column rank of the K-step result cannot be dropped.**  At `Y₀ = e₁ e₁ᵀ`, with constant

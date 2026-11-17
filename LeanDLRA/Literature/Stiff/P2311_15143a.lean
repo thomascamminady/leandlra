@@ -160,7 +160,8 @@ example : ‖!![(1 : ℝ)] * !![(1 / 3 : ℝ)] * !![(1 : ℝ)]ᵀ‖ ≤
       ((1 : ℝ) • ((!![(-1 : ℝ)] * !![(1 : ℝ)])ᵀ * !![(1 : ℝ)])) =
       (!![(1 : ℝ)])ᵀ * (!![(1 : ℝ)] * !![(1 : ℝ)] * (!![(1 : ℝ)])ᵀ) * !![(1 : ℝ)] := by
     ext i j; fin_cases i; fin_cases j
-    norm_num [Matrix.mul_apply, Matrix.transpose_apply, Matrix.vecMul, dotProduct]
+    norm_num [Matrix.mul_apply, Matrix.transpose_apply, Matrix.vecMul, dotProduct,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
   exact (rail_firstOrder_L2_stable (m := 1) (n := 1) (p := 1) (q := 1) (k := 1) (l := 1)
     (r := 1) (r' := 1) !![(-1 : ℝ)] !![(-1 : ℝ)] hsym hsym hneg hneg
     (by norm_num : (0 : ℝ) < 1) !![(1 : ℝ)] !![(1 : ℝ)] !![(1 : ℝ)] !![(1 : ℝ)] !![(1 : ℝ)]

@@ -1578,13 +1578,15 @@ lemma rob_state : robGrid.IsState robU robX robW := by
   refine ⟨?_, ?_, ?_, ?_⟩
   · ext i j
     rcases i with i | i <;> rcases j with j | j <;>
-      simp [robX, robGrid, Grid.Hx, Matrix.mul_apply, Fin.sum_univ_four] <;>
+      simp [robX, robGrid, Grid.Hx, Matrix.mul_apply, Fin.sum_univ_four,
+          Function.swap, Matrix.vecHead, Matrix.vecTail] <;>
       norm_num
   · ext i j
     simp [robU, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three]
     norm_num
   · ext i j
-    simp [robW, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three]
+    simp [robW, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
     norm_num
   · ext i j
     simp [robU, robW, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three]
@@ -1618,7 +1620,8 @@ lemma rob_lNext (τ ε : ℝ) :
   fin_cases v <;>
     simp [Grid.lNext, Grid.pairX, Grid.pairXV, Grid.Hx, Grid.Hu, Grid.Fi, robGrid, robX, robS,
       robU, robW, robA, robL, robVel, colsP, vb, Matrix.mul_apply, Fintype.sum_sum_type,
-      Fin.sum_univ_four, Fin.sum_univ_three, Matrix.diagonal_apply] <;> ring
+      Fin.sum_univ_four, Fin.sum_univ_three, Matrix.diagonal_apply,
+        Function.swap, Matrix.vecHead, Matrix.vecTail] <;> ring
 
 lemma density_dist_eq_zero {q : Grid Mx Mv} {y : Mv → ℝ} (X' : Matrix Mx r ℝ) (S' : Matrix r s ℝ)
     (V' : Matrix Mv s ℝ) (hy : V'ᵀ *ᵥ (q.Hv *ᵥ y) = 0) : q.density y (q.dist X' S' V') = 0 := by

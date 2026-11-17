@@ -4293,7 +4293,8 @@ theorem lemma_B1_hypotheses {Δt ε : ℝ} (hΔt : 0 < Δt) (hε : 0 < ε) (hε1
     have hi : i = 0 := Subsingleton.elim _ _
     have hj : j = 0 := Subsingleton.elim _ _
     subst hi hj
-    simp [Hmat, dirMat, colsOf, Matrix.mul_apply, Fin.sum_univ_two, cxD, cxl]
+    simp [Hmat, dirMat, colsOf, Matrix.mul_apply, Fin.sum_univ_two, cxD, cxl,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
   obtain ⟨τ, hτ⟩ : ∃ τ, τ = Δt / 2 := ⟨_, rfl⟩
   have hτ0 : 0 < τ := by rw [hτ]; positivity
   obtain ⟨Δ', hΔ'⟩ : ∃ Δ', Δ' = 1 + τ / ε ^ 2 + τ ^ 2 / ε ^ 2 := ⟨_, rfl⟩

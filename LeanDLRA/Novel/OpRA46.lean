@@ -393,13 +393,13 @@ private theorem tangentProj_e₁ : tangentProj e₁ e₁ G₀ = Zin := by
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [tangentProj_apply, e₁, G₀, Zin, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul,
-      dotProduct]
+      dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 private theorem tangentProj_e₂ : tangentProj e₂ e₂ G₀ = Z₂ := by
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [tangentProj_apply, e₂, G₀, Z₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul,
-      dotProduct]
+      dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 private theorem det_one_unit {a : ℝ} (ha : a ≠ 0) :
     IsUnit (!![a] : Matrix (Fin 1) (Fin 1) ℝ).det := by
@@ -1046,10 +1046,12 @@ theorem bug_example (h : ℝ) (U : ℕ → Matrix (Fin 2) (Fin 1) ℝ) (S : ℕ 
     constructor
     · ext i j
       fin_cases i <;> fin_cases j <;>
-        simp [e₁, G₀, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+        simp [e₁, G₀, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+            Function.swap, Matrix.vecHead, Matrix.vecTail]
     · ext i j
       fin_cases i <;> fin_cases j <;>
-        simp [e₁, G₀, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+        simp [e₁, G₀, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+            Function.swap, Matrix.vecHead, Matrix.vecTail]
   have hM : e₁ᵀ * G₀ * e₁ = !![-2] := by
     ext i j
     fin_cases i; fin_cases j

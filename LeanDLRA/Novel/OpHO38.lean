@@ -587,7 +587,7 @@ theorem weingarten_two_by_two {σ ε : ℝ} (hσ : 0 < σ) :
     rw [h.tanProj_apply]
     ext i j; fin_cases i <;> fin_cases j <;>
       simp [F, Matrix.mul_apply, Matrix.vecMul, dotProduct, Fin.sum_univ_succ,
-        Matrix.transpose_apply]
+        Matrix.transpose_apply, Function.swap, Matrix.vecHead, Matrix.vecTail]
   have hN : F - tangentProjAt X F = !![0, 0; 0, ε] := by
     rw [hT]; ext i j; fin_cases i <;> fin_cases j <;> simp [F]
   have hW : weingarten U S U (tangentProjAt X F) (F - tangentProjAt X F) =
@@ -597,7 +597,8 @@ theorem weingarten_two_by_two {σ ε : ℝ} (hσ : 0 < σ) :
     rw [show S⁻¹ = !![σ⁻¹] from inv_one_by_one hσ.ne']
     ext i j; fin_cases i <;> fin_cases j <;>
       simp [U, Matrix.mul_apply, Matrix.vecMul, dotProduct, Fin.sum_univ_succ,
-        Matrix.transpose_apply, Matrix.one_apply, div_eq_mul_inv, mul_comm]
+        Matrix.transpose_apply, Matrix.one_apply, div_eq_mul_inv, mul_comm,
+          Function.swap, Matrix.vecHead, Matrix.vecTail]
   refine ⟨hT, hN, hW, ?_⟩
   rw [hW, hN, hT]
   have e1 : ‖(!![0, ε / σ; ε / σ, 0] : Matrix (Fin 2) (Fin 2) ℝ)‖ ^ 2 = 2 * (ε / σ) ^ 2 := by

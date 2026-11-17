@@ -656,4 +656,18 @@ theorem strang_smoothing_global {S Aτ : E →L[ℝ] E} (hS : ∀ x, ‖S x‖ �
     _ ≤ a n * Real.exp (L * (n * τ)) := mul_le_mul_of_nonneg_left hexp ha0
     _ = _ := by simp only [ha]; ring
 
+attribute [-instance] ContinuousLinearMap.instNPowId in
+/-- The statement of `strang_smoothing_global` as recorded on v4.36.0-rc2, where `S ^ j`
+elaborated with `Monoid.toNPow`; Mathlib v4.36.0 elaborates `ContinuousLinearMap.instNPowId`.
+Both forms are the same proposition: this one follows from the theorem by `exact`. -/
+example {S Aτ : E →L[ℝ] E} (hS : ∀ x, ‖S x‖ ≤ ‖x‖) {Cs : ℝ}
+    (hCs : 0 ≤ Cs) (hsm : ∀ j : ℕ, 1 ≤ j → ∀ x, ‖(S ^ j) (Aτ x)‖ ≤ Cs / j * ‖x‖)
+    {L K τ : ℝ} (hL : 0 ≤ L) (hK : 0 ≤ K) (hτ : 0 ≤ τ) {N : ℕ} {e g d ρ : ℕ → E}
+    (hrec : ∀ n < N, e (n + 1) = S (e n) + g n + d n)
+    (hg : ∀ n < N, ‖g n‖ ≤ L * τ * ‖e n‖) (hd : ∀ n < N, d n = Aτ (ρ n))
+    (hρ : ∀ n < N, ‖ρ n‖ ≤ K * τ ^ 2) (hdn : ∀ n < N, ‖d n‖ ≤ K * τ ^ 2) :
+    ∀ n ≤ N, ‖e n‖ ≤
+      Real.exp (L * (n * τ)) * (‖e 0‖ + K * τ ^ 2 * (1 + Cs * (1 + Real.log n))) := by
+  exact strang_smoothing_global hS hCs hsm hL hK hτ hrec hg hd hρ hdn
+
 end LeanDLRA.OpenProblems.Stiff

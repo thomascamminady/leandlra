@@ -175,7 +175,8 @@ example := galerkin_exact_bases (A := !![2]) (B := !![3]) (C := !![5]) (U := !![
   (by ext i j; fin_cases i; fin_cases j; norm_num [Matrix.mul_apply])
   (by ext i j; fin_cases i; fin_cases j; norm_num [Matrix.mul_apply])
   (by simp)
-  (by ext i j; fin_cases i; fin_cases j; norm_num [Matrix.mul_apply, Matrix.vecMul, dotProduct])
+  (by ext i j; fin_cases i; fin_cases j; norm_num [Matrix.mul_apply, Matrix.vecMul, dotProduct,
+      Function.swap, Matrix.vecHead, Matrix.vecTail])
   (by ext i j; fin_cases i; fin_cases j; norm_num [Matrix.mul_apply])
   (by ext i j; fin_cases i; fin_cases j; norm_num [Matrix.mul_apply])
   (by ext i j; fin_cases i; fin_cases j; norm_num [Matrix.mul_apply])

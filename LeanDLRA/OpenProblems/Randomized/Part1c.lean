@@ -49,7 +49,8 @@ theorem exists_obliqueSketch_drift :
   · rw [Matrix.mul_one, Matrix.one_mul]; exact hE
   · rw [tangentProj_apply]
     ext i j; fin_cases i <;> fin_cases j <;>
-      simp [sketchE₁, sketchN, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+      simp [sketchE₁, sketchN, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+          Function.swap, Matrix.vecHead, Matrix.vecTail]
   · intro h
     have h1 := congrFun (congrFun h 0) 1
     simp only [sketchTangentProj, obliqueTangentProj_apply, obliqueProj] at h1

@@ -2182,7 +2182,7 @@ theorem svTail_geoPre_rank_one (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (S : Matr
       ext p q
       fin_cases p <;> fin_cases q
       · simpa [Matrix.mul_apply, hP] using hUU
-      · simp only [Matrix.mul_apply, hP]
+      · simp only [Matrix.mul_apply, hP, Function.swap, Matrix.vecHead, Matrix.vecTail]
         simp [mul_div_assoc', ← Finset.sum_div, hUa0]
       · simp only [Matrix.mul_apply, hP]
         simp [div_mul_eq_mul_div, ← Finset.sum_div, mul_comm (a _ e), hUa0]
@@ -2192,7 +2192,7 @@ theorem svTail_geoPre_rank_one (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (S : Matr
       ext p q
       fin_cases p <;> fin_cases q
       · simpa [Matrix.mul_apply, hQ] using hVV
-      · simp only [Matrix.mul_apply, hQ]
+      · simp only [Matrix.mul_apply, hQ, Function.swap, Matrix.vecHead, Matrix.vecTail]
         simp [mul_div_assoc', ← Finset.sum_div, hbV0]
       · simp only [Matrix.mul_apply, hQ]
         simp [div_mul_eq_mul_div, ← Finset.sum_div, mul_comm (b e _), hbV0]
@@ -2430,7 +2430,7 @@ lemma ex_norm_left (ε ν μ : ℝ) : ‖leftBlock exU exU (exG ε ν μ)‖ = |
   rw [ex_left]
   refine (sq_eq_sq₀ (norm_nonneg _) (abs_nonneg _)).1 ?_
   rw [Frobenius.norm_sq_eq_sum, sq_abs]
-  simp [Fin.sum_univ_succ]
+  simp [Fin.sum_univ_succ, Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 lemma ex_norm_right (ε ν μ : ℝ) : ‖rightBlock exU exU (exG ε ν μ)‖ = |ε| := by
   rw [ex_right]
@@ -2458,7 +2458,7 @@ lemma ex_resR (ε ν : ℝ) : (1 - exUh * exUhᵀ) *ᵥ ((exG ε ν ν)ᵀ *ᵥ 
 lemma ex_probeLeft {ε ν : ℝ} (hν : 0 < ν) : probeLeft exUh (exG ε ν ν) exE = exE := by
   have e := ex_resL ε ν
   have h0 : ν • exE ⬝ᵥ ν • exE = ν ^ 2 := by
-    simp [exE, dotProduct, Fin.sum_univ_succ, sq]
+    simp [exE, dotProduct, Fin.sum_univ_succ, sq, Function.swap, Matrix.vecHead, Matrix.vecTail]
   rw [probeLeft, unitize, e, h0, Real.sqrt_sq hν.le, smul_smul, inv_mul_cancel₀ hν.ne', one_smul]
 
 /-- The right probe of the example, for `ν > 0`. -/

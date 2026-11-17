@@ -295,6 +295,7 @@ theorem printed40_not_hasDerivAt :
   intro h
   have h10 := congrFun (congrFun (h.unique ce_hasDerivAt) 1) 0
   rw [ceCY_zero] at h10
-  norm_num [ceA, ceC0, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct] at h10
+  norm_num [ceA, ceC0, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+      Function.swap, Matrix.vecHead, Matrix.vecTail] at h10
 
 end LeanDLRA.Literature.P2607_27432

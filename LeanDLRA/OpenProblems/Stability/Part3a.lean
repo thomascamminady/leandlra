@@ -83,7 +83,8 @@ theorem dgn_perturbation {σ η : ℝ} (hσ : 0 < σ) :
     rw [hDi, hB, hC]
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [e, Matrix.vecMul, dotProduct] <;> field_simp
+      simp [e, Matrix.vecMul, dotProduct,
+          Function.swap, Matrix.vecHead, Matrix.vecTail] <;> field_simp
   rw [key, Frobenius.norm_def]
   simp only [Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_fin_one, Fin.sum_univ_two,
     Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one, ne_eq, OfNat.ofNat_ne_zero,

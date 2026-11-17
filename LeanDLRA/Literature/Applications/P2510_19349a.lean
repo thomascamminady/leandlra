@@ -60,7 +60,8 @@ lemma appendCols_mul_transpose {k n : ℕ} (U V : Matrix (Fin d) (Fin k) ℝ)
     (A B : Matrix (Fin d) (Fin n) ℝ) :
     appendCols U A * (appendCols V B)ᵀ = U * Vᵀ + A * Bᵀ := by
   ext i j
-  simp [appendCols, Matrix.mul_apply, Fin.sum_univ_add]
+  simp [appendCols, Matrix.mul_apply, Fin.sum_univ_add,
+      Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 lemma dot_self_nonneg' {n : ℕ} (v : Fin n → ℝ) : 0 ≤ v ⬝ᵥ v := by
   simp only [dotProduct]

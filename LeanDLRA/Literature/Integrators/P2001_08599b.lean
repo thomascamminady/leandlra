@@ -215,11 +215,13 @@ theorem isChartBasis_example :
   have h1 : (Matrix.of fun (i : ρ ⊕ σ) (j : ρ) => if i = Sum.inl j then (1 : ℝ) else 0)ᵀ *
       (Matrix.of fun (i : ρ ⊕ σ) (j : ρ) => if i = Sum.inl j then (1 : ℝ) else 0) = 1 := by
     ext a b
-    simp [Matrix.mul_apply, Matrix.one_apply, Matrix.transpose_apply, eq_comm]
+    simp [Matrix.mul_apply, Matrix.one_apply, Matrix.transpose_apply, eq_comm,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
   have h2 : (Matrix.of fun (i : ρ ⊕ σ) (j : σ) => if i = Sum.inr j then (1 : ℝ) else 0)ᵀ *
       (Matrix.of fun (i : ρ ⊕ σ) (j : σ) => if i = Sum.inr j then (1 : ℝ) else 0) = 1 := by
     ext a b
-    simp [Matrix.mul_apply, Matrix.one_apply, Matrix.transpose_apply, eq_comm]
+    simp [Matrix.mul_apply, Matrix.one_apply, Matrix.transpose_apply, eq_comm,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
   refine ⟨?_, ?_, ?_, by simp⟩
   · rw [h1]; simp
   · rw [h2]; simp

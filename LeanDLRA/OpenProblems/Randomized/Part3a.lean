@@ -108,7 +108,8 @@ theorem oversampled_tt_canonical_counterexample :
     rw [hc, hc2, hGi]
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [Matrix.mul_apply, Matrix.vecMul, dotProduct]
+      simp [Matrix.mul_apply, Matrix.vecMul, dotProduct,
+          Function.swap, Matrix.vecHead, Matrix.vecTail]
   intro Pint
   have hP : Pint = !![1 / 2, 1 / 2; 1 / 2, 1 / 2] := by
     simp only [Pint, hU]

@@ -2199,7 +2199,8 @@ theorem cx_lField {s : ℝ} (hs : 0 < s) (t : ℝ) :
         (s * (Real.cos (3 / 5 * t) * (3 / 5))) • cxE2 := by
   rw [MatrixKSL.lField, cxF_of_norm hs t (norm_cxYL hs t)]
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [cxPhi, cxE1, cxE2, cxL, cxW, cxE11, Matrix.mul_apply] <;> ring
+    simp [cxPhi, cxE1, cxE2, cxL, cxW, cxE11, Matrix.mul_apply,
+        Function.swap, Matrix.vecHead, Matrix.vecTail] <;> ring
 
 /-- *arXiv 2403.02834, counterexample to Theorem 5.1.* An auxiliary computation. -/
 theorem cx_sField {s : ℝ} (hs : 0 < s) (t : ℝ) :
@@ -2238,7 +2239,8 @@ theorem cx_isVariant2 {s h : ℝ} (hs : 0 < s) (hsh : Real.sin h ≠ 0) :
     have hs0 := hs.ne'
     refine ⟨by simp, by simp, ⟨fromRows cxE1ᵀ ((5 / (3 * s)) • cxE2ᵀ), ?_⟩⟩
     rw [Matrix.fromCols_mul_fromRows]
-    ext i j; fin_cases i <;> fin_cases j <;> simp [cxE1, cxE2, cxW, Matrix.mul_apply]
+    ext i j; fin_cases i <;> fin_cases j <;> simp [cxE1, cxE2, cxW, Matrix.mul_apply,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
     all_goals field_simp
   kSol := odeSolution_of_hasDerivAt fun t => by rw [cx_kField hs]; exact hasDerivAt_cxK s t
   kStart := by rw [← cxY₀]; simp

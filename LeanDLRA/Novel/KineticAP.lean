@@ -2899,7 +2899,8 @@ theorem ap_fails_with_V_perp_a (hdt : 0 < dt)
         rw [lCoeff, hstiff, inv_one, Matrix.one_mul]
       rw [lLimit, hc]
       ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, eCol, eVec]
+      fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, eCol, eVec,
+          Function.swap, Matrix.vecHead, Matrix.vecTail]
     · rw [hstiff, mul_one]
       exact isUnit_one.neg
 
