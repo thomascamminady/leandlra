@@ -124,6 +124,7 @@ import LeanDLRA.Research.SameMinibatchAugmentation
 import LeanDLRA.Research.StiffEnergyGalerkin
 import LeanDLRA.Research.StiffGlobalCycle
 import LeanDLRA.Research.StiffGlobalVariation
+import LeanDLRA.Research.StiffInvariantGalerkin
 import LeanDLRA.Research.StiffOldColumnGalerkin
 import LeanDLRA.Research.StiffOldColumnVariation
 import LeanDLRA.Research.StiffOrderReduction
