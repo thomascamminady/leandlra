@@ -67,6 +67,13 @@ map `docs/renames.json` (`scripts/hashdiff.py`) and checks the recorded statemen
 queued with the number of statements it may change or remove; the round is rejected if it changes
 more.
 
+The recorded statements ([CONTRIBUTING.md](../CONTRIBUTING.md)) are in two files:
+`docs/statements.json` for theorems of core modules and `docs/statements_catalogue.json` for those of
+the catalogue; no name is in both. The gate and `scripts/fidelity.py` check both;
+`scripts/fidelity.py --lib=LeanDLRA` checks the core file against the core library alone. After a
+promotion, `uv run -q scripts/rolling.py records --write` moves the entries of the promoted modules
+to the core file.
+
 | Workflow | Trigger | Scope | Must be green |
 |---|---|---|---|
 | `lean_action_ci.yml` | every push | core: build with warnings as errors, import rule, audit, kernel replay of changed core modules | on every commit |

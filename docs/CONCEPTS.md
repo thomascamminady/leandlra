@@ -344,7 +344,7 @@ Kept in the catalogue:
 
 | Definition | Module | Why it stays |
 |---|---|---|
-| `ttTangentSum` | `OpenProblems/TensorNetworks/Part2Defs.lean` | three theorems recorded in `docs/statements.json` are stated with it (`ttTangentSum_idem`, `ttTangentSum_isObliqueProj`, `ttTangentSum_isOrthProj` in `OpenProblems/TensorNetworks/Part2b.lean`), and a recorded statement does not change; bridged by `ttTangentSum_eq_tensor`; no core module uses it |
+| `ttTangentSum` | `OpenProblems/TensorNetworks/Part2Defs.lean` | three theorems recorded in `docs/statements_catalogue.json` are stated with it (`ttTangentSum_idem`, `ttTangentSum_isObliqueProj`, `ttTangentSum_isOrthProj` in `OpenProblems/TensorNetworks/Part2b.lean`), and a recorded statement does not change; bridged by `ttTangentSum_eq_tensor`; no core module uses it |
 | `schmidtOp` | `OpenProblems/TensorNetworks/Part2Defs.lean` | the operator `X ↦ ∑ₖ Bₖ X Cₖᵀ` on matrices, without a core counterpart; used in the catalogue files `Part2b` and `Part2c` of that folder only |
 | `IsDefectParTuckerStep` | `OpenProblems/TensorNetworks/Part2Defs.lean` | a parallel Tucker step with a defect term; used in the catalogue file `Part2c` only; its relation to `parTuckerBUG` is not examined |
 | `tucker3` | `OpenProblems/TensorNetworks/Part3Defs.lean` | tensors with three modes as functions `ι → κ → μ → ℝ`; used in the catalogue files `Part3a` and `Part3b` of that folder only; bridged (table above) |

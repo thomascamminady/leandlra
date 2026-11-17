@@ -3,8 +3,9 @@ import Lean
 line.  Two formats:
 
 * **legacy** (default): every theorem, as `{"name", "type"}` with `type` the string
-  `"{universe parameters} ⊢ {type}"`.  `docs/statements.json` records the SHA-256 of this string,
-  so `scripts/fidelity.py` compares against it.  Do not change this format.
+  `"{universe parameters} ⊢ {type}"`.  `docs/statements.json` and `docs/statements_catalogue.json`
+  record the SHA-256 of this string, so `scripts/fidelity.py` compares against it.  Do not change
+  this format.
 * **canonical** (`--canonical`, used by `scripts/hashdiff.py`): every theorem, definition,
   opaque constant, axiom, inductive type and constructor, as `{"name", "module", "kind", "type"}`
   plus `"value"` (the body) for definitions.  Universe parameters are renamed `u0, u1, …` by

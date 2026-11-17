@@ -292,7 +292,8 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
 * **By shape:** names say what a theorem bounds or states (`norm_sub_le`, `exists_run`, an ending iff);
   the rules are in section 7 of [CONVENTIONS.md](CONVENTIONS.md). A search for the key word in
   LeanDLRA/ with grep is usually enough.
-* **Is a statement proved at all?** The recorded statements are in `docs/statements.json`; the
+* **Is a statement proved at all?** The recorded statements are in `docs/statements.json` (core)
+  and `docs/statements_catalogue.json` (catalogue); the
   open questions are in [`docs/survey/`](../docs/survey/).
 
 ## 7. I want to check my own Lean file

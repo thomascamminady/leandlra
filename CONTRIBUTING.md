@@ -35,9 +35,9 @@ steps for a new result are in
   is built separately. `make build` runs `scripts/core.py check`. See
   [docs/STRUCTURE.md](docs/STRUCTURE.md). No `import Mathlib` in library files: import the
   modules that you use.
-* **Recorded statements do not change.** `docs/statements.json` records the elaborated type of
-  the statements that were fixed before they were proved. A theorem recorded there keeps its
-  type. If the library needs another form, add a new theorem and prove the recorded one from it,
+* **Recorded statements do not change.** `docs/statements.json` (core) and
+  `docs/statements_catalogue.json` (catalogue) record the elaborated type of the statements that
+  were fixed before they were proved. A theorem recorded there keeps its type. If the library needs another form, add a new theorem and prove the recorded one from it,
   with its original statement. A rename of a constant is entered in `docs/renames.json`
   (`scripts/fidelity.py` reads it); a rename leaves a deprecated alias.
 * **One definition per concept.** Search [docs/DEFINITIONS.md](docs/DEFINITIONS.md),

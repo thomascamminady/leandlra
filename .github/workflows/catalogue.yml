@@ -38,7 +38,7 @@ jobs:
       - name: Axiom audit of every constant of every module
         run: scripts/audit.sh LeanDLRACatalogue
       - uses: astral-sh/setup-uv@v6
-      - name: Statements are unchanged (kernel types against docs/statements.json)
+      - name: Statements are unchanged (kernel types against both records, core and catalogue)
         run: uv run -q scripts/fidelity.py
       # Replaying one module loads all of Mathlib, so they run one at a time. Everything is
       # replayed by the nightly workflow kernel_replay.yml.

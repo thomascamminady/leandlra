@@ -414,7 +414,7 @@ proofs that other files need move to the core file of the topic.
 - **Renaming a definition changes the statement hash of every theorem that mentions it.** Each such
   rename is entered in the rename map `docs/renames.json` (old constant → new constant), which
   `scripts/fidelity.py` and the gate read, and the change lists the number of affected
-  statements. Theorem renames update `docs/statements.json`.
+  statements. Theorem renames update `docs/statements.json` or `docs/statements_catalogue.json`.
 - A `structure` rename keeps its field names; renamed fields get deprecated theorem aliases.
 
 ## 12. Proof hygiene

@@ -90,3 +90,52 @@ def test_load_renames_follows_chains(tmp_path: Path) -> None:
     path.write_text(json.dumps({A: B, B: A}))
     with pytest.raises(SystemExit):
         fidelity.load_renames(path)
+
+
+def write_records(root: Path, core: dict[str, str], catalogue: dict[str, str]) -> None:
+    """Write the two records of a repository below ``root``."""
+    (root / "docs").mkdir(exist_ok=True)
+    for part, table in (("core", core), ("catalogue", catalogue)):
+        (root / fidelity.RECORDS[part]).write_text(fidelity.record_text(table))
+
+
+def test_load_recorded_reads_both_records(tmp_path: Path) -> None:
+    write_records(tmp_path, {"LeanDLRA.t": "1"}, {"LeanDLRA.Literature.u": "2"})
+    assert fidelity.load_recorded(tmp_path) == {
+        "LeanDLRA.t": "1",
+        "LeanDLRA.Literature.u": "2",
+    }
+    assert fidelity.load_recorded(tmp_path, "core") == {"LeanDLRA.t": "1"}
+    assert fidelity.load_recorded(tmp_path, "catalogue") == {
+        "LeanDLRA.Literature.u": "2"
+    }
+    with pytest.raises(SystemExit, match="scope"):
+        fidelity.load_recorded(tmp_path, "both")
+
+
+def test_a_name_in_both_records_is_an_error(tmp_path: Path) -> None:
+    write_records(tmp_path, {"LeanDLRA.t": "1"}, {"LeanDLRA.t": "1"})
+    with pytest.raises(SystemExit, match="recorded in both"):
+        fidelity.load_recorded(tmp_path, "core")
+
+
+def test_a_missing_record_is_an_error_unless_allowed(tmp_path: Path) -> None:
+    write_records(tmp_path, {"LeanDLRA.t": "1"}, {})
+    (tmp_path / fidelity.RECORDS["catalogue"]).unlink()
+    with pytest.raises(FileNotFoundError):
+        fidelity.load_recorded(tmp_path)
+    assert fidelity.read_records(tmp_path, missing_ok=True) == {
+        "core": {"LeanDLRA.t": "1"},
+        "catalogue": {},
+    }
+
+
+def test_a_record_is_an_object_of_hashes(tmp_path: Path) -> None:
+    write_records(tmp_path, {}, {})
+    (tmp_path / fidelity.RECORDS["core"]).write_text('["LeanDLRA.t"]')
+    with pytest.raises(SystemExit, match="expected a JSON object"):
+        fidelity.load_recorded(tmp_path)
+
+
+def test_record_text_is_sorted_with_one_entry_per_line() -> None:
+    assert fidelity.record_text({"b": "2", "a": "1"}) == '{\n "a": "1",\n "b": "2"\n}\n'

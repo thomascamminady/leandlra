@@ -59,10 +59,21 @@ class Library:
         )
 
     def record(self, names: Sequence[str]) -> None:
-        """Record the present statements of the given theorems as the baseline."""
-        types = {d[0]: d[2] for decls in self.modules.values() for d in decls}
-        table = {name: fidelity.sha256(types[name]) for name in names}
-        (self.root / "docs/statements.json").write_text(json.dumps(table))
+        """Record the present statements of the given theorems: core ones in the core record."""
+        types = {d[0]: (m, d[2]) for m, decls in self.modules.items() for d in decls}
+        core = set(rolling.library_modules(self.root, "LeanDLRA"))
+        parts: dict[str, dict[str, str]] = {"core": {}, "catalogue": {}}
+        for name in names:
+            module, typ = types[name]
+            parts["core" if module in core else "catalogue"][name] = fidelity.sha256(
+                typ
+            )
+        for part, table in parts.items():
+            (self.root / fidelity.RECORDS[part]).write_text(fidelity.record_text(table))
+
+    def records(self) -> dict[str, dict[str, str]]:
+        """The two records as they are on disk."""
+        return fidelity.read_records(self.root)
 
     def renames(self, table: dict[str, str]) -> None:
         (self.root / "docs/renames.json").write_text(json.dumps(table))
@@ -245,6 +256,94 @@ def test_new_slice_module_is_read(lib: Library) -> None:
     lib.round(LIT_Z)
     lib.record(["core_a", "lit_z"])
     assert lib.fidelity()[1] == []
+
+
+# -- the two records --------------------------------------------------------------------------------
+
+
+def test_fidelity_reads_both_records(lib: Library) -> None:
+    assert set(lib.records()["core"]) == {"core_a", "core_b"}
+    assert set(lib.records()["catalogue"]) == {"lit_x", "lit_y"}
+    lib.modules[LIT_Y] = [thm("lit_y", "3 = 4")]
+    lib.round(LIT_Y)
+    assert lib.fidelity()[1] == ["differs: lit_y"]
+
+
+def records_output(
+    capsys: pytest.CaptureFixture[str], write: bool = False
+) -> list[str]:
+    """The lines printed by `rolling.py records`, or raise SystemExit with its status."""
+    capsys.readouterr()
+    rolling.records(write=write)
+    return capsys.readouterr().out.splitlines()
+
+
+def test_records_in_their_files_pass(
+    lib: Library, capsys: pytest.CaptureFixture[str]
+) -> None:
+    expected = (
+        "4 recorded statements: 2 in core modules, 2 in catalogue modules, 0 in no module of "
+        ".lake/hashdiff/rolling_statements.jsonl.gz; 0 in the wrong file"
+    )
+    assert records_output(capsys) == [expected]
+
+
+def test_promoted_statement_belongs_to_the_core_record(
+    lib: Library, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # LIT_X becomes a core module: its statement must move to the core record.
+    lib.write_roots([CORE_A, CORE_B, LIT_X], [LIT_Y])
+    with pytest.raises(SystemExit) as err:
+        records_output(capsys)
+    assert err.value.code == 1
+    assert "belongs to docs/statements.json: lit_x" in capsys.readouterr().out
+    before = {**lib.records()["core"], **lib.records()["catalogue"]}
+    lines = records_output(capsys, write=True)
+    assert lines[-1] == (
+        "written: docs/statements.json (3), docs/statements_catalogue.json (1)"
+    )
+    assert set(lib.records()["core"]) == {"core_a", "core_b", "lit_x"}
+    assert {**lib.records()["core"], **lib.records()["catalogue"]} == before
+    assert records_output(capsys)[0].endswith("0 in the wrong file")
+
+
+def test_records_follow_the_rename_map_and_keep_unknown_names(
+    lib: Library, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # `old_x` was renamed to `core_a` (a core theorem); `gone` is in no module.
+    parts = lib.records()
+    parts["catalogue"]["old_x"] = parts["core"].pop("core_a")
+    parts["catalogue"]["gone"] = "0" * 64
+    for part, table in parts.items():
+        (lib.root / fidelity.RECORDS[part]).write_text(fidelity.record_text(table))
+    lib.renames({"old_x": "core_a"})
+    lines = records_output(capsys, write=True)
+    assert "belongs to docs/statements.json: old_x" in lines
+    assert "in no module: gone" in lines
+    assert set(lib.records()["core"]) == {"core_b", "old_x"}
+    assert set(lib.records()["catalogue"]) == {"lit_x", "lit_y", "gone"}
+
+
+def test_split_of_a_single_record(
+    lib: Library, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Before the split there was one file, docs/statements.json, with every statement.
+    everything = {**lib.records()["core"], **lib.records()["catalogue"]}
+    (lib.root / fidelity.RECORDS["core"]).write_text(fidelity.record_text(everything))
+    (lib.root / fidelity.RECORDS["catalogue"]).unlink()
+    records_output(capsys, write=True)
+    assert set(lib.records()["core"]) == {"core_a", "core_b"}
+    assert set(lib.records()["catalogue"]) == {"lit_x", "lit_y"}
+
+
+def test_placement() -> None:
+    where = {"a": "Core", "b": "Lit", "c_new": "Core"}
+    assert rolling.placement(["a", "b", "c", "d"], where, {"c": "c_new"}, {"Core"}) == {
+        "a": "core",
+        "b": "catalogue",
+        "c": "core",
+        "d": "unknown",
+    }
 
 
 # -- diff -----------------------------------------------------------------------------------------

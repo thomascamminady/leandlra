@@ -13,7 +13,8 @@ take everything else from the *rolling dump*, the last known entries of every mo
   (every declaration, canonical type and body), with ``library_commit`` in its header: the last
   commit to the library that it describes;
 * ``.lake/hashdiff/rolling_statements.jsonl.gz``: module, name and printed type of every theorem,
-  in the form whose hash ``docs/statements.json`` records (``scripts/fidelity.py``).
+  in the form whose hash the records ``docs/statements.json`` (core) and
+  ``docs/statements_catalogue.json`` (catalogue) keep (``scripts/fidelity.py``).
 
 Commands (the gate runs ``dump``, ``fidelity``, ``diff`` before the commit, ``accept`` after)::
 
@@ -24,10 +25,13 @@ Commands (the gate runs ``dump``, ``fidelity``, ``diff`` before the commit, ``ac
     uv run scripts/rolling.py accept                # the rolling dump takes the new entries of M
     uv run scripts/rolling.py discard               # forget the entries of a rejected round
     uv run scripts/rolling.py status
+    uv run scripts/rolling.py records [--write]     # each recorded statement in its library's file
 
-``fidelity`` looks every recorded statement up in the new entries of ``M`` and, for modules
-outside ``M``, in the rolling dump: a statement that disappears from a module of ``M`` is missing,
-a statement of an untouched catalogue module never is.  ``diff`` compares the rolling entries of
+``fidelity`` looks every recorded statement of both records up in the new entries of ``M`` and,
+for modules outside ``M``, in the rolling dump: a statement that disappears from a module of ``M``
+is missing, a statement of an untouched catalogue module never is.  ``records`` checks, against the
+rolling dump, that a theorem is in the core record exactly when its module (under its new name, if
+renamed) is a core module; ``--write`` moves misplaced entries to their file.  ``diff`` compares the rolling entries of
 the modules of ``M`` with their new entries, under ``docs/renames.json``, with
 ``hashdiff.compare``; its last line ``HASHDIFF {json}`` carries the counts.  Exit status 2 means
 that a check could not run (no build, no dump), never that a statement changed.
@@ -239,10 +243,8 @@ def proved_types(root: Path, names: set[str]) -> dict[str, str]:
 
 
 def check_statements(root: Path, renames: Path, cap: int) -> tuple[str, list[str]]:
-    """The fidelity check on the rolling dump: its summary line and the failures."""
-    recorded: dict[str, str] = json.loads(
-        (root / "docs" / "statements.json").read_text(encoding="utf-8")
-    )
+    """The fidelity check on the rolling dump, both records: its summary line and the failures."""
+    recorded = fidelity.load_recorded(root, "all")
     rmap = fidelity.load_renames(renames)
     names = set(recorded) | {rmap[n] for n in recorded if n in rmap}
     exact, via, problems = fidelity.check(
@@ -254,6 +256,59 @@ def check_statements(root: Path, renames: Path, cap: int) -> tuple[str, list[str
         "read in this round, the others from the rolling dump)"
     )
     return summary, problems
+
+
+def theorem_modules(path: Path, names: set[str]) -> dict[str, str]:
+    """Name → module of the given theorems in a statements dump."""
+    table: dict[str, str] = {}
+    for line in lines_of(path):
+        m = NAME_OF.search(line)
+        if m is not None and json.loads(f'"{m.group(1)}"') in names:
+            table[json.loads(f'"{m.group(1)}"')] = module_of(line)
+    return table
+
+
+def placement(
+    recorded: Iterable[str],
+    where: dict[str, str],
+    rmap: dict[str, str],
+    core: set[str],
+) -> dict[str, str]:
+    """The record of each recorded theorem: ``core``, ``catalogue``, or ``unknown``.
+
+    ``where`` maps theorem names to modules; a renamed theorem is looked up under its new name
+    (``rmap``, chains followed), and ``unknown`` means that no module has it.
+    """
+    result: dict[str, str] = {}
+    for name in recorded:
+        module = where.get(rmap.get(name, name))
+        if module is None:
+            result[name] = "unknown"
+        else:
+            result[name] = "core" if module in core else "catalogue"
+    return result
+
+
+def misplaced_records(
+    root: Path, record: Path, renames: Path
+) -> tuple[dict[str, dict[str, str]], dict[str, str], dict[str, str]]:
+    """Both records (a missing file is empty), the record of each name, and the misplaced names.
+
+    The third value maps each theorem that is not in the file of its library to that library.
+    """
+    parts = fidelity.read_records(root, missing_ok=True)
+    rmap = fidelity.load_renames(renames)
+    names = {name for table in parts.values() for name in table}
+    where = theorem_modules(record, names | {rmap[n] for n in names if n in rmap})
+    core = set(library_modules(root, "LeanDLRA"))
+    places = placement(names, where, rmap, core)
+    wrong = {
+        name: places[name]
+        for part, table in parts.items()
+        for name in table
+        if places[name] not in (part, "unknown")
+    }
+    return parts, places, wrong
 
 
 def compare_round(
@@ -377,6 +432,49 @@ def discard() -> None:
         at(ROOT, name).unlink(missing_ok=True)
 
 
+def records(
+    write: bool = False,
+    record: str = f"{HASHDIR}/{STATEMENTS}",
+    renames: str = fidelity.RENAMES,
+) -> None:
+    """Check that each recorded statement is in the record of its library; exit 1 if not.
+
+    The modules come from the rolling dump (``record``) and ``LeanDLRA.lean``.  With ``--write``
+    each misplaced entry moves to the file of its library (``fidelity.RECORDS``) unchanged; a
+    theorem that no module has stays where it is.
+    """
+    path = path_in(ROOT, record)
+    if not path.exists():
+        raise ToolError(f"no statements dump: {record}")
+    parts, places, wrong = misplaced_records(ROOT, path, path_in(ROOT, renames))
+    counts = {p: sum(1 for v in places.values() if v == p) for p in (*parts, "unknown")}
+    print(
+        f"{len(places)} recorded statements: {counts['core']} in core modules, "
+        f"{counts['catalogue']} in catalogue modules, {counts['unknown']} in no module of "
+        f"{record}; {len(wrong)} in the wrong file"
+    )
+    for name, part in sorted(wrong.items()):
+        print(f"belongs to {fidelity.RECORDS[part]}: {name}")
+    for name in sorted(n for n, v in places.items() if v == "unknown"):
+        print(f"in no module: {name}")
+    if not wrong:
+        return
+    if not write:
+        sys.exit(1)
+    moved: dict[str, dict[str, str]] = {p: {} for p in parts}
+    for part, table in parts.items():
+        for name, digest in table.items():
+            moved[wrong.get(name, part)][name] = digest
+    for part, table in moved.items():
+        (ROOT / fidelity.RECORDS[part]).write_text(
+            fidelity.record_text(table), encoding="utf-8"
+        )
+    print(
+        "written: "
+        + ", ".join(f"{fidelity.RECORDS[p]} ({len(t)})" for p, t in moved.items())
+    )
+
+
 def status() -> None:
     """Describe the rolling dump."""
     for name in (ROLLING, STATEMENTS, ROUND, ROUND_STATEMENTS):
@@ -403,6 +501,7 @@ def cli() -> None:
                 "accept": accept,
                 "discard": discard,
                 "status": status,
+                "records": records,
             }
         )
     except SystemExit as err:
