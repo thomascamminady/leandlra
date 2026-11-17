@@ -6,7 +6,7 @@ import LeanDLRA.Research.SylvesterFlows
 ## Setting
 
 `F(t, Y) = 𝒜(t) Y + Y ℬ(t)` on `m × n` matrices with coefficients continuous on `[t₀, t₀ + N h]`,
-and `N` steps of the rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, arXiv:2104.05247;
+and `N` steps of the rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022];
 `MatrixBUG.IsRankAdaptiveStep`) with step size `h` and truncation tolerance `ϑ`.  The rank may
 change from step to step.
 
@@ -25,7 +25,7 @@ The proof is Lady Windermere's fan (`lady_windermere`) with the local bound
 
 ## References
 
-* Ceruti–Kusch–Lubich, arXiv:2104.05247 (rank-adaptive BUG integrator, Theorem 2).
+* Ceruti–Kusch–Lubich, [CerutiKuschLubich2022] (rank-adaptive BUG integrator, Theorem 2).
 -/
 
 open Set

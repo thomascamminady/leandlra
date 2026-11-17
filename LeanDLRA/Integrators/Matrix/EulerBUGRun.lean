@@ -5,7 +5,7 @@ import LeanDLRA.Integrators.Matrix.EulerBUGStep
 
 This file closes the theory of the basis-update & Galerkin (BUG) integrator with explicit Euler
 substeps and a fixed rank for a matrix differential equation `Y' = F(t, Y)` (Nobile and Riffaud,
-arXiv:2502.07040, §2.1, Algorithm 1): it shows that the integrator can be run, and that every
+[NobileRiffaud2025, §2.1], Algorithm 1): it shows that the integrator can be run, and that every
 run stays close to the exact solution. The step relation and its local error are in
 `LeanDLRA/Integrators/Matrix/EulerBUGStep.lean`. The error analysis at the level of orthogonal
 projectors, on which the local error rests, is in `LeanDLRA/Integrators/EulerBUG.lean`. This
@@ -98,7 +98,7 @@ continuity of `F` on the tube, and the larger constants `11 L B + Lₜ` and `3` 
 `(L B + Lₜ) / 2` and `1`. For the integrator with a truncation tolerance, whose rank changes
 from step to step, `augmentedBug_euler_global_error` remains the result to use.
 
-The theorem `eulerBug_global_error` (Hauck and Schnake, arXiv:2209.00550, Theorem 4.1) has other
+The theorem `eulerBug_global_error` (Hauck and Schnake, [HauckSchnake2023, Thm. 4.1]) has other
 hypotheses: the new bases are required to contain the results of the explicit Euler K-step and
 L-step, the result of a step is not truncated, and the normal component of the field is
 measured at these two results. Its constants `(7 L B + 3 Lₜ) / 2` and `2` belong to these
@@ -107,9 +107,9 @@ hypotheses and cannot be compared term by term with `11 L B + Lₜ` and `3`.
 ## References
 
 * F. Nobile, S. Riffaud, *High-order BUG dynamical low-rank integrators based on explicit
-  Runge–Kutta methods*, arXiv:2502.07040, §2.1, Algorithm 1.
+  Runge–Kutta methods*, [NobileRiffaud2025, §2.1], Algorithm 1.
 * C. D. Hauck, S. R. Schnake, *A predictor-corrector strategy for adaptivity in dynamical
-  low-rank approximations*, arXiv:2209.00550, Theorem 4.1.
+  low-rank approximations*, [HauckSchnake2023, Thm. 4.1]
 -/
 
 open Set

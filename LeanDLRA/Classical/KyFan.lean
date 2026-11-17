@@ -48,8 +48,8 @@ with equality for the top `k` eigenvectors.  For a real matrix `A ∈ ℝ^{m × 
   `‖(1 - U Uᵀ) X (1 - V Vᵀ)‖_F² ≥ ∑_{i ≥ 2r} λᵢ(Xᵀ X)`.  This is an intrinsic lower bound for the
   modelling error `ε` in the robust error bounds of Kieri–Lubich–Walach and Ceruti–Lubich.
 * `exists_rank_le_norm_sub_le_iff`: the truncation criterion of the rank-adaptive BUG integrator
-  (Ceruti–Kusch–Lubich, arXiv 2104.05247, §3): a matrix within `ϑ` of rank `≤ r` exists iff the
-  eigenvalue tail satisfies `∑_{i ≥ r} λᵢ(Xᵀ X) ≤ ϑ²`; the witness is the POD truncation
+  (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, §3]): a matrix within `ϑ` of rank `≤ r` exists iff
+  the eigenvalue tail satisfies `∑_{i ≥ r} λᵢ(Xᵀ X) ≤ ϑ²`; the witness is the POD truncation
   `X W Wᵀ`.
 
 ## Implementation notes
@@ -80,7 +80,7 @@ with equality for the top `k` eigenvectors.  For a real matrix `A ∈ ℝ^{m × 
 * E. Kieri, Ch. Lubich, H. Walach, *Discretized dynamical low-rank approximation in the presence
   of small singular values*, SIAM J. Numer. Anal. 54 (2016).
 * G. Ceruti, J. Kusch, Ch. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
-  approximation*, BIT 62 (2022), arXiv 2104.05247.
+  approximation*, BIT 62 (2022), [CerutiKuschLubich2022].
 -/
 
 open Finset
@@ -463,7 +463,7 @@ theorem rank_rightProj_le {r : ℕ} (V : Matrix n (Fin r) ℝ) (X : Matrix m n �
     (rightProj V X).rank ≤ r :=
   (Matrix.rank_mul_le_right _ _).trans (by simpa using Vᵀ.rank_le_card_height)
 
-/-- **Rank truncation criterion** (rank-adaptive BUG, Ceruti–Kusch–Lubich, arXiv 2104.05247):
+/-- **Rank truncation criterion** (rank-adaptive BUG, Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]):
 there is a matrix of rank `≤ r` within `ϑ` of `X` iff `∑_{i ≥ r} λᵢ(Xᵀ X) ≤ ϑ²`; the POD
 truncation `X W Wᵀ` is such a matrix. -/
 theorem exists_rank_le_norm_sub_le_iff (X : Matrix m n ℝ) (hX : (Xᵀ * X).IsHermitian) {r : ℕ}

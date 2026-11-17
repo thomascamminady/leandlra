@@ -4,7 +4,7 @@ import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
 # Runs of the augmented BUG integrator with truncation to a fixed rank
 
 This file closes the theory of the basis-update & Galerkin (BUG) integrator that works with the
-augmented bases of Ceruti, Kusch and Lubich (arXiv:2104.05247) and truncates the result of
+augmented bases of Ceruti, Kusch and Lubich ([CerutiKuschLubich2022]) and truncates the result of
 every step back to a fixed rank `r`, for a matrix differential equation `Y' = F(t, Y)`: the
 integrator can be run, and every run stays close to the exact solution. The step relation
 `MatrixBUG.truncStepRel` and its local error are in
@@ -75,9 +75,9 @@ not optimised.
 ## References
 
 * G. Ceruti, J. Kusch, Ch. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
-  approximation*, arXiv:2104.05247 (BIT Numer. Math. 2022).
+  approximation*, [CerutiKuschLubich2022] (BIT Numer. Math. 2022).
 * G. Ceruti, Ch. Lubich, *An unconventional robust integrator for dynamical low-rank
-  approximation*, arXiv:2010.02022 (BIT Numer. Math. 2022).
+  approximation*, [CerutiLubich2022] (BIT Numer. Math. 2022).
 -/
 
 open Set

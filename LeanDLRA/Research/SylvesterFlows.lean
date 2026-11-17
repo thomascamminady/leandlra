@@ -7,7 +7,7 @@ import LeanDLRA.Research.AugmentationRank
 ## Setting
 
 `F(t, Y) = 𝒜(t) Y + Y ℬ(t)` on `m × n` matrices, one step of the rank-adaptive BUG integrator
-(Ceruti–Kusch–Lubich, arXiv:2104.05247; `MatrixBUG.IsRankAdaptiveStep`) from
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]; `MatrixBUG.IsRankAdaptiveStep`) from
 `Y₀ = U₀ S₀ V₀ᵀ`.  `capture_of_sylvester` and `error_le_of_sylvester` take the solutions `P`, `Q`
 of the two linear equations
 
@@ -34,7 +34,7 @@ depend on time.
 
 ## References
 
-* Ceruti–Kusch–Lubich, arXiv:2104.05247 (rank-adaptive BUG integrator).
+* Ceruti–Kusch–Lubich, [CerutiKuschLubich2022] (rank-adaptive BUG integrator).
 -/
 
 open Set
@@ -181,7 +181,7 @@ theorem capture_of_sylvester_of_continuousOn (hFS : ∀ t Y, F t Y = 𝒜 t * Y 
 `F(t, Y) = 𝒜(t) Y + Y ℬ(t)` be `L`-Lipschitz with coefficients continuous on `[t₀, t₁]`, let `A`
 be the exact solution from `Y₀ = U₀ S₀ V₀ᵀ`, and let `t ↦ F(t, A(t))` have a derivative bounded
 by `M₂`.  Then every step of the rank-adaptive BUG integrator (Ceruti–Kusch–Lubich,
-arXiv:2104.05247; `MatrixBUG.IsRankAdaptiveStep`) with truncation tolerance `ϑ` satisfies
+[CerutiKuschLubich2022]; `MatrixBUG.IsRankAdaptiveStep`) with truncation tolerance `ϑ` satisfies
 
     ‖Y₁ - A(t₁)‖ ≤ (e^{L h} - 1) M₂ h² + ϑ.
 

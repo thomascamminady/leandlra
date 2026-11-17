@@ -6,7 +6,7 @@ import LeanDLRA.Randomized.RandomizedBUG
 # The dynamical randomized SVD as a step relation
 
 This file states one step of the dynamical randomized singular value decomposition (DRSVD) of
-Carrel (arXiv:2410.17091, Algorithm 3), in the variant with an augmented sketch, as a relation
+Carrel ([Carrel2025, Alg. 3]), in the variant with an augmented sketch, as a relation
 between the old value `Y₀` and the new value `Y₁` (`StepRel`), and gives its locality and its
 local error near a reference solution. The step at the level of orthogonal projectors and its
 error analysis for fields that are Lipschitz and bounded everywhere are
@@ -68,7 +68,7 @@ its cost is bounded by the distance of the exact solution to the matrices of ran
 
 ## References
 
-* B. Carrel, *Randomized methods for dynamical low-rank approximation*, arXiv:2410.17091, §§2–3.
+* B. Carrel, *Randomized methods for dynamical low-rank approximation*, [Carrel2025], §§2–3.
 -/
 
 open Set
@@ -87,7 +87,7 @@ section Rel
 variable {m n : Type*} [Fintype m] [Fintype n]
 
 /-- **The DRSVD step without truncation, as a relation between matrices**
-(arXiv:2410.17091, Algorithm 3, before the truncation, with an augmented sketch).
+([Carrel2025, Alg. 3], before the truncation, with an augmented sketch).
 `augmentedRel F k l t₀ t₁ Y₀ Ŷ` holds if there are a sketch basis `W` with `k` orthonormal
 columns whose range contains the row space of `Y₀`, a solution `B` of the B-step
 `B' = F(B Wᵀ) W` with `B(t₀) = Y₀ W`, a range basis `Q` with `l` orthonormal columns that
@@ -103,7 +103,7 @@ def augmentedRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (k l : ℕ) : S
         Yh = Q * (Cs t₁)ᵀ
 
 /-- **The DRSVD step with truncation to rank `r`, as a relation between matrices**
-(arXiv:2410.17091, Algorithm 3, with an augmented sketch). `stepRel F r k l t₀ t₁ Y₀ Y₁` holds
+([Carrel2025, Alg. 3], with an augmented sketch). `stepRel F r k l t₀ t₁ Y₀ Y₁` holds
 if `Y₁` is a best approximation of rank at most `r` to a result `Ŷ` of the step without
 truncation (`MatrixDRSVD.augmentedRel`): `Y₁` has rank at most `r`, and `‖Y₁ - Ŷ‖` is the
 distance `distLR r Ŷ` of `Ŷ` to the matrices of rank at most `r`. Such a `Y₁` is computed by a

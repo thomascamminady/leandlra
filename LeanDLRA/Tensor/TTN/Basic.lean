@@ -4,7 +4,7 @@ import LeanDLRA.Tensor.Unfolding
 # Tree tensor networks: subtree projectors and nested orthonormal bases
 
 For a dimension tree `τ` (`LeanDLRA.DimTree`) this file proves the structural facts on which the
-tree tensor network integrators rest (Ceruti–Lubich–Walach, arXiv 2002.11392, §2):
+tree tensor network integrators rest (Ceruti–Lubich–Walach, [CerutiLubichWalach2021, §2]):
 
 * the subtree projectors `Z ↦ Ten_τ(U_τ U_τᵀ Mat_τ(Z))` are orthogonal projectors for orthonormal
   bases, the projectors of disjoint subtrees commute (in particular those of the children of a
@@ -13,7 +13,7 @@ tree tensor network integrators rest (Ceruti–Lubich–Walach, arXiv 2002.11392
 * **nested orthonormal bases**: if every leaf basis has orthonormal columns and every connecting
   tensor has orthonormal rows of its root matricization, then every basis matrix
   `U_τ(x, a) = ∑_b C(a, b) ∏ᵢ U_{τᵢ}(x_{τᵢ}, bᵢ)` has orthonormal columns
-  (arXiv 2002.11392, Lemma 2.4 in the orthonormal case); hence the tensor of an orthonormal
+  ([CerutiLubichWalach2021, Lemma 2.4] in the orthonormal case); hence the tensor of an orthonormal
   tree tensor network of root rank one has norm `‖C_root‖ = 1`.
 
 ## Main results
@@ -158,8 +158,8 @@ theorem basis_node_eq {m : ℕ} {cs : Fin m → DimTree κ} {rs : Fin m → ℕ}
 
 variable [∀ k, Fintype (ι k)]
 
-/-- **Nested orthonormal bases** (arXiv 2002.11392, Lemma 2.4, orthonormal case): for a valid
-dimension tree, if every leaf basis has orthonormal columns and every connecting tensor
+/-- **Nested orthonormal bases** ([CerutiLubichWalach2021, Lemma 2.4], orthonormal case): for a
+valid dimension tree, if every leaf basis has orthonormal columns and every connecting tensor
 satisfies `Mat₀(C) Mat₀(C)ᵀ = 1`, then every basis matrix `U_τ` has orthonormal columns. -/
 theorem basis_transpose_mul_self :
     ∀ {τ : DimTree κ} {r : ℕ} (t : TTN ι τ r), τ.IsValid → t.IsOrthonormal →

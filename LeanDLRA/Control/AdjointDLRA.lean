@@ -11,15 +11,15 @@ Core file for the use of dynamical low-rank approximation inside gradient-based 
 
 ## Main results
 
-* OP-TR-06 (arXiv 2506.21405 Sec. 5, 2610.29554 Sec. 7, 2409.14938 Sec. 5):
+* OP-TR-06 ([BaumannEtAl2025b] Sec. 5, 2610.29554 Sec. 7, 2409.14938 Sec. 5):
   `abs_reducedGrad_sub_le` (time-discrete reduced gradient error, bilinear in the state and adjoint
   errors), `abs_reducedGrad_sub_le_unif` (uniform form `‖B‖ (e_f G + F e_g)`),
   `abs_param_sub_le` (parameter error `C δ / m` from a strongly monotone optimality map) and
   `abs_rayleigh_sub_le` (eigenvalue error quadratic in the eigenvector error).
-* OP-TR-19 (arXiv 2608.21545 Sec. 3.2): `inner_pos_of_norm_sub_lt` (a perturbed gradient with
+* OP-TR-19 ([EinkemmerMangott2026] Sec. 3.2): `inner_pos_of_norm_sub_lt` (a perturbed gradient with
   relative error `< 1` is still an ascent direction), `inner_comp_adjoint` (the adjoint of a
   Lie–Trotter composition is the reversed composition of the adjoints).
-* OP-OT-21 (arXiv 2010.02022 Sec. 1, 2608.21545 Sec. 3): `hasDerivWithinAt_Iic_of_right`
+* OP-OT-21 ([CerutiLubich2022] Sec. 1, 2608.21545 Sec. 3): `hasDerivWithinAt_Iic_of_right`
   (a continuous right derivative is also a left derivative), `odeSolution_reverse` (the time
   reversal `s ↦ y(a + b - s)` of a solution solves the reversed ODE),
   `odeSolution_eq_reverse` (uniqueness), `IsKSLStep.reverse_eq` (running the KSL substeps backward
@@ -289,7 +289,7 @@ lemma odeSolution_congr_field (hfg : ∀ t x, f t x = g t x) (hy : ODESolution f
 
 end Reversal
 
-/-- **OP-OT-21 (ii): the KSL step is reversed exactly by its backward substeps** (arXiv 2010.02022
+/-- **OP-OT-21 (ii): the KSL step is reversed exactly by its backward substeps** ([CerutiLubich2022]
 Sec. 1; 2608.21545 Sec. 3).  Running the substeps of a KSL step backward in reverse order (L-step,
 forward S-step, K-step, each with the time-reversed field and the *same* projectors) returns
 exactly the starting value `Y₀`.  This is the abstract (fixed-projector) form: in the matrix

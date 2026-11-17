@@ -10,11 +10,11 @@ The recursive tree tensor network integrators of the library are stated on an ab
 product space with families of projectors per inner node:
 
 * the TTN projector-splitting integrator `IsTTNKSLStep` over a
-  `TreeShape` (Ceruti–Lubich–Walach, arXiv 2002.11392, §4; robust error bound
+  `TreeShape` (Ceruti–Lubich–Walach, [CerutiLubichWalach2021, §4]; robust error bound
   `ttn_ksl_global_error`, Thm 6.1), whose nodes are nested Tucker KSL steps
   (`IsTuckerKSLStep`);
 * the TTN BUG, rank-adaptive and parallel TTN BUG integrators over a `TTNFrame`
-  (Ceruti–Lubich–Sulz, SINUM 2023; arXiv 2412.00858, §4), whose nodes are Tucker BUG steps
+  (Ceruti–Lubich–Sulz, SINUM 2023; [CerutiEtAl2024, §4]), whose nodes are Tucker BUG steps
   (`IsTuckerBUGStep`, `IsParTuckerBUGStep`).
 
 At an inner node `τ = (τ₁, …, τ_m)` of a dimension tree, the projectors are the subtree
@@ -104,7 +104,7 @@ theorem IsValid.isTuckerBUGStep {m : ℕ} {cs : Fin m → DimTree κ} (hv : (nod
 
 /-- **Concrete TTN projector-splitting node steps.** At an inner node of a valid dimension tree,
 a nested Tucker KSL step with new subtree bases `U¹ᵢ` and co-range bases `V⁰ᵢ` with orthonormal
-columns satisfies `IsTuckerKSLStep` (arXiv 2002.11392, §4) once its substep conditions hold;
+columns satisfies `IsTuckerKSLStep` ([CerutiLubichWalach2021, §4]) once its substep conditions hold;
 orthogonality and commutation of the projectors are derived. -/
 theorem IsValid.isTuckerKSLStep {m : ℕ} {cs : Fin m → DimTree κ} (hv : (node cs).IsValid)
     {r s : Fin m → Type*} [∀ i, Fintype (r i)] [∀ i, DecidableEq (r i)] [∀ i, Fintype (s i)]

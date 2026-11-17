@@ -53,9 +53,9 @@ operator `T† T`, `T = toEuclideanLin A`, enters, through its sorted orthonorma
 
 * `norm_projEulerDEIM_truncation_sub_le`: the truncated SVD is a quasi-best (`κ = 1`)
   approximation, as assumed in `LeanDLRA.norm_projEulerDEIM_sub_le` (Lemma 11 of
-  arXiv 2510.19518, which cites Eckart–Young for exactly this).
+  [CarrelEtAl2025], which cites Eckart–Young for exactly this).
 * `sqrt_tail_le_norm_sub`, `rank_le_of_tolerance`: the rank selected by the rank-adaptive BUG
-  integrator (Ceruti–Kusch–Lubich, arXiv 2104.05247, eq. (6): the smallest `r` with
+  integrator (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, eq. (6)]: the smallest `r` with
   `(∑_{i ≥ r} σ_i²)^{1/2} ≤ ϑ`) is the smallest rank of *any* matrix within `ϑ` of `Ŷ₁`, and
   `norm_sub_truncation_le_of_tail` provides the truncation hypothesis `‖Y₁ - Ŷ₁‖ ≤ ϑ`
   (`IsRankAdaptiveBUGStep.trunc`).
@@ -80,7 +80,7 @@ operator `T† T`, `T = toEuclideanLin A`, enters, through its sorted orthonorma
   operators*, Proc. Natl. Acad. Sci. USA 37 (1951), 760–766.
 * G. H. Golub, C. F. Van Loan, *Matrix Computations*, 4th ed., Thm. 2.4.8.
 * G. Ceruti, J. Kusch, C. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
-  approximation*, BIT 62 (2022), arXiv 2104.05247.
+  approximation*, BIT 62 (2022), [CerutiKuschLubich2022].
 
 ## Implementation notes
 
@@ -576,7 +576,7 @@ section DLRA
 open scoped LeanDLRA.Frobenius
 
 /-- **Quasi-optimality of the truncated SVD in projected Euler-DEIM.**  Lemma 11 of
-arXiv 2510.19518 (`LeanDLRA.norm_projEulerDEIM_sub_le`) assumes a retraction `T` with
+[CarrelEtAl2025] (`LeanDLRA.norm_projEulerDEIM_sub_le`) assumes a retraction `T` with
 `‖T x - x‖ ≤ κ ‖z - x‖` for all `z ∈ ℳ`; by Eckart–Young–Mirsky the truncated SVD satisfies this
 with `κ = 1` on `ℳ = {rank ≤ r}`, so the local error of one projected Euler-DEIM step with SVD
 truncation is at most `d + 2 (e + h C ε)`. -/

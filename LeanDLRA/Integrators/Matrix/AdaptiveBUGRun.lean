@@ -4,11 +4,11 @@ import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
 # Runs of the rank-adaptive BUG integrator with truncation by a tolerance
 
 This file closes the theory of the rank-adaptive basis-update & Galerkin (BUG) integrator of
-Ceruti, Kusch and Lubich (arXiv:2104.05247) for a matrix differential equation `Y' = F(t, Y)`:
-the integrator can be run, and every run stays close to the exact solution. Every step augments
-the bases, takes a Galerkin step in the augmented bases and truncates the result to a tolerance
-`ϑ`; the rank of the values is not fixed. The step relation `MatrixBUG.adaptiveStepRel` and its
-local error are in `LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean`.
+Ceruti, Kusch and Lubich ([CerutiKuschLubich2022]) for a matrix differential equation
+`Y' = F(t, Y)`: the integrator can be run, and every run stays close to the exact solution. Every
+step augments the bases, takes a Galerkin step in the augmented bases and truncates the result to a
+tolerance `ϑ`; the rank of the values is not fixed. The step relation `MatrixBUG.adaptiveStepRel`
+and its local error are in `LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean`.
 
 **Setting.** Let `A` be a solution of `Y' = F(t, Y)` on `[t₀, t₀ + N h]`. The field `F` is only
 assumed to be `L`-Lipschitz and bounded by `B` on the tube of radius `ρ` around `A`
@@ -76,7 +76,7 @@ than the matrix `Y n` is needed, in particular no rank that changes from step to
 ## References
 
 * G. Ceruti, J. Kusch, Ch. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
-  approximation*, arXiv:2104.05247 (BIT Numer. Math. 2022).
+  approximation*, [CerutiKuschLubich2022] (BIT Numer. Math. 2022).
 -/
 
 open Set
@@ -223,7 +223,7 @@ factorization with at least `r₀` columns, followed by a truncation to the tole
 
   `‖Y n - A (t₀ + n h)‖ ≤ e^{L T} δ + T e^{L T} (c₁ ε + c₂ h) + e^{L T} n ϑ`
 
-for all `n ≤ N` (arXiv:2104.05247, Theorem 2, for a field that is Lipschitz and bounded near the
+for all `n ≤ N` ([CerutiKuschLubich2022, Thm. 2], for a field that is Lipschitz and bounded near the
 exact solution only). The terms without `ϑ` are `bugGlobalBound L B H T δ ε h`. The constants are
 independent of the singular values of the matrices `Y n`, and nothing is assumed about `F`
 outside the tube.

@@ -16,14 +16,14 @@ orthonormal columns, the maps
 are commuting orthogonal projectors on `ℝ^{m × n}` with the Frobenius inner product.  They are the
 building blocks of all DLRA integrators: the orthogonal projector onto the tangent space of the
 rank-`r` manifold at `Y = U S Vᵀ` is (Koch–Lubich 2007, Lemma 4.1; Lubich–Oseledets,
-arXiv 1301.1058, eq. (2.6))
+[LubichOseledets2014, eq. (2.6)])
 
   `P(Y) Z = U Uᵀ Z - U Uᵀ Z V Vᵀ + Z V Vᵀ`,
 
 which is `LeanDLRA.tangent (leftProj U) (rightProj V)` in the abstract calculus of
 `LeanDLRA.Foundations.Projector`, and its normal part is `(I - U Uᵀ) Z (I - V Vᵀ)`, the quantity
 bounded by `ε` in the robust error analyses (Kieri–Lubich–Walach 2016; Ceruti–Lubich,
-arXiv 2010.02022, §2.3, assumption (2.3)).
+[CerutiLubich2022, §2.3], assumption (2.3)).
 
 Main results:
 
@@ -34,9 +34,9 @@ Main results:
   `U B + C Vᵀ` (`mem_range_tangentProj`), the tangent space of Koch–Lubich (2007, §2.1);
 * range monotonicity (`U₁ U₁ᵀ U = U`): `leftProj U₁` fixes the range of `leftProj U` and
   `‖(1 - leftProj U₁) X‖ ≤ ‖(1 - leftProj U) X‖` (used for augmented bases in the rank-adaptive
-  BUG integrator, Ceruti–Kusch–Lubich, arXiv 2104.05247, §3);
+  BUG integrator, Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, §3]);
 * transposition swaps left and right projectors (used for symmetry preservation,
-  Ceruti–Lubich, arXiv 2010.02022, Thm 5).
+  Ceruti–Lubich, [CerutiLubich2022, Thm. 5]).
 
 The column index types of `U` and `V` are allowed to differ, so the same API covers augmented
 bases (`[K₁, U₀]` with `2r` columns) and the original bases.
