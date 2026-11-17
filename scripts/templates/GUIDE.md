@@ -199,8 +199,16 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
   that is Lipschitz on a tube only in @file(LeanDLRA/DLRA/QuasiOptimalityTube.lean) and for the
   truncated singular value decomposition under a gap in
   @file(LeanDLRA/DLRA/QuasiOptimalityGap.lean); the margin `ρ / 4` can be widened to `θ ρ` with
-  `θ < 1 / 2` in @file(LeanDLRA/DLRA/QuasiOptimalityMargin.lean) (sections 3.6 and 3.7 of
-  [Main results](MAIN_RESULTS.md)).
+  `θ < 1 / 2` in @file(LeanDLRA/DLRA/QuasiOptimalityMargin.lean) and to every `θ < 1` in
+  @file(LeanDLRA/DLRA/QuasiOptimalityNormal.lean), which uses the constant `1` of the Lipschitz
+  bound of the tangent projector in
+  @file(LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean). The forms for the error against
+  `A`, a field that is Lipschitz on a tube and the truncation under a gap with `θ < 1` are in
+  @file(LeanDLRA/DLRA/QuasiOptimalitySharp.lean), the truncation with the margins `θ ρ` and
+  `ρ / 2` in @file(LeanDLRA/DLRA/QuasiOptimalityTruncation.lean), and the bounds with the spectral
+  norm of the tail, `σ_r(A)` for the truncation, in
+  @file(LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) (sections 2.4, 3.6 and 3.7 of
+  [Main results](MAIN_RESULTS.md); the table at the end of 3.7 lists the theorems side by side).
 * **By question about stiffness or training:** what is proved and what is open for stiff problems
   with forcing is in @file(LeanDLRA/Research/StiffGlobalCycle.lean) and the files named in
   [Main results, section
