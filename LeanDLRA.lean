@@ -89,6 +89,7 @@ import LeanDLRA.LinearAlgebra.LowRank.SepRank
 import LeanDLRA.LinearAlgebra.Projection.Defs
 import LeanDLRA.LinearAlgebra.SVD.Defs
 import LeanDLRA.LinearAlgebra.SVD.MinMax
+import LeanDLRA.LinearAlgebra.SVD.SinTheta
 import LeanDLRA.LinearAlgebra.SVD.TruncationDeriv
 import LeanDLRA.Literature.Applications.P2503_18271a
 import LeanDLRA.Literature.Applications.P2508_04484a

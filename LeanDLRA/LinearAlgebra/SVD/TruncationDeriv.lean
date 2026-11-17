@@ -43,6 +43,12 @@ Sylvester operator is invertible on the block `P · (1 - P)` by coercivity) is l
 Hence `P̃ - P = X₀(E) + X₀(E)ᵀ + O(‖E‖²)`, and `T_r(B) = B P̃`. No resolvent and no implicit
 function theorem is used. The constant `4 ‖A‖²` is that of this proof, not the sharp one.
 
+The sin-Θ theorems of Wedin and of Davis–Kahan in `LeanDLRA/LinearAlgebra/SVD/SinTheta.lean`
+bound the distance of the singular subspaces of `A` and `B` under a gap on one side only, in
+terms of `‖B - A‖`. They do not follow from `norm_sub_le_of_isOrthProjMat`, nor conversely:
+that bound needs gaps on both sides, and holds for every orthogonal projector with the stated
+properties, which the uniqueness of the spectral projector uses.
+
 ## References
 
 * [KochLubich2007]
