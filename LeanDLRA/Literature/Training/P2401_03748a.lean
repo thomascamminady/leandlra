@@ -951,7 +951,7 @@ noncomputable def twoPointSketch (ω : Fin 4) : Matrix (Fin 1) (Fin 1) ℝ :=
 private theorem isProbabilityMeasure_unifFour :
     IsProbabilityMeasure ((4⁻¹ : ℝ≥0∞) • Measure.count : Measure (Fin 4)) := by
   constructor
-  simp only [Measure.smul_apply, smul_eq_mul, Measure.count_univ]
+  simp only [_root_.smul_apply, smul_eq_mul, Measure.count_univ]
   rw [ENat.card_eq_coe_fintype_card, Fintype.card_fin]
   exact ENNReal.inv_mul_cancel (by norm_num) (by norm_num)
 

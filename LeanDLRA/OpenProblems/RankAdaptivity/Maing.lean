@@ -238,13 +238,13 @@ theorem augmentedGalerkin_not_le_tangent :
       1 := by
     ext i j
     fin_cases i
-    all_goals fin_cases j
-    all_goals norm_num [Matrix.mul_apply, Fin.sum_univ_succ]
+    fin_cases j
+    norm_num [Matrix.mul_apply, Fin.sum_univ_succ]
   have hA : (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)ᵀ * (!![0, 1; 0, 0] : Matrix (Fin 2) (Fin 2) ℝ) =
       !![0, 1] := by
     ext i j
     fin_cases i
-    all_goals fin_cases j
+    fin_cases j
     all_goals norm_num [Matrix.mul_apply, Fin.sum_univ_succ]
   have hB : (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) * (!![0, 1] : Matrix (Fin 1) (Fin 2) ℝ) =
       !![0, 1; 0, 0] := by

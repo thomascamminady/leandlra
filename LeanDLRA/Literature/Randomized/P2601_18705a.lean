@@ -212,8 +212,8 @@ example : ∃! x : Fin 1 → ℝ,
   apply reduced_system_unique Matrix.PosDef.one
   ext i j
   fin_cases i
-  all_goals fin_cases j
-  all_goals simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply]
+  fin_cases j
+  simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply]
 
 set_option linter.unusedFintypeInType false in
 /-- **The even-parity K-step matrix is SPD** (arXiv 2601.18705, Sec. 3.2, remark after

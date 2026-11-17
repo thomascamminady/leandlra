@@ -708,7 +708,7 @@ lemma parseval (x : ZMod n → ℝ) :
     ring
   apply Complex.ofReal_injective
   push_cast
-  simp only [hexp, Function.swap, Matrix.vecHead, Matrix.vecTail]
+  simp only [hexp]
   calc ∑ α : ZMod n, ∑ j, ∑ k, (x j : ℂ) * (x k : ℂ) * ZMod.stdAddChar (α * (k - j))
       = ∑ j, ∑ k, ∑ α : ZMod n, (x j : ℂ) * (x k : ℂ) * ZMod.stdAddChar (α * (k - j)) := by
         rw [Finset.sum_comm]

@@ -348,7 +348,7 @@ lemma isXLStep : IsXLStep (r := 1) (t := 1) F 0 1 X₀ S₀ V₀ K Xh Lh Vh Sh V
   capture := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [Xh, K, Matrix.mul_apply, Fin.sum_univ_succ, Matrix.vecMul, dotProduct,
+      simp [Xh, K, Matrix.mul_apply, Fin.sum_univ_succ,
           Function.swap, Matrix.vecHead, Matrix.vecTail]
   lstep := odeSolution_Lh
   lstep₀_left := by

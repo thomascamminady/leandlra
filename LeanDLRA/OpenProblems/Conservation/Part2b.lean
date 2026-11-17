@@ -295,7 +295,7 @@ theorem fixedRankBUG_changes_mass :
       ext i j
       fin_cases i <;> fin_cases j <;>
         simp [coE11, Matrix.mul_apply, Fin.sum_univ_two]
-      all_goals ring
+      ring
   · have hn1 : n * (u1 + u2) = 1 := by linarith
     have hn2 : n * (u1 - u2) = q := by linarith
     have e1 : u1 * (u1 + u2) = ((1 + q) / 2) / ((1 + q ^ 2) / 2) := by

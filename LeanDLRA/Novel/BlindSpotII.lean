@@ -1224,7 +1224,7 @@ instance [Nonempty n] : IsProbabilityMeasure (sphereLaw n) := by
     intro h
     exact Measure.toSphere_ne_zero (μ := (volume : Measure (EuclideanSpace ℝ n)))
       (Measure.measure_univ_eq_zero.1 h)
-  rw [sphereLaw, Measure.smul_apply, smul_eq_mul]
+  rw [sphereLaw, _root_.smul_apply, smul_eq_mul]
   exact ENNReal.inv_mul_cancel h0 (measure_ne_top _ _)
 
 open Pointwise in
@@ -1264,7 +1264,7 @@ theorem isRotationInvariant_sphereLaw [Nonempty n] :
     ext s hs
     rw [Measure.map_apply hL hs, Measure.map_apply measurable_subtype_coe (hL hs),
       Measure.map_apply measurable_subtype_coe hs]
-    simp only [sphereLaw, Measure.smul_apply, smul_eq_mul, toSphere_preimage_isometry L hs]
+    simp only [sphereLaw, _root_.smul_apply, smul_eq_mul, toSphere_preimage_isometry L hs]
   ae_ne_zero := by
     have hm : MeasurableSet {x : EuclideanSpace ℝ n | x ≠ 0} :=
       (measurableSet_singleton 0).compl
@@ -1308,7 +1308,7 @@ theorem isProbabilityMeasure_finiteLaw {Ξ : Type*} [Fintype Ξ] [MeasurableSpac
     [MeasurableSingletonClass Ξ] {p : Ξ → ℝ} (hp : ∀ ξ, 0 ≤ p ξ) (hp1 : ∑ ξ, p ξ = 1) :
     IsProbabilityMeasure (finiteLaw p) := by
   refine ⟨?_⟩
-  simp only [finiteLaw, Measure.finsetSum_apply, Measure.smul_apply, measure_univ, smul_eq_mul,
+  simp only [finiteLaw, _root_.sum_apply, _root_.smul_apply, measure_univ, smul_eq_mul,
     mul_one]
   rw [← ENNReal.ofReal_sum_of_nonneg fun ξ _ => hp ξ, hp1, ENNReal.ofReal_one]
 

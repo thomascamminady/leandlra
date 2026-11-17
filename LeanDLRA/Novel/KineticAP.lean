@@ -225,7 +225,7 @@ private theorem isCompact_gapSphere (P C : E →L[ℝ] E) :
       Metric.sphere (0 : E) 1 ∩ (gapSpace P C : Set E) := by
     ext x; simp [and_comm]
   rw [h]
-  exact (isCompact_sphere 0 1).inter_right (Submodule.closed_of_finiteDimensional _)
+  exact (isCompact_sphere 0 1).inter_right (Submodule.isClosed_of_finiteDimensional _)
 
 /-- The gap is a coercivity constant on `range P ⊖ K`. -/
 theorem relaxGap_mul_le (P C : E →L[ℝ] E) {x : E} (hx : x ∈ gapSpace P C) :
@@ -2900,7 +2900,7 @@ theorem ap_fails_with_V_perp_a (hdt : 0 < dt)
       rw [lLimit, hc]
       ext i j
       fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, eCol, eVec,
-          Function.swap, Matrix.vecHead, Matrix.vecTail]
+          Function.swap]
     · rw [hstiff, mul_one]
       exact isUnit_one.neg
 

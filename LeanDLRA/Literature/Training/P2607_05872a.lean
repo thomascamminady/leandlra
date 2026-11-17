@@ -799,7 +799,7 @@ private noncomputable def coin : Measure Bool :=
   (2⁻¹ : ENNReal) • (Measure.dirac false + Measure.dirac true)
 
 private lemma coin_prob : IsProbabilityMeasure coin := ⟨by
-  simp only [coin, Measure.smul_apply, Measure.add_apply, measure_univ, smul_eq_mul]
+  simp only [coin, _root_.smul_apply, _root_.add_apply, measure_univ, smul_eq_mul]
   rw [one_add_one_eq_two]
   exact ENNReal.inv_mul_cancel two_ne_zero ENNReal.ofNat_ne_top⟩
 

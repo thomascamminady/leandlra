@@ -63,7 +63,7 @@ private lemma mul_apply_upper (Z : Matrix (Fin n) (Fin r) ℂ) (W : Matrix (Fin 
       have hjk : j < k := by simpa [not_le] using hk
       rw [hW k j hjk, mul_zero]
   rw [Matrix.mul_apply, ← Finset.sum_subset (Finset.subset_univ (Finset.Iic j)) hz,
-    ← Finset.Iio_insert, Finset.sum_insert (by simp)]
+    ← Finset.insert_Iio, Finset.sum_insert (by simp)]
 
 /-- **Schur reduction** (arXiv 2605.15382, eqs. (3.2) ⇔ (3.3)).  If `U` is unitary and
 `L₂ = U W Uᴴ`, then `L₁ᵀ X + X L₂ = R` holds iff `Z = X U` satisfies `L₁ᵀ Z + Z W = R U`. -/

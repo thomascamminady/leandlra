@@ -243,7 +243,7 @@ theorem basisOf_orthonormal {a b : ℝ} (hab : 0 < a ^ 2 + b ^ 2) :
   have hs : √(a ^ 2 + b ^ 2) * √(a ^ 2 + b ^ 2) = a ^ 2 + b ^ 2 := Real.mul_self_sqrt hab.le
   have hs0 : √(a ^ 2 + b ^ 2) ≠ 0 := (Real.sqrt_pos.2 hab).ne'
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [basisOf, Matrix.mul_apply, Fin.sum_univ_three, Matrix.transpose_apply]
+    simp [basisOf, Matrix.mul_apply, Fin.sum_univ_three]
   field_simp
   nlinarith [hs]
 
@@ -255,8 +255,8 @@ theorem basisOf_capture {a b : ℝ} (hab : 0 < a ^ 2 + b ^ 2) :
   have ha : a * √(a ^ 2 + b ^ 2) ^ 2 = a * (a ^ 2 + b ^ 2) := by rw [hs2]
   have hb : b * √(a ^ 2 + b ^ 2) ^ 2 = b * (a ^ 2 + b ^ 2) := by rw [hs2]
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [basisOf, Matrix.mul_apply, Fin.sum_univ_three, Fin.sum_univ_two, Matrix.vecMul,
-      dotProduct, Matrix.transpose_apply, Function.swap, Matrix.vecHead,
+    simp [basisOf, Matrix.mul_apply, Fin.sum_univ_three,
+      Function.swap, Matrix.vecHead,
       Matrix.vecTail] <;>
     field_simp <;> nlinarith [hs, hs2, ha, hb]
 
@@ -285,7 +285,7 @@ def fullStep (σ lr : ℝ) : Matrix (Fin 3) (Fin 3) ℝ := W₀ σ - lr • G σ
 
 theorem U₀_orthonormal : U₀ᵀ * U₀ = 1 := by
   ext i j; fin_cases i <;> fin_cases j <;> simp [U₀, Matrix.mul_apply, Fin.sum_univ_three,
-      Function.swap, Matrix.vecHead, Matrix.vecTail]
+      Function.swap]
 
 theorem W₀_eq (σ : ℝ) : W₀ σ = !![1, 0, 0; 0, σ, 0; 0, 0, 0] := by
   ext i j; fin_cases i <;> fin_cases j <;>
@@ -315,8 +315,8 @@ theorem hasFDerivAt_loss_W₀ (σ : ℝ) : HasFDerivAt loss (innerSL ℝ (G σ))
 /-- The gradient has no right-normal component: `G V₀ V₀ᵀ = G`. -/
 theorem G_mul_proj (σ : ℝ) : G σ * (U₀ * U₀ᵀ) = G σ := by
   rw [G_eq]; ext i j; fin_cases i <;> fin_cases j <;>
-    simp [U₀, Matrix.mul_apply, Fin.sum_univ_two, Fin.sum_univ_three, Matrix.vecMul, dotProduct,
-      Matrix.transpose_apply, Function.swap, Matrix.vecHead, Matrix.vecTail]
+    simp [U₀, Matrix.mul_apply, Fin.sum_univ_three,
+      Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 /-- `G` has no doubly normal component: `(1 - U₀U₀ᵀ) G (1 - V₀V₀ᵀ) = 0`; the normal-component
 constant `ε` of the robust BUG analysis vanishes. -/
@@ -339,9 +339,9 @@ theorem kStep_eq (σ lr : ℝ) :
 theorem lStep_eq (σ lr : ℝ) :
     U₀ * (S₀ σ)ᵀ - lr • ((G σ)ᵀ * U₀) = U₀ * !![1, 0; 0, (1 - lr) * σ + lr] := by
   rw [G_eq]; ext i j; fin_cases i <;> fin_cases j <;>
-    simp [U₀, S₀, Matrix.mul_apply, Fin.sum_univ_two, Fin.sum_univ_three, Matrix.vecMul,
-      dotProduct, Matrix.transpose_apply, Function.swap, Matrix.vecHead, Matrix.vecTail]
-  all_goals ring
+    simp [U₀, S₀, Matrix.mul_apply, Fin.sum_univ_two, Fin.sum_univ_three,
+      Function.swap, Matrix.vecHead, Matrix.vecTail]
+  ring
 
 /-- The full step is `K₁ V₀ᵀ`, hence of rank `≤ 2`: it stays on the rank-2 manifold. -/
 theorem rank_fullStep_le (σ lr : ℝ) : (fullStep σ lr).rank ≤ 2 := by
@@ -471,8 +471,8 @@ theorem stiefelStep_eq {σ : ℝ} (hσ : σ ≠ 0) (lr : ℝ) :
     U₀ - lr • stiefelDir U₀ (S₀ σ) U₀ (G σ) = !![1, 0; 0, 1; 0, lr / σ] := by
   rw [stiefelDir_eq (isUnit_det_S₀ hσ), S₀_inv hσ, G_eq]
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [U₀, Matrix.mul_apply, Fin.sum_univ_two, Fin.sum_univ_three, Matrix.vecMul, dotProduct,
-      Matrix.transpose_apply, Function.swap, Matrix.vecHead, Matrix.vecTail]
+    simp [U₀, Matrix.mul_apply, Fin.sum_univ_two, Fin.sum_univ_three,
+      Function.swap, Matrix.vecHead, Matrix.vecTail]
   field_simp
 
 theorem det_gram_stiefel (σ lr : ℝ) :
@@ -587,9 +587,9 @@ theorem factorStep_eq (σ lr : ℝ) :
     U₀ - lr • (G σ * U₀ * (S₀ σ)ᵀ) = !![1, 0; 0, 1 + lr * σ * (1 - σ); 0, lr * σ] := by
   rw [G_eq]
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [U₀, S₀, Fin.sum_univ_two, Matrix.vecMul, dotProduct, Matrix.transpose_apply,
+    simp [U₀, S₀,
         Function.swap, Matrix.vecHead, Matrix.vecTail]
-  all_goals ring
+  ring
 
 /-- **Plain factor GD is not robust either (error).**  Every iterate
 `W₁ = (U₀ - λ ∇_U ℒ) M'` (any `S₁`, `V₁`) satisfies

@@ -81,21 +81,21 @@ theorem eLpNorm_indep_le {q : ℝ≥0∞} (hq0 : q ≠ 0) (hqt : q ≠ ∞) {R :
   have hm1 : Measurable (fun ω => R (ξ ω) (X ω) - X ω) :=
     (hR.comp (hξ.prodMk hX)).sub hX
   by_cases hd : AEStronglyMeasurable (fun ω => d (X ω)) P
-  · rw [eLpNorm_eq_lintegral_rpow_enorm_toReal hq0 hqt hm1.aestronglyMeasurable,
-      eLpNorm_eq_lintegral_rpow_enorm_toReal hq0 hqt hd]
+  · rw [eLpNorm_eq_lintegral_rpow_eNorm_toReal hq0 hqt hm1.aestronglyMeasurable,
+      eLpNorm_eq_lintegral_rpow_eNorm_toReal hq0 hqt hd]
     refine ENNReal.rpow_le_rpow ?_ (by positivity)
     refine lintegral_indep_le (f := fun k z => ‖R k z - z‖ₑ ^ q.toReal)
       (g := fun z => ‖d z‖ₑ ^ q.toReal) hξ hX hind ?_ ?_
-    · exact ((hR.sub measurable_snd).enorm).pow_const _
+    · exact ((hR.sub measurable_snd).eNorm).pow_const _
     · intro z
       have hmz : Measurable (fun ω => R (ξ ω) z - z) :=
         (hR.comp (hξ.prodMk measurable_const)).sub measurable_const
       have h1 := hmom z
-      rw [eLpNorm_eq_lintegral_rpow_enorm_toReal hq0 hqt hmz.aestronglyMeasurable] at h1
+      rw [eLpNorm_eq_lintegral_rpow_eNorm_toReal hq0 hqt hmz.aestronglyMeasurable] at h1
       have h2 := ENNReal.rpow_le_rpow h1 hqr.le
       rw [← ENNReal.rpow_mul, one_div_mul_cancel hqr.ne', ENNReal.rpow_one] at h2
       refine h2.trans (ENNReal.rpow_le_rpow ?_ hqr.le)
-      rw [Real.enorm_eq_ofReal_abs]
+      rw [Real.eNorm_eq_ofReal_abs]
       exact ENNReal.ofReal_le_ofReal (le_abs_self _)
   · rw [eLpNorm_of_not_aestronglyMeasurable hd]
     exact le_top
@@ -228,7 +228,7 @@ theorem markov_tail {q : ℝ≥0∞} (hq0 : q ≠ 0) (hqt : q ≠ ∞) {X : Ω �
     simp only [Set.mem_ofPred_eq, ← ofReal_norm]
     rw [ENNReal.ofReal_le_ofReal_iff (norm_nonneg _)]
   rw [hset]
-  refine (meas_ge_le_mul_pow_eLpNorm_enorm P hq0 hqt (by simpa using hηc)
+  refine (meas_ge_le_mul_pow_eLpNorm_eNorm P hq0 hqt (by simpa using hηc)
     (by simp)).trans ?_
   calc (ENNReal.ofReal (η * c))⁻¹ ^ q.toReal * eLpNorm X q P ^ q.toReal
       ≤ (ENNReal.ofReal (η * c))⁻¹ ^ q.toReal * ENNReal.ofReal c ^ q.toReal := by
@@ -258,7 +258,7 @@ theorem eLpNorm_le_ofReal {F : Type*} [NormedAddCommGroup F] {q : ℝ≥0∞} (h
   calc eLpNorm f q P ≤ eLpNorm (fun _ : Ω => c) q P := eLpNorm_mono_real hf h
     _ = ENNReal.ofReal c := by
         rw [eLpNorm_const c hq0 (IsProbabilityMeasure.ne_zero P), measure_univ, ENNReal.one_rpow,
-          mul_one, Real.enorm_eq_ofReal hc]
+          mul_one, Real.eNorm_eq_ofReal hc]
 
 /-- The idealized randomized projection method of arXiv 2409.06384, Sec. 2.4: `Y₀ = 𝒩₀(A₀)`,
 `Y_{i+1} = 𝒩_{i+1}(Φ^h(Y_i))`, where `𝒩_i = R (ξ i ω)` is the randomized low-rank approximation
@@ -496,7 +496,7 @@ theorem eLpNorm_const_add_norm_le {q : ℝ≥0∞} (hq : 1 ≤ q) {f : Ω → E}
   rw [this]
   refine (eLpNorm_add_le hq).trans (add_le_add ?_ ?_)
   · rw [eLpNorm_const c hq0 (IsProbabilityMeasure.ne_zero P), measure_univ, ENNReal.one_rpow,
-      mul_one, Real.enorm_eq_ofReal hc]
+      mul_one, Real.eNorm_eq_ofReal hc]
   · exact (eLpNorm_norm f hf).le
 
 omit [NormedSpace ℝ E] in
@@ -581,7 +581,7 @@ theorem thm11 {F : E → E} {L : ℝ} (hL : 0 ≤ L) (hF : ∀ x y, ‖F x - F y
         ← Finset.sum_sub_distrib, Finset.smul_sum, smul_smul]
     rw [this]
     refine (eLpNorm_sum_le hq).trans (Finset.sum_le_sum fun l _ => ?_)
-    rw [eLpNorm_const_smul, Real.enorm_eq_ofReal_abs]
+    rw [eLpNorm_const_smul, Real.eNorm_eq_ofReal_abs]
   -- stage recursion
   have hstage : ∀ j < s, e j ≤ ENNReal.ofReal L * (ENNReal.ofReal C_N * ENNReal.ofReal (β j) +
       ENNReal.ofReal (C_N + 1) * ∑ l : Fin j, ENNReal.ofReal |h * a j l| * e l) := by
@@ -710,7 +710,7 @@ theorem rk_step_error {F : E → E} {L : ℝ} (hL : 0 ≤ L) (hF : ∀ x y, ‖F
         ← smul_sub, ← Finset.sum_sub_distrib, Finset.smul_sum, smul_smul]
     rw [this, ENNReal.ofReal_sum_of_nonneg (fun j _ => mul_nonneg (abs_nonneg _) (hE0 j))]
     refine (eLpNorm_sum_le hq).trans (Finset.sum_le_sum fun j hj => ?_)
-    rw [eLpNorm_const_smul, Real.enorm_eq_ofReal_abs, ENNReal.ofReal_mul (abs_nonneg _)]
+    rw [eLpNorm_const_smul, Real.eNorm_eq_ofReal_abs, ENNReal.ofReal_mul (abs_nonneg _)]
     gcongr
     exact hmaj j (Finset.mem_range.1 hj)
   have hXΦ : eLpNorm (fun ω => X ω - Φh (Y ω)) q P ≤

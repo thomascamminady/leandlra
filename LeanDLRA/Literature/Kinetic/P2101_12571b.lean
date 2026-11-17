@@ -1579,14 +1579,14 @@ lemma rob_state : robGrid.IsState robU robX robW := by
   · ext i j
     rcases i with i | i <;> rcases j with j | j <;>
       simp [robX, robGrid, Grid.Hx, Matrix.mul_apply, Fin.sum_univ_four,
-          Function.swap, Matrix.vecHead, Matrix.vecTail] <;>
+          Function.swap] <;>
       norm_num
   · ext i j
     simp [robU, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three]
     norm_num
   · ext i j
     simp [robW, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three,
-        Function.swap, Matrix.vecHead, Matrix.vecTail]
+        Function.swap]
     norm_num
   · ext i j
     simp [robU, robW, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three]
@@ -1621,7 +1621,7 @@ lemma rob_lNext (τ ε : ℝ) :
     simp [Grid.lNext, Grid.pairX, Grid.pairXV, Grid.Hx, Grid.Hu, Grid.Fi, robGrid, robX, robS,
       robU, robW, robA, robL, robVel, colsP, vb, Matrix.mul_apply, Fintype.sum_sum_type,
       Fin.sum_univ_four, Fin.sum_univ_three, Matrix.diagonal_apply,
-        Function.swap, Matrix.vecHead, Matrix.vecTail] <;> ring
+        Function.swap] <;> ring
 
 lemma density_dist_eq_zero {q : Grid Mx Mv} {y : Mv → ℝ} (X' : Matrix Mx r ℝ) (S' : Matrix r s ℝ)
     (V' : Matrix Mv s ℝ) (hy : V'ᵀ *ᵥ (q.Hv *ᵥ y) = 0) : q.density y (q.dist X' S' V') = 0 := by
@@ -1735,8 +1735,7 @@ theorem rob_competitor {τ ε : ℝ} (hτ : 0 < τ) (hε : 0 < ε) :
   refine ⟨W₁, diagonal (Sum.elim (fun _ => 3) (fun _ => N)), ⟨rob_state.orthX, rob_state.orthU,
     ?_, ?_⟩, ?_⟩
   · ext i j
-    simp [hW₁, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three, robVel, Function.swap,
-      Matrix.vecHead, Matrix.vecTail]
+    simp [hW₁, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three, robVel, Function.swap]
     field_simp
     rw [hN2]
     ring

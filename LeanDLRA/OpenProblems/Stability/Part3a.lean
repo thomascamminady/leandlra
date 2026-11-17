@@ -78,12 +78,12 @@ theorem dgn_perturbation {σ η : ℝ} (hσ : 0 < σ) :
   have hC : C = !![1; σ] := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [C, Z, Ψ, Matrix.mul_apply, Fin.sum_univ_two, Matrix.transpose_apply]
+      simp [C, Z, Ψ, Matrix.mul_apply, Fin.sum_univ_two]
   have key : (B + η • e) * D⁻¹ * Cᵀ - B * D⁻¹ * Cᵀ = !![η / σ, η; 0, 0] := by
     rw [hDi, hB, hC]
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [e, Matrix.vecMul, dotProduct,
+      simp [e,
           Function.swap, Matrix.vecHead, Matrix.vecTail] <;> field_simp
   rw [key, Frobenius.norm_def]
   simp only [Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_fin_one, Fin.sum_univ_two,

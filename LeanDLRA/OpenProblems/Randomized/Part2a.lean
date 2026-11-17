@@ -292,7 +292,7 @@ theorem randomized_lq_global_error {E : Type*} [NormedAddCommGroup E] {Ω : Type
   have hconst : ∀ c : ℝ, 0 ≤ c → eLpNorm (fun _ : Ω => c) q μ = ENNReal.ofReal c := by
     intro c hc
     rw [eLpNorm_const c hq0 (IsProbabilityMeasure.ne_zero μ), measure_univ, ENNReal.one_rpow,
-      mul_one, Real.enorm_eq_ofReal hc]
+      mul_one, Real.eNorm_eq_ofReal hc]
   have step : ∀ n, eLpNorm (fun ω => Y (n + 1) ω - a (n + 1)) q μ ≤
       ENNReal.ofReal (h * τ) + ENNReal.ofReal (Real.exp (L * h)) *
         eLpNorm (fun ω => Y n ω - a n) q μ + ENNReal.ofReal (h * ρ) := by
@@ -317,7 +317,7 @@ theorem randomized_lq_global_error {E : Type*} [NormedAddCommGroup E] {Ω : Type
         ENNReal.ofReal (Real.exp (L * h)) * eLpNorm (fun ω => Y n ω - a n) q μ := by
       have := eLpNorm_const_smul (μ := μ) (p := q) (Real.exp (L * h))
         (fun ω => ‖Y n ω - a n‖)
-      rw [eLpNorm_norm, Real.enorm_eq_ofReal hK0] at this
+      rw [eLpNorm_norm, Real.eNorm_eq_ofReal hK0] at this
       · exact this
       · exact hdm n
     have h6 := eLpNorm_add_le (μ := μ) (f := w) (g := e n) hq

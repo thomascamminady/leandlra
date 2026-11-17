@@ -2182,7 +2182,7 @@ theorem svTail_geoPre_rank_one (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (S : Matr
       ext p q
       fin_cases p <;> fin_cases q
       · simpa [Matrix.mul_apply, hP, Function.swap, Matrix.vecHead, Matrix.vecTail] using hUU
-      · simp only [Matrix.mul_apply, hP, Function.swap, Matrix.vecHead, Matrix.vecTail]
+      · simp only [Matrix.mul_apply, hP]
         simp [mul_div_assoc', ← Finset.sum_div, hUa0]
       · simp only [Matrix.mul_apply, hP]
         simp [div_mul_eq_mul_div, ← Finset.sum_div, mul_comm (a _ e), hUa0]
@@ -2192,7 +2192,7 @@ theorem svTail_geoPre_rank_one (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (S : Matr
       ext p q
       fin_cases p <;> fin_cases q
       · simpa [Matrix.mul_apply, hQ, Function.swap, Matrix.vecHead, Matrix.vecTail] using hVV
-      · simp only [Matrix.mul_apply, hQ, Function.swap, Matrix.vecHead, Matrix.vecTail]
+      · simp only [Matrix.mul_apply, hQ]
         simp [mul_div_assoc', ← Finset.sum_div, hbV0]
       · simp only [Matrix.mul_apply, hQ]
         simp [div_mul_eq_mul_div, ← Finset.sum_div, mul_comm (b e _), hbV0]
@@ -2392,7 +2392,7 @@ lemma ex_aug (ε ν μ : ℝ) (hε : ε ≠ 0) :
     refine ⟨!![1, 0], !![0, ε⁻¹], ?_⟩
     ext i j
     fin_cases i <;> fin_cases j <;> ex_simp
-    all_goals exact (mul_inv_cancel₀ hε).symm
+    exact (mul_inv_cancel₀ hε).symm
 
 lemma ex_aug' (ε ν μ : ℝ) (hε : ε ≠ 0) :
     IsExactAugmentation exUh exU ((exG ε ν μ)ᵀ * exU) where
@@ -2405,7 +2405,7 @@ lemma ex_aug' (ε ν μ : ℝ) (hε : ε ≠ 0) :
     refine ⟨!![1, 0], !![0, ε⁻¹], ?_⟩
     ext i j
     fin_cases i <;> fin_cases j <;> ex_simp
-    all_goals exact (mul_inv_cancel₀ hε).symm
+    exact (mul_inv_cancel₀ hε).symm
 
 lemma ex_core (ε ν μ lr : ℝ) : coreBlock exU exU 1 (exG ε ν μ) lr = 1 := by
   ext i j

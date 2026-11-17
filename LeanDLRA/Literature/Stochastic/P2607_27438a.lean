@@ -90,8 +90,7 @@ example : (!![(1 : ℝ), 0]ᵀ * !![(2 : ℝ)] * !![(1 : ℝ), 0]).IsMoorePenros
     ext i j
     fin_cases i
     fin_cases j
-    simp [Matrix.vecMul, dotProduct, Fin.sum_univ_two,
-        Function.swap, Matrix.vecHead, Matrix.vecTail]
+    simp [Function.swap, Matrix.vecHead, Matrix.vecTail]
   have hC : IsUnit (!![(2 : ℝ)] : Matrix (Fin 1) (Fin 1) ℝ).det := by
     rw [Matrix.det_fin_one_of]
     exact isUnit_iff_ne_zero.mpr two_ne_zero

@@ -224,7 +224,7 @@ private theorem cx_odeSolution_zero {E' : Type*} [NormedAddCommGroup E'] [Normed
 private theorem leftProj_ce₁ (M : Matrix (Fin 2) (Fin 2) ℝ) :
     leftProj ce₁ M = !![M 0 0, M 0 1; 0, 0] := by
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [ce₁, Matrix.mul_apply, Matrix.vecMul, dotProduct,
+    simp [ce₁, Matrix.mul_apply,
         Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 private theorem rightProj_ce₁ (M : Matrix (Fin 2) (Fin 2) ℝ) :

@@ -353,7 +353,7 @@ theorem rsvdEstimator_not_conservative :
     have : Q * Qᵀ * R = !![1, 0, 0; 0, 0, 0; 0, 0, 0] := by
       ext i j
       fin_cases i <;> fin_cases j <;>
-        simp [Q, R, Matrix.mul_apply, Fin.sum_univ_succ, Matrix.vecMul, dotProduct,
+        simp [Q, R, Matrix.mul_apply, Fin.sum_univ_succ,
             Function.swap, Matrix.vecHead, Matrix.vecTail]
     rw [this]
     simp [Fin.sum_univ_succ]

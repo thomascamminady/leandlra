@@ -132,9 +132,9 @@ lemma relRatio_comp {φ : Y → Z} {ψ : X → Y} {x δ : X} (hy : ψ x ≠ 0)
   have e : ψ x + (ψ (x + δ) - ψ x) = ψ (x + δ) := by abel
   simp only [relRatio, Function.comp_apply, e]
   have h0 : ‖ψ (x + δ) - ψ x‖ₑ / ‖ψ x‖ₑ ≠ 0 :=
-    ENNReal.div_ne_zero.2 ⟨enorm_ne_zero.2 hη, enorm_ne_top⟩
+    ENNReal.div_ne_zero.2 ⟨eNorm_ne_zero.2 hη, eNorm_ne_top⟩
   have ht : ‖ψ (x + δ) - ψ x‖ₑ / ‖ψ x‖ₑ ≠ ∞ :=
-    ENNReal.div_ne_top enorm_ne_top (enorm_ne_zero.2 hy)
+    ENNReal.div_ne_top eNorm_ne_top (eNorm_ne_zero.2 hy)
   generalize ‖ψ (x + δ) - ψ x‖ₑ / ‖ψ x‖ₑ = h at h0 ht
   rw [div_eq_mul_inv _ h, div_eq_mul_inv h, mul_assoc, ← mul_assoc h⁻¹,
     ENNReal.inv_mul_cancel h0 ht, one_mul, div_eq_mul_inv]
@@ -176,15 +176,15 @@ lemma condAt_comp_eq_zero {φ : Y → Z} {ψ : X → Y} {x : X} (hx : x ≠ 0) (
     have := lt_top_iff_ne_top.2 h₁
     simpa [condAt, iInf_lt_iff] using this
   refine le_antisymm ((condAt_le_condEps _ _ hε).trans (iSup₂_le fun δ hδ => ?_)) (zero_le)
-  have hxp : ‖x‖ₑ ≠ 0 := enorm_ne_zero.2 hx
+  have hxp : ‖x‖ₑ ≠ 0 := eNorm_ne_zero.2 hx
   by_cases h : ψ (x + δ) = 0
   · simp [relRatio, h, hy]
   · exfalso
     have h2 := (relRatio_le_condEps ψ hδ.1 hδ.2).trans_lt hlt
     have h3 : relRatio ψ x δ = ∞ := by
-      have hne : ‖δ‖ₑ / ‖x‖ₑ ≠ ∞ := ENNReal.div_ne_top enorm_ne_top hxp
-      simp only [relRatio, hy, sub_zero, enorm_zero]
-      rw [ENNReal.div_zero (enorm_ne_zero.2 h), ENNReal.top_div_of_ne_top hne]
+      have hne : ‖δ‖ₑ / ‖x‖ₑ ≠ ∞ := ENNReal.div_ne_top eNorm_ne_top hxp
+      simp only [relRatio, hy, sub_zero, eNorm_zero]
+      rw [ENNReal.div_zero (eNorm_ne_zero.2 h), ENNReal.top_div_of_ne_top hne]
     rw [h3] at h2
     exact lt_irrefl _ h2
 
@@ -333,8 +333,8 @@ variable {X Y : Type*} [NormedAddCommGroup X] [NormedAddCommGroup Y] [NormedSpac
 lemma condAt_linear_le (T : X →ₗ[ℝ] Y) {b : ℝ} (hup : ∀ v, ‖T v‖ ≤ b * ‖v‖) (hb : 0 ≤ b) {x : X}
     (hx : x ≠ 0) : condAt T x ≤ ENNReal.ofReal b * ‖x‖ₑ / ‖T x‖ₑ := by
   refine (condAt_le_condEps _ _ one_pos).trans (iSup₂_le fun δ hδ => ?_)
-  have hd0 : ‖δ‖ₑ ≠ 0 := enorm_ne_zero.2 hδ.1
-  have hx0 : ‖x‖ₑ ≠ 0 := enorm_ne_zero.2 hx
+  have hd0 : ‖δ‖ₑ ≠ 0 := eNorm_ne_zero.2 hδ.1
+  have hx0 : ‖x‖ₑ ≠ 0 := eNorm_ne_zero.2 hx
   have h1 : ‖T δ‖ₑ ≤ ENNReal.ofReal b * ‖δ‖ₑ := by
     rw [← ofReal_norm, ← ofReal_norm, ← ENNReal.ofReal_mul hb]
     exact ENNReal.ofReal_le_ofReal (hup δ)
@@ -344,11 +344,11 @@ lemma condAt_linear_le (T : X →ₗ[ℝ] Y) {b : ℝ} (hup : ∀ v, ‖T v‖ �
       ≤ ENNReal.ofReal b * ‖δ‖ₑ / ‖T x‖ₑ / (‖δ‖ₑ / ‖x‖ₑ) := by gcongr
     _ = ENNReal.ofReal b * ‖x‖ₑ / ‖T x‖ₑ := by
         rw [ENNReal.div_eq_inv_mul (b := ‖δ‖ₑ / ‖x‖ₑ),
-          ENNReal.inv_div (Or.inr enorm_ne_top) (Or.inr hd0), ENNReal.div_eq_inv_mul,
+          ENNReal.inv_div (Or.inr eNorm_ne_top) (Or.inr hd0), ENNReal.div_eq_inv_mul,
           ENNReal.div_eq_inv_mul, ENNReal.div_eq_inv_mul]
         calc ‖δ‖ₑ⁻¹ * ‖x‖ₑ * ((‖T x‖ₑ)⁻¹ * (ENNReal.ofReal b * ‖δ‖ₑ))
             = (‖δ‖ₑ⁻¹ * ‖δ‖ₑ) * ((‖T x‖ₑ)⁻¹ * (ENNReal.ofReal b * ‖x‖ₑ)) := by ring
-          _ = _ := by rw [ENNReal.inv_mul_cancel hd0 enorm_ne_top, one_mul]
+          _ = _ := by rw [ENNReal.inv_mul_cancel hd0 eNorm_ne_top, one_mul]
 
 /-- **The linear case of Section 3 of arXiv 2306.01485**: if `‖T v‖ ≤ b ‖v‖` for all `v` and
 `a ‖x‖ ≤ ‖T x‖` on the feature set `A`, `a > 0`, then `cond(T) ≤ b / a` on `A`.  With `b = s_max`
@@ -386,10 +386,10 @@ theorem condAt_eq_top_of_ker (T : X →ₗ[ℝ] Y) (hT : T ≠ 0) {x : X} (hx : 
     exact (div_mul_cancel₀ _ hvp.ne').le
   refine le_trans ?_ (relRatio_le_condEps T hδ hle)
   have hTδ : T (x + c • v) = c • T v := by simp [hTx]
-  have hne : ‖c • v‖ₑ / ‖x‖ₑ ≠ ∞ := ENNReal.div_ne_top enorm_ne_top (enorm_ne_zero.2 hx)
+  have hne : ‖c • v‖ₑ / ‖x‖ₑ ≠ ∞ := ENNReal.div_ne_top eNorm_ne_top (eNorm_ne_zero.2 hx)
   have e : relRatio T x (c • v) = ‖c • T v‖ₑ / 0 / (‖c • v‖ₑ / ‖x‖ₑ) := by
-    simp only [relRatio, hTδ, hTx, sub_zero, enorm_zero]
-  rw [e, ENNReal.div_zero (enorm_ne_zero.2 (smul_ne_zero hc0.ne' hv)),
+    simp only [relRatio, hTδ, hTx, sub_zero, eNorm_zero]
+  rw [e, ENNReal.div_zero (eNorm_ne_zero.2 (smul_ne_zero hc0.ne' hv)),
     ENNReal.top_div_of_ne_top hne]
 
 /-- **A rank-deficient layer has infinite condition number on the whole space**: if `A` contains
@@ -411,7 +411,7 @@ lemma relRatio_real {σ : ℝ → ℝ} {x δ : ℝ} (hx : x ≠ 0) (hδ : δ ≠
   have hx' : 0 < |x| := abs_pos.2 hx
   have hδ' : 0 < |δ| := abs_pos.2 hδ
   have hσ' : 0 < |σ x| := abs_pos.2 hσ
-  simp only [relRatio, Real.enorm_eq_ofReal_abs]
+  simp only [relRatio, Real.eNorm_eq_ofReal_abs]
   rw [← ENNReal.ofReal_div_of_pos hσ', ← ENNReal.ofReal_div_of_pos hx',
     ← ENNReal.ofReal_div_of_pos (by positivity)]
   congr 1

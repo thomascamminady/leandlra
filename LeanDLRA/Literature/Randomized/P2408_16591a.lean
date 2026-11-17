@@ -582,7 +582,7 @@ theorem lsq_cur_rows_ne :
   · rw [hG, inv_one, Matrix.one_mul]
     intro h
     have h11 := congrFun (congrFun h 1) 1
-    simp [V, Q, p', Matrix.vecMul, dotProduct] at h11
+    simp [V, Q, p'] at h11
 
 
 end CUR
@@ -1022,7 +1022,7 @@ theorem eq19_false_for_singular_vectors :
   · ext i j; fin_cases i; fin_cases j; simp [w, Matrix.mul_apply]; norm_num
   · ext i j; fin_cases i; fin_cases j; simp [u, w, Matrix.mul_apply]; norm_num
   · ext i j; fin_cases i <;> fin_cases j <;>
-      simp [V, u, w, Matrix.vecMul, dotProduct,
+      simp [V, u, w,
           Function.swap, Matrix.vecHead, Matrix.vecTail] <;> norm_num
   · intro l c hc _ i
     have hl : l = 0 := Subsingleton.elim _ _
@@ -1047,12 +1047,12 @@ theorem eq19_false_for_singular_vectors :
   have hleft : (1 - u * uᵀ) * V = (-225 : ℝ) • (w * wᵀ) := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [V, u, w, Matrix.mul_apply, Matrix.one_apply, Matrix.vecMul, dotProduct,
+      simp [V, u, w, Matrix.mul_apply, Matrix.one_apply,
           Function.swap, Matrix.vecHead, Matrix.vecTail] <;> norm_num
   have hright : V * (1 - u * uᵀ) = (-225 : ℝ) • (w * wᵀ) := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [V, u, w, Matrix.mul_apply, Matrix.one_apply, Matrix.vecMul, dotProduct,
+      simp [V, u, w, Matrix.mul_apply, Matrix.one_apply,
           Function.swap, Matrix.vecHead, Matrix.vecTail] <;> norm_num
   have hproj : specNorm (w * wᵀ) ≤ 1 := (isOrthProjMat_mul_transpose hww).specNorm_le_one
   have hσ : specNorm ((-225 : ℝ) • (w * wᵀ)) ≤ 225 := by

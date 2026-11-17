@@ -3235,7 +3235,7 @@ theorem IsAdaptiveStep.norm_sub_le {ρ q q' τ ρs ρ₁ : Type*} [Fintype ρ] [
       simpa [hVh, Matrix.vecMul, dotProduct] using this
     simp only [hG, limitG, Matrix.neg_mul, Matrix.vecMulVec_mul, hb0]
     ext j m
-    simp [Matrix.vecMulVec_apply]
+    simp
   set Wf := W.submatrix id f with hWfdef
   set Uf := U.submatrix id f with hUfdef
   have ha' : Sr * Wf = Uf * diagonal (s ∘ f) := svd_trunc hs.svd hs.W_orth

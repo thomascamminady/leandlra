@@ -2577,10 +2577,14 @@ noncomputable def recoveryCoords :
   toFun p := WithLp.toLp 2 ![p.fst 0 0 - p.snd 0 1, p.snd 0 1, p.snd 0 0, p.snd 0 0]
   map_add' p q := by
     ext i
-    fin_cases i <;> (simp; try ring)
+    fin_cases i
+    · simp; ring
+    all_goals simp
   map_smul' c p := by
     ext i
-    fin_cases i <;> (simp; try ring)
+    fin_cases i
+    · simp; ring
+    all_goals simp
 
 /-- The four forms determine the point. -/
 lemma recoveryCoords_injective : Function.Injective recoveryCoords := by

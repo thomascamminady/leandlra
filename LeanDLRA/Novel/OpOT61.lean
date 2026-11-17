@@ -520,7 +520,7 @@ theorem IsMode.pow {S : Matrix (ZMod N) V ℝ →ₗ[ℝ] Matrix (ZMod N) V ℝ}
     (hX : IsMode θ X) (n : ℕ) : IsMode θ ((S ^ n) X) := by
   induction n with
   | zero => simpa using hX
-  | succ n ih => rw [pow_succ', Module.End.mul_apply]; exact ih.map hS hθ
+  | succ n ih => rw [pow_succ', mul_apply_eq_comp]; exact ih.map hS hθ
 
 /-- The rank of a sum is at most the sum of the ranks. -/
 theorem rank_sum_le {ι : Type*} (s : Finset ι) (A : ι → Matrix (ZMod N) V ℝ) :
@@ -686,7 +686,7 @@ theorem norm_pow_apply_le {S : Matrix (ZMod N) V ℝ →ₗ[ℝ] Matrix (ZMod N)
     (hS1 : ∀ F, ‖S F‖ ≤ ‖F‖) (n : ℕ) (F : Matrix (ZMod N) V ℝ) : ‖(S ^ n) F‖ ≤ ‖F‖ := by
   induction n with
   | zero => simp
-  | succ n ih => rw [pow_succ', Module.End.mul_apply]; exact (hS1 _).trans ih
+  | succ n ih => rw [pow_succ', mul_apply_eq_comp]; exact (hS1 _).trans ih
 
 /-- **Time-uniform `ε`-rank bound for stable translation-invariant schemes.**  If `S` commutes with
 the spatial shift and does not increase the Frobenius norm, and `F₀ = ∑_{k ∈ K} G_k` is a sum of

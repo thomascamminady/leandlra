@@ -90,7 +90,7 @@ instance spanY_finiteDim {r : ℕ} (Y : Fin r → E) :
 
 instance spanY_complete {r : ℕ} (Y : Fin r → E) :
     CompleteSpace (Submodule.span ℝ (Set.range Y)) :=
-  FiniteDimensional.complete ℝ _
+  FiniteDimensional.completeSpace ℝ _
 
 /-- `P_Y` is the orthogonal projection onto `span{Y_1, …, Y_r}`. -/
 lemma projY_eq_starProjection {r : ℕ} {Y : Fin r → E} (hY : LinearIndependent ℝ Y) (u : E) :

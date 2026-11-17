@@ -1664,7 +1664,7 @@ theorem exists_ap_trajectory (hD : D.Admissible) {n : ℕ} (hnx : n ≤ Fintype.
       ∀ k, D.IsDiffusionStep (Φ k) (ρd k) (ρd (k + 1)) := by
     choose f hf using fun (k : ℕ) (y : x → ℝ) => (existsUnique_diffusion hD (Φ k) y).exists
     refine ⟨fun k => Nat.rec ρ₀ (fun k y => f k y) k, rfl, fun k => ?_⟩
-    simp only [Nat.rec_add_one]
+    simp only
     exact hf k _
   have htraj : ∀ ε : ℝ, ∃ (ρ : ℕ → x → ℝ) (X : ℕ → Matrix x (Fin n) ℝ)
       (S : ℕ → Matrix (Fin n) (Fin n) ℝ) (V : ℕ → Matrix a (Fin n) ℝ)

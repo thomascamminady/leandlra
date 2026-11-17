@@ -2603,7 +2603,7 @@ noncomputable def coin : Measure Bool :=
 
 instance : IsProbabilityMeasure coin :=
   ⟨by
-    simp only [coin, Measure.coe_add, Measure.coe_smul, Pi.add_apply, Pi.smul_apply, smul_eq_mul,
+    simp only [coin, FunLike.coe_add, FunLike.coe_smul, Pi.add_apply, Pi.smul_apply, smul_eq_mul,
       measure_univ, mul_one]
     exact ENNReal.add_halves 1⟩
 

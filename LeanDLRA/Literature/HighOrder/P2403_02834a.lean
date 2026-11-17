@@ -2098,7 +2098,7 @@ theorem cxF_cxK {s : ℝ} (hs : 0 < s) (t : ℝ) :
     cxF s t (cxK s t) = (-(s * Real.sin t)) • cxE11 + (s * Real.cos t) • cxW := by
   rw [cxF_of_norm hs t (norm_cxK hs t)]
   ext i j; fin_cases i <;> fin_cases j <;> simp [cxPhi, cxK, cxE11, cxW]
-  all_goals ring
+  ring
 
 /-- *arXiv 2403.02834, counterexample to Theorem 5.1.* An auxiliary computation. -/
 theorem hasDerivAt_cxK (s t : ℝ) :
@@ -2189,8 +2189,7 @@ theorem hasDerivAt_cxL (s t : ℝ) :
 theorem norm_cxYL {s : ℝ} (hs : 0 < s) (t : ℝ) : ‖cxE1 * (cxL s t)ᵀ‖ = s := by
   refine (sq_eq_sq₀ (norm_nonneg _) hs.le).1 ?_
   rw [Frobenius.norm_sq_eq_sum]
-  simp [Fin.sum_univ_two, cxE1, cxE2, cxL, Matrix.mul_apply, Function.swap, Matrix.vecHead,
-    Matrix.vecTail]
+  simp [Fin.sum_univ_two, cxE1, cxE2, cxL, Matrix.mul_apply, Function.swap]
   linear_combination s ^ 2 * Real.sin_sq_add_cos_sq (3 / 5 * t)
 
 /-- *arXiv 2403.02834, counterexample to Theorem 5.1.* An auxiliary computation. -/
@@ -2201,7 +2200,7 @@ theorem cx_lField {s : ℝ} (hs : 0 < s) (t : ℝ) :
   rw [MatrixKSL.lField, cxF_of_norm hs t (norm_cxYL hs t)]
   ext i j; fin_cases i <;> fin_cases j <;>
     simp [cxPhi, cxE1, cxE2, cxL, cxW, cxE11, Matrix.mul_apply,
-        Function.swap, Matrix.vecHead, Matrix.vecTail] <;> ring
+        Function.swap] <;> ring
 
 /-- *arXiv 2403.02834, counterexample to Theorem 5.1.* An auxiliary computation. -/
 theorem cx_sField {s : ℝ} (hs : 0 < s) (t : ℝ) :
@@ -2241,8 +2240,8 @@ theorem cx_isVariant2 {s h : ℝ} (hs : 0 < s) (hsh : Real.sin h ≠ 0) :
     refine ⟨by simp, by simp, ⟨fromRows cxE1ᵀ ((5 / (3 * s)) • cxE2ᵀ), ?_⟩⟩
     rw [Matrix.fromCols_mul_fromRows]
     ext i j; fin_cases i <;> fin_cases j <;> simp [cxE1, cxE2, cxW, Matrix.mul_apply,
-        Function.swap, Matrix.vecHead, Matrix.vecTail]
-    all_goals field_simp
+        Function.swap]
+    field_simp
   kSol := odeSolution_of_hasDerivAt fun t => by rw [cx_kField hs]; exact hasDerivAt_cxK s t
   kStart := by rw [← cxY₀]; simp
   lSol := odeSolution_of_hasDerivAt fun t => by rw [cx_lField hs]; exact hasDerivAt_cxL s t
@@ -2277,7 +2276,7 @@ theorem cx_isVariant2 {s h : ℝ} (hs : 0 < s) (hsh : Real.sin h ≠ 0) :
         ext i j; fin_cases i <;> fin_cases j <;>
           simp [cxE1, cxE2, cxK, cxE11, cxW, Matrix.mul_apply, Fin.sum_univ_two]
         all_goals field_simp
-        all_goals norm_num
+        norm_num
   newV := by
     refine ⟨?_, ?_, ⟨fromBlocks 1 0 0 0, ?_⟩⟩
     · rw [Matrix.transpose_fromCols, Matrix.fromRows_mul_fromCols]
@@ -2300,8 +2299,8 @@ theorem cx_augSol (s h : ℝ) :
   rw [augSol_eq_sum]
   ext i j; fin_cases i <;> fin_cases j <;>
     simp [cxE1, cxE2, cxS, cxL, cxK, cxE11, cxW, cxV2, Matrix.mul_apply, Fin.sum_univ_two,
-      Function.swap, Matrix.vecHead, Matrix.vecTail, Matrix.add_apply, Matrix.smul_apply]
-  all_goals ring
+      Function.swap, Matrix.add_apply]
+  ring
 
 /-- *arXiv 2403.02834, counterexample to Theorem 5.1.* An auxiliary computation. -/
 theorem norm_sq_cx_augSol (s h : ℝ) :

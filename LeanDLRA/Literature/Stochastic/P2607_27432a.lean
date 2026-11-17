@@ -222,7 +222,7 @@ theorem reducedCov_instance :
     ext i j
     fin_cases i
     fin_cases j
-    simp [instU, instQ, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+    simp [instU, instQ]
   have h := reducedCov_hasDerivAt (k := Fin 1) (d := Fin 2) (m := Fin 1) 0 instQ 0 1
     (fun _ => instU) (fun _ => (1 : Matrix (Fin 1) (Fin 1) ℝ)) 0 0 (instUᵀ * instU) (t := 0)
     (hasDerivAt_const _ _) (hasDerivAt_const _ _) instU_mul_transpose (by simp) (by simp)

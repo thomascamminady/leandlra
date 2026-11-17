@@ -594,7 +594,7 @@ noncomputable instance : NormedAddCommGroup (MassSpace Mx Mv) :=
 noncomputable instance : InnerProductSpace ℝ (MassSpace Mx Mv) :=
   InnerProductSpace.ofCore instCore.toCore
 
-instance : CompleteSpace (MassSpace Mx Mv) := FiniteDimensional.complete ℝ _
+instance : CompleteSpace (MassSpace Mx Mv) := FiniteDimensional.completeSpace ℝ _
 
 /-- The inner product of `MassSpace` is `tr(Aᵀ M_x B M_v)`. -/
 lemma inner_ofMat (A B : Matrix m n ℝ) :

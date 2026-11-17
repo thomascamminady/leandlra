@@ -159,11 +159,11 @@ lemma eq_sum_pow_of_succ (T : E →ₗ[ℝ] E) {e d : ℕ → E} (h0 : e 0 = 0)
   | zero => simp [h0]
   | succ N ih =>
     rw [he, ih, map_sum, sum_range_succ, Nat.add_sub_cancel, Nat.sub_self, pow_zero,
-      Module.End.one_apply]
+      one_apply_eq_self]
     congr 1
     refine sum_congr rfl fun n hn => ?_
     have hn : n < N := mem_range.1 hn
-    rw [← Module.End.mul_apply, ← pow_succ']
+    rw [← mul_apply_eq_comp, ← pow_succ']
     congr 3
     omega
 
@@ -240,7 +240,7 @@ theorem norm_stepInv_stepB_pow_le {Vi V A : E →ₗ[ℝ] E} (hVVi : ∀ z, V (V
   induction k with
   | zero => simp
   | succ k ih =>
-    rw [pow_succ', Module.End.mul_apply, LinearMap.comp_apply, pow_succ', mul_assoc]
+    rw [pow_succ', mul_apply_eq_comp, LinearMap.comp_apply, pow_succ', mul_assoc]
     exact (norm_stepInv_stepB_le hVVi hθ hθ1 hγ0 hΔt hγ hs _).trans
       (mul_le_mul_of_nonneg_left ih hϑ)
 

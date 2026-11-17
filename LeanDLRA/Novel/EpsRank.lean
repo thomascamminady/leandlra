@@ -137,7 +137,7 @@ theorem eq_geom {M : Type*} [AddCommGroup M] [Module ℝ M] (P : M →ₗ[ℝ] M
   | succ k ih =>
     have h1 : (P ^ k) x = (P ^ k) s + c • (P ^ (k + 1)) x := by
       conv_lhs => rw [h]
-      rw [map_add, map_smul, pow_succ, Module.End.mul_apply]
+      rw [map_add, map_smul, pow_succ, mul_apply_eq_comp]
     rw [Finset.sum_range_succ, add_assoc]
     conv_lhs => rw [ih, h1]
     rw [smul_add, smul_smul, pow_succ c k]
@@ -257,7 +257,7 @@ theorem psi_pow_mon (D : Matrix X X ℝ) (q : Quadrature V) (a b : ℝ) (l j : �
   | succ j ih =>
     obtain ⟨u, hu⟩ := ih
     refine ⟨fun n => filt a b l (fun m => D.mulVec (u m)) n, fun n => ?_⟩
-    rw [pow_succ', Module.End.mul_apply, psi_apply]
+    rw [pow_succ', mul_apply_eq_comp, psi_apply]
     have h1 : (fun m => transport D q ((psi D q a b l ^ j) (fun m => mon q 0 (φ m)) m)) =
         fun m => monL q (j + 1) (D.mulVec (u m)) := by
       funext m
@@ -428,7 +428,7 @@ theorem norm_psi_pow_le {D : Matrix X X ℝ} {q : Quadrature V} {a b m : ℝ} {l
     simpa using hz n hn
   | succ k ih =>
     intro z C N hC hz n hn
-    rw [pow_succ, Module.End.mul_apply]
+    rw [pow_succ, mul_apply_eq_comp]
     have h1 := ih (psi D q a b l z) (m * C) N (by positivity) ?_ n hn
     · calc _ ≤ m ^ k * (m * C) := h1
         _ = m ^ (k + 1) * C := by ring
@@ -661,7 +661,7 @@ theorem existsUnique_implicitEuler {D : Matrix X X ℝ} {q : Quadrature V} {ε �
     ∃! F : ℕ → Matrix X V ℝ, F 0 = f₀ ∧ IsImplicitEuler D q ε σ τ F := by
   choose S hS using fun f => (existsUnique_step (q := q) hD hε hσ hτ f).exists
   refine ⟨fun n => Nat.rec f₀ (fun _ y => S y) n, ⟨rfl, fun n => ?_⟩, ?_⟩
-  · simp only [Nat.rec_add_one]
+  · simp only
     exact hS _
   rintro G ⟨h0, hG⟩
   funext n
@@ -759,7 +759,7 @@ theorem transportL_pow (D : Matrix X X ℝ) (q : Quadrature V) (j : ℕ) (G : Ma
   induction j with
   | zero => ext i v; simp
   | succ j ih =>
-    rw [pow_succ', Module.End.mul_apply, ih]
+    rw [pow_succ', mul_apply_eq_comp, ih]
     ext i v
     simp only [transportL_apply, transport, Matrix.of_apply]
     rw [mul_of_scale, Matrix.of_apply, pow_succ', ← Matrix.mul_assoc, pow_succ']
@@ -773,11 +773,11 @@ theorem psi_pow_layer (D : Matrix X X ℝ) (q : Quadrature V) (a b : ℝ) (G : M
   | zero => intro n; simp [layerCoeff]
   | succ j ih =>
     intro n
-    rw [pow_succ', Module.End.mul_apply, psi_apply]
+    rw [pow_succ', mul_apply_eq_comp, psi_apply]
     have h1 : (fun m => transport D q ((psi D q a b 0 ^ j) (fun m => b ^ m • G) m)) =
         fun m => layerCoeff a b m j • (transportL D q ^ (j + 1)) G := by
       funext m
-      rw [ih m, pow_succ', Module.End.mul_apply, ← transportL_apply, map_smul]
+      rw [ih m, pow_succ', mul_apply_eq_comp, ← transportL_apply, map_smul]
     rw [h1, filt_smul_const, filt_layerCoeff]
 
 theorem norm_transport_pow_le {D : Matrix X X ℝ} {q : Quadrature V} {m : ℝ} (hm0 : 0 ≤ m)
@@ -1796,7 +1796,7 @@ noncomputable def weightedC (q : Quadrature V) : Matrix X V ℝ →L[ℝ] Matrix
 /-- The semi-discrete equation has a solution for every initial value. -/
 theorem exists_flow (D : Matrix X X ℝ) (q : Quadrature V) (ε σ : ℝ) (f₀ : Matrix X V ℝ) :
     ∃ y : ℝ → Matrix X V ℝ, y 0 = f₀ ∧ ∀ s, HasDerivAt y (genL D q ε σ (y s)) s := by
-  have : CompleteSpace (Matrix X V ℝ) := FiniteDimensional.complete ℝ _
+  have : CompleteSpace (Matrix X V ℝ) := FiniteDimensional.completeSpace ℝ _
   refine ⟨fun s => NormedSpace.exp (s • genC D q ε σ) f₀, by simp, fun s => ?_⟩
   have h := (hasDerivAt_exp_smul_const' (𝕂 := ℝ) (genC D q ε σ) s).clm_apply
     (hasDerivAt_const s f₀)

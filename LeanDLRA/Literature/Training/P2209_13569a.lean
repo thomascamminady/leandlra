@@ -183,7 +183,7 @@ theorem factorGD_paper_formula_false :
   have h2 := add_left_cancel h
   simp only [one_smul, one_pow, transpose_one, Matrix.mul_one] at h2
   have h1 := congrFun (congrFun h2 0) 0
-  simp [vecMul, dotProduct, Fin.sum_univ_two, Matrix.mul_apply] at h1
+  simp [Fin.sum_univ_two, Matrix.mul_apply] at h1
 
 end FactorGD
 

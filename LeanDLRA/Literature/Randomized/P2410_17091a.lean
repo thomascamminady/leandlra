@@ -422,7 +422,7 @@ lemma A_ode : ODESolution F A 0 1 :=
 
 /-- `A₀ = Y₀ = U₀ S₀ V₀ᵀ` with `U₀ = V₀ = e₁`, `S₀ = 1`. -/
 lemma A_zero : A 0 = e₁ * (1 : Matrix (Fin 1) (Fin 1) ℝ) * e₁ᵀ := by
-  ext i j; fin_cases i <;> fin_cases j <;> simp [A, Y₀, e₁, Matrix.vecMul, dotProduct,
+  ext i j; fin_cases i <;> fin_cases j <;> simp [A, Y₀, e₁,
       Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 /-- `U₀ = V₀ = e₁` has orthonormal columns. -/
@@ -477,7 +477,7 @@ lemma Bt_one : Bt 1 = Ω := by
 lemma fromCols_mul_transpose : Matrix.fromCols e₁ Ω * (Matrix.fromCols e₁ Ω)ᵀ = 1 := by
   rw [Matrix.transpose_fromCols, Matrix.fromCols_mul_fromRows]
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [e₁, Ω, Matrix.vecMul, dotProduct, Fin.sum_univ_two,
+    simp [e₁, Ω,
         Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 /-- `Cs` solves the C-step (14). -/
@@ -651,11 +651,11 @@ theorem counterexample :
     · ext i j; fin_cases i <;> fin_cases j <;>
         norm_num [Matrix.mul_apply, Fin.sum_univ_three, h2]
     · ext i j; fin_cases i <;> fin_cases j <;>
-        simp [U₀, Matrix.mul_apply, Fin.sum_univ_three, Matrix.vecMul, dotProduct,
-          Fin.sum_univ_two, Function.swap, Matrix.vecHead, Matrix.vecTail]
+        simp [U₀, Matrix.mul_apply, Fin.sum_univ_three,
+          Function.swap, Matrix.vecHead, Matrix.vecTail]
     · ext i j; fin_cases i <;> fin_cases j <;>
-        simp [a, Matrix.mul_apply, Fin.sum_univ_three, Matrix.vecMul, dotProduct,
-          Fin.sum_univ_two, h2, Function.swap, Matrix.vecHead, Matrix.vecTail] <;> norm_num
+        simp [a, Matrix.mul_apply, Fin.sum_univ_three,
+          h2, Function.swap, Matrix.vecHead, Matrix.vecTail] <;> norm_num
   · intro Q hU hB hmid
     have key : ∀ (v : Matrix (Fin 3) (Fin 1) ℝ) (j : Fin 3), (∀ k, M k j = v k 0) →
         Q * Qᵀ * v = v → ∀ i, (Q * Qᵀ * M) i j = M i j := by

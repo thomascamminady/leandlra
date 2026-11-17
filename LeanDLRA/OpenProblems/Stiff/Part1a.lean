@@ -49,7 +49,7 @@ private theorem spectral_gap [FiniteDimensional ℝ E] {C : E →L[ℝ] E}
   set M := (LinearMap.ker (C : E →ₗ[ℝ] E))ᗮ with hM
   by_cases hne : ((M : Set E) ∩ Metric.sphere 0 1).Nonempty
   · have hcomp : IsCompact ((M : Set E) ∩ Metric.sphere 0 1) :=
-      (isCompact_sphere 0 1).inter_left (Submodule.closed_of_finiteDimensional M)
+      (isCompact_sphere 0 1).inter_left (Submodule.isClosed_of_finiteDimensional M)
     obtain ⟨x₀, hx₀, hmin⟩ := hcomp.exists_isMinOn hne
       (f := fun x => -⟪C x, x⟫)
       (by fun_prop)

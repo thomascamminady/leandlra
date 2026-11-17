@@ -611,7 +611,7 @@ theorem cxA_hasDerivAt_A (δ t : ℝ) : HasDerivAt (cxA_A δ) E₂₂ t := by
 theorem tangentProj_e₁_E₂₂ : tangentProj e₁ e₁ E₂₂ = 0 := by
   rw [tangentProj_apply]
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [e₁, E₂₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct, Matrix.vecHead,
+    simp [e₁, E₂₂, Matrix.vecHead,
       Matrix.vecTail]
 
 /-- **The DLRA solution is stationary**: `Y(t) ≡ diag(δ, 0)` solves `Ẏ = P(Y) Ȧ` with
@@ -770,7 +770,7 @@ theorem cxB_hasDerivAt_E (α t : ℝ) : HasDerivAt (cxB_E α) (cxB_Ed α t) t :=
   refine h.congr_deriv ?_
   have hpyth := Real.sin_sq_add_cos_sq t
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [cxB_Ed, cwd, e₁, e₂, E₁₁, E₁₂, E₂₂, Matrix.vecMul, dotProduct, Matrix.vecHead,
+    simp [cxB_Ed, cwd, e₁, e₂, E₁₁, E₁₂, E₂₂, Matrix.vecHead,
       Matrix.vecTail]
   · linear_combination (-(α * (3 * Real.sin t ^ 2 - Real.cos t ^ 2 + 2) / 2)) * hpyth
   · ring
@@ -916,7 +916,7 @@ theorem cxC_hasDerivAt_A (δ t : ℝ) : HasDerivAt (cxC_A δ) (cxC_A' t) t :=
 theorem tangentProj_e₁_diag (a b : ℝ) : tangentProj e₁ e₁ (a • E₁₁ + b • E₂₂) = a • E₁₁ := by
   rw [tangentProj_apply]
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [e₁, E₁₁, E₂₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+    simp [e₁, E₁₁, E₂₂,
       Matrix.vecHead, Matrix.vecTail]
 
 /-- **`Y_δ` solves the DLRA equation** `Ẏ = P(Y) Ȧ_δ` on `[0, T]`. -/

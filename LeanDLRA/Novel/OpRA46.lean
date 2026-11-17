@@ -392,14 +392,14 @@ private theorem e₂_factor : e₂ * !![(3 : ℝ)] * e₂ᵀ = Z₂ := by
 private theorem tangentProj_e₁ : tangentProj e₁ e₁ G₀ = Zin := by
   ext i j
   fin_cases i <;> fin_cases j <;>
-    simp [tangentProj_apply, e₁, G₀, Zin, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul,
-      dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
+    simp [tangentProj_apply, e₁, G₀, Zin,
+      Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 private theorem tangentProj_e₂ : tangentProj e₂ e₂ G₀ = Z₂ := by
   ext i j
   fin_cases i <;> fin_cases j <;>
-    simp [tangentProj_apply, e₂, G₀, Z₂, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul,
-      dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
+    simp [tangentProj_apply, e₂, G₀, Z₂,
+      Function.swap, Matrix.vecHead, Matrix.vecTail]
 
 private theorem det_one_unit {a : ℝ} (ha : a ≠ 0) :
     IsUnit (!![a] : Matrix (Fin 1) (Fin 1) ℝ).det := by
@@ -611,17 +611,17 @@ private theorem tangentProj_het {s : ℝ} (hs : 0 < s) :
   have hq4 := q_fourth hs.le
   ext i j
   fin_cases i <;> fin_cases j
-  · simp [tangentProj_apply, uhet, vhet, G₀, Dhet, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.vecMul, dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
+  · simp [tangentProj_apply, uhet, vhet, G₀, Dhet,
+      Function.swap, Matrix.vecHead, Matrix.vecTail]
     field_simp; ring_nf; simp only [hq2]; ring
-  · simp [tangentProj_apply, uhet, vhet, G₀, Dhet, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.vecMul, dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
+  · simp [tangentProj_apply, uhet, vhet, G₀, Dhet,
+      Function.swap, Matrix.vecHead, Matrix.vecTail]
     field_simp; ring_nf; simp only [hq3]; ring
-  · simp [tangentProj_apply, uhet, vhet, G₀, Dhet, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.vecMul, dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
+  · simp [tangentProj_apply, uhet, vhet, G₀, Dhet,
+      Function.swap, Matrix.vecHead, Matrix.vecTail]
     field_simp; ring_nf; simp only [hq3]; ring
-  · simp [tangentProj_apply, uhet, vhet, G₀, Dhet, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.vecMul, dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
+  · simp [tangentProj_apply, uhet, vhet, G₀, Dhet,
+      Function.swap, Matrix.vecHead, Matrix.vecTail]
     field_simp; ring_nf; simp only [hq2, hq4]; ring
 
 /-- **The heteroclinic curve is a Dirac–Frenkel solution.**  `Yhet` is a rank-one Dirac–Frenkel
@@ -1046,11 +1046,11 @@ theorem bug_example (h : ℝ) (U : ℕ → Matrix (Fin 2) (Fin 1) ℝ) (S : ℕ 
     constructor
     · ext i j
       fin_cases i <;> fin_cases j <;>
-        simp [e₁, G₀, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+        simp [e₁, G₀, Matrix.mul_apply, Fin.sum_univ_two,
             Function.swap, Matrix.vecHead, Matrix.vecTail]
     · ext i j
       fin_cases i <;> fin_cases j <;>
-        simp [e₁, G₀, Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct,
+        simp [e₁, G₀, Matrix.mul_apply, Fin.sum_univ_two,
             Function.swap, Matrix.vecHead, Matrix.vecTail]
   have hM : e₁ᵀ * G₀ * e₁ = !![-2] := by
     ext i j

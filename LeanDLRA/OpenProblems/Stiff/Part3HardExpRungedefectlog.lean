@@ -54,7 +54,7 @@ private theorem pow_apply_of_eigen {E : Type*} [NormedAddCommGroup E] [InnerProd
 private theorem exp_apply_of_eigen {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     [FiniteDimensional ℝ E] {A : E →L[ℝ] E} {v : E} {μ : ℝ} (hv : A v = μ • v) :
     NormedSpace.exp A v = Real.exp μ • v := by
-  have : CompleteSpace E := FiniteDimensional.complete ℝ E
+  have : CompleteSpace E := FiniteDimensional.completeSpace ℝ E
   have h1 := (NormedSpace.exp_series_hasSum_exp' (𝕂 := ℝ) A).mapL
     (ContinuousLinearMap.apply ℝ E v)
   have h2 := (NormedSpace.exp_series_hasSum_exp' (𝕂 := ℝ) μ).smul_const v

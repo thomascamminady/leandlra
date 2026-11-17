@@ -821,8 +821,8 @@ example :
     · nlinarith [sq_nonneg (c 0)]
   · ext i j
     fin_cases i
-    all_goals fin_cases j
-    all_goals simp [Matrix.mul_apply, Fin.sum_univ_two]
+    fin_cases j
+    simp [Matrix.mul_apply, Fin.sum_univ_two]
 
 variable [DecidableEq m] [DecidableEq k]
 

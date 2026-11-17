@@ -74,10 +74,10 @@ theorem ksl_breaks_symmetry :
     ext i j
     fin_cases i <;> fin_cases j <;>
       simp [leftProj_apply, rightProj_apply, hUdef, coE11, coQ, coE1, Matrix.mul_apply,
-        Matrix.vecMul, dotProduct, Fin.sum_univ_succ, Matrix.vecHead, Matrix.vecTail] <;>
+        Fin.sum_univ_succ, Matrix.vecHead, Matrix.vecTail] <;>
       field_simp <;> nlinarith [h5]
-  · simp [leftProj_apply, rightProj_apply, hUdef, coE11, coQ, coE1, Matrix.mul_apply,
-      Matrix.vecMul, dotProduct, Fin.sum_univ_succ, Matrix.vecHead, Matrix.vecTail]
+  · simp [leftProj_apply, rightProj_apply, hUdef, coE11, coQ, coE1,
+      Matrix.vecHead, Matrix.vecTail]
     field_simp
     nlinarith [h5]
 
@@ -93,7 +93,7 @@ theorem galerkinS_misses_moment_law :
   · ext i j
     fin_cases i <;> fin_cases j <;>
       simp [leftProj_apply, rightProj_apply, coE1, coRot, coE11, Matrix.mul_apply,
-        Matrix.vecMul, dotProduct, Fin.sum_univ_succ, Function.swap, Matrix.vecHead, Matrix.vecTail]
+        Fin.sum_univ_succ, Function.swap, Matrix.vecHead, Matrix.vecTail]
   · intro h
     have h10 := congrFun (congrFun h 1) 0
     simp [rightProj_apply, coE1, coRot, coE11, Matrix.mul_apply] at h10

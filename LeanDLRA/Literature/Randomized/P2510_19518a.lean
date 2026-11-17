@@ -627,11 +627,11 @@ example : ∀ n : ℕ, n ≤ 2 → (n : ℝ) * 1 ≤ 2 →
     · unfold IsPRKDEIMStep
       refine ⟨fun j => ?_, ?_⟩
       · fin_cases j <;> simp [Fin.sum_univ_two]
-      · simp [Fin.sum_univ_two]; try ring
+      · simp [Fin.sum_univ_two]; ring
     · unfold IsGalerkinRKStep
       refine ⟨fun j => ?_, ?_⟩
       · fin_cases j <;> simp [Fin.sum_univ_two]
-      · simp [Fin.sum_univ_two]; try ring
+      · simp [Fin.sum_univ_two]; ring
     · simp
 
 end PRKDEIM

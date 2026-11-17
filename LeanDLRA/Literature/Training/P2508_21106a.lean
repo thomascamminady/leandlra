@@ -301,7 +301,7 @@ private theorem appendCol_mul_transpose {k : ℕ} (P Q : Matrix n (Fin k) ℝ) (
     appendCol P a * (appendCol Q b)ᵀ = P * Qᵀ + vecMulVec a b := by
   ext i j
   simp [appendCol, Matrix.mul_apply, Fin.sum_univ_castSucc, vecMulVec_apply,
-      Function.swap, Matrix.vecHead, Matrix.vecTail]
+      Function.swap]
 
 /-- The factors `(P_t, Q_t)` of Lemma 1 of arXiv 2508.21106: `P_0 = Q_0 = ∅`,
 `P_{t+1} = [P_t, β_{t+1} ḡ_{t+1}]`, `Q_{t+1} = [Q_t, (I - Q_t P_tᵀ) ḡ_{t+1}]`. -/

@@ -68,11 +68,11 @@ theorem enrich_top_singular_of_E_no_gain :
       simp [Fin.sum_univ_succ]
     exact (pow_left_inj₀ (norm_nonneg _) (by norm_num) two_ne_zero).1 hsq
   · ext i j; fin_cases i <;> fin_cases j <;>
-      simp [Matrix.mul_apply, Matrix.vecMul, dotProduct, Fin.sum_univ_succ,
+      simp [Matrix.mul_apply, Fin.sum_univ_succ,
           Function.swap, Matrix.vecHead, Matrix.vecTail]
   · intro h
     have := congrFun (congrFun h 1) 1
-    simp [Matrix.mul_apply, Matrix.vecMul, dotProduct, Matrix.one_apply,
+    simp [Matrix.mul_apply, Matrix.one_apply,
       Matrix.diagonal] at this
 
 /-- **OP-RA-28 (b): the domain-decomposition identity holds up to the projection error.**  For

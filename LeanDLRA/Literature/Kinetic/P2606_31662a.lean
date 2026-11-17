@@ -1028,7 +1028,7 @@ theorem nondegeneracy_needed :
     refine ⟨?_, ⟨?_, by simp⟩, ?_, ?_⟩
     · funext i
       fin_cases i
-      simp [Matrix.mulVec, dotProduct, Fin.sum_univ_two]
+      simp [Matrix.mulVec, dotProduct]
       norm_num
     · intro j
       fin_cases j <;> simp [Matrix.mulVec, dotProduct]

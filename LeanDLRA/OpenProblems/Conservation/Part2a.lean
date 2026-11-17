@@ -54,7 +54,7 @@ theorem ap_limit_capture {K : Matrix nx r ℝ} {V : Matrix nv r ℝ} {a : nv →
     apply hd
     rw [← hw, hK, hu]
     ext i
-    simp [Matrix.mulVec, Matrix.vecMulVec_apply]
+    simp [Matrix.mulVec]
   · intro hu
     have hpos : 0 < (Vᵀ *ᵥ a) ⬝ᵥ (Vᵀ *ᵥ a) := by
       exact lt_of_le_of_ne (Finset.sum_nonneg fun i _ => mul_self_nonneg _)

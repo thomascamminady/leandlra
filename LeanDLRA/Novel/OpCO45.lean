@@ -1975,7 +1975,7 @@ theorem limited_scheme_aposteriori {a b : ℝ} {r : ℕ} {Φ : Mat →ₗ[ℝ] M
     | zero => simp
     | succ N ih =>
       have e1 : (Φ ^ (N + 1)) (X 0) = Φ ((Φ ^ N) (X 0)) := by
-        rw [pow_succ', Module.End.mul_apply]
+        rw [pow_succ', mul_apply_eq_comp]
       have e2 := hΦ.norm_le (X N - (Φ ^ N) (X 0))
       rw [map_sub] at e2
       have e3 := (hlocal N).2
@@ -2283,7 +2283,7 @@ theorem advection_reference (σ : Equiv.Perm ι) (σ' : Equiv.Perm ι') {a₁ a�
     | zero => simp [hY0]
     | succ n ih =>
       have e1 : (Φ ^ (n + 1)) Y₀ = Φ ((Φ ^ n) Y₀) := by
-        rw [pow_succ', Module.End.mul_apply]
+        rw [pow_succ', mul_apply_eq_comp]
       have e2 := hΦ.norm_le (Y n - (Φ ^ n) Y₀)
       rw [map_sub] at e2
       have e3 := hcons n

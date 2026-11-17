@@ -166,7 +166,7 @@ theorem failure_example :
     ext i j
     fin_cases i
     fin_cases j
-    all_goals norm_num [exU, Matrix.mul_apply, Fin.sum_univ_two]
+    norm_num [exU, Matrix.mul_apply, Fin.sum_univ_two]
   have hUF : exUᵀ * exF = 0 := by
     ext i j
     fin_cases i

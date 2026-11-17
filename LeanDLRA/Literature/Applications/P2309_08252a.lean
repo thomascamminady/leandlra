@@ -269,7 +269,7 @@ theorem hasDerivAt_fullSol (Q : Matrix S S ℝ) (P0 : S → ℝ) (t : ℝ) :
     HasDerivAt (fullSol Q P0) (Q *ᵥ fullSol Q P0 t) t := by
   let _ := Matrix.linftyOpNormedRing (n := S) (α := ℝ)
   let _ := Matrix.linftyOpNormedAlgebra (n := S) (R := ℝ) (α := ℝ)
-  have : CompleteSpace (Matrix S S ℝ) := FiniteDimensional.complete ℝ _
+  have : CompleteSpace (Matrix S S ℝ) := FiniteDimensional.completeSpace ℝ _
   have h := hasDerivAt_exp_smul_const' (𝕂 := ℝ) Q t
   let L : Matrix S S ℝ →L[ℝ] (S → ℝ) := LinearMap.toContinuousLinearMap
     { toFun := fun M => M *ᵥ P0

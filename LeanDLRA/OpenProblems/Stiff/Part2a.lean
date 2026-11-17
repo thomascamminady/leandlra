@@ -158,7 +158,7 @@ theorem lieSplitting_skew_global : ∃ c₀ : ℝ, 0 ≤ c₀ ∧
         Real.exp (LG * (n * τ)) * (‖Y 0 - u₀‖ + n * (δ + c₀ * Cc * R * τ ^ 2)) := by
   refine ⟨Real.exp 2, (Real.exp_pos 2).le, ?_⟩
   intro E _ _ _ 𝒜 𝒢 LG Cc R δ τ N u₀ Y Ψ hskew hG hC hτ hτL hR hΨ hY n hn
-  have : CompleteSpace E := FiniteDimensional.complete ℝ E
+  have : CompleteSpace E := FiniteDimensional.completeSpace ℝ E
   let : NormedAlgebra ℚ (E →L[ℝ] E) := NormedAlgebra.restrictScalars ℚ ℝ _
   have hLG : 0 ≤ LG := (norm_nonneg _).trans hG
   have hCc : 0 ≤ Cc := (norm_nonneg _).trans hC
@@ -603,7 +603,7 @@ theorem complexSylvester_dissipative_smoothing {E : Type*} [NormedAddCommGroup E
       ‖NormedSpace.exp (t • (ν • H + η • (J * H)))‖ ≤ 1 ∧
       ‖(t • (ν • H + η • (J * H))) * NormedSpace.exp (t • (ν • H + η • (J * H)))‖ ≤
         Real.sqrt (ν ^ 2 + η ^ 2) / (Real.exp 1 * ν) := by
-  have : CompleteSpace E := FiniteDimensional.complete ℝ E
+  have : CompleteSpace E := FiniteDimensional.completeSpace ℝ E
   let : NormedAlgebra ℚ (E →L[ℝ] E) := NormedAlgebra.restrictScalars ℚ ℝ _
   set K : E →L[ℝ] E := J * H with hK
   have hKapp : ∀ x, K x = J (H x) := fun x => rfl

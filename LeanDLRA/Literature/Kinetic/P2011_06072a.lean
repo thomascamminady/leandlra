@@ -608,7 +608,7 @@ theorem exists_isLeastSquaresFix [Fintype ι] (m : Fin 3 → A) (V : Matrix A (F
     LinearMap.range (Frobenius.rightMulCLM (momentMatrix m V) :
       Matrix ι (Fin r) ℝ →L[ℝ] Matrix ι (Fin 3) ℝ).toLinearMap
   obtain ⟨v, hv, hmin⟩ := S.exists_norm_eq_iInf_of_complete_subspace
-    (Submodule.complete_of_finiteDimensional S) lo.toMatrix
+    (Submodule.isComplete_of_finiteDimensional S) lo.toMatrix
   obtain ⟨K', rfl⟩ := hv
   refine ⟨K', fun K'' => ?_⟩
   rw [fixResidual_eq, fixResidual_eq, norm_sub_rev, norm_sub_rev (K'' * _)]

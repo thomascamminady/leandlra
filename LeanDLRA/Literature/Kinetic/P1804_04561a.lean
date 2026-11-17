@@ -370,7 +370,7 @@ private lemma integrable_smul_gauss (d : ℕ) :
       (f := fun w : Vel d => Real.exp (-‖w‖ ^ 2 / 4)) (.of_integral_ne_zero ?_) 2
     rw [h]
     exact (Real.rpow_pos_of_pos (by have := Real.pi_pos; positivity) _).ne'
-  haveI : ContinuousSMul ℝ (Vel d) := IsBoundedSMul.continuousSMul
+  have : ContinuousSMul ℝ (Vel d) := IsBoundedSMul.continuousSMul
   refine hint.mono' (by fun_prop) (.of_forall fun w => ?_)
   rw [norm_smul, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
   have h1 : ‖w‖ ^ 2 / 4 + 1 ≤ Real.exp (‖w‖ ^ 2 / 4) := Real.add_one_le_exp _
@@ -813,7 +813,7 @@ theorem maxwellian_not_low_rank {d : ℕ} (hd : 0 < d) {ρ₀ δ : ℝ} (hρ : �
     have h2 : δ / 2 ≠ 0 := by positivity
     have h3 : ((r : ℝ) + 1) ≠ 0 := by positivity
     have := mul_left_cancel₀ h2 hkl
-    have h4 := (div_left_inj' h3).1 this
+    have h4 := (div_left_inj₀ h3).1 this
     exact Fin.ext (by exact_mod_cast h4)
   set g : Fin (r + 1) → Vel d → ℝ := fun k v => maxwellian ρ₀ (a k • e) v with hg
   have hmem : ∀ k, g k ∈ Submodule.span ℝ (Set.range fun (x : Metric.ball (0 : Vel d) δ) v =>
@@ -2941,8 +2941,8 @@ theorem kStep_nonvacuous (D : Fin d → Matrix m m ℝ) (ξ : n → Vel d) {V : 
       (Frobenius.rightMulCLM Φ) (fun μ => μ * Ψ)) m₀ 0 τ ∧ m₀ 0 = K₀ * Vᵀ * Φ) ∧
     ∀ ε : ℝ, ∃ K : ℝ → Matrix m r ℝ,
       ODESolution (MatrixKSL.kField V (bgkField D ξ (fun f => f * Φ * Ψ) ε)) K 0 τ ∧ K 0 = K₀ := by
-  have : CompleteSpace (Matrix m q ℝ) := FiniteDimensional.complete ℝ _
-  have : CompleteSpace (Matrix m r ℝ) := FiniteDimensional.complete ℝ _
+  have : CompleteSpace (Matrix m q ℝ) := FiniteDimensional.completeSpace ℝ _
+  have : CompleteSpace (Matrix m r ℝ) := FiniteDimensional.completeSpace ℝ _
   refine ⟨fun μ => ?_, ?_, fun ε => ?_⟩
   · have e : μ * Ψ * V * Vᵀ * Φ = μ * Ψ * (V * Vᵀ * Φ) := by simp only [Matrix.mul_assoc]
     rw [e, hΦ, Matrix.mul_assoc, hΨ, Matrix.mul_one]
@@ -2974,8 +2974,8 @@ theorem lStep_nonvacuous (D : Fin d → Matrix m m ℝ) (ξ : n → Vel d) {X : 
     ∀ ε : ℝ, ∃ Lf : ℝ → Matrix n r ℝ,
       ODESolution (MatrixKSL.lField X (bgkField D ξ (fun f => f * Φ * Ψ) ε)) Lf 0 τ ∧
         Lf 0 = L₀ := by
-  have : CompleteSpace (Matrix m q ℝ) := FiniteDimensional.complete ℝ _
-  have : CompleteSpace (Matrix n r ℝ) := FiniteDimensional.complete ℝ _
+  have : CompleteSpace (Matrix m q ℝ) := FiniteDimensional.completeSpace ℝ _
+  have : CompleteSpace (Matrix n r ℝ) := FiniteDimensional.completeSpace ℝ _
   refine ⟨fun μ => by rw [Matrix.mul_assoc, hΨ, Matrix.mul_one], ?_, fun ε => ?_⟩
   · set B : Matrix m q ℝ →L[ℝ] Matrix m q ℝ := (Frobenius.rightMulCLM Φ).comp ((leftProj X).comp
       ((-transport D ξ).comp ((leftProj X).comp (Frobenius.rightMulCLM Ψ)))) with hB
@@ -3003,7 +3003,7 @@ theorem sStep_nonvacuous (D : Fin d → Matrix m m ℝ) (ξ : n → Vel d) (X : 
     ∃ S : ℝ → Matrix r r ℝ,
       ODESolution (MatrixKSL.sField X V (bgkField D ξ (fun f => f * Φ * Ψ) ε)) S 0 τ ∧
         S 0 = S₀ := by
-  have : CompleteSpace (Matrix r r ℝ) := FiniteDimensional.complete ℝ _
+  have : CompleteSpace (Matrix r r ℝ) := FiniteDimensional.completeSpace ℝ _
   set Fc : Matrix m n ℝ →L[ℝ] Matrix m n ℝ := -transport D ξ +
     ε⁻¹ • (Frobenius.rightMulCLM (Φ * Ψ) - 1) with hFc
   set B : Matrix r r ℝ →L[ℝ] Matrix r r ℝ := -((Frobenius.rightMulCLM V).comp

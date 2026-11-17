@@ -1649,7 +1649,7 @@ private theorem cx₀_orth : cx₀ᵀ * cx₀ = 1 := by
 private theorem cv₀_orth : cv₀ᵀ * cv₀ = 1 := by
   ext i j
   simp [Matrix.mul_apply, Fin.sum_univ_two, cv₀, Subsingleton.elim i j,
-      Function.swap, Matrix.vecHead, Matrix.vecTail]
+      Function.swap]
   norm_num
 
 /-- The initial value `u⁰` of the counterexample, entrywise. -/
