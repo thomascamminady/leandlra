@@ -231,38 +231,75 @@ section Examples
 
 open TTKSLExample
 
-/-- Non-vacuity of `IsTTKSLStep.local_error`: three cores, the constant field `c ≠ 0`
-(`L = 1`, `B = ‖c‖`, `ε = 1`), one step of size `1` from `c`. -/
-example : ‖((1 : ℝ) • c 3 + (1 : ℝ) • c 3) - ((1 : ℝ) • c 3 + (1 : ℝ) • c 3)‖ ≤
-    (∑ j ∈ Finset.range (3 - 1), (2 + 3 * 1 * 1 : ℝ) ^ j) * (1 * (11 * 1 * ‖c 3‖ * 1 + 1)) :=
-  (isTTKSLStep (d := 3) (by norm_num) 1 0 1).local_error (L := 1) (B := ‖c 3‖) (ε := 1)
-    (A := fun t : ℝ => (1 : ℝ) • c 3 + t • c 3)
-    (fun _ _ _ => by simp) zero_le_one (fun _ _ => le_rfl) (fun _ => continuous_const)
-    (fun k hk _ _ => by simp [ttRightProj_c (show k + 1 ≤ 3 by omega)]) (by norm_num)
-    zero_le_one (Exactness.odeSolution_add_smul_of_const (fun _ _ => rfl) _ 0 1) rfl
-    (by norm_num)
+/-- The doubly normal parts of the field `c + n` of `TTKSLExample` at the substep values: `n` at
+the first inner bond and `0` at the second. -/
+private theorem norm_doublyNormal_le (k : ℕ) (hk : k + 1 < 3) :
+    ‖(1 - ttLeftProj newCores (k + 1))
+      ((1 - ttRightProj oldCores (k + 1)) (drift + normalDrift))‖ ≤ ‖normalDrift‖ := by
+  obtain rfl | rfl : k = 0 ∨ k = 1 := by omega
+  · change ‖(1 - ttLeftProj newCores 1) ((1 - ttRightProj oldCores 1) (drift + normalDrift))‖ ≤
+      ‖normalDrift‖
+    have h1 : (1 - ttRightProj oldCores 1) (drift + normalDrift) = normalDrift := by
+      rw [_root_.sub_apply, one_apply_eq_self, map_add, ttRightProj_one_drift,
+        ttRightProj_one_normalDrift, add_zero, add_sub_cancel_left]
+    rw [h1, _root_.sub_apply, one_apply_eq_self, ttLeftProj_one_normalDrift, sub_zero]
+  · change ‖(1 - ttLeftProj newCores 2) ((1 - ttRightProj oldCores 2) (drift + normalDrift))‖ ≤
+      ‖normalDrift‖
+    have h2 : (1 - ttRightProj oldCores 2) (drift + normalDrift) = 0 := by
+      rw [_root_.sub_apply, one_apply_eq_self, map_add, ttRightProj_two_drift,
+        ttRightProj_two_normalDrift, sub_self]
+    rw [h2, map_zero, norm_zero]
+    exact norm_nonneg _
 
-/-- Non-vacuity of `tt_ksl_global_error`: two steps of size `1` with the data of the example
-above, `Y n = c + n c`, and `δ = 1`. -/
-example : ∀ n : ℕ, n ≤ 2 → (n : ℝ) * 1 ≤ 2 →
-    ‖((1 : ℝ) • c 3 + (0 + (n : ℝ) * 1) • c 3) - ((1 : ℝ) • c 3 + (0 + (n : ℝ) * 1) • c 3)‖ ≤
-      Real.exp (1 * 2) * 1 +
-        2 * Real.exp (1 * 2) * (∑ j ∈ Finset.range (3 - 1), (2 + 3 * 1 * 1 : ℝ) ^ j) * 1 +
-        11 * 1 * ‖c 3‖ * 2 * Real.exp (1 * 2) *
-          (∑ j ∈ Finset.range (3 - 1), (2 + 3 * 1 * 1 : ℝ) ^ j) * 1 :=
-  tt_ksl_global_error (F := fun _ _ => c 3) (L := 1) (B := ‖c 3‖) (ε := 1) (t₀ := 0) (h := 1)
-    (H := 1) (N := 2) (δ := 1) (T := 2) (A := fun t : ℝ => (1 : ℝ) • c 3 + t • c 3)
-    (U := fun _ => cores 3) (V := fun _ => cores 3)
-    (Y := fun n : ℕ => (1 : ℝ) • c 3 + (0 + (n : ℝ) * 1) • c 3)
-    (YK := fun _ _ t => (1 : ℝ) • c 3 + t • c 3)
-    (YS := fun n _ t => ((1 : ℝ) • c 3 + (0 + ((n : ℝ) + 1) * 1) • c 3 +
-      (0 + (n : ℝ) * 1) • c 3) + t • -c 3)
-    (fun _ _ _ => by simp) zero_le_one (fun _ _ => le_rfl) (fun _ => continuous_const)
-    zero_le_one zero_le_one le_rfl (Exactness.odeSolution_add_smul_of_const (fun _ _ => rfl) _ _ _)
-    (fun n _ => isTTKSLStep (by norm_num) 1 _ _)
-    (fun n _ => by simp only [Nat.cast_succ])
-    (fun _ _ k hk _ _ => by simp [ttRightProj_c (show k + 1 ≤ 3 by omega)]) (by simp)
-    (by norm_num)
+/-- The numerical solution of the example misses the exact solution `A(t) = A(0) + t (c + n)`
+of the field `c + n` by `-n` after one step. -/
+example : ((3 / 5 : ℝ) • tt newCores + (1 : ℝ) • ((22 / 5 : ℝ) • tt newCores)) -
+    (tt oldCores + (1 : ℝ) • (drift + normalDrift)) = -normalDrift := by
+  have h := tt_oldCores_add_drift
+  rw [← eq_sub_iff_add_eq] at h
+  rw [h]
+  module
+
+/-- Non-vacuity of `IsTTKSLStep.local_error`, with an error that is not zero: the step of
+`TTKSLExample` on `ℝ² ⊗ ℝ² ⊗ ℝ²` for the constant field `c + n` (`L = 0`, `B = ‖c + n‖`), whose
+doubly normal part at the first inner bond is `n ≠ 0` (`ε = ‖n‖`), `h = 1`. The left-hand side
+is `‖n‖` (previous example), the right-hand side `c₃(1) ‖n‖ = 3 ‖n‖`. -/
+example : ‖((3 / 5 : ℝ) • tt newCores + (1 : ℝ) • ((22 / 5 : ℝ) • tt newCores)) -
+      (tt oldCores + (1 : ℝ) • (drift + normalDrift))‖ ≤
+    (∑ j ∈ Finset.range (3 - 1), (2 + 3 * 0 * 1 : ℝ) ^ j) *
+      (1 * (11 * 0 * ‖drift + normalDrift‖ * 1 + ‖normalDrift‖)) :=
+  isTTKSLStep_drift_add_normalDrift.local_error (L := 0) (B := ‖drift + normalDrift‖)
+    (ε := ‖normalDrift‖) (h := 1) (A := fun t => tt oldCores + t • (drift + normalDrift))
+    (fun _ _ _ => by simp) le_rfl (fun _ _ => le_rfl) (fun _ => continuous_const)
+    (fun k hk _ _ => norm_doublyNormal_le k hk) (by norm_num) zero_le_one
+    (Exactness.odeSolution_add_smul_of_const (fun _ _ => rfl) _ 0 1) (by simp) (by norm_num)
+
+/-- Non-vacuity of `tt_ksl_global_error`: one step of size `1` with the data of the example
+above, `δ = 0`. -/
+example : ∀ n : ℕ, n ≤ 1 → (n : ℝ) * 1 ≤ 1 →
+    ‖(if n = 0 then tt oldCores else kPath 2 1) -
+        (tt oldCores + (0 + (n : ℝ) * 1) • (drift + normalDrift))‖ ≤
+      Real.exp (0 * 1) * 0 +
+        1 * Real.exp (0 * 1) * (∑ j ∈ Finset.range (3 - 1), (2 + 3 * 0 * 1 : ℝ) ^ j) *
+          ‖normalDrift‖ +
+        11 * 0 * ‖drift + normalDrift‖ * 1 * Real.exp (0 * 1) *
+          (∑ j ∈ Finset.range (3 - 1), (2 + 3 * 0 * 1 : ℝ) ^ j) * 1 :=
+  tt_ksl_global_error (F := fun _ _ => drift + normalDrift) (L := 0)
+    (B := ‖drift + normalDrift‖) (ε := ‖normalDrift‖) (t₀ := 0) (h := 1) (H := 1) (N := 1)
+    (δ := 0) (T := 1) (A := fun t => tt oldCores + t • (drift + normalDrift))
+    (U := fun _ => newCores) (V := fun _ => oldCores)
+    (Y := fun n => if n = 0 then tt oldCores else kPath 2 1) (YK := fun _ => kPath)
+    (YS := fun _ => sPath)
+    (fun _ _ _ => by simp) le_rfl (fun _ _ => le_rfl) (fun _ => continuous_const)
+    (norm_nonneg _) zero_le_one le_rfl
+    (Exactness.odeSolution_add_smul_of_const (fun _ _ => rfl) _ _ _)
+    (fun n hn => by
+      obtain rfl : n = 0 := by omega
+      simpa using isTTKSLStep_drift_add_normalDrift)
+    (fun n hn => by
+      obtain rfl : n = 0 := by omega
+      norm_num)
+    (fun _ _ k hk _ _ => norm_doublyNormal_le k hk) (by simp) (by norm_num)
 
 end Examples
 
