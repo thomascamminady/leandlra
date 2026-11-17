@@ -41,8 +41,11 @@ integrator.
   norm. No bound for `γₙ`, `θₙ` in terms of the data is proved here. In particular the file
   does not show that the global error is small for a forcing of bounded variation.
 * For the step of `StiffCouplingExample` the bound holds with `γ = 0` and is attained for every
-  stiffness `λ` (the `example` at the end of the file), while the coupling numbers of that step
-  grow like `λ`.
+  stiffness `λ` (the first `example` at the end of the file), while the coupling numbers of that
+  step grow like `λ`.
+* Against the exact solution `decaySol λ` of the same field, which starts at `Y₀ + E₂₂` and
+  decays like `e^{-λ t}` in the stiff direction outside the Galerkin space, the hypotheses hold
+  with `γ = √λ`, so the energy term is not zero (the second `example`).
 
 ## Relation to the literature
 
@@ -257,6 +260,94 @@ example {lam h : ℝ} (hlam : 0 ≤ lam) (hh : 0 ≤ h) :
     norm_num
   · rw [hη, norm_smul, norm_D_sub_W, Real.norm_of_nonneg hh]
     linarith
+
+/-- The unit matrix `E₂₂` in the stiff column, outside the Galerkin space of `step`. -/
+def E₂₂ : Matrix (Fin 2) (Fin 3) ℝ := !![0, 0, 0; 0, 1, 0]
+
+/-- The exact solution `A(t) = Y₀ + t D + e^{-λ t} E₂₂` of the field of the example, which starts
+off the start value of `step` and decays in the stiff direction. -/
+noncomputable def decaySol (lam t : ℝ) : Matrix (Fin 2) (Fin 3) ℝ :=
+  Y₀ + t • D + Real.exp (-(lam * t)) • E₂₂
+
+private lemma E₂₂_mul_N₁ : E₂₂ * N₁ = -E₂₂ := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_three, E₂₂, N₁]
+
+private lemma U₀_transpose_mul_E₂₂ : U₀ᵀ * E₂₂ = 0 := by
+  ext i j
+  fin_cases i
+  fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two, U₀, E₂₂]
+
+private lemma norm_E₂₂ : ‖E₂₂‖ = 1 := by
+  have h1 : ‖E₂₂‖ ^ 2 = 1 ^ 2 := by
+    rw [Frobenius.norm_sq_eq_sum]
+    norm_num [E₂₂, Fin.sum_univ_two, Fin.sum_univ_three]
+  rw [← Real.sqrt_sq (norm_nonneg E₂₂), h1]
+  exact Real.sqrt_sq (by norm_num)
+
+/-- `decaySol lam` solves `Y' = Y (λ N₁) + (D - Y₀ (λ N₁))`. -/
+theorem odeSolution_decaySol (lam h : ℝ) : ODESolution (field lam) (decaySol lam) 0 h := by
+  have hd : ∀ t, HasDerivAt (decaySol lam) (D + (-lam * Real.exp (-(lam * t))) • E₂₂) t := by
+    intro t
+    have h1 : HasDerivAt (fun t : ℝ => Real.exp (-(lam * t))) (-lam * Real.exp (-(lam * t))) t :=
+      ((hasDerivAt_id t).const_mul lam).neg.exp.congr_deriv
+        (by simp only [Pi.neg_apply, id_eq]; ring)
+    have h2 := (((hasDerivAt_id t).smul_const D).const_add Y₀).add (h1.smul_const E₂₂)
+    rw [one_smul] at h2
+    exact h2
+  refine ⟨fun t _ => (hd t).continuousAt.continuousWithinAt, fun t _ => ?_⟩
+  convert (hd t).hasDerivWithinAt using 1
+  change decaySol lam t * (lam • N₁) + (D - Y₀ * (lam • N₁)) = _
+  rw [decaySol]
+  simp only [Matrix.add_mul, Matrix.smul_mul, Matrix.mul_smul, D_mul_N₁, E₂₂_mul_N₁, smul_zero,
+    add_zero]
+  module
+
+/-- **Non-vacuity of `IsRankAdaptiveBUGStep.stiff_energy_error` with `γ > 0`.** For the step
+`step` of the example, every stiffness `λ ≥ 0` and every `h ≥ 0`, against the exact solution
+`decaySol λ`, which starts at `Y₀ + E₂₂` and has the component `e^{-λ t} E₂₂` in the stiff
+direction outside the Galerkin space: the hypotheses hold with the energy
+`-⟪𝓛 η, η⟫ = λ e^{-2 λ t} ≤ λ = γ²`, `θ = 4 h + 1` and `ϑ = 0`. -/
+example {lam h : ℝ} (hlam : 0 ≤ lam) (hh : 0 ≤ h) :
+    ‖(Y₀ + h • W) - decaySol lam h‖
+      ≤ ‖Y₀ - decaySol lam 0‖ + √lam * √((h - 0) / 2) + (4 * h + 1) + 0 := by
+  have hE : U₀ * U₀ᵀ * (E₂₂ * (Va * Vaᵀ)) = 0 := by
+    rw [Matrix.mul_assoc U₀, ← Matrix.mul_assoc U₀ᵀ, U₀_transpose_mul_E₂₂, Matrix.zero_mul,
+      Matrix.mul_zero]
+  have hη : ∀ t : ℝ, decaySol lam t - (leftProj U₀ * rightProj Va :
+      Matrix (Fin 2) (Fin 3) ℝ →L[ℝ] Matrix (Fin 2) (Fin 3) ℝ) (decaySol lam t) =
+      t • (D - W) + Real.exp (-(lam * t)) • E₂₂ := by
+    intro t
+    change decaySol lam t - U₀ * U₀ᵀ * (decaySol lam t * (Va * Vaᵀ)) = _
+    rw [decaySol, Matrix.add_mul, Matrix.add_mul, Matrix.smul_mul, Matrix.smul_mul, Y₀_mul_Va,
+      D_mul_Va, Matrix.mul_add, Matrix.mul_add, Matrix.mul_smul, Matrix.mul_smul, U₀_mul_Y₀,
+      U₀_mul_D, hE, smul_zero, add_zero, smul_sub]
+    abel
+  refine (step lam h).stiff_energy_error (g := fun _ => D - Y₀ * (lam • N₁))
+    (𝓛 := stiffOp lam) (A := decaySol lam) (fun _ _ => rfl) (stiffOp_symm lam)
+    (stiffOp_dissipative hlam) hh (odeSolution_decaySol lam h) (Real.sqrt_nonneg _)
+    (fun t ht => ?_) ?_
+  · rw [hη]
+    change -⟪(t • (D - W) + Real.exp (-(lam * t)) • E₂₂) * (lam • N₁),
+      t • (D - W) + Real.exp (-(lam * t)) • E₂₂⟫ ≤ √lam ^ 2
+    rw [Matrix.mul_smul, real_inner_smul_left, inner_mul_N₁, Real.sq_sqrt hlam]
+    have he0 : 0 ≤ Real.exp (-(lam * t)) := (Real.exp_pos _).le
+    have he1 : Real.exp (-(lam * t)) ≤ 1 :=
+      Real.exp_le_one_iff.2 (neg_nonpos.2 (mul_nonneg hlam ht.1))
+    simp [D, W, E₂₂]
+    nlinarith [mul_le_mul_of_nonneg_left (mul_le_mul he1 he1 he0 zero_le_one) hlam]
+  · rw [hη]
+    refine (norm_add_le _ _).trans ?_
+    rw [norm_smul, norm_smul, norm_D_sub_W, norm_E₂₂, Real.norm_of_nonneg hh,
+      Real.norm_of_nonneg (Real.exp_pos _).le, mul_one]
+    have : Real.exp (-(lam * h)) ≤ 1 :=
+      Real.exp_le_one_iff.2 (neg_nonpos.2 (mul_nonneg hlam hh))
+    linarith
+
+/-- The start error of the previous example is `‖Y₀ - (Y₀ + E₂₂)‖ = 1`. -/
+example (lam : ℝ) : ‖Y₀ - decaySol lam 0‖ = 1 := by
+  rw [decaySol, zero_smul, add_zero, mul_zero, neg_zero, Real.exp_zero, one_smul,
+    sub_add_cancel_left, norm_neg, norm_E₂₂]
 
 end StiffCouplingExample
 

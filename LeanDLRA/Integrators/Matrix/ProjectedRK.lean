@@ -5,19 +5,20 @@ import LeanDLRA.Integrators.Matrix.ProjectedEuler
 /-!
 # Projected Runge–Kutta methods for matrices: runs and global error
 
-The projected Runge–Kutta method of Kieri and Vandereycken with an explicit tableau `(a, b, c)`
-of `s` stages advances a matrix `Y₀` of rank at most `r` over `[t₀, t₁]`, `h = t₁ - t₀`, by
+The projected Runge–Kutta method of Kieri and Vandereycken [KieriVandereycken2019] with an
+explicit tableau `(a, b, c)` of `s` stages advances a matrix `Y₀` of rank at most `r` over
+`[t₀, t₁]`, `h = t₁ - t₀`, by
 
   `η_j = ℛ(Y₀ + h ∑_l a_{jl} P(η_l) F(t₀ + c_l h, η_l))`,
   `Y₁ = ℛ(Y₀ + h ∑_j b_j P(η_j) F(t₀ + c_j h, η_j))`
 
-(Kieri–Vandereycken 2019, eqs. (26), (27)), with tangent projectors `P(η_j) = tangentProj U_j V_j`
+([KieriVandereycken2019], eqs. (26), (27)), with tangent projectors `P(η_j) = tangentProj U_j V_j`
 at `η_j = U_j S_j V_jᵀ` and a `κ`-quasi-optimal retraction `ℛ` to the matrices of rank at most `r`.
 The stages `η_j` have rank at most `r`; the arguments of the retraction have rank at most `2 s r`.
 
 This file states the method as a step relation (`MatrixPRK.stepRel`), shows that it is a
 tube-local method, proves its local error near a reference solution and obtains the existence of
-runs and the global error bound (Kieri–Vandereycken 2019, Theorem 6) from
+runs and the global error bound ([KieriVandereycken2019], Theorem 6) from
 `StepMethod.IsTubeLocal.exists_run_norm_sub_le`.
 
 **Assumptions.** As for the projected Euler method (`MatrixProjEuler`): the field is Lipschitz
@@ -43,9 +44,9 @@ matrices of rank at most `r` (their (15)) is bounded by `distLR_flow_le_exp_of_t
 * `MatrixPRK.exists_stepRel`, `MatrixPRK.isTubeLocal_stepRel`: steps exist from every matrix of
   rank at most `r`, and the method is tube-local with margin constant `(1 + κ) α + 1`,
   `α = tabWeight a b`.
-* `MatrixPRK.stepRel.hasLocalError_of_tube` (local error, Kieri–Vandereycken 2019, Lemma 7 and
+* `MatrixPRK.stepRel.hasLocalError_of_tube` (local error, [KieriVandereycken2019], Lemma 7 and
   proof of Theorem 6): `h · localErrorConst a b L κ · (ε + ε e^{L h} + K h^{q'})`.
-* `MatrixPRK.exists_run_norm_sub_le` (Kieri–Vandereycken 2019, Theorem 6): runs exist, have rank
+* `MatrixPRK.exists_run_norm_sub_le` ([KieriVandereycken2019], Theorem 6): runs exist, have rank
   at most `r` and satisfy
   `‖Y n - A (t₀ + n h)‖ ≤ e^{L T} δ + T e^{L T} C (ε + ε e^{L h} + K h^{q'})`,
   `C = localErrorConst a b L κ`,
@@ -54,8 +55,7 @@ matrices of rank at most `r` (their (15)) is bounded by `distLR_flow_le_exp_of_t
 
 ## References
 
-* E. Kieri, B. Vandereycken, *Projection methods for dynamical low-rank approximation of
-  high-dimensional problems*, Comput. Methods Appl. Math. 19 (2019), §5.
+* [KieriVandereycken2019], §5
 -/
 
 open Set Finset
@@ -87,7 +87,7 @@ noncomputable def stageSum (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (c : 
     (S : Fin s → Matrix (Fin r) (Fin r) ℝ) (V : Fin s → Matrix n (Fin r) ℝ) : Matrix m n ℝ :=
   Y₀ + h • ∑ l, w l • stageDeriv F c t₀ h U S V l
 
-/-- **One step of the projected Runge–Kutta method** (Kieri–Vandereycken 2019, eqs. (26),
+/-- **One step of the projected Runge–Kutta method** ([KieriVandereycken2019], eqs. (26),
 (27)) with tableau `(a, b, c)` and a `κ`-quasi-optimal retraction to rank `r`:
 `stepRel F r κ a b c t₀ t₁ Y₀ Y₁` holds if there are stages `η_j = U_j S_j V_jᵀ` with orthonormal
 `U_j`, `V_j` such that, with `h = t₁ - t₀` and the projected stage derivatives
@@ -290,7 +290,7 @@ variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] {
   {b c : Fin s → ℝ} {Y₀ Y₁ : Matrix m n ℝ} {A : ℝ → Matrix m n ℝ} {a₀ b₀ ρ L B ε K : ℝ}
 
 /-- **Local error of a projected Runge–Kutta step near a reference solution**
-(Kieri–Vandereycken 2019, Lemma 7 and the proof of Theorem 6, with explicit constants and tube
+([KieriVandereycken2019], Lemma 7 and the proof of Theorem 6, with explicit constants and tube
 hypotheses). Let `F` be continuous, `L`-Lipschitz and bounded by `B` on the tube of radius `ρ`
 around a solution `A` over `[a₀, b₀]`, with normal part at most `ε` at the factored rank-`r`
 points of the tube. Let the tableau be explicit with nodes `0 ≤ c_j ≤ 1`, `κ ≥ 0`, and let the
@@ -485,7 +485,7 @@ theorem stepRel.hasLocalError_uniformGrid {k : ℕ} {Z₀ Z₁ : Matrix m n ℝ}
   rwa [hsub] at hloc
 
 /-- **Every run of the projected Runge–Kutta method satisfies the error bound**
-(Kieri–Vandereycken 2019, Theorem 6, for every run). Let `A` solve `Y' = F(t, Y)` on
+([KieriVandereycken2019], Theorem 6, for every run). Let `A` solve `Y' = F(t, Y)` on
 `[t₀, t₀ + N h]`, let `F` be `L`-Lipschitz and bounded by `B` on the tube of radius `ρ` around
 `A` (`DLRAProblem`), continuous there, with normal part at most `ε` at the factored rank-`r`
 points of the tube. Let the tableau be explicit with nodes in `[0, 1]`, `κ ≥ 0`, `0 ≤ h ≤ 1`,
@@ -531,7 +531,7 @@ theorem IsRun.norm_sub_le {Y : ℕ → Matrix m n ℝ}
   exact hstep.hasLocalError_uniformGrid ha hc hκ hP hcont hε hε₀ hh hh1 hj hZ₀ (by linarith) hK
     hq hqp hqb (hRK j hj Z₀ hZ₀ hnear)
 
-/-- **Existence and error bound for the projected Runge–Kutta method** (Kieri–Vandereycken 2019,
+/-- **Existence and error bound for the projected Runge–Kutta method** ([KieriVandereycken2019],
 Theorem 6, with explicit constants and tube hypotheses). Let `A` solve `Y' = F(t, Y)` on
 `[t₀, t₀ + N h]`, let `F` be `L`-Lipschitz and bounded by `B` on the tube of radius `ρ` around
 `A` (`DLRAProblem`), continuous there, with normal part at most `ε` at the factored rank-`r`
@@ -601,7 +601,7 @@ section Examples
 variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] {r : ℕ}
 
 /-- **Non-vacuity of `MatrixPRK.exists_run_norm_sub_le`**, for the projected Heun method (PRK2
-of Kieri–Vandereycken 2019, eq. (29): `a₂₁ = 1`, `b = (1/2, 1/2)`, `c = (0, 1)`; order `p = 2`,
+of [KieriVandereycken2019], eq. (29): `a₂₁ = 1`, `b = (1/2, 1/2)`, `c = (0, 1)`; order `p = 2`,
 stage order `q₂ = 1`, exponent `q' = 2`) and the constant field `F(t, Y) = G` with the solution
 `A(t) = C + (t - t₀) G`. The field is `0`-Lipschitz, bounded by `‖G‖`, and its normal part is
 at most `‖G‖`; the classical Heun step is exact for it, so `hRK` holds with `K = 0`. The projected
@@ -682,6 +682,119 @@ example (G C : Matrix m n ℝ) {κ : ℝ} (hκ : 1 ≤ κ) (hrm : r ≤ Fintype.
     (fun j => by fin_cases j <;> norm_num) hP
     (continuous_const : Continuous fun _ : ℝ × Matrix m n ℝ => G).continuousOn hε
     (norm_nonneg G) hκ hh hh1 hNT hrm hrn le_rfl (fun _ _ => le_rfl) le_rfl
+    (fun j hj _ => by fin_cases j <;> simp_all) hRK hY₀ (by simpa using hδ) (lt_add_one _)
+  exact ⟨Y, hY0, hrun, hbd⟩
+
+/-- **Non-vacuity of `MatrixPRK.exists_run_norm_sub_le` with `K > 0` and `L = 1`**, for the
+projected Heun method and the time-dependent field `F(t, Y) = 2t G` with the solution
+`A(t) = C + t² G` from `t₀ = 0`. The field does not depend on the state, so every `L ≥ 0` is a
+Lipschitz constant; the example takes `L = 1`. On `[0, T]` the field and its normal part are
+bounded by `2 T ‖G‖`. From every start `Z₀` the classical Heun step is exact (the trapezoidal
+rule integrates `2t` exactly), but its second stage `Z₀ + 2 t_k h G` misses the exact solution
+by `h² G`: `hRK` holds with `K = ‖G‖`, stage order `q₂ = 1` and `q' = 2`. -/
+example (G C : Matrix m n ℝ) {κ : ℝ} (hκ : 1 ≤ κ) (hrm : r ≤ Fintype.card m)
+    (hrn : r ≤ Fintype.card n) {h T δ : ℝ} {N : ℕ} (hh : 0 ≤ h) (hh1 : h ≤ 1)
+    (hNT : N * h ≤ T) {Y₀ : Matrix m n ℝ} (hY₀ : Y₀.rank ≤ r) (hδ : ‖Y₀ - C‖ ≤ δ) :
+    ∃ Y : ℕ → Matrix m n ℝ, Y 0 = Y₀ ∧
+      IsRun (stepRel (fun t _ => (2 * t) • G) r κ ![![0, 0], ![1, 0]] ![1 / 2, 1 / 2] ![0, 1])
+        (uniformGrid 0 h) N Y ∧
+      ∀ k ≤ N, (Y k).rank ≤ r ∧ ‖Y k - (C + (0 + k * h) ^ 2 • G)‖ ≤ Real.exp (1 * T) * δ +
+        T * Real.exp (1 * T) * (localErrorConst ![![0, 0], ![1, 0]] ![1 / 2, 1 / 2] 1 κ *
+          (2 * T * ‖G‖ + 2 * T * ‖G‖ * Real.exp (1 * h) + ‖G‖ * h ^ 2)) := by
+  have hT : 0 ≤ T := (mul_nonneg (Nat.cast_nonneg N) hh).trans hNT
+  -- the solutions of the field `2t G`, and their uniqueness
+  have aff : ∀ (y₀ : Matrix m n ℝ) (s₀ s₁ : ℝ),
+      ODESolution (fun t (_ : Matrix m n ℝ) => (2 * t) • G) (fun t => y₀ + (t ^ 2 - s₀ ^ 2) • G)
+        s₀ s₁ := fun y₀ s₀ s₁ =>
+    ⟨by fun_prop, fun t _ => by
+      have hd : HasDerivAt (fun t : ℝ => y₀ + (t ^ 2 - s₀ ^ 2) • G) ((2 * t) • G) t := by
+        simpa using (((hasDerivAt_pow 2 t).sub_const (s₀ ^ 2)).smul_const G).const_add y₀
+      exact hd.hasDerivWithinAt⟩
+  have hAsol : ODESolution (fun t (_ : Matrix m n ℝ) => (2 * t) • G) (fun t => C + t ^ 2 • G) 0
+      (0 + N * h) :=
+    ⟨by fun_prop, fun t _ => by
+      have hd : HasDerivAt (fun t : ℝ => C + t ^ 2 • G) ((2 * t) • G) t := by
+        simpa using ((hasDerivAt_pow 2 t).smul_const G).const_add C
+      exact hd.hasDerivWithinAt⟩
+  have hLip0 : IsLipschitzField (fun (t : ℝ) (_ : Matrix m n ℝ) => (2 * t) • G) 0 :=
+    fun _ _ _ => by simp
+  set R := Real.exp (1 * T) * δ + T * Real.exp (1 * T) *
+    (localErrorConst ![![0, 0], ![1, 0]] ![1 / 2, 1 / 2] 1 κ *
+      (2 * T * ‖G‖ + 2 * T * ‖G‖ * Real.exp (1 * h) + ‖G‖ * h ^ 2)) with hR
+  set ρ := R + ((1 + κ) * tabWeight ![![(0 : ℝ), 0], ![1, 0]] ![1 / 2, 1 / 2] + 3) *
+    (2 * T * ‖G‖) * h + 1 with hρ
+  have hP : DLRAProblem (fun t (_ : Matrix m n ℝ) => (2 * t) • G) (fun t => C + t ^ 2 • G) 0
+      (0 + N * h) ρ 1 (2 * T * ‖G‖) :=
+    ⟨hAsol, zero_le_one, by positivity, fun _ _ x y _ _ => by simp, fun t ht x _ => by
+      rw [norm_smul, Real.norm_of_nonneg (by linarith [ht.1])]
+      have : t ≤ T := by linarith [ht.2]
+      nlinarith [norm_nonneg G]⟩
+  have hε : FactoredNormalBoundOn (fun t (_ : Matrix m n ℝ) => (2 * t) • G) r
+      (tubeSet (fun t => C + t ^ 2 • G) 0 (0 + N * h) ρ) (2 * T * ‖G‖) :=
+    fun t U V S hU hV hmem => by
+      have h1 := factoredNormalBoundOn_linear (r := r) (0 : Matrix m m ℝ) (0 : Matrix n n ℝ)
+        ((2 * t) • G) (tubeSet (fun t => C + t ^ 2 • G) 0 (0 + N * h) ρ) t U V S hU hV hmem
+      simp only [Matrix.zero_mul, Matrix.transpose_zero, Matrix.mul_zero, zero_add] at h1
+      refine h1.trans ?_
+      rw [norm_smul, Real.norm_of_nonneg (by linarith [hmem.1.1])]
+      have : t ≤ T := by linarith [hmem.1.2]
+      nlinarith [norm_nonneg G]
+  have hRK : ∀ k < N, ∀ Z₀ : Matrix m n ℝ, Z₀.rank ≤ r → ‖Z₀ - (C + (0 + k * h) ^ 2 • G)‖ ≤ R →
+      ∀ (Zt : Fin 2 → Matrix m n ℝ) (zt : Matrix m n ℝ),
+      IsGalerkinRKStep (fun t (_ : Matrix m n ℝ) => (2 * t) • G) ![![0, 0], ![1, 0]]
+        ![1 / 2, 1 / 2] ![0, 1] (fun _ => 1) 1 (0 + k * h) h Z₀ Zt zt →
+      ∀ Φ : ℝ → Matrix m n ℝ, ODESolution (fun t (_ : Matrix m n ℝ) => (2 * t) • G) Φ
+        (0 + k * h) (0 + (k + 1) * h) → Φ (0 + k * h) = Z₀ →
+        (∀ j : Fin 2, 0 < j.val →
+          ‖Zt j - Φ (0 + k * h + (![0, 1] : Fin 2 → ℝ) j * h)‖ ≤
+            ‖G‖ * h ^ ((fun _ => 1) j + 1)) ∧
+        ‖zt - Φ (0 + (k + 1) * h)‖ ≤ ‖G‖ * h ^ (2 + 1) := by
+    intro k _ Z₀ _ _ Zt zt hs Φ hΦ hΦ₀
+    have huniq : ∀ t ∈ Icc (0 + k * h) (0 + (k + 1) * h),
+        Φ t = Z₀ + (t ^ 2 - (0 + k * h) ^ 2) • G := fun t ht =>
+      hΦ.eqOn (aff Z₀ _ _) hLip0 le_rfl (by rw [hΦ₀]; simp) ht
+    have hZt1 : Zt 1 = Z₀ + (2 * (0 + k * h) * h) • G := by
+      rw [hs.1 1]
+      simp only [Fin.sum_univ_two, one_apply_eq_self, Matrix.cons_val_zero, Matrix.cons_val_one]
+      module
+    have hzt : zt = Z₀ + (2 * (0 + k * h) * h + h ^ 2) • G := by
+      rw [hs.2]
+      simp only [Fin.sum_univ_two, one_apply_eq_self, Matrix.cons_val_zero, Matrix.cons_val_one]
+      module
+    have hk1 : (0 : ℝ) + k * h ≤ 0 + (k + 1) * h := by nlinarith
+    constructor
+    · intro j hj
+      fin_cases j
+      · simp at hj
+      · have hmem : 0 + k * h + (![0, 1] : Fin 2 → ℝ) 1 * h ∈
+            Icc ((0 : ℝ) + k * h) (0 + (k + 1) * h) := by
+          simp only [Matrix.cons_val_one, Matrix.cons_val_zero, one_mul]
+          constructor <;> linarith
+        simp only [Fin.mk_one] at hmem ⊢
+        rw [hZt1, huniq _ hmem]
+        calc _ = ‖(-(h ^ 2)) • G‖ := by
+              congr 1
+              simp only [Matrix.cons_val_one, Matrix.cons_val_zero]
+              module
+          _ = ‖G‖ * h ^ (1 + 1) := by
+              rw [norm_smul, norm_neg, Real.norm_of_nonneg (sq_nonneg h)]
+              ring
+          _ ≤ _ := le_rfl
+    · rw [hzt, huniq _ ⟨hk1, le_rfl⟩]
+      calc _ = ‖(0 : ℝ) • G‖ := by
+            congr 1
+            module
+        _ ≤ _ := by
+            rw [zero_smul, norm_zero]
+            positivity
+  obtain ⟨Y, hY0, hrun, hbd⟩ := exists_run_norm_sub_le (F := fun t _ => (2 * t) • G)
+    (A := fun t => C + t ^ 2 • G) (a := ![![0, 0], ![1, 0]]) (b := ![1 / 2, 1 / 2])
+    (c := ![0, 1]) (κ := κ) (K := ‖G‖) (q := fun _ => 1) (q₂ := 1) (p := 2) (q' := 2)
+    (fun i j hij => by fin_cases i <;> fin_cases j <;> simp_all)
+    (fun j => by fin_cases j <;> norm_num) hP
+    (Continuous.smul (continuous_const.mul continuous_fst) continuous_const :
+      Continuous fun p : ℝ × Matrix m n ℝ => (2 * p.1) • G).continuousOn hε
+    (by positivity) hκ hh hh1 hNT hrm hrn (norm_nonneg G) (fun _ _ => le_rfl) le_rfl
     (fun j hj _ => by fin_cases j <;> simp_all) hRK hY₀ (by simpa using hδ) (lt_add_one _)
   exact ⟨Y, hY0, hrun, hbd⟩
 

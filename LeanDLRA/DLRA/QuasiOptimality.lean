@@ -818,41 +818,125 @@ example :
       (X' := fun _ => e₁ * e₁ᵀ) one_pos le_rfl hF odeSolution_smul_e₁_add hμ hXc hX hbest hσ hd
       h0⟩
 
-/-- `dlra_norm_sub_truncation_le_integral` for `m = n = Fin 1`, `r = 1`, `A t = (1 + t) • 1`,
-`X = Y = A`, `U = V = 1`, `S = A`, `μ = ρ = 1` on `[0, 1]`: the truncation of a `1 × 1` matrix to
-rank `1` is the matrix itself, and `σ₀(A t) = 1 + t ≥ 1`. -/
+/-- The normal part `diag(0, 1/16)` of the truncation example. -/
+local notation "N₁₆" => (!![0, 0; 0, 1 / 16] : Matrix (Fin 2) (Fin 2) ℝ)
+
+private theorem smul_e₁_add_N₁₆ (t : ℝ) :
+    (1 + t) • (e₁ * e₁ᵀ) + N₁₆ = !![1 + t, 0; 0, 1 / 16] := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+
+private theorem smul_e₁_eq (t : ℝ) : (1 + t) • (e₁ * e₁ᵀ) = !![1 + t, 0; 0, 0] := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+
+private theorem norm_N₁₆_le : ‖N₁₆‖ ≤ 1 / 16 := by
+  have h : ‖N₁₆‖ ^ 2 = (1 / 16) ^ 2 := by
+    rw [Curvature.frob_sq]
+    norm_num [Fin.sum_univ_two]
+  exact (pow_le_pow_iff_left₀ (norm_nonneg _) (by norm_num) two_ne_zero).mp h.le
+
+/-- `σ₀(diag(c, 1/16)) ≥ c`: the matrix maps `e₁` to `c e₁`. -/
+private theorem le_singularValues_diag {c : ℝ} :
+    c ≤ (toEuclideanLin (!![c, 0; 0, 1 / 16] : Matrix (Fin 2) (Fin 2) ℝ)).singularValues 0 := by
+  rw [← EckartYoung.specNorm_eq_singularValues_zero]
+  have hs : toEuclideanLin (!![c, 0; 0, 1 / 16] : Matrix (Fin 2) (Fin 2) ℝ)
+      (EuclideanSpace.single 0 1) = EuclideanSpace.single 0 c := by
+    ext i
+    fin_cases i <;> simp [Matrix.toEuclideanLin, Matrix.toLpLin_apply]
+  have h := Curvature.norm_toEuclideanLin_le (!![c, 0; 0, 1 / 16] : Matrix (Fin 2) (Fin 2) ℝ)
+    (EuclideanSpace.single 0 1)
+  rw [hs] at h
+  exact (le_abs_self c).trans (by simpa using h)
+
+/-- **The rank-one truncation of `diag(c, 1/16)`, `c ≥ 1`**, is `diag(c, 0)`: the top right
+singular vector is `± e₁`, because `σ₀² ≥ c² > 1/256`. -/
+private theorem truncation_diag {c : ℝ} (hc : 1 ≤ c) :
+    EckartYoung.truncation (!![c, 0; 0, 1 / 16] : Matrix (Fin 2) (Fin 2) ℝ) 1 =
+      !![c, 0; 0, 0] := by
+  set A : Matrix (Fin 2) (Fin 2) ℝ := !![c, 0; 0, 1 / 16] with hA
+  have hAA : Aᵀ * A = !![c * c, 0; 0, 1 / 256] := by
+    rw [hA]
+    ext i j
+    fin_cases i <;> fin_cases j <;> norm_num [Matrix.mul_apply, Fin.sum_univ_two]
+  have hσ : c ≤ (toEuclideanLin A).singularValues 0 := le_singularValues_diag
+  let i0 : Fin (Module.finrank ℝ (EuclideanSpace ℝ (Fin 2))) := ⟨0, by simp⟩
+  let j0 : {i : Fin (Module.finrank ℝ (EuclideanSpace ℝ (Fin 2))) // (i : ℕ) < 1} :=
+    ⟨i0, Nat.zero_lt_one⟩
+  have hP : EckartYoung.topRightSingularVectors A 1 *
+      (EckartYoung.topRightSingularVectors A 1)ᵀ =
+      Matrix.of fun a b => EckartYoung.rightSingularVectors A i0 a *
+        EckartYoung.rightSingularVectors A i0 b := by
+    ext a b
+    rw [Matrix.mul_apply, Fintype.sum_eq_single j0]
+    · rfl
+    · intro x hx
+      exact absurd (Subtype.ext (Fin.ext (by have := x.2; change (x.1 : ℕ) = 0; omega))) hx
+  have hE := EckartYoung.transpose_mul_self_mulVec_rightSingularVectors A i0
+  rw [hAA] at hE
+  have hn : EckartYoung.rightSingularVectors A i0 0 ^ 2 +
+      EckartYoung.rightSingularVectors A i0 1 ^ 2 = 1 := by
+    have h1 := (EckartYoung.rightSingularVectors A).orthonormal.1 i0
+    have h2 : ‖EckartYoung.rightSingularVectors A i0‖ ^ 2 =
+        EckartYoung.rightSingularVectors A i0 0 ^ 2 +
+          EckartYoung.rightSingularVectors A i0 1 ^ 2 := by
+      rw [EuclideanSpace.norm_sq_eq, Fin.sum_univ_two]
+      simp [Real.norm_eq_abs, sq_abs]
+    rw [h1] at h2
+    linarith
+  have h1 := congrFun hE 1
+  simp only [mulVec, dotProduct, Fin.isValue, of_apply, cons_val', cons_val_fin_one,
+    cons_val_one, Fin.sum_univ_two, cons_val_zero, zero_mul, zero_add, Pi.smul_apply,
+    smul_eq_mul] at h1
+  have hσ' : c ≤ (toEuclideanLin A).singularValues ↑i0 := hσ
+  have hs2 : 1 ≤ (toEuclideanLin A).singularValues ↑i0 ^ 2 := by nlinarith
+  have hx1 : EckartYoung.rightSingularVectors A i0 1 = 0 := by
+    have hm : ((toEuclideanLin A).singularValues ↑i0 ^ 2 - 1 / 256) *
+        EckartYoung.rightSingularVectors A i0 1 = 0 := by
+      linear_combination (-1 : ℝ) * h1
+    rcases mul_eq_zero.1 hm with h | h
+    · linarith
+    · exact h
+  have hx00 : EckartYoung.rightSingularVectors A i0 0 *
+      EckartYoung.rightSingularVectors A i0 0 = 1 := by
+    rw [hx1] at hn
+    nlinarith
+  unfold EckartYoung.truncation
+  rw [Matrix.mul_assoc, hP]
+  generalize EckartYoung.rightSingularVectors A i0 = e at hx1 hx00 ⊢
+  rw [hA]
+  ext a b
+  fin_cases a <;> fin_cases b <;> simp [Matrix.mul_apply, Fin.sum_univ_two, hx1, hx00]
+
+/-- `dlra_norm_sub_truncation_le_integral` for `2 × 2` matrices, `r = 1`,
+`A t = (1 + t) e₁ e₁ᵀ + diag(0, 1/16)` on `[0, 1]` (`Ȧ = e₁ e₁ᵀ`, `μ = ρ = 1`): the truncation
+`X t = T₁(A t) = (1 + t) e₁ e₁ᵀ` differs from `A t` by `‖X t - A t‖ = 1/16 = ρ/16`, so the
+right-hand side is `16 e^{8t} t/16 > 0` for `t > 0`. Here `Ȧ` is tangent at `X t`, so the DLRA
+solution `Y = e₁ ((1 + t) • 1) e₁ᵀ` is `X` itself and the left-hand side is `0`. -/
 example : ∀ t ∈ Set.Icc (0 : ℝ) 1,
-    ‖(1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ) - (1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ)‖ ≤
+    ‖(1 + t) • (e₁ * e₁ᵀ) - (1 + t) • (e₁ * e₁ᵀ)‖ ≤
       2 * (8 * 1 / 1) * Real.exp (8 * 1 / 1 * t) * ∫ s in (0 : ℝ)..t,
-        ‖(1 + s) • (1 : Matrix (Fin 1) (Fin 1) ℝ) - (1 + s) • (1 : Matrix (Fin 1) (Fin 1) ℝ)‖ := by
-  have hA : ∀ t : ℝ, HasDerivAt (fun t : ℝ => (1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ)) 1 t :=
-    fun t => by
-      have h1 : HasDerivAt (fun x : ℝ => (1 : ℝ) + x) 1 t := (hasDerivAt_id t).const_add 1
-      simpa using h1.smul_const (1 : Matrix (Fin 1) (Fin 1) ℝ)
-  have hbound : ∀ t : ℝ, 0 ≤ t → ∀ w : EuclideanSpace ℝ (Fin 1),
-      1 * ‖w‖ ≤ ‖toEuclideanLin ((1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ)) w‖ := fun t ht w => by
-    rw [LinearEquiv.map_smul, toLpLin_one]
-    change 1 * ‖w‖ ≤ ‖(1 + t) • w‖
-    rw [norm_smul, Real.norm_eq_abs, abs_of_pos (by linarith)]
-    nlinarith [norm_nonneg w]
-  have hone : ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖ ≤ 1 := by
-    have h : ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖ ^ 2 = 1 := by
-      rw [Curvature.frob_sq]
-      simp
-    nlinarith [norm_nonneg (1 : Matrix (Fin 1) (Fin 1) ℝ)]
+        ‖(1 + s) • (e₁ * e₁ᵀ) - ((1 + s) • (e₁ * e₁ᵀ) + N₁₆)‖ := by
+  have hA : ∀ t : ℝ, HasDerivAt (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₁₆) (e₁ * e₁ᵀ) t :=
+    fun t => by simpa using (hasDerivAt_smul_e₁ t).add_const N₁₆
   refine dlra_norm_sub_truncation_le_integral (r := 1)
-    (A := fun t => (1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ))
-    (X := fun t => (1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ))
-    (Y := fun t => (1 + t) • (1 : Matrix (Fin 1) (Fin 1) ℝ)) (A' := fun _ => 1) (X' := fun _ => 1)
-    (U := fun _ => 1) (V := fun _ => 1) (S := fun t => (1 + t) • 1) one_pos one_pos
-    (fun t _ => hA t) (fun _ _ => hone) (fun t _ => ?_) (fun t _ => hA t)
-    (fun t ht => (SVD.forall_mul_norm_le_iff_fin one_pos _).mp (hbound t ht.1))
-    (fun _ _ => by norm_num) (fun t _ => ⟨by simp, by simp, by simp⟩)
-    ⟨fun s _ => (hA s).continuousAt.continuousWithinAt, fun s _ => ?_⟩ rfl
-  · exact (EckartYoung.truncation_eq_self ((rank_le_card_width _).trans (by simp))).symm
-  · have h := (hA s).hasDerivWithinAt (s := Ici s)
+    (A := fun t => (1 + t) • (e₁ * e₁ᵀ) + N₁₆) (X := fun t => (1 + t) • (e₁ * e₁ᵀ))
+    (Y := fun t => (1 + t) • (e₁ * e₁ᵀ)) (A' := fun _ => e₁ * e₁ᵀ) (X' := fun _ => e₁ * e₁ᵀ)
+    (U := fun _ => e₁) (V := fun _ => e₁) (S := fun t => (1 + t) • 1) one_pos one_pos
+    (fun t _ => hA t) (fun _ _ => norm_e₁_mul_le) (fun t ht => ?_)
+    (fun t _ => hasDerivAt_smul_e₁ t) (fun t ht => ?_) (fun t _ => ?_)
+    (fun t _ => ⟨e₁_transpose_mul_self, e₁_transpose_mul_self, smul_e₁_mul _⟩)
+    ⟨fun s _ => (hasDerivAt_smul_e₁ s).continuousAt.continuousWithinAt, fun s hs => ?_⟩ rfl
+  · rw [smul_e₁_add_N₁₆, truncation_diag (by linarith [ht.1]), smul_e₁_eq]
+  · change (1 : ℝ) ≤ (toEuclideanLin ((1 + t) • (e₁ * e₁ᵀ) + N₁₆)).singularValues 0
+    rw [smul_e₁_add_N₁₆]
+    exact le_trans (by linarith [ht.1]) le_singularValues_diag
+  · rw [sub_add_cancel_left, norm_neg]
+    exact norm_N₁₆_le
+  · have h := (hasDerivAt_smul_e₁ s).hasDerivWithinAt (s := Ici s)
     convert h using 1
-    simp [tangentProj_apply]
+    rw [← tangentProjAt_smul_e₁ (ne_of_gt (by linarith [hs.1] : (0 : ℝ) < 1 + s))]
+    exact (hyps_smul_e₁ hs.1).2.2.2.2
 
 end Examples
 

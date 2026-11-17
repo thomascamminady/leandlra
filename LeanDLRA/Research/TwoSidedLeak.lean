@@ -844,13 +844,41 @@ theorem isRankAdaptiveStep_leakLeft (h : ℝ) :
   sStart := by simp [leakCurve]
   trunc := by simp
 
-/-- **Non-vacuity of `error_le_of_twoSided`** with a leaking two-sided term: the field
-`Y ↦ E₂₁ Y` written as `0 Y + Y 0 + E₂₁ Y 1`, the step of `isRankAdaptiveStep_leakLeft`, the exact
-solution `(1, t)ᵀ`, the auxiliary flows `P = 1`, `Z = 0`, `Q = e₁`, `Zr(t) = t e₂`, and the
-increment constants `κ = ‖e₂‖`, `κ₂ = π = 0`.  The leak of `C` is `‖e₂‖ = 1` (`leak_leakLeft`). -/
-example (h : ℝ) (hh : 0 ≤ h) : ∃ θ : ℝ,
+private theorem norm_leakLeft : ‖leakLeft‖ = 1 := by
+  have h1 : ‖leakLeft‖ ^ 2 = 1 ^ 2 := by
+    rw [Frobenius.norm_sq_eq_sum]
+    norm_num [leakLeft, Fin.sum_univ_two]
+  rw [← Real.sqrt_sq (norm_nonneg leakLeft), h1]
+  exact Real.sqrt_sq (by norm_num)
+
+private theorem norm_leakDir : ‖leakDir‖ = 1 := by
+  have h1 : ‖leakDir‖ ^ 2 = 1 ^ 2 := by
+    rw [Frobenius.norm_sq_eq_sum]
+    norm_num [leakDir, Fin.sum_univ_two]
+  rw [← Real.sqrt_sq (norm_nonneg leakDir), h1]
+  exact Real.sqrt_sq (by norm_num)
+
+private theorem norm_one_fin_one : ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖ = 1 := by
+  have h1 : ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖ ^ 2 = 1 ^ 2 := by
+    rw [Frobenius.norm_sq_eq_sum]
+    simp
+  rw [← Real.sqrt_sq (norm_nonneg (1 : Matrix (Fin 1) (Fin 1) ℝ)), h1]
+  exact Real.sqrt_sq (by norm_num)
+
+/-- **Non-vacuity of `error_le_of_twoSided`** with a leaking two-sided term and the constants
+written out: the field `Y ↦ E₂₁ Y` written as `0 Y + Y 0 + E₂₁ Y 1` (`L = ‖E₂₁‖ = 1`), the step
+of `isRankAdaptiveStep_leakLeft`, the exact solution `(1, t)ᵀ`, the auxiliary flows `P = 1`,
+`Z = 0`, `Q = e₁`, `Zr(t) = t e₂`, the bounds `a = b = 0`, `c = δ = σ = 1`, `κ = ‖e₂‖ = 1`,
+`κ₂ = π = 0`, the normal component `ε₀ = 0`, the leaks `ν_C = ℓ_C = 1` (`leak_leakLeft`) and
+`ν_D = ℓ_D = 0`, `Γ₁ = 3`, `Γ₂ = 1`, hence `θ = 2 h e^{h} (3 h + h²)`. Here the augmented basis
+`Û = I₂` is the whole space and the step is exact, so the left-hand side is `0`: the example
+shows that the hypotheses hold with a leak `ν_C = 1`, not that the bound is attained. -/
+example (h : ℝ) (hh : 0 ≤ h) :
     ‖(1 : Matrix (Fin 2) (Fin 2) ℝ) * leakCurve h * (1 : Matrix (Fin 1) (Fin 1) ℝ)ᵀ - leakCurve h‖
-      ≤ (Real.exp (‖leakLeft‖ * h) - 1) * (θ + 0 * h ^ 2) + θ + 0 := by
+      ≤ (Real.exp (‖leakLeft‖ * h) - 1) *
+          (2 * (h * Real.exp (‖leakLeft‖ * h) * (0 + h * 3 * (1 + 0 + 1 * 0) + h ^ 2 * 1)) +
+            0 * h ^ 2) +
+        2 * (h * Real.exp (‖leakLeft‖ * h) * (0 + h * 3 * (1 + 0 + 1 * 0) + h ^ 2 * 1)) + 0 := by
   have hcurve : (fun t => leakLeft * leakCurve t) = fun _ => leakDir :=
     funext leakLeft_mul_leakCurve
   have hinc : ∀ t ∈ Icc (0 : ℝ) h,
@@ -858,11 +886,12 @@ example (h : ℝ) (hh : 0 ≤ h) : ∃ θ : ℝ,
     fun t ht => by
       rw [Matrix.mul_one, leakCurve, add_sub_cancel_left, norm_smul, Real.norm_of_nonneg ht.1,
         sub_zero, mul_comm]
-  refine ⟨_, error_le_of_twoSided (F := fun _ Y => leakLeft * Y) (𝒜 := 0) (ℬ := 0)
+  have hV : (1 : Matrix (Fin 1) (Fin 1) ℝ) - 1 * (1 : Matrix (Fin 1) (Fin 1) ℝ)ᵀ = 0 := by simp
+  exact error_le_of_twoSided (F := fun _ Y => leakLeft * Y) (𝒜 := 0) (ℬ := 0)
     (C := leakLeft) (D := 1) (A := leakCurve) (P := fun _ => 1) (Z := fun _ => 0)
     (Q := fun _ => leakStart) (Zr := fun t => t • leakDir) (a₂ := fun _ => 0) (M₂ := 0)
-    (a := 0) (b := 0) (c := ‖leakLeft‖) (δ := ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖)
-    (σ := ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖) (κ := ‖leakDir‖) (κ₂ := 0) (π := 0)
+    (a := 0) (b := 0) (c := 1) (δ := 1) (σ := 1) (κ := ‖leakDir‖) (κ₂ := 0) (π := 0)
+    (ε₀ := 0) (νC := 1) (νD := 0) (ℓC := 1) (ℓD := 0) (Γ₁ := 3) (Γ₂ := 1)
     (fun _ Y => by simp) isLipschitzField_leakLeft (norm_nonneg _) (zero_add h).symm hh
     (isRankAdaptiveStep_leakLeft h)
     (odeSolution_of_hasDerivAt hasDerivAt_leakCurve leakLeft_mul_leakCurve h)
@@ -884,13 +913,23 @@ example (h : ℝ) (hh : 0 ≤ h) : ∃ θ : ℝ,
     (fun s _ => by
       show HasDerivWithinAt (fun t => leakLeft * leakCurve t) 0 _ s
       rw [hcurve]; exact hasDerivWithinAt_const _ _ _)
-    (fun _ _ => by simp) (by simp) (by simp) le_rfl le_rfl le_rfl (norm_nonneg _) le_rfl le_rfl
+    (fun _ _ => by simp) (by simp) (by simp) norm_leakLeft.le norm_one_fin_one.le
+    norm_one_fin_one.le (norm_nonneg _) le_rfl le_rfl
     hinc
     (fun t _ => by simp [kField, leakLeft_mul_leakStart, leakCurve])
     (fun t ht => by simpa using mul_nonneg (norm_nonneg leakDir) ht.1)
     (fun t _ => by simp [lField_leak])
-    (fun t _ => by simp) (fun t _ => by simp) le_rfl le_rfl le_rfl le_rfl le_rfl
-    (le_max_left _ _) (le_max_left _ _) (le_max_right _ _) (le_max_right _ _) rfl⟩
+    (fun t _ => by simp) (fun t _ => by simp)
+    (by rw [hV, Matrix.mul_zero, norm_zero])
+    (by rw [leak_leakLeft, Matrix.mul_one, norm_leakDir])
+    (by rw [hV, Matrix.mul_zero, norm_zero])
+    (by rw [leak_leakLeft, norm_leakDir])
+    (by rw [hV, Matrix.mul_zero, norm_zero])
+    (by rw [norm_leakDir]; norm_num)
+    (by rw [norm_leakDir]; norm_num)
+    (by rw [norm_leakDir]; norm_num)
+    (by rw [norm_leakDir]; norm_num)
+    rfl
 
 end LeakExample
 

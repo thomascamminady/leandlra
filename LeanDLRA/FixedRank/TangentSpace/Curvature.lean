@@ -214,54 +214,85 @@ section Examples
 
 open scoped LeanDLRA.Frobenius
 
-/-- The `1 × 1` matrix `c • 1` with `c ≥ 1` has rank `1` and `σ₀ ≥ 1`. -/
-private theorem rank_and_singularValues_smul_one {c : ℝ} (hc : 1 ≤ c) :
-    ((c • 1 : Matrix (Fin 1) (Fin 1) ℝ)).rank = 1 ∧
-      (1 : ℝ) ≤ (toEuclideanLin (c • 1 : Matrix (Fin 1) (Fin 1) ℝ)).singularValues (1 - 1) := by
-  have hc0 : c ≠ 0 := by positivity
-  refine ⟨?_, ?_⟩
-  · have hu : IsUnit (c • 1 : Matrix (Fin 1) (Fin 1) ℝ) := by
-      rw [Matrix.isUnit_iff_isUnit_det, det_smul, det_one, mul_one, Fintype.card_fin, pow_one]
-      exact isUnit_iff_ne_zero.mpr hc0
-    simpa using rank_of_isUnit _ hu
-  · refine (SVD.forall_mul_norm_le_iff_fin one_pos _).mp fun v => ?_
-    rw [LinearEquiv.map_smul, toLpLin_one]
-    change 1 * ‖v‖ ≤ ‖c • v‖
-    rw [norm_smul, Real.norm_eq_abs, abs_of_pos (by linarith)]
-    nlinarith [norm_nonneg v]
+/-- The first unit column of `ℝ²`. -/
+local notation "col₁" => (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)
+
+/-- The unit column `v = (3/5, 4/5)ᵀ` of `ℝ²`. -/
+local notation "v₁" => (!![3 / 5; 4 / 5] : Matrix (Fin 2) (Fin 1) ℝ)
+
+private theorem col₁_transpose_mul_self : col₁ᵀ * col₁ = 1 := by
+  ext i j
+  fin_cases i
+  fin_cases j
+  simp [Matrix.mul_apply, Fin.sum_univ_two]
+
+private theorem v₁_transpose_mul_self : v₁ᵀ * v₁ = 1 := by
+  ext i j
+  fin_cases i
+  fin_cases j
+  norm_num [Matrix.mul_apply, Fin.sum_univ_two]
+
+/-- `c e₁ e₁ᵀ` has rank `1` for `c ≠ 0`. -/
+private theorem rank_smul_col₁ {c : ℝ} (hc : c ≠ 0) : (c • (col₁ * col₁ᵀ)).rank = 1 :=
+  (SVD.rank_eq_iff_exists_factor _).2 ⟨col₁, c • 1, col₁, col₁_transpose_mul_self,
+    col₁_transpose_mul_self, by
+      rw [det_smul, det_one, mul_one, Fintype.card_fin, pow_one]
+      exact isUnit_iff_ne_zero.mpr hc,
+    by rw [Matrix.mul_smul, Matrix.mul_one, Matrix.smul_mul]⟩
+
+/-- `v vᵀ` has rank `1`. -/
+private theorem rank_v₁ : (v₁ * v₁ᵀ).rank = 1 :=
+  (SVD.rank_eq_iff_exists_factor _).2 ⟨v₁, 1, v₁, v₁_transpose_mul_self, v₁_transpose_mul_self,
+    by simp, by rw [Matrix.mul_one]⟩
+
+/-- `σ₀(c e₁ e₁ᵀ) ≥ 1` for `c ≥ 1`: the matrix maps `e₁` to `c e₁`. -/
+private theorem one_le_singularValues_smul_col₁ {c : ℝ} (hc : 1 ≤ c) :
+    (1 : ℝ) ≤ (toEuclideanLin (c • (col₁ * col₁ᵀ))).singularValues (1 - 1) := by
+  have hm : c • (col₁ * col₁ᵀ) = !![c, 0; 0, 0] := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [Matrix.vecMul, dotProduct]
+  rw [hm, Nat.sub_self, ← EckartYoung.specNorm_eq_singularValues_zero]
+  have hs : toEuclideanLin (!![c, 0; 0, 0] : Matrix (Fin 2) (Fin 2) ℝ)
+      (EuclideanSpace.single 0 1) = EuclideanSpace.single 0 c := by
+    ext i
+    fin_cases i <;> simp [Matrix.toEuclideanLin, Matrix.toLpLin_apply]
+  have h := Curvature.norm_toEuclideanLin_le (!![c, 0; 0, 0] : Matrix (Fin 2) (Fin 2) ℝ)
+    (EuclideanSpace.single 0 1)
+  rw [hs] at h
+  simp at h
+  linarith [le_abs_self c]
 
 /-- `norm_tangentProj_sub_tangentProjAt_le`, `norm_tangentProjAt_sub_le` and
-`norm_one_sub_tangentProjAt_apply_sub_le` apply to `X = 1`, `Y = 2 • 1` (`1 × 1`, `r = 1`,
-`ρ = 1`, `‖Y - X‖ = 1`). -/
-example (B : Matrix (Fin 1) (Fin 1) ℝ) :
-    ‖tangentProj (1 : Matrix (Fin 1) (Fin 1) ℝ) (1 : Matrix (Fin 1) (Fin 1) ℝ) B -
-        tangentProjAt ((1 : ℝ) • 1) B‖ ≤
-      2 * 1⁻¹ * ‖(1 : Matrix (Fin 1) (Fin 1) ℝ) * ((2 : ℝ) • 1) * 1ᵀ - (1 : ℝ) • 1‖ * ‖B‖ ∧
-    ‖tangentProjAt ((2 : ℝ) • 1) B - tangentProjAt ((1 : ℝ) • 1) B‖ ≤
-      2 * 1⁻¹ * ‖(2 : ℝ) • (1 : Matrix (Fin 1) (Fin 1) ℝ) - (1 : ℝ) • 1‖ * ‖B‖ ∧
-    ‖(1 - tangentProjAt ((2 : ℝ) • (1 : Matrix (Fin 1) (Fin 1) ℝ)))
-        ((2 : ℝ) • 1 - (1 : ℝ) • 1)‖ ≤
-      1⁻¹ * ‖(2 : ℝ) • (1 : Matrix (Fin 1) (Fin 1) ℝ) - (1 : ℝ) • 1‖ ^ 2 := by
-  obtain ⟨h1r, h1σ⟩ := rank_and_singularValues_smul_one (le_refl (1 : ℝ))
-  obtain ⟨h2r, -⟩ := rank_and_singularValues_smul_one (by norm_num : (1 : ℝ) ≤ 2)
-  exact ⟨norm_tangentProj_sub_tangentProjAt_le h1r one_pos h1σ (by simp) (by simp) _ B,
-    norm_tangentProjAt_sub_le h1r h2r one_pos h1σ B,
-    norm_one_sub_tangentProjAt_apply_sub_le h1r h2r one_pos h1σ⟩
+`norm_one_sub_tangentProjAt_apply_sub_le` at `X = e₁ e₁ᵀ` (`2 × 2`, `r = 1`, `ρ = 1`) and the
+rotated rank-one matrix `Y = v vᵀ`, `v = (3/5, 4/5)ᵀ` (factors `U = V = v`, `S = 1`). -/
+example (B : Matrix (Fin 2) (Fin 2) ℝ) :
+    ‖tangentProj v₁ v₁ B - tangentProjAt ((1 : ℝ) • (col₁ * col₁ᵀ)) B‖ ≤
+      2 * 1⁻¹ * ‖v₁ * (1 : Matrix (Fin 1) (Fin 1) ℝ) * v₁ᵀ - (1 : ℝ) • (col₁ * col₁ᵀ)‖ * ‖B‖ ∧
+    ‖tangentProjAt (v₁ * v₁ᵀ) B - tangentProjAt ((1 : ℝ) • (col₁ * col₁ᵀ)) B‖ ≤
+      2 * 1⁻¹ * ‖v₁ * v₁ᵀ - (1 : ℝ) • (col₁ * col₁ᵀ)‖ * ‖B‖ ∧
+    ‖(1 - tangentProjAt (v₁ * v₁ᵀ)) (v₁ * v₁ᵀ - (1 : ℝ) • (col₁ * col₁ᵀ))‖ ≤
+      1⁻¹ * ‖v₁ * v₁ᵀ - (1 : ℝ) • (col₁ * col₁ᵀ)‖ ^ 2 :=
+  ⟨norm_tangentProj_sub_tangentProjAt_le (rank_smul_col₁ one_ne_zero) one_pos
+      (one_le_singularValues_smul_col₁ le_rfl) v₁_transpose_mul_self v₁_transpose_mul_self 1 B,
+    norm_tangentProjAt_sub_le (rank_smul_col₁ one_ne_zero) rank_v₁ one_pos
+      (one_le_singularValues_smul_col₁ le_rfl) B,
+    norm_one_sub_tangentProjAt_apply_sub_le (rank_smul_col₁ one_ne_zero) rank_v₁ one_pos
+      (one_le_singularValues_smul_col₁ le_rfl)⟩
 
-/-- `mem_tangentSpaceAt_of_hasDerivWithinAt` for the moving curve `X u = (1 + u) • 1` on
-`s = [0, 1]` at `t = 0` (`r = 1`, `ρ = 1`, velocity `1`). -/
-example : (1 : Matrix (Fin 1) (Fin 1) ℝ) ∈ tangentSpaceAt (((1 : ℝ) + 0) • 1) := by
-  have hX : HasDerivWithinAt (fun u : ℝ => (1 + u) • (1 : Matrix (Fin 1) (Fin 1) ℝ)) 1
+/-- `mem_tangentSpaceAt_of_hasDerivWithinAt` for the curve `X u = (1 + u) e₁ e₁ᵀ` of rank-one
+`2 × 2` matrices on `s = [0, 1]` at `t = 0` (`r = 1`, `ρ = 1`, velocity `e₁ e₁ᵀ`). -/
+example : col₁ * col₁ᵀ ∈ tangentSpaceAt (((1 : ℝ) + 0) • (col₁ * col₁ᵀ)) := by
+  have hX : HasDerivWithinAt (fun u : ℝ => (1 + u) • (col₁ * col₁ᵀ)) (col₁ * col₁ᵀ)
       (Icc 0 1) 0 := by
-    have := (((hasDerivAt_id (0 : ℝ)).const_add 1).smul_const
-      (1 : Matrix (Fin 1) (Fin 1) ℝ)).hasDerivWithinAt (s := Icc 0 1)
+    have := (((hasDerivAt_id (0 : ℝ)).const_add 1).smul_const (col₁ * col₁ᵀ)).hasDerivWithinAt
+      (s := Icc 0 1)
     simpa using this
   have hs : (𝓝[Icc (0 : ℝ) 1 \ {0}] 0).NeBot := by
     rw [Icc_sdiff_left]
     exact left_nhdsWithin_Ioc_neBot one_pos
   exact mem_tangentSpaceAt_of_hasDerivWithinAt (r := 1) hX ⟨le_rfl, zero_le_one⟩ hs one_pos
-    (fun u hu => (rank_and_singularValues_smul_one (by linarith [hu.1])).1)
-    (fun u hu => (rank_and_singularValues_smul_one (by linarith [hu.1])).2)
+    (fun u hu => rank_smul_col₁ (by linarith [hu.1]))
+    (fun u hu => one_le_singularValues_smul_col₁ (by linarith [hu.1]))
 
 /-- The hypotheses of `tangentProjAt_sub_eq_zero_of_forall_norm_sub_le` hold for the truncated SVD
 of every matrix (Eckart–Young). -/
