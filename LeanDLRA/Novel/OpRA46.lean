@@ -612,16 +612,16 @@ private theorem tangentProj_het {s : ℝ} (hs : 0 < s) :
   ext i j
   fin_cases i <;> fin_cases j
   · simp [tangentProj_apply, uhet, vhet, G₀, Dhet, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.vecMul, dotProduct]
+      Matrix.vecMul, dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
     field_simp; ring_nf; simp only [hq2]; ring
   · simp [tangentProj_apply, uhet, vhet, G₀, Dhet, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.vecMul, dotProduct]
+      Matrix.vecMul, dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
     field_simp; ring_nf; simp only [hq3]; ring
   · simp [tangentProj_apply, uhet, vhet, G₀, Dhet, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.vecMul, dotProduct]
+      Matrix.vecMul, dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
     field_simp; ring_nf; simp only [hq3]; ring
   · simp [tangentProj_apply, uhet, vhet, G₀, Dhet, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.vecMul, dotProduct]
+      Matrix.vecMul, dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail]
     field_simp; ring_nf; simp only [hq2, hq4]; ring
 
 /-- **The heteroclinic curve is a Dirac–Frenkel solution.**  `Yhet` is a rank-one Dirac–Frenkel
@@ -798,7 +798,7 @@ theorem YglueFam_hasDerivAt_zero {c : ℝ} (hc : 0 < c) : HasDerivAt (YglueFam c
   have h1 : HasDerivAt (fun t : ℝ => t / c) (1 / c) 0 := by
     simpa using (hasDerivAt_id (0 : ℝ)).div_const c
   have h2 : HasDerivAt Yglue Zin ((fun t : ℝ => t / c) 0) := by simpa using Yglue_hasDerivAt_zero
-  have := (h2.scomp 0 h1).const_smul c
+  have := (h2.scomp (h := fun t : ℝ => t / c) 0 h1).const_smul c
   rw [smul_smul, mul_one_div_cancel hc.ne', one_smul] at this
   exact this
 

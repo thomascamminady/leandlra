@@ -337,7 +337,7 @@ theorem IsC3Bounded.of_contDiff {F : ℝ → E → E} {R : E →L[ℝ] E} (hR : 
   refine ⟨h3, ?_, hbd⟩
   obtain ⟨h, rfl⟩ : ∃ h, b = a + h := ⟨b - a, by ring⟩
   have hh : 0 < h := by linarith
-  have hM₁0 : 0 ≤ M₁ := (norm_nonneg _).trans (hM₁ 0)
+  have hM₁0 : 0 ≤ M₁ := (norm_nonneg (fderiv ℝ (Function.uncurry F) 0)).trans (hM₁ 0)
   obtain ⟨hc, -, hd⟩ := MidpointBUG.contDiffOn_three_data hh h3
   set D : ℝ → E → (ℝ × E) →L[ℝ] E := fun t x => fderiv ℝ (Function.uncurry F) (t, x) with hDdef
   have hD : ∀ t x, HasFDerivAt (fun p : ℝ × E => F p.1 p.2) (D t x) (t, x) := fun t x =>
@@ -558,8 +558,8 @@ theorem capture (hs : Variant2Bases F t₀ t₁ U₀ S₀ V₀ Uh₀ Vh₀ Uh₁
     (leftProj_leftProj_of_mul hs.spanUh₀) (rightProj_rightProj_of_mul hs.spanVh₀) hs.proj_start
     hA hA₀ hAreg (odeSolution_kField hs.kSol) hs.yk_start hKreg hPK
     (odeSolution_lField hs.lSol) hs.yl_start hLreg hQL
-    (by rwa [one_sub_leftProj_one_sub_rightProj_apply])
-    (by rwa [one_sub_leftProj_one_sub_rightProj_apply, ← predictor_eq])
+    (by rw [one_sub_leftProj_one_sub_rightProj_apply]; exact hεr)
+    (by rw [one_sub_leftProj_one_sub_rightProj_apply, ← predictor_eq]; exact hε2r)
   calc _ = ‖A t₁ - leftProj Uh₁ (rightProj Vh₁ (A t₁))‖ := by
         simp only [leftProj_apply, rightProj_apply, Matrix.mul_assoc]
     _ ≤ _ := key

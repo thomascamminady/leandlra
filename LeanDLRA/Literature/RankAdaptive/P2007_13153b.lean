@@ -62,7 +62,7 @@ theorem error_bound_integral {X : E → E} {L : ℝ} (hX : IsLipschitzField (fun
   refine hmain.trans (le_of_eq ?_)
   unfold gronwallIntegralBound
   rw [mul_add, ← intervalIntegral.integral_const_mul]
-  congr 1
+  refine congrArg (fun y : ℝ => _ + y) ?_
   refine intervalIntegral.integral_congr fun s hs => ?_
   rw [uIcc_of_le ht.1] at hs
   rw [← mul_assoc, ← Real.exp_add, hηe s ⟨hs.1, hs.2.trans ht.2⟩]

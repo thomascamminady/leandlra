@@ -668,7 +668,7 @@ def e₂ : Matrix (Fin 2) (Fin 1) ℝ := !![0; 1]
 /-- Entry computation for the `2 × 1` example matrices. -/
 local macro "e_simp" : tactic =>
   `(tactic| simp [e₁, e₂, Matrix.mul_apply, Matrix.one_apply, Fin.sum_univ_two, Matrix.vecMul,
-    dotProduct] <;> try norm_num)
+    dotProduct, Function.swap, Matrix.vecHead, Matrix.vecTail] <;> try norm_num)
 
 /-- **Proposition 3.12 is false as literally stated** (arXiv 2001.08599, Prop. 3.12, hypothesis
 "`A(t)` has bounded rank `r` for all `t`").  The curve `A(t) = e₁ ((1-t) e₁ + t e₂)ᵀ` has rank
@@ -692,7 +692,7 @@ theorem prop_3_12_literal_false :
   · ext i j; fin_cases i <;> fin_cases j <;> simp [e₁, e₂, Matrix.mul_apply]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩ <;> ext i j <;> fin_cases i <;> fin_cases j <;>
       simp [e₁, e₂, Matrix.mul_apply, Matrix.vecMul, dotProduct, Fin.sum_univ_two,
-        Matrix.one_apply]
+        Matrix.one_apply, Function.swap, Matrix.vecHead, Matrix.vecTail]
   · intro h
     have := congrFun (congrFun h 0) 1
     simp [e₁, e₂, Matrix.mul_apply] at this

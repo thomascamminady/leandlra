@@ -1751,7 +1751,7 @@ theorem integrable_collisionIntegrand {B : ℝ → ℝ → ℝ} (hB : Measurable
         ‖v - z.1‖ := by fun_prop
     have h2 : Measurable fun z : EuclideanSpace ℝ ι × Metric.sphere (0 : EuclideanSpace ℝ ι) 1 =>
         ⟪(z.2 : EuclideanSpace ℝ ι), v - z.1⟫ / ‖v - z.1‖ :=
-      (Continuous.measurable (by fun_prop)).div h1
+      (Continuous.measurable (by fun_prop)).fun_div h1
     have hP : Continuous fun z : EuclideanSpace ℝ ι × Metric.sphere (0 : EuclideanSpace ℝ ι) 1 =>
         postVel v z.1 z.2 := by
       unfold postVel

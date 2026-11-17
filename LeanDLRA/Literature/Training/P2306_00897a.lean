@@ -449,7 +449,7 @@ theorem lowerSemicontinuous_norm_riemGrad {G : Matrix m n ℝ → Matrix m n ℝ
   have hτne : (A * X + X * B) ≠ 0 := by
     rw [← hAB]; exact fun h => h0 (by rw [h, norm_zero])
   have hquot : ContinuousAt (fun Y : Matrix m n ℝ => ⟪G Y, A * Y + Y * B⟫ / ‖A * Y + Y * B‖) X := by
-    refine ContinuousAt.div (by fun_prop) hcont.norm.continuousAt (norm_ne_zero_iff.2 hτne)
+    refine ContinuousAt.div₀ (by fun_prop) hcont.norm.continuousAt (norm_ne_zero_iff.2 hτne)
   have hval : ⟪G X, A * X + X * B⟫ / ‖A * X + X * B‖ = ‖riemGrad G X‖ := by
     rw [← hAB, inner_grad_eq_inner_riemGrad G hmem, real_inner_self_eq_norm_sq, sq]
     field_simp
@@ -3308,7 +3308,8 @@ theorem riemBlockDescent_refined_core (hf : IsSmooth f G lam) (hlam : 0 < lam)
   have h1q : 0 < 1 - q := sub_pos.2 hq1
   have hq0 : 0 < q := hρ0.trans hq
   have hcc : ContinuousAt (fun Λ => T₁ Λ / (2 * Λ) * (2 * μ)) l := by
-    refine ContinuousAt.mul (ContinuousAt.div hT₁c (by fun_prop) (by positivity)) (by fun_prop)
+    refine ContinuousAt.fun_mul (ContinuousAt.div₀ hT₁c (by fun_prop) (by positivity))
+      (by fun_prop)
   have hval : 1 - q < T₁ l / (2 * l) * (2 * μ) := by
     have e : T₁ l / (2 * l) * (2 * μ) = T₁ l * μ / l := by field_simp
     rw [e]

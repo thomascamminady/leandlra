@@ -959,7 +959,7 @@ theorem quadDefect_le {F : ℝ → E → E} {X : ℝ → E} {t : ℕ → ℝ} {P
       simp only [c, smul_smul]
       rw [mul_comm]
     rw [htay]
-    refine (taylor_mean_remainder_bound hab hg hτ hM).trans ?_
+    refine (taylor_mean_remainder_bound hg hτ hM).trans ?_
     have : (τ - t 0) ^ (P + 1) ≤ (t P - t 0) ^ (P + 1) :=
       pow_le_pow_left₀ (by linarith [hτ.1]) (by linarith [hτ.2]) _
     gcongr

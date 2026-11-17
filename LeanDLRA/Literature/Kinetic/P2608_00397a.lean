@@ -1458,8 +1458,9 @@ theorem condExp_totalEnergy_heun (hU : ContainsMoments G U) (hP : G.PeriodicX)
   have hΘi : ∀ x, Integrable (fun ω => Grid.thetaHeun σ (Δβ n ω) (G.dens (f n ω)) x) μ := by
     intro x
     simp only [Grid.thetaHeun]
-    refine Integrable.const_mul (integrable_finsetSum _ fun s _ =>
-      integrable_finsetSum _ fun r _ => ?_) _
+    refine Integrable.const_mul ?_ _
+    refine integrable_finsetSum _ fun s _ => ?_
+    refine integrable_finsetSum _ fun r _ => ?_
     have h1 : (fun ω => Δβ n ω s * Δβ n ω r * (∑ i, σ s i x * σ r i x) * G.dens (f n ω) x) =
         fun ω => (∑ i, σ s i x * σ r i x) * (Δβ n ω s * Δβ n ω r * G.dens (f n ω) x) := by
       ext ω

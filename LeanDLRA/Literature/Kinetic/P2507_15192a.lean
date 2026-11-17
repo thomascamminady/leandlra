@@ -1400,7 +1400,7 @@ theorem gTheta_tendsto {θ : ℝ} (hθ : 0 < θ) : Tendsto (gTheta θ) (𝓝[<] 
   have hnum : Tendsto (fun ψ : ℝ => (1 + (1 - θ) * ψ) / (1 + ψ) ^ 2) (𝓝[<] (1 / θ))
       (𝓝 ((1 + (1 - θ) * (1 / θ)) / (1 + 1 / θ) ^ 2)) := by
     refine ContinuousAt.tendsto ?_ |>.mono_left nhdsWithin_le_nhds
-    refine ContinuousAt.div (by fun_prop) (by fun_prop) ?_
+    refine ContinuousAt.div₀ (by fun_prop) (by fun_prop) ?_
     positivity
   have hC : 0 < (1 + (1 - θ) * (1 / θ)) / (1 + 1 / θ) ^ 2 := by
     have : 1 + (1 - θ) * (1 / θ) = 1 / θ := by

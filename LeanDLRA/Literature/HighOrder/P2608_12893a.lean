@@ -2457,12 +2457,14 @@ private theorem Bm_Sig_one (a h : ℝ) : Bm a * Sig h 1 * (Bm a)ᵀ = E11 + h ^ 
 private theorem Bm_Sig_half (ℓ h : ℝ) :
     Bm (ℓ + 1 / 2) * Sig h (Real.cos (Real.pi / 8)) * (Bm ℓ)ᵀ =
       E11 + h ^ 3 • (W (ℓ + 1 / 2) * W ℓ) := by
-  rw [← Bm_Sig_eq]; congr 3; ring_nf
+  have e : Real.pi * (ℓ + 1 / 2 - ℓ) / 4 = Real.pi / 8 := by ring
+  rw [← e, Bm_Sig_eq]
 
 private theorem Bm_Sig_half' (ℓ h : ℝ) :
     Bm (ℓ + 1 / 2) * Sig h (Real.cos (Real.pi / 8)) * (Bm (ℓ + 1))ᵀ =
       E11 + h ^ 3 • (W (ℓ + 1 / 2) * W (ℓ + 1)) := by
-  rw [← Bm_Sig_eq, ← Real.cos_neg]; congr 3; ring_nf
+  have e : Real.pi * (ℓ + 1 / 2 - (ℓ + 1)) / 4 = -(Real.pi / 8) := by ring
+  rw [← Real.cos_neg, ← e, Bm_Sig_eq]
 
 /-- **The leading factor cycle (A.26)** (arXiv 2608.12893, Appendix A.2). With `M_η` omitted,
 i.e. for the forcing alone, `F(t, X) = R_h(t) = h² W'(t/h)`, every exact-subflow Strang step on

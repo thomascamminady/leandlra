@@ -1022,8 +1022,8 @@ theorem exists_entropy_increase_near_maxwellian {δ : ℝ} (hδ : 0 < δ) :
   have hrate' : 0 < entropyRate (fState ε) (dlraField (hyperProj (uvec (yv ε))) (hyperProj w)
       (MState ε - fState ε)) := by
     simpa only [fState, MState, entropyRate_dlra] using hrate
-  refine ⟨fState ε, MState ε, _, _, hf, rank_mkMat _, ?_, ?_, hmax, hPU, hPV, ?_, ?_, hrate',
-    entropy_euler_step hf hrate'⟩
+  refine ⟨fState ε, MState ε, hyperProj (uvec (yv ε)), hyperProj w, hf, rank_mkMat _, ?_, ?_, hmax,
+    hPU, hPV, ?_, ?_, (by assumption), entropy_euler_step hf (by assumption)⟩
   · intro i j
     fin_cases i
     · simpa [fState, M₀] using (mul_pos hδ (b1_pos j)).le

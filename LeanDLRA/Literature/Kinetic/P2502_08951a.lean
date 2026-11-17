@@ -684,8 +684,8 @@ theorem tendsto_collision (hlam : 0 < lam) (hΔt : 0 < Δt) {Ds : Ξ → ℝ}
   have hpos : (0 : ℝ) + lam * Δt ≠ 0 := by positivity
   have hc : ContinuousAt (fun ε : ℝ => S.val (S.maxw fs) ξ +
       (ε + Ds ξ * Δt) / (ε + lam * Δt) * S.dev fs ξ) 0 := by
-    refine continuousAt_const.add (ContinuousAt.mul (ContinuousAt.div (by fun_prop) (by fun_prop)
-      hpos) continuousAt_const)
+    refine continuousAt_const.fun_add (ContinuousAt.fun_mul
+      (ContinuousAt.div₀ (by fun_prop) (by fun_prop) hpos) continuousAt_const)
   have hval : S.val (S.maxw fs) ξ + (0 + Ds ξ * Δt) / (0 + lam * Δt) * S.dev fs ξ =
       S.val (S.maxw fs) ξ + Ds ξ / lam * S.dev fs ξ := by
     field_simp

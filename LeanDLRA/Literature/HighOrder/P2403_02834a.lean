@@ -2189,7 +2189,8 @@ theorem hasDerivAt_cxL (s t : ℝ) :
 theorem norm_cxYL {s : ℝ} (hs : 0 < s) (t : ℝ) : ‖cxE1 * (cxL s t)ᵀ‖ = s := by
   refine (sq_eq_sq₀ (norm_nonneg _) hs.le).1 ?_
   rw [Frobenius.norm_sq_eq_sum]
-  simp [Fin.sum_univ_two, cxE1, cxE2, cxL, Matrix.mul_apply]
+  simp [Fin.sum_univ_two, cxE1, cxE2, cxL, Matrix.mul_apply, Function.swap, Matrix.vecHead,
+    Matrix.vecTail]
   linear_combination s ^ 2 * Real.sin_sq_add_cos_sq (3 / 5 * t)
 
 /-- *arXiv 2403.02834, counterexample to Theorem 5.1.* An auxiliary computation. -/
@@ -2298,7 +2299,8 @@ theorem cx_augSol (s h : ℝ) :
         else s * Real.sin (3 / 5 * h)) else (if j = 0 then 0 else 4 / 5 * (s * Real.sin h)) := by
   rw [augSol_eq_sum]
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [cxE1, cxE2, cxS, cxL, cxK, cxE11, cxW, cxV2, Matrix.mul_apply, Fin.sum_univ_two]
+    simp [cxE1, cxE2, cxS, cxL, cxK, cxE11, cxW, cxV2, Matrix.mul_apply, Fin.sum_univ_two,
+      Function.swap, Matrix.vecHead, Matrix.vecTail, Matrix.add_apply, Matrix.smul_apply]
   all_goals ring
 
 /-- *arXiv 2403.02834, counterexample to Theorem 5.1.* An auxiliary computation. -/

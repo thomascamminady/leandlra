@@ -76,6 +76,7 @@ private theorem bug_cex_aux (κ : ℝ) (hκ : 0 < κ) :
       IsBUGStep (fun _ x => A x) 0 P₀ Q₀ P₁ Q₁ 0 (1 / κ) Y₀ YK YL YS ∧
       ODESolution (fun _ x => A x) Ex 0 (1 / κ) ∧ Ex 0 = Y₀ ∧ ‖Y₀‖ = Real.sqrt 2 ∧
       (1 / 20 : ℝ) ≤ ‖YS (1 / κ) - Ex (1 / κ)‖ := by
+  haveI : ContinuousSMul ℝ (EuclideanSpace ℝ (Fin 2)) := IsBoundedSMul.continuousSMul
   set e1 : EuclideanSpace ℝ (Fin 2) := EuclideanSpace.single 0 1 with he1
   set e2 : EuclideanSpace ℝ (Fin 2) := EuclideanSpace.single 1 1 with he2
   have i11 : ⟪e1, e1⟫ = 1 := by simp [he1]
@@ -188,8 +189,8 @@ private theorem bug_cex_aux (κ : ℝ) (hκ : 0 < κ) :
     have hsq : ρ ^ 2 ≤ 1362 / 10000 := by nlinarith [hρlo.1, hρlo.2]
     have hsq' : (1 + ρ ^ 2) * (1 + ρ ^ 2) ≤ (11362 / 10000) * (11362 / 10000) := by
       have : 0 ≤ ρ ^ 2 := by positivity
-      nlinarith
-    nlinarith [hρlo.1]
+      nlinarith only [this, hsq]
+    nlinarith only [hρlo.1, hρlo.2, hsq, hsq']
   have hwn1 : 1 ≤ ‖w‖ := by
     by_contra hlt
     have := pow_lt_one₀ (norm_nonneg w) (not_le.1 hlt) two_ne_zero

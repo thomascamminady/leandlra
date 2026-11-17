@@ -110,7 +110,7 @@ private theorem norm_sub_le_exp_add_integral {y z u w : ℝ → E} {ℓ a b : �
   refine hfinal.trans (le_of_eq ?_)
   simp only [hΦ]
   rw [mul_add, ← intervalIntegral.integral_const_mul]
-  congr 1
+  refine congrArg (fun y : ℝ => _ + y) ?_
   refine intervalIntegral.integral_congr fun s hs => ?_
   rw [Set.uIcc_of_le ht₁.1] at hs
   have hsb : s ∈ Icc a b := ⟨hs.1, hs.2.trans ht₁.2⟩

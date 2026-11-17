@@ -1943,7 +1943,7 @@ theorem not_energy_stable_without_e₀ {κ Δx Δt σ : ℝ} {A : Matrix (Fin 2)
       rw [hus, Frobenius.norm_sq_eq_sum, sum_zmod3]
       have hv : ∀ p, (cK * cv₀ᵀ) p 1 = cK p () * (4 / 5) := by
         intro p
-        simp [Matrix.mul_apply, cv₀]
+        simp [Matrix.mul_apply, cv₀, Function.swap]
       simp only [Fin.sum_univ_two, mul_sub_E0_apply, one_ne_zero, ite_true, ite_false, hv, k0, k1,
         k2]
       norm_num

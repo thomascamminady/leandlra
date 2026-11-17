@@ -2181,7 +2181,7 @@ theorem svTail_geoPre_rank_one (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (S : Matr
     have hPP : Pᵀ * P = 1 := by
       ext p q
       fin_cases p <;> fin_cases q
-      · simpa [Matrix.mul_apply, hP] using hUU
+      · simpa [Matrix.mul_apply, hP, Function.swap, Matrix.vecHead, Matrix.vecTail] using hUU
       · simp only [Matrix.mul_apply, hP, Function.swap, Matrix.vecHead, Matrix.vecTail]
         simp [mul_div_assoc', ← Finset.sum_div, hUa0]
       · simp only [Matrix.mul_apply, hP]
@@ -2191,7 +2191,7 @@ theorem svTail_geoPre_rank_one (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) (S : Matr
     have hQQ : Qᵀ * Q = 1 := by
       ext p q
       fin_cases p <;> fin_cases q
-      · simpa [Matrix.mul_apply, hQ] using hVV
+      · simpa [Matrix.mul_apply, hQ, Function.swap, Matrix.vecHead, Matrix.vecTail] using hVV
       · simp only [Matrix.mul_apply, hQ, Function.swap, Matrix.vecHead, Matrix.vecTail]
         simp [mul_div_assoc', ← Finset.sum_div, hbV0]
       · simp only [Matrix.mul_apply, hQ]
@@ -2366,7 +2366,8 @@ def exE : Fin 3 → ℝ := ![0, 0, 1]
 macro "ex_simp" : tactic =>
   `(tactic| simp [exUh, exU, exG, exE, leftBlock, rightBlock, normalBlock, compress, coreBlock,
     Matrix.mul_apply, Matrix.vecMul, Matrix.mulVec, dotProduct, Fin.sum_univ_succ,
-    Matrix.transpose_apply, Matrix.one_apply, Matrix.sub_apply])
+    Matrix.transpose_apply, Matrix.one_apply, Matrix.sub_apply, Function.swap, Matrix.vecHead,
+    Matrix.vecTail])
 
 lemma exU_orth : exUᵀ * exU = 1 := by
   ext i j

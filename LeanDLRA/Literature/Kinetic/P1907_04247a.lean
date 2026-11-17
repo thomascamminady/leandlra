@@ -1512,7 +1512,7 @@ private theorem cn_density (D : Fin d → Matrix (Fin Nx) (Fin Nx) ℝ) {σ : Fi
   have hεε₂ : ε < ε₂ := hεε.trans_le (min_le_right _ _)
   have hε1 : ε ≤ 1 := (hεε₁.trans_le hε₁1).le
   have hdd : Δt / 2 / (d : ℝ) = Δt / (2 * d) := by rw [div_div]
-  have hst1' : Stable (1 - (Δt / 2 / d) • limL X D σ) B := by rwa [hdd]
+  have hst1' : Stable (1 - (Δt / 2 / d) • limL X D σ) B := by rw [hdd]; exact hst1
   have hst2' : Stable (1 - (-Δt / 2 / d) • limL X D σ) B := by
     rw [neg_div, neg_div, hdd]
     exact stable_neg hst2
@@ -3676,7 +3676,7 @@ theorem lemma_A1 (D : Fin d → Matrix (Fin Nx) (Fin Nx) ℝ) {σ : Fin Nx → �
   refine ⟨2 * (C₁ * BL) + 2 * C₀, ε₁, by positivity, hε₁, ?_⟩
   intro ε hε hεε X l L L₁ S₁ V hX hLB hwp hs hqr hV hst
   have hdd : Δt / 2 / (d : ℝ) = Δt / (2 * d) := by rw [div_div]
-  have hst' : Stable (1 - (Δt / 2 / d) • limL X D σ) B := by rwa [hdd]
+  have hst' : Stable (1 - (Δt / 2 / d) • limL X D σ) B := by rw [hdd]; exact hst
   obtain ⟨-, a2, -, -⟩ := h1 ε hε hεε _ _ _ _ _ _ _ (stiffHyp_L (D := D) hv hs₀ hσs hX)
     (stable_lift hX hst') (hs.stiff hΔt.ne')
   obtain ⟨Y, hY⟩ : ∃ Y, Y = (2 : ℝ)⁻¹ • (L₁ + L) := ⟨_, rfl⟩
@@ -3979,7 +3979,7 @@ theorem exists_CNIEStep (D : Fin d → Matrix (Fin Nx) (Fin Nx) ℝ) {σ : Fin N
   have hε1 : ε ≤ 1 := (hεε₁.trans_le hε₁1).le
   have hV : (1 : Matrix (Fin Nv) (Fin Nv) ℝ)ᵀ * 1 = 1 := by simp
   have hdd : Δt / 2 / (d : ℝ) = Δt / (2 * d) := by rw [div_div]
-  have hst1' : Stable (1 - (Δt / 2 / d) • limL X D σ) B := by rwa [hdd]
+  have hst1' : Stable (1 - (Δt / 2 / d) • limL X D σ) B := by rw [hdd]; exact hst1
   have hst2' : Stable (1 - (-Δt / 2 / d) • limL X D σ) B := by
     rw [neg_div, neg_div, hdd]
     exact stable_neg hst2

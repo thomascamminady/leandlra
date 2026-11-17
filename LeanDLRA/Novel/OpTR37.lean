@@ -2430,7 +2430,8 @@ theorem rank_loss_family₂ {t : ℝ} (ht : t ≠ 0) :
     · linear_combination t * hc1
   have hL : (eulerMat (fun _ => G₀) 1 (c • (wt t * (wt t)ᵀ)))ᵀ * wt t = ey * oneBy (2 * t) := by
     ext i j; fin_cases i <;> fin_cases j <;>
-      simp [eulerMat, wt, ey, G₀, oneBy, Matrix.mul_apply, Fin.sum_univ_two]
+      simp [eulerMat, wt, ey, G₀, oneBy, Matrix.mul_apply, Fin.sum_univ_two,
+        Function.swap, Matrix.vecHead, Matrix.vecTail]
     · linear_combination hc1
     · linear_combination t * hc1
   rw [bugStep_eq_of_qr hK hL ey_orth ey_orth (isUnit_oneBy ht2) (isUnit_oneBy ht2)]
@@ -2462,7 +2463,7 @@ theorem rank_loss_no_limit :
   · have : Continuous fun τ : ℝ => (1 + τ) • (ex * exᵀ) := by fun_prop
     simpa using this.tendsto 0
   · have hc : Continuous fun t : ℝ => (1 + t ^ 2)⁻¹ • (ex * exᵀ + t • (ex * eyᵀ + ey * exᵀ) +
-        t ^ 2 • (ey * eyᵀ)) := hi.smul (by fun_prop)
+        t ^ 2 • (ey * eyᵀ)) := hi.fun_smul (by fun_prop)
     have h0 := hc.tendsto 0
     simp only [hw]
     simpa using h0

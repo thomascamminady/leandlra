@@ -366,9 +366,11 @@ private lemma integrable_smul_gauss (d : ℕ) :
     have e : ∀ w : Vel d, Real.exp (-(1 / 4) * ‖w‖ ^ 2) = Real.exp (-‖w‖ ^ 2 / 4) := fun w => by
       congr 1; ring
     simp only [e] at h
-    refine MeasureTheory.Integrable.const_mul (.of_integral_ne_zero ?_) 2
+    refine MeasureTheory.Integrable.const_mul
+      (f := fun w : Vel d => Real.exp (-‖w‖ ^ 2 / 4)) (.of_integral_ne_zero ?_) 2
     rw [h]
     exact (Real.rpow_pos_of_pos (by have := Real.pi_pos; positivity) _).ne'
+  haveI : ContinuousSMul ℝ (Vel d) := IsBoundedSMul.continuousSMul
   refine hint.mono' (by fun_prop) (.of_forall fun w => ?_)
   rw [norm_smul, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
   have h1 : ‖w‖ ^ 2 / 4 + 1 ≤ Real.exp (‖w‖ ^ 2 / 4) := Real.add_one_le_exp _

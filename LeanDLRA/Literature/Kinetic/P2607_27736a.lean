@@ -2022,9 +2022,9 @@ theorem Admissible.tendsto_beta (hP : P.Admissible) :
         (1 - P.alpha1 ε i) / (3 * P.σs i)) (𝓝[>] 0) (𝓝 (P.betaLim i)) := by
       have h3 : Tendsto (fun ε : ℝ => P.σs i / (P.σs i + P.σa i * ε ^ 2)) (𝓝[>] 0)
           (𝓝 (P.σs i / (P.σs i + P.σa i * 0 ^ 2))) := by
-        refine (Tendsto.div tendsto_const_nhds ?_ (by simpa using hσ.ne')).mono_left
-          nhdsWithin_le_nhds
-        exact (Continuous.tendsto (by fun_prop) 0)
+        have hc : Continuous fun ε : ℝ => P.σs i + P.σa i * ε ^ 2 := by fun_prop
+        exact ((tendsto_const_nhds (x := P.σs i)).div (hc.tendsto 0)
+          (by simpa using hσ.ne')).mono_left nhdsWithin_le_nhds
       have h4 := ((h3.pow 2).mul ((tendsto_const_nhds (x := (1 : ℝ))).sub h1)).div_const
         (3 * P.σs i)
       have e : (P.σs i / (P.σs i + P.σa i * 0 ^ 2)) ^ 2 * (1 - 0) / (3 * P.σs i) = P.betaLim i := by

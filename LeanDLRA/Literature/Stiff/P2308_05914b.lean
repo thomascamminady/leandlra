@@ -260,16 +260,18 @@ theorem lemma_4_11_chi_alignment (χmin χmax α : ℝ) (hmin : 0 < χmin) (hle 
   set g := Real.sqrt (wNormSq A1 R1) with hgdef
   set w := Real.sqrt (wNormSq A1 W) with hwdef
   have hq1le : g ^ 2 ≤ 1 := by rw [hg2]; linarith
-  have hg1 : g ≤ 1 := by nlinarith
+  have hg1 : g ≤ 1 := by nlinarith only [hq1le, hg0]
   have hkey : χmax * (1 - g ^ 2) ≤ χmin * (g - α) ^ 2 := by
-    have hA : 1 - g ^ 2 ≤ 2 * (1 - g) := by nlinarith
+    have hA : 1 - g ^ 2 ≤ 2 * (1 - g) := by nlinarith only [sq_nonneg (g - 1)]
     have hB : 1 - g ≤ d := by linarith
     have hC : (1 - α) / 2 ≤ g - α := by linarith
     have hD : χmax * (1 - g ^ 2) ≤ χmax * (2 * d) :=
       mul_le_mul_of_nonneg_left (by linarith) hχmax.le
     have hE' : χmax * (2 * d) = (1 - α) ^ 2 * χmin / 4 := by
       linear_combination hd8 / 4
-    have hF : (1 - α) ^ 2 / 4 ≤ (g - α) ^ 2 := by nlinarith
+    have hF : (1 - α) ^ 2 / 4 ≤ (g - α) ^ 2 := by
+      calc (1 - α) ^ 2 / 4 = ((1 - α) / 2) ^ 2 := by ring
+        _ ≤ (g - α) ^ 2 := pow_le_pow_left₀ (by linarith) hC 2
     have hG : χmin * ((1 - α) ^ 2 / 4) ≤ χmin * (g - α) ^ 2 :=
       mul_le_mul_of_nonneg_left hF hmin.le
     linarith

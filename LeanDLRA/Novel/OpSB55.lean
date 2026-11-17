@@ -256,7 +256,8 @@ theorem basisOf_capture {a b : ℝ} (hab : 0 < a ^ 2 + b ^ 2) :
   have hb : b * √(a ^ 2 + b ^ 2) ^ 2 = b * (a ^ 2 + b ^ 2) := by rw [hs2]
   ext i j; fin_cases i <;> fin_cases j <;>
     simp [basisOf, Matrix.mul_apply, Fin.sum_univ_three, Fin.sum_univ_two, Matrix.vecMul,
-      dotProduct, Matrix.transpose_apply] <;>
+      dotProduct, Matrix.transpose_apply, Function.swap, Matrix.vecHead,
+      Matrix.vecTail] <;>
     field_simp <;> nlinarith [hs, hs2, ha, hb]
 
 /-! #### The data -/

@@ -1735,7 +1735,8 @@ theorem rob_competitor {τ ε : ℝ} (hτ : 0 < τ) (hε : 0 < ε) :
   refine ⟨W₁, diagonal (Sum.elim (fun _ => 3) (fun _ => N)), ⟨rob_state.orthX, rob_state.orthU,
     ?_, ?_⟩, ?_⟩
   · ext i j
-    simp [hW₁, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three, robVel]
+    simp [hW₁, robGrid, Grid.Hv, Matrix.mul_apply, Fin.sum_univ_three, robVel, Function.swap,
+      Matrix.vecHead, Matrix.vecTail]
     field_simp
     rw [hN2]
     ring
@@ -1874,6 +1875,7 @@ lemma rob_proj_sin (hX : X'ᵀ * robGrid.Hx * X' = 1) (hK : robK = X' * R) :
 initial data). -/
 theorem robF_pos {ε : ℝ} (h0 : 0 ≤ ε) (h1 : ε ≤ 16 / 25) (x : Fin 4) (v : Fin 3) :
     0 < robF ε x v := by
+  simp only [robF, Matrix.of_apply]
   refine mul_pos (robGrid.f0_pos v) ?_
   fin_cases x <;> fin_cases v <;> norm_num <;> linarith
 

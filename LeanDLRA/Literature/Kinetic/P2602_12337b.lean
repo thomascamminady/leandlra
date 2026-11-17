@@ -1663,7 +1663,9 @@ theorem exists_ap_trajectory (hD : D.Admissible) {n : ℕ} (hnx : n ≤ Fintype.
   obtain ⟨ρd, hρ0, hρd⟩ : ∃ ρd : ℕ → x → ℝ, ρd 0 = ρ₀ ∧
       ∀ k, D.IsDiffusionStep (Φ k) (ρd k) (ρd (k + 1)) := by
     choose f hf using fun (k : ℕ) (y : x → ℝ) => (existsUnique_diffusion hD (Φ k) y).exists
-    exact ⟨fun k => Nat.rec ρ₀ (fun k y => f k y) k, rfl, fun k => hf k _⟩
+    refine ⟨fun k => Nat.rec ρ₀ (fun k y => f k y) k, rfl, fun k => ?_⟩
+    simp only [Nat.rec_add_one]
+    exact hf k _
   have htraj : ∀ ε : ℝ, ∃ (ρ : ℕ → x → ℝ) (X : ℕ → Matrix x (Fin n) ℝ)
       (S : ℕ → Matrix (Fin n) (Fin n) ℝ) (V : ℕ → Matrix a (Fin n) ℝ)
       (K : ℕ → Matrix x (Fin n) ℝ) (L : ℕ → Matrix a (Fin n) ℝ), 0 < ε →
@@ -2014,7 +2016,7 @@ private theorem unit_of {y : Fin 4 → ℝ} (h : y ⬝ᵥ y = 4) :
   norm_num
 
 private theorem tendsto_lam : Tendsto (fun ε => lam ε • alt) 𝓕 (𝓝 ((1 / 5 : ℝ) • alt)) := by
-  have hc : Continuous lam := Continuous.div (by fun_prop) (by fun_prop) fun ε => by positivity
+  have hc : Continuous lam := Continuous.div₀ (by fun_prop) (by fun_prop) fun ε => by positivity
   have h1 : Tendsto lam 𝓕 (𝓝 (1 / 5)) := by
     refine tendsto_nhdsWithin_of_tendsto_nhds ?_
     simpa [lam] using hc.tendsto 0

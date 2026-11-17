@@ -690,7 +690,7 @@ lemma EntryMeasurable.gsStep {Q : Ω → Matrix m m ℝ} {a : Ω → m → ℝ} 
   intro i j
   simp only [P2410_18720.gsStep, Matrix.add_apply, Matrix.smul_apply, Matrix.vecMulVec_apply,
     smul_eq_mul]
-  refine (hQ i j).add (Measurable.mul (Measurable.inv ?_) ((hc i).mul (hc j)))
+  refine (hQ i j).fun_add (Measurable.fun_mul (Measurable.fun_inv ?_) ((hc i).fun_mul (hc j)))
   simp only [dotProduct]
   exact Finset.measurable_fun_sum _ fun k _ => (hc k).mul (hc k)
 
@@ -2545,7 +2545,8 @@ theorem mem_range_blockMask_of_continuous (hE : IsBlockFamily E) (hF : IsBlockFa
     (hUo : ∀ t ∈ Icc a b, (U t)ᵀ * U t = 1) (hVo : ∀ t ∈ Icc a b, (V t)ᵀ * V t = 1)
     (hdet : ∀ t ∈ Icc a b, IsUnit (S t).det) (hSc : ContinuousOn S (Icc a b))
     (h0 : blockMask E F (Y a) = Y a) : ∀ t ∈ Icc a b, blockMask E F (Y t) = Y t := by
-  obtain ⟨C, hC⟩ := isCompact_Icc.exists_bound_of_continuousOn (continuousOn_inv hSc hdet)
+  have hinv := continuousOn_inv hSc hdet
+  obtain ⟨C, hC⟩ := isCompact_Icc.exists_bound_of_continuousOn hinv
   refine mem_range_blockMask_of_flow hE hF hg hY (C := C) (fun t ht => ?_) h0
   have ht' := Ico_subset_Icc_self ht
   exact ⟨r, U t, S t, V t, hUo t ht', hVo t ht', hdet t ht', hfac t ht', hC t ht'⟩

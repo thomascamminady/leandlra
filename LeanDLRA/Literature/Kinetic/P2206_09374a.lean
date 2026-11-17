@@ -115,7 +115,8 @@ lemma one_add_pow_mul_exp_le (k : ℕ) {t : ℝ} (ht : 0 ≤ t) :
         nlinarith [sq_nonneg (t / 2 - 1)]
 
 lemma integrable_prod_gauss : Integrable (fun v : Pt d => ∏ s, Real.exp (-(1 / 4) * v s ^ 2)) :=
-  Integrable.fintype_prod (fun _ => integrable_exp_neg_mul_sq (by norm_num : (0 : ℝ) < 1 / 4))
+  Integrable.fintype_prod (f := fun _ y => Real.exp (-(1 / 4) * y ^ 2))
+    (fun _ => integrable_exp_neg_mul_sq (by norm_num : (0 : ℝ) < 1 / 4))
 
 lemma continuous_f0 : Continuous (f0 : Pt d → ℝ) := by unfold f0 vsq; fun_prop
 
@@ -1724,7 +1725,7 @@ theorem total_energy_change (hs : s.Admissible U) (hp : s.Periodic L) (hL : 0 �
     have e : energyDensity (s.f U) E =
         fun x => (1 / 2) * mom vsq (s.f U) x + (1 / 2) * ∑ r, E r x ^ 2 := rfl
     rw [e]
-    exact (continuous_const.mul this).add (continuous_const.mul
+    exact (continuous_const.fun_mul this).fun_add (continuous_const.fun_mul
       (continuous_finsetSum _ fun r _ => (cpE r).continuous.pow 2))
   have hinc : ∀ x, energyDensity (h.next.f U) E₁ x - energyDensity (s.f U) E x =
       -τ * ∑ r, pd r (heatFlux (s.f U) r) x + ∑ r, E r x * G r x +

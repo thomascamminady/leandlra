@@ -478,12 +478,12 @@ theorem IsMode.map {S : Matrix (ZMod N) V ℝ →ₗ[ℝ] Matrix (ZMod N) V ℝ}
   -- the shifted pair
   have h1 : shift G = cos θ • G - sin θ • G' := by
     rw [hG, ← hS, shift_modeMat hθ, hG', ← map_smul, ← map_smul, ← map_sub]
-    congr 1
+    refine congrArg S ?_
     ext i j; simp only [modeMat_apply, Matrix.sub_apply, Matrix.smul_apply, Pi.add_apply,
       Pi.sub_apply, Pi.smul_apply, Pi.neg_apply, smul_eq_mul]; ring
   have h2 : shift G' = cos θ • G' + sin θ • G := by
     rw [hG', ← hS, shift_modeMat hθ, hG, ← map_smul, ← map_smul, ← map_add]
-    congr 1
+    refine congrArg S ?_
     ext i j; simp only [modeMat_apply, Matrix.add_apply, Matrix.smul_apply, Pi.add_apply,
       Pi.sub_apply, Pi.smul_apply, Pi.neg_apply, smul_eq_mul]; ring
   -- the recursion along the grid

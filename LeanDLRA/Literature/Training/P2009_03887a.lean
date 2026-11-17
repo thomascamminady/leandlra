@@ -958,7 +958,7 @@ theorem variance_lower_bound_of_le {Ω : Type*} [MeasurableSpace Ω] {μ : Measu
   -- integrate
   have hψint : Integrable (fun ω => l ^ 2 - 2 * ∑ i, y i * t i + ∑ i, t i ^ 2 +
       2 * ∑ i, A ω i i * t i) μ :=
-    (integrable_const _).add
+    (integrable_const _).fun_add
       ((integrable_finsetSum _ fun i _ => (hint i i).mul_const _).const_mul _)
   have hint2 : ∫ ω, (l ^ 2 - 2 * ∑ i, y i * t i + ∑ i, t i ^ 2 + 2 * ∑ i, A ω i i * t i) ∂μ =
       l ^ 2 - 2 * ∑ i, y i * t i + ∑ i, t i ^ 2 + 2 * ∑ i, σ i * t i := by

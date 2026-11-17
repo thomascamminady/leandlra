@@ -1885,15 +1885,17 @@ theorem pert_periodic (α t : ℝ) (x v : R3) (i : Fin 3) :
     simp only [wave, mul_add]
     rw [Real.cos_add_two_pi, show 2 * s + 2 * (2 * Real.pi) = 2 * s + 2 * Real.pi + 2 * Real.pi by
       ring, Real.cos_add_two_pi, Real.cos_add_two_pi]
+  have h : wave ((x + (2 * Real.pi) • Pi.single i 1 : R3) 0 - t * v 0) =
+      wave (x 0 - t * v 0) := by
+    fin_cases i
+    · simp only [Fin.zero_eta, Fin.isValue, Pi.add_apply, Pi.smul_apply, Pi.single_eq_same,
+        smul_eq_mul, mul_one]
+      rw [show x 0 + 2 * Real.pi - t * v 0 = x 0 - t * v 0 + 2 * Real.pi by ring]
+      exact hw _
+    · simp
+    · simp
   unfold pert
-  congr 3
-  fin_cases i
-  · simp only [Fin.zero_eta, Fin.isValue, Pi.add_apply, Pi.smul_apply, Pi.single_eq_same,
-      smul_eq_mul, mul_one]
-    rw [show x 0 + 2 * Real.pi - t * v 0 = x 0 - t * v 0 + 2 * Real.pi by ring]
-    exact hw _
-  · simp
-  · simp
+  rw [h]
 
 /-- Reflection of one coordinate. -/
 def flipC (k : Fin 3) (v : R3) : R3 := fun i => if i = k then -v i else v i
@@ -2257,7 +2259,7 @@ lemma abs_two_mul_div_le (v : ℝ) : |2 * v / (1 + v ^ 2)| ≤ 1 := by
 lemma integrable_lor' : Integrable lor' := by
   refine integrable_lor.bdd_mul (c := 1) (f := fun v => -(2 * v / (1 + v ^ 2))) ?_ ?_
   · have hc : Continuous fun v : ℝ => -(2 * v / (1 + v ^ 2)) := by
-      refine Continuous.neg (Continuous.div (by fun_prop) (by fun_prop) fun v => ?_)
+      refine Continuous.fun_neg (Continuous.div₀ (by fun_prop) (by fun_prop) fun v => ?_)
       exact (one_add_sq_pos v).ne'
     exact hc.aestronglyMeasurable
   · exact ae_of_all _ fun v => by

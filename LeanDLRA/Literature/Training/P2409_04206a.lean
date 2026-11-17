@@ -1879,7 +1879,7 @@ theorem lora_ffStop_ge_of_factorStep (hℓ : ∀ x, HasFDerivAt ℓ (innerSL ℝ
   have hc0 : 0 ≤ c := norm_nonneg _
   have hT0 : (0 : ℝ) ≤ (T : ℝ) + 1 := by positivity
   have hg0 : 0 ≤ g₀ := norm_nonneg _
-  have hh2 : h ^ 2 ≤ h := by nlinarith
+  have hh2 : h ^ 2 ≤ h := by nlinarith only [hh0, hh1]
   -- the curvature scales like `h²`
   have hcurv : curveCurv β g₀ (h * v) (h ^ 2 * c) (T + 1) ≤
       h ^ 2 * curveCurv β g₀ v c (T + 1) := by
@@ -1887,23 +1887,23 @@ theorem lora_ffStop_ge_of_factorStep (hℓ : ∀ x, HasFDerivAt ℓ (innerSL ℝ
     have h1 : h * v + 2 * ((T : ℝ) + 1) * (h ^ 2 * c) ≤ h * (v + 2 * ((T : ℝ) + 1) * c) := by
       have : ((T : ℝ) + 1) * c * h ^ 2 ≤ ((T : ℝ) + 1) * c * h :=
         mul_le_mul_of_nonneg_left hh2 (by positivity)
-      nlinarith
+      nlinarith only [this]
     have h2 : (h * v + 2 * ((T : ℝ) + 1) * (h ^ 2 * c)) ^ 2 ≤
         h ^ 2 * (v + 2 * ((T : ℝ) + 1) * c) ^ 2 := by
       rw [← mul_pow]
       exact pow_le_pow_left₀ (by positivity) h1 2
     have h3 : g₀ + β * ((T : ℝ) + 1) * (h * v + ((T : ℝ) + 1) * (h ^ 2 * c)) ≤
         g₀ + β * ((T : ℝ) + 1) * (v + ((T : ℝ) + 1) * c) := by
-      have h4 : h * v ≤ v := by nlinarith
-      have h5 : h ^ 2 * c ≤ c := by nlinarith
+      have h4 : h * v ≤ v := by nlinarith only [hh1, hv0]
+      have h5 : h ^ 2 * c ≤ c := by nlinarith only [hh2, hh1, hc0]
       have h6 : h * v + ((T : ℝ) + 1) * (h ^ 2 * c) ≤ v + ((T : ℝ) + 1) * c := by
-        nlinarith [mul_le_mul_of_nonneg_left h5 hT0]
+        nlinarith only [mul_le_mul_of_nonneg_left h5 hT0, h4]
       have := mul_le_mul_of_nonneg_left h6 (mul_nonneg hβ hT0)
       linarith
     have h7 := mul_le_mul_of_nonneg_left h2 hβ
     have h8 := mul_le_mul_of_nonneg_left h3
       (show 0 ≤ 2 * (h ^ 2 * c) by positivity)
-    nlinarith
+    nlinarith only [h7, h8]
   have hTpos : (0 : ℝ) ≤ (T : ℝ) + 1 / 2 := by positivity
   have h1 := mul_le_mul_of_nonneg_left hcurv hTpos
   have h2 := mul_lt_mul_of_pos_left hT hh0

@@ -2553,7 +2553,7 @@ private theorem run_step (hσ : IsCrossSection σ σ₀ σ₁) (hτ0 : 0 ≤ τ)
         ‖X' ε (k + 1) * S' ε (k + 1) * (V' ε (k + 1))ᵀ‖ := by
       rw [norm_mul_transpose_of_orthonormal hs.hV₁, norm_mul_of_orthonormal hs.hX₁]
     have h4 := norm_le_norm_sub_add (X' ε (k + 1) * S' ε (k + 1) * (V' ε (k + 1))ᵀ) Gb
-    have h5 : C₁ * ε ≤ C₁ := by nlinarith
+    have h5 : C₁ * ε ≤ C₁ := by nlinarith only [hC₁0, hε1]
     linarith
   · -- nondegeneracy persists: this is where the CFL condition is used
     intro hd₁
@@ -2606,7 +2606,7 @@ private theorem run_step (hσ : IsCrossSection σ σ₀ σ₁) (hτ0 : 0 ≤ τ)
       have hd₁le : ‖d₁‖ ≤ D₁ := by
         have h11 := norm_le_norm_sub_add d₁ db₁
         have h12 : ‖𝒢‖ * (Cρ₁ * ε) ≤ ‖𝒢‖ * Cρ₁ := by
-          have : Cρ₁ * ε ≤ Cρ₁ := by nlinarith
+          have : Cρ₁ * ε ≤ Cρ₁ := by nlinarith only [hCρ₁0, hε1]
           gcongr
         rw [hD₁]
         linarith
@@ -2645,7 +2645,7 @@ private theorem run_step (hσ : IsCrossSection σ σ₀ σ₁) (hτ0 : 0 ≤ τ)
           rw [hW]
           ring
         rw [h11]
-        linarith
+        linarith only [h12, h13, h14, h15, h16, h4]
       rw [div_le_iff₀ (by positivity)]
       calc θ = 2 * (θ / 2) := by ring
         _ ≤ 2 * (‖Yᵀ * d₁‖ * ‖ub‖) :=

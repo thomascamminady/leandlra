@@ -826,7 +826,7 @@ private lemma integrable_vf_sq : ∀ j : Fin 2, Integrable fun y => vf j y ^ 2 :
 /-- **Sec. 4** (arXiv 1807.02338): the functions `V₁⁰, V₂⁰` are orthonormal in `L²(ℝ)`. -/
 theorem isOrthonormalL2_V₀ : IsOrthonormalL2 (volume : Measure (PS 1)) V₀ where
   memLp i := (memLp_two_iff_integrable_sq (continuous_V₀ i).aestronglyMeasurable).2
-    (integrable_coord (integrable_vf_sq i))
+    (integrable_coord (g := fun y => vf i y ^ 2) (integrable_vf_sq i))
   inner_eq i k := by
     have h : ∫ v, V₀ i v * V₀ k v = ∫ y, vf i y * vf k y :=
       integral_coord fun y => vf i y * vf k y

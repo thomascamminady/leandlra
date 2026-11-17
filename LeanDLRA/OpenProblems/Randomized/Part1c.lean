@@ -320,7 +320,7 @@ theorem exists_obliqueSketch_drift_of_not_scalar {m n k l p : Type*} [Fintype m]
   have hV : (Matrix.of fun (i : n) (c : l) => if i = g c then (1 : ℝ) else 0)ᵀ *
       (Matrix.of fun (i : n) (c : l) => if i = g c then (1 : ℝ) else 0) = 1 := by
     ext a b
-    simp [Matrix.mul_apply, Matrix.one_apply, g.injective.eq_iff, eq_comm]
+    simp [Matrix.mul_apply, Matrix.one_apply, g.injective.eq_iff, eq_comm, Function.swap]
   have hrv : (Matrix.of fun (_ : Unit) (j : n) => if j = n₀ then (1 : ℝ) else 0) *
       (Matrix.of fun (i : n) (c : l) => if i = g c then (1 : ℝ) else 0) = 0 := by
     ext u c

@@ -155,7 +155,8 @@ omit [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ] [Fintype p] in
 private lemma continuousOn_mmul {m n o : Type*} [Fintype m] [Fintype n] [Fintype o]
     {f : ℝ → Matrix m n ℝ} {h : ℝ → Matrix n o ℝ} {s : Set ℝ} (hf : ContinuousOn f s)
     (hh : ContinuousOn h s) : ContinuousOn (fun t => f t * h t) s :=
-  (continuous_fst.matrix_mul continuous_snd).comp_continuousOn (hf.prodMk hh)
+  have h2 := (continuous_fst.matrix_mul continuous_snd).comp_continuousOn (hf.prodMk hh)
+  h2
 
 omit [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ] [Fintype p] in
 private lemma continuousOn_transpose {m n : Type*} [Fintype m] [Fintype n]

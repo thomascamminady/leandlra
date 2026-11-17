@@ -145,7 +145,7 @@ lemma hasDerivAt_dualObj_line (w : V → ℝ) (m : V → Fin (n + 1) → ℝ) (�
   have he : ∀ (s : ℝ) (v : V), (α + s • Pi.single i 1) ⬝ᵥ m v = α ⬝ᵥ m v + s * m v i := by
     intro s v; simp [add_dotProduct, smul_dotProduct, single_dotProduct]
   simp only [dualObj, avg, ansatz, moments, hd, he]
-  refine HasDerivAt.sub (HasDerivAt.fun_sum fun v _ => ?_) ?_
+  refine HasDerivAt.fun_sub (HasDerivAt.fun_sum fun v _ => ?_) ?_
   · have := (((hasDerivAt_mul_const (m v i) (x := t)).const_add (α ⬝ᵥ m v)).exp).const_mul (w v)
     convert this using 1
     ring

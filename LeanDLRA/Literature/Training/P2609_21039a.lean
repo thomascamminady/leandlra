@@ -1310,7 +1310,7 @@ lemma V_le (h : AdamSeq β β₂ ε G g M V) (t : ℕ) (i : p) (j : q) : V t i j
   induction t with
   | zero => simpa [h.V0] using sq_nonneg G
   | succ t ih =>
-    rw [h.Vsucc]
+    rw [h.Vsucc, amsMoment, Matrix.of_apply]
     refine max_le ?_ ih
     have h1 := h.g_le (t + 1) (by omega) i j
     have h2 : g (t + 1) i j ^ 2 ≤ G ^ 2 := sq_le_sq' (by linarith [abs_le.1 h1]) (abs_le.1 h1).2

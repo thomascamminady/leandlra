@@ -393,7 +393,7 @@ theorem sq_norm_le_of_selfAdjoint {T t₀ : ℝ} {G : ℝ → E →L[ℂ] E} {w 
             intervalIntegral.norm_integral_le_integral_norm_uIoc
         _ ≤ ∫ s in Ioc 0 T, ‖2 * Complex.re ⟪w s, deriv w s⟫_ℂ‖ :=
             setIntegral_mono_set (hφ'c.norm.integrableOn_Icc.mono_set Ioc_subset_Icc_self)
-              (ae_of_all _ fun _ => norm_nonneg _) hsub.eventuallyLE
+              (ae_of_all _ fun _ => norm_nonneg _) (ae_of_all _ fun _ hx => hsub hx)
         _ ≤ ∫ s in Ioc 0 T, (S / (2 * T) +
               2 * T * ‖Complex.I • deriv w s - G s (w s)‖ ^ 2) :=
             setIntegral_mono_on (hφ'c.norm.integrableOn_Icc.mono_set Ioc_subset_Icc_self)

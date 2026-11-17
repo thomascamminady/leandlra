@@ -1027,7 +1027,7 @@ theorem partialX_coeFn [SigmaFinite ν] (a : Lp ℝ 2 μ) (g : Lp ℝ 2 (μ.prod
     rw [h2]
   have hFint : Integrable F (μ.prod ν) := by
     have h0 : Integrable (fun p => tensL2 μ ν a φ p * g p) (μ.prod ν) :=
-      (Lp.memLp _).integrable_mul (Lp.memLp g)
+      (Lp.memLp (tensL2 μ ν a φ)).integrable_mul (Lp.memLp g)
     refine h0.congr ?_
     filter_upwards [hT] with p hp
     rw [hp]
@@ -1063,7 +1063,7 @@ theorem partialV_coeFn [SigmaFinite μ] (b : Lp ℝ 2 ν) (g : Lp ℝ 2 (μ.prod
     rw [h2]
   have hFint : Integrable F (μ.prod ν) := by
     have h0 : Integrable (fun p => tensL2 μ ν φ b p * g p) (μ.prod ν) :=
-      (Lp.memLp _).integrable_mul (Lp.memLp g)
+      (Lp.memLp (tensL2 μ ν φ b)).integrable_mul (Lp.memLp g)
     refine h0.congr ?_
     filter_upwards [hT] with p hp
     rw [hp]

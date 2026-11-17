@@ -906,10 +906,7 @@ private theorem hasDerivAt_phase (ω t : ℝ) :
       (Complex.exp (I * ω * t) * (I * ω)) t := by
   have h1 : HasDerivAt (fun r : ℝ => I * ω * (r : ℂ)) (I * ω) t := by
     simpa using ((hasDerivAt_id t).ofReal_comp).const_mul (I * (ω : ℂ))
-  have h2 : HasDerivAt (fun r : ℝ => Complex.exp (I * ω * r))
-      ((I * ω) • Complex.exp (I * ω * t)) t := (Complex.hasDerivAt_exp (I * ω * t)).scomp t h1
-  rw [smul_eq_mul] at h2
-  exact h2.congr_deriv (mul_comm _ _)
+  exact h1.cexp
 
 private theorem norm_phase (ω t : ℝ) : ‖Complex.exp (I * ω * t)‖ = 1 := by
   have h : I * (ω : ℂ) * (t : ℂ) = ((ω * t : ℝ) : ℂ) * I := by push_cast; ring
@@ -2787,7 +2784,9 @@ theorem IsSpectralSolution.modes {μ : Measure (Fin 3 → ℝ)} {g : (Fin 3 → 
   have hint : ∀ t ∈ Icc (0 : ℝ) T, ∀ a,
       Integrable (fun v => gridCoeff k (fun x => v a * f t x v)) μ := fun t ht a => by
     simp only [hexp]
-    exact (integrable_finsetSum _ fun x _ => (h.integrable t ht x a).ofReal.const_mul _).const_mul _
+    refine Integrable.const_mul ?_ _
+    refine integrable_finsetSum _ fun x _ => ?_
+    exact (h.integrable t ht x a).ofReal.const_mul _
   refine ⟨fun v => ?_, ?_, ?_, fun t ht => ?_⟩
   · have hy : ODESolution (fun t _ => fun x => -∑ a, v a * (spec1 κ a *ᵥ fun y => f t y v) x +
         ((fun a => E t a x) + v ⨯₃ fun a => B t a x) ⬝ᵥ g v) (fun t x => f t x v) 0 T :=
@@ -2820,8 +2819,10 @@ theorem IsSpectralSolution.modes {μ : Measure (Fin 3 → ℝ)} {g : (Fin 3 → 
           exact hint t ht' b
       rw [fieldCoeff_apply, eval_integral hi]
       simp only [hcomp, hexp]
-      rw [integral_const_mul, integral_finsetSum _ fun x _ =>
-        (h.integrable t ht' x a).ofReal.const_mul _, gridCoeff_apply]
+      have hix : ∀ x, Integrable
+          (fun v => ZMod.stdAddChar (-(x * k)) * ((v a * f t x v : ℝ) : ℂ)) μ := fun x =>
+        (h.integrable t ht' x a).ofReal.const_mul _
+      rw [integral_const_mul, integral_finsetSum _ fun x _ => hix x, gridCoeff_apply]
       congr 1
       refine Finset.sum_congr rfl fun x _ => ?_
       rw [integral_const_mul]

@@ -666,10 +666,10 @@ lemma planeU_orthonormal {α : ZMod n} (hα : 2 * α ≠ 0) : (planeU α)ᵀ * p
   have hp : (plane α)ᵀ * plane α = ((n : ℝ) / 2) • (1 : Matrix (Fin 2) (Fin 2) ℝ) := by
     ext i k
     fin_cases i <;> fin_cases k
-    · simpa [plane, Matrix.mul_apply] using hc
-    · simpa [plane, Matrix.mul_apply] using h2
-    · simpa [plane, Matrix.mul_apply] using h2'
-    · simpa [plane, Matrix.mul_apply] using hs
+    · simpa [plane, Matrix.mul_apply, Function.swap, Matrix.vecHead, Matrix.vecTail] using hc
+    · simpa [plane, Matrix.mul_apply, Function.swap, Matrix.vecHead, Matrix.vecTail] using h2
+    · simpa [plane, Matrix.mul_apply, Function.swap, Matrix.vecHead, Matrix.vecTail] using h2'
+    · simpa [plane, Matrix.mul_apply, Function.swap, Matrix.vecHead, Matrix.vecTail] using hs
   rw [planeU, Matrix.transpose_smul, Matrix.smul_mul, Matrix.mul_smul, smul_smul, hsq, hp,
     smul_smul]
   have : 2 / (n : ℝ) * (n / 2) = 1 := by field_simp

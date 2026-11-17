@@ -660,7 +660,9 @@ theorem existsUnique_implicitEuler {D : Matrix X X ℝ} {q : Quadrature V} {ε �
     (hD : D.transpose = -D) (hε : 0 < ε) (hσ : 0 < σ) (hτ : 0 < τ) (f₀ : Matrix X V ℝ) :
     ∃! F : ℕ → Matrix X V ℝ, F 0 = f₀ ∧ IsImplicitEuler D q ε σ τ F := by
   choose S hS using fun f => (existsUnique_step (q := q) hD hε hσ hτ f).exists
-  refine ⟨fun n => Nat.rec f₀ (fun _ y => S y) n, ⟨rfl, fun n => hS _⟩, ?_⟩
+  refine ⟨fun n => Nat.rec f₀ (fun _ y => S y) n, ⟨rfl, fun n => ?_⟩, ?_⟩
+  · simp only [Nat.rec_add_one]
+    exact hS _
   rintro G ⟨h0, hG⟩
   funext n
   induction n with
@@ -1846,7 +1848,7 @@ theorem flow_defect_le (D : Matrix X X ℝ) (q : Quadrature V) (ε σ : ℝ) {y 
       W (y v) - v • W (A (y v)) - (W (y u) - u • W (A (y v))) := by
     have h5 : weighted q (y v - (v - u) • genL D q ε σ (y v) - y u) =
         W (y v) - (v - u) • W (A (y v)) - W (y u) := by
-      change W _ = _
+      change W (y v - (v - u) • genL D q ε σ (y v) - y u) = _
       rw [map_sub, map_sub, map_smul]
       rfl
     rw [h5]

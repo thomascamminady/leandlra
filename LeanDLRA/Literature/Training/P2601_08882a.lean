@@ -1233,9 +1233,10 @@ private lemma measurable_err (h : IsStochasticDLRT 𝓕 μ g Ghat lr ϑ σ X D) 
   have hx := ((h.adaptedW t).mono (𝓕.le _)).aestronglyMeasurable (μ := μ)
   have hQ : StronglyMeasurable[mΩ] fun ω => (D t ω).gal := (h.adaptedGal t).mono (𝓕.le _)
   have hY : StronglyMeasurable[mΩ] (Ghat t) := (h.adaptedG t).mono (𝓕.le _)
-  have hQY : StronglyMeasurable[mΩ] fun ω => (D t ω).gal (Ghat t ω) :=
-    (isBoundedBilinearMap_apply (𝕜 := ℝ) (E := Matrix m n ℝ)
+  have hQY : StronglyMeasurable[mΩ] fun ω => (D t ω).gal (Ghat t ω) := by
+    have := (isBoundedBilinearMap_apply (𝕜 := ℝ) (E := Matrix m n ℝ)
       (F := Matrix m n ℝ)).continuous.comp_stronglyMeasurable (hQ.prodMk hY)
+    exact this
   exact hx₁.sub (hx.sub (hQY.aestronglyMeasurable.const_smul (lr t)))
 
 omit [IsProbabilityMeasure μ] in
@@ -1294,9 +1295,10 @@ private theorem integrable_gal_sq (h : IsStochasticDLRT 𝓕 μ g Ghat lr ϑ σ 
       rw [dist_eq_norm, dist_eq_norm]; exact hg a b).continuous
   have hgx : StronglyMeasurable[𝓕 t] fun ω => g (X t ω).W :=
     hgc.comp_stronglyMeasurable (h.adaptedW t)
-  have hf : StronglyMeasurable[𝓕 t] fun ω => (D t ω).gal (g (X t ω).W) :=
-    (isBoundedBilinearMap_apply (𝕜 := ℝ) (E := Matrix m n ℝ)
+  have hf : StronglyMeasurable[𝓕 t] fun ω => (D t ω).gal (g (X t ω).W) := by
+    have h2 := (isBoundedBilinearMap_apply (𝕜 := ℝ) (E := Matrix m n ℝ)
       (F := Matrix m n ℝ)).continuous.comp_stronglyMeasurable ((h.adaptedGal t).prodMk hgx)
+    exact h2
   have hfm : AEStronglyMeasurable[mΩ] (fun ω => (D t ω).gal (g (X t ω).W)) μ :=
     (hf.mono (𝓕.le t)).aestronglyMeasurable
   refine Integrable.of_bound (hfm.norm.pow 2) (G ^ 2) (ae_of_all _ fun ω => ?_)

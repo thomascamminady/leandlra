@@ -632,9 +632,9 @@ theorem exists_generators {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {L : �
     calc ∑ l, (if l = i ∨ l = j then σ l else 0) ^ 2
         ≤ ∑ l, ((if l = i then σ l ^ 2 else 0) + (if l = j then σ l ^ 2 else 0)) :=
           Finset.sum_le_sum fun l _ => by
-            split_ifs <;> first | nlinarith [sq_nonneg (σ l)] | (exfalso; tauto)
+            split_ifs <;> first | nlinarith only [sq_nonneg (σ l)] | (exfalso; tauto)
       _ = σ i ^ 2 + σ j ^ 2 := by simp [Finset.sum_add_distrib]
-      _ ≤ (σ i + σ j) ^ 2 := by nlinarith [hσ i, hσ j]
+      _ ≤ (σ i + σ j) ^ 2 := by nlinarith only [hσ i, hσ j]
   have hXd1 : ∀ i : Fin q, ‖X - Xd i i‖ ≤ σ i := fun i => by
     rw [← pow_le_pow_iff_left₀ (norm_nonneg _) (hσ i).le two_ne_zero, hnormdiag]
     simp only [or_self]

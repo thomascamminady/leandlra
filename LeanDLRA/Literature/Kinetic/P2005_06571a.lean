@@ -1066,8 +1066,9 @@ private theorem continuous_gLim : Continuous M.gLim := by
   have h : M.gLim = fun ρ => -(Frobenius.leftMulCLM (Matrix.diagonal fun x => (M.σS x)⁻¹)
       (Frobenius.rightMulCLM M.velMat.transpose (M.gradL ρ))) := rfl
   rw [h]
-  exact ((ContinuousLinearMap.continuous _).comp ((ContinuousLinearMap.continuous _).comp
-    M.gradL.continuous_of_finiteDimensional)).neg
+  exact ((Frobenius.leftMulCLM (Matrix.diagonal fun x => (M.σS x)⁻¹)).continuous.comp
+    ((Frobenius.rightMulCLM M.velMat.transpose).continuous.comp
+      M.gradL.continuous_of_finiteDimensional)).neg
 
 private theorem continuous_hat : Continuous M.hat := M.hat.continuous_of_finiteDimensional
 

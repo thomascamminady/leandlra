@@ -1444,7 +1444,7 @@ theorem theorem_1_tendsto {σ₀ : ℝ} (hP : P.Admissible σ₀) {Ψ T h : ZMod
     set G : ℝ → ℝ := fun ε => (ε ^ 2 / (P.c * P.Δt) * g j k - ε * P.flux g j k -
       bvec N k * (A + ε ^ 2 * Dp P.Δx h j)) / (ε ^ 2 / (P.c * P.Δt) + P.σf j) with hG
     have hcont : ContinuousAt G 0 := by
-      refine ContinuousAt.div (by fun_prop) (by fun_prop) ?_
+      refine ContinuousAt.div₀ (by fun_prop) (by fun_prop) ?_
       simpa using (hσf j).ne'
     have hG0 : G 0 = -(P.limitFlux Ψ T j * bvec N k) := by
       simp only [hG, limitFlux, ← hA]
@@ -2845,7 +2845,7 @@ lemma tendsto_of_implicit {d σ u₀ f A B : ℝ} (hd : 0 < d) (hσ : 0 < σ) {u
     Tendsto u (𝓝[>] 0) (𝓝 (-(A / σ))) := by
   set G : ℝ → ℝ := fun ε => (ε ^ 2 / d * u₀ - ε * f - (A + ε ^ 2 * B)) / (ε ^ 2 / d + σ) with hG
   have hcont : ContinuousAt G 0 :=
-    ContinuousAt.div (by fun_prop) (by fun_prop) (by simpa using hσ.ne')
+    ContinuousAt.div₀ (by fun_prop) (by fun_prop) (by simpa using hσ.ne')
   have hG0 : G 0 = -(A / σ) := by
     simp only [hG, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, zero_div, zero_mul,
       sub_zero, zero_sub, add_zero, zero_add]

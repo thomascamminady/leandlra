@@ -1990,7 +1990,7 @@ theorem exists_riccati_branch {W₀ : Matrix m n ℝ} {U₀ : Matrix m (Fin r) �
       simp only [riccati, add_zero, Matrix.mul_zero]
       rw [hs.swap.mul_V, h2, sub_self, Matrix.mul_zero]
   have dfu : HasStrictFDerivAt f (fderiv ℝ f u) u :=
-    hfc.contDiffAt.hasStrictFDerivAt (by norm_num)
+    hfc.contDiffAt.hasStrictFDerivAt_fderiv (by norm_num)
   have hfd : HasFDerivAt f (fderiv ℝ f u) u := dfu.hasFDerivAt
   set T : (Matrix m (Fin r) ℝ × Matrix n (Fin r) ℝ) →L[ℝ]
       (Matrix m (Fin r) ℝ × Matrix n (Fin r) ℝ) :=

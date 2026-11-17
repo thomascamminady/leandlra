@@ -1083,7 +1083,7 @@ lemma norm_mul_Talpha_le (hNv : 2 ≤ Nv) (f : Phase Nx Nv) :
     simp only [hS1, hS2, Matrix.smul_apply, Matrix.sub_apply, Matrix.of_apply, smul_eq_mul]
     ring
   have h1 : ‖S1‖ ≤ alphaMax G * ‖f‖ :=
-    norm_le_of_rows hA fun p => sum_shift_up_le (f p) _ (abs_alphaR_le G hNv)
+    norm_le_of_rows hA fun p => sum_shift_up_le (f p) (alphaR G) (abs_alphaR_le G hNv)
   have h2 : ‖S2‖ ≤ alphaMax G * ‖f‖ := by
     refine norm_le_of_rows hA fun p => ?_
     rw [mul_sum]
@@ -1110,7 +1110,8 @@ lemma norm_mul_TalphaInv_le (hNv : 2 ≤ Nv) (f : Phase Nx Nv) :
     simp only [hS1, hS2, Matrix.smul_apply, Matrix.sub_apply, Matrix.of_apply, smul_eq_mul]
     ring
   have h1 : ‖S1‖ ≤ (alphaMin G)⁻¹ * ‖f‖ :=
-    norm_le_of_rows hAi fun p => sum_shift_down_le hNv0 (f p) _ (by simp [alphaL])
+    norm_le_of_rows hAi fun p =>
+      sum_shift_down_le hNv0 (f p) (fun q => (alphaL G q)⁻¹) (by simp [alphaL])
       (fun q hq => abs_inv_alphaL_le G hNv hq)
   have h2 : ‖S2‖ ≤ (alphaMin G)⁻¹ * ‖f‖ := by
     refine norm_le_of_rows hAi fun p => ?_

@@ -87,9 +87,11 @@ theorem galerkin_isospectral_trace_pow {U : Matrix n k ℝ} (hU : Uᵀ * U = 1)
       | zero => simpa using continuousOn_const
       | succ i ih =>
         simp only [pow_succ]
-        exact hmul.comp_continuousOn (ih.prodMk hS.cont)
-    exact (LinearMap.toContinuousLinearMap
+        have h2 := hmul.comp_continuousOn (ih.prodMk hS.cont)
+        exact h2
+    have h2 := (LinearMap.toContinuousLinearMap
       (Matrix.traceLinearMap k ℝ ℝ)).continuous.comp_continuousOn (h1 j)
+    exact h2
   refine constant_of_has_deriv_right_zero hcont ?_
   intro x hx
   have h1 := hasDerivWithinAt_pow_aux (hS.deriv x hx) j
@@ -231,8 +233,9 @@ omit [Fintype m] [Fintype n] [Fintype r] [DecidableEq m] [DecidableEq n] [Decida
   [DecidableEq k] in
 private theorem continuousOn_mul' {f g : ℝ → Matrix k k ℝ} {s : Set ℝ} (hf : ContinuousOn f s)
     (hg : ContinuousOn g s) : ContinuousOn (fun t => f t * g t) s :=
-  ((Frobenius.mulCLM : Matrix k k ℝ →L[ℝ] Matrix k k ℝ →L[ℝ] Matrix k k ℝ).continuous₂
+  have h := ((Frobenius.mulCLM : Matrix k k ℝ →L[ℝ] Matrix k k ℝ →L[ℝ] Matrix k k ℝ).continuous₂
     ).comp_continuousOn (hf.prodMk hg)
+  h
 
 omit [DecidableEq n] in
 /-- **The BUG S-step preserves positive semidefiniteness for differential Lyapunov equations**
