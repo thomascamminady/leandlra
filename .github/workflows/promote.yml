@@ -65,6 +65,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for workflow in catalogue.yml apidocs.yml pages.yml; do
+          for workflow in catalogue.yml pages.yml; do
             gh workflow run "$workflow" --ref main
           done

@@ -1,19 +1,39 @@
 name: API docs
 
-# doc-gen4 API reference. The first run documents all of Mathlib (over an hour); later runs reuse
-# docgen-action's Mathlib cache. The output is saved to the Actions cache, and the Pages workflow
-# (triggered when this one completes) publishes it under docs/.
+# doc-gen4 API reference of the core library (`LeanDLRA`; the catalogue is not documented here).
+#
+# doc-gen4 first writes the documentation data of every module (Lean core, Mathlib and the other
+# dependencies, the core library) into one SQLite database and then generates the HTML from it.
+# The database and its marker files are kept between runs in the artifact `apidocs-state`, so only
+# the first run after a change of the toolchain or of Mathlib documents all of Mathlib; later runs
+# only document the modules that changed. The state is also uploaded when a run fails, so the
+# next run continues where the failed one stopped.
+#
+# The HTML is uploaded as the artifact `apidocs-html`; the Pages workflow (triggered when this one
+# completes) publishes the newest one under docs/.
+#
+# Memory: the documentation uses little memory (see the "Memory report" step), but Lake reserves
+# tens of GB of address space that it never touches. Linux's default overcommit heuristic refuses
+# a `fork` when one such reservation is larger than RAM plus swap (19 GB on the runner), and then
+# Lake cannot start doc-gen4 or git: "resource exhausted (error code: 12, not enough memory)".
+# The job therefore switches the heuristic off (vm.overcommit_memory=1) on the runner.
 on:
-  push:
-    branches: [main]
+  schedule:
+    - cron: "23 2 * * *"
   workflow_dispatch:
+    inputs:
+      fresh:
+        description: Ignore the saved documentation state and document everything again
+        type: boolean
+        default: false
 
 concurrency:
-  group: apidocs
+  group: apidocs-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   docs:
@@ -21,25 +41,142 @@ jobs:
     timeout-minutes: 340
     steps:
       - uses: actions/checkout@v7
-      # doc-gen4 documents the modules that the root file of the default library imports. That is
-      # the core (docs/STRUCTURE.md); for this build only, the root file also imports the
-      # catalogue, so that the reference covers every module the website links to.
-      - name: Import every module in the root file
-        run: |
-          scripts/gen_root.sh
-          grep '^import LeanDLRA\.' LeanDLRACatalogue.lean >> LeanDLRA.lean
-      - name: Install Lean and build the library
+      - name: Generate the root files
+        run: scripts/gen_root.sh
+      - name: Install Lean and build the core library
         uses: leanprover/lean-action@v1
-      - name: Build API documentation (doc-gen4)
-        uses: leanprover-community/docgen-action@v1
+
+      - name: Allow address-space reservations larger than RAM (see the note at the top)
+        run: sudo sysctl -w vm.overcommit_memory=1
+
+      - name: Record memory use in the background
+        run: |
+          nohup bash -c 'while true; do
+            printf "%s used=%s avail=%s swap=%s top:" "$(date -u +%T)" \
+              $(free -m | awk "/^Mem:/ {print \$3, \$7} /^Swap:/ {print \$3}")
+            ps -eo rss=,args= --sort=-rss | head -n 4 |
+              awk "{printf \" [%d MB %s %s %s]\", \$1/1024, \$2, \$3, \$6}"
+            echo
+            sleep 15
+          done' > "$RUNNER_TEMP/memory.log" 2>&1 &
+
+      - name: Restore the documentation state of the newest earlier run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          key=$(cat lean-toolchain lake-manifest.json | sha256sum | cut -d' ' -f1)
+          echo "STATE_KEY=$key" >> "$GITHUB_ENV"
+          if [ "${{ inputs.fresh }}" = "true" ]; then echo "Fresh build requested."; exit 0; fi
+          # Newest artifact of this repository and branch (not of a fork) that has not expired.
+          run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=apidocs-state&per_page=100" \
+            --jq "[.artifacts[] | select(.expired | not)
+                   | select(.workflow_run.head_branch == \"$GITHUB_REF_NAME\")
+                   | select(.workflow_run.head_repository_id == $GITHUB_REPOSITORY_ID)]
+                  | sort_by(.created_at) | last | .workflow_run.id // empty")
+          if [ -z "$run_id" ]; then echo "No earlier state: full build."; exit 0; fi
+          gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name apidocs-state --dir "$RUNNER_TEMP/state"
+          if [ "$(cat "$RUNNER_TEMP/state/state-key")" != "$key" ]; then
+            echo "State of run $run_id is for another toolchain or manifest: full build."; exit 0
+          fi
+          tar --zstd -xf "$RUNNER_TEMP/state/apidocs-state.tar.zst"
+          rm -rf "$RUNNER_TEMP/state"
+          # The HTML folder is not part of the state: remove its markers so that it is generated
+          # again, and the output of the bibliography step, which also writes into that folder.
+          rm -f docbuild/.lake/build/doc-data/*.docs_built* docbuild/.lake/build/doc-data/*.docsHeader_built* \
+            docbuild/.lake/build/doc-data/references.json*
+          echo "Restored the state of run $run_id."
+          du -sh docbuild/.lake/build/api-docs.db
+          ls docbuild/.lake/build/doc-data | wc -l
+
+      # The same Lake project as leanprover-community/docgen-action builds. The manifest is part
+      # of the state, so doc-gen4 and its dependencies stay at the same revisions between runs.
+      - name: Set up the documentation project
+        run: |
+          mkdir -p docbuild
+          cat > docbuild/lakefile.toml << EOF
+          name = "docbuild"
+          reservoir = false
+          version = "0.1.0"
+          packagesDir = "../.lake/packages"
+
+          [[require]]
+          name = "LeanDLRA"
+          path = "../"
+
+          [[require]]
+          scope = "leanprover"
+          name = "doc-gen4"
+          rev = "$(cut -f 2 -d: lean-toolchain)"
+          EOF
+          cd docbuild
+          if [ ! -f lake-manifest.json ]; then MATHLIB_NO_CACHE_ON_UPDATE=1 lake update LeanDLRA; fi
+          lake build doc-gen4
+
+      - name: Document Lean core (Init, Std, Lake, Lean)
+        working-directory: docbuild
+        run: lake build doc-gen4/coreDocs
+
+      - name: Document the dependencies and the core library
+        working-directory: docbuild
+        run: lake build @LeanDLRA/LeanDLRA:docInfo
+
+      - name: Save the documentation state
+        if: success() || failure()
+        run: |
+          if [ ! -f docbuild/.lake/build/api-docs.db ]; then echo "Nothing to save."; exit 0; fi
+          echo "$STATE_KEY" > state-key
+          pkgs=""
+          for p in doc-gen4 leansqlite MD4Lean BibtexQuery UnicodeBasic; do
+            if [ -d ".lake/packages/$p" ]; then pkgs="$pkgs .lake/packages/$p"; fi
+          done
+          tar --zstd -cf apidocs-state.tar.zst --exclude=docbuild/.lake/build/doc \
+            docbuild/lake-manifest.json docbuild/.lake/build $pkgs
+          ls -lh apidocs-state.tar.zst
+      - name: Upload the documentation state
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
         with:
-          # A folder that does not exist yet: the action skips its own Jekyll build and only
-          # writes the API documentation to _apidocs/docs.
-          homepage: _apidocs
-          build-page: false
-          deploy: false
-      - name: Save API documentation for the Pages workflow
-        uses: actions/cache/save@v4
+          name: apidocs-state
+          path: |
+            apidocs-state.tar.zst
+            state-key
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Generate the HTML
+        working-directory: docbuild
+        run: |
+          lake build @LeanDLRA/LeanDLRA:docs
+          test -f .lake/build/doc/LeanDLRA.html
+          du -sh .lake/build/doc
+          find .lake/build/doc -type f | wc -l
+          tar --zstd -cf ../apidocs-html.tar.zst -C .lake/build doc
+          ls -lh ../apidocs-html.tar.zst
+      - name: Upload the HTML for the Pages workflow
+        uses: actions/upload-artifact@v4
         with:
-          path: _apidocs/docs
-          key: apidocs-${{ github.sha }}
+          name: apidocs-html
+          path: apidocs-html.tar.zst
+          compression-level: 0
+          retention-days: 30
+
+      - name: Memory report
+        if: always()
+        run: |
+          log="$RUNNER_TEMP/memory.log"
+          {
+            echo "### Memory (MB; one sample every 15 s, $(wc -l < "$log") samples)"
+            echo '```'
+            echo "largest used:      $(sed 's/.*used=\([0-9]*\).*/\1/' "$log" | sort -n | tail -n 1)"
+            echo "smallest available: $(sed 's/.*avail=\([0-9]*\).*/\1/' "$log" | sort -n | head -n 1)"
+            echo "largest swap:      $(sed 's/.*swap=\([0-9]*\).*/\1/' "$log" | sort -n | tail -n 1)"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload the memory log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-log
+          path: ${{ runner.temp }}/memory.log
+          retention-days: 7

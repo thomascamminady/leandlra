@@ -1,15 +1,17 @@
 name: Pages
 
 # Project website (just-the-docs): pages generated from README, docs/ and the Lean declaration
-# index. The doc-gen4 API reference is built by the separate "API docs" workflow (slow: it
-# documents Mathlib too) and restored here from the Actions cache, so the site itself deploys in
-# minutes. A finished "API docs" run triggers a redeploy that picks up the fresh documentation.
+# index. The doc-gen4 API reference (core library only) is built by the separate "API docs"
+# workflow (nightly) and downloaded here from its newest `apidocs-html` artifact, so the site
+# itself deploys in minutes. A successful "API docs" run triggers a redeploy that picks up the
+# fresh documentation.
 on:
   push:
     branches: [main]
   workflow_run:
     workflows: ["API docs"]
     types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -18,11 +20,14 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
 jobs:
   build:
+    # A failed or cancelled "API docs" run brings nothing to publish.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -45,12 +50,22 @@ jobs:
         with:
           source: website
           destination: ./_site
-      - name: Restore API documentation (latest available)
-        uses: actions/cache/restore@v4
-        with:
-          path: _apidocs/docs
-          key: apidocs-${{ github.sha }}
-          restore-keys: apidocs-
+      - name: Download API documentation (newest available)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Newest artifact of this repository and branch (not of a fork) that has not expired.
+          run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=apidocs-html&per_page=100" \
+            --jq "[.artifacts[] | select(.expired | not)
+                   | select(.workflow_run.head_branch == \"$GITHUB_REF_NAME\")
+                   | select(.workflow_run.head_repository_id == $GITHUB_REPOSITORY_ID)]
+                  | sort_by(.created_at) | last | .workflow_run.id // empty")
+          if [ -z "$run_id" ]; then echo "No API documentation available."; exit 0; fi
+          gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name apidocs-html --dir "$RUNNER_TEMP/apidocs"
+          mkdir -p _apidocs
+          tar --zstd -xf "$RUNNER_TEMP/apidocs/apidocs-html.tar.zst" -C _apidocs
+          mv _apidocs/doc _apidocs/docs
+          echo "API documentation of run $run_id: $(find _apidocs/docs -type f | wc -l) files."
       - name: Add API documentation to the site
         run: |
           if [ -d _apidocs/docs ]; then sudo cp -r _apidocs/docs _site/docs; fi
