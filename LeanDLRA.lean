@@ -136,8 +136,11 @@ import LeanDLRA.Stability.Conservation
 import LeanDLRA.Stability.Energy
 import LeanDLRA.Stability.NormBalance
 import LeanDLRA.Stiff.CouplingLocalError
+import LeanDLRA.Stiff.Defs
 import LeanDLRA.Stiff.DualWeightedResidual
 import LeanDLRA.Stiff.ImplicitBUG
+import LeanDLRA.Stiff.ImplicitBUGRun
+import LeanDLRA.Stiff.ImplicitBUGStep
 import LeanDLRA.Stiff.ImplicitSolvability
 import LeanDLRA.Stochastic.GramianLowerBound
 import LeanDLRA.Stochastic.KalmanBucy
