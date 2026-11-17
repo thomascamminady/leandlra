@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit bb5ff85 (2026-11-17). A theorem is quoted from its
+files and were compared with them at commit 564ab0b (2026-11-17). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -2672,7 +2672,7 @@ the module docstring; the docstring of the theorem cites no theorem of a paper.
 
 **A-posteriori bounds, tolerance schedules and rank selection.**
 
-`rankAdaptiveBUG_aposteriori_global_error` in [`LeanDLRA/Integrators/RankAdaptiveBUGAposteriori.lean`, lines 293–301](../LeanDLRA/Integrators/RankAdaptiveBUGAposteriori.lean#L293-L301):
+`rankAdaptiveBUG_aposteriori_global_error` in [`LeanDLRA/Integrators/RankAdaptiveBUGAposteriori.lean`, lines 306–314](../LeanDLRA/Integrators/RankAdaptiveBUGAposteriori.lean#L306-L314):
 
 ```lean
 theorem rankAdaptiveBUG_aposteriori_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L)
@@ -2686,7 +2686,7 @@ theorem rankAdaptiveBUG_aposteriori_global_error (hF : IsLipschitzField F L) (hL
       Real.exp (L * (n * h)) * (‖Y 0 - A t₀‖ + ∑ k ∈ range n, (ϑ k + h * η k))
 ```
 
-`rankAdaptiveBUG_global_error_of_tol` in [`LeanDLRA/Integrators/RankAdaptiveBUGAposteriori.lean`, lines 381–392](../LeanDLRA/Integrators/RankAdaptiveBUGAposteriori.lean#L381-L392):
+`rankAdaptiveBUG_global_error_of_tol` in [`LeanDLRA/Integrators/RankAdaptiveBUGAposteriori.lean`, lines 394–405](../LeanDLRA/Integrators/RankAdaptiveBUGAposteriori.lean#L394-L405):
 
 ```lean
 theorem rankAdaptiveBUG_global_error_of_tol (hF : IsLipschitzField F L) (hL : 0 ≤ L)
@@ -4412,7 +4412,7 @@ to [CarrelVandereycken2023, §2.3] for low-rank integrators for stiff problems.
 
 ### 7.4 A family of stiff problems without a uniform constant for one step
 
-`StiffOrderReduction.Example.not_exists_uniform_bound` in [`LeanDLRA/Research/StiffOrderReduction.lean`, lines 880–883](../LeanDLRA/Research/StiffOrderReduction.lean#L880-L883):
+`StiffOrderReduction.Example.not_exists_uniform_bound` in [`LeanDLRA/Research/StiffOrderReduction.lean`, lines 881–884](../LeanDLRA/Research/StiffOrderReduction.lean#L881-L884):
 
 ```lean
 theorem not_exists_uniform_bound :

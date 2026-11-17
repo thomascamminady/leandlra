@@ -15,7 +15,7 @@ The page describes the core library, the modules imported by `LeanDLRA.lean`. Th
 * [Conventions](CONVENTIONS.md): the rules for names, statements and docstrings.
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit bb5ff85 (2026-11-17).
+block links to the lines. The blocks were compared with the files at commit 564ab0b (2026-11-17).
 Installation is described in the [README](../README.md#using-leandlra-in-your-project).
 
 ## Contents
