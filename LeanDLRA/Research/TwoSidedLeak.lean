@@ -6,7 +6,7 @@ import LeanDLRA.Research.AugmentationRank
 ## Setting
 
 `F(Y) = 𝒜 Y + Y ℬ + C Y D` on `m × n` matrices with constant coefficients, one step of the
-rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, arXiv:2104.05247;
+rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022];
 `MatrixBUG.IsRankAdaptiveStep`) from `Y₀ = U₀ S₀ V₀ᵀ`.  For `C = 0` the Galerkin space of the
 step contains the exact solution (`capture_of_sylvester`).  A two-sided term destroys this exact
 capture unless `C` maps the range of `U₀` into itself and `D` maps the row space of `V₀` into
@@ -34,14 +34,17 @@ itself.  The amount by which it does not is measured by the *leaks*
 
 ## Implementation notes
 
-The auxiliary flows `P`, `Z` (row side: `Q`, `Zr`) are hypotheses, as in `capture_of_sylvester`;
-their existence (linear equations with continuous coefficients) is not formalised.  The bounds
-on the increments of the K- and L-step solutions are hypotheses as well.
+The auxiliary flows `P`, `Z` (row side: `Q`, `Zr`) are hypotheses of the theorems of this file,
+as in `capture_of_sylvester`.  The flows `P` and `Q` exist: `exists_rightFactor_of_sylvester` and
+`exists_leftFactor_of_sylvester` in `LeanDLRA/Research/SylvesterFlows.lean` construct them for
+coefficients continuous in time, in particular for the constant `𝒜`, `ℬ` here; the existence of
+the corrections `Z`, `Zr` is not formalised.  The bounds on the increments of the K- and L-step
+solutions are hypotheses as well.
 
 ## References
 
-* Ceruti–Kusch–Lubich, arXiv:2104.05247 (rank-adaptive BUG integrator).
-* Ceruti–Einkemmer–Kusch–Lubich, arXiv:2402.08607, Section 5.2 (a field with a two-sided term
+* Ceruti–Kusch–Lubich, [CerutiKuschLubich2022] (rank-adaptive BUG integrator).
+* Ceruti–Einkemmer–Kusch–Lubich, [CerutiEtAl2024b, Sec. 5.2] (a field with a two-sided term
   on which the rank-adaptive BUG integrator shows order two).
 -/
 
@@ -633,7 +636,7 @@ private theorem galerkinProj_eq' {b b' : Type*} [Fintype b] [Fintype b'] (Ub : M
 
 /-- **Local error of the rank-adaptive BUG step for a field with a two-sided term.**  For
 `F(Y) = 𝒜 Y + Y ℬ + C Y D`, `L`-Lipschitz, and every step of the rank-adaptive BUG integrator
-(Ceruti–Kusch–Lubich, arXiv:2104.05247; `MatrixBUG.IsRankAdaptiveStep`) with truncation
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]; `MatrixBUG.IsRankAdaptiveStep`) with truncation
 tolerance `ϑ`,
 
     ‖Y₁ - A(t₁)‖ ≤ (e^{L h} - 1) (θ + M₂ h²) + θ + ϑ,

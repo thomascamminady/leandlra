@@ -6,8 +6,8 @@ import LeanDLRA.Foundations.Galerkin
 /-!
 # The tensor-train projector-splitting integrator (TT-KSL, one-site TDVP)
 
-The projector-splitting integrator for tensor trains (Lubich–Oseledets–Vandereycken, arXiv
-1407.2042; the one-site TDVP algorithm of Haegeman et al. as described in
+The projector-splitting integrator for tensor trains (Lubich–Oseledets–Vandereycken,
+[LubichOseledetsVandereycken2015]; the one-site TDVP algorithm of Haegeman et al. as described in
 [PeterssonHodgesHeilmannGunther2026, §4.3]; the PS-TDVP of [KapasEtAl2026]) splits the TT tangent
 projector `P_Y = ∑_{k=1}^{d} P_{≤k-1} P_{>k} - ∑_{k=1}^{d-1} P_{≤k} P_{>k}` into its `2d - 1` terms
 and integrates them one after the other in a left-to-right sweep: a forward substep with the
@@ -20,10 +20,10 @@ bond `k + 1` is `ttSProj A B k = P_{≤k+1} P_{>k+1}`, built from the new left-o
 ## Core and bond coefficients
 
 A substep only changes one core or one bond matrix. The new core is the **core coefficient**
-`C̃(α, x_k, α') = ∑ X_{≤k}(w, α) Z(w, x_k, v) X_{>k+1}(v, α')` of the right-hand side (arXiv
-2512.14950, Eqs. (3.7), (3.15), (3.23); the core-centred contraction `Q̂_k` of
+`C̃(α, x_k, α') = ∑ X_{≤k}(w, α) Z(w, x_k, v) X_{>k+1}(v, α')` of the right-hand side
+([WangHu2026a, Eqs. (3.7), (3.15), (3.23)]; the core-centred contraction `Q̂_k` of
 [PeterssonHodgesHeilmannGunther2026], Eqs. (4.22)–(4.23)), the new bond matrix is the **bond
-coefficient** `S̃ = X_{≤k}ᵀ Z⟨k⟩ X_{>k}` ([WangHu2026a, Eqs. (3.11)], (3.19); the bond-centred
+coefficient** `S̃ = X_{≤k}ᵀ Z⟨k⟩ X_{>k}` ([WangHu2026a, Eqs. (3.11), (3.19)]; the bond-centred
 contraction `Q̂_k^B` of [PeterssonHodgesHeilmannGunther2026, Eq. (4.26)]). Inserted back into the
 tensor train they give the substep projectors applied to the right-hand side
 (`tt_update_ttCoreCoeff`, `ttBond_ttBondCoeff`); they extract the core of a mixed canonical tensor
@@ -39,9 +39,10 @@ train and the bond matrix of a bond-centred one, and they are invariant under th
   paper's `G_Δt`, `H_Δt`, Eqs. (3.4)–(3.5)), and the QR step as the capture condition
   `P_{≤k+1} Y_{2k+1} = Y_{2k+1}` (derived from a QR factorization of the new core in
   `capture_of_qr`).
-* `IsTTKSLStep`: one step of the time-continuous TT projector-splitting integrator (arXiv
-  1407.2042, §4; TDVP, [PeterssonHodgesHeilmannGunther2026, Eqs. (4.29)–(4.30)]), with forward
-  K-substeps `Y' = P_{≤k} P_{>k+1} F(t, Y)` and backward substeps `Y' = -P_{≤k+1} P_{>k+1} F(t, Y)`.
+* `IsTTKSLStep`: one step of the time-continuous TT projector-splitting integrator
+  ([LubichOseledetsVandereycken2015, §4]; TDVP,
+  [PeterssonHodgesHeilmannGunther2026, Eqs. (4.29)–(4.30)]), with forward K-substeps
+  `Y' = P_{≤k} P_{>k+1} F(t, Y)` and backward substeps `Y' = -P_{≤k+1} P_{>k+1} F(t, Y)`.
 
 ## Main results
 
@@ -53,7 +54,7 @@ train and the bond matrix of a bond-centred one, and they are invariant under th
   tangent projector `ttTangentProj A B`.
 * `IsTTKSLDiscreteStep.fix_fwd`, `fix_bwd`, `fwd_eq_tt`, `bwd_eq_ttBond`, `euler_fwd`,
   `euler_bwd`, and **`IsTTKSLDiscreteStep.euler_consistency`**: with forward-Euler substeps
-  `G = id + h F`, `H = id - h F` ([WangHu2026a, Eqs. (4.8)], (4.17), (4.24)) one sweep is a
+  `G = id + h F`, `H = id - h F` ([WangHu2026a, Eqs. (4.8), (4.17), (4.24)]) one sweep is a
   Lie–Trotter splitting of the projected Euler step: `‖Y_{2d-1} - (Y₀ + h P F(Y₀))‖ ≤
   L B h² (2d - 1)(d - 1)` with `P = ttTangentProj A B`, an orthogonal projector.
 * `norm_sub_euler_sum_le`: the abstract estimate behind it (a composition of Euler steps with
@@ -142,8 +143,8 @@ noncomputable def ttCoreCoeff (A B : TTCores ι β) (k : ℕ) (hk : k < d) (Z : 
     β k → ι ⟨k, hk⟩ → β (k + 1) → ℝ :=
   fun a c b => ∑ w, ∑ v, ttLeft A k w a * Z (assemble k hk w c v) * ttRight B (k + 1) v b
 
-/-- The **bond coefficient** `S̃ = X_{≤k}ᵀ Z⟨k⟩ X_{>k}` of a tensor `Z` at bond `k` (arXiv
-2512.14950, Eqs. (3.11), (3.19); the bond-centred contraction of
+/-- The **bond coefficient** `S̃ = X_{≤k}ᵀ Z⟨k⟩ X_{>k}` of a tensor `Z` at bond `k`
+([WangHu2026a, Eqs. (3.11), (3.19)]; the bond-centred contraction of
 [PeterssonHodgesHeilmannGunther2026, Eq. (4.26)]). -/
 noncomputable def ttBondCoeff (A B : TTCores ι β) (k : ℕ) (Z : Tensor ι) :
     Matrix (β k) (β k) ℝ :=
@@ -535,7 +536,7 @@ theorem fix_bwd (hs : IsTTKSLDiscreteStep G H A B Y) {k : ℕ} (hk : k + 1 < d) 
   exact (isOrthProj_ttKProj (by omega) (fun i hi => hs.leftOrth i (by omega))
     fun i hi => hs.rightOrth i (by omega)).idem _
 
-/-- **Forward-Euler forward substeps** ([WangHu2026a, Eqs. (4.8)], (4.17), (4.24)): with
+/-- **Forward-Euler forward substeps** ([WangHu2026a, Eqs. (4.8), (4.17), (4.24)]): with
 `G k Y = Y + h F(Y)` the forward substep is the Euler step of the projected equation,
 `Y_{2k+1} = Y_{2k} + h P_{≤k} P_{>k+1} F(Y_{2k})`. -/
 theorem euler_fwd [Unique (β 0)] (hs : IsTTKSLDiscreteStep G H A B Y) {F : Tensor ι → Tensor ι}
@@ -543,7 +544,7 @@ theorem euler_fwd [Unique (β 0)] (hs : IsTTKSLDiscreteStep G H A B Y) {F : Tens
     Y (2 * k + 1) = Y (2 * k) + h • ttKProj A B k (F (Y (2 * k))) := by
   rw [hs.fwd k hk, hG, map_add, map_smul, hs.fix_fwd k hk]
 
-/-- **Forward-Euler backward substeps** ([WangHu2026a, Eqs. (4.8)], (4.17), (4.24)): with
+/-- **Forward-Euler backward substeps** ([WangHu2026a, Eqs. (4.8), (4.17), (4.24)]): with
 `H k Y = Y - h F(Y)`, `Y_{2k+2} = Y_{2k+1} - h P_{≤k+1} P_{>k+1} F(Y_{2k+1})`. -/
 theorem euler_bwd (hs : IsTTKSLDiscreteStep G H A B Y) {F : Tensor ι → Tensor ι} {h : ℝ}
     (hH : ∀ k Z, H k Z = Z - h • F Z) {k : ℕ} (hk : k + 1 < d) :
@@ -656,12 +657,13 @@ section Continuous
 
 variable [∀ i, Fintype (ι i)] [∀ k, DecidableEq (β k)]
 
-/-- **One step of the TT projector-splitting integrator** (Lubich–Oseledets–Vandereycken, arXiv
-1407.2042, §4; the one-site TDVP sweep, [PeterssonHodgesHeilmannGunther2026, Eqs. (4.29)–(4.30)]),
-from `Y₀` in form (I) (right-orthogonal old cores `B i`, `i ≥ 1`): for `k < d` the forward K-substep
-`YK k' = P_{≤k} P_{>k+1} F(t, YK k)`, for `k + 1 < d` the QR step (`kCap`, the new left core `A k`
-spans `YK k t₁`) and the backward substep `YS k' = -P_{≤k+1} P_{>k+1} F(t, YS k)`, started from the
-end values of the previous substep. The new approximation is `YK (d - 1) t₁`. -/
+/-- **One step of the TT projector-splitting integrator** (Lubich–Oseledets–Vandereycken,
+[LubichOseledetsVandereycken2015, §4]; the one-site TDVP sweep,
+[PeterssonHodgesHeilmannGunther2026, Eqs. (4.29)–(4.30)]), from `Y₀` in form (I) (right-orthogonal
+old cores `B i`, `i ≥ 1`): for `k < d` the forward K-substep `YK k' = P_{≤k} P_{>k+1} F(t, YK k)`,
+for `k + 1 < d` the QR step (`kCap`, the new left core `A k` spans `YK k t₁`) and the backward
+substep `YS k' = -P_{≤k+1} P_{>k+1} F(t, YS k)`, started from the end values of the previous
+substep. The new approximation is `YK (d - 1) t₁`. -/
 structure IsTTKSLStep (F : ℝ → Tensor ι → Tensor ι) (A B : TTCores ι β) (t₀ t₁ : ℝ)
     (Y₀ : Tensor ι) (YK YS : ℕ → ℝ → Tensor ι) : Prop where
   leftOrth : ∀ i : Fin d, i.val + 1 < d → IsLeftOrth A i
@@ -723,9 +725,9 @@ theorem sStart_fix [Unique (β 0)] (hs : IsTTKSLStep F A B t₀ t₁ Y₀ YK YS)
   rw [hs.sStart k hk]
   exact ttSProj_fix_of_ttKProj (by omega) (fun i hi => hs.rightOrth i (by omega)) hK (hs.kCap k hk)
 
-/-- **Norm conservation of the TT projector-splitting integrator** (one-site TDVP; arXiv
-2603.13990, §4.3, "The TDVP algorithm conserves both the norm and the energy", citing
-Haegeman et al.): if `⟪F(t, x), x⟫ = 0` for all `x` (e.g. `F(t, x) = A x` with `A`
+/-- **Norm conservation of the TT projector-splitting integrator** (one-site TDVP;
+[PeterssonHodgesHeilmannGunther2026, §4.3], "The TDVP algorithm conserves both the norm and the
+energy", citing Haegeman et al.): if `⟪F(t, x), x⟫ = 0` for all `x` (e.g. `F(t, x) = A x` with `A`
 skew-symmetric, the real form of unitary dynamics), every substep conserves the norm, so
 `‖Y₁‖ = ‖Y₀‖` for the new approximation `Y₁ = YK (d - 1) t₁`. -/
 theorem norm_eq [Unique (β 0)] (hs : IsTTKSLStep F A B t₀ t₁ Y₀ YK YS) (h01 : t₀ ≤ t₁)
@@ -744,9 +746,9 @@ theorem norm_eq [Unique (β 0)] (hs : IsTTKSLStep F A B t₀ t₁ Y₀ YK YS) (h
       (fun t x _ => by rw [inner_neg_left, hF, neg_zero]) t₁ ⟨h01, le_rfl⟩, hs.sStart k hk']
     exact ih (by omega)
 
-/-- **Energy conservation of the TT projector-splitting integrator** (one-site TDVP; arXiv
-2603.13990, §4.3): for `F(t, x) = J ∇ℰ(x)` with `J` skew (`⟪J z, z⟫ = 0`, e.g. the realified
-`-i`) and commuting with all substep projectors, every substep conserves `ℰ`, so
+/-- **Energy conservation of the TT projector-splitting integrator** (one-site TDVP;
+[PeterssonHodgesHeilmannGunther2026, §4.3]): for `F(t, x) = J ∇ℰ(x)` with `J` skew (`⟪J z, z⟫ = 0`,
+e.g. the realified `-i`) and commuting with all substep projectors, every substep conserves `ℰ`, so
 `ℰ(Y₁) = ℰ(Y₀)` for the new approximation `Y₁ = YK (d - 1) t₁`. -/
 theorem energy_eq (hs : IsTTKSLStep F A B t₀ t₁ Y₀ YK YS) (h01 : t₀ ≤ t₁)
     {ℰ : Tensor ι → ℝ} {g : Tensor ι → Tensor ι} (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x)

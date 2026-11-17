@@ -9,7 +9,7 @@ import LeanDLRA.LinearAlgebra.SVD.MinMax
 # Dynamical randomized SVD and generalized Nyström as BUG-type steps
 
 B. Carrel, *Randomized methods for dynamical low-rank approximation*
-(arXiv 2410.17091, §§2–3; quoted in arXiv 2506.15259, §2.3.1) proposes two randomized DLRA
+([Carrel2025], §§2–3; quoted in [WuZhaoGu2025, §2.3.1]) proposes two randomized DLRA
 integrators.  One step of the **dynamical randomized SVD (DRSVD)** from `Y₀ = U₀ S₀ V₀ᵀ` is
 
 1. *B-step* (dynamical range finder): `B' = F(B Ω†) Ω`, `B(0) = Y₀ Ω`, `Q_h = orth(B(h))`,
@@ -42,14 +42,14 @@ is the one-sided Galerkin step `Y_C = Q C(·)ᵀ`, `Y_C' = Q Qᵀ F(Y_C)`, `Y_C(
   `c₂ = T e^{LT} bugC₂`, `c₃ = e^{LT}` (Lady Windermere's fan).
 
 All constants depend only on `L`, `B`, `T` and the step-size bound, **not on singular values**,
-and the non-checkable range-inclusion hypothesis of arXiv 2410.17091 is replaced by the
+and the non-checkable range-inclusion hypothesis of [Carrel2025] is replaced by the
 quantitative normal-component bound `ε`.  This is new: the paper gives only exactness results
 and numerical evidence.  Two by-products: the robust bound does not need the augmentation of
 `Q` by `U₀` (the C-step starts at `Q Qᵀ Y₀` and is compared with `Q Qᵀ A`), but it does need
 the augmentation of the *sketch* (`Y_B(t₀) = Y₀`); without it the B-step starts at
 `Y₀ W Wᵀ ≠ Y₀` in general (`Counterexample.not_augmented_start`), and an additional
 `O(L h ‖Y₀ (I - WWᵀ)‖)` term appears (not formalized).  **Scope caveat.**  The DRSVD of
-arXiv 2410.17091 (Algorithms 1 and 3) sketches with a plain Gaussian `Ω`, which is *not*
+[Carrel2025] (Algorithms 1 and 3) sketches with a plain Gaussian `Ω`, which is *not*
 augmented by `V₀`; the robust bound above therefore covers the variant whose sketch is
 `W = orth([V₀, Ω])` (`r` extra columns, the same augmentation that (15) applies to the co-range
 basis of DGN), not Algorithm 3 verbatim.  *Remaining:* the non-augmented case (extra
@@ -59,7 +59,7 @@ these is formalized.  The paper's heuristic `B(h) ≈ A(h) Ω` is not formalized
 
 **OP-RS-07 (erratum; resolved).**  For `F(t, Y) = Ȧ(t)` every substep is an explicit
 increment: `B(h) = A(h) W` (`bStep_exact`), `C(h) = A(h)ᵀ Q`, i.e. `C(h)ᵀ = Qᵀ A(h)`
-(`cStep_exact`; the proof of Lemma 3.3 of arXiv 2410.17091 writes `Q A(h)ᵀ`, a transposition
+(`cStep_exact`; the proof of Lemma 3.3 of [Carrel2025] writes `Q A(h)ᵀ`, a transposition
 slip), and `D(h) = Qᵀ A(h) W` (`dStep_exact`).  Hence, if `Q` captures `A(h)`:
 
 * `drsvd_exact_iff`: `Q C(h)ᵀ = A(h)`, and `T_r(Q C(h)ᵀ) = A(h)` **iff `rank A(h) ≤ r`**
@@ -71,7 +71,7 @@ slip), and `D(h) = Qᵀ A(h) W` (`dStep_exact`).  Hence, if `Q` captures `A(h)`:
 * `Counterexample.drsvd_not_exact`, `Counterexample.dgn_not_exact`: with `r = p = 1`,
   `A(t) = diag(1, 0) + t diag(0, 1)` (`rank Y₀ = r`, `rank G = p`, `rank A(1) = 2 ≤ r + p`) and
   full sketches `Q = W = I` (all range inclusions hold), DRSVD and DGN are **not** exact.
-  So Lemmas 3.2 and 3.3 of arXiv 2410.17091 (hypothesis `rank A(h) ≤ r + p`) are false as
+  So Lemmas 3.2 and 3.3 of [Carrel2025] (hypothesis `rank A(h) ≤ r + p`) are false as
   stated; the correct hypothesis is `rank A(h) ≤ r`.  (`Q = I` is what (13) yields, up to an
   orthogonal change of basis that leaves `Q Qᵀ = I` unchanged, whenever the sketch `B(1) = Ω`
   is invertible; the B-step itself is not part of the Lean counterexample.  For DGN the Lean
@@ -84,11 +84,10 @@ slip), and `D(h) = Qᵀ A(h) W` (`dStep_exact`).  Hence, if `Q` captures `A(h)`:
 `A₁ = k < r` allowed), then `A₁ = A₁ V₀ C`.  Under this range condition (and its transpose),
 `bug_exact_of_range` and `ksl_exact_of_range` give exactness of BUG and KSL with no
 non-singularity of an `r × r` overlap, which explains the KSL column of the over-approximation
-experiment of arXiv 2001.08599 (Table 1, `r = 20`, rank 10); the chart-based column follows
-from the paper's Lemma 3.11 (chart method = KSL under its assumptions), which is not formalized
-here.  Part (b) is `drsvd_exact_iff`.  Parts (c)
-(conservative rank-adaptive scheme) and (d) (rank-reduced Kalman filter) are not addressed
-here.
+experiment of [BillaudFriessFalcoNouy2022] (Table 1, `r = 20`, rank 10); the chart-based column
+follows from the paper's Lemma 3.11 (chart method = KSL under its assumptions), which is not
+formalized here. Part (b) is `drsvd_exact_iff`. Parts (c) (conservative rank-adaptive scheme) and
+(d) (rank-reduced Kalman filter) are not addressed here.
 
 ## Formalization notes
 
@@ -114,7 +113,7 @@ section Abstract
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 variable {F : ℝ → E → E} {L B ε ϑ : ℝ} {t₀ t₁ h : ℝ} {A : ℝ → E}
 
-/-- All hypotheses of one step of the (augmented) dynamical randomized SVD (arXiv 2410.17091,
+/-- All hypotheses of one step of the (augmented) dynamical randomized SVD ([Carrel2025],
 Algorithm 3) from `(t₀, Y₀)` to `t₁`, written in the full space: `QΩ` is the orthogonal projector
 onto the sketch space (`X ↦ X W Wᵀ`), `YB` the B-step trajectory (`YB = B Wᵀ`), `P` the
 projector onto the range basis (`X ↦ Q Qᵀ X`), which captures `YB t₁` (`Q = orth([U₀, B(h)])`),
@@ -263,7 +262,7 @@ theorem odeSolution_map {E₁ E₂ : Type*} [NormedAddCommGroup E₁] [NormedSpa
     exact h⟩
 
 /-- **The B-step is a K-step** (OP-RS-01): if `B' = F(B Wᵀ) W` (the dynamical range finder of
-arXiv 2410.17091, eq. (7), with `Ω Ω† = W Wᵀ`), then `Y_B = B Wᵀ` solves
+[Carrel2025, eq. (7)], with `Ω Ω† = W Wᵀ`), then `Y_B = B Wᵀ` solves
 `Y_B' = F(Y_B) W Wᵀ`, a BUG K-step with `Q₀ = rightProj W`. -/
 theorem bStep_full {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {W : Matrix n k ℝ}
     {Bs : ℝ → Matrix m k ℝ} {a b : ℝ}
@@ -272,7 +271,7 @@ theorem bStep_full {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {W : Matrix n
   odeSolution_map hB (Frobenius.rightMulCLM Wᵀ) fun t _ => by
     simp [rightProj_apply]
 
-/-- **The C-step is a one-sided Galerkin step**: if `C' = F(Q Cᵀ)ᵀ Q` (arXiv 2410.17091,
+/-- **The C-step is a one-sided Galerkin step**: if `C' = F(Q Cᵀ)ᵀ Q` ([Carrel2025],
 eq. (14)), then `Y_C = Q Cᵀ` solves `Y_C' = Q Qᵀ F(Y_C)`. -/
 theorem cStep_full {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {Q : Matrix m k ℝ}
     {Cs : ℝ → Matrix n k ℝ} {a b : ℝ}
@@ -286,7 +285,7 @@ theorem cStep_full {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {Q : Matrix m
   simpa only [Frobenius.sandwichTransposeCLM_apply, Matrix.mul_one] using h
 
 /-- **The DGN core step is a two-sided Galerkin step**: if `D' = Qᵀ F(Q D Wᵀ) W`
-(arXiv 2410.17091, eq. (16)), then `Y_D = Q D Wᵀ` solves `Y_D' = Q Qᵀ F(Y_D) W Wᵀ`. -/
+([Carrel2025, eq. (16)]), then `Y_D = Q D Wᵀ` solves `Y_D' = Q Qᵀ F(Y_D) W Wᵀ`. -/
 theorem dStep_full {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {Q : Matrix m k ℝ} {W : Matrix n l ℝ}
     {Ds : ℝ → Matrix k l ℝ} {a b : ℝ}
     (hD : ODESolution (fun t D => Qᵀ * F t (Q * D * Wᵀ) * W) Ds a b) :
@@ -365,7 +364,7 @@ theorem bStep_exact {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A : ℝ →
 
 /-- **Exact C-step** for `F(t, Y) = Ȧ(t)`: `C(t) = A(t)ᵀ Q`, i.e. `C(t)ᵀ = Qᵀ A(t)` (this
 corrects the transposition slip `C(h)ᵀ = Q A(h)ᵀ` in the proof of Lemma 3.3 of
-arXiv 2410.17091, OP-RS-07). -/
+[Carrel2025], OP-RS-07). -/
 theorem cStep_exact {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A : ℝ → Matrix m n ℝ} {t₀ t₁ : ℝ}
     (hA : IsDerivRHS F A t₀ t₁) {Q : Matrix m k ℝ} {Cs : ℝ → Matrix n k ℝ}
     (hC : ODESolution (fun t C => (F t (Q * Cᵀ))ᵀ * Q) Cs t₀ t₁) (hC₀ : Cs t₀ = (A t₀)ᵀ * Q) :
@@ -394,8 +393,8 @@ theorem truncation_eq_self_iff [DecidableEq n] (X : Matrix m n ℝ) (r : ℕ) :
     EckartYoung.truncation X r = X ↔ X.rank ≤ r :=
   ⟨fun h => h ▸ EckartYoung.rank_truncation_le X r, EckartYoung.truncation_eq_self⟩
 
-/-- **Corrected exactness of DRSVD** (arXiv 2410.17091, Lemma 3.2, corrected per OP-RS-07; also
-the exact-reconstruction remark of arXiv 2506.15259, §2.3.1, OP-RA-11 (b)).  For
+/-- **Corrected exactness of DRSVD** ([Carrel2025, Lemma 3.2], corrected per OP-RS-07; also
+the exact-reconstruction remark of [WuZhaoGu2025, §2.3.1], OP-RA-11 (b)).  For
 `F(t, Y) = Ȧ(t)`, if the range basis `Q` captures `A(t₁)`, then the C-step reproduces `A(t₁)`
 (`Q C(t₁)ᵀ = A(t₁)`), and the truncated result `T_r(Q C(t₁)ᵀ)` equals `A(t₁)` **iff
 `rank A(t₁) ≤ r`**; the paper's hypothesis `rank A(t₁) ≤ r + p` is not sufficient
@@ -414,7 +413,7 @@ theorem drsvd_exact_iff [DecidableEq n] {F : ℝ → Matrix m n ℝ → Matrix m
 /-- **Deterministic range finder**: if `Q` captures the exact sketch `A₁ W` and the row range
 of `A₁` is reached through `W` (`A₁ = A₁ W Z`; e.g. `rank A₁ ≤ r + p` and `Vᵀ W` of full row
 rank), then `Q Qᵀ A₁ = A₁`.  This is the deterministic content of Lemma 2.1/3.1 of
-arXiv 2410.17091 (the Gaussian sketch satisfies the row condition almost surely, which is not
+[Carrel2025] (the Gaussian sketch satisfies the row condition almost surely, which is not
 formalized). -/
 theorem capture_of_sketch {A₁ : Matrix m n ℝ} {W : Matrix n k ℝ} {Q : Matrix m l ℝ}
     (hcapB : Q * Qᵀ * (A₁ * W) = A₁ * W) (hrow : ∃ Z : Matrix k n ℝ, A₁ = A₁ * W * Z) :
@@ -432,7 +431,7 @@ variable {m n k l : Type*} [Fintype m] [Fintype n] [Fintype k] [Fintype l]
 /-- **Generalized Nyström identity** (`{1}`-inverse form).  If `Q Qᵀ A = A`, `A = A W Z` and
 `G` is a `{1}`-inverse of the core `D = Qᵀ A W` (`D G D = D`, e.g. the Moore–Penrose inverse or
 `D⁻¹`), then `A W G Qᵀ A = A`.  This is the identity `A W (Qᵀ A W)† Qᵀ A = A` used in the
-proof of Lemma 3.3 of arXiv 2410.17091, with the correct transposition. -/
+proof of Lemma 3.3 of [Carrel2025], with the correct transposition. -/
 theorem nystrom_eq_self {A : Matrix m n ℝ} {Q : Matrix m k ℝ} {W : Matrix n l ℝ}
     {G : Matrix l k ℝ} (hcol : Q * Qᵀ * A = A) (hrow : ∃ Z : Matrix l n ℝ, A = A * W * Z)
     (hG : Qᵀ * A * W * G * (Qᵀ * A * W) = Qᵀ * A * W) :
@@ -454,7 +453,7 @@ theorem rank_assembly_le (Bm : Matrix m l ℝ) (G : Matrix l k ℝ) (C : Matrix 
     (Bm * G * Cᵀ).rank ≤ G.rank :=
   (Matrix.rank_mul_le_left _ _).trans (Matrix.rank_mul_le_right _ _)
 
-/-- **Corrected exactness of DGN** (arXiv 2410.17091, Lemma 3.3, corrected per OP-RS-07).  For
+/-- **Corrected exactness of DGN** ([Carrel2025, Lemma 3.3], corrected per OP-RS-07).  For
 `F(t, Y) = Ȧ(t)` with `Q` capturing `A(t₁)` and `A(t₁) = A(t₁) W Z`:
 if `rank A(t₁) ≤ r` and `G` is a `{1}`-inverse of `T_r(D(t₁))`, then
 `B(t₁) G C(t₁)ᵀ = A(t₁)`; conversely, if `rank G ≤ r` (true for the pseudo-inverse of
@@ -500,7 +499,7 @@ omit [Fintype m] [Fintype p] [Fintype q] in
 `A = U S Vᵀ` with `k` columns (`k ≤ r`, `rank A < r` allowed) and `G = S (Vᵀ V₀)` (`k × r`)
 has a right inverse `G'` — i.e. `X ↦ X V₀ V₀ᵀ` is injective on the row space of `A` — then
 `A = A V₀ C` with `C = G' S Vᵀ`.  For `k = r` and `S`, `Vᵀ V₀` invertible this is the
-non-degeneracy hypothesis of Ceruti–Lubich (arXiv 2010.02022, Lemma 1). -/
+non-degeneracy hypothesis of Ceruti–Lubich ([CerutiLubich2022, Lemma 1]). -/
 theorem exists_eq_mul_mul_of_rightInv [DecidableEq k] {U : Matrix m k ℝ} {S : Matrix k k ℝ}
     {V : Matrix n k ℝ} {V₀ : Matrix n r ℝ} {A : Matrix m n ℝ} (hA : A = U * S * Vᵀ)
     {G' : Matrix r k ℝ} (hG : S * (Vᵀ * V₀) * G' = 1) :
@@ -514,7 +513,7 @@ theorem exists_eq_mul_mul_of_rightInv [DecidableEq k] {U : Matrix m k ℝ} {S : 
 
 omit [Fintype k] in
 /-- **BUG exactness under over-approximation** (OP-RA-11 (a); generalizes Ceruti–Lubich,
-arXiv 2010.02022, Theorem 3).  If `A₁ = A₁ V₀ C` and `A₁ᵀ = A₁ᵀ U₀ D` (e.g. via
+[CerutiLubich2022, Thm. 3]).  If `A₁ = A₁ V₀ C` and `A₁ᵀ = A₁ᵀ U₀ D` (e.g. via
 `exists_eq_mul_mul_of_rightInv`, for `rank A₁ < r`), and the new bases capture the K- and
 L-step results, then the BUG step for `F = Ȧ` is exact. -/
 theorem bug_exact_of_range [DecidableEq r] {U₀ : Matrix m r ℝ} {S₀ : Matrix r r ℝ}
@@ -536,7 +535,7 @@ theorem bug_exact_of_range [DecidableEq r] {U₀ : Matrix m r ℝ} {S₀ : Matri
 
 omit [Fintype q] [Fintype k] in
 /-- **KSL exactness under over-approximation** (OP-RA-11 (a); generalizes Lubich–Oseledets,
-arXiv 1301.1058, Theorem 4.1): only the row range condition `A₁ = A₁ V₀ C` is needed. -/
+[LubichOseledets2014, Thm. 4.1]): only the row range condition `A₁ = A₁ V₀ C` is needed. -/
 theorem ksl_exact_of_range [DecidableEq r] {U₀ : Matrix m r ℝ} {S₀ : Matrix r r ℝ}
     {V₀ : Matrix n r ℝ} {A₀ A₁ : Matrix m n ℝ} (hV₀ : V₀ᵀ * V₀ = 1)
     (hY₀ : U₀ * S₀ * V₀ᵀ = A₀) (hrow : ∃ C : Matrix r n ℝ, A₁ = A₁ * V₀ * C)
@@ -605,7 +604,7 @@ theorem cSol : ODESolution (fun t C => (((fun _ _ => G) : ℝ → Matrix (Fin 2)
     ((1 : Matrix (Fin 2) (Fin 2) ℝ) * Cᵀ))ᵀ * 1) Cs 0 1 :=
   Exactness.odeSolution_add_smul_of_const (fun _ _ => by simp) Y₀ᵀ 0 1
 
-/-- **Counterexample to Lemma 3.2 of arXiv 2410.17091 as stated** (OP-RS-07): `r = p = 1`,
+/-- **Counterexample to Lemma 3.2 of [Carrel2025] as stated** (OP-RS-07): `r = p = 1`,
 `rank Y₀ = r`, `rank G = p`, `rank A(1) ≤ r + p`, the range inclusion `Range A(t) ⊆ Range Q`
 holds for all `t` (`Q = I`), the C-step is exact before truncation, and yet the DRSVD result
 `T_1(Q C(1)ᵀ)` differs from `A(1)`. -/
@@ -634,7 +633,7 @@ theorem not_augmented_start : Y₀ * w * wᵀ ≠ Y₀ ∧ wᵀ * w = 1 := by
     fin_cases i; fin_cases j
     simp [w, Matrix.mul_apply, Fin.sum_univ_two]
 
-/-- **Counterexample to Lemma 3.3 of arXiv 2410.17091 as stated** (OP-RS-07): in the same
+/-- **Counterexample to Lemma 3.3 of [Carrel2025] as stated** (OP-RS-07): in the same
 setting, every Nyström assembly through a core of rank `≤ r = 1` (in particular
 `B(1) T_1(D(1))† C(1)ᵀ`) differs from `A(1)`, although `rank A(1) ≤ r + p`. -/
 theorem dgn_not_exact (Bm C G' : Matrix (Fin 2) (Fin 2) ℝ) (hG : G'.rank ≤ 1) :

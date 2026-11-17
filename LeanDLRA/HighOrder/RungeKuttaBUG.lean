@@ -722,14 +722,13 @@ example : rk4Lin (-1 : ℝ →L[ℝ] ℝ) 1 1 = 3 / 8 := by
 /-! ### BUG-p local and global error with interior capture ([HauckKuschSchotthofer2026], 2502.07040)
 -/
 
-/-- **BUG-p local error** ([HauckKuschSchotthofer2026, Sec. 3.1] properties P1–P2 and Thm 1; arXiv
-2502.07040, Thm 1).  Let the Galerkin projector `R` fix the starting value `y₀` (P1), capture the
-exact solution `A` (`A t₀ = y₀`) to `ρ` on the step and to `θ` at the endpoint, and let the
-S-solver (e.g. an `s`-stage Runge–Kutta method) reproduce the Galerkin flow
-`YS' = R F(t, YS)`, `YS t₀ = y₀`, up to `η` at the endpoint.  Then the local error is
-`≤ (e^{L h} - 1) ρ + θ + η`.  For BUG-p, `ρ = O(h^p)`-interior capture, `θ = O(h (ε + h^p))`
-endpoint capture and an order-`p` S-solver (`η = O(h^{p+1})`) give local error
-`O(h (ε + h^p))`. -/
+/-- **BUG-p local error** ([HauckKuschSchotthofer2026, Sec. 3.1] properties P1–P2 and Thm 1;
+[NobileRiffaud2025, Thm. 1]). Let the Galerkin projector `R` fix the starting value `y₀` (P1),
+capture the exact solution `A` (`A t₀ = y₀`) to `ρ` on the step and to `θ` at the endpoint, and let
+the S-solver (e.g. an `s`-stage Runge–Kutta method) reproduce the Galerkin flow `YS' = R F(t, YS)`,
+`YS t₀ = y₀`, up to `η` at the endpoint. Then the local error is `≤ (e^{L h} - 1) ρ + θ + η`. For
+BUG-p, `ρ = O(h^p)`-interior capture, `θ = O(h (ε + h^p))` endpoint capture and an order-`p`
+S-solver (`η = O(h^{p+1})`) give local error `O(h (ε + h^p))`. -/
 theorem bugP_local_error {F : ℝ → E → E} {L ρ θ η h t₀ : ℝ} {R : E →L[ℝ] E} (hR : IsOrthProj R)
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hh : 0 ≤ h) {y₀ y₁ : E} (hy₀ : R y₀ = y₀)
     {A YS : ℝ → E} (hA : ODESolution F A t₀ (t₀ + h)) (hA₀ : A t₀ = y₀)
@@ -763,12 +762,12 @@ theorem bugP_local_error {F : ℝ → E → E} {L ρ θ η h t₀ : ℝ} {R : E 
         exact add_le_add (add_le_add hη hgr) hθ
     _ = _ := by ring
 
-/-- **Conservative (extra-augmented) BUG-p keeps the error bound** (OP-HO-12 (c); arXiv
-2311.06399, Sec. 5).  If the conservative basis contains the BUG-p basis (`Pe (Pa x) = Pa x`,
-`X̄ = [X̂, X̄⋆]` with the RK flux moments), then all hypotheses of `bugP_local_error` for `Pa`
-transfer to `Pe` (`norm_sub_apply_le_of_le`), so the conservative Galerkin step has the same
-local error bound `(e^{L h} - 1) ρ + θ + η`; global bounds follow verbatim (`bugP_global_error`).
-Items (a), (b), (d) of OP-HO-12 are not addressed here. -/
+/-- **Conservative (extra-augmented) BUG-p keeps the error bound** (OP-HO-12 (c);
+[EinkemmerKuschSchotthofer2023, Sec. 5]). If the conservative basis contains the BUG-p basis
+(`Pe (Pa x) = Pa x`, `X̄ = [X̂, X̄⋆]` with the RK flux moments), then all hypotheses of
+`bugP_local_error` for `Pa` transfer to `Pe` (`norm_sub_apply_le_of_le`), so the conservative
+Galerkin step has the same local error bound `(e^{L h} - 1) ρ + θ + η`; global bounds follow
+verbatim (`bugP_global_error`). Items (a), (b), (d) of OP-HO-12 are not addressed here. -/
 theorem bugP_local_error_of_le {F : ℝ → E → E} {L ρ θ η h t₀ : ℝ} {Pa Pe : E →L[ℝ] E}
     (hPe : IsOrthProj Pe) (hle : ∀ x, Pe (Pa x) = Pa x) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hh : 0 ≤ h) {y₀ y₁ : E} (hy₀ : Pa y₀ = y₀) {A YS : ℝ → E}
@@ -923,11 +922,10 @@ theorem galerkin_ssp_linear_norm_le {P : E →L[ℝ] E} (hP : IsOrthProj P) (A :
         exact mul_le_mul_of_nonneg_left (galerkinEulerPow_mem_norm_le hP hFE k hx).2 (hc k)
     _ = ‖x‖ := by rw [← Finset.sum_mul, hsum, one_mul]
 
-/-- **Classical RK4 Galerkin substep in Taylor form is norm-nonincreasing** (OP-SB-06; arXiv
-2508.04484).  With `M = P A`, the RK4 step
-`x + h M x + h²/2 M² x + h³/6 M³ x + h⁴/24 M⁴ x` is norm-nonincreasing on `range P` whenever the
-full forward-Euler step is (only on `range P` is needed).  It is `rk4Lin (P A) h x`, and
-`rk4Lin_norm_le` applies. -/
+/-- **Classical RK4 Galerkin substep in Taylor form is norm-nonincreasing** (OP-SB-06;
+[StammerEtAl2026]). With `M = P A`, the RK4 step `x + h M x + h²/2 M² x + h³/6 M³ x + h⁴/24 M⁴ x` is
+norm-nonincreasing on `range P` whenever the full forward-Euler step is (only on `range P` is
+needed). It is `rk4Lin (P A) h x`, and `rk4Lin_norm_le` applies. -/
 theorem galerkin_rk4_taylor_norm_le {P : E →L[ℝ] E} (hP : IsOrthProj P) (A : E →L[ℝ] E)
     {h : ℝ} (hFE : ∀ x, P x = x → ‖x + h • A x‖ ≤ ‖x‖) {x : E} (hx : P x = x) :
     let M : E → E := fun y => P (A y)
@@ -944,11 +942,11 @@ theorem galerkin_rk4_taylor_norm_le {P : E →L[ℝ] E} (hP : IsOrthProj P) (A :
   rw [this]
   exact (hP.norm_le _).trans (hFE y hy)
 
-/-- **Galerkin SSP-RK2 (Heun) substep is norm-nonincreasing** (OP-SB-06, nonlinear part; arXiv
-2508.04484, Shu–Osher form).  `y = x + h P F(x)`, `x' = x/2 + (y + h P F(y))/2` satisfies
-`‖x'‖ ≤ ‖x‖` on `range P` if the full forward-Euler step is norm-nonincreasing on `range P`.
-This proves the statement `galerkin_sspRK2_norm_le`; the general Shu–Osher case is
-`sspGalerkin_norm_le`. -/
+/-- **Galerkin SSP-RK2 (Heun) substep is norm-nonincreasing** (OP-SB-06, nonlinear part;
+[StammerEtAl2026], Shu–Osher form). `y = x + h P F(x)`, `x' = x/2 + (y + h P F(y))/2` satisfies
+`‖x'‖ ≤ ‖x‖` on `range P` if the full forward-Euler step is norm-nonincreasing on `range P`. This
+proves the statement `galerkin_sspRK2_norm_le`; the general Shu–Osher case is `sspGalerkin_norm_le`.
+-/
 theorem galerkin_sspRK2_norm_le {P : E →L[ℝ] E} (hP : IsOrthProj P) {F : E → E} {h : ℝ}
     (hFE : ∀ z, P z = z → ‖z + h • F z‖ ≤ ‖z‖) {x : E} (hx : P x = x) :
     let y := x + h • P (F x)
@@ -1021,10 +1019,10 @@ def IsShuOsherStep {s : ℕ} (F : ℝ → E → E) (α β : Fin (s + 1) → Fin 
     (u : Fin (s + 1) → E) : Prop :=
   u 0 = y ∧ ∀ i, i ≠ 0 → u i = R i (∑ k, (α i k • u k + (h * β i k) • F (t + c k * h) (u k)))
 
-/-- **Galerkin Shu–Osher exactness** (OP-HO-15 (a), Shu–Osher form; [YeYang2025], arXiv
-2608.27749 Remark 1).  If every stage projector fixes the full-method stages `vₖ` entering with
-`αᵢₖ ≠ 0` and the stage derivatives `F(t + cₖ h, vₖ)` entering with `βᵢₖ ≠ 0`, the Galerkin
-Shu–Osher step coincides with the full one (all stages, hence the result).  This proves the
+/-- **Galerkin Shu–Osher exactness** (OP-HO-15 (a), Shu–Osher form; [YeYang2025],
+[HauckKuschSchotthofer2026] Remark 1). If every stage projector fixes the full-method stages `vₖ`
+entering with `αᵢₖ ≠ 0` and the stage derivatives `F(t + cₖ h, vₖ)` entering with `βᵢₖ ≠ 0`, the
+Galerkin Shu–Osher step coincides with the full one (all stages, hence the result). This proves the
 statement `galerkinShuOsher_eq`. -/
 theorem galerkinShuOsher_eq {s : ℕ} {F : ℝ → E → E} {α β : Fin (s + 1) → Fin (s + 1) → ℝ}
     {c : Fin (s + 1) → ℝ} (hlow : ∀ i k, i ≤ k → α i k = 0 ∧ β i k = 0)

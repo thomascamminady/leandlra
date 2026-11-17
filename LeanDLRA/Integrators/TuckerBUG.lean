@@ -9,20 +9,20 @@ This file formalises the robust error analysis of the Tucker-tensor version of t
 basis-update & Galerkin (BUG) integrator:
 
 * Ceruti–Lubich, *An unconventional robust integrator for dynamical low-rank approximation*,
-  BIT 2022, arXiv 2010.02022, §5: Lemma 5, **Lemma 6**, **Lemma 7** (local error) and
+  BIT 2022, [CerutiLubich2022, §5]: Lemma 5, **Lemma 6**, **Lemma 7** (local error) and
   **Theorem 7** (robust global error bound); Theorem 6 (exactness) is formalised in abstract form
   as `LeanDLRA.Exactness.tucker_exact_abstract` in `Integrators/Exactness.lean`;
 * Ceruti–Kusch–Lubich, *A rank-adaptive robust integrator for dynamical low-rank approximation*,
-  BIT 2022, arXiv 2104.05247, §4.2: the rank-adaptive Tucker integrator inherits the robust
+  BIT 2022, [CerutiKuschLubich2022, §4.2]: the rank-adaptive Tucker integrator inherits the robust
   error bound with an extra term `c₃ n ϑ`, norm conservation up to `ϑ` (Thm 4) and energy decay
   for gradient systems up to `O(ϑ)` (Thm 5);
 * Ceruti–Kusch–Lubich–Sulz, *A parallel basis update and Galerkin integrator for tree tensor
-  networks*, arXiv 2412.00858, §3: the **parallel Tucker BUG integrator** and its robust error
+  networks*, [CerutiEtAl2024, §3]: the **parallel Tucker BUG integrator** and its robust error
   bound (**Theorem 3.1**);
-* for context: Lubich–Vandereycken–Walach, arXiv 1709.02594 (projector-splitting integrator for
-  rank-constrained Tucker tensors, same robust error bound), and the tree-tensor-network
-  extensions arXiv 2002.11392 and 2412.00858, §4, whose analysis is the recursive application of
-  the argument below.
+* for context: Lubich–Vandereycken–Walach, [LubichVandereyckenWalach2018] (projector-splitting
+  integrator for rank-constrained Tucker tensors, same robust error bound), and the
+  tree-tensor-network extensions [CerutiLubichWalach2021] and 2412.00858, §4, whose analysis is the
+  recursive application of the argument below.
 
 ## The integrator as full-space trajectories
 
@@ -62,7 +62,7 @@ at `YK i t₁`**: a tangent vector at `Y = C ×ⱼ Uⱼ` has the form
 `k = i` is of the form `Uᵢ (⋯)`, i.e. lies in the range of the left projector onto the column
 space of `Matᵢ(Y)`, and the term `k = i` is `δUᵢ Matᵢ(C) (⊗_{j ≠ i} Uⱼ)ᵀ`, whose rows lie in the
 row space of `Matᵢ(Y)`.  So the Tucker tangent space at `Y` is contained in the tangent space of
-the rank-`rᵢ` matrix manifold at `Matᵢ(Y)` (this is Lemma 5 of arXiv 2010.02022).  At
+the rank-`rᵢ` matrix manifold at `Matᵢ(Y)` (this is Lemma 5 of [CerutiLubich2022]).  At
 `Y = YK i t₁` we have `Matᵢ(YK i t₁) = Kᵢ(t₁) V⁰ᵢᵀ`: its column space is contained in the range of
 `U¹ᵢ` (fixed by `P₁ i`) and its row space in the range of `V⁰ᵢ` (fixed by `Q₀ i`).  Hence every
 tangent vector is `a + b` with `P₁ i a = a` and `Q₀ i b = b`, i.e. it lies in the range of the
@@ -94,7 +94,7 @@ With `F` `L`-Lipschitz and bounded by `B`, and `ϑ = h (4 L B h + ε)`:
 * `tucker_global_error`, `tucker_global_error_le` (**Theorem 7**): via Lady Windermere's fan,
   `‖Yₙ - A tₙ‖ ≤ c₀ δ + c₁' ε + c₂' h` for `n h ≤ T`, with constants depending only on `L`, `B`,
   `T`, `H` and `d` — not on singular values of matricizations;
-* rank-adaptive Tucker BUG (arXiv 2104.05247, §4.2), `IsAugTuckerBUGStep`: the augmented mode
+* rank-adaptive Tucker BUG ([CerutiKuschLubich2022, §4.2]), `IsAugTuckerBUGStep`: the augmented mode
   projectors also fix `Y₀`, so the core step starts at `Y₀` itself; local error plus truncation
   tolerance (`IsAugTuckerBUGStep.local_error_trunc`), global error with the extra `c₃ n ϑ` term
   (`aug_tucker_global_error`, `aug_tucker_global_error_le`: Tucker version of Thm 2), exact norm
@@ -105,7 +105,7 @@ With `F` `L`-Lipschitz and bounded by `B`, and `ϑ = h (4 L B h + ε)`:
   conservation for Hamiltonian-type fields `F = J ∇ℰ` (`IsAugTuckerBUGStep.energy_eq_of_skew`,
   `IsAugTuckerBUGStep.energy_sub_le_of_skew`: Thms 6–7); the sequential mode-wise truncation with
   tolerance `ϑ/d` per mode has total error `≤ ϑ` (`norm_sub_le_of_chain`);
-* parallel Tucker BUG integrator (arXiv 2412.00858, §3), `IsParTuckerBUGStep`, `parTuckerBUG`:
+* parallel Tucker BUG integrator ([CerutiEtAl2024, §3]), `IsParTuckerBUGStep`, `parTuckerBUG`:
   all Kᵢ-steps and a rank-`r` core step `YC' = (∏ P₀ i) F(t, YC)` run in parallel; the augmented
   core has the blocks `C(t₁)` (core), `h F(Y₀) ×_{j ≠ i} U⁰ⱼᵀ ×ᵢ Ũᵢᵀ` (one new mode) and zero
   (two or more new modes).  The block projectors are `modeProd P₀`, `modeProdLeOne P₀ Pa` ("at most
@@ -130,7 +130,7 @@ With `F` `L`-Lipschitz and bounded by `B`, and `ϑ = h (4 L B h + ε)`:
   constants `tuckerC₁`, `tuckerC₂`.
 * Exact flows from the numerical values (needed for Lady Windermere's fan) are hypotheses; their
   existence is proved in `Foundations/Existence.lean`.
-* Parallel Tucker integrator (arXiv 2412.00858, Thm 3.1): the paper's proof is a sketch for
+* Parallel Tucker integrator ([CerutiEtAl2024, Thm. 3.1]): the paper's proof is a sketch for
   autonomous `F`; we allow time-dependent `F` with `‖F(t, x) - F(s, x)‖ ≤ Lₜ (t - s)` (`Lₜ = 0` in
   the autonomous case), and assume the normal-component bound at `(t₀, Y₀)` for the "tangent hull"
   `modeProdLeOne P₀ (1 - P₀) = Π₀ + ∑ᵢ (1 - P₀ i) ∏_{j ≠ i} P₀ j`.  This operator is the formula
@@ -239,7 +239,7 @@ lemma norm_sub_listProd_apply_le {l : List (E →L[ℝ] E)} (hl : ∀ T ∈ l, �
       _ ≤ _ := add_le_add le_rfl (ih fun T' hT' => hl T' (List.mem_cons_of_mem T hT'))
 
 /-- **Telescoping bound for products of mode projectors** (proof of Lemma 6 of
-arXiv 2010.02022): if every `P i` is a contraction, then
+[CerutiLubich2022]): if every `P i` is a contraction, then
 `‖x - (P 0 ∘ ⋯ ∘ P (d-1)) x‖ ≤ ∑ᵢ ‖x - P i x‖`.  No commutativity is needed. -/
 theorem norm_sub_modeProd_apply_le {d : ℕ} {P : Fin d → E →L[ℝ] E}
     (hP : ∀ i y, ‖P i y‖ ≤ ‖y‖) (x : E) : ‖x - modeProd P x‖ ≤ ∑ i, ‖x - P i x‖ := by
@@ -251,8 +251,8 @@ theorem norm_sub_modeProd_apply_le {d : ℕ} {P : Fin d → E →L[ℝ] E}
 
 omit [NormedSpace ℝ E] in
 /-- **Sequential truncation.**  If a chain `C 0, C 1, …, C d` (e.g. the mode-by-mode truncations
-`Ĉ = C₀ ↦ C₁ ↦ ⋯ ↦ C_d` of the rank-adaptive Tucker integrator, arXiv 2104.05247, §4.1, step 3)
-moves by at most `τ` in each step, then `‖C 0 - C d‖ ≤ d τ`.  With the tolerance `τ = ϑ / d` per
+`Ĉ = C₀ ↦ C₁ ↦ ⋯ ↦ C_d` of the rank-adaptive Tucker integrator, [CerutiKuschLubich2022, §4.1], step
+3) moves by at most `τ` in each step, then `‖C 0 - C d‖ ≤ d τ`. With the tolerance `τ = ϑ / d` per
 mode, the total truncation error is at most `ϑ`. -/
 theorem norm_sub_le_of_chain {C : ℕ → E} {d : ℕ} {τ : ℝ}
     (hC : ∀ i < d, ‖C i - C (i + 1)‖ ≤ τ) : ‖C 0 - C d‖ ≤ d * τ := by
@@ -281,10 +281,10 @@ see `modeProdLeOne_eq_sum` for the explicit sum.
 * With `p i = U⁰ᵢ U⁰ᵢᵀ` (old bases) and `q i = Ũᵢ Ũᵢᵀ` (new directions orthogonal to the old
   basis) it is the projector onto the core block `C(t₁) ×ᵢ U⁰ᵢ` together with the blocks
   `C̃ᵢ ×ᵢ Ũᵢ ×_{j ≠ i} U⁰ⱼ` of the augmented core of the parallel Tucker integrator
-  (arXiv 2412.00858, (3.3)–(3.4)).
+  ([CerutiEtAl2024], (3.3)–(3.4)).
 * With `q i = 1 - p i` it is `Π₀ + ∑ᵢ (1 - P₀ i) ∏_{j ≠ i} P₀ j`, the projector onto the sum of the
   ranges of the `∏_{j ≠ i} P₀ j`, which contains the tangent space of the Tucker manifold at `Y₀`
-  (the formula used for the tangent projector in arXiv 2412.00858, §3.2). -/
+  (the formula used for the tangent projector in [CerutiEtAl2024, §3.2]). -/
 def modeProdLeOne : {d : ℕ} → (Fin d → E →L[ℝ] E) → (Fin d → E →L[ℝ] E) → E →L[ℝ] E
   | 0, _, _ => 1
   | _ + 1, p, q => p 0 * modeProdLeOne (fun i => p i.succ) (fun i => q i.succ)
@@ -637,7 +637,7 @@ section Local
 
 variable {F : ℝ → E → E} {L B ε : ℝ} {t₀ t₁ h : ℝ} {A : ℝ → E} {d : ℕ}
 
-/-- **Lemma 6 of arXiv 2010.02022** (abstract form, explicit constant).  Let `F` be
+/-- **Lemma 6 of [CerutiLubich2022]** (abstract form, explicit constant).  Let `F` be
 `L`-Lipschitz (`L ≥ 0`) and bounded by `B`, `A` a solution of `A' = F(t, A)` on `[t₀, t₁]`,
 `t₁ = t₀ + h`, `h ≥ 0`.  For each mode `i : Fin d` let the K-step trajectory `YK i` solve
 `YK i' = Q₀ i F(t, YK i)`, `YK i t₀ = A t₀`, let the new mode projector capture it,
@@ -663,7 +663,7 @@ theorem tucker_capture {P₁ Q₀ : Fin d → E →L[ℝ] E} {YK : Fin d → ℝ
           simpa using this
     _ = d * (h * (4 * L * B * h + ε)) := by simp
 
-/-- **Robust local error of the Tucker BUG integrator** (Ceruti–Lubich, arXiv 2010.02022,
+/-- **Robust local error of the Tucker BUG integrator** (Ceruti–Lubich, [CerutiLubich2022],
 Lemma 7, with explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B`, `A`
 the exact solution on `[t₀, t₁]`, `t₁ = t₀ + h`, `h ≥ 0`, with `A t₀ = Y₀`.  Assume for every
 mode `i : Fin d`
@@ -695,7 +695,7 @@ theorem tucker_local_error {P₁ Q₀ : Fin d → E →L[ℝ] E} {Y₀ : E} {YK 
     (tucker_capture hF hL hB hP₁ hQ₀ ht₁ hh hA hK (fun i => (hK₀ i).trans hA₀.symm) hKcap hεK)
 
 /-- **Robust local error of the Tucker BUG integrator under the Tucker normal-component
-assumption** (arXiv 2010.02022, Lemma 7 with assumption 2 of Theorem 7).  Same as
+assumption** ([CerutiLubich2022, Lemma 7] with assumption 2 of Theorem 7).  Same as
 `tucker_local_error`, but instead of the doubly-normal bound we assume, for each mode `i`, a map
 `T i` (the tangent projector of the Tucker manifold at `YK i t₁`) whose range lies in the range
 of `tangent (P₁ i) (Q₀ i)` (see the module docstring), with `P₁ i`, `Q₀ i` commuting, and the
@@ -754,7 +754,7 @@ lemma natCast_mul_eps_nonneg (hs : IsTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀
   · exact mul_nonneg (Nat.cast_nonneg d)
       ((norm_nonneg _).trans (hs.kNormal ⟨0, hd⟩ t₀ ⟨le_rfl, h01⟩))
 
-/-- **Lemma 6 of arXiv 2010.02022**, bundled form of `tucker_capture`. -/
+/-- **Lemma 6 of [CerutiLubich2022]**, bundled form of `tucker_capture`. -/
 theorem capture (hs : IsTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS) (hF : IsLipschitzField F L)
     (hL : 0 ≤ L) (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
     (hA : ODESolution F A t₀ t₁) (hA₀ : A t₀ = Y₀) :
@@ -762,7 +762,7 @@ theorem capture (hs : IsTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS) (hF :
   tucker_capture hF hL hB hs.projP₁ hs.projQ₀ ht₁ hh hA hs.kSol
     (fun i => (hs.kStart i).trans hA₀.symm) hs.kCap hs.kNormal
 
-/-- **Robust local error of the Tucker BUG integrator** (arXiv 2010.02022, Lemma 7), bundled
+/-- **Robust local error of the Tucker BUG integrator** ([CerutiLubich2022, Lemma 7]), bundled
 form of `tucker_local_error`. -/
 theorem local_error (hs : IsTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS)
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h)
@@ -772,7 +772,7 @@ theorem local_error (hs : IsTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS)
   tucker_local_error hF hL hB hs.projP₁ hs.projQ₀ hs.comm₁ ht₁ hh hA hA₀ hs.kSol hs.kStart
     hs.kCap hs.kNormal hs.sSol hs.sStart
 
-/-- **Robust local error of the Tucker BUG integrator, `O`-form** (arXiv 2010.02022, Lemma 7:
+/-- **Robust local error of the Tucker BUG integrator, `O`-form** ([CerutiLubich2022, Lemma 7]:
 `‖Y₁ - A₁‖ ≤ ĉ h (B L h + ε)`).  For step sizes `0 ≤ h ≤ H`:
 `‖YS t₁ - A t₁‖ ≤ h (c₁ ε + c₂ h)` with `c₁ = tuckerC₁ d L H`, `c₂ = tuckerC₂ d L B H`
 depending only on `d`, `L`, `B` and `H`. -/
@@ -812,7 +812,7 @@ theorem IsBUGStep.toTucker {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E} {Y₀ : E} {YK 
   sStart := by rw [modeProd_two]; exact hs.sStart
 
 /-- The two-mode Tucker local error bound is exactly the matrix BUG local error bound
-`bug_local_error` (arXiv 2010.02022, Lemma 4): the case `d = 2` of `tucker_local_error`. -/
+`bug_local_error` ([CerutiLubich2022, Lemma 4]): the case `d = 2` of `tucker_local_error`. -/
 theorem IsBUGStep.local_error_of_tucker {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E} {Y₀ : E} {YK YL YS : ℝ → E}
     (hs : IsBUGStep F ε P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h) (hA : ODESolution F A t₀ t₁)
@@ -831,7 +831,7 @@ section Global
 variable {F : ℝ → E → E} {L B ε : ℝ} {d : ℕ}
 
 /-- **Robust global error bound of the Tucker BUG integrator** (Ceruti–Lubich,
-arXiv 2010.02022, Theorem 7, with explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and
+[CerutiLubich2022, Thm. 7], with explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and
 bounded by `B`, `tₙ = t₀ + n h` with `0 ≤ h ≤ H`, and `A` a solution of `A' = F(t, A)` on
 `[t₀, t₀ + N h]`.  For `n < N` let step `n` of the Tucker BUG integrator with `d` modes go from
 `(tₙ, Y n)` to `Y (n+1) = YS n tₙ₊₁` with co-range projectors `Q n i` and new mode projectors
@@ -863,7 +863,7 @@ theorem tucker_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsB
     _ = _ := by ring
 
 /-- **Robust global error bound of the Tucker BUG integrator, final form** (Ceruti–Lubich,
-arXiv 2010.02022, Theorem 7): under the hypotheses of `tucker_global_error`, with `ε ≥ 0`, an
+[CerutiLubich2022, Thm. 7]): under the hypotheses of `tucker_global_error`, with `ε ≥ 0`, an
 initial error `‖Y 0 - A t₀‖ ≤ δ` and `n h ≤ T`,
 
     ‖Y n - A tₙ‖ ≤ c₀ δ + c₁' ε + c₂' h,
@@ -911,7 +911,7 @@ open scoped RealInnerProductSpace
 variable {F : ℝ → E → E} {L B ε : ℝ} {t₀ t₁ h : ℝ} {A : ℝ → E} {d : ℕ}
 
 /-- One step of the **rank-adaptive Tucker BUG integrator** (Ceruti–Kusch–Lubich,
-arXiv 2104.05247, §4.1) before truncation: a Tucker BUG step whose augmented mode projectors
+[CerutiKuschLubich2022, §4.1]) before truncation: a Tucker BUG step whose augmented mode projectors
 `P̂ i` (bases `Ûᵢ` of the range of `(Kᵢ(t₁), U⁰ᵢ)`) also fix the starting value `Y₀`.  The core
 step starts at `C₀ ×ᵢ (Ûᵢᵀ U⁰ᵢ)`, i.e. at `Π̂ Y₀ = Y₀` (`IsAugTuckerBUGStep.start`). -/
 structure IsAugTuckerBUGStep (F : ℝ → E → E) (ε : ℝ) {d : ℕ} (Q₀ P₁ : Fin d → E →L[ℝ] E)
@@ -924,13 +924,13 @@ namespace IsAugTuckerBUGStep
 
 variable {Q₀ P₁ : Fin d → E →L[ℝ] E} {Y₀ : E} {YK : Fin d → ℝ → E} {YS : ℝ → E}
 
-/-- The augmented core step starts at `Y₀` itself (Lemma 1 of arXiv 2104.05247, Tucker
+/-- The augmented core step starts at `Y₀` itself (Lemma 1 of [CerutiKuschLubich2022], Tucker
 version). -/
 lemma start (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS) : YS t₀ = Y₀ := by
   rw [hs.sStart, modeProd_apply_eq_self hs.augment]
 
-/-- **Local error of the rank-adaptive Tucker BUG integrator** (arXiv 2104.05247, §4.2, Tucker
-version of Thm 2): if the truncated result `Y₁` satisfies `‖Y₁ - YS t₁‖ ≤ ϑtr`, then
+/-- **Local error of the rank-adaptive Tucker BUG integrator** ([CerutiKuschLubich2022, §4.2],
+Tucker version of Thm 2): if the truncated result `Y₁` satisfies `‖Y₁ - YS t₁‖ ≤ ϑtr`, then
 `‖Y₁ - A t₁‖ ≤ (e^{L h} - 1) (B h + d ϑ) + d ϑ + ϑtr`. -/
 theorem local_error_trunc (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS)
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h)
@@ -953,9 +953,9 @@ theorem local_error_trunc_le (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y
   calc ‖Y₁ - A t₁‖ ≤ ‖Y₁ - YS t₁‖ + ‖YS t₁ - A t₁‖ := norm_sub_le_norm_sub_add_norm_sub _ _ _
     _ ≤ _ := by linarith
 
-/-- **Norm conservation of the untruncated rank-adaptive Tucker step** (arXiv 2104.05247, §4.2,
-Tucker version of the proof of Thm 4): if `⟪F(t, x), x⟫ = 0` for all `t`, `x`, then
-`‖YS t₁‖ = ‖Y₀‖`. -/
+/-- **Norm conservation of the untruncated rank-adaptive Tucker step**
+([CerutiKuschLubich2022, §4.2], Tucker version of the proof of Thm 4): if `⟪F(t, x), x⟫ = 0` for all
+`t`, `x`, then `‖YS t₁‖ = ‖Y₀‖`. -/
 theorem norm_eq (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS) (h01 : t₀ ≤ t₁)
     (hF : ∀ t x, ⟪F t x, x⟫ = 0) : ‖YS t₁‖ = ‖Y₀‖ := by
   have h0 : modeProd P₁ (YS t₀) = YS t₀ := by
@@ -964,8 +964,8 @@ theorem norm_eq (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS) (h
   exact hs.sSol.galerkin_norm_eq hs.proj h0 (fun t _ => hF t _) t₁ ⟨h01, le_rfl⟩
 
 /-- **Norm conservation up to the truncation tolerance** for the rank-adaptive Tucker BUG
-integrator (arXiv 2104.05247, Thm 4 and §4.2): if `⟪F(t, x), x⟫ = 0` and the truncated result
-satisfies `‖Y₁ - YS t₁‖ ≤ ϑ`, then `|‖Y₁‖ - ‖Y₀‖| ≤ ϑ`. -/
+integrator ([CerutiKuschLubich2022, Thm. 4] and §4.2): if `⟪F(t, x), x⟫ = 0` and the truncated
+result satisfies `‖Y₁ - YS t₁‖ ≤ ϑ`, then `|‖Y₁‖ - ‖Y₀‖| ≤ ϑ`. -/
 theorem norm_sub_le (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS) (h01 : t₀ ≤ t₁)
     (hF : ∀ t x, ⟪F t x, x⟫ = 0) {Y₁ : E} {ϑ : ℝ} (htr : ‖Y₁ - YS t₁‖ ≤ ϑ) :
     |‖Y₁‖ - ‖Y₀‖| ≤ ϑ := by
@@ -973,7 +973,7 @@ theorem norm_sub_le (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS
   exact (abs_norm_sub_norm_le _ _).trans htr
 
 /-- **Energy decay of the untruncated rank-adaptive Tucker step for gradient systems**
-(arXiv 2104.05247, Thm 5 and §4.2): if `F(t, x) = -∇ℰ(x)` then `ℰ(YS t₁) ≤ ℰ(Y₀)`. -/
+([CerutiKuschLubich2022, Thm. 5] and §4.2): if `F(t, x) = -∇ℰ(x)` then `ℰ(YS t₁) ≤ ℰ(Y₀)`. -/
 theorem energy_le (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS) (h01 : t₀ ≤ t₁)
     {ℰ : E → ℝ} {g : E → E} (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x)
     (hFg : ∀ t x, F t x = -g x) : ℰ (YS t₁) ≤ ℰ Y₀ := by
@@ -984,9 +984,9 @@ theorem energy_le (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS) 
   rw [← hs.start]
   exact hS.energy_le_gradFlow hs.proj hℰ t₁ ⟨h01, le_rfl⟩
 
-/-- **Energy decay up to truncation for gradient systems** (arXiv 2104.05247, Thm 5 and §4.2):
-if `F(t, x) = -∇ℰ(x)`, the truncated result satisfies `‖Y₁ - YS t₁‖ ≤ ϑ` and `‖∇ℰ‖ ≤ β` on the
-segment `[YS t₁, Y₁]` (`β` plays the role of `‖G(Y₁)‖ + O(ϑ)` in the paper), then
+/-- **Energy decay up to truncation for gradient systems** ([CerutiKuschLubich2022, Thm. 5] and
+§4.2): if `F(t, x) = -∇ℰ(x)`, the truncated result satisfies `‖Y₁ - YS t₁‖ ≤ ϑ` and `‖∇ℰ‖ ≤ β` on
+the segment `[YS t₁, Y₁]` (`β` plays the role of `‖G(Y₁)‖ + O(ϑ)` in the paper), then
 `ℰ(Y₁) ≤ ℰ(Y₀) + β ϑ`. -/
 theorem energy_le_trunc (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS) (h01 : t₀ ≤ t₁)
     {ℰ : E → ℝ} {g : E → E} (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x)
@@ -1016,7 +1016,7 @@ lemma comm_modeProd {J : E →L[ℝ] E} (hJP : ∀ i z, J (P₁ i z) = P₁ i (J
     exact hJP i x) z
 
 /-- **Energy conservation of the untruncated rank-adaptive Tucker step for Hamiltonian-type
-fields** (arXiv 2104.05247, Thms 6–7 and §4.2): if `F(t, x) = J ∇ℰ(x)` with `J` skew
+fields** ([CerutiKuschLubich2022], Thms 6–7 and §4.2): if `F(t, x) = J ∇ℰ(x)` with `J` skew
 (`⟪J z, z⟫ = 0`, e.g. multiplication by `-i` for Schrödinger equations in real form) and `J`
 commuting with every mode projector, then `ℰ(YS t₁) = ℰ(Y₀)`. -/
 theorem energy_eq_of_skew (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS) (h01 : t₀ ≤ t₁)
@@ -1027,7 +1027,7 @@ theorem energy_eq_of_skew (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀
   exact hs.sSol.galerkin_energy_eq_of_skew hs.proj hℰ hJ (comm_modeProd hJP) hFJ t₁
     ⟨h01, le_rfl⟩
 
-/-- **Energy conservation up to truncation for Hamiltonian-type fields** (arXiv 2104.05247,
+/-- **Energy conservation up to truncation for Hamiltonian-type fields** ([CerutiKuschLubich2022],
 Thms 6–7 and §4.2): under the hypotheses of `energy_eq_of_skew`, if the truncated result
 satisfies `‖Y₁ - YS t₁‖ ≤ ϑ` and `‖∇ℰ‖ ≤ β` on the segment `[YS t₁, Y₁]`, then
 `|ℰ(Y₁) - ℰ(Y₀)| ≤ β ϑ`. -/
@@ -1043,8 +1043,8 @@ theorem energy_sub_le_of_skew (hs : IsAugTuckerBUGStep F ε Q₀ P₁ t₀ t₁ 
 end IsAugTuckerBUGStep
 
 /-- **Robust global error bound of the rank-adaptive Tucker BUG integrator**
-(Ceruti–Kusch–Lubich, arXiv 2104.05247, §4.2: Theorem 7 of arXiv 2010.02022 "with an extra term
-`c₃ ϑ` as in Theorem 2").  Under the hypotheses of `tucker_global_error`, with augmented steps
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, §4.2]: Theorem 7 of [CerutiLubich2022] "with an extra
+term `c₃ ϑ` as in Theorem 2"). Under the hypotheses of `tucker_global_error`, with augmented steps
 (`IsAugTuckerBUGStep`) followed by truncations `‖Y (n+1) - YS n tₙ₊₁‖ ≤ ϑ`, for `n ≤ N`
 
     ‖Y n - A tₙ‖ ≤ e^{L n h} (‖Y 0 - A t₀‖ + n h (c₁ ε + c₂ h) + n ϑ). -/
@@ -1067,7 +1067,7 @@ theorem aug_tucker_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     _ = _ := by ring
 
 /-- **Robust global error bound of the rank-adaptive Tucker BUG integrator, final form**
-(Ceruti–Kusch–Lubich, arXiv 2104.05247, Theorem 2 and §4.2): under the hypotheses of
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022, Thm. 2] and §4.2): under the hypotheses of
 `aug_tucker_global_error`, with `ε ≥ 0`, `‖Y 0 - A t₀‖ ≤ δ` and `n h ≤ T`,
 
     ‖Y n - A tₙ‖ ≤ c₀ δ + c₁' ε + c₂' h + c₃ n ϑ,
@@ -1172,7 +1172,7 @@ theorem isOrthProj_modeProdLeOne {d : ℕ} {p q : Fin d → E →L[ℝ] E} (hp :
     exact congrArg (fun f : E →L[ℝ] E => f _) (hs.pq 0)
 
 /-- **Distance between the parallel and the rank-adaptive Tucker integrators** (abstract form of
-the proof of Theorem 3.1 of arXiv 2412.00858).  Let `M₀` (old core projector `∏ P₀ i`), `S`
+the proof of Theorem 3.1 of [CerutiEtAl2024]).  Let `M₀` (old core projector `∏ P₀ i`), `S`
 (core plus single-new-mode blocks) and `M` (augmented core projector `∏ (P₀ i + Pa i)`) be
 orthogonal projectors with `M M₀ = M₀`, `M S = S`, and let `T` be a map (the tangent projector
 at `Y₀`) with `M T = S T`.  Let `YC' = M₀ F(t, YC)` (the parallel core step) and
@@ -1252,7 +1252,7 @@ theorem parallel_sub_galerkin_le {F : ℝ → E → E} {L B ε Lt : ℝ} (hF : I
     _ = _ := by ring
 
 /-- The untruncated result `Ŷ₁ = Ĉ₁ ×ᵢ Ûᵢ` of one step of the **parallel Tucker BUG integrator**
-(arXiv 2412.00858, §3.1), `Ûᵢ = (U⁰ᵢ, Ũᵢ)`: with `P₀ i = U⁰ᵢU⁰ᵢᵀ`, `Pa i = ŨᵢŨᵢᵀ`, the core block
+([CerutiEtAl2024, §3.1]), `Ûᵢ = (U⁰ᵢ, Ũᵢ)`: with `P₀ i = U⁰ᵢU⁰ᵢᵀ`, `Pa i = ŨᵢŨᵢᵀ`, the core block
 (3.3) is `yC = C(t₁) ×ᵢ U⁰ᵢ` (the parallel core step) and the blocks (3.4) are
 `C̃ᵢ ×ᵢ Ũᵢ ×_{j ≠ i} U⁰ⱼ = h (Pa i ∏_{j ≠ i} P₀ j) F(Y₀)`, whose sum is
 `h (modeProdLeOne P₀ Pa - modeProd P₀) F(Y₀)` (`modeProdLeOne_eq_sum`); all other blocks of `Ĉ₁`
@@ -1269,7 +1269,7 @@ lemma parTuckerC₂_nonneg (d : ℕ) {L B Lt H : ℝ} (hL : 0 ≤ L) (hB : 0 ≤
   unfold parTuckerC₂; positivity
 
 /-- One step of the **parallel Tucker BUG integrator** (Ceruti–Kusch–Lubich–Sulz,
-arXiv 2412.00858, §3.1) from `(t₀, Y₀)` to `t₁`, abstract form.  For each mode `i`:
+[CerutiEtAl2024, §3.1]) from `(t₀, Y₀)` to `t₁`, abstract form.  For each mode `i`:
 
 * `P₀ i = U⁰ᵢU⁰ᵢᵀ` (old basis, `P₀ i Y₀ = Y₀`) and `Pa i = ŨᵢŨᵢᵀ` (new directions, `U⁰ᵢᵀŨᵢ = 0`,
   i.e. `P₀ i Pa i = 0`) are orthogonal projectors, all commuting (different modes); the
@@ -1355,8 +1355,9 @@ lemma augFix (hs : IsParTuckerBUGStep F ε Q₀ P₀ Pa t₀ t₁ Y₀ YK YC) (i
   rw [add_apply, hs.start₀ i, h, add_zero]
 
 /-- **The comparison rank-adaptive step.**  With the same augmented bases, the rank-adaptive
-Tucker BUG step (`IsAugTuckerBUGStep`, arXiv 2104.05247) whose Galerkin trajectory `YB` solves
-`YB' = (∏ (P₀ i + Pa i)) F(t, YB)`, `YB t₀ = Y₀`, has all the hypotheses of the parallel step. -/
+Tucker BUG step (`IsAugTuckerBUGStep`, [CerutiKuschLubich2022]) whose Galerkin trajectory `YB`
+solves `YB' = (∏ (P₀ i + Pa i)) F(t, YB)`, `YB t₀ = Y₀`, has all the hypotheses of the parallel
+step. -/
 theorem toAug (hs : IsParTuckerBUGStep F ε Q₀ P₀ Pa t₀ t₁ Y₀ YK YC) {YB : ℝ → E}
     (hYB : ODESolution (fun t x => modeProd (fun i => P₀ i + Pa i) (F t x)) YB t₀ t₁)
     (hYB₀ : YB t₀ = Y₀) : IsAugTuckerBUGStep F ε Q₀ (fun i => P₀ i + Pa i) t₀ t₁ Y₀ YK YB where
@@ -1372,7 +1373,7 @@ theorem toAug (hs : IsParTuckerBUGStep F ε Q₀ P₀ Pa t₀ t₁ Y₀ YK YC) {
   augment := hs.augFix
 
 /-- **The parallel and the rank-adaptive Tucker integrators differ by `O(h (h + ε))`** (proof
-of Theorem 3.1 of arXiv 2412.00858): `‖Ŷ₁ - Ŷ₁ᴮᵁᴳ‖ ≤ h ((3 L B + Lₜ) h + ε)`. -/
+of Theorem 3.1 of [CerutiEtAl2024]): `‖Ŷ₁ - Ŷ₁ᴮᵁᴳ‖ ≤ h ((3 L B + Lₜ) h + ε)`. -/
 theorem parallel_sub_aug (hs : IsParTuckerBUGStep F ε Q₀ P₀ Pa t₀ t₁ Y₀ YK YC) {L B Lt : ℝ}
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B) (hLt : 0 ≤ Lt)
     (hFt : ∀ t ∈ Ico t₀ t₁, ‖F t Y₀ - F t₀ Y₀‖ ≤ Lt * (t - t₀)) (ht : t₀ ≤ t₁) {YB : ℝ → E}
@@ -1392,7 +1393,7 @@ theorem parallel_sub_aug (hs : IsParTuckerBUGStep F ε Q₀ P₀ Pa t₀ t₁ Y�
     ht hs.cSol hs.cStart hYB hYB₀ hs.normal₀ hFt
 
 /-- **Robust local error of the parallel Tucker BUG integrator** (Ceruti–Kusch–Lubich–Sulz,
-arXiv 2412.00858, proof of Theorem 3.1, explicit constants).  Let `F` be `L`-Lipschitz
+[CerutiEtAl2024], proof of Theorem 3.1, explicit constants).  Let `F` be `L`-Lipschitz
 (`L ≥ 0`), bounded by `B`, with `‖F(t, Y₀) - F(t₀, Y₀)‖ ≤ Lₜ (t - t₀)` on the step (`Lₜ = 0` for
 autonomous `F`, as in the paper), and let `A` be the exact solution with `A t₀ = Y₀`,
 `t₁ = t₀ + h`, `h ≥ 0`.  Given the (auxiliary, not computed) Galerkin trajectory `YB` of the
@@ -1422,7 +1423,7 @@ theorem local_error (hs : IsParTuckerBUGStep F ε Q₀ P₀ Pa t₀ t₁ Y₀ YK
 
 /-- **Robust local error of the parallel Tucker BUG integrator, `O`-form**: for `0 ≤ h ≤ H`,
 `‖Ŷ₁ - A t₁‖ ≤ h (c₁ ε + c₂ h)` with `c₁ = parTuckerC₁ d L H`, `c₂ = parTuckerC₂ d L B Lₜ H`
-(arXiv 2412.00858: `c₁ h² + c₂ h ε`). -/
+([CerutiEtAl2024]: `c₁ h² + c₂ h ε`). -/
 theorem local_error_le (hs : IsParTuckerBUGStep F ε Q₀ P₀ Pa t₀ t₁ Y₀ YK YC) {L B Lt h H : ℝ}
     {A : ℝ → E} (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
     (hLt : 0 ≤ Lt) (hFt : ∀ t ∈ Ico t₀ t₁, ‖F t Y₀ - F t₀ Y₀‖ ≤ Lt * (t - t₀))
@@ -1461,7 +1462,7 @@ theorem local_error_of_complete [CompleteSpace E]
 end IsParTuckerBUGStep
 
 /-- **Robust global error bound of the parallel Tucker BUG integrator** (Ceruti–Kusch–Lubich–Sulz,
-arXiv 2412.00858, Theorem 3.1, explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`),
+[CerutiEtAl2024, Thm. 3.1], explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`),
 bounded by `B` and `Lₜ`-Lipschitz in time, `tₙ = t₀ + n h` with `0 ≤ h ≤ H`, and `A` the exact
 solution on `[t₀, t₀ + N h]`.  For `n < N` let step `n` be a parallel Tucker BUG step
 (`IsParTuckerBUGStep`) from `(tₙ, Y n)` followed by a truncation with
@@ -1504,7 +1505,7 @@ theorem par_tucker_global_error {F : ℝ → E → E} {L B ε Lt : ℝ} {d : ℕ
     _ = _ := by ring
 
 /-- **Robust global error bound of the parallel Tucker BUG integrator, final form**
-(arXiv 2412.00858, Theorem 3.1: `‖Yₖ - A(tₖ)‖ ≤ c₁ h + c₂ ε + c₃ δ + c₄ k ϑ`).  On a Banach space,
+([CerutiEtAl2024, Thm. 3.1]: `‖Yₖ - A(tₖ)‖ ≤ c₁ h + c₂ ε + c₃ δ + c₄ k ϑ`).  On a Banach space,
 for `F` continuous in time, `ε ≥ 0`, `‖Y 0 - A t₀‖ ≤ δ` and `n h ≤ T`, under the hypotheses of
 `par_tucker_global_error` (the comparison trajectories are constructed internally):
 

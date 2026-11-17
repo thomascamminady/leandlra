@@ -17,7 +17,7 @@ the sweep from core `k + 1`) is one step of the matrix projector-splitting integ
 field `G_k = P_{≤k} F` with `Q₀ = P_{>k+1}` and `P₁ = P_{≤k+1}`, whose L-step
 `ẏ = P_{≤k+1} F(t, y)` is solved inexactly, namely by the sweep from core `k + 1`. The bound of
 the matrix integrator with inexact substeps (`IsInexactKSLStep.local_error`; cf.
-[KieriLubichWalach2016], §2.6.3, as quoted in arXiv 2010.02022) gives, for the error `η_k` of the
+[KieriLubichWalach2016], §2.6.3, as quoted in [CerutiLubich2022]) gives, for the error `η_k` of the
 sweep from core `k` against the exact flow of `G_k`,
 `η_k ≤ h (11 L B h + ε) + (2 + 3 L h) η_{k+1}` and `η_{d-1} = 0`. Since `P_{≤0} = 1`, the local
 error is `η_0 ≤ c_d(h) h (11 L B h + ε)` with `c_d(h) = ∑_{j<d-1} (2 + 3 L h)^j`. For `d = 2`

@@ -5,10 +5,10 @@ import LeanDLRA.Integrators.KStep
 # Robust error bound of the basis-update & Galerkin (BUG) integrator
 
 This file formalises the central result of Ceruti–Lubich, *An unconventional robust integrator
-for dynamical low-rank approximation* (BIT 2022, arXiv 2010.02022): the BUG ("unconventional")
+for dynamical low-rank approximation* (BIT 2022, [CerutiLubich2022]): the BUG ("unconventional")
 integrator has local error `O(h (h + ε))` and global error `O(δ + ε + h)` with constants that are
 **independent of the singular values** of the exact and the approximate solution
-(arXiv 2010.02022, Lemmas 2–4 and Theorem 4).
+([CerutiLubich2022], Lemmas 2–4 and Theorem 4).
 
 ## The integrator as full-space trajectories
 
@@ -25,7 +25,7 @@ consists of (with `P₀ X = U₀ U₀ᵀ X`, `Q₀ X = X V₀ V₀ᵀ` and the n
   `YS = U₁ S V₁ᵀ` solves `YS' = P₁ Q₁ F(t, YS)`, `YS t₀ = P₁ Q₁ Y₀`, and `Y₁ = YS t₁`.
 
 `P₁` and `Q₁` commute (left and right multiplication).  The normal-component assumption
-(assumption 2 of Theorem 2 of arXiv 2010.02022) is only used at the points `YK t₁` and `YL t₁`,
+(assumption 2 of Theorem 2 of [CerutiLubich2022]) is only used at the points `YK t₁` and `YL t₁`,
 in the form `‖(1 - P₁) ((1 - Q₀) (F t (YK t₁)))‖ ≤ ε` and
 `‖(1 - Q₁) ((1 - P₀) (F t (YL t₁)))‖ ≤ ε`.  All hypotheses of one step are bundled in the
 predicate `IsBUGStep`.
@@ -36,7 +36,7 @@ With `F` `L`-Lipschitz and bounded by `B`, and `ϑ = h (4 L B h + ε)`:
 
 * `galerkin_step_error`: a Galerkin step with an orthogonal projector `R` whose range captures the
   exact solution at `t₁` up to `θ` has error `≤ (e^{L h} - 1) (B h + θ) + θ`;
-* `bug_capture` (Lemma 3 of arXiv 2010.02022): `‖A t₁ - P₁ Q₁ A t₁‖ ≤ 2 ϑ`;
+* `bug_capture` (Lemma 3 of [CerutiLubich2022]): `‖A t₁ - P₁ Q₁ A t₁‖ ≤ 2 ϑ`;
 * `bug_local_error` (Lemma 4): `‖Y₁ - A t₁‖ ≤ (e^{L h} - 1) (B h + 2ϑ) + 2ϑ`;
 * `bug_local_error_le` (Lemma 4, `O`-form): for `0 ≤ h ≤ H`,
   `‖Y₁ - A t₁‖ ≤ h (c₁ ε + c₂ h)` with `c₁ = bugC₁ L H`, `c₂ = bugC₂ L B H`;
@@ -129,7 +129,7 @@ section Local
 
 variable {F : ℝ → E → E} {L B ε : ℝ} {t₀ t₁ h : ℝ} {A : ℝ → E}
 
-/-- **Error of a Galerkin step** (core of Lemma 4 of arXiv 2010.02022).  Let `R` be an orthogonal
+/-- **Error of a Galerkin step** (core of Lemma 4 of [CerutiLubich2022]).  Let `R` be an orthogonal
 projector, `F` `L`-Lipschitz (`L ≥ 0`) and bounded by `B`, `A` a solution of `A' = F(t, A)` on
 `[t₀, t₁]`, `t₁ = t₀ + h`, `h ≥ 0`, and `YS` the Galerkin trajectory `YS' = R F(t, YS)` with
 `YS t₀ = R (A t₀)`.  If the range of `R` captures the exact solution at the end of the step,
@@ -184,7 +184,7 @@ lemma norm_sub_apply_apply_le {P Q : E →L[ℝ] E} (hP : IsOrthProj P) (x : E) 
     _ ≤ ‖x - P x‖ + ‖x - Q x‖ := add_le_add le_rfl (hP.norm_le _)
     _ = ‖(1 - P) x‖ + ‖(1 - Q) x‖ := by simp
 
-/-- **Lemma 3 of arXiv 2010.02022 (abstract form).**  If the K-step and the L-step capture
+/-- **Lemma 3 of [CerutiLubich2022] (abstract form).**  If the K-step and the L-step capture
 conditions hold (see `kstep_capture`), the new left and right bases together capture the exact
 solution: `‖A t₁ - P₁ Q₁ A t₁‖ ≤ 2 ϑ`, `ϑ = h (4 L B h + ε)`. -/
 theorem bug_capture {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E} {YK YL : ℝ → E} (hF : IsLipschitzField F L)
@@ -203,7 +203,7 @@ theorem bug_capture {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E} {YK YL : ℝ → E} (h
   have h3 := norm_sub_apply_apply_le (Q := Q₁) hP₁ (A t₁)
   linarith
 
-/-- **Robust local error of the BUG integrator** (Ceruti–Lubich, arXiv 2010.02022, Lemma 4,
+/-- **Robust local error of the BUG integrator** (Ceruti–Lubich, [CerutiLubich2022, Lemma 4],
 with explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B`, `A` the exact
 solution on `[t₀, t₁]`, `t₁ = t₀ + h`, `h ≥ 0`, with `A t₀ = Y₀`.  Assume
 
@@ -274,7 +274,7 @@ variable {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E} {Y₀ : E} {YK YL YS : ℝ → E}
 lemma eps_nonneg (hs : IsBUGStep F ε P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS) (h01 : t₀ ≤ t₁) : 0 ≤ ε :=
   (norm_nonneg _).trans (hs.kNormal t₀ ⟨le_rfl, h01⟩)
 
-/-- **Robust local error of the BUG integrator** (arXiv 2010.02022, Lemma 4), bundled form of
+/-- **Robust local error of the BUG integrator** ([CerutiLubich2022, Lemma 4]), bundled form of
 `bug_local_error`. -/
 theorem local_error (hs : IsBUGStep F ε P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS)
     (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h)
@@ -284,7 +284,7 @@ theorem local_error (hs : IsBUGStep F ε P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK Y
   bug_local_error hF hL hB hs.projP₀ hs.projQ₀ hs.projP₁ hs.projQ₁ hs.comm₁ ht₁ hh hA hA₀
     hs.kSol hs.kStart hs.kCap hs.kNormal hs.lSol hs.lStart hs.lCap hs.lNormal hs.sSol hs.sStart
 
-/-- **Robust local error of the BUG integrator, `O`-form** (arXiv 2010.02022, Lemma 4).  For
+/-- **Robust local error of the BUG integrator, `O`-form** ([CerutiLubich2022, Lemma 4]).  For
 step sizes `0 ≤ h ≤ H`: `‖YS t₁ - A t₁‖ ≤ h (c₁ ε + c₂ h)` with `c₁ = bugC₁ L H`,
 `c₂ = bugC₂ L B H` depending only on `L`, `B` and the step-size bound `H` — in particular not on
 singular values. -/
@@ -297,7 +297,7 @@ theorem local_error_le (hs : IsBUGStep F ε P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ Y
 
 end IsBUGStep
 
-/-- **Robust local error of the BUG integrator, `O`-form**, unbundled (arXiv 2010.02022,
+/-- **Robust local error of the BUG integrator, `O`-form**, unbundled ([CerutiLubich2022],
 Lemma 4): under the hypotheses of `bug_local_error` and `0 ≤ h ≤ H`,
 `‖YS t₁ - A t₁‖ ≤ h (c₁ ε + c₂ h)` with `c₁ = 2 + 2 L H e^{L H}` and
 `c₂ = L B (8 + e^{L H} (1 + 8 L H))`. -/
@@ -325,7 +325,7 @@ section Global
 
 variable {F : ℝ → E → E} {L B ε : ℝ}
 
-/-- **Robust global error bound of the BUG integrator** (Ceruti–Lubich, arXiv 2010.02022,
+/-- **Robust global error bound of the BUG integrator** (Ceruti–Lubich, [CerutiLubich2022],
 Theorem 4, with explicit constants).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B`, let
 `tₙ = t₀ + n h` with `0 ≤ h ≤ H`, and let `A` solve `A' = F(t, A)` on `[t₀, t₀ + N h]`.  For
 `n < N` let step `n` of the BUG integrator go from `(tₙ, Y n)` to `Y (n+1) = YS n tₙ₊₁` with
@@ -357,7 +357,7 @@ theorem bug_global_error (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoun
     _ = _ := by ring
 
 /-- **Robust global error bound of the BUG integrator, final form** (Ceruti–Lubich,
-arXiv 2010.02022, Theorem 4 / Theorem 2): under the hypotheses of `bug_global_error`, with an
+[CerutiLubich2022, Thm. 4] / Theorem 2): under the hypotheses of `bug_global_error`, with an
 initial error `‖Y 0 - A t₀‖ ≤ δ`, `ε ≥ 0`, and `n h ≤ T`,
 
     ‖Y n - A tₙ‖ ≤ c₀ δ + c₁' ε + c₂' h,

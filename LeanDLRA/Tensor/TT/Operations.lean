@@ -4,9 +4,9 @@ import LeanDLRA.Tensor.TT.Basic
 # Tensor trains: operations on cores, gauge transformations and the bond-centred form
 
 For tensor-train cores `G` (`Tensor.TTCores`) this file provides the elementary operations on
-tensor trains that every TT algorithm uses (Oseledets 2011; Lubich–Oseledets–Vandereycken, arXiv
-1407.2042; the list of operations in Wang–Hu, [WangHu2026a, §2]; the canonical forms of
-Petersson–Hodges-Heilmann–Günther, [PeterssonHodgesHeilmannGunther2026, §4]):
+tensor trains that every TT algorithm uses (Oseledets 2011; Lubich–Oseledets–Vandereycken,
+[LubichOseledetsVandereycken2015]; the list of operations in Wang–Hu, [WangHu2026a, §2]; the
+canonical forms of Petersson–Hodges-Heilmann–Günther, [PeterssonHodgesHeilmannGunther2026, §4]):
 
 * **locality of the interfaces**: `X_{≤k}` depends only on the cores `< k`, `X_{>k}` only on the
   cores `≥ k`; hence the expansion of a tensor train around one core
@@ -17,16 +17,17 @@ Petersson–Hodges-Heilmann–Günther, [PeterssonHodgesHeilmannGunther2026, §4
 * **gauge transformations**: moving a matrix `R` across a bond does not change the tensor train
   (`tt_gauge`). This is the step behind the QR/RQ orthonormalization sweeps ([WangHu2026a],
   operations 7–8), moving the orthogonality centre
-  ([PeterssonHodgesHeilmannGunther2026, Eqs. (4.11)], (4.13)) and the gauge invariance
+  ([PeterssonHodgesHeilmannGunther2026, Eqs. (4.11), (4.13)]) and the gauge invariance
   `M_k ↦ M_k C⁻¹`, `M_{k+1} ↦ C M_{k+1}`;
 * **rank-one tensor trains** (all bonds of size one): entrywise products, inverses and Hadamard
   products with a general tensor train ([WangHu2026a], operations 4–5), the sum of all entries
   (operation 6), and the rank bound for sums of tensor trains (operation 2);
 * **mixed canonical and bond-centred forms**: the cores `A i` (`i < k`) followed by `B i`
-  (`i ≥ k`) (`ttMix`), the bond-centred tensor `Y⟨k⟩ = X_{≤k} S X_{>k}ᵀ` (`ttBond`, arXiv
-  2603.13990, Eq. (4.12)), which is a tensor train with `S` merged into core `k`; with orthonormal
-  interfaces the rank of the `k`-th unfolding is the rank of the bond matrix `S` (Schmidt rank),
-  and the right interface projector fixes a tensor train with right-orthogonal cores.
+  (`i ≥ k`) (`ttMix`), the bond-centred tensor `Y⟨k⟩ = X_{≤k} S X_{>k}ᵀ` (`ttBond`,
+  [PeterssonHodgesHeilmannGunther2026, Eq. (4.12)]), which is a tensor train with `S` merged into
+  core `k`; with orthonormal interfaces the rank of the `k`-th unfolding is the rank of the bond
+  matrix `S` (Schmidt rank), and the right interface projector fixes a tensor train with
+  right-orthogonal cores.
 
 ## Main results
 
@@ -153,7 +154,7 @@ section Gauge
 this is one step of the orthonormalization sweeps ([WangHu2026a], operations 7–8, Eqs.
 (2.8)–(2.14)), with `R = C_j` the shift of the orthogonality centre
 ([PeterssonHodgesHeilmannGunther2026], Eqs. (4.11) and (4.13)), and with `R C⁻¹ = 1` the gauge
-invariance noted after Eq. (4.3) of arXiv 2603.13990. -/
+invariance noted after Eq. (4.3) of [PeterssonHodgesHeilmannGunther2026]. -/
 theorem tt_gauge {G G' : TTCores ι β} {k : ℕ} (hk : k + 1 < d)
     (R : Matrix (β (k + 1)) (β (k + 1)) ℝ)
     (hl : ∀ (a : β k) (x : ι ⟨k, Nat.lt_of_succ_lt hk⟩) (c : β (k + 1)),

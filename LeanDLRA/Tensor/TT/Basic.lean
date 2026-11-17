@@ -18,7 +18,7 @@ format used by every TT integrator:
 * the interface projectors `P_{≤k}` (`ttLeftProj`) and `P_{>k}` (`ttRightProj`) are orthogonal
   projectors, `P_{≤0} = P_{>d} = 1`, `P_{≤j}` and `P_{>k}` commute for `j ≤ k`, and the ranges are
   nested: `P_{≤k} P_{≤k+1} = P_{≤k+1}`, `P_{>k+1} P_{>k} = P_{>k}`
-  ([LubichOseledetsVandereycken2015, §3]; arXiv 2402.18721, Eq. (25) and the sentence before (21)).
+  ([LubichOseledetsVandereycken2015, §3]; [Dektor2025, Eq. (25)] and the sentence before (21)).
 
 ## Main results
 

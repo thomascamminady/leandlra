@@ -540,14 +540,14 @@ theorem global_error_of_pointwise [DecidableEq m] [DecidableEq n]
     hΦ hΦ₀ hδ
 
 /-- **Robust global error bound of the matrix projector-splitting integrator**
-(Kieri–Lubich–Walach 2016, Theorem 2.1, as quoted in Theorem 2 of Ceruti–Lubich, arXiv
-2010.02022; explicit constants ours).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B` in
-the Frobenius norm, satisfy the (global) factored normal-component assumption with `ε ≥ 0`, and
-let `A' = F(t, A)` on `[t₀, t₀ + N h]`, `h ≥ 0`.  For `k < N` let step `k` of the KSL integrator
-go from `Yₖ = Uₖ Sₖ Vₖᵀ` at `tₖ = t₀ + k h` to `tₖ₊₁` (`IsStep`, new basis `U₁ k`, K/S/L factor
-trajectories `K k`, `Sf k`, `Lf k`), and let the next factors be `Uₖ₊₁ = U₁ k` and the QR
-factorization `Lf k (tₖ₊₁) = Vₖ₊₁ Sₖ₊₁ᵀ` of the L-step result.  If `Φ k` are the exact flows
-from `(tₖ, Yₖ)` and `‖Y₀ - A(t₀)‖ ≤ δ`, then for `k ≤ N` with `k h ≤ T`
+(Kieri–Lubich–Walach 2016, Theorem 2.1, as quoted in Theorem 2 of Ceruti–Lubich, [CerutiLubich2022];
+explicit constants ours). Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B` in the Frobenius
+norm, satisfy the (global) factored normal-component assumption with `ε ≥ 0`, and let `A' = F(t, A)`
+on `[t₀, t₀ + N h]`, `h ≥ 0`. For `k < N` let step `k` of the KSL integrator go from
+`Yₖ = Uₖ Sₖ Vₖᵀ` at `tₖ = t₀ + k h` to `tₖ₊₁` (`IsStep`, new basis `U₁ k`, K/S/L factor trajectories
+`K k`, `Sf k`, `Lf k`), and let the next factors be `Uₖ₊₁ = U₁ k` and the QR factorization
+`Lf k (tₖ₊₁) = Vₖ₊₁ Sₖ₊₁ᵀ` of the L-step result. If `Φ k` are the exact flows from `(tₖ, Yₖ)` and
+`‖Y₀ - A(t₀)‖ ≤ δ`, then for `k ≤ N` with `k h ≤ T`
 
     ‖Yₖ - A(tₖ)‖ ≤ e^{L T} δ + T e^{L T} ε + 11 L B T e^{L T} h.
 

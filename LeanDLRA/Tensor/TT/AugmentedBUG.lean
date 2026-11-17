@@ -117,18 +117,18 @@ the rotation of the core into the augmented bases is exact, [KapasEtAl2026, Fig.
 theorem start_eq (hs : IsTTAugGalerkinStep F ϑ A B j k t₀ t₁ Y₀ YS Y₁) : YS t₀ = Y₀ :=
   hs.toAugmentedGalerkinStep.start_eq
 
-/-- **Norm conservation of the augmented MPS-BUG Galerkin step** ([KapasEtAl2026], §I; arXiv
-2104.05247, Thm 4): if `⟪F(t, x), x⟫ = 0` (e.g. `F(t, x) = A x` with `A` skew-symmetric, the real
-form of unitary dynamics), then `‖YS t₁‖ = ‖Y₀‖` before the truncation and
+/-- **Norm conservation of the augmented MPS-BUG Galerkin step** ([KapasEtAl2026], §I;
+[CerutiKuschLubich2022, Thm. 4]): if `⟪F(t, x), x⟫ = 0` (e.g. `F(t, x) = A x` with `A`
+skew-symmetric, the real form of unitary dynamics), then `‖YS t₁‖ = ‖Y₀‖` before the truncation and
 `|‖Y₁‖ - ‖Y₀‖| ≤ ϑ` after it. -/
 theorem norm_eq (hs : IsTTAugGalerkinStep F ϑ A B j k t₀ t₁ Y₀ YS Y₁) (h01 : t₀ ≤ t₁)
     (hF : ∀ t x, ⟪F t x, x⟫ = 0) : ‖YS t₁‖ = ‖Y₀‖ ∧ |‖Y₁‖ - ‖Y₀‖| ≤ ϑ :=
   hs.toAugmentedGalerkinStep.abs_norm_sub_le h01 fun t x _ => hF t x
 
-/-- **Energy conservation of the augmented MPS-BUG Galerkin step** ([KapasEtAl2026], §I; arXiv
-2104.05247, Thms 6–7): for `F = J ∇ℰ` with `J` skew and commuting with the Galerkin projector,
-`ℰ(YS t₁) = ℰ(Y₀)` before the truncation and `|ℰ(Y₁) - ℰ(Y₀)| ≤ β ϑ` after it, if `‖∇ℰ‖ ≤ β` on
-the segment `[YS t₁, Y₁]`. -/
+/-- **Energy conservation of the augmented MPS-BUG Galerkin step** ([KapasEtAl2026], §I;
+[CerutiKuschLubich2022], Thms 6–7): for `F = J ∇ℰ` with `J` skew and commuting with the Galerkin
+projector, `ℰ(YS t₁) = ℰ(Y₀)` before the truncation and `|ℰ(Y₁) - ℰ(Y₀)| ≤ β ϑ` after it, if
+`‖∇ℰ‖ ≤ β` on the segment `[YS t₁, Y₁]`. -/
 theorem energy_eq (hs : IsTTAugGalerkinStep F ϑ A B j k t₀ t₁ Y₀ YS Y₁) (h01 : t₀ ≤ t₁)
     {ℰ : Tensor ι → ℝ} {g : Tensor ι → Tensor ι} (hℰ : ∀ x, HasFDerivAt ℰ (innerSL ℝ (g x)) x)
     {J : Tensor ι →L[ℝ] Tensor ι} (hJ : ∀ z, ⟪J z, z⟫ = 0)

@@ -1384,9 +1384,9 @@ noncomputable def mmObjective (ℰ : E → ℝ) (h : ℝ) (X₀ X : E) : ℝ :=
   ℰ X + ‖X - X₀‖ ^ 2 / (2 * h)
 
 omit [InnerProductSpace ℝ E] in
-/-- **Unconditional energy stability of minimising-movement steps** (OP-ST-17 (a), arXiv
-2305.11532).  Any `X₁` whose objective does not exceed the objective of the admissible competitor
-`X₀` (in particular any minimiser over a set `S ∋ X₀`, such as `M_{≤ r}`) satisfies
+/-- **Unconditional energy stability of minimising-movement steps** (OP-ST-17 (a),
+[SuttiVandereycken2024]). Any `X₁` whose objective does not exceed the objective of the admissible
+competitor `X₀` (in particular any minimiser over a set `S ∋ X₀`, such as `M_{≤ r}`) satisfies
 `ℰ(X₁) + ‖X₁ - X₀‖² / (2 h) ≤ ℰ(X₀)` — for **every** `h`, no step-size restriction. -/
 theorem mm_energy_le {ℰ : E → ℝ} {h : ℝ} {X₀ X₁ : E}
     (h1 : mmObjective ℰ h X₀ X₁ ≤ mmObjective ℰ h X₀ X₀) :
