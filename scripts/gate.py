@@ -79,7 +79,9 @@ TOOL = ("uv", "run", "-q", "scripts/rolling.py")
 # audit checks those that read the sources, the round checks the duplicate statements after its
 # dump (which they read). GATE_SOURCE_RATCHETS selects the source checks (default defs,mathlib:
 # the vacuity count is a source heuristic and is reported, not enforced; wip rule 16).
-SOURCE_RATCHETS = "AUDIT_RATCHET_CHECKS=" + os.environ.get("GATE_SOURCE_RATCHETS", "defs,mathlib")
+SOURCE_RATCHETS = "AUDIT_RATCHET_CHECKS=" + os.environ.get(
+    "GATE_SOURCE_RATCHETS", "defs,mathlib"
+)
 RATCHET = (
     "uv",
     "run",
