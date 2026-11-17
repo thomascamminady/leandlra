@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit c95ebe0 (2026-11-17). A theorem is quoted from its
+files and were compared with them at commit 64d393b (2026-11-17). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -545,7 +545,7 @@ dynamically orthogonal (DO) system, its dual (DDO) and the bi-orthogonal (BO) sy
 product of factors of full rank the file also computes the tangent projector
 (`DynamicallyOrthogonal.tangentProjAt_mul_transpose_apply`).
 
-`DynamicallyOrthogonal.isDLRASolution_iff_hasDerivWithinAt` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 243–250](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L243-L250):
+`DynamicallyOrthogonal.isDLRASolution_iff_hasDerivWithinAt` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 251–258](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L251-L258):
 
 ```lean
 theorem isDLRASolution_iff_hasDerivWithinAt {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
@@ -563,7 +563,7 @@ if and only if it is continuous on `[a, b]` and has the right derivative
 `tangentProjAt (U Zᵀ) (F t (U Zᵀ))` on `[a, b)`: the rank condition is automatic for factors of
 full rank.
 
-`DynamicallyOrthogonal.doSystem_iff_isDLRASolution` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 305–313](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L305-L313):
+`DynamicallyOrthogonal.doSystem_iff_isDLRASolution` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 313–321](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L313-L321):
 
 ```lean
 theorem doSystem_iff_isDLRASolution [DecidableEq m] {r : ℕ}
@@ -577,7 +577,7 @@ theorem doSystem_iff_isDLRASolution [DecidableEq m] {r : ℕ}
       IsDLRASolution r F (fun t => U t * (Z t)ᵀ) a b ∧ ∀ t ∈ Ico a b, (U t)ᵀ * U' t = 0
 ```
 
-`DynamicallyOrthogonal.ddoSystem_iff_isDLRASolution` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 331–339](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L331-L339):
+`DynamicallyOrthogonal.ddoSystem_iff_isDLRASolution` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 339–347](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L339-L347):
 
 ```lean
 theorem ddoSystem_iff_isDLRASolution [DecidableEq n] {r : ℕ}
@@ -600,7 +600,7 @@ the factors are required on the closed interval `[a, b]`, because `IsDLRASolutio
 `r` at `b` too. The factors are given and differentiable: the theorems translate between two
 descriptions of a given pair of factors and do not construct them.
 
-`DynamicallyOrthogonal.isDLRASolution_of_bo` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 358–368](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L358-L368):
+`DynamicallyOrthogonal.isDLRASolution_of_bo` in [`LeanDLRA/DLRA/DynamicallyOrthogonal.lean`, lines 366–376](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean#L366-L376):
 
 ```lean
 theorem isDLRASolution_of_bo [DecidableEq n] {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
@@ -994,7 +994,7 @@ theorem exists_run_norm_sub_le
       ∀ n ≤ N, (Y n).rank ≤ r ∧ ‖Y n - A (t₀ + n * h)‖ ≤ bugGlobalBound L B H T δ ε h
 ```
 
-`bugGlobalBound` in [`LeanDLRA/Foundations/Localization.lean`, lines 538–540](../LeanDLRA/Foundations/Localization.lean#L538-L540):
+`bugGlobalBound` in [`LeanDLRA/Foundations/Localization.lean`, lines 563–565](../LeanDLRA/Foundations/Localization.lean#L563-L565):
 
 ```lean
 noncomputable def bugGlobalBound (L B H T δ ε h : ℝ) : ℝ :=
@@ -1175,7 +1175,7 @@ to step.
 
 **Fixed rank.**
 
-`MatrixParallelBUG.IsStep` in [`LeanDLRA/Integrators/Matrix/ParallelBUG.lean`, lines 235–258](../LeanDLRA/Integrators/Matrix/ParallelBUG.lean#L235-L258):
+`MatrixParallelBUG.IsStep` in [`LeanDLRA/Integrators/Matrix/ParallelBUG.lean`, lines 233–256](../LeanDLRA/Integrators/Matrix/ParallelBUG.lean#L233-L256):
 
 ```lean
 structure IsStep (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (t₀ t₁ : ℝ) (U₀ : Matrix m r ℝ)
@@ -1278,7 +1278,7 @@ theorems of sections 5.2 and 6.1.
 
 **Truncation tolerance, variable rank.**
 
-`MatrixParallelBUG.global_error_paper` in [`LeanDLRA/Integrators/Matrix/ParallelBUG.lean`, lines 512–532](../LeanDLRA/Integrators/Matrix/ParallelBUG.lean#L512-L532):
+`MatrixParallelBUG.global_error_paper` in [`LeanDLRA/Integrators/Matrix/ParallelBUG.lean`, lines 510–530](../LeanDLRA/Integrators/Matrix/ParallelBUG.lean#L510-L530):
 
 ```lean
 theorem global_error_paper {rk sU sV : ℕ → ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
@@ -1764,7 +1764,7 @@ quantities
 are hypotheses (`hθ`, `hθ'`) of every statement of that file: the bases are given. The size of
 `θ` is bounded in a second file, at the end of this section.
 
-`ODESolution.norm_midpoint_defect_le` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 80–84](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L80-L84):
+`ODESolution.norm_midpoint_defect_le` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 87–91](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L87-L91):
 
 ```lean
 theorem ODESolution.norm_midpoint_defect_le [InnerProductSpace ℝ E] {F : ℝ → E → E}
@@ -1780,7 +1780,7 @@ class `C³` there and its third derivative is bounded by `M₃`, then the defect
 companion `ODESolution.norm_half_step_sub_le` gives, for `C²` and the bound `M₂` of the second
 derivative, `‖A(t₀ + h/2) - A t₀ - (h/2) F(t₀, A t₀)‖ ≤ M₂ h² / 8`.
 
-`ExplicitMidpoint.norm_one_sub_galerkinProj_le_of_capture` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 173–177](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L173-L177):
+`ExplicitMidpoint.norm_one_sub_galerkinProj_le_of_capture` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 180–184](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L180-L184):
 
 ```lean
 theorem norm_one_sub_galerkinProj_le_of_capture [DecidableEq k] (hUa : Uaᵀ * Ua = 1)
@@ -1790,7 +1790,7 @@ theorem norm_one_sub_galerkinProj_le_of_capture [DecidableEq k] (hUa : Uaᵀ * U
     ‖(1 - galerkinProj Ua Va) G‖ ≤ θ + θ'
 ```
 
-`ExplicitMidpoint.norm_predictor_sub_le` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 195–204](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L195-L204):
+`ExplicitMidpoint.norm_predictor_sub_le` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 202–211](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L202-L211):
 
 ```lean
 theorem norm_predictor_sub_le {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
@@ -1812,7 +1812,7 @@ behind it splits `G - galerkinProj Ua Va G` into one term for each defect
 the factored point `Y₀`, the predictor is within `M₂ h² / 8 + (h/2) ε` of the exact solution at
 the midpoint of the step.
 
-`ExplicitMidpoint.galerkin_local_error` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 230–252](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L230-L252):
+`ExplicitMidpoint.galerkin_local_error` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 237–259](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L237-L259):
 
 ```lean
 theorem galerkin_local_error [DecidableEq k] [DecidableEq k']
@@ -1846,7 +1846,7 @@ hypotheses on the field are those of section 6.5: `F` is `L`-Lipschitz, bounded 
 `Lₜ`-Lipschitz in time. The statement is an instance of `MidpointBUG.midpointGalerkin_local_error`
 with the predictor of this section in place of a half step of the BUG integrator.
 
-`ExplicitMidpoint.norm_update_sub_le` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 273–289](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L273-L289):
+`ExplicitMidpoint.norm_update_sub_le` in [`LeanDLRA/Research/ExplicitMidpointGalerkin.lean`, lines 280–296](../LeanDLRA/Research/ExplicitMidpointGalerkin.lean#L280-L296):
 
 ```lean
 theorem norm_update_sub_le [DecidableEq k] {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
@@ -1888,7 +1888,7 @@ with `h = 3/2`).
 
 **Size of the capture defect.**
 
-`norm_capture_defect_le` in [`LeanDLRA/Research/ExplicitMidpointCapture.lean`, lines 631–648](../LeanDLRA/Research/ExplicitMidpointCapture.lean#L631-L648):
+`norm_capture_defect_le` in [`LeanDLRA/Research/ExplicitMidpointCapture.lean`, lines 646–663](../LeanDLRA/Research/ExplicitMidpointCapture.lean#L646-L663):
 
 ```lean
 theorem norm_capture_defect_le {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {r : ℕ}
@@ -1911,7 +1911,7 @@ theorem norm_capture_defect_le {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {
       (L + κ + h / 2 * L * κ) * δ + ε + e + (h / 2) ^ 2 * κ * (L * B + Lₜ + B * κ)
 ```
 
-`norm_capture_defect_right_le` in [`LeanDLRA/Research/ExplicitMidpointCapture.lean`, lines 881–898](../LeanDLRA/Research/ExplicitMidpointCapture.lean#L881-L898):
+`norm_capture_defect_right_le` in [`LeanDLRA/Research/ExplicitMidpointCapture.lean`, lines 896–913](../LeanDLRA/Research/ExplicitMidpointCapture.lean#L896-L913):
 
 ```lean
 theorem norm_capture_defect_right_le {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {r : ℕ}
@@ -2004,7 +2004,7 @@ local error of the BUG step. The local error of the theorem above is
 `(t₁ - t₀) ((2 c₁ + 1) ε + (2 c₂ + 10 L B) (t₁ - t₀))` with `c₁ = bugC₁ L H`,
 `c₂ = bugC₂ L B H`, under the normal bound `ε` at rank `r` and at `k` columns, `k ≤ l`.
 
-`MatrixDRSVD.isTubeLocal_stepRel` in [`LeanDLRA/Randomized/DRSVDRun.lean`, lines 162–165](../LeanDLRA/Randomized/DRSVDRun.lean#L162-L165):
+`MatrixDRSVD.isTubeLocal_stepRel` in [`LeanDLRA/Randomized/DRSVDRun.lean`, lines 166–169](../LeanDLRA/Randomized/DRSVDRun.lean#L166-L169):
 
 ```lean
 theorem isTubeLocal_stepRel (hrk : r ≤ k) (hkn : k ≤ Fintype.card n) (hkl : k ≤ l)
@@ -2013,7 +2013,7 @@ theorem isTubeLocal_stepRel (hrk : r ≤ k) (hkn : k ≤ Fintype.card n) (hkl : 
       (fun Y => Y.rank ≤ r) 3
 ```
 
-`MatrixDRSVD.exists_run_norm_sub_le` in [`LeanDLRA/Randomized/DRSVDRun.lean`, lines 271–282](../LeanDLRA/Randomized/DRSVDRun.lean#L271-L282):
+`MatrixDRSVD.exists_run_norm_sub_le` in [`LeanDLRA/Randomized/DRSVDRun.lean`, lines 277–288](../LeanDLRA/Randomized/DRSVDRun.lean#L277-L288):
 
 ```lean
 theorem exists_run_norm_sub_le
@@ -2710,7 +2710,7 @@ the number `Fintype.card (β k)` of elements of the `k`-th bond index type.
 
 Source: arXiv 2402.18721, Eq. (16), as cited in the docstring of the first theorem.
 
-`Tensor.isOrthProj_ttTangentProj` in [`LeanDLRA/Tensor/TT/TangentProjector.lean`, lines 366–368](../LeanDLRA/Tensor/TT/TangentProjector.lean#L366-L368):
+`Tensor.isOrthProj_ttTangentProj` in [`LeanDLRA/Tensor/TT/TangentProjector.lean`, lines 367–369](../LeanDLRA/Tensor/TT/TangentProjector.lean#L367-L369):
 
 ```lean
 theorem isOrthProj_ttTangentProj [Unique (β 0)] [Unique (β d)] {A B : TTCores ι β}
@@ -2915,7 +2915,7 @@ instance of its predicate of the projector level
 `DimTree.BasisFrame.IsBUGStep.isTTNBUGStep`, `DimTree.BasisFrame.IsAugBUGStep.isAugTTNBUGStep`,
 `DimTree.BasisFrame.IsParBUGStep.isParTTNBUGStep`), so the four error bounds hold for tensors.
 
-`DimTree.projectorSplitting_global_error` in [`LeanDLRA/Tensor/TTN/ProjectorSplitting.lean`, lines 206–215](../LeanDLRA/Tensor/TTN/ProjectorSplitting.lean#L206-L215):
+`DimTree.projectorSplitting_global_error` in [`LeanDLRA/Tensor/TTN/ProjectorSplitting.lean`, lines 207–216](../LeanDLRA/Tensor/TTN/ProjectorSplitting.lean#L207-L216):
 
 ```lean
 theorem projectorSplitting_global_error.{v} (τ : DimTree κ) {L B T : ℝ} (hL : 0 ≤ L)

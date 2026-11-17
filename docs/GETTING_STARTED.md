@@ -15,7 +15,7 @@ The page describes the core library, the modules imported by `LeanDLRA.lean`. Th
 * [Conventions](CONVENTIONS.md): the rules for names, statements and docstrings.
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit c95ebe0 (2026-11-17).
+block links to the lines. The blocks were compared with the files at commit 64d393b (2026-11-17).
 Installation is described in the [README](../README.md#using-leandlra-in-your-project).
 
 ## Contents
@@ -108,7 +108,7 @@ Nine definitions suffice to read the theorem of section 3, in this order:
 | `uniformGrid` | [Integrators/Defs.lean:70](../LeanDLRA/Integrators/Defs.lean#L70) | `uniformGrid t₀ h`: the times `t₀ + n h`. |
 | `IsRun` | [Integrators/Defs.lean:239](../LeanDLRA/Integrators/Defs.lean#L239) | `IsRun M τ N Y`: the times `τ 0 ≤ … ≤ τ N` are nondecreasing, and each `Y (n + 1)` is a result of one step of `M` from `Y n`, from time `τ n` to `τ (n + 1)`. |
 | `MatrixBUG.stepRel` | [Integrators/Matrix/BUGStep.lean:72](../LeanDLRA/Integrators/Matrix/BUGStep.lean#L72) | `MatrixBUG.stepRel F r`: the step of the BUG integrator of rank `r` for the field `F`, as a step relation on matrices. |
-| `bugGlobalBound` | [Foundations/Localization.lean:538](../LeanDLRA/Foundations/Localization.lean#L538) | `bugGlobalBound L B H T δ ε h`: the right-hand side `e^{L T} δ + T e^{L T} (c₁ ε + c₂ h)` of the error bound, with `c₁ = bugC₁ L H` and `c₂ = bugC₂ L B H`. |
+| `bugGlobalBound` | [Foundations/Localization.lean:563](../LeanDLRA/Foundations/Localization.lean#L563) | `bugGlobalBound L B H T δ ε h`: the right-hand side `e^{L T} δ + T e^{L T} (c₁ ε + c₂ h)` of the error bound, with `c₁ = bugC₁ L H` and `c₂ = bugC₂ L B H`. |
 
 A step is a relation and not a function because the result of a step is not unique: the new
 bases of a step are determined only up to a choice, and a substep is described by the
@@ -168,7 +168,7 @@ The conclusion: there are matrices `Y 0 = Y₀, Y 1, …, Y N`, each obtained fr
 by a BUG step of size `h`, all of rank at most `r`, whose distance to the exact solution at the
 grid times is at most `bugGlobalBound L B H T δ ε h`:
 
-`bugGlobalBound` in [`LeanDLRA/Foundations/Localization.lean`, lines 538–540](../LeanDLRA/Foundations/Localization.lean#L538-L540):
+`bugGlobalBound` in [`LeanDLRA/Foundations/Localization.lean`, lines 563–565](../LeanDLRA/Foundations/Localization.lean#L563-L565):
 
 ```lean
 noncomputable def bugGlobalBound (L B H T δ ε h : ℝ) : ℝ :=
@@ -448,7 +448,7 @@ declarations.
 
 The Lean sources below `LeanDLRA/` form two libraries ([STRUCTURE.md](STRUCTURE.md)).
 
-* The **core** is the set of modules imported by `LeanDLRA.lean`, 175 modules at the commit
+* The **core** is the set of modules imported by `LeanDLRA.lean`, 179 modules at the commit
   named above. Its theorems are stated in shared definitions, so they can be combined: the
   solution of one theorem is the solution of the next, a run is a run. This page,
   [Main results](MAIN_RESULTS.md) and [Definitions](DEFINITIONS.md) describe the core only.
@@ -470,7 +470,7 @@ import LeanDLRACatalogue                     -- the core and the catalogue
 A single module can be imported in the same way; the theorem of section 3 is in the module that
 the root file of the core imports with the line
 
-[`LeanDLRA.lean`, line 51](../LeanDLRA.lean#L51):
+[`LeanDLRA.lean`, line 54](../LeanDLRA.lean#L54):
 
 ```lean
 import LeanDLRA.Integrators.Matrix.BUGRun
