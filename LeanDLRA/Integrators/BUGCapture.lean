@@ -27,6 +27,8 @@ compared with `ϑ = h (4 L B h + ε)` and the factor `2` in place of `√2` in
   the explicit form and in the `O`-form.
 * `IsBUGStepCore.hasLocalError_of_tube_two_mul`: the local error of a step near a reference
   solution, for a field that is Lipschitz and bounded only on a tube.
+* `IsTuckerBUGStep.local_error_two_mul`: the Tucker BUG integrator with `d` modes,
+  `(e^{L h} - 1) (B h + √d ϑ) + √d ϑ` with `ϑ = h (2 L B h + ε)`.
 
 ## Proof of the capture estimate
 
@@ -40,8 +42,9 @@ and the distances are bounded with the time at which they are taken:
 for every `t`. The proof of `kstep_capture` compares `F(t, A)` with `F(t, YK)` and `F(t, YK(t₁))`,
 both at distance up to `2 B h`.
 
-The `example`s at the end prove `kstep_capture`, `IsBUGStep.local_error_le` and
-`IsBUGStep.local_error_sqrt_two` (all restated verbatim) from the results of this file.
+The `example`s at the end prove `kstep_capture`, `IsBUGStep.local_error_le`,
+`IsBUGStep.local_error_sqrt_two` and `IsTuckerBUGStep.local_error'` (all restated verbatim) from
+the results of this file.
 -/
 
 open Set
@@ -257,6 +260,32 @@ theorem IsBUGStepCore.hasLocalError_of_tube_two_mul
 
 end Near
 
+/-! ### The Tucker BUG integrator -/
+
+namespace IsTuckerBUGStep
+
+variable {F : ℝ → E → E} {L B ε : ℝ} {d : ℕ} {Q₀ P₁ : Fin d → E →L[ℝ] E} {t₀ t₁ h : ℝ}
+  {Y₀ : E} {YK : Fin d → ℝ → E} {YS A : ℝ → E}
+
+/-- **Local error of the Tucker BUG integrator with the constant `2`.** Under the hypotheses of
+`IsTuckerBUGStep.local_error'`, with `ϑ = h (2 L B h + ε)`,
+
+    ‖YS t₁ - A t₁‖ ≤ (e^{L h} - 1) (B h + √d ϑ) + √d ϑ.
+
+`IsTuckerBUGStep.local_error'` has `ϑ = h (4 L B h + ε)`: every mode-`i` K-step captures the
+exact solution up to `h (2 L B h + ε)` (`kstep_capture_two_mul`). -/
+theorem local_error_two_mul (hs : IsTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK YS)
+    (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h)
+    (hh : 0 ≤ h) (hA : ODESolution F A t₀ t₁) (hA₀ : A t₀ = Y₀) :
+    ‖YS t₁ - A t₁‖ ≤ (Real.exp (L * h) - 1) * (B * h + √(d : ℝ) * (h * (2 * L * B * h + ε)))
+      + √(d : ℝ) * (h * (2 * L * B * h + ε)) :=
+  galerkin_step_error hs.proj hF hL hB ht₁ hh hA hs.sSol (by rw [hs.sStart, hA₀])
+    (norm_sub_modeProd_apply_le_sqrt_mul hs.projP₁ fun i => by
+      simpa using kstep_capture_two_mul hF hL hB (hs.projP₁ i) (hs.projQ₀ i) ht₁ hh hA
+        (hs.kSol i) ((hs.kStart i).trans hA₀.symm) (hs.kCap i) (hs.kNormal i))
+
+end IsTuckerBUGStep
+
 /-! ### The theorems with the larger constants, and non-vacuity -/
 
 /-- The constants of `IsBUGStep.local_error_le_two_mul` are at most those of
@@ -335,31 +364,62 @@ example : ‖((1 : ℝ →L[ℝ] ℝ) - 1) ((fun t : ℝ => t) 1)‖ ≤ 1 * (2 
     (by norm_num) zero_le_one (odeSolution_id_of_eq_one (fun _ _ => rfl) _ _)
     (odeSolution_id_of_eq_one (fun _ _ => by simp) _ _) rfl (by simp) (fun _ _ => by simp)
 
+/-- The step of the integrator on `ℝ` for `F(t, y) = 1` with all projectors the identity and all
+trajectories `t ↦ t` on `[0, 1]` (`ε = 0`). -/
+private theorem isBUGStep_one :
+    IsBUGStep (E := ℝ) (fun _ _ => 1) 0 1 1 1 1 0 1 0 (fun t => t) (fun t => t) (fun t => t) where
+  projP₀ := IsOrthProj.one
+  projQ₀ := IsOrthProj.one
+  projP₁ := IsOrthProj.one
+  projQ₁ := IsOrthProj.one
+  comm₁ := fun _ => rfl
+  kSol := odeSolution_id_of_eq_one (fun _ _ => by simp) _ _
+  kStart := rfl
+  kCap := rfl
+  kNormal := fun _ _ => by simp
+  lSol := odeSolution_id_of_eq_one (fun _ _ => by simp) _ _
+  lStart := rfl
+  lCap := rfl
+  lNormal := fun _ _ => by simp
+  sSol := odeSolution_id_of_eq_one (fun _ _ => by simp) _ _
+  sStart := rfl
+
 /-- **Non-vacuity of `IsBUGStep.local_error_two_mul` and `IsBUGStep.local_error_le_two_mul`**: the
-step of the integrator on `ℝ` for `F(t, y) = 1` with all projectors the identity and all
-trajectories `t ↦ t` on `[0, 1]` satisfies their hypotheses (`L = 0`, `B = 1`, `ε = 0`). -/
+step `isBUGStep_one` on `ℝ` for `F(t, y) = 1` satisfies their hypotheses (`L = 0`, `B = 1`,
+`ε = 0`). -/
 example : ‖(fun t : ℝ => t) 1 - (fun t : ℝ => t) 1‖ ≤
     1 * (√2 * (1 + 0 * 1 * Real.exp (0 * 1)) * 0
       + 0 * 1 * (Real.exp (0 * 1) + 2 * √2 * (1 + 0 * 1 * Real.exp (0 * 1))) * 1) :=
-  IsBUGStep.local_error_le_two_mul (E := ℝ) (F := fun _ _ => 1) (P₀ := 1) (Q₀ := 1) (P₁ := 1)
-    (Q₁ := 1) (YK := fun t => t) (YL := fun t => t) (YS := fun t => t) (Y₀ := 0)
-    { projP₀ := IsOrthProj.one
-      projQ₀ := IsOrthProj.one
-      projP₁ := IsOrthProj.one
-      projQ₁ := IsOrthProj.one
-      comm₁ := fun _ => rfl
-      kSol := odeSolution_id_of_eq_one (fun _ _ => by simp) _ _
-      kStart := rfl
-      kCap := rfl
-      kNormal := fun _ _ => by simp
-      lSol := odeSolution_id_of_eq_one (fun _ _ => by simp) _ _
-      lStart := rfl
-      lCap := rfl
-      lNormal := fun _ _ => by simp
-      sSol := odeSolution_id_of_eq_one (fun _ _ => by simp) _ _
-      sStart := rfl }
-    (fun _ _ _ => by simp) le_rfl (fun _ _ => by simp) (t₀ := 0) (t₁ := 1) (h := 1)
-    (by norm_num) zero_le_one le_rfl (odeSolution_id_of_eq_one (fun _ _ => rfl) _ _) rfl
+  isBUGStep_one.local_error_le_two_mul (fun _ _ _ => by simp) le_rfl (fun _ _ => by simp)
+    (t₀ := 0) (t₁ := 1) (h := 1) (by norm_num) zero_le_one le_rfl
+    (odeSolution_id_of_eq_one (fun _ _ => rfl) _ _) rfl
+
+/-- **Non-vacuity of `IsTuckerBUGStep.local_error_two_mul`**: the step `isBUGStep_one`, as a
+Tucker step with `d = 2` modes (`IsBUGStep.toTucker`), satisfies its hypotheses. -/
+example : ‖(fun t : ℝ => t) 1 - (fun t : ℝ => t) 1‖ ≤
+    (Real.exp (0 * 1) - 1) * (1 * 1 + √((2 : ℕ) : ℝ) * (1 * (2 * 0 * 1 * 1 + 0)))
+      + √((2 : ℕ) : ℝ) * (1 * (2 * 0 * 1 * 1 + 0)) :=
+  isBUGStep_one.toTucker.local_error_two_mul (fun _ _ _ => by simp) le_rfl (fun _ _ => by simp)
+    (t₀ := 0) (t₁ := 1) (h := 1) (by norm_num) zero_le_one
+    (odeSolution_id_of_eq_one (fun _ _ => rfl) _ _) rfl
+
+/-- `IsTuckerBUGStep.local_error'`, restated verbatim, follows from
+`IsTuckerBUGStep.local_error_two_mul`. -/
+example {d : ℕ} {Q₀' P₁' : Fin d → E →L[ℝ] E} {YK' : Fin d → ℝ → E} {F' : ℝ → E → E}
+    {YS' A' : ℝ → E} {Y₀' : E}
+    (hs : IsTuckerBUGStep F' ε Q₀' P₁' t₀ t₁ Y₀' YK' YS') (hF : IsLipschitzField F' L)
+    (hL : 0 ≤ L) (hB : IsBoundedField F' B) (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
+    (hA : ODESolution F' A' t₀ t₁) (hA₀ : A' t₀ = Y₀') :
+    ‖YS' t₁ - A' t₁‖ ≤ (Real.exp (L * h) - 1) * (B * h + √(d : ℝ) * (h * (4 * L * B * h + ε)))
+      + √(d : ℝ) * (h * (4 * L * B * h + ε)) := by
+  refine (hs.local_error_two_mul hF hL hB ht₁ hh hA hA₀).trans ?_
+  have hB0 := hB.nonneg
+  have hd : 0 ≤ √(d : ℝ) * (h * (2 * L * B * h)) := by positivity
+  have he : 0 ≤ Real.exp (L * h) - 1 := by
+    have := Real.add_one_le_exp (L * h)
+    nlinarith [mul_nonneg hL hh]
+  have := mul_nonneg he hd
+  nlinarith
 
 end Examples
 
