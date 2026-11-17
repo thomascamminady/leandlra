@@ -72,6 +72,7 @@ import LeanDLRA.Integrators.Matrix.Symmetry
 import LeanDLRA.Integrators.Matrix.TruncBUGRun
 import LeanDLRA.Integrators.Method
 import LeanDLRA.Integrators.MethodGrid
+import LeanDLRA.Integrators.MethodOneSided
 import LeanDLRA.Integrators.MethodTolerance
 import LeanDLRA.Integrators.ParallelBUG
 import LeanDLRA.Integrators.PerturbedField
@@ -132,6 +133,7 @@ import LeanDLRA.Research.StiffVelocityVariation
 import LeanDLRA.Research.SylvesterFlows
 import LeanDLRA.Research.SylvesterGlobal
 import LeanDLRA.Research.TwoSidedLeak
+import LeanDLRA.Research.TwoSidedPadded
 import LeanDLRA.Stability.Conservation
 import LeanDLRA.Stability.Energy
 import LeanDLRA.Stability.NormBalance
