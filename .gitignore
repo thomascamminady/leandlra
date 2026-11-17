@@ -15,3 +15,7 @@
 /papers/txt/
 /papers/statements/
 /wip/
+
+# Paper drafts and their builds stay local (owner rule); only papers/README.md and
+# papers/catalogue.json are tracked.
+/papers/*/
