@@ -5,10 +5,10 @@ import LeanDLRA.Foundations.Gronwall
 
 The robust error analysis of the basis-update & Galerkin (BUG) integrator
 (Ceruti–Lubich, *An unconventional robust integrator for dynamical low-rank approximation*,
-arXiv 2010.02022, Lemmas 2–3) and of the projector-splitting integrator (Kieri–Lubich–Walach 2016,
-Theorem 2.1, quoted as Theorem 2 in arXiv 2010.02022) rests on one estimate: the new basis computed
-by the K-step *captures* the exact solution at the end of the step up to `O(h (h + ε))`, with a
-constant that does not depend on singular values.
+[CerutiLubich2022], Lemmas 2–3) and of the projector-splitting integrator (Kieri–Lubich–Walach 2016,
+Theorem 2.1, quoted as Theorem 2 in [CerutiLubich2022]) rests on one estimate: the new basis
+computed by the K-step *captures* the exact solution at the end of the step up to `O(h (h + ε))`,
+with a constant that does not depend on singular values.
 
 We formalise this abstractly.  `E` is a real inner product space (matrices with the Frobenius
 inner product, Tucker tensors, ...), `F : ℝ → E → E` is an `L`-Lipschitz vector field bounded by
@@ -17,7 +17,7 @@ inner product, Tucker tensors, ...), `F : ℝ → E → E` is an `L`-Lipschitz v
 `YK' = Q₀ F(t, YK)` with the orthogonal projector `Q₀ X = X V₀ V₀ᵀ`, and `YK t₀ = Y₀ = A t₀`.
 The new basis `U₁` spans the range of `K(t₁)`; with `P₁ X = U₁ U₁ᵀ X` this reads
 `P₁ (YK t₁) = YK t₁`.  The normal-component assumption (assumption 2 of Theorem 2 of
-arXiv 2010.02022, at the point `YK t₁ = U₁ (U₁ᵀ K(t₁)) V₀ᵀ` of the manifold) is used only in the
+[CerutiLubich2022], at the point `YK t₁ = U₁ (U₁ᵀ K(t₁)) V₀ᵀ` of the manifold) is used only in the
 form `‖(1 - P₁) ((1 - Q₀) (F t (YK t₁)))‖ ≤ ε`.
 
 ## Main results
@@ -179,7 +179,7 @@ theorem kstep_capture_of_Ico (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : Is
   rw [mul_comm h]
   exact hmvt
 
-/-- **K-step capture lemma** (Ceruti–Lubich, arXiv 2010.02022, Lemma 2; Kieri–Lubich–Walach
+/-- **K-step capture lemma** (Ceruti–Lubich, [CerutiLubich2022, Lemma 2]; Kieri–Lubich–Walach
 2016, proof of Theorem 2.1).  Let `F` be `L`-Lipschitz (`L ≥ 0`) and bounded by `B`, let `A`
 solve `A' = F(t, A)` on `[t₀, t₁]`, `t₁ = t₀ + h`, `h ≥ 0`, and let the K-step trajectory `YK`
 solve `YK' = Q₀ F(t, YK)` with `YK t₀ = A t₀`, where `Q₀` is an orthogonal projector.  If the
@@ -191,7 +191,7 @@ solution:
     ‖(1 - P₁) (A t₁)‖ ≤ h (4 L B h + ε).
 
 In matrix language (`P₁ X = U₁ U₁ᵀ X`) this is `‖U₁ U₁ᵀ A(t₁) - A(t₁)‖ ≤ ϑ` with
-`ϑ = h (4 L B h + ε)`, an explicit version of the bound of Lemma 2 of arXiv 2010.02022 for exact
+`ϑ = h (4 L B h + ε)`, an explicit version of the bound of Lemma 2 of [CerutiLubich2022] for exact
 starting values (`δ = 0`).  The abstract formulation only uses that `P₁`, `Q₀` are orthogonal
 projectors. -/
 theorem kstep_capture (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)

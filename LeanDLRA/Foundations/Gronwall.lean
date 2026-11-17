@@ -9,9 +9,9 @@ by the standard argument of **Lady Windermere's fan** (Hairer–Nørsett–Wanne
 Differential Equations I*, Section II.3).  In the DLRA literature this step is invoked, e.g., in
 
 * Ceruti–Lubich, *An unconventional robust integrator for dynamical low-rank approximation*,
-  arXiv 2010.02022, proof of Theorem 7 (global error of the BUG integrator);
+  [CerutiLubich2022], proof of Theorem 7 (global error of the BUG integrator);
 * Ceruti–Lubich, *Time integration of symmetric and anti-symmetric low-rank matrices and Tucker
-  tensors*, arXiv 1906.01369, proof of Theorem 4;
+  tensors*, [CerutiLubich2020], proof of Theorem 4;
 * Kieri–Lubich–Walach (2016), global error of the projector-splitting integrator.
 
 The argument has two ingredients, both formalised here:
@@ -209,7 +209,7 @@ theorem lady_windermere_step {F : ℝ → E → E} {L : ℝ} (hF : IsLipschitzFi
 let `Φ n` solve the same ODE on `[tₙ, tₙ₊₁]` with `Φ n tₙ = Y n`.  If the local errors satisfy
 `‖Y (n+1) - Φ n tₙ₊₁‖ ≤ ℓ n`, then for `n ≤ N`
 `‖Y n - A tₙ‖ ≤ exp (L n h) (‖Y 0 - A t₀‖ + ∑_{k<n} ℓ k)`.
-(Hairer–Nørsett–Wanner, Section II.3; used in arXiv 2010.02022, proof of Theorem 7.) -/
+(Hairer–Nørsett–Wanner, Section II.3; used in [CerutiLubich2022], proof of Theorem 7.) -/
 theorem lady_windermere_sum {F : ℝ → E → E} {L : ℝ} (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     {t₀ h : ℝ} (hh : 0 ≤ h) {N : ℕ} {A : ℝ → E} (hA : ODESolution F A t₀ (t₀ + N * h))
     {Y : ℕ → E} {Φ : ℕ → ℝ → E}
@@ -230,8 +230,8 @@ theorem lady_windermere_sum {F : ℝ → E → E} {L : ℝ} (hF : IsLipschitzFie
 let `Φ n` solve the same ODE on `[tₙ, tₙ₊₁]` with `Φ n tₙ = Y n`.  If the local errors satisfy
 `‖Y (n+1) - Φ n tₙ₊₁‖ ≤ ℓ`, then for `n ≤ N`
 `‖Y n - A tₙ‖ ≤ exp (L n h) (‖Y 0 - A t₀‖ + n ℓ)`.
-(Hairer–Nørsett–Wanner, Section II.3; used in arXiv 2010.02022, proof of Theorem 7, and
-arXiv 1906.01369, proof of Theorem 4.) -/
+(Hairer–Nørsett–Wanner, Section II.3; used in [CerutiLubich2022], proof of Theorem 7, and
+[CerutiLubich2020], proof of Theorem 4.) -/
 theorem lady_windermere {F : ℝ → E → E} {L : ℝ} (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     {t₀ h : ℝ} (hh : 0 ≤ h) {N : ℕ} {A : ℝ → E} (hA : ODESolution F A t₀ (t₀ + N * h))
     {Y : ℕ → E} {Φ : ℕ → ℝ → E}

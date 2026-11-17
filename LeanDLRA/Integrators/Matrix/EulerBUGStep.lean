@@ -21,7 +21,7 @@ existence and the error bound of runs, are shown in
 
 **The step.** The integrator advances a rank-`r` matrix `Y₀ = U₀ S₀ V₀ᵀ` over a time step
 `[t₀, t₁]` with one evaluation `F₀ = F(t₀, Y₀)` of the vector field (Nobile and Riffaud,
-arXiv:2502.07040, §2.1, Algorithm 1). The K-step takes an orthonormal basis `Û` of the range of
+[NobileRiffaud2025, §2.1], Algorithm 1). The K-step takes an orthonormal basis `Û` of the range of
 `[U₀, F₀ V₀]`, the L-step an orthonormal basis `V̂` of the range of `[V₀, F₀ᵀ U₀]`, and the S-step
 sets `Ŝ = Ûᵀ (Y₀ + (t₁ - t₀) F₀) V̂`. The matrix `Ŷ₁ = Û Ŝ V̂ᵀ` has rank at most `2 r`. For the
 integrator with a fixed rank `r` it is then truncated to a best approximation of rank at most
@@ -96,9 +96,9 @@ time. This is the only place where continuity of the field enters.
 ## References
 
 * F. Nobile, S. Riffaud, *High-order BUG dynamical low-rank integrators based on explicit
-  Runge–Kutta methods*, arXiv:2502.07040, §2.1, Algorithm 1.
+  Runge–Kutta methods*, [NobileRiffaud2025, §2.1], Algorithm 1.
 * G. Ceruti, J. Kusch, Ch. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
-  approximation*, arXiv:2104.05247 (BIT Numer. Math. 2022), for the augmented bases.
+  approximation*, [CerutiKuschLubich2022] (BIT Numer. Math. 2022), for the augmented bases.
 -/
 
 open Set
@@ -142,7 +142,7 @@ variable {m n k s s' : Type*} [Fintype m] [Fintype n] [Fintype k] [Fintype s] [F
   [DecidableEq k] [DecidableEq s] [DecidableEq s']
 
 /-- **One step of the BUG integrator with explicit Euler substeps, at the level of the factors,
-before the truncation** (arXiv:2502.07040, §2.1, Algorithm 1, lines 2 to 7). The start value is
+before the truncation** ([NobileRiffaud2025, §2.1], Algorithm 1, lines 2 to 7). The start value is
 `Y₀ = U₀ S₀ V₀ᵀ` with orthonormal `U₀`, `V₀`, and `F₀ = F t₀ Y₀`. The new bases `Ua`, `Va` are
 orthonormal, the range of `Ua` contains the columns of `U₀` and of `F₀ V₀` (K-step), the range
 of `Va` contains the columns of `V₀` and of `F₀ᵀ U₀` (L-step), and
@@ -284,7 +284,7 @@ variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ}
 `augmentedRel F r t₀ t₁ Y₀ Ŷ₁` holds if `Y₀ = U₀ S₀ V₀ᵀ` for factors with `r` columns and
 orthonormal `U₀`, `V₀`, and `Ŷ₁ = Ua Sa Vaᵀ` for a step `MatrixEulerBUG.IsStep` of these factors
 over `[t₀, t₁]` in which the new bases `Ua`, `Va` have at most `2 r` columns
-(arXiv:2502.07040, §2.1, Algorithm 1, lines 2 to 7). The new bases are any orthonormal bases
+([NobileRiffaud2025, §2.1], Algorithm 1, lines 2 to 7). The new bases are any orthonormal bases
 with this number of columns whose ranges contain the columns named in the K- and L-step. -/
 def augmentedRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
   fun t₀ t₁ Y₀ Y₁ =>
@@ -295,7 +295,7 @@ def augmentedRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : Ste
         Y₁ = Ua * Sa * Vaᵀ
 
 /-- **The step of the fixed-rank explicit Euler BUG integrator, as a relation between
-matrices** (arXiv:2502.07040, §2.1, Algorithm 1). `stepRel F r t₀ t₁ Y₀ Y₁` holds if `Y₁` is a
+matrices** ([NobileRiffaud2025, §2.1], Algorithm 1). `stepRel F r t₀ t₁ Y₀ Y₁` holds if `Y₁` is a
 best approximation of rank at most `r` to a result `Ŷ₁` of the step without truncation from
 `Y₀` over `[t₀, t₁]`: `Y₁` has rank at most `r`, and `‖Y₁ - Ŷ₁‖` is at most the distance
 `distLR r Ŷ₁` of `Ŷ₁` to the matrices of rank at most `r`. The relation contains every

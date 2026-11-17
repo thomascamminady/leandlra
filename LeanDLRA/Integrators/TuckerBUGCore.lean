@@ -4,7 +4,7 @@ import LeanDLRA.Integrators.Tube
 /-!
 # The Tucker BUG step without analysis constants, near a reference solution
 
-The basis-update & Galerkin (BUG) integrator for `d` modes (Ceruti and Lubich, arXiv:2010.02022,
+The basis-update & Galerkin (BUG) integrator for `d` modes (Ceruti and Lubich, [CerutiLubich2022],
 §5, for Tucker tensors) advances an approximation `Y₀` from `t₀` to `t₁` by a basis update for
 every mode, followed by a Galerkin step in the common range of the projectors after the update.
 This file states the step as a predicate that contains the algorithm only
@@ -61,7 +61,7 @@ which the substeps can be shown to exist; it belongs to the files on Tucker tens
 ## References
 
 * G. Ceruti, Ch. Lubich, *An unconventional robust integrator for dynamical low-rank
-  approximation*, arXiv:2010.02022 (BIT Numer. Math. 2022), §5, Lemma 7 and Theorem 7.
+  approximation*, [CerutiLubich2022] (BIT Numer. Math. 2022), §5, Lemma 7 and Theorem 7.
 -/
 
 open Set
@@ -73,7 +73,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 /-! ### The step -/
 
 /-- **One step of the BUG integrator for `d` modes, without constants of the error analysis**
-(arXiv:2010.02022, §5.1): a basis update for the modes `i : Fin d` (the substep `YK i` solves
+([CerutiLubich2022, §5.1]): a basis update for the modes `i : Fin d` (the substep `YK i` solves
 `Ẏ = Q₀ i (F (t, Y))` from `Y₀`, and the projector `P₁ i` after the update captures its result,
 see `BasisUpdate`) followed by the Galerkin step `Ẏ = Π (F (t, Y))` from the start value `Π Y₀`,
 where `Π = modeProd P₁` is the product of the projectors after the update. The value after the
@@ -140,7 +140,7 @@ theorem isTuckerBUGStepCore_two_iff {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E} {YK YL
     rw [e]
     exact ⟨hb, hS, hS₀⟩
 
-/-- **Local error of a step for `d` modes** (arXiv:2010.02022, Lemma 7). Let `F` be
+/-- **Local error of a step for `d` modes** ([CerutiLubich2022, Lemma 7]). Let `F` be
 `L`-Lipschitz and bounded by `B`, and let the part of `F` that is normal to the range of `P₁ i`
 and to the range of `Q₀ i` be at most `ε` at the result `YK i t₁` of every substep. Then the
 result `YS t₁` of a step from `(t₀, Y₀)` to `t₁` with `t₁ - t₀ ≤ H` differs from the exact
@@ -292,7 +292,7 @@ theorem IsTuckerBUGStepCore.hasLocalError_of_tube {L ε H : ℝ}
     (isBoundedField_tubeExt hFB hB hρ) ht₁ hh hH hΦG hΦ₀
 
 /-- **Error bound of the BUG integrator for `d` modes from hypotheses near the solution**
-(arXiv:2010.02022, Theorem 7). Let `A` solve `Ȧ = F(t, A)` on `[t₀, t₀ + N h]`, and let `F` be
+([CerutiLubich2022, Thm. 7]). Let `A` solve `Ȧ = F(t, A)` on `[t₀, t₀ + N h]`, and let `F` be
 `L`-Lipschitz and bounded by `B` on the tube of radius `ρ` around `A`. For `n < N` let step `n`
 of the integrator (`IsTuckerBUGStep`, with normal part at most `ε` at the results of the
 substeps) with step size `0 ≤ h ≤ H` go from `Y n` to `Y (n + 1)`, and let `Φ n` be the exact

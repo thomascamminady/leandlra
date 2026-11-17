@@ -17,7 +17,7 @@ or Karhunen–Loève approximation of a potential, ...) with `‖G(t, Y) - F(t, 
 three substep trajectories only**.  No Lipschitz, continuity or boundedness assumption is made
 on `G` (so DEIM index switching is allowed); only the exact field `F` is `L`-Lipschitz and
 `B`-bounded.  The normal-component assumption is made for `F`.  Instance: the DLRA-DEIM-FS
-scheme of arXiv 2401.04249, eqs. (17a)–(17b), where `G` is the DEIM fibre-sampled `F`.
+scheme of [GhahremaniBabaee2024], eqs. (17a)–(17b), where `G` is the DEIM fibre-sampled `F`.
 
 * `hyper_kstep_capture`: `‖(1 - P₁) A(t₁)‖ ≤ θ`, `θ = h (4 L (B + δ) h + (ε + δ))`;
 * `hyper_galerkin_step_error`: `‖YS t₁ - A t₁‖ ≤ (e^{Lh} - 1)(B h + θ') + θ' + h e^{Lh} δ`;
@@ -29,16 +29,15 @@ scheme of arXiv 2401.04249, eqs. (17a)–(17b), where `G` is the DEIM fibre-samp
   evaluated at `B + δ`; it is monotone in `δ`, so the constants are uniform for `δ ≤ δ_max`).
   In particular the total error saturates at the DLRA error once `δ ≲ ε + h`.
 
-This is new: arXiv 2401.04249 states (17a)–(17b) without an error analysis of the hyper-reduced
-BUG step, and the KSL analogue in this library (`ksl_local_error_inexact`) needs the substep
-*solutions* to be close, not just the fields.  (Hyper-reduced KSL is covered by composing
-`substep_error_of_defect`, which turns a `δ`-accurate field into a substep error
-`h e^{Lh} δ`, with `ksl_global_error_inexact`; that route additionally takes the exact
-`F`-substep flows from the same starting points as hypotheses and is not packaged as a single
-theorem here.)  The proof needs two new ingredients: a capture lemma
-whose K-step trajectory has speed `B + δ` and an extra defect term `(1 - P₁) Q₀ (F - G)(YK)`,
-and a Galerkin comparison whose numerical trajectory carries the defect `δ`.  The Lipschitz
-constant of `G` never enters.
+This is new: [GhahremaniBabaee2024] states (17a)–(17b) without an error analysis of the
+hyper-reduced BUG step, and the KSL analogue in this library (`ksl_local_error_inexact`) needs the
+substep *solutions* to be close, not just the fields. (Hyper-reduced KSL is covered by composing
+`substep_error_of_defect`, which turns a `δ`-accurate field into a substep error `h e^{Lh} δ`, with
+`ksl_global_error_inexact`; that route additionally takes the exact `F`-substep flows from the same
+starting points as hypotheses and is not packaged as a single theorem here.) The proof needs two new
+ingredients: a capture lemma whose K-step trajectory has speed `B + δ` and an extra defect term
+`(1 - P₁) Q₀ (F - G)(YK)`, and a Galerkin comparison whose numerical trajectory carries the defect
+`δ`. The Lipschitz constant of `G` never enters.
 * `hyper_dlra_norm_sub_le` (continuous DLRA `Y' = P(t) G(t, Y)`):
   `‖Y t - A t‖ ≤ gronwallBound δ₀ L (ε + δ) (t - a)`.
 
@@ -74,17 +73,17 @@ of the separation error `η_R` (approximation theory) and singular Coulomb poten
   flows from `Y₀` satisfy `‖Φ̃_h(Y₀) - Φ_h(Y₀)‖ ≤ L_G L_E B h² e^{L h}`.
 
 This proves the `O(h²)` local estimate of OP-OT-04, which underlies the first-order claim of
-arXiv 2303.01856, Sec. 2.5 (electric field held constant over a Lie-splitting step).  The proof uses
-the constant defect `L_G L_E B h` instead of the time-dependent defect `L_G L_E B (t - t₀)`.
-That avoids an integral Grönwall form and costs only a factor 2 in the constant.  The
-Bogoliubov scheme of arXiv 2610.08956, Sec. 4.2 (keep `χ₄, …, χ₂ₙ` constant over a step, then
-rebuild them from `χ₂` by tensorization) is the instance where `E` is the reconstruction map, if
-that map is Lipschitz (a hypothesis here; the phase `θ₂ⱼ` of their eq. (10) must be part of a
-Lipschitz reconstruction).  The reference solution is then the "variational crime" system of
-their Sec. 2.2, in which the tensorized functions are substituted continuously; the error of that
-system against the exact many-body dynamics is not addressed.  With exact integration of the
-frozen field (`g₀ = 0` in `frozen_global_error_of_local`), the per-step `O(h²)` estimate gives
-first-order convergence of the freeze-and-rebuild scheme to that reference.
+[UschmajewZeiser2024, Sec. 2.5] (electric field held constant over a Lie-splitting step). The proof
+uses the constant defect `L_G L_E B h` instead of the time-dependent defect `L_G L_E B (t - t₀)`.
+That avoids an integral Grönwall form and costs only a factor 2 in the constant. The Bogoliubov
+scheme of [LeHenaffLubichPickl2026, Sec. 4.2] (keep `χ₄, …, χ₂ₙ` constant over a step, then rebuild
+them from `χ₂` by tensorization) is the instance where `E` is the reconstruction map, if that map is
+Lipschitz (a hypothesis here; the phase `θ₂ⱼ` of their eq. (10) must be part of a Lipschitz
+reconstruction). The reference solution is then the "variational crime" system of their Sec. 2.2, in
+which the tensorized functions are substituted continuously; the error of that system against the
+exact many-body dynamics is not addressed. With exact integration of the frozen field (`g₀ = 0` in
+`frozen_global_error_of_local`), the per-step `O(h²)` estimate gives first-order convergence of the
+freeze-and-rebuild scheme to that reference.
 
 ## (d) Frozen coupling in robust integrators (OP-HO-04, global part of OP-OT-04)
 
@@ -637,7 +636,7 @@ lemma frozen_defect_le (hG : ∀ t Y c c', ‖G t Y c - G t Y c'‖ ≤ LG * ‖
     _ = LG * LE * ‖Y - Y₀‖ := by rw [norm_sub_rev]; ring
 
 /-- **Freezing the coupling over a step costs `O(h²)`** (new; OP-OT-04, claimed in
-arXiv 2303.01856, Sec. 2.5).  Let `F = G(·, ·, E(·))` be `L`-Lipschitz, `G` `L_G`-Lipschitz in
+[UschmajewZeiser2024, Sec. 2.5]).  Let `F = G(·, ·, E(·))` be `L`-Lipschitz, `G` `L_G`-Lipschitz in
 the coupling argument, `E` `L_E`-Lipschitz, and the frozen field `F̃ = G(·, ·, E(Y₀))`
 `B`-bounded.  If `Φ` solves `Φ' = F(t, Φ)` and `Φt` solves `Φt' = F̃(t, Φt)` on `[t₀, t₀ + h]`,
 both from `Y₀`, then

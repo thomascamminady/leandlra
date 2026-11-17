@@ -47,12 +47,12 @@ singular value decomposition and without Eckart–Young, the following classical
 ## Connection to dynamical low-rank approximation
 
 * `exists_bestTrunc`: a best rank-`r` truncation `T` of an augmented BUG result `Ŷ` exists, and
-  `‖T - A₁‖ ≤ dist(A₁, M_{≤ r}) + 2 ‖Ŷ - A₁‖` (the truncation inequality of arXiv 2608.27749,
-  Remark 2, used for the fixed-rank truncated augmented BUG integrator; the hypothesis `κ = 1`
-  of `LeanDLRA.norm_trunc_sub_le` is satisfiable without an SVD).
+  `‖T - A₁‖ ≤ dist(A₁, M_{≤ r}) + 2 ‖Ŷ - A₁‖` (the truncation inequality of
+  [HauckKuschSchotthofer2026], Remark 2, used for the fixed-rank truncated augmented BUG integrator;
+  the hypothesis `κ = 1` of `LeanDLRA.norm_trunc_sub_le` is satisfiable without an SVD).
 * `exists_rankAdaptive_trunc`: for a tolerance `ϑ ≥ 0` there is a truncation `Y₁` with
   `‖Y₁ - Ŷ‖ ≤ ϑ` (the hypothesis `IsRankAdaptiveBUGStep.trunc` of the rank-adaptive BUG
-  integrator, Ceruti–Kusch–Lubich, arXiv 2104.05247) whose rank `rank_ϑ Ŷ` is minimal among
+  integrator, Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]) whose rank `rank_ϑ Ŷ` is minimal among
   all matrices meeting the tolerance.
 * `infDist_two_mul_le_norm_normal_apply`, `exists_norm_normal_apply_le_infDist`,
   `norm_normal_le_norm_sub_factored`: the modelling error `ε` of the robust DLRA error bounds,
@@ -72,9 +72,9 @@ singular value decomposition and without Eckart–Young, the following classical
 * O. Koch, C. Lubich, *Dynamical low-rank approximation*, SIAM J. Matrix Anal. Appl. 29 (2007),
   434–454.
 * G. Ceruti, J. Kusch, C. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
-  approximation*, BIT 62 (2022), arXiv 2104.05247.
+  approximation*, BIT 62 (2022), [CerutiKuschLubich2022].
 * G. Ceruti, J. Kusch, C. Lubich, *A parallel rank-adaptive integrator for dynamical low-rank
-  approximation*, arXiv 2304.05660.
+  approximation*, [CerutiKuschLubich2024].
 
 ## Implementation notes
 
@@ -263,10 +263,10 @@ end Normal
 
 section DLRA
 
-/-- **Best truncation of an augmented step** (arXiv 2608.27749, Remark 2; OP-RA-07): for every
-`Ŷ` there is a best rank-`≤ r` approximation `T` (no SVD needed), and every such `T` satisfies
-`‖T - A₁‖ ≤ dist(A₁, M_{≤ r}) + 2 ‖Ŷ - A₁‖` for the exact value `A₁`.  So the quasi-best
-hypothesis (`κ = 1`) of `LeanDLRA.norm_trunc_sub_le` is always satisfiable. -/
+/-- **Best truncation of an augmented step** ([HauckKuschSchotthofer2026, Remark 2]; OP-RA-07): for
+every `Ŷ` there is a best rank-`≤ r` approximation `T` (no SVD needed), and every such `T` satisfies
+`‖T - A₁‖ ≤ dist(A₁, M_{≤ r}) + 2 ‖Ŷ - A₁‖` for the exact value `A₁`. So the quasi-best hypothesis
+(`κ = 1`) of `LeanDLRA.norm_trunc_sub_le` is always satisfiable. -/
 theorem exists_bestTrunc (Yh : Matrix m n ℝ) (r : ℕ) :
     ∃ T : Matrix m n ℝ, T.rank ≤ r ∧ ‖T - Yh‖ = distLR r Yh ∧
       ∀ A₁ : Matrix m n ℝ, ‖T - A₁‖ ≤ distLR r A₁ + 2 * ‖Yh - A₁‖ := by
@@ -274,10 +274,10 @@ theorem exists_bestTrunc (Yh : Matrix m n ℝ) (r : ℕ) :
   have hTY : ‖T - Yh‖ = distLR r Yh := by rw [norm_sub_rev]; exact hYT
   exact ⟨T, hT, hTY, fun _ => norm_bestTrunc_sub_le hTY.le⟩
 
-/-- **Rank-adaptive truncation with minimal rank** (Ceruti–Kusch–Lubich, arXiv 2104.05247, step 3
-of the rank-adaptive BUG integrator): for a tolerance `ϑ ≥ 0` there is `Y₁` with `‖Y₁ - Ŷ‖ ≤ ϑ`
-(the hypothesis `IsRankAdaptiveBUGStep.trunc`) and `rank Y₁ = rank_ϑ Ŷ`, which is the smallest
-rank of any matrix meeting the tolerance. -/
+/-- **Rank-adaptive truncation with minimal rank** (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022],
+step 3 of the rank-adaptive BUG integrator): for a tolerance `ϑ ≥ 0` there is `Y₁` with
+`‖Y₁ - Ŷ‖ ≤ ϑ` (the hypothesis `IsRankAdaptiveBUGStep.trunc`) and `rank Y₁ = rank_ϑ Ŷ`, which is the
+smallest rank of any matrix meeting the tolerance. -/
 theorem exists_rankAdaptive_trunc {ϑ : ℝ} (hϑ : 0 ≤ ϑ) (Yh : Matrix m n ℝ) :
     ∃ Y₁ : Matrix m n ℝ, ‖Y₁ - Yh‖ ≤ ϑ ∧ Y₁.rank = epsRank ϑ Yh ∧
       ∀ Z : Matrix m n ℝ, ‖Z - Yh‖ ≤ ϑ → Y₁.rank ≤ Z.rank := by

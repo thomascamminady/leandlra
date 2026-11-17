@@ -10,7 +10,7 @@ import LeanDLRA.Matrix.LowRankDistance
 
 One step of a BUG-type integrator for `A' = F(t, A)` from `Y₀ = U₀ S₀ V₀ᵀ` (rank `r`) is a
 Galerkin step `YS' = R F(t, YS)`, `YS(t₀) = Y₀`, with an orthogonal projector `R` that fixes
-`Y₀`.  The rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, arXiv:2104.05247) uses
+`Y₀`.  The rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]) uses
 `R X = Û Ûᵀ X V̂ V̂ᵀ`, where the range of `Û` contains the ranges of `U₀` and of the K-step
 solution `K(t₁)`, and the range of `V̂` contains the ranges of `V₀` and of the L-step solution
 `L(t₁)` (`MatrixBUG.IsRankAdaptiveStep`).
@@ -62,8 +62,8 @@ solution `K(t₁)`, and the range of `V̂` contains the ranges of `V₀` and of 
 
 ## References
 
-* Ceruti–Kusch–Lubich, arXiv:2104.05247 (rank-adaptive BUG integrator).
-* Ceruti–Einkemmer–Kusch–Lubich, arXiv:2402.08607 (the argument behind
+* Ceruti–Kusch–Lubich, [CerutiKuschLubich2022] (rank-adaptive BUG integrator).
+* Ceruti–Einkemmer–Kusch–Lubich, [CerutiEtAl2024b] (the argument behind
   `MidpointBUG.interior_capture`, which `galerkin_error_of_predictor` uses).
 -/
 
@@ -448,7 +448,7 @@ theorem row_two_eq_zero_of_capture {h : ℝ} (hh : h ≠ 0) {Ua : Matrix (Fin 3)
 /-- **Lower bound for the rank-adaptive BUG step with a two-column left basis.**  For the
 field `rowField` (zero normal component, `factoredNormalBoundOn_rowField`) and the start
 `Y₀ = e₁ e₁ᵀ` (rank one, singular value `1`), every rank-adaptive BUG step
-(Ceruti–Kusch–Lubich, arXiv:2104.05247; `MatrixBUG.IsRankAdaptiveStep`) with a two-column
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]; `MatrixBUG.IsRankAdaptiveStep`) with a two-column
 left basis `Û`, any right basis `V̂` and any truncation tolerance `ϑ` has error at least
 `h² / 2 - ϑ` at `t₁ = h`. -/
 theorem error_ge_of_isRankAdaptiveStep {h ϑ : ℝ} (hh : 0 < h) {k' : Type*} [Fintype k']
@@ -752,7 +752,7 @@ private theorem galerkinProj_eq {b b' : Type*} [Fintype b] [Fintype b'] (Ub : Ma
 /-- **Error of the rank-adaptive BUG step on fields of Sylvester type.**  Let
 `F(t, Y) = 𝒜(t) Y + Y ℬ(t)` be `L`-Lipschitz, let `A` be the exact solution from
 `Y₀ = U₀ S₀ V₀ᵀ`, and let `t ↦ F(t, A(t))` have a derivative bounded by `M₂`.  Then every step
-of the rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, arXiv:2104.05247;
+of the rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022];
 `MatrixBUG.IsRankAdaptiveStep`) with truncation tolerance `ϑ` satisfies
 
     ‖Y₁ - A(t₁)‖ ≤ (e^{L h} - 1) M₂ h² + ϑ.

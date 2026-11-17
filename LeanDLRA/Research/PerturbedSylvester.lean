@@ -6,7 +6,7 @@ import LeanDLRA.Research.SylvesterFlows
 ## Setting
 
 `F(Y) = 𝒜 Y + Y ℬ + G(Y)` on `m × n` matrices with constant `𝒜`, `ℬ` and a `g`-Lipschitz map
-`G`, one step of the rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, arXiv:2104.05247;
+`G`, one step of the rank-adaptive BUG integrator (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022];
 `MatrixBUG.IsRankAdaptiveStep`) from `Y₀ = U₀ S₀ V₀ᵀ`.  For `G = 0` the Galerkin space of the
 step contains the exact solution (`capture_of_sylvester_of_continuousOn`).  With `a`, `b` bounds
 of the Frobenius norms of `𝒜`, `ℬ`, `γ₀` a bound of `‖G(Y₀)‖`, `B` a bound of `F` along the
@@ -36,8 +36,8 @@ exponential is used.  The constants are stated for Frobenius norms of `𝒜`, `�
 
 ## References
 
-* Ceruti–Kusch–Lubich, arXiv:2104.05247 (rank-adaptive BUG integrator).
-* Ceruti–Einkemmer–Kusch–Lubich, arXiv:2402.08607 (second-order BUG integrators; experiments in
+* Ceruti–Kusch–Lubich, [CerutiKuschLubich2022] (rank-adaptive BUG integrator).
+* Ceruti–Einkemmer–Kusch–Lubich, [CerutiEtAl2024b] (second-order BUG integrators; experiments in
   which the rank-adaptive BUG integrator shows order one or two).
 -/
 
@@ -494,8 +494,8 @@ variable {k k' : Type*} [Fintype k] [Fintype k'] [DecidableEq k] [DecidableEq k'
 /-- **Capture defect of the rank-adaptive BUG step for a perturbed Sylvester field.**  Let
 `F(Y) = 𝒜 Y + Y ℬ + G(Y)` with `‖𝒜‖ ≤ a`, `‖ℬ‖ ≤ b` (Frobenius norms) and `G` Lipschitz with
 constant `g`.  For every step of the rank-adaptive BUG integrator (Ceruti–Kusch–Lubich,
-arXiv:2104.05247; `MatrixBUG.IsRankAdaptiveStep`) from `Y₀ = U₀ S₀ V₀ᵀ` the exact solution `A`
-satisfies
+[CerutiKuschLubich2022]; `MatrixBUG.IsRankAdaptiveStep`) from `Y₀ = U₀ S₀ V₀ᵀ` the exact solution
+`A` satisfies
 
     ‖A(t₁) - Û Ûᵀ A(t₁) V̂ V̂ᵀ‖ ≤ 2 h ε₀ + 4 e^{3 (a + b) h} h² (g B + (a + b) γ₀),
 
@@ -546,7 +546,7 @@ theorem norm_sub_galerkinProj_le_of_perturbedSylvester {ϑ g h : ℝ}
 /-- **Local error of the rank-adaptive BUG step for a perturbed Sylvester field.**  Let
 `F(Y) = 𝒜 Y + Y ℬ + G(Y)` be `L`-Lipschitz, with `‖𝒜‖ ≤ a`, `‖ℬ‖ ≤ b` (Frobenius norms) and `G`
 Lipschitz with constant `g`.  Every step of the rank-adaptive BUG integrator
-(Ceruti–Kusch–Lubich, arXiv:2104.05247; `MatrixBUG.IsRankAdaptiveStep`) with truncation
+(Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]; `MatrixBUG.IsRankAdaptiveStep`) with truncation
 tolerance `ϑ` satisfies
 
     ‖Y₁ - A(t₁)‖ ≤ (e^{L h} - 1) (θ + M₂ h²) + θ + ϑ,

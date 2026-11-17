@@ -6,7 +6,7 @@ import LeanDLRA.Foundations.ConjugatedField
 # Runs of the Tucker BUG integrator: existence and error bound
 
 This file closes the theory of the basis-update & Galerkin (BUG) integrator for tensors in Tucker
-format with fixed multilinear rank `r` (Ceruti and Lubich, arXiv:2010.02022, §5), for a
+format with fixed multilinear rank `r` (Ceruti and Lubich, [CerutiLubich2022, §5]), for a
 differential equation `Y' = F(t, Y)` on `Tensor ι` with `d` modes: the integrator can be run, and
 every run stays close to the exact solution. The step relation `TuckerBUG.stepRel F r` and its
 local error are in `LeanDLRA/Tensor/Tucker/BUGStep.lean`.
@@ -28,7 +28,7 @@ with
   `‖Y n - A (t₀ + n h)‖ ≤ e^{L T} δ + T e^{L T} (c₁ ε + c₂ h)`
 
 for all `n ≤ N`, where `N h ≤ T`, `c₁ = tuckerC₁ d L H` and `c₂ = tuckerC₂ d L B H`
-(arXiv:2010.02022, Theorem 7, for a field that is Lipschitz and bounded near the exact solution
+([CerutiLubich2022, Thm. 7], for a field that is Lipschitz and bounded near the exact solution
 only, with the steps shown to exist). The constants do not depend on the singular values of the
 unfoldings of the `Y n`. The only further hypothesis is that the right-hand side plus
 `(d + 2) B h` is less than `ρ`. The same bound holds for every run (`TuckerBUG.IsRun.norm_sub_le`).
@@ -58,7 +58,7 @@ constant `d + 2 = 4` is that of the matrix BUG integrator.
 ## References
 
 * G. Ceruti, Ch. Lubich, *An unconventional robust integrator for dynamical low-rank
-  approximation*, arXiv:2010.02022 (BIT Numer. Math. 2022), §5, Theorem 7.
+  approximation*, [CerutiLubich2022] (BIT Numer. Math. 2022), §5, Theorem 7.
 -/
 
 open Set
@@ -211,7 +211,7 @@ theorem IsRun.norm_sub_le {Y : ℕ → Tensor ι}
   -- the local error of a step that starts within the error bound of `A`
   exact hstep.hasLocalError_uniformGrid hP hε hh hhH hj (by linarith)
 
-/-- **Existence and robust error bound for the Tucker BUG integrator** (arXiv:2010.02022,
+/-- **Existence and robust error bound for the Tucker BUG integrator** ([CerutiLubich2022],
 Theorem 7, for a field that is Lipschitz and bounded near the exact solution only). Let `A` solve
 `Y' = F(t, Y)` on `[t₀, t₀ + N h]`, and let `F` be `L`-Lipschitz and bounded by `B` on the tube of
 radius `ρ` around `A` (`DLRAProblem`), jointly continuous there, with normal part at most `ε` at

@@ -6,7 +6,7 @@ import LeanDLRA.Matrix.Orthonormal
 # The Tucker BUG step as a step relation
 
 This file states one step of the basis-update & Galerkin (BUG) integrator for tensors in Tucker
-format with fixed multilinear rank (Ceruti and Lubich, arXiv:2010.02022, §5) as a relation
+format with fixed multilinear rank (Ceruti and Lubich, [CerutiLubich2022, §5]) as a relation
 between the old value `Y₀` and the new value `Y₁` (`StepRel` on `Tensor ι`), and gives its
 invariance, its locality and its local error near a reference solution. The step at the level
 of orthogonal projectors and its analysis are `IsTuckerBUGStepCore` and
@@ -57,7 +57,7 @@ the new mode projector (by the step) and by the old co-range projector (a soluti
 ## References
 
 * G. Ceruti, Ch. Lubich, *An unconventional robust integrator for dynamical low-rank
-  approximation*, arXiv:2010.02022 (BIT Numer. Math. 2022), §5.
+  approximation*, [CerutiLubich2022] (BIT Numer. Math. 2022), §5.
 -/
 
 open Set
@@ -244,7 +244,7 @@ variable {d : ℕ} {ι : Fin d → Type*} [∀ i, Fintype (ι i)]
 section Rel
 
 /-- **The Tucker BUG step with multilinear rank `r`, as a relation between tensors**
-(arXiv:2010.02022, §5.1). `stepRel F r t₀ t₁ Y₀ Y₁` holds if there are co-range bases `V₀ i`
+([CerutiLubich2022, §5.1]). `stepRel F r t₀ t₁ Y₀ Y₁` holds if there are co-range bases `V₀ i`
 with `r i` orthonormal columns whose projectors fix `Y₀`, mode bases `U₁ i` with `r i`
 orthonormal columns, K-step trajectories `YK i` (solutions of `Ẏ = Q₀ i F(t, Y)` from `Y₀`, with
 `Q₀ i = actOn (· ≠ i) (V₀ i V₀ iᵀ)`) whose results are fixed by the new mode projectors
@@ -321,7 +321,7 @@ normal part of `F` be at most `ε` at the triples `TuckerBUG.normalTriples r` of
 step over `[t₀, t₁] ⊆ [a, b]` has size `t₁ - t₀ ≤ H` and its start value satisfies
 `‖Y₀ - A t₀‖ + (d + 2) B (t₁ - t₀) < ρ`, then every step of `TuckerBUG.stepRel F r` from `Y₀`
 has local error at most `(t₁ - t₀) (c₁ ε + c₂ (t₁ - t₀))` with `c₁ = tuckerC₁ d L H` and
-`c₂ = tuckerC₂ d L B H` (arXiv:2010.02022, Lemma 7, for a field that is Lipschitz and bounded
+`c₂ = tuckerC₂ d L B H` ([CerutiLubich2022, Lemma 7], for a field that is Lipschitz and bounded
 near the reference solution only). The normal part is evaluated at the results `YK i t₁` of the
 K-steps, which lie in the tube and are fixed by the new mode projector and by the old co-range
 projector, so that `(P₁ i, Q₀ i, YK i t₁)` is a normal triple. -/

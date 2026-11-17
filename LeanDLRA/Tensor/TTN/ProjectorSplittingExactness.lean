@@ -4,13 +4,13 @@ import LeanDLRA.Tensor.TTN.Abstract.ProjectorSplittingExactness
 /-!
 # Exactness of the recursive TTN projector-splitting integrator
 
-Ceruti–Lubich–Walach (arXiv 2002.11392, Theorem 5.1) prove that the recursive tree tensor network
-(TTN) projector-splitting integrator reproduces a time-dependent family `A(t)` of tree tensor
-networks exactly when it is applied to `F(t, Y) = Ȧ(t)` from `Y⁰ = A(t₀)`, provided the restrictions
-`A_τ(t₁)` keep full tree rank for every subtree `τ` (the non-degeneracy condition (5.2)). The
-proof is an induction over the height of the tree, with the exactness of the nested Tucker
-projector-splitting integrator (Lubich–Vandereycken–Walach, arXiv 1709.02594, Thm 3;
-`tucker_ksl_exact`) at every node.
+Ceruti–Lubich–Walach ([CerutiLubichWalach2021, Thm. 5.1]) prove that the recursive tree tensor
+network (TTN) projector-splitting integrator reproduces a time-dependent family `A(t)` of tree
+tensor networks exactly when it is applied to `F(t, Y) = Ȧ(t)` from `Y⁰ = A(t₀)`, provided the
+restrictions `A_τ(t₁)` keep full tree rank for every subtree `τ` (the non-degeneracy condition
+(5.2)). The proof is an induction over the height of the tree, with the exactness of the nested
+Tucker projector-splitting integrator (Lubich–Vandereycken–Walach,
+[LubichVandereyckenWalach2018, Thm. 3]; `tucker_ksl_exact`) at every node.
 
 The full-rank condition enters only through the capture argument: the new basis of child `i`,
 which captures the `K`-value `Q₀ i A(t₁)`, must also capture `A(t₁)` itself. As in the matrix and
@@ -35,7 +35,8 @@ which are the paper's `A_{τᵢ}` prolongated to the full tensor space.
 
 * `DimTree.IsNondegenerateProjectorSplittingStep.isProjectorSplittingStep`: such steps are steps
   of the integrator, so the error bounds apply to them.
-* `DimTree.IsNondegenerateProjectorSplittingStep.eq`: **exactness** (arXiv 2002.11392, Thm 5.1).
+* `DimTree.IsNondegenerateProjectorSplittingStep.eq`: **exactness**
+  ([CerutiLubichWalach2021, Thm. 5.1]).
 -/
 
 open Set
@@ -86,8 +87,8 @@ theorem IsNondegenerateProjectorSplittingStep.isProjectorSplittingStep :
         fun i => (hch i).isProjectorSplittingStep, hY⟩
 
 /-- **Exactness of the recursive TTN projector-splitting integrator** (Ceruti–Lubich–Walach,
-arXiv 2002.11392, Theorem 5.1). Let `F(t, Y) = Ȧ(t)` on `[t₀, t₁]` (`IsDerivRHS`). A step of the
-integrator from `Y₀ = A(t₀)` that is non-degenerate for `A` (condition (5.2), abstract form; see
+[CerutiLubichWalach2021, Thm. 5.1]). Let `F(t, Y) = Ȧ(t)` on `[t₀, t₁]` (`IsDerivRHS`). A step of
+the integrator from `Y₀ = A(t₀)` that is non-degenerate for `A` (condition (5.2), abstract form; see
 the module docstring) reproduces `A(t₁)` exactly. -/
 theorem IsNondegenerateProjectorSplittingStep.eq :
     ∀ {τ : DimTree κ} {A : ℝ → Tensor ι} {F : ℝ → Tensor ι → Tensor ι} {ε t₀ t₁ : ℝ}

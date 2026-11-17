@@ -69,16 +69,16 @@ The idea (I2-1) is proved as stated, with these refinements.
 
 * Koch–Lubich, *Dynamical low-rank approximation*, SIAM J. Matrix Anal. Appl. 29 (2007): the
   data-driven setting `F = Ȧ`.
-* Lubich–Oseledets, arXiv:1301.1058, and Ceruti–Lubich, arXiv:2010.02022, prove *exactness* for
-  `A(t) ∈ M_r`.  The library has this as `Exactness.ksl_exact_multistep` and
-  `Exactness.bug_exact_multistep`.  The present recursion is the inexact version: exactness is
-  the special case `d n = 0`, `e 0 = 0`.
+* Lubich–Oseledets, [LubichOseledets2014], and Ceruti–Lubich, [CerutiLubich2022], prove *exactness*
+  for `A(t) ∈ M_r`. The library has this as `Exactness.ksl_exact_multistep` and
+  `Exactness.bug_exact_multistep`. The present recursion is the inexact version: exactness is the
+  special case `d n = 0`, `e 0 = 0`.
 * The robust error bounds (Kieri–Lubich–Walach arXiv:1507.07953, Ceruti–Lubich
-  arXiv:2010.02022), and the high-order projector-splitting analysis of Zhang–Hu
-  arXiv:2608.17157, accumulate local errors *linearly* via Lady Windermere's fan / Grönwall
+  [CerutiLubich2022]), and the high-order projector-splitting analysis of Zhang–Hu
+  [ZhangHu2026b], accumulate local errors *linearly* via Lady Windermere's fan / Grönwall
   (`lady_windermere` in this library).  For data-driven problems, `norm_sq_err_le` replaces this
   by `ℓ²` accumulation of subspace errors.
-* arXiv:2606.30469 uses `‖(I - P_r) P_l‖ = sin θ` once, to glue two regimes.  arXiv:2608.16994
+* [Goutaudier2026] uses `‖(I - P_r) P_l‖ = sin θ` once, to glue two regimes.  [FrohlichEtAl2026]
   records a Pythagorean identity for basis transport, not for errors.  Here the drift
   `s n = ‖Π (n + 1) (1 - Π n)‖` is used recursively.  For equal-dimensional subspaces of a
   finite-dimensional space it is the sine of the largest principal angle (not formalized).
