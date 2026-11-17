@@ -188,9 +188,7 @@ end Tube
 section Examples
 
 open scoped LeanDLRA.Frobenius
-
-/-- The first unit column of `ℝ²`. -/
-local notation "e₁" => (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)
+open QuasiOptimalityExamples
 
 /-- The matrix unit `E₂₂ = diag(0, 1)`. -/
 local notation "E₂₂" => (!![0, 0; 0, 1] : Matrix (Fin 2) (Fin 2) ℝ)
@@ -209,46 +207,6 @@ tube around `A`, not on the whole space. -/
 local notation "Fₑ" => fun (_ : ℝ) (x : Matrix (Fin 2) (Fin 2) ℝ) =>
   e₁ * e₁ᵀ + (x 1 1 - 1 / 8) ^ 2 • E₂₂
 
-private theorem e₁_transpose_mul_self : e₁ᵀ * e₁ = 1 := by
-  ext i j
-  fin_cases i
-  fin_cases j
-  simp [Matrix.mul_apply, Fin.sum_univ_two]
-
-private theorem smul_e₁_mul (c : ℝ) :
-    c • (e₁ * e₁ᵀ) = e₁ * (c • (1 : Matrix (Fin 1) (Fin 1) ℝ)) * e₁ᵀ := by
-  rw [Matrix.mul_smul, Matrix.mul_one, Matrix.smul_mul]
-
-private theorem isUnit_det_smul_one {c : ℝ} (hc : c ≠ 0) :
-    IsUnit (c • (1 : Matrix (Fin 1) (Fin 1) ℝ)).det := by
-  rw [det_smul, det_one, mul_one, Fintype.card_fin, pow_one]
-  exact isUnit_iff_ne_zero.mpr hc
-
-private theorem rank_smul_e₁ {c : ℝ} (hc : c ≠ 0) : (c • (e₁ * e₁ᵀ)).rank = 1 :=
-  (SVD.rank_eq_iff_exists_factor _).2 ⟨e₁, c • 1, e₁, e₁_transpose_mul_self,
-    e₁_transpose_mul_self, isUnit_det_smul_one hc, smul_e₁_mul c⟩
-
-private theorem one_le_singularValues_smul_e₁ {c : ℝ} (hc : 1 ≤ c) :
-    (1 : ℝ) ≤ (toEuclideanLin (c • (e₁ * e₁ᵀ))).singularValues (1 - 1) := by
-  refine SVD.le_singularValues_of_eq_mul one_pos e₁_transpose_mul_self e₁_transpose_mul_self
-    (smul_e₁_mul c) fun w => ?_
-  rw [LinearEquiv.map_smul, toLpLin_one]
-  change 1 * ‖w‖ ≤ ‖c • w‖
-  rw [norm_smul, Real.norm_eq_abs, abs_of_pos (by linarith)]
-  nlinarith [norm_nonneg w]
-
-private theorem tangentProjAt_smul_e₁ {c : ℝ} (hc : c ≠ 0) :
-    tangentProjAt (c • (e₁ * e₁ᵀ)) = tangentProj e₁ e₁ := by
-  rw [smul_e₁_mul]
-  exact tangentProjAt_eq_tangentProj e₁_transpose_mul_self e₁_transpose_mul_self
-    (isUnit_det_smul_one hc)
-
-private theorem tangentProjAt_smul_e₁_apply {c : ℝ} (hc : c ≠ 0) :
-    tangentProjAt (c • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ) = e₁ * e₁ᵀ := by
-  have h := tangentProjAt_self (c • (e₁ * e₁ᵀ))
-  rw [map_smul] at h
-  exact smul_right_injective _ hc h
-
 private theorem tangentProjAt_smul_e₁_E₂₂ {c : ℝ} (hc : c ≠ 0) :
     tangentProjAt (c • (e₁ * e₁ᵀ)) E₂₂ = 0 := by
   have h1 : e₁ᵀ * E₂₂ = 0 := by
@@ -260,12 +218,6 @@ private theorem tangentProjAt_smul_e₁_E₂₂ {c : ℝ} (hc : c ≠ 0) :
     fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
   rw [tangentProjAt_smul_e₁ hc, tangentProj_apply, Matrix.mul_assoc e₁ e₁ᵀ E₂₂, h1, h2]
   simp
-
-private theorem norm_e₁_mul_le : ‖e₁ * e₁ᵀ‖ ≤ 1 := by
-  have h : ‖e₁ * e₁ᵀ‖ ^ 2 = 1 := by
-    rw [Curvature.frob_sq]
-    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
-  nlinarith [norm_nonneg (e₁ * e₁ᵀ)]
 
 private theorem norm_E₂₂_le : ‖E₂₂‖ ≤ 1 := by
   have h : ‖E₂₂‖ ^ 2 = 1 := by
@@ -326,10 +278,6 @@ private theorem tangentProjAt_field_example {c : ℝ} (hc : c ≠ 0) (t : ℝ) :
   change tangentProjAt (c • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ + _ • E₂₂) = _
   rw [map_add, map_smul, tangentProjAt_smul_e₁_apply hc, tangentProjAt_smul_e₁_E₂₂ hc, smul_zero,
     add_zero]
-
-private theorem hasDerivAt_smul_e₁ (c t : ℝ) :
-    HasDerivAt (fun t : ℝ => (c + t) • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ) t := by
-  simpa using ((hasDerivAt_id t).const_add c).smul_const (e₁ * e₁ᵀ)
 
 private theorem hasDerivAt_smul_e₁_add (t : ℝ) :
     HasDerivAt (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + (1 / 8 : ℝ) • E₂₂) (e₁ * e₁ᵀ) t := by

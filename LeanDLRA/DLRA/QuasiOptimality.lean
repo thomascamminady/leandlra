@@ -568,14 +568,18 @@ theorem dlra_norm_sub_truncation_le_integral {r : ℕ} (hr : 0 < r)
 
 end QuasiOptimal
 
-/-! ### Examples -/
+/-! ### Examples
 
-section Examples
+The namespace `QuasiOptimalityExamples` holds the facts on the rank-one matrices `c e₁ e₁ᵀ` of
+`ℝ^{2×2}` that the examples of this file, of `LeanDLRA/DLRA/QuasiOptimalityTube.lean` and of
+`LeanDLRA/DLRA/QuasiOptimalityGap.lean` use. -/
+
+namespace QuasiOptimalityExamples
 
 open scoped LeanDLRA.Frobenius
 
-/-- The first unit column of `ℝ²`. -/
-local notation "e₁" => (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)
+/-- The first unit column of `ℝ²` (`open QuasiOptimalityExamples` gives this notation). -/
+scoped notation "e₁" => (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)
 
 /-- The normal part `diag(0, 1/8)` of the examples. -/
 local notation "N₈" => (!![0, 0; 0, 1 / 8] : Matrix (Fin 2) (Fin 2) ℝ)
@@ -589,26 +593,31 @@ local notation "Aₑ" => fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₈
 /-- The field `F(t, Y) = e₁ e₁ᵀ` of the examples. -/
 local notation "Fₑ" => fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => e₁ * e₁ᵀ
 
-private theorem e₁_transpose_mul_self : e₁ᵀ * e₁ = 1 := by
+/-- `e₁` has an orthonormal column: `e₁ᵀ e₁ = 1`. -/
+theorem e₁_transpose_mul_self : e₁ᵀ * e₁ = 1 := by
   ext i j
   fin_cases i
   fin_cases j
   simp [Matrix.mul_apply, Fin.sum_univ_two]
 
-private theorem smul_e₁_mul (c : ℝ) :
+/-- `c e₁ e₁ᵀ = e₁ (c • 1) e₁ᵀ`: a factorization with a `1 × 1` core. -/
+theorem smul_e₁_mul (c : ℝ) :
     c • (e₁ * e₁ᵀ) = e₁ * (c • (1 : Matrix (Fin 1) (Fin 1) ℝ)) * e₁ᵀ := by
   rw [Matrix.mul_smul, Matrix.mul_one, Matrix.smul_mul]
 
-private theorem isUnit_det_smul_one {c : ℝ} (hc : c ≠ 0) :
+/-- The `1 × 1` core `c • 1` is invertible for `c ≠ 0`. -/
+theorem isUnit_det_smul_one {c : ℝ} (hc : c ≠ 0) :
     IsUnit (c • (1 : Matrix (Fin 1) (Fin 1) ℝ)).det := by
   rw [det_smul, det_one, mul_one, Fintype.card_fin, pow_one]
   exact isUnit_iff_ne_zero.mpr hc
 
-private theorem rank_smul_e₁ {c : ℝ} (hc : c ≠ 0) : (c • (e₁ * e₁ᵀ)).rank = 1 :=
+/-- `c e₁ e₁ᵀ` has rank `1` for `c ≠ 0`. -/
+theorem rank_smul_e₁ {c : ℝ} (hc : c ≠ 0) : (c • (e₁ * e₁ᵀ)).rank = 1 :=
   (SVD.rank_eq_iff_exists_factor _).2 ⟨e₁, c • 1, e₁, e₁_transpose_mul_self,
     e₁_transpose_mul_self, isUnit_det_smul_one hc, smul_e₁_mul c⟩
 
-private theorem one_le_singularValues_smul_e₁ {c : ℝ} (hc : 1 ≤ c) :
+/-- `σ₀(c e₁ e₁ᵀ) ≥ 1` for `c ≥ 1`. -/
+theorem one_le_singularValues_smul_e₁ {c : ℝ} (hc : 1 ≤ c) :
     (1 : ℝ) ≤ (toEuclideanLin (c • (e₁ * e₁ᵀ))).singularValues (1 - 1) := by
   refine SVD.le_singularValues_of_eq_mul one_pos e₁_transpose_mul_self e₁_transpose_mul_self
     (smul_e₁_mul c) fun w => ?_
@@ -617,13 +626,15 @@ private theorem one_le_singularValues_smul_e₁ {c : ℝ} (hc : 1 ≤ c) :
   rw [norm_smul, Real.norm_eq_abs, abs_of_pos (by linarith)]
   nlinarith [norm_nonneg w]
 
-private theorem tangentProjAt_smul_e₁ {c : ℝ} (hc : c ≠ 0) :
+/-- The tangent space projector at `c e₁ e₁ᵀ`, `c ≠ 0`, is that of the factors `e₁`, `e₁`. -/
+theorem tangentProjAt_smul_e₁ {c : ℝ} (hc : c ≠ 0) :
     tangentProjAt (c • (e₁ * e₁ᵀ)) = tangentProj e₁ e₁ := by
   rw [smul_e₁_mul]
   exact tangentProjAt_eq_tangentProj e₁_transpose_mul_self e₁_transpose_mul_self
     (isUnit_det_smul_one hc)
 
-private theorem tangentProjAt_smul_e₁_apply {c : ℝ} (hc : c ≠ 0) :
+/-- `e₁ e₁ᵀ` lies in the tangent space at `c e₁ e₁ᵀ`, `c ≠ 0`. -/
+theorem tangentProjAt_smul_e₁_apply {c : ℝ} (hc : c ≠ 0) :
     tangentProjAt (c • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ) = e₁ * e₁ᵀ := by
   have h := tangentProjAt_self (c • (e₁ * e₁ᵀ))
   rw [map_smul] at h
@@ -641,7 +652,8 @@ private theorem tangentProjAt_smul_e₁_normal {c : ℝ} (hc : c ≠ 0) :
   rw [tangentProjAt_smul_e₁ hc, tangentProj_apply, Matrix.mul_assoc e₁ e₁ᵀ N₈, h1, h2]
   simp
 
-private theorem norm_e₁_mul_le : ‖e₁ * e₁ᵀ‖ ≤ 1 := by
+/-- `‖e₁ e₁ᵀ‖ ≤ 1`. -/
+theorem norm_e₁_mul_le : ‖e₁ * e₁ᵀ‖ ≤ 1 := by
   have h : ‖e₁ * e₁ᵀ‖ ^ 2 = 1 := by
     rw [Curvature.frob_sq]
     norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
@@ -687,13 +699,14 @@ private theorem isBest_example (t : ℝ) (ht : 0 ≤ t) (Z : Matrix (Fin 2) (Fin
   have h4 := Curvature.specNorm_le_frob ((1 + t) • (e₁ * e₁ᵀ) + N₈ - Z)
   linarith [norm_N₈_le]
 
-private theorem hasDerivAt_smul_e₁ (t : ℝ) :
-    HasDerivAt (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ) t := by
-  simpa using ((hasDerivAt_id t).const_add 1).smul_const (e₁ * e₁ᵀ)
+/-- The curve `t ↦ (c + t) e₁ e₁ᵀ` has the derivative `e₁ e₁ᵀ`. -/
+theorem hasDerivAt_smul_e₁ (c t : ℝ) :
+    HasDerivAt (fun t : ℝ => (c + t) • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ) t := by
+  simpa using ((hasDerivAt_id t).const_add c).smul_const (e₁ * e₁ᵀ)
 
 private theorem hasDerivAt_smul_e₁_add (t : ℝ) :
     HasDerivAt (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₈) (e₁ * e₁ᵀ) t := by
-  simpa using (hasDerivAt_smul_e₁ t).add_const N₈
+  simpa using (hasDerivAt_smul_e₁ 1 t).add_const N₈
 
 private theorem odeSolution_smul_e₁_add :
     ODESolution (fun _ _ => e₁ * e₁ᵀ) (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₈) 0 1 :=
@@ -729,7 +742,7 @@ example :
     exact left_nhdsWithin_Ioc_neBot one_pos
   have h0 : (0 : ℝ) ∈ Set.Icc (0 : ℝ) 1 := ⟨le_rfl, zero_le_one⟩
   have hA := (hasDerivAt_smul_e₁_add 0).hasDerivWithinAt (s := Set.Icc (0 : ℝ) 1)
-  have hX := (hasDerivAt_smul_e₁ 0).hasDerivWithinAt (s := Set.Icc (0 : ℝ) 1)
+  have hX := (hasDerivAt_smul_e₁ 1 0).hasDerivWithinAt (s := Set.Icc (0 : ℝ) 1)
   have hr : ∀ u ∈ Set.Icc (0 : ℝ) 1, ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) u).rank = 1 :=
     fun u hu => (hyps_smul_e₁ hu.1).1
   have hσ : ∀ u ∈ Set.Icc (0 : ℝ) 1, (1 : ℝ) ≤
@@ -767,9 +780,9 @@ example :
   have hμ : ∀ t ∈ Ico (0 : ℝ) 1, ‖(fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => e₁ * e₁ᵀ) t
       ((fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₈) t)‖ ≤ 1 := fun _ _ => norm_e₁_mul_le
   have hXc : ContinuousOn (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) (Set.Icc 0 1) :=
-    fun s _ => (hasDerivAt_smul_e₁ s).continuousAt.continuousWithinAt
+    fun s _ => (hasDerivAt_smul_e₁ 1 s).continuousAt.continuousWithinAt
   have hX : ∀ t ∈ Ico (0 : ℝ) 1, HasDerivWithinAt (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ))
-      ((fun _ : ℝ => e₁ * e₁ᵀ) t) (Ici t) t := fun s _ => (hasDerivAt_smul_e₁ s).hasDerivWithinAt
+      ((fun _ : ℝ => e₁ * e₁ᵀ) t) (Ici t) t := fun s _ => (hasDerivAt_smul_e₁ 1 s).hasDerivWithinAt
   have hXr : ∀ t ∈ Set.Icc (0 : ℝ) 1, ((1 + t) • (e₁ * e₁ᵀ)).rank = 1 :=
     fun t ht => (hyps_smul_e₁ ht.1).1
   have hσ : ∀ t ∈ Set.Icc (0 : ℝ) 1,
@@ -788,7 +801,7 @@ example :
       ((fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => e₁ * e₁ᵀ) t x))
       (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) 0 1 := by
     refine ⟨hXc, fun s hs => ?_⟩
-    have h := (hasDerivAt_smul_e₁ s).hasDerivWithinAt (s := Ici s)
+    have h := (hasDerivAt_smul_e₁ 1 s).hasDerivWithinAt (s := Ici s)
     convert h using 1
     change tangentProj e₁ e₁ (e₁ * e₁ᵀ) = e₁ * e₁ᵀ
     rw [← tangentProjAt_smul_e₁ (ne_of_gt (by linarith [hs.1] : (0 : ℝ) < 1 + s))]
@@ -796,7 +809,7 @@ example :
   have hYd : IsDLRASolution 1 (fun (_ : ℝ) (_ : Matrix (Fin 2) (Fin 2) ℝ) => e₁ * e₁ᵀ)
       (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ)) 0 1 := by
     refine ⟨⟨hXc, fun s hs => ?_⟩, hXr⟩
-    have h := (hasDerivAt_smul_e₁ s).hasDerivWithinAt (s := Ici s)
+    have h := (hasDerivAt_smul_e₁ 1 s).hasDerivWithinAt (s := Ici s)
     convert h using 1
     exact (hyps_smul_e₁ hs.1).2.2.2.2
   have hbest : ∀ t ∈ Set.Icc (0 : ℝ) 1, ((1 + t) • (e₁ * e₁ᵀ)).rank ≤ 1 ∧
@@ -918,26 +931,26 @@ example : ∀ t ∈ Set.Icc (0 : ℝ) 1,
       2 * (8 * 1 / 1) * Real.exp (8 * 1 / 1 * t) * ∫ s in (0 : ℝ)..t,
         ‖(1 + s) • (e₁ * e₁ᵀ) - ((1 + s) • (e₁ * e₁ᵀ) + N₁₆)‖ := by
   have hA : ∀ t : ℝ, HasDerivAt (fun t : ℝ => (1 + t) • (e₁ * e₁ᵀ) + N₁₆) (e₁ * e₁ᵀ) t :=
-    fun t => by simpa using (hasDerivAt_smul_e₁ t).add_const N₁₆
+    fun t => by simpa using (hasDerivAt_smul_e₁ 1 t).add_const N₁₆
   refine dlra_norm_sub_truncation_le_integral (r := 1)
     (A := fun t => (1 + t) • (e₁ * e₁ᵀ) + N₁₆) (X := fun t => (1 + t) • (e₁ * e₁ᵀ))
     (Y := fun t => (1 + t) • (e₁ * e₁ᵀ)) (A' := fun _ => e₁ * e₁ᵀ) (X' := fun _ => e₁ * e₁ᵀ)
     (U := fun _ => e₁) (V := fun _ => e₁) (S := fun t => (1 + t) • 1) one_pos one_pos
     (fun t _ => hA t) (fun _ _ => norm_e₁_mul_le) (fun t ht => ?_)
-    (fun t _ => hasDerivAt_smul_e₁ t) (fun t ht => ?_) (fun t _ => ?_)
+    (fun t _ => hasDerivAt_smul_e₁ 1 t) (fun t ht => ?_) (fun t _ => ?_)
     (fun t _ => ⟨e₁_transpose_mul_self, e₁_transpose_mul_self, smul_e₁_mul _⟩)
-    ⟨fun s _ => (hasDerivAt_smul_e₁ s).continuousAt.continuousWithinAt, fun s hs => ?_⟩ rfl
+    ⟨fun s _ => (hasDerivAt_smul_e₁ 1 s).continuousAt.continuousWithinAt, fun s hs => ?_⟩ rfl
   · rw [smul_e₁_add_N₁₆, truncation_diag (by linarith [ht.1]), smul_e₁_eq]
   · change (1 : ℝ) ≤ (toEuclideanLin ((1 + t) • (e₁ * e₁ᵀ) + N₁₆)).singularValues 0
     rw [smul_e₁_add_N₁₆]
     exact le_trans (by linarith [ht.1]) le_singularValues_diag
   · rw [sub_add_cancel_left, norm_neg]
     exact norm_N₁₆_le
-  · have h := (hasDerivAt_smul_e₁ s).hasDerivWithinAt (s := Ici s)
+  · have h := (hasDerivAt_smul_e₁ 1 s).hasDerivWithinAt (s := Ici s)
     convert h using 1
     rw [← tangentProjAt_smul_e₁ (ne_of_gt (by linarith [hs.1] : (0 : ℝ) < 1 + s))]
     exact (hyps_smul_e₁ hs.1).2.2.2.2
 
-end Examples
+end QuasiOptimalityExamples
 
 end LeanDLRA

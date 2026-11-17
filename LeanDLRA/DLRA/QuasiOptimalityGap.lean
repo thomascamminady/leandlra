@@ -115,43 +115,11 @@ end Gap
 
 section Examples
 
-/-- The first unit column of `ℝ²`. -/
-local notation "e₁" => (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)
-
-private theorem e₁_transpose_mul_self : e₁ᵀ * e₁ = 1 := by
-  ext i j
-  fin_cases i
-  fin_cases j
-  simp [Matrix.mul_apply, Fin.sum_univ_two]
-
-private theorem smul_e₁_mul (c : ℝ) :
-    c • (e₁ * e₁ᵀ) = e₁ * (c • (1 : Matrix (Fin 1) (Fin 1) ℝ)) * e₁ᵀ := by
-  rw [Matrix.mul_smul, Matrix.mul_one, Matrix.smul_mul]
-
-private theorem isUnit_det_smul_one {c : ℝ} (hc : c ≠ 0) :
-    IsUnit (c • (1 : Matrix (Fin 1) (Fin 1) ℝ)).det := by
-  rw [det_smul, det_one, mul_one, Fintype.card_fin, pow_one]
-  exact isUnit_iff_ne_zero.mpr hc
-
-private theorem rank_smul_e₁ {c : ℝ} (hc : c ≠ 0) : (c • (e₁ * e₁ᵀ)).rank = 1 :=
-  (SVD.rank_eq_iff_exists_factor _).2 ⟨e₁, c • 1, e₁, e₁_transpose_mul_self,
-    e₁_transpose_mul_self, isUnit_det_smul_one hc, smul_e₁_mul c⟩
+open QuasiOptimalityExamples
 
 private theorem rank_smul_e₁_le (c : ℝ) : (c • (e₁ * e₁ᵀ)).rank ≤ 1 := by
   rw [smul_e₁_mul]
   exact (rank_mul_le_right _ _).trans (by simpa using rank_le_card_height e₁ᵀ)
-
-private theorem tangentProjAt_smul_e₁_apply {c : ℝ} (hc : c ≠ 0) :
-    tangentProjAt (c • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ) = e₁ * e₁ᵀ := by
-  have h := tangentProjAt_self (c • (e₁ * e₁ᵀ))
-  rw [map_smul] at h
-  exact smul_right_injective _ hc h
-
-private theorem norm_e₁_mul_le : ‖e₁ * e₁ᵀ‖ ≤ 1 := by
-  have h : ‖e₁ * e₁ᵀ‖ ^ 2 = 1 := by
-    rw [Curvature.frob_sq]
-    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
-  nlinarith [norm_nonneg (e₁ * e₁ᵀ)]
 
 /-- The gap `σ₀(c e₁ e₁ᵀ) - σ₁(c e₁ e₁ᵀ) ≥ 1` for `c ≥ 1`. -/
 private theorem one_le_gap_smul_e₁ {c : ℝ} (hc : 1 ≤ c) :
@@ -162,18 +130,8 @@ private theorem one_le_gap_smul_e₁ {c : ℝ} (hc : 1 ≤ c) :
       (rank_smul_e₁_le c)
     rw [sub_self] at h
     exact h.trans ((Curvature.specNorm_le_frob 0).trans_eq norm_zero)
-  have h1 : (1 : ℝ) ≤ (toEuclideanLin (c • (e₁ * e₁ᵀ))).singularValues (1 - 1) := by
-    refine SVD.le_singularValues_of_eq_mul one_pos e₁_transpose_mul_self e₁_transpose_mul_self
-      (smul_e₁_mul c) fun w => ?_
-    rw [LinearEquiv.map_smul, toLpLin_one]
-    change 1 * ‖w‖ ≤ ‖c • w‖
-    rw [norm_smul, Real.norm_eq_abs, abs_of_pos (by linarith)]
-    nlinarith [norm_nonneg w]
+  have h1 := one_le_singularValues_smul_e₁ hc
   linarith
-
-private theorem hasDerivAt_smul_e₁ (c t : ℝ) :
-    HasDerivAt (fun t : ℝ => (c + t) • (e₁ * e₁ᵀ)) (e₁ * e₁ᵀ) t := by
-  simpa using ((hasDerivAt_id t).const_add c).smul_const (e₁ * e₁ᵀ)
 
 /-- `IsDLRASolution.norm_sub_truncation_le_integral_of_gap` for `A t = (1 + t) e₁ e₁ᵀ`, the
 solution of `Ȧ = F(t, A) = e₁ e₁ᵀ` (`L = 0`, `μ = 1`), whose singular values have the gap
