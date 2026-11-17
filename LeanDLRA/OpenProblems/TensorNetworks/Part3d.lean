@@ -247,6 +247,12 @@ end CP
 
 section SchmidtGradient
 
+-- `HasDerivAt` on `ℝ` needs `ContinuousSMul ℝ ℝ`, found either as
+-- `PolynormableSpace.continuousSMul` or as `IsModuleTopology.toContinuousSMul`; which comes first
+-- depends on the order in which the imports are loaded. The statements of this section keep
+-- the first one, with which they were elaborated originally.
+attribute [local instance high] PolynormableSpace.continuousSMul
+
 private theorem exists_antiderivative_poly (q : Polynomial ℝ) :
     ∃ P : Polynomial ℝ, Polynomial.derivative P = q := by
   induction q using Polynomial.induction_on' with
