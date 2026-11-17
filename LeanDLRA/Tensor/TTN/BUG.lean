@@ -131,42 +131,333 @@ theorem bug_global_error {τ : DimTree κ} (hv : τ.IsValid) {F : ℝ → Tensor
 
 end BasisFrame
 
-/-! ### Non-vacuity -/
+/-! ### Non-vacuity: a step on two modes of size two -/
 
-/-- Non-vacuity of `BasisFrame.IsBUGStep` at an inner node: on the tree with two leaves (modes `0`
-and `1` of dimension one), the zero field with the zero tensor and rank-zero bases is a TTN BUG
-step on every time interval. -/
-private theorem isBUGStep_zero_aux (t₀ t₁ : ℝ) :
-    (BasisFrame.node (ι := fun _ : Fin 2 => Fin 1) (cs := fun i : Fin 2 => leaf i)
-      (fun _ => 0) (fun _ => 0) (fun _ => 0) (fun _ => 0) (fun i => BasisFrame.leaf i)).IsBUGStep
-      (fun _ _ => 0) 0 t₀ t₁ 0 0 := by
-  have hz : ODESolution (fun _ _ => (0 : Tensor (fun _ : Fin 2 => Fin 1))) (fun _ => 0) t₀ t₁ :=
-    ⟨continuousOn_const, fun t _ => by simpa using hasDerivWithinAt_const t (Ici t) _⟩
-  refine ⟨fun _ => Subsingleton.elim _ _, fun _ => Subsingleton.elim _ _, fun _ => map_zero _,
-    fun _ => map_zero _, fun _ => 0, fun _ => 0, fun _ => 0,
-    fun _ => Subsingleton.elim _ _, fun i => ?_,
-    fun _ => map_zero _, fun _ t _ => by simp, by simpa using hz, (map_zero _).symm, rfl⟩
-  refine ⟨fun _ => 0, ?_, rfl, rfl⟩
-  convert hz using 1
-  funext t x
-  simp
+namespace BUGExample
 
-/-- The dimension tree with two leaves `0` and `1` is valid, so the step of the non-vacuity
-example is an abstract TTN BUG step. -/
-example := (isBUGStep_zero_aux 0 1).isTTNBUGStep _
-  (show (node fun i : Fin 2 => leaf i).IsValid from
-    ⟨fun _ => trivial, fun _ _ hij => Finset.disjoint_singleton.2 hij⟩)
+open Tensor
 
-/-- The hypotheses of `BasisFrame.bug_global_error` are satisfiable: `N` steps of size `1` of the
-non-vacuity example, with the zero field (`L = B = ε = 0`) and the zero solution. -/
-example (N : ℕ) := BasisFrame.bug_global_error
-  (show (node fun i : Fin 2 => leaf i).IsValid from
-    ⟨fun _ => trivial, fun _ _ hij => Finset.disjoint_singleton.2 hij⟩)
-  (F := fun _ _ => (0 : Tensor (fun _ : Fin 2 => Fin 1))) (L := 0) (B := 0) (ε := 0)
-  (fun _ _ _ => by simp) le_rfl (fun _ _ => by simp) (fun _ => continuous_const) le_rfl
-  (t₀ := 0) (h := 1) zero_le_one (by simp) (N := N) (A := fun _ => 0)
-  ⟨continuousOn_const, fun t _ => by simpa using hasDerivWithinAt_const t (Ici t) _⟩
-  (Y := fun _ => 0) (fun _ _ => isBUGStep_zero_aux _ _) (δ := 0) (T := N) (by simp)
+/-- The elementary tensor `a ⊗ b` on two modes of size two. -/
+noncomputable def elem (a b : Fin 2 → ℝ) : Tensor (fun _ : Fin 2 => Fin 2) :=
+  WithLp.toLp 2 fun x => a (x 0) * b (x 1)
+
+/-- Two tensors on two modes of size two agree if they agree at every pair of indices. -/
+theorem tensor_ext {X Y : Tensor (fun _ : Fin 2 => Fin 2)}
+    (h : ∀ i j : Fin 2, X ![i, j] = Y ![i, j]) : X = Y := by
+  ext x
+  have hx : x = ![x 0, x 1] := by
+    funext k
+    fin_cases k <;> rfl
+  rw [hx]
+  exact h _ _
+
+/-- Sums over the multi-indices of a set of modes consisting of mode `j` alone. -/
+private theorem sum_pi_unique {p : Fin 2 → Prop} [Fintype {k // p k}] {j : Fin 2} (hj : p j)
+    (hp : ∀ k, p k → k = j) (F : Fin 2 → ℝ) :
+    ∑ w : {k // p k} → Fin 2, F (w ⟨j, hj⟩) = ∑ c, F c :=
+  Fintype.sum_equiv
+    { toFun := fun w => w ⟨j, hj⟩
+      invFun := fun c _ => c
+      left_inv := fun w => funext fun ⟨k, hk⟩ => by obtain rfl := hp k hk; rfl
+      right_inv := fun _ => rfl } _ _ fun _ => rfl
+
+/-- The Gram matrix of two basis columns on the set of modes `{j}`. -/
+private theorem transpose_mul_of_apply {p : Fin 2 → Prop} [Fintype {k // p k}] {j : Fin 2}
+    (hj : p j) (hp : ∀ k, p k → k = j) {u v : Fin 2 → ℝ}
+    {U V : Matrix ({k // p k} → Fin 2) (Fin 1) ℝ} (hU : ∀ y b, U y b = u (y ⟨j, hj⟩))
+    (hV : ∀ y b, V y b = v (y ⟨j, hj⟩)) : Uᵀ * V = (∑ c, u c * v c) • 1 := by
+  ext a b
+  rw [Matrix.mul_apply, Subsingleton.elim a 0, Subsingleton.elim b 0]
+  simp only [Matrix.transpose_apply, hU, hV, Matrix.smul_apply, Matrix.one_apply_eq,
+    smul_eq_mul, mul_one]
+  exact sum_pi_unique hj hp fun c => u c * v c
+
+/-- A basis column on the set of modes `{0}` acting on `a ⊗ b`. -/
+private theorem actOn_elem_zero {p : Fin 2 → Prop} [DecidablePred p] (hj : p 0)
+    (hp : ∀ k, p k → k = 0) {u : Fin 2 → ℝ} {U : Matrix ({k // p k} → Fin 2) (Fin 1) ℝ}
+    (hU : ∀ y b, U y b = u (y ⟨0, hj⟩)) (a b : Fin 2 → ℝ) :
+    actOn p (U * Uᵀ) (elem a b) = (∑ c, u c * a c) • elem u b := by
+  have h1 : ¬ p 1 := fun h => absurd (hp 1 h) (by decide)
+  ext x
+  rw [actOn_mul_transpose_apply]
+  simp only [Fin.sum_univ_one, hU, elem, PiLp.toLp_apply, PiLp.smul_apply, smul_eq_mul,
+    Subtype.restrict_apply, override_apply_of p hj, override_apply_of_not p h1]
+  have key : ∑ w : {k // p k} → Fin 2, u (w ⟨0, hj⟩) * (a (w ⟨0, hj⟩) * b (x 1)) =
+      ∑ c, u c * (a c * b (x 1)) := sum_pi_unique hj hp fun c => u c * (a c * b (x 1))
+  rw [key]
+  simp only [Fin.sum_univ_two]
+  ring
+
+/-- A basis column on the set of modes `{1}` acting on `a ⊗ b`. -/
+private theorem actOn_elem_one {p : Fin 2 → Prop} [DecidablePred p] (hj : p 1)
+    (hp : ∀ k, p k → k = 1) {u : Fin 2 → ℝ} {U : Matrix ({k // p k} → Fin 2) (Fin 1) ℝ}
+    (hU : ∀ y b, U y b = u (y ⟨1, hj⟩)) (a b : Fin 2 → ℝ) :
+    actOn p (U * Uᵀ) (elem a b) = (∑ c, u c * b c) • elem a u := by
+  have h0 : ¬ p 0 := fun h => absurd (hp 0 h) (by decide)
+  ext x
+  rw [actOn_mul_transpose_apply]
+  simp only [Fin.sum_univ_one, hU, elem, PiLp.toLp_apply, PiLp.smul_apply, smul_eq_mul,
+    Subtype.restrict_apply, override_apply_of p hj, override_apply_of_not p h0]
+  have key : ∑ w : {k // p k} → Fin 2, u (w ⟨1, hj⟩) * (a (x 0) * b (w ⟨1, hj⟩)) =
+      ∑ c, u c * (a (x 0) * b c) := sum_pi_unique hj hp fun c => u c * (a (x 0) * b c)
+  rw [key]
+  simp only [Fin.sum_univ_two]
+  ring
+
+/-- The leaf `i` does not contain the other mode `1 - i`. -/
+theorem one_sub_notMem_leaf (i : Fin 2) : 1 - i ∉ (leaf i : DimTree (Fin 2)).modes := by
+  fin_cases i <;> simp [DimTree.modes]
+
+/-- The basis column of the vector `u` on the leaf `i`. -/
+def leafCol (i : Fin 2) (u : Fin 2 → ℝ) :
+    Matrix ({k // k ∈ (leaf i : DimTree (Fin 2)).modes} → Fin 2) (Fin 1) ℝ :=
+  fun y _ => u (y ⟨i, Finset.mem_singleton_self i⟩)
+
+/-- The co-range column of the vector `u` on the mode `1 - i` outside the leaf `i`. -/
+def coCol (i : Fin 2) (u : Fin 2 → ℝ) :
+    Matrix ({k // k ∉ (leaf i : DimTree (Fin 2)).modes} → Fin 2) (Fin 1) ℝ :=
+  fun y _ => u (y ⟨1 - i, one_sub_notMem_leaf i⟩)
+
+private theorem mem_leaf_eq {i k : Fin 2} (hk : k ∈ (leaf i : DimTree (Fin 2)).modes) : k = i :=
+  Finset.mem_singleton.1 hk
+
+private theorem notMem_leaf_eq {i k : Fin 2} (hk : k ∉ (leaf i : DimTree (Fin 2)).modes) :
+    k = 1 - i := by
+  fin_cases i <;> fin_cases k <;> simp_all [DimTree.modes]
+
+/-- `(leafCol i u)ᵀ (leafCol i v) = ⟨u, v⟩ • 1`. -/
+theorem leafCol_transpose_mul (i : Fin 2) (u v : Fin 2 → ℝ) :
+    (leafCol i u)ᵀ * leafCol i v = (∑ c, u c * v c) • 1 :=
+  transpose_mul_of_apply (j := i) (Finset.mem_singleton_self i) (fun _ hk => mem_leaf_eq hk)
+    (u := u) (v := v) (fun _ _ => rfl) (fun _ _ => rfl)
+
+/-- `(coCol i u)ᵀ (coCol i v) = ⟨u, v⟩ • 1`. -/
+theorem coCol_transpose_mul (i : Fin 2) (u v : Fin 2 → ℝ) :
+    (coCol i u)ᵀ * coCol i v = (∑ c, u c * v c) • 1 :=
+  transpose_mul_of_apply (j := 1 - i) (one_sub_notMem_leaf i) (fun _ hk => notMem_leaf_eq hk)
+    (u := u) (v := v) (fun _ _ => rfl) (fun _ _ => rfl)
+
+/-- The subtree projector of the leaf `0` with basis `u` maps `a ⊗ b` to `⟨u, a⟩ u ⊗ b`. -/
+theorem subtreeProj_leafCol_zero (u a b : Fin 2 → ℝ) :
+    (leaf (0 : Fin 2)).subtreeProj (leafCol 0 u) (elem a b) = (∑ c, u c * a c) • elem u b :=
+  actOn_elem_zero (Finset.mem_singleton_self 0) (fun _ hk => mem_leaf_eq hk) (u := u)
+    (fun _ _ => rfl) a b
+
+/-- The subtree projector of the leaf `1` with basis `u` maps `a ⊗ b` to `⟨u, b⟩ a ⊗ u`. -/
+theorem subtreeProj_leafCol_one (u a b : Fin 2 → ℝ) :
+    (leaf (1 : Fin 2)).subtreeProj (leafCol 1 u) (elem a b) = (∑ c, u c * b c) • elem a u :=
+  actOn_elem_one (Finset.mem_singleton_self 1) (fun _ hk => mem_leaf_eq hk) (u := u)
+    (fun _ _ => rfl) a b
+
+/-- The co-range projector of the leaf `0` acts on mode `1`. -/
+theorem actOn_coCol_zero (v a b : Fin 2 → ℝ) :
+    actOn (· ∉ (leaf (0 : Fin 2)).modes) (coCol 0 v * (coCol 0 v)ᵀ) (elem a b) =
+      (∑ c, v c * b c) • elem a v :=
+  actOn_elem_one (one_sub_notMem_leaf 0) (fun _ hk => notMem_leaf_eq hk) (u := v)
+    (fun _ _ => rfl) a b
+
+/-- The co-range projector of the leaf `1` acts on mode `0`. -/
+theorem actOn_coCol_one (v a b : Fin 2 → ℝ) :
+    actOn (· ∉ (leaf (1 : Fin 2)).modes) (coCol 1 v * (coCol 1 v)ᵀ) (elem a b) =
+      (∑ c, v c * a c) • elem v b :=
+  actOn_elem_zero (one_sub_notMem_leaf 1) (fun _ hk => notMem_leaf_eq hk) (u := v)
+    (fun _ _ => rfl) a b
+
+/-- The basis frame of the start value `e₀ ⊗ e₀` on the tree with the two leaves `0`, `1`: the
+bases `e₀` on both leaves and the co-range bases `e₀` on the other mode (`e₀ = (1, 0)`). -/
+noncomputable def frame : BasisFrame (fun _ : Fin 2 => Fin 2) (node fun i : Fin 2 => leaf i) :=
+  BasisFrame.node (fun _ => 1) (fun _ => 1) (fun i => leafCol i ![1, 0])
+    (fun i => coCol i ![1, 0]) fun i => BasisFrame.leaf i
+
+/-- The tree with the two leaves `0` and `1` is valid. -/
+theorem isValid_node : (node fun i : Fin 2 => leaf i).IsValid :=
+  ⟨fun _ => trivial, fun _ _ hij => Finset.disjoint_singleton.2 hij⟩
+
+/-- The field `g = (2, 4) ⊗ e₀ + e₁ ⊗ e₁` of the example (`e₁ = (0, 1)`); its part `e₁ ⊗ e₁` is
+doubly normal to both leaves. -/
+noncomputable def field : Tensor (fun _ : Fin 2 => Fin 2) :=
+  elem ![2, 4] ![1, 0] + elem ![0, 1] ![0, 1]
+
+/-- `e₀ ⊗ e₀ + (2, 4) ⊗ e₀ = 5 (u ⊗ e₀)` with `u = (3/5, 4/5)`. -/
+theorem elem_add_elem :
+    elem ![1, 0] ![1, 0] + (1 : ℝ) • elem ![2, 4] ![1, 0] =
+      (5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0] :=
+  tensor_ext fun i j => by fin_cases i <;> fin_cases j <;> norm_num [elem]
+
+
+/-- The co-range projector of the leaf `0` maps the field `g` to `(2, 4) ⊗ e₀`. -/
+theorem actOn_coCol_zero_field :
+    actOn (· ∉ (leaf (0 : Fin 2)).modes) (coCol 0 ![1, 0] * (coCol 0 ![1, 0])ᵀ) field =
+      elem ![2, 4] ![1, 0] := by
+  rw [field, map_add, actOn_coCol_zero, actOn_coCol_zero]
+  norm_num [Fin.sum_univ_two]
+
+/-- The co-range projector of the leaf `1` maps the field `g` to `2 e₀ ⊗ e₀`. -/
+theorem actOn_coCol_one_field :
+    actOn (· ∉ (leaf (1 : Fin 2)).modes) (coCol 1 ![1, 0] * (coCol 1 ![1, 0])ᵀ) field =
+      (2 : ℝ) • elem ![1, 0] ![1, 0] := by
+  rw [field, map_add, actOn_coCol_one, actOn_coCol_one]
+  norm_num [Fin.sum_univ_two]
+
+private theorem p0g : (leaf (0 : Fin 2)).subtreeProj (leafCol 0 ![3 / 5, 4 / 5])
+    (elem ![2, 4] ![1, 0]) = (22 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0] := by
+  rw [subtreeProj_leafCol_zero]
+  norm_num [Fin.sum_univ_two]
+
+private theorem p0u : (leaf (0 : Fin 2)).subtreeProj (leafCol 0 ![3 / 5, 4 / 5])
+    (elem ![3 / 5, 4 / 5] ![1, 0]) = elem ![3 / 5, 4 / 5] ![1, 0] := by
+  rw [subtreeProj_leafCol_zero]
+  norm_num [Fin.sum_univ_two]
+
+private theorem p0e : (leaf (0 : Fin 2)).subtreeProj (leafCol 0 ![3 / 5, 4 / 5])
+    (elem ![1, 0] ![1, 0]) = (3 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0] := by
+  rw [subtreeProj_leafCol_zero]
+  norm_num [Fin.sum_univ_two]
+
+private theorem p1c : (leaf (1 : Fin 2)).subtreeProj (leafCol 1 ![1, 0]) (elem ![2, 4] ![1, 0]) =
+    elem ![2, 4] ![1, 0] := by
+  rw [subtreeProj_leafCol_one]
+  norm_num [Fin.sum_univ_two]
+
+private theorem p1e : (leaf (1 : Fin 2)).subtreeProj (leafCol 1 ![1, 0]) (elem ![1, 0] ![1, 0]) =
+    elem ![1, 0] ![1, 0] := by
+  rw [subtreeProj_leafCol_one]
+  norm_num [Fin.sum_univ_two]
+
+private theorem p1n : (leaf (1 : Fin 2)).subtreeProj (leafCol 1 ![1, 0]) (elem ![0, 1] ![0, 1]) =
+    0 := by
+  rw [subtreeProj_leafCol_one]
+  norm_num [Fin.sum_univ_two]
+
+private theorem hU₁0 : (leafCol 0 ![3 / 5, 4 / 5])ᵀ * leafCol 0 ![3 / 5, 4 / 5] = 1 := by
+  rw [leafCol_transpose_mul]
+  norm_num [Fin.sum_univ_two]
+
+/-- The doubly normal part at the leaf `0` before the new projector: `e₁ ⊗ e₁`. -/
+private theorem coNormal_zero :
+    (1 - actOn (ι := fun _ : Fin 2 => Fin 2) (· ∉ (leaf (0 : Fin 2)).modes)
+      (coCol 0 ![1, 0] * (coCol 0 ![1, 0])ᵀ)) field = elem ![0, 1] ![0, 1] := by
+  rw [_root_.sub_apply, one_apply_eq_self, actOn_coCol_zero_field, field, add_sub_cancel_left]
+
+/-- The doubly normal part at the leaf `1` is `e₁ ⊗ e₁`. -/
+private theorem normal_one :
+    (1 - (leaf (1 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 1 ![1, 0]))
+      ((1 - actOn (ι := fun _ : Fin 2 => Fin 2) (· ∉ (leaf (1 : Fin 2)).modes)
+        (coCol 1 ![1, 0] * (coCol 1 ![1, 0])ᵀ)) field) = elem ![0, 1] ![0, 1] := by
+  rw [_root_.sub_apply, one_apply_eq_self, _root_.sub_apply, one_apply_eq_self,
+    actOn_coCol_one_field, field, map_sub, map_add, map_smul, p1c, p1n, p1e]
+  abel
+
+/-- **Non-vacuity of `BasisFrame.IsBUGStep` at an inner node with rank one.** On the tree with
+the two leaves `0`, `1` and modes of size two, the step of size `1` from `e₀ ⊗ e₀` with the
+bases `frame` and the constant field `g = (2, 4) ⊗ e₀ + e₁ ⊗ e₁`: the K-steps end at
+`5 (u ⊗ e₀)` and `3 (e₀ ⊗ e₀)`, the new bases are `u = (3/5, 4/5)` and `e₀`, the doubly normal
+parts are at most `‖e₁ ⊗ e₁‖`, and the Galerkin step moves from `(3/5) u ⊗ e₀` along
+`(22/5) u ⊗ e₀` to `5 (u ⊗ e₀)`. -/
+theorem isBUGStep_frame :
+    frame.IsBUGStep (fun _ _ => field) ‖elem ![0, 1] ![0, 1]‖ 0 1 (elem ![1, 0] ![1, 0])
+      ((3 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0] +
+        (1 : ℝ) • ((22 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0])) := by
+  -- the K-steps
+  have hK0 : ∃ y : ℝ → Tensor (fun _ : Fin 2 => Fin 2),
+      ODESolution (fun _ _ => actOn (· ∉ (leaf (0 : Fin 2)).modes)
+        (coCol 0 ![1, 0] * (coCol 0 ![1, 0])ᵀ) field) y 0 1 ∧
+      y 0 = elem ![1, 0] ![1, 0] ∧ y 1 = (5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0] :=
+    ⟨_, Exactness.odeSolution_add_smul_of_const (fun _ _ => actOn_coCol_zero_field)
+      (elem ![1, 0] ![1, 0]) 0 1, by simp, elem_add_elem⟩
+  have hK1 : ∃ y : ℝ → Tensor (fun _ : Fin 2 => Fin 2),
+      ODESolution (fun _ _ => actOn (· ∉ (leaf (1 : Fin 2)).modes)
+        (coCol 1 ![1, 0] * (coCol 1 ![1, 0])ᵀ) field) y 0 1 ∧
+      y 0 = elem ![1, 0] ![1, 0] ∧ y 1 = (3 : ℝ) • elem ![1, 0] ![1, 0] :=
+    ⟨_, Exactness.odeSolution_add_smul_of_const (fun _ _ => actOn_coCol_one_field)
+      (elem ![1, 0] ![1, 0]) 0 1, by simp, by
+        change elem ![1, 0] ![1, 0] + (1 : ℝ) • ((2 : ℝ) • elem ![1, 0] ![1, 0]) =
+          (3 : ℝ) • elem ![1, 0] ![1, 0]
+        module⟩
+  refine ⟨Fin.forall_fin_two.2 ⟨?_, ?_⟩, Fin.forall_fin_two.2 ⟨?_, ?_⟩,
+    Fin.forall_fin_two.2 ⟨?_, ?_⟩, Fin.forall_fin_two.2 ⟨?_, ?_⟩,
+    fun i => leafCol i (![![3 / 5, 4 / 5], ![1, 0]] i),
+    ![(5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0], (3 : ℝ) • elem ![1, 0] ![1, 0]],
+    fun t => (3 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0] +
+      t • ((22 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0]),
+    Fin.forall_fin_two.2 ⟨?_, ?_⟩, Fin.forall_fin_two.2 ⟨hK0, hK1⟩,
+    Fin.forall_fin_two.2 ⟨?_, ?_⟩, Fin.forall_fin_two.2 ⟨?_, ?_⟩, ?_, ?_, rfl⟩
+  -- orthonormal old bases and co-range bases
+  · rw [leafCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  · rw [leafCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  · rw [coCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  · rw [coCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  -- the old projectors fix the start value
+  · rw [subtreeProj_leafCol_zero]; norm_num [Fin.sum_univ_two]
+  · exact p1e
+  · rw [actOn_coCol_zero]; norm_num [Fin.sum_univ_two]
+  · rw [actOn_coCol_one]; norm_num [Fin.sum_univ_two]
+  -- orthonormal new bases
+  · exact hU₁0
+  · rw [leafCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  -- capture
+  · change (leaf (0 : Fin 2)).subtreeProj (leafCol 0 ![3 / 5, 4 / 5])
+      ((5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0]) = (5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0]
+    rw [map_smul, p0u]
+  · change (leaf (1 : Fin 2)).subtreeProj (leafCol 1 ![1, 0])
+      ((3 : ℝ) • elem ![1, 0] ![1, 0]) = (3 : ℝ) • elem ![1, 0] ![1, 0]
+    rw [map_smul, p1e]
+  -- the doubly normal parts
+  · intro t _
+    simp only [Matrix.cons_val_zero]
+    rw [coNormal_zero, _root_.sub_apply, one_apply_eq_self]
+    exact (isOrthProj_subtreeProj _ hU₁0).norm_sub_le _
+  · intro t _
+    simp only [Matrix.cons_val_zero, Matrix.cons_val_one]
+    rw [normal_one]
+  -- the Galerkin step
+  · refine Exactness.odeSolution_add_smul_of_const (fun _ _ => ?_) _ 0 1
+    dsimp only
+    rw [modeProd_succ, modeProd_succ, modeProd_zero, mul_apply_eq_comp, mul_apply_eq_comp,
+      one_apply_eq_self]
+    simp only [Fin.succ_zero_eq_one, Matrix.cons_val_zero, Matrix.cons_val_one]
+    rw [field, map_add, p1c, p1n, add_zero, p0g]
+  · dsimp only
+    rw [modeProd_succ, modeProd_succ, modeProd_zero, mul_apply_eq_comp, mul_apply_eq_comp,
+      one_apply_eq_self]
+    simp only [Fin.succ_zero_eq_one, Matrix.cons_val_zero, Matrix.cons_val_one]
+    rw [p1e, p0e, zero_smul, add_zero]
+
+/-- The step `isBUGStep_frame` is an abstract TTN BUG step. -/
+example := isBUGStep_frame.isTTNBUGStep _ isValid_node
+
+/-- The numerical solution of `isBUGStep_frame` misses the exact solution
+`A(t) = e₀ ⊗ e₀ + t g` by `-e₁ ⊗ e₁` after one step. -/
+example : ((3 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0] +
+      (1 : ℝ) • ((22 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0])) -
+    (elem ![1, 0] ![1, 0] + (1 : ℝ) • field) = -elem ![0, 1] ![0, 1] := by
+  have h := elem_add_elem
+  rw [one_smul, ← eq_sub_iff_add_eq] at h
+  rw [field, h]
+  module
+
+/-- Non-vacuity of `BasisFrame.bug_global_error` with an error that is not zero: one step of
+`isBUGStep_frame` (`L = 0`, `B = ‖g‖`, `ε = ‖e₁ ⊗ e₁‖`, `δ = 0`) against the exact solution
+`A(t) = e₀ ⊗ e₀ + t g`; the left-hand side at `n = 1` is `‖e₁ ⊗ e₁‖` (previous example). -/
+example : ∀ n : ℕ, n ≤ 1 → (n : ℝ) * 1 ≤ 1 →
+    ‖(if n = 0 then elem ![1, 0] ![1, 0] else (3 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0] +
+        (1 : ℝ) • ((22 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0])) -
+      (elem ![1, 0] ![1, 0] + (0 + (n : ℝ) * 1) • field)‖ ≤
+      Real.exp (0 * 1) * (0 + 1 * (3 * (node fun i : Fin 2 => leaf i).nodeCount *
+        (‖elem ![0, 1] ![0, 1]‖ + 6 * 0 * ‖field‖ * 1))) :=
+  BasisFrame.bug_global_error isValid_node (F := fun _ _ => field) (L := 0) (B := ‖field‖)
+    (ε := ‖elem ![0, 1] ![0, 1]‖) (fun _ _ _ => by simp) le_rfl (fun _ _ => le_rfl)
+    (fun _ => continuous_const) (norm_nonneg _) (t₀ := 0) (h := 1) zero_le_one (by simp)
+    (N := 1) (A := fun t => elem ![1, 0] ![1, 0] + t • field)
+    (Exactness.odeSolution_add_smul_of_const (fun _ _ => rfl) _ _ _) (f := fun _ => frame)
+    (Y := fun n => if n = 0 then elem ![1, 0] ![1, 0] else (3 / 5 : ℝ) •
+      elem ![3 / 5, 4 / 5] ![1, 0] + (1 : ℝ) • ((22 / 5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0]))
+    (fun n hn => by
+      obtain rfl : n = 0 := by omega
+      simpa using isBUGStep_frame)
+    (δ := 0) (T := 1) (by simp)
+
+end BUGExample
 
 end DimTree
 

@@ -1,4 +1,4 @@
-import LeanDLRA.Tensor.TTN.ParallelBUG
+import LeanDLRA.Tensor.TTN.BUG
 import LeanDLRA.Tensor.TTN.Abstract.RankAdaptiveBUG
 
 /-!
@@ -161,42 +161,152 @@ theorem augBUG_global_error {τ : DimTree κ} (hv : τ.IsValid) {F : ℝ → Ten
 
 end BasisFrame
 
-/-! ### Non-vacuity -/
+/-! ### Non-vacuity: a step on two modes of size two -/
 
-/-- Non-vacuity of `BasisFrame.IsAugBUGStep` at an inner node: on the tree with two leaves (modes
-`0` and `1` of dimension one), the zero field with the zero tensor, rank-zero bases and no new
-directions is a rank-adaptive TTN BUG step on every time interval. -/
-private theorem isAugBUGStep_zero_aux (t₀ t₁ : ℝ) :
-    (BasisFrame.node (ι := fun _ : Fin 2 => Fin 1) (cs := fun i : Fin 2 => leaf i)
-      (fun _ => 0) (fun _ => 0) (fun _ => 0) (fun _ => 0)
-      (fun i => BasisFrame.leaf i)).IsAugBUGStep (fun _ _ => 0) 0 0 t₀ t₁ 0 0 := by
-  have hz : ODESolution (fun _ _ => (0 : Tensor (fun _ : Fin 2 => Fin 1))) (fun _ => 0) t₀ t₁ :=
-    ⟨continuousOn_const, fun t _ => by simpa using hasDerivWithinAt_const t (Ici t) _⟩
-  refine ⟨fun _ => Subsingleton.elim _ _, fun _ => Subsingleton.elim _ _, fun _ => map_zero _,
-    fun _ => map_zero _, fun _ => 0, fun _ => 0, fun _ => 0, fun _ => 0,
-    fun _ => Subsingleton.elim _ _, fun _ => Subsingleton.elim _ _, fun i => ?_,
-    fun _ => map_zero _, fun _ t _ => by simp, by simpa using hz, rfl, by simp⟩
-  refine ⟨fun _ => 0, ?_, rfl, rfl⟩
-  convert hz using 1
-  funext t x
-  simp
+namespace BUGExample
 
-/-- The dimension tree with two leaves `0` and `1` is valid, so the step of the non-vacuity
-example is an abstract rank-adaptive TTN BUG step. -/
-example := (isAugBUGStep_zero_aux 0 1).isAugTTNBUGStep _
-  (show (node fun i : Fin 2 => leaf i).IsValid from
-    ⟨fun _ => trivial, fun _ _ hij => Finset.disjoint_singleton.2 hij⟩)
+open Tensor
 
-/-- The hypotheses of `BasisFrame.augBUG_global_error` are satisfiable: `N` steps of size `1` of
-the non-vacuity example, with the zero field (`L = B = ε = ϑ = 0`) and the zero solution. -/
-example (N : ℕ) := BasisFrame.augBUG_global_error
-  (show (node fun i : Fin 2 => leaf i).IsValid from
-    ⟨fun _ => trivial, fun _ _ hij => Finset.disjoint_singleton.2 hij⟩)
-  (F := fun _ _ => (0 : Tensor (fun _ : Fin 2 => Fin 1))) (L := 0) (B := 0) (ε := 0) (ϑ := 0)
-  (fun _ _ _ => by simp) le_rfl (fun _ _ => by simp) (fun _ => continuous_const) le_rfl le_rfl
-  (t₀ := 0) (h := 1) zero_le_one (by simp) (N := N) (A := fun _ => 0)
-  ⟨continuousOn_const, fun t _ => by simpa using hasDerivWithinAt_const t (Ici t) _⟩
-  (Y := fun _ => 0) (fun _ _ => isAugBUGStep_zero_aux _ _) (δ := 0) (T := N) (by simp)
+/-- The old basis `e₀` and the new direction `e₁` of the leaf `0` together span mode `0`. -/
+private theorem augProj_zero (a b : Fin 2 → ℝ) :
+    ((leaf (0 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 0 ![1, 0]) +
+      (leaf (0 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 0 ![0, 1]))
+      (elem a b) = elem a b := by
+  rw [_root_.add_apply, subtreeProj_leafCol_zero, subtreeProj_leafCol_zero]
+  exact tensor_ext fun i j => by
+    fin_cases i <;> simp [elem, Fin.sum_univ_two]
+
+/-- The old basis `e₀` and the new direction `e₁` of the leaf `1` together span mode `1`. -/
+private theorem augProj_one (a b : Fin 2 → ℝ) :
+    ((leaf (1 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 1 ![1, 0]) +
+      (leaf (1 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 1 ![0, 1]))
+      (elem a b) = elem a b := by
+  rw [_root_.add_apply, subtreeProj_leafCol_one, subtreeProj_leafCol_one]
+  exact tensor_ext fun i j => by
+    fin_cases j <;> simp [elem, Fin.sum_univ_two, mul_comm]
+
+/-- At the leaf `0` the doubly normal part vanishes: the augmented basis spans mode `0`. -/
+private theorem augNormal_zero :
+    (1 - ((leaf (0 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 0 ![1, 0]) +
+      (leaf (0 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 0 ![0, 1])))
+      ((1 - actOn (ι := fun _ : Fin 2 => Fin 2) (· ∉ (leaf (0 : Fin 2)).modes)
+        (coCol 0 ![1, 0] * (coCol 0 ![1, 0])ᵀ)) field) = 0 := by
+  rw [_root_.sub_apply, one_apply_eq_self, _root_.sub_apply, one_apply_eq_self,
+    actOn_coCol_zero_field, field, add_sub_cancel_left, augProj_zero, sub_self]
+
+/-- At the leaf `1` the doubly normal part vanishes: the augmented basis spans mode `1`. -/
+private theorem augNormal_one :
+    (1 - ((leaf (1 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 1 ![1, 0]) +
+      (leaf (1 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 1 ![0, 1])))
+      ((1 - actOn (ι := fun _ : Fin 2 => Fin 2) (· ∉ (leaf (1 : Fin 2)).modes)
+        (coCol 1 ![1, 0] * (coCol 1 ![1, 0])ᵀ)) field) = 0 := by
+  rw [_root_.sub_apply, one_apply_eq_self, _root_.sub_apply, one_apply_eq_self,
+    actOn_coCol_one_field, field, map_sub, map_add, map_smul, augProj_one, augProj_one,
+    augProj_one, sub_self]
+
+/-- **Non-vacuity of `BasisFrame.IsAugBUGStep` at an inner node with rank one.** On the tree with
+the two leaves `0`, `1` and modes of size two, the step of size `1` from `e₀ ⊗ e₀` with the bases
+`frame` (rank one) and the constant field `g = (2, 4) ⊗ e₀ + e₁ ⊗ e₁`: the new directions `e₁`
+(orthogonal to the old bases `e₀`) augment both leaves to their full mode spaces, the K-steps
+end at `5 (u ⊗ e₀)` and `3 (e₀ ⊗ e₀)` (`u = (3/5, 4/5)`), the doubly normal parts vanish, the
+Galerkin step is `e₀ ⊗ e₀ + t g`, and the truncation to `5 (u ⊗ e₀)` (rank one) drops
+`e₁ ⊗ e₁`, with error `ϑ = ‖e₁ ⊗ e₁‖`. -/
+theorem isAugBUGStep_frame :
+    frame.IsAugBUGStep (fun _ _ => field) 0 ‖elem ![0, 1] ![0, 1]‖ 0 1 (elem ![1, 0] ![1, 0])
+      ((5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0]) := by
+  have hK0 : ∃ y : ℝ → Tensor (fun _ : Fin 2 => Fin 2),
+      ODESolution (fun _ _ => actOn (· ∉ (leaf (0 : Fin 2)).modes)
+        (coCol 0 ![1, 0] * (coCol 0 ![1, 0])ᵀ) field) y 0 1 ∧
+      y 0 = elem ![1, 0] ![1, 0] ∧ y 1 = (5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0] :=
+    ⟨_, Exactness.odeSolution_add_smul_of_const (fun _ _ => actOn_coCol_zero_field)
+      (elem ![1, 0] ![1, 0]) 0 1, by simp, elem_add_elem⟩
+  have hK1 : ∃ y : ℝ → Tensor (fun _ : Fin 2 => Fin 2),
+      ODESolution (fun _ _ => actOn (· ∉ (leaf (1 : Fin 2)).modes)
+        (coCol 1 ![1, 0] * (coCol 1 ![1, 0])ᵀ) field) y 0 1 ∧
+      y 0 = elem ![1, 0] ![1, 0] ∧ y 1 = (3 : ℝ) • elem ![1, 0] ![1, 0] :=
+    ⟨_, Exactness.odeSolution_add_smul_of_const (fun _ _ => actOn_coCol_one_field)
+      (elem ![1, 0] ![1, 0]) 0 1, by simp, by
+        change elem ![1, 0] ![1, 0] + (1 : ℝ) • ((2 : ℝ) • elem ![1, 0] ![1, 0]) =
+          (3 : ℝ) • elem ![1, 0] ![1, 0]
+        module⟩
+  refine ⟨Fin.forall_fin_two.2 ⟨?_, ?_⟩, Fin.forall_fin_two.2 ⟨?_, ?_⟩,
+    Fin.forall_fin_two.2 ⟨?_, ?_⟩, Fin.forall_fin_two.2 ⟨?_, ?_⟩, fun _ => 1,
+    fun i => leafCol i ![0, 1],
+    ![(5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0], (3 : ℝ) • elem ![1, 0] ![1, 0]],
+    fun t => elem ![1, 0] ![1, 0] + t • field,
+    Fin.forall_fin_two.2 ⟨?_, ?_⟩, Fin.forall_fin_two.2 ⟨?_, ?_⟩,
+    Fin.forall_fin_two.2 ⟨hK0, hK1⟩, Fin.forall_fin_two.2 ⟨?_, ?_⟩,
+    Fin.forall_fin_two.2 ⟨?_, ?_⟩, ?_, by simp, ?_⟩
+  -- orthonormal old bases and co-range bases
+  · rw [leafCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  · rw [leafCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  · rw [coCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  · rw [coCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  -- the old projectors fix the start value
+  · rw [subtreeProj_leafCol_zero]; norm_num [Fin.sum_univ_two]
+  · rw [subtreeProj_leafCol_one]; norm_num [Fin.sum_univ_two]
+  · rw [actOn_coCol_zero]; norm_num [Fin.sum_univ_two]
+  · rw [actOn_coCol_one]; norm_num [Fin.sum_univ_two]
+  -- orthonormal new directions, orthogonal to the old bases
+  · rw [leafCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  · rw [leafCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  · rw [leafCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  · rw [leafCol_transpose_mul]; norm_num [Fin.sum_univ_two]
+  -- capture by the augmented bases
+  · change ((leaf (0 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 0 ![1, 0]) +
+      (leaf (0 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 0 ![0, 1]))
+        ((5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0]) = (5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0]
+    rw [map_smul, augProj_zero]
+  · change ((leaf (1 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 1 ![1, 0]) +
+      (leaf (1 : Fin 2)).subtreeProj (ι := fun _ : Fin 2 => Fin 2) (leafCol 1 ![0, 1]))
+        ((3 : ℝ) • elem ![1, 0] ![1, 0]) = (3 : ℝ) • elem ![1, 0] ![1, 0]
+    rw [map_smul, augProj_one]
+  -- the doubly normal parts vanish
+  · intro t _
+    dsimp only
+    rw [augNormal_zero, norm_zero]
+  · intro t _
+    dsimp only
+    rw [augNormal_one, norm_zero]
+  -- the Galerkin step in the augmented bases is the exact flow
+  · refine Exactness.odeSolution_add_smul_of_const (fun _ _ => ?_) _ 0 1
+    dsimp only
+    rw [modeProd_succ, modeProd_succ, modeProd_zero, mul_apply_eq_comp, mul_apply_eq_comp,
+      one_apply_eq_self]
+    simp only [Fin.succ_zero_eq_one]
+    rw [field, map_add, augProj_one, augProj_one, map_add, augProj_zero, augProj_zero]
+  -- the truncation drops `e₁ ⊗ e₁`
+  · have h := elem_add_elem
+    rw [one_smul] at h
+    change ‖(5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0] - (elem ![1, 0] ![1, 0] + (1 : ℝ) • field)‖ ≤
+      ‖elem ![0, 1] ![0, 1]‖
+    rw [one_smul, field, ← add_assoc, h, sub_add_cancel_left, norm_neg]
+
+/-- The step `isAugBUGStep_frame` is an abstract rank-adaptive TTN BUG step. -/
+example := isAugBUGStep_frame.isAugTTNBUGStep _ isValid_node
+
+/-- Non-vacuity of `BasisFrame.augBUG_global_error` with an error that is not zero: one step of
+`isAugBUGStep_frame` (`L = 0`, `B = ‖g‖`, `ε = 0`, `ϑ = ‖e₁ ⊗ e₁‖`, `δ = 0`) against the exact
+solution `A(t) = e₀ ⊗ e₀ + t g`; at `n = 1` the left-hand side is the truncation error
+`‖e₁ ⊗ e₁‖`. -/
+example : ∀ n : ℕ, n ≤ 1 → (n : ℝ) * 1 ≤ 1 →
+    ‖(if n = 0 then elem ![1, 0] ![1, 0] else (5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0]) -
+      (elem ![1, 0] ![1, 0] + (0 + (n : ℝ) * 1) • field)‖ ≤
+      Real.exp (0 * 1) * (0 + 1 * (3 * (node fun i : Fin 2 => leaf i).nodeCount *
+        (0 + 6 * 0 * ‖field‖ * 1)) + 3 * (node fun i : Fin 2 => leaf i).nodeCount *
+          (n * ‖elem ![0, 1] ![0, 1]‖)) :=
+  BasisFrame.augBUG_global_error isValid_node (F := fun _ _ => field) (L := 0) (B := ‖field‖)
+    (ε := 0) (ϑ := ‖elem ![0, 1] ![0, 1]‖) (fun _ _ _ => by simp) le_rfl (fun _ _ => le_rfl)
+    (fun _ => continuous_const) le_rfl (norm_nonneg _) (t₀ := 0) (h := 1) zero_le_one (by simp)
+    (N := 1) (A := fun t => elem ![1, 0] ![1, 0] + t • field)
+    (Exactness.odeSolution_add_smul_of_const (fun _ _ => rfl) _ _ _) (f := fun _ => frame)
+    (Y := fun n => if n = 0 then elem ![1, 0] ![1, 0] else (5 : ℝ) • elem ![3 / 5, 4 / 5] ![1, 0])
+    (fun n hn => by
+      obtain rfl : n = 0 := by omega
+      simpa using isAugBUGStep_frame)
+    (δ := 0) (T := 1) (by simp)
+
+end BUGExample
 
 end DimTree
 
