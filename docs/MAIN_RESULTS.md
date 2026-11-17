@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit b5e86df (2026-11-17). A theorem is quoted from its
+files and were compared with them at commit 9b54ff3 (2026-11-17). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -721,7 +721,7 @@ Mathlib; for `L ≠ 0` its value is `δ e^{L(t-a)} + ε (e^{L(t-a)} - 1) / L`. T
 Source: Kieri, Lubich and Walach 2016 [KieriLubichWalach2016]; Carrel, Gander and Vandereycken,
 arXiv 2203.08455, Theorem 2.3, as cited in the docstring.
 
-`dlra_norm_sub_truncation_le_integral` in [`LeanDLRA/DLRA/QuasiOptimality.lean`, lines 513–524](../LeanDLRA/DLRA/QuasiOptimality.lean#L513-L524):
+`dlra_norm_sub_truncation_le_integral` in [`LeanDLRA/DLRA/QuasiOptimality.lean`, lines 537–548](../LeanDLRA/DLRA/QuasiOptimality.lean#L537-L548):
 
 ```lean
 theorem dlra_norm_sub_truncation_le_integral {r : ℕ} (hr : 0 < r)
@@ -990,7 +990,7 @@ of the distance to `A`, `P(X) (A - X) = 0`, for example best approximations. The
 section bound the distance of the DLRA solution `Y` from `X` by the time integral of the
 approximation error `‖X - A‖`. All norms are Frobenius norms.
 
-`IsDLRASolution.norm_sub_le_integral` in [`LeanDLRA/DLRA/QuasiOptimality.lean`, lines 389–399](../LeanDLRA/DLRA/QuasiOptimality.lean#L389-L399):
+`IsDLRASolution.norm_sub_le_integral` in [`LeanDLRA/DLRA/QuasiOptimality.lean`, lines 393–403](../LeanDLRA/DLRA/QuasiOptimality.lean#L393-L403):
 
 ```lean
 theorem IsDLRASolution.norm_sub_le_integral {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}

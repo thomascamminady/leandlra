@@ -10,7 +10,7 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 191 modules with 567 definitions (0 of them without a docstring) and 63 private definitions, which are helpers of one file and are not listed.
+The core has 195 modules with 567 definitions (0 of them without a docstring) and 63 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 

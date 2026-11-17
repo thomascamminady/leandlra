@@ -34,7 +34,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`LinearAlgebra/Projection/Defs`](../LeanDLRA/LinearAlgebra/Projection/Defs.lean) | Definitions: orthogonal and oblique projectors | 9 |  |
 | [`LinearAlgebra/SVD/Defs`](../LeanDLRA/LinearAlgebra/SVD/Defs.lean) | Definitions: singular vectors and the truncated SVD | 1 |  |
 | [`LinearAlgebra/SVD/MinMax`](../LeanDLRA/LinearAlgebra/SVD/MinMax.lean) | Lower bounds for singular values from subspaces | 3 |  |
-| [`LinearAlgebra/SVD/SinTheta`](../LeanDLRA/LinearAlgebra/SVD/SinTheta.lean) | Sin-Θ theorems: Wedin and Davis–Kahan | 15 |  |
+| [`LinearAlgebra/SVD/SinTheta`](../LeanDLRA/LinearAlgebra/SVD/SinTheta.lean) | Sin-Θ theorems: Wedin and Davis–Kahan | 17 |  |
 | [`LinearAlgebra/SVD/TruncationDeriv`](../LeanDLRA/LinearAlgebra/SVD/TruncationDeriv.lean) | Differentiability of the truncated singular value decomposition under a gap | 29 |  |
 
 ## Matrices
@@ -70,6 +70,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`FixedRank/TangentSpace`](../LeanDLRA/FixedRank/TangentSpace.lean) | Tangent vectors of the fixed-rank manifold | 13 | [1803.10473](https://arxiv.org/abs/1803.10473), [2010.05249](https://arxiv.org/abs/2010.05249) |
 | [`FixedRank/TangentSpace/Curvature`](../LeanDLRA/FixedRank/TangentSpace/Curvature.lean) | Curvature bounds at a matrix, tangent velocities and first-order optimality | 12 |  |
 | [`FixedRank/TangentSpace/Defs`](../LeanDLRA/FixedRank/TangentSpace/Defs.lean) | Definitions: tangent projector and tangent space at a point of the fixed-rank manifold | 2 |  |
+| [`FixedRank/TangentSpace/ProjectorLipschitz`](../LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean) | The Lipschitz constant `1` of the tangent projector | 31 |  |
 | [`FixedRank/TangentStepTruncation`](../LeanDLRA/FixedRank/TangentStepTruncation.lean) | Truncating a tangent step: the distance to rank `r` is of second order | 2 | [2111.14540](https://arxiv.org/abs/2111.14540) |
 
 ## The DLRA problem
@@ -80,9 +81,12 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`DLRA/DynamicallyOrthogonal`](../LeanDLRA/DLRA/DynamicallyOrthogonal.lean) | Dynamically orthogonal formulations of dynamical low-rank approximation | 20 |  |
 | [`DLRA/Existence`](../LeanDLRA/DLRA/Existence.lean) | Existence and uniqueness of the DLRA solution | 22 |  |
 | [`DLRA/GaugeInvariance`](../LeanDLRA/DLRA/GaugeInvariance.lean) | Results of arXiv 2503.18271: On-the-fly ROM of the filter density function (TDB/DO) | 4 | [2503.18271](https://arxiv.org/abs/2503.18271) |
-| [`DLRA/QuasiOptimality`](../LeanDLRA/DLRA/QuasiOptimality.lean) | Quasi-optimality of dynamical low-rank approximation for matrices | 34 |  |
+| [`DLRA/QuasiOptimality`](../LeanDLRA/DLRA/QuasiOptimality.lean) | Quasi-optimality of dynamical low-rank approximation for matrices | 39 |  |
 | [`DLRA/QuasiOptimalityGap`](../LeanDLRA/DLRA/QuasiOptimalityGap.lean) | Quasi-optimality of dynamical low-rank approximation against the truncated SVD under a gap | 5 |  |
-| [`DLRA/QuasiOptimalityMargin`](../LeanDLRA/DLRA/QuasiOptimalityMargin.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ / 2` | 7 |  |
+| [`DLRA/QuasiOptimalityMargin`](../LeanDLRA/DLRA/QuasiOptimalityMargin.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ / 2` | 10 |  |
+| [`DLRA/QuasiOptimalityNormal`](../LeanDLRA/DLRA/QuasiOptimalityNormal.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ` | 11 |  |
+| [`DLRA/QuasiOptimalitySharp`](../LeanDLRA/DLRA/QuasiOptimalitySharp.lean) | Quasi-optimality of matrix DLRA with the Lipschitz constant `1` of the tangent projector | 11 |  |
+| [`DLRA/QuasiOptimalityTruncation`](../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean) | Quasi-optimality of matrix DLRA against the truncated SVD with a margin below `ρ` | 3 |  |
 | [`DLRA/QuasiOptimalityTube`](../LeanDLRA/DLRA/QuasiOptimalityTube.lean) | Quasi-optimality of dynamical low-rank approximation for a field Lipschitz near the solution | 18 |  |
 
 ## Dynamics
@@ -96,7 +100,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
 | [`Integrators/BUG`](../LeanDLRA/Integrators/BUG.lean) | Robust error bound of the basis-update & Galerkin (BUG) integrator | 16 |  |
-| [`Integrators/BUGCapture`](../LeanDLRA/Integrators/BUGCapture.lean) | The capture estimate of the BUG integrator with smaller constants | 8 |  |
+| [`Integrators/BUGCapture`](../LeanDLRA/Integrators/BUGCapture.lean) | The capture estimate of the BUG integrator with smaller constants | 9 |  |
 | [`Integrators/BUGCore`](../LeanDLRA/Integrators/BUGCore.lean) | The basis update and the BUG step without analysis constants | 20 |  |
 | [`Integrators/Defs`](../LeanDLRA/Integrators/Defs.lean) | Definitions: time grids, local errors, step relations and runs | 11 |  |
 | [`Integrators/EulerBUG`](../LeanDLRA/Integrators/EulerBUG.lean) | Explicit-Euler BUG, XL/sXL and GAP integrators | 51 | [2209.00550](https://arxiv.org/abs/2209.00550), [2502.07040](https://arxiv.org/abs/2502.07040), [2502.08951](https://arxiv.org/abs/2502.08951), [2505.19929](https://arxiv.org/abs/2505.19929), [2609.02721](https://arxiv.org/abs/2609.02721) |
@@ -130,7 +134,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/Matrix/TruncBUGRun`](../LeanDLRA/Integrators/Matrix/TruncBUGRun.lean) | Runs of the augmented BUG integrator with truncation to a fixed rank | 8 |  |
 | [`Integrators/Method`](../LeanDLRA/Integrators/Method.lean) | Step methods: existence of a run and error bound from four properties of one step | 9 |  |
 | [`Integrators/MethodGrid`](../LeanDLRA/Integrators/MethodGrid.lean) | Tube-local methods on general grids | 3 |  |
-| [`Integrators/MethodOneSided`](../LeanDLRA/Integrators/MethodOneSided.lean) | Runs of a method with a one-sided Lipschitz constant in the error bound | 16 |  |
+| [`Integrators/MethodOneSided`](../LeanDLRA/Integrators/MethodOneSided.lean) | Runs of a method with a one-sided Lipschitz constant in the error bound | 19 |  |
 | [`Integrators/MethodTolerance`](../LeanDLRA/Integrators/MethodTolerance.lean) | Tube-local methods with a tolerance per step | 5 |  |
 | [`Integrators/ParallelBUG`](../LeanDLRA/Integrators/ParallelBUG.lean) | The parallel rank-adaptive BUG integrator: robust local and global error bounds | 29 |  |
 | [`Integrators/PerturbedField`](../LeanDLRA/Integrators/PerturbedField.lean) | Hyper-reduced, surrogate and frozen-coupling vector fields | 21 |  |
