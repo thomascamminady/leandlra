@@ -402,6 +402,21 @@ private theorem exists_iteratedDerivWithin_bounds {E : Type*} [NormedAddCommGrou
   obtain ⟨M₃, hM₃⟩ := isCompact_Icc.exists_bound_of_continuousOn (hc 3 le_rfl)
   exact ⟨M₂, M₃, hM₂, hM₃⟩
 
+/-- The derivatives of order two and three of an affine curve vanish on an interval. -/
+private theorem iteratedDerivWithin_affine {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (Y C : E) {a b : ℝ} (hab : a < b) {n : ℕ} (hn : n = 2 ∨ n = 3) {t : ℝ} (ht : t ∈ Icc a b) :
+    iteratedDerivWithin n (fun t : ℝ => Y + (t - a) • C) (Icc a b) t = 0 := by
+  have hd : deriv (fun t : ℝ => Y + (t - a) • C) = fun _ => C := by
+    funext s
+    exact ((((hasDerivAt_id s).sub_const a).smul_const C).const_add Y).deriv.trans (one_smul ℝ C)
+  rcases hn with rfl | rfl
+  · rw [iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Icc hab) (by fun_prop) ht,
+      iteratedDeriv_succ', iteratedDeriv_one, hd]
+    simp
+  · rw [iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Icc hab) (by fun_prop) ht,
+      iteratedDeriv_succ', iteratedDeriv_succ', iteratedDeriv_one, hd]
+    simp
+
 /-- The exact solution of `rowField` from `e₁ e₁ᵀ` with its coefficients written out. -/
 private theorem exactSolution_eq : exactSolution = fun t : ℝ =>
     (!![1, 0; 0, 0; 0, 0] : Matrix (Fin 3) (Fin 2) ℝ) + t • !![0, 1; 1, 0; 0, 0] +
@@ -454,7 +469,9 @@ private theorem kCap_rowLeft :
 
 /-- **Non-vacuity of `ODESolution.norm_midpoint_defect_le`, `ODESolution.norm_half_step_sub_le`
 and `norm_predictor_sub_le`** on the field `rowField` (normal component zero at every rank-one
-point) from `Y₀ = e₁ e₁ᵀ` with `h = 3/2`. -/
+point) from `Y₀ = e₁ e₁ᵀ` with `h = 3/2`. The derivative bounds `M₂`, `M₃` of the cubic exact
+solution are only asserted to exist (by compactness): the statement shows that the hypotheses
+can be met, and as an existential over `M₂`, `M₃` it is not a quantitative bound. -/
 example : ∃ M₂ M₃ : ℝ,
     ‖exactSolution (0 + 3 / 2) - exactSolution 0 -
         (3 / 2 : ℝ) • rowField (exactSolution (0 + 3 / 2 / 2))‖ ≤ M₃ * (3 / 2) ^ 3 / 24 ∧
@@ -478,7 +495,9 @@ example : ∃ M₂ M₃ : ℝ,
 `h = 3/2` (every rank-adaptive BUG step with a two-column left basis has error at least `h²/2`
 there, `error_ge_of_isRankAdaptiveStep`): the bases `Ua = [e₁, (4 e₂ + 3 e₃)/5]` and `Va = I₂`,
 `ε = 0`, the capture defects `θ`, `θ'` taken as the norms themselves, and the Lipschitz
-bound on the three points that the theorem compares. -/
+bound on the three points that the theorem compares. As in the previous example, `L`, `M₂`,
+`M₃` are only asserted to exist: the statement shows that the hypotheses can be met, not a
+quantitative bound. -/
 example : ∃ L M₂ M₃ : ℝ,
     ‖startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ +
         (3 / 2 : ℝ) • galerkinProj rowLeft (1 : Matrix (Fin 2) (Fin 2) ℝ) (rowField rowPredictor) -
@@ -549,28 +568,36 @@ private theorem kCap_augmentedLeft :
 /-- **Non-vacuity of `galerkin_local_error`**: the constant field `F ≡ C`,
 `C = [[0, 1], [1, 0], [0, 1]]` (`L = Lₜ = 1`, `B = ε = ‖C‖`), the start `Y₀ = e₁ e₁ᵀ`, the bases
 `Ua = [e₁, e₂]`, `Va = I₂`, every `h > 0`; the capture defect
-`θ = ‖(1 - Ua Uaᵀ) C (1 - V₀ V₀ᵀ)‖` and `θ'` are taken as the norms themselves. -/
-example {h : ℝ} (hh : 0 < h) : ∃ M₂ M₃ : ℝ,
+`θ = ‖(1 - Ua Uaᵀ) C (1 - V₀ V₀ᵀ)‖` and `θ'` are taken as the norms themselves; the exact
+solution `Y₀ + t C` is affine, so its derivative bounds are `M₂ = M₃ = 0`. -/
+example {h : ℝ} (hh : 0 < h) :
     ‖(startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ +
           (0 + h - 0) • galerkinProj augmentedLeft (1 : Matrix (Fin 2) (Fin 2) ℝ) constField) -
         (startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (0 + h - 0) • constField)‖ ≤
       (Real.exp (1 * h) - 1) *
-          (h * ((1 * ‖constField‖ + 1) * h / 2 + 1 * (M₂ * h ^ 2 / 8 + h / 2 * ‖constField‖) +
+          (h * ((1 * ‖constField‖ + 1) * h / 2 + 1 * (0 * h ^ 2 / 8 + h / 2 * ‖constField‖) +
             (‖(1 - augmentedLeft * augmentedLeftᵀ) * constField *
               (1 - startRight * startRightᵀ)‖ +
               ‖(1 - startLeft * startLeftᵀ) * constField *
                 (1 - (1 : Matrix (Fin 2) (Fin 2) ℝ) * (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ)‖))) +
-        (h * (1 * (M₂ * h ^ 2 / 8 + h / 2 * ‖constField‖) +
+        (h * (1 * (0 * h ^ 2 / 8 + h / 2 * ‖constField‖) +
             (‖(1 - augmentedLeft * augmentedLeftᵀ) * constField *
               (1 - startRight * startRightᵀ)‖ +
               ‖(1 - startLeft * startLeftᵀ) * constField *
                 (1 - (1 : Matrix (Fin 2) (Fin 2) ℝ) * (1 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ)‖)) +
-          M₃ * h ^ 3 / 24) := by
+          0 * h ^ 3 / 24) := by
   have hA3 : ContDiffOn ℝ 3 (fun t : ℝ =>
       startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
       (Icc 0 (0 + h)) := by fun_prop
-  obtain ⟨M₂, M₃, hM₂, hM₃⟩ := exists_iteratedDerivWithin_bounds hh hA3
-  exact ⟨M₂, M₃, galerkin_local_error (F := fun _ _ => constField) (D := univ) (t₀ := 0) (h := h)
+  have hM₂ : ∀ t ∈ Icc (0 : ℝ) (0 + h), ‖iteratedDerivWithin 2 (fun t : ℝ =>
+      startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
+        (Icc 0 (0 + h)) t‖ ≤ 0 := fun t ht => by
+    rw [iteratedDerivWithin_affine _ _ (by linarith) (Or.inl rfl) ht, norm_zero]
+  have hM₃ : ∀ t ∈ Icc (0 : ℝ) (0 + h), ‖iteratedDerivWithin 3 (fun t : ℝ =>
+      startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
+        (Icc 0 (0 + h)) t‖ ≤ 0 := fun t ht => by
+    rw [iteratedDerivWithin_affine _ _ (by linarith) (Or.inr rfl) ht, norm_zero]
+  exact galerkin_local_error (F := fun _ _ => constField) (D := univ) (t₀ := 0) (h := h)
     (Lₜ := 1) (B := ‖constField‖) (S₀ := 1) (G := constField) (Ua := augmentedLeft)
     (Va := (1 : Matrix (Fin 2) (Fin 2) ℝ))
     (A := fun t => startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
@@ -581,29 +608,30 @@ example {h : ℝ} (hh : 0 < h) : ∃ M₂ M₃ : ℝ,
     startLeft_orth startRight_orth hh (mem_univ _) (MatrixBUG.odeSolution_affine _ _ _ _)
     (by simp) hA3 hM₂ hM₃ rfl rfl orth_augmentedLeft (by simp) augU_augmentedLeft (by simp)
     kCap_augmentedLeft (by simp) le_rfl le_rfl (MatrixBUG.odeSolution_affine _ _ _ _)
-    (by simp)⟩
+    (by simp)
 
 /-- **Non-vacuity of `norm_update_sub_le_cube_add`**: the constant field `F ≡ C`,
 `C = [[0, 1], [1, 0], [0, 1]]` (`L = Lₜ = 0`, `B = ε = ‖C‖`), the start `Y₀ = e₁ e₁ᵀ`, the bases
-`Ua = [e₁, e₂]`, `Va = I₂`, `h = H = 1/2`, `ρ = 16`, `κ = 1`, `D₁ = 2`, `D₂ = 1`; `M₂`, `M₃`
-are bounds of the derivatives of the exact solution `Y₀ + t C`. -/
-example : ∃ M₂ M₃ : ℝ,
-    (∀ t ∈ Icc (0 : ℝ) (0 + 1 / 2), ‖iteratedDerivWithin 2 (fun t : ℝ =>
-      startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
-        (Icc 0 (0 + 1 / 2)) t‖ ≤ M₂) ∧
-    (∀ t ∈ Icc (0 : ℝ) (0 + 1 / 2), ‖iteratedDerivWithin 3 (fun t : ℝ =>
-      startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
-        (Icc 0 (0 + 1 / 2)) t‖ ≤ M₃) ∧
+`Ua = [e₁, e₂]`, `Va = I₂`, `h = H = 1/2`, `ρ = 16`, `κ = 1`, `D₁ = 2`, `D₂ = 1`; the exact
+solution `Y₀ + t C` is affine, so its derivative bounds are `M₂ = M₃ = 0`. -/
+example :
     ‖startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ +
         (1 / 2 : ℝ) • galerkinProj augmentedLeft (1 : Matrix (Fin 2) (Fin 2) ℝ) constField -
       (startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ +
         ((0 : ℝ) + 1 / 2 - 0) • constField)‖ ≤
-      (1 / 2) ^ 3 * (6 + M₃ / 24) + 1 / 2 * ‖constField‖ * 7 := by
+      (1 / 2) ^ 3 * (6 + 0 / 24) + 1 / 2 * ‖constField‖ * 7 := by
   have hh : (0 : ℝ) < 1 / 2 := by norm_num
   have hA3 : ContDiffOn ℝ 3 (fun t : ℝ =>
       startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
       (Icc 0 (0 + 1 / 2)) := by fun_prop
-  obtain ⟨M₂, M₃, hM₂, hM₃⟩ := exists_iteratedDerivWithin_bounds hh hA3
+  have hM₂ : ∀ t ∈ Icc (0 : ℝ) (0 + 1 / 2), ‖iteratedDerivWithin 2 (fun t : ℝ =>
+      startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
+        (Icc 0 (0 + 1 / 2)) t‖ ≤ 0 := fun t ht => by
+    rw [iteratedDerivWithin_affine _ _ (by norm_num) (Or.inl rfl) ht, norm_zero]
+  have hM₃ : ∀ t ∈ Icc (0 : ℝ) (0 + 1 / 2), ‖iteratedDerivWithin 3 (fun t : ℝ =>
+      startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
+        (Icc 0 (0 + 1 / 2)) t‖ ≤ 0 := fun t ht => by
+    rw [iteratedDerivWithin_affine _ _ (by norm_num) (Or.inr rfl) ht, norm_zero]
   have hc0 := norm_nonneg constField
   have hc2 : ‖constField‖ ≤ 2 := by
     have h3 : ‖constField‖ ^ 2 = 3 := by
@@ -619,7 +647,7 @@ example : ∃ M₂ M₃ : ℝ,
       rw [Frobenius.norm_sq_eq_sum]
       simp
     nlinarith [norm_nonneg (1 : Matrix (Fin 1) (Fin 1) ℝ)]
-  refine ⟨M₂, M₃, hM₂, hM₃, (norm_update_sub_le_cube_add (F := fun _ _ => constField)
+  refine (norm_update_sub_le_cube_add (F := fun _ _ => constField)
     (D := univ) (L := 0) (Lₜ := 0) (B := ‖constField‖) (ρ := 16) (H := 1 / 2) (κ := 1)
     (D₁ := 2) (D₂ := 1) (t₀ := 0) (h := 1 / 2) (S₀ := 1) (G := constField)
     (Ua := augmentedLeft) (Va := (1 : Matrix (Fin 2) (Fin 2) ℝ))
@@ -629,7 +657,7 @@ example : ∃ M₂ M₃ : ℝ,
     (by simp) (by simp) startLeft_orth startRight_orth hh le_rfl (by norm_num)
     (fun _ _ _ _ => mem_univ _) ?_ ?_ ?_ ?_ (MatrixBUG.odeSolution_affine _ _ _ _) (by simp) hA3
     hM₂ hM₃ (mem_univ _) rfl rfl orth_augmentedLeft (by simp) augU_augmentedLeft (by simp)
-    kCap_augmentedLeft (by simp)).trans ?_⟩
+    kCap_augmentedLeft (by simp)).trans ?_
   · rw [hsq, hmax]
     linarith
   · rw [hsq, hmax, hone]

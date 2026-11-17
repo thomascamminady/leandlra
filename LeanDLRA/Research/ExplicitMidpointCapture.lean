@@ -1159,49 +1159,62 @@ private theorem norm_one_one : ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖ = 1 := by
     simp
   nlinarith [norm_nonneg (1 : Matrix (Fin 1) (Fin 1) ℝ)]
 
-/-- **Non-vacuity of `norm_capture_defect_le`**: the constant field
-`F ≡ C = [[0, 1/2], [1/2, 0], [0, 1/2]]` (`ε = B = ‖C‖`, `L = Lₜ = 0`) on the whole space, the
-start `Y₀ = e₁ f₁ᵀ`, `h = 1`, `ρ = 8`, `τ = 1`, the basis `Ua = [e₁, e₂]`. -/
-example : ∃ κ e δ : ℝ,
-    ‖(1 - left₂ * left₂ᵀ) * C * (1 - f₁ * f₁ᵀ)‖ ≤
-      (0 + κ + 1 / 2 * 0 * κ) * δ + ‖C‖ + e + (1 / 2) ^ 2 * κ * (0 * ‖C‖ + 0 + ‖C‖ * κ) := by
+/-- **Non-vacuity of `norm_capture_defect_le`** with the constants written out: the constant
+field `F ≡ C = [[0, 1/2], [1/2, 0], [0, 1/2]]` (`ε = B = ‖C‖ = √3/2`, `L = Lₜ = 0`) on the whole
+space, the start `Y₀ = e₁ f₁ᵀ`, `h = 1`, `ρ = 8`, `τ = 1`, the basis `Ua = [e₁, e₂]`, and
+`κ = 3‖C‖/4`, `e = 9‖C‖/8`, `δ = 9‖C‖/8 + 33‖C‖²/64 + 9‖C‖³/128`. -/
+example : ‖(1 - left₂ * left₂ᵀ) * C * (1 - f₁ * f₁ᵀ)‖ ≤
+    (0 + 3 / 4 * ‖C‖ + 1 / 2 * 0 * (3 / 4 * ‖C‖)) *
+        (9 / 8 * ‖C‖ + 33 / 64 * ‖C‖ ^ 2 + 9 / 128 * ‖C‖ ^ 3) +
+      ‖C‖ + 9 / 8 * ‖C‖ + (1 / 2) ^ 2 * (3 / 4 * ‖C‖) * (0 * ‖C‖ + 0 + ‖C‖ * (3 / 4 * ‖C‖)) := by
   have hc0 := norm_nonneg C
   have hc1 : ‖C‖ ≤ 1 := by nlinarith [norm_C_sq]
+  have hc2 : ‖C‖ ^ 2 ≤ 1 := by nlinarith
+  have hc3 : ‖C‖ ^ 3 ≤ 1 := by nlinarith
   have hmax : max (0 : ℝ) (2 * ‖C‖ / 8) = ‖C‖ / 4 := by
     rw [max_eq_right (by positivity)]; ring
   have hsq : Real.sqrt ((1 : ℕ) : ℝ) = 1 := by simp
-  refine ⟨_, _, _, norm_capture_defect_le (F := fun _ _ => C) (D := univ) (L := 0) (Lₜ := 0)
+  refine norm_capture_defect_le (F := fun _ _ => C) (D := univ) (L := 0) (Lₜ := 0)
     (B := ‖C‖) (ρ := 8) (τ := 1) (r := 1) (U₀ := e₁) (S₀ := 1) (V₀ := f₁) (t₀ := 0) (h := 1)
-    (G := C) (Ua := left₂)
+    (G := C) (Ua := left₂) (κ := 3 / 4 * ‖C‖) (e := 9 / 8 * ‖C‖)
+    (δ := 9 / 8 * ‖C‖ + 33 / 64 * ‖C‖ ^ 2 + 9 / 128 * ‖C‖ ^ 3)
     (factoredNormalBound_iff_univ.1 (MatrixBUG.factoredNormalBound_const C 1))
     (by intro _ _ _ _ _; simp) le_rfl (by intro _ _ _; exact le_rfl) (fun _ _ _ _ _ => by simp)
     (by simp) (by simp) e₁_orth f₁_orth zero_le_one (by norm_num) (fun _ _ _ _ => mem_univ _)
-    one_pos le_rfl le_rfl le_rfl ?_ rfl rfl left₂_orth left₂_augU left₂_kCap⟩
-  rw [hmax, hsq, norm_one_one]
-  nlinarith [mul_nonneg hc0 hc0, mul_nonneg (mul_nonneg hc0 hc0) hc0]
+    one_pos ?_ ?_ ?_ ?_ rfl rfl left₂_orth left₂_augU left₂_kCap
+  · rw [hsq, hmax]; linarith
+  · rw [hsq, hmax]; linarith
+  · rw [norm_one_one]; exact le_of_eq (by ring)
+  · linarith
 
-/-- **Non-vacuity of `norm_capture_defect_right_le`** on the transposed data: the constant field
-`F ≡ Cᵀ` on `2 × 3` matrices, the start `f₁ e₁ᵀ`, the right basis `Va = [e₁, e₂]`. -/
-example : ∃ κ e δ : ℝ,
-    ‖(1 - f₁ * f₁ᵀ) * Cᵀ * (1 - left₂ * left₂ᵀ)‖ ≤
-      (0 + κ + 1 / 2 * 0 * κ) * δ + ‖Cᵀ‖ + e + (1 / 2) ^ 2 * κ * (0 * ‖Cᵀ‖ + 0 + ‖Cᵀ‖ * κ) := by
-  rw [Frobenius.norm_transpose]
+/-- **Non-vacuity of `norm_capture_defect_right_le`** on the transposed data, with the constants
+of the previous example: the constant field `F ≡ Cᵀ` on `2 × 3` matrices (`ε = B = ‖Cᵀ‖ = ‖C‖`),
+the start `f₁ e₁ᵀ`, the right basis `Va = [e₁, e₂]`. -/
+example : ‖(1 - f₁ * f₁ᵀ) * Cᵀ * (1 - left₂ * left₂ᵀ)‖ ≤
+    (0 + 3 / 4 * ‖C‖ + 1 / 2 * 0 * (3 / 4 * ‖C‖)) *
+        (9 / 8 * ‖C‖ + 33 / 64 * ‖C‖ ^ 2 + 9 / 128 * ‖C‖ ^ 3) +
+      ‖C‖ + 9 / 8 * ‖C‖ + (1 / 2) ^ 2 * (3 / 4 * ‖C‖) * (0 * ‖C‖ + 0 + ‖C‖ * (3 / 4 * ‖C‖)) := by
   have hc0 := norm_nonneg C
   have hc1 : ‖C‖ ≤ 1 := by nlinarith [norm_C_sq]
+  have hc2 : ‖C‖ ^ 2 ≤ 1 := by nlinarith
+  have hc3 : ‖C‖ ^ 3 ≤ 1 := by nlinarith
   have hmax : max (0 : ℝ) (2 * ‖C‖ / 8) = ‖C‖ / 4 := by
     rw [max_eq_right (by positivity)]; ring
   have hsq : Real.sqrt ((1 : ℕ) : ℝ) = 1 := by simp
   have hCt : ‖Cᵀ‖ = ‖C‖ := Frobenius.norm_transpose C
-  refine ⟨_, _, _, norm_capture_defect_right_le (F := fun _ _ => Cᵀ) (D := univ) (L := 0)
+  refine norm_capture_defect_right_le (F := fun _ _ => Cᵀ) (D := univ) (L := 0)
     (Lₜ := 0) (B := ‖C‖) (ρ := 8) (τ := 1) (r := 1) (U₀ := f₁) (S₀ := 1) (V₀ := e₁) (t₀ := 0)
-    (h := 1) (G := Cᵀ) (Va := left₂) (ε := ‖C‖)
+    (h := 1) (G := Cᵀ) (Va := left₂) (ε := ‖C‖) (κ := 3 / 4 * ‖C‖) (e := 9 / 8 * ‖C‖)
+    (δ := 9 / 8 * ‖C‖ + 33 / 64 * ‖C‖ ^ 2 + 9 / 128 * ‖C‖ ^ 3)
     (hCt ▸ factoredNormalBound_iff_univ.1 (MatrixBUG.factoredNormalBound_const Cᵀ 1))
     (by intro _ _ _ _ _; simp) le_rfl (by intro _ _ _; exact hCt.le) (fun _ _ _ _ _ => by simp)
     (by simp) (by simp) f₁_orth e₁_orth zero_le_one (by norm_num) (fun _ _ _ _ => mem_univ _)
-    one_pos le_rfl le_rfl le_rfl ?_ rfl rfl left₂_orth left₂_augU
-    (by rw [Matrix.transpose_transpose]; exact left₂_kCap)⟩
-  rw [hmax, hsq, norm_one_one]
-  nlinarith [mul_nonneg hc0 hc0, mul_nonneg (mul_nonneg hc0 hc0) hc0]
+    one_pos ?_ ?_ ?_ ?_ rfl rfl left₂_orth left₂_augU
+    (by rw [Matrix.transpose_transpose]; exact left₂_kCap)
+  · rw [hsq, hmax]; linarith
+  · rw [hsq, hmax]; linarith
+  · rw [norm_one_one]; exact le_of_eq (by ring)
+  · linarith
 
 /-- **Non-vacuity of `norm_capture_defect_le_sq_add`**: the data of the example for
 `norm_capture_defect_le` (constant field `F ≡ C`, `ε = B = ‖C‖`, `L = Lₜ = 0`, start
