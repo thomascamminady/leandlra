@@ -69,6 +69,7 @@ The theorems of the other fixed-rank integrators have the same hypotheses `hP`, 
 | projected Euler method | `MatrixProjEuler.exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/ProjectedEuler.lean) | the field is Lipschitz in time with `Lt`; `hκ : 1 ≤ κ`, the quality of the retraction |
 | projected Runge–Kutta methods | `MatrixPRK.exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/ProjectedRK.lean) | a Butcher tableau, `hκ`, and as a hypothesis (`hRK`) the order of the classical scheme |
 | midpoint BUG, fixed rank (the 4r variant) | `MatrixMidpointBUG.exists_run_norm_sub_le` | @file(LeanDLRA/HighOrder/MidpointBUGRun.lean) | the field is of class `C²` with bounds `M₁`, `M₂` on its derivatives; normal bounds `ε` at rank `r` and `ε₂` at rank `2 r`, with `2 r` at most the matrix sizes; the error is of order `h²` up to the terms in `ε`, `ε₂` |
+| explicit midpoint method in bases with `2 r` columns, truncated to rank `r` | `ExplicitMidpoint.exists_run_norm_sub_le` | @file(LeanDLRA/Research/ExplicitMidpointRun.lean) | as for the midpoint BUG integrator: the field is of class `C²` with bounds `M₁`, `M₂`; normal bound `ε` at rank `r` only; `2 r` at most the matrix sizes |
 | BUG for Tucker tensors | `TuckerBUG.exists_run_norm_sub_le` | @file(LeanDLRA/Tensor/Tucker/BUGRun.lean) | the field is on `Tensor ι`; the normal bound is at the triples `TuckerBUG.normalTriples r`; margin `(d + 2) B h` |
 
 The table with the error bounds and the margins is in [Getting started, section
@@ -186,17 +187,24 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
   statements.
 * **By integrator:** the `…Run.lean` files of @file(LeanDLRA/Integrators/Matrix/) hold the
   existence and error theorems; start with the module docstring. The midpoint BUG integrator is
-  in @file(LeanDLRA/HighOrder/MidpointBUGRun.lean).
+  in @file(LeanDLRA/HighOrder/MidpointBUGRun.lean), the explicit midpoint method in
+  @file(LeanDLRA/Research/ExplicitMidpointRun.lean). A bound with a one-sided Lipschitz constant
+  in place of `L` in the propagation of errors is in
+  @file(LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean) for the BUG integrator and in
+  @file(LeanDLRA/Integrators/MethodOneSided.lean) for every tube-local method; the implicit BUG
+  integrator on matrices is in @file(LeanDLRA/Stiff/ImplicitBUGRun.lean) (not a stiff bound).
 * **By question about the solution:** existence and uniqueness of the DLRA solution of rank `r`
   on a short interval are in @file(LeanDLRA/DLRA/Existence.lean); its distance from the best
   approximation of rank `r` is bounded in @file(LeanDLRA/DLRA/QuasiOptimality.lean), for a field
   that is Lipschitz on a tube only in @file(LeanDLRA/DLRA/QuasiOptimalityTube.lean) and for the
   truncated singular value decomposition under a gap in
-  @file(LeanDLRA/DLRA/QuasiOptimalityGap.lean) (sections 3.6 and 3.7 of
+  @file(LeanDLRA/DLRA/QuasiOptimalityGap.lean); the margin `ρ / 4` can be widened to `θ ρ` with
+  `θ < 1 / 2` in @file(LeanDLRA/DLRA/QuasiOptimalityMargin.lean) (sections 3.6 and 3.7 of
   [Main results](MAIN_RESULTS.md)).
 * **By question about stiffness or training:** what is proved and what is open for stiff problems
   with forcing is in @file(LeanDLRA/Research/StiffGlobalCycle.lean) and the files named in
-  [Main results, section 7.6](MAIN_RESULTS.md#76-stiff-problems-with-forcing-five-results-and-what-stays-open);
+  [Main results, section
+  7.6](MAIN_RESULTS.md#76-stiff-problems-with-forcing-six-results-and-what-stays-open);
   the descent thresholds of federated rounds are in section 10.1 of the same page.
 * **By paper:** [PROVEN.md](PROVEN.md) lists every module with the papers it cites.
 * **By shape:** names say what a theorem bounds or states (`norm_sub_le`, `exists_run`, an ending iff);
