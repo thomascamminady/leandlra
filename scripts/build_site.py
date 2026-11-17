@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import collections
 import json
+import posixpath
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -214,9 +215,9 @@ def rewrite_repo_links(text: str, source: str) -> str:
     """Point repository-relative Markdown links at GitHub, mirrored docs at site pages."""
     mirrored = {
         "README.md": "./",
-        "docs/PROVEN.md": "proven.html",
-        "docs/NOVEL.md": "novel.html",
-        "docs/CORRECTIONS.md": "corrections.html",
+        "docs/catalogue/PROVEN.md": "proven.html",
+        "docs/catalogue/NOVEL.md": "novel.html",
+        "docs/catalogue/CORRECTIONS.md": "corrections.html",
     }
     base = Path(source).parent
 
@@ -226,7 +227,7 @@ def rewrite_repo_links(text: str, source: str) -> str:
             return f"]({target.removeprefix(SITE_URL) or './'}{anchor})"
         if re.match(r"^[a-z]+:", target) or target.startswith("/"):
             return m.group(0)
-        resolved = re.sub(r"(^|/)\./", r"\1", (base / target).as_posix())
+        resolved = posixpath.normpath((base / target).as_posix())
         if resolved in mirrored:
             return f"]({mirrored[resolved]}{anchor})"
         kind = (
@@ -381,10 +382,16 @@ def main() -> None:
     )
     pages = {
         "index.md": front("Home", 1, "/") + linkify_markdown(readme, index),
-        "proven.md": mirror("docs/PROVEN.md", "Proven", 2, "/proven.html", index),
-        "novel.md": mirror("docs/NOVEL.md", "Novel", 3, "/novel.html", index),
+        "proven.md": mirror(
+            "docs/catalogue/PROVEN.md", "Proven", 2, "/proven.html", index
+        ),
+        "novel.md": mirror("docs/catalogue/NOVEL.md", "Novel", 3, "/novel.html", index),
         "corrections.md": mirror(
-            "docs/CORRECTIONS.md", "Corrections", 4, "/corrections.html", index
+            "docs/catalogue/CORRECTIONS.md",
+            "Corrections",
+            4,
+            "/corrections.html",
+            index,
         ),
         "library.md": page_library(index),
     }

@@ -292,8 +292,8 @@ Mathlib's rules apply (`https://leanprover-community.github.io/contribute/naming
   `exists_run_norm_sub_le` in the namespace of the method. Established names of classical results
   are fine (`lady_windermere`, `IsOrthProj.diracFrenkel_tfae`, `gronwallBound`). Numbers of a
   paper (theorem, lemma, equation), arXiv identifiers and codes of the catalogue are not part of
-  a new name in the core. The declarations listed in [CORRECTIONS.md](CORRECTIONS.md) keep their
-  names.
+  a new name in the core. The declarations listed in
+  [CORRECTIONS.md](catalogue/CORRECTIONS.md) keep their names.
 - No primes for a second copy of a statement; a prime is only a Mathlib-style variant (e.g.
   explicit vs implicit arguments) next to the unprimed one.
 - No new Unicode subscripts in declaration names (`bugC₁` stays, new constants are spelled out).
@@ -343,8 +343,8 @@ Projector form; QR steps are capture hypotheses.
   paper it cites. `## TODO` says what the file does not prove; there are no other headings for
   this ("What remains open", "Not formalised here").
 - An open problem of the survey is named by its tag (form `OP-HO-14`). The tags are the
-  identifiers of `docs/survey/open-problems.json`; the header of a file that uses tags names this
-  file once.
+  identifiers of `docs/catalogue/survey/open-problems.json`; the header of a file that uses
+  tags names this file once.
 - A docstring is required for every definition, for every theorem that a page of `docs/` names,
   and for every theorem with a hypothesis that needs explanation. No docstring is required for a
   lemma that only rewrites or unfolds a definition (simp lemmas and lemmas ending in `_iff`,
@@ -357,9 +357,9 @@ Projector form; QR steps are capture hypotheses.
   "Conditional on …", and the hypothesis is named after that step.
 - Bold names (`**Robust global error bound**`) only for named results. No "we", no proof
   narrative, no history of the file.
-- Docstrings make no claim of novelty; [NOVEL.md](NOVEL.md) is the place for the comparison with
-  the literature. A declaration that belongs to an entry of [CORRECTIONS.md](CORRECTIONS.md) is
-  listed there by name.
+- Docstrings make no claim of novelty; [NOVEL.md](catalogue/NOVEL.md) is the place for the
+  comparison with the literature. A declaration that belongs to an entry of
+  [CORRECTIONS.md](catalogue/CORRECTIONS.md) is listed there by name.
 - Docstrings cite papers by key (§9), declarations by name and tracked files by path. They do not
   cite planning documents.
 

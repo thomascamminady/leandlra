@@ -76,11 +76,13 @@ def rank(result: dict[str, Any]) -> int:
 
 def main(size: int = SIZE) -> None:
     """Write the skeletons and extend the manifest."""
-    data = json.loads((ROOT / "docs/survey/synthesis.json").read_text(encoding="utf-8"))
+    data = json.loads(
+        (ROOT / "docs/catalogue/survey/synthesis.json").read_text(encoding="utf-8")
+    )
     details = {
         paper["id"]: {r["label"]: r for r in paper["main_results"]}
         for paper in json.loads(
-            (ROOT / "docs/survey/papers.json").read_text(encoding="utf-8")
+            (ROOT / "docs/catalogue/survey/papers.json").read_text(encoding="utf-8")
         )
     }
     manifest: dict[str, Any] = json.loads(

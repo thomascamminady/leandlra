@@ -32,14 +32,15 @@ merge checks that only the standard axioms `propext`, `Classical.choice` and `Qu
 * [Index of the definitions of the core](docs/DEFINITIONS.md)
 * [Concepts: how the definitions relate to each other](docs/CONCEPTS.md)
 * [Core and catalogue: how the library is organized](docs/STRUCTURE.md)
-* [All modules with their sources](docs/PROVEN.md)
+* [All modules with their sources](docs/catalogue/PROVEN.md)
 * [Website and API reference](https://camminady.dev/leandlra/)
 
 Two more pages are about results of single papers. With few exceptions the declarations they name
 belong to the catalogue and not to the core:
 
-* [Novel results](docs/NOVEL.md)
-* [Corrections to published statements](docs/CORRECTIONS.md)
+* [Novel results](docs/catalogue/NOVEL.md)
+* [Corrections to published statements](docs/catalogue/CORRECTIONS.md)
+* [Catalogue concept map: the local forms of the core notions in single papers](docs/catalogue/CATALOGUE.md)
 
 ## One theorem
 

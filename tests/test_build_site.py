@@ -30,3 +30,19 @@ def test_catalogue_module_has_no_api_link() -> None:
 
 def test_folder_name_inside_a_core_path_is_not_catalogue() -> None:
     assert build_site.has_api("LeanDLRA.Research.NovelSchemes")
+
+
+def test_repo_links_of_the_catalogue_pages() -> None:
+    text = (
+        "[a](../../LeanDLRA/X.lean#L3) [p](PROVEN.md) [c](../CONCEPTS.md) [s](survey/)"
+    )
+    out = build_site.rewrite_repo_links(text, "docs/catalogue/NOVEL.md")
+    blob = f"{build_site.REPO_URL}/blob/main"
+    assert out == (
+        f"[a]({blob}/LeanDLRA/X.lean#L3) [p](proven.html) [c]({blob}/docs/CONCEPTS.md) "
+        f"[s]({build_site.REPO_URL}/tree/main/docs/catalogue/survey)"
+    )
+    readme = "[n](docs/catalogue/NOVEL.md) [k](docs/catalogue/CORRECTIONS.md#x)"
+    assert build_site.rewrite_repo_links(readme, "README.md") == (
+        "[n](novel.html) [k](corrections.html#x)"
+    )

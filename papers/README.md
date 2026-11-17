@@ -8,7 +8,8 @@ make papers
 ```
 
 The repository keeps only the catalogue of harvested arXiv records (`papers/catalogue.json`) and this
-list. The survey itself (main results and open items per paper) is in [`docs/survey/`](../docs/survey/).
+list. The survey itself (main results and open items per paper) is in
+[`docs/catalogue/survey/`](../docs/catalogue/survey/).
 
 ## Surveyed papers
 

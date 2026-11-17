@@ -40,7 +40,7 @@ def test_todo_items() -> None:
 
 
 def make_repo(root: Path) -> None:
-    (root / "docs" / "survey").mkdir(parents=True)
+    (root / op.SURVEY).mkdir(parents=True)
     (root / "LeanDLRA" / "OpenProblems").mkdir(parents=True)
     (root / "LeanDLRA" / "A").mkdir(parents=True)
     (root / "docs" / "references.bib").write_text(BIB)
@@ -71,9 +71,9 @@ def make_repo(root: Path) -> None:
         rec(2, "resolved in LeanDLRA", "A/B.lean: bar_baz"),
         rec(3, "partially addressed", None),
     ]
-    (root / "docs" / "survey" / "open-problems.json").write_text(json.dumps(problems))
-    (root / "docs" / "survey" / "open-xx.json").write_text(json.dumps([{}, {}]))
-    (root / "docs" / "survey" / "synthesis.json").write_text(
+    (root / op.SURVEY / "open-problems.json").write_text(json.dumps(problems))
+    (root / op.SURVEY / "open-xx.json").write_text(json.dumps([{}, {}]))
+    (root / op.SURVEY / "synthesis.json").write_text(
         json.dumps({"open": [{"key": "xx", "category_title": "Topic XX"}]})
     )
 

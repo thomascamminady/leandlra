@@ -214,13 +214,13 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
   [Main results, section
   7.6](MAIN_RESULTS.md#76-stiff-problems-with-forcing-six-results-and-what-stays-open);
   the descent thresholds of federated rounds are in section 10.1 of the same page.
-* **By paper:** [PROVEN.md](PROVEN.md) lists every module with the papers it cites.
+* **By paper:** [PROVEN.md](catalogue/PROVEN.md) lists every module with the papers it cites.
 * **By shape:** names say what a theorem bounds or states (`norm_sub_le`, `exists_run`, an ending iff);
   the rules are in section 7 of [CONVENTIONS.md](CONVENTIONS.md). A search for the key word in
   LeanDLRA/ with grep is usually enough.
 * **Is a statement proved at all?** The recorded statements are in `docs/statements.json` (core)
   and `docs/statements_catalogue.json` (catalogue); the
-  open questions are in @file(docs/survey/).
+  open questions are in @file(docs/catalogue/survey/).
 
 ## 7. I want to check my own Lean file
 

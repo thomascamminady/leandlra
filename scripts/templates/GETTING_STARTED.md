@@ -348,7 +348,7 @@ margins.
 | low-rank training | @file(LeanDLRA/Training/Defs.lean), @file(LeanDLRA/Training/Descent.lean), @file(LeanDLRA/Training/GradientFlowConvergence.lean), @file(LeanDLRA/Training/ConvergenceRates.lean), @file(LeanDLRA/Training/FederatedDescent.lean); thresholds for federated rounds in @file(LeanDLRA/Research/FederatedDescentThreshold.lean), @file(LeanDLRA/Research/FederatedConvexThreshold.lean), @file(LeanDLRA/Research/FederatedTwoSteps.lean) and @file(LeanDLRA/Research/FederatedThreeSteps.lean) (and, for every number of local steps, descent when `sstar lr β < 4`, @file(LeanDLRA/Research/FederatedManySteps.lean)); fixed points of federated rounds in @file(LeanDLRA/Training/FederatedFixedPoints.lean); the explicit Euler splitting step in @file(LeanDLRA/Training/ProjectorSplittingDescent.lean) |
 | filtering | @file(LeanDLRA/Filtering/Defs.lean), @file(LeanDLRA/Stochastic/KalmanBucy.lean), @file(LeanDLRA/Stochastic/GramianLowerBound.lean) |
 | optimal control | @file(LeanDLRA/Control/AdjointDLRA.lean) |
-| the results of one paper | [PROVEN.md](PROVEN.md), which lists modules with the papers they cite; the paper files are in @file(LeanDLRA/Literature/) |
+| the results of one paper | [PROVEN.md](catalogue/PROVEN.md), which lists modules with the papers they cite; the paper files are in @file(LeanDLRA/Literature/) |
 
 Every module starts with a docstring that says what the file contains; read it before the
 declarations.

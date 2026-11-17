@@ -1,5 +1,5 @@
 # Scope: both
-"""Tests of ``scripts/ledger.py`` (``docs/PROVEN.md`` and the status block of the README)."""
+"""Tests of ``scripts/ledger.py`` (``docs/catalogue/PROVEN.md`` and the README status block)."""
 
 from __future__ import annotations
 
@@ -96,12 +96,12 @@ def test_proven_lists_modules_by_folder_and_the_curated_results(tmp_path: Path) 
         "## Cited papers",
     ]
     assert (
-        f"| [`Topic/Defs`](../{CORE}) | Topic: definitions | 2 "
+        f"| [`Topic/Defs`](../../{CORE}) | Topic: definitions | 2 "
         "| [2010.02022](https://arxiv.org/abs/2010.02022) |"
     ) in lines
     assert (
         "| Doubling \\| zero | `double_zero`, `a`, `b` | [Author2020, Thm. 1] "
-        f"| [`{CORE}`](../{CORE}) |"
+        f"| [`{CORE}`](../../{CORE}) |"
     ) in lines
     # only papers with a known title are listed
     assert lines[-2:] == [

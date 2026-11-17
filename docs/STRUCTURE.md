@@ -90,3 +90,11 @@ its top: `Scope: core`, `Scope: catalogue` or `Scope: both`. Those for the catal
 `scripts/catalogue/` (the full build `scripts/catalogue/catalogue.sh`, the connectivity report and
 its inventory, the paper corpus and the literature slices) and `tests/catalogue/`;
 `tests/test_script_scopes.py` checks the tags.
+
+## Pages
+
+The pages about the core are in `docs/`. The pages about the catalogue are in `docs/catalogue/`: the
+local forms of the core notions in single papers (`docs/catalogue/CATALOGUE.md`, the counterpart of
+`docs/CONCEPTS.md`), all modules with their sources (`docs/catalogue/PROVEN.md`, written by
+`scripts/ledger.py`), `docs/catalogue/NOVEL.md`, `docs/catalogue/CORRECTIONS.md` and the literature
+survey `docs/catalogue/survey/`.

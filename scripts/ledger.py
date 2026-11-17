@@ -3,11 +3,11 @@
 # dependencies = ["fire"]
 # ///
 # Scope: both
-"""Generate ``docs/PROVEN.md`` and the status block of ``README.md`` from the Lean sources.
+"""Generate ``docs/catalogue/PROVEN.md`` and the status block of ``README.md`` from the sources.
 
 Each tracked module contributes its title (the first heading of the module docstring), its number
 of theorems and definitions, and the arXiv ids it cites.  Paper titles come from
-``docs/survey/papers.json`` and ``papers/catalogue.json``.  ``docs/ledger.json`` lists curated main
+``docs/catalogue/survey/papers.json`` and ``papers/catalogue.json``.  ``docs/ledger.json`` lists curated main
 results with their source.
 
 The status block has one line for the core library (the modules imported by ``LeanDLRA.lean``,
@@ -29,6 +29,9 @@ from typing import Any
 import core
 
 ROOT = Path(__file__).resolve().parent.parent
+# The generated page, and the way from its folder up to the repository (for its links).
+PROVEN = "docs/catalogue/PROVEN.md"
+UP = "../../"
 START, END = "<!-- status:start -->", "<!-- status:end -->"
 DECL = re.compile(
     r"^\s*(?:@\[[^\]]*\]\s*)?(?:(?:private|protected|noncomputable|nonrec)\s+)*"
@@ -121,7 +124,7 @@ def summary(path: str, root: Path = ROOT) -> Module:
 def titles() -> dict[str, str]:
     """arXiv id → title, from the survey and the harvested catalogue."""
     table: dict[str, str] = {}
-    for rel in ("papers/catalogue.json", "docs/survey/papers.json"):
+    for rel in ("papers/catalogue.json", "docs/catalogue/survey/papers.json"):
         path = ROOT / rel
         if path.exists():
             for entry in json.loads(path.read_text(encoding="utf-8")):
@@ -146,7 +149,7 @@ def module_table(mods: list[Module]) -> list[str]:
         name = mod.path.removeprefix("LeanDLRA/").removesuffix(".lean")
         papers = ", ".join(arxiv(p) for p in mod.papers)
         rows.append(
-            f"| [`{name}`](../{mod.path}) | {cell(mod.title)} | {mod.theorems} | {papers} |"
+            f"| [`{name}`]({UP}{mod.path}) | {cell(mod.title)} | {mod.theorems} | {papers} |"
         )
     return rows
 
@@ -158,7 +161,7 @@ def curated(entries: list[dict[str, Any]]) -> list[str]:
         names = ", ".join(f"`{n.strip()}`" for n in entry["lean_names"].split(",")[:3])
         rows.append(
             f"| {cell(entry['result'])} | {cell(names)} | {cell(entry['source'])} "
-            f"| [`{entry['file']}`](../{entry['file']}) |"
+            f"| [`{entry['file']}`]({UP}{entry['file']}) |"
         )
     return rows
 
@@ -166,7 +169,7 @@ def curated(entries: list[dict[str, Any]]) -> list[str]:
 def proven(
     mods: list[Module], ledger: list[dict[str, Any]], names: dict[str, str]
 ) -> str:
-    """Text of docs/PROVEN.md; ``names`` gives the titles of the cited papers."""
+    """Text of docs/catalogue/PROVEN.md; ``names`` gives the titles of the cited papers."""
     lines = [
         "# Proven",
         "",
@@ -215,13 +218,11 @@ def replace_status(text: str, block: str) -> str:
 
 
 def main() -> None:
-    """Rewrite docs/PROVEN.md and the status block of README.md."""
+    """Rewrite docs/catalogue/PROVEN.md and the status block of README.md."""
     mods = [summary(p) for p in tracked()]
     core_files = core_paths()
     ledger = json.loads((ROOT / "docs" / "ledger.json").read_text(encoding="utf-8"))
-    (ROOT / "docs" / "PROVEN.md").write_text(
-        proven(mods, ledger, titles()), encoding="utf-8"
-    )
+    (ROOT / PROVEN).write_text(proven(mods, ledger, titles()), encoding="utf-8")
     readme = ROOT / "README.md"
     text = readme.read_text(encoding="utf-8")
     readme.write_text(replace_status(text, status(mods, core_files)), encoding="utf-8")
