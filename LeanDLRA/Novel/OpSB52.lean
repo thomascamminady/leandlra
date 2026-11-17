@@ -6,7 +6,7 @@ import LeanDLRA.Stability.Energy
 # Energy stability of DLRA for nonlinear kinetic models: Stefan–Boltzmann emission and
 entropy (OP-SB-52)
 
-Open problem OP-SB-52 of `docs/survey/open-problems.json` (research-level).
+Open problem OP-SB-52 of `docs/catalogue/survey/open-problems.json` (research-level).
 
 ## The nonlinear Stefan–Boltzmann coupling (arXiv 2402.16746 only treats the linearised model)
 

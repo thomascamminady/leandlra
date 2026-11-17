@@ -3,7 +3,8 @@ import LeanDLRA.Novel.KineticAP
 /-!
 # AP of low-rank implicit steps for nonlinear BGK models (OP-ST-33)
 
-Open problem OP-ST-33 of `docs/survey/open-problems.json`, part (b): asymptotic preservation of
+Open problem OP-ST-33 of `docs/catalogue/survey/open-problems.json`, part (b): asymptotic
+preservation of
 low-rank schemes for *nonlinear* BGK models, where the Maxwellian `M[f]` depends on the state and
 has no low-rank form.  `LeanDLRA.Novel.KineticAP` treats the linear case (fixed equilibrium
 direction `M`).  Here the equilibrium is `𝓜 (f Ψ)`, an arbitrary function of the moments

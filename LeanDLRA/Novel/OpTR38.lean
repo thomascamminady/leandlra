@@ -5,8 +5,8 @@ import LeanDLRA.Matrix.GaugeODE
 /-!
 # Escape of spurious critical points by the Riemannian gradient flow on rank-`r` PSD matrices
 
-Open problem OP-TR-38 of `docs/survey/open-problems.json` (arXiv 2107.09207, Sec. 1, 6): for
-`f(Z) = ½‖Z − X‖²` on the manifold of rank-`r` symmetric positive semidefinite matrices, the set
+Open problem OP-TR-38 of `docs/catalogue/survey/open-problems.json` (arXiv 2107.09207, Sec. 1, 6):
+for `f(Z) = ½‖Z − X‖²` on the manifold of rank-`r` symmetric positive semidefinite matrices, the set
 of initial values from which the Riemannian gradient flow converges to a spurious (rank-deficient)
 critical point `Z# = ∑_{i∈J} dᵢ eᵢeᵢᵀ`, `|J| = s < r`, should have measure zero.  The paper proves
 it for `s = r − 1` and distinct eigenvalues, by a rescaling and a stable-manifold argument that

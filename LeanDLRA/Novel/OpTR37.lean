@@ -7,7 +7,7 @@ import LeanDLRA.LinearAlgebra.Factorization.Defs
 /-!
 # Differentiating through a DLRA integrator: discrete adjoints of BUG-type steps
 
-Open problem OP-TR-37 of `docs/survey/open-problems.json` (arXiv 2506.21405 Sec. 6, arXiv
+Open problem OP-TR-37 of `docs/catalogue/survey/open-problems.json` (arXiv 2506.21405 Sec. 6, arXiv
 2610.29554 Sec. 7).  The question: when is a BUG step `Y ↦ Y₁`, including QR
 and rank truncation, differentiable, what is its exact discrete adjoint, and is that adjoint
 robust, i.e. independent of `1 / σ_r`?

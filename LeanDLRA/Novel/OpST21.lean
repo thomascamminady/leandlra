@@ -3,8 +3,8 @@ import LeanDLRA.Novel.EpsRank
 /-!
 # Uniform-in-`ε` error bounds for low-rank kinetic schemes (OP-ST-21)
 
-Open problem OP-ST-21 of `docs/survey/open-problems.json`: error bounds for low-rank kinetic
-schemes in the diffusive scaling with constants independent of `ε`.  Setting of `EpsRank`:
+Open problem OP-ST-21 of `docs/catalogue/survey/open-problems.json`: error bounds for low-rank
+kinetic schemes in the diffusive scaling with constants independent of `ε`.  Setting of `EpsRank`:
 `f ∈ ℝ^{X × V}`, `∂_t f + ε⁻¹ D f diag(μ) = σ ε⁻² (⟨f⟩ ⊗ 1 - f)`, skew-symmetric `D`,
 quadrature `(μ_v, w_v)`, weighted norm `‖f‖_w = ‖weighted q f‖`, full implicit Euler `F_n`,
 isotropic data `F₀ = ρ₀ ⊗ 1`.
@@ -377,7 +377,7 @@ rank-`k` Galerkin scheme is `O(ε^{k-1} (ε + t_n))`-close to the full discrete-
 uniformly in the stiffness.  It matters because it isolates the low-rank part of the error of a
 kinetic low-rank scheme from the time-discretisation error, and bounds it uniformly in `ε`.  The
 proof is the Galerkin energy estimate plus the moment bound `exists_moment_approx` of `EpsRank`;
-see `docs/survey/open-problems.json` OP-ST-21. -/
+see `docs/catalogue/survey/open-problems.json` OP-ST-21. -/
 theorem galerkin_sub_full_le [DecidableEq X] {m : ℝ} (hD : D.transpose = -D) (hε : 0 < ε)
     (hσ : 0 < σ) (hτ : 0 < τ) (hm0 : 0 ≤ m) (hm : ∀ v, |q.μ v| ≤ m)
     (hP : IsVelocityGalerkin q P) {k : ℕ}

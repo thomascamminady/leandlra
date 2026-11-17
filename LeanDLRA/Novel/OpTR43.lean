@@ -4,7 +4,8 @@ import LeanDLRA.Training.FactorizedDynamics
 /-!
 # Singular-value dynamics and implicit bias in factorized training with weight decay
 
-Open problem OP-TR-43 of `docs/survey/open-problems.json` (arXiv 2209.13569, Sec. 3.3 and 4.2):
+Open problem OP-TR-43 of `docs/catalogue/survey/open-problems.json` (arXiv 2209.13569, Sec. 3.3 and
+4.2):
 with L2 decay `λ (‖U‖² + ‖V‖²) / 2` on the factors of `W = U Vᵀ`, singular values are claimed to
 evolve "rich get richer, poor get poorer", with `σ̇ᵢ = -2σᵢ ⟨∇L, uᵢvᵢᵀ⟩ - 2λσᵢ`, and the
 effective rank `‖W‖_* / ‖W‖_op` to drop; "Frobenius decay" `λ ‖U Vᵀ‖² / 2` is reported to keep

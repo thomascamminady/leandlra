@@ -5,8 +5,8 @@ import LeanDLRA.Matrix.Frobenius
 # Projected local conservation laws in Vlasov–Poisson DLRA: what they are, and how a
 continuity defect feeds the electric energy (OP-SL-48)
 
-Open problem OP-SL-48 of `docs/survey/open-problems.json` (Einkemmer–Lubich, arXiv 1807.02338,
-Sec. 6, Figs. 1–2): enforcing the *projected* local conservation laws
+Open problem OP-SL-48 of `docs/catalogue/survey/open-problems.json` (Einkemmer–Lubich, arXiv
+1807.02338, Sec. 6, Figs. 1–2): enforcing the *projected* local conservation laws
 `P_X (∂ₜ ρ + ∇·j) = 0`, `P_X (∂ₜ j + ∇·m₂ + E ρ) = 0` in the substeps of the projector-splitting
 integrator gives a qualitatively correct long-time electric energy (two-stream instability, rank
 15, `t = 300`), whereas the uncorrected scheme and the globally corrected one lose it.  No theory

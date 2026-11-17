@@ -7,7 +7,8 @@ import Mathlib.Analysis.Matrix.Order
 /-!
 # Algebraic stability of Galerkin Runge–Kutta steps, and its loss under stage-dependent bases
 
-Open problem OP-SB-54 of `docs/survey/open-problems.json` (stability of higher-order low-rank
+Open problem OP-SB-54 of `docs/catalogue/survey/open-problems.json` (stability of higher-order
+low-rank
 integrators: high-order DIRK/IMEX BUG and RAIL, 2311.15143; Strang PSI, 2006.05211, 2507.15192).
 This module settles the DIRK/implicit Runge–Kutta part in the abstract
 framework of the library (orthogonal projectors `P` on a real inner product space standing for

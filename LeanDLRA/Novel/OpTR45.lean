@@ -3,8 +3,8 @@ import LeanDLRA.Matrix.Frobenius
 /-!
 # Fast Forward for factorized (LoRA) versus full-rank training: the quadratic model
 
-Open problem OP-TR-45 of `docs/survey/open-problems.json` (arXiv 2409.04206, Sec. 6.1, Fig. 7–8,
-App. D).  *Fast Forward* (FF) repeats the last optimizer update,
+Open problem OP-TR-45 of `docs/catalogue/survey/open-problems.json` (arXiv 2409.04206, Sec. 6.1,
+Fig. 7–8, App. D).  *Fast Forward* (FF) repeats the last optimizer update,
 `x ↦ x + τ (x_t - x_{t-1})`, while a small validation loss keeps decreasing.  Empirically it saves
 compute for LoRA (even at full LoRA rank) but "the loss rises at the first simulated step" for
 full-rank fine-tuning.  The conjectured explanation is that the factorization makes consecutive

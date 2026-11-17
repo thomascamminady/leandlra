@@ -5,8 +5,8 @@ import LeanDLRA.Matrix.LowRankDistance
 /-!
 # Low-rank gradient dynamics of a two-layer network with a smooth activation
 
-Open problem OP-TR-39 of `docs/survey/open-problems.json` (arXiv 2602.06208, Assumption 3.4,
-Sec. 3, App. C).  The model of the paper: inputs `X : d × N` (whitened,
+Open problem OP-TR-39 of `docs/catalogue/survey/open-problems.json` (arXiv 2602.06208, Assumption
+3.4, Sec. 3, App. C).  The model of the paper: inputs `X : d × N` (whitened,
 `X Xᵀ = 1`), labels `Y : K × N`, a fixed second layer `W₂ : K × m`, a first layer `W₁ : m × d`
 trained by gradient descent `W(t+1) = W(t) − η G₁(W(t))` on `½ ‖W₂ φ(W₁ X) − Y‖²_F` with an
 elementwise activation `φ`, `φ(0) = 0`, `|φ''| ≤ μ`.  The gradient is

@@ -5,7 +5,7 @@ import LeanDLRA.Matrix.Frobenius
 /-!
 # Robustness of low-rank training to rank over-estimation and ill-conditioned initial spectra
 
-Open problem OP-SB-55 of `docs/survey/open-problems.json` (research-level;).
+Open problem OP-SB-55 of `docs/catalogue/survey/open-problems.json` (research-level;).
 Target of the entry: discrete error and descent bounds for geometry-aware Tucker/DLRT training
 (arXiv 2305.19059) and for CondLR (arXiv 2306.01485) "with constants independent of the smallest
 singular values and of the initial conditioning", backing the numerical observations of those
