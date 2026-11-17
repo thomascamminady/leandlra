@@ -30,6 +30,10 @@ approximation error `‖X - A‖`, with explicit constants. All norms are Froben
 * `IsDLRASolution.norm_sub_le_integral`: the bound for a DLRA solution of rank `r`
   (`IsDLRASolution`); `IsDLRASolution.norm_sub_le_integral_of_forall_norm_sub_le`: the same for
   a right-differentiable curve `X` of best approximations of rank at most `r`.
+* `EckartYoung.exists_truncation_eq_mul_diagonal_mul_transpose`,
+  `EckartYoung.rank_truncation_of_le_singularValues`, `EckartYoung.le_singularValues_truncation`:
+  if `0 < ρ ≤ σ_{r-1}(A)`, the truncated SVD `T_r(A)` is `U diag(σ) Vᵀ` with `σ i ≥ ρ`, has rank
+  `r` and `ρ ≤ σ_{r-1}(T_r(A))`.
 * `dlra_norm_sub_truncation_le_integral`: the case `F(t, Y) = Ȧ(t)`, `X t = T_r(A t)`, `Y 0 = X 0`:
   `‖Y t - X t‖ ≤ 2 β e^{β t} ∫₀ᵗ ‖X s - A s‖ ds` with `β = 8 μ / ρ`.
 
@@ -440,10 +444,11 @@ theorem IsDLRASolution.norm_sub_le_integral_of_forall_norm_sub_le {r : ℕ}
 
 /-! ### The truncated SVD -/
 
-/-- If the `r`-th singular value of `A` is at least `ρ > 0`, then `truncation A r` is
-`U diag(σ) Vᵀ` with orthonormal columns of `U` and `V` and `σ i ≥ ρ`. -/
-private theorem truncation_factor {r : ℕ} (hr : 0 < r) {A : Matrix m n ℝ} {ρ : ℝ} (hρ : 0 < ρ)
-    (hσ : ρ ≤ (toEuclideanLin A).singularValues (r - 1)) :
+/-- **A singular value decomposition of the truncated SVD.** If the `r`-th singular value of `A`
+is at least `ρ > 0` (`ρ ≤ σ_{r-1}(A)`, `0`-indexed), then `truncation A r = U diag(σ) Vᵀ` with `r`
+orthonormal columns of `U` and of `V` and `σ i ≥ ρ` for all `i`. -/
+theorem EckartYoung.exists_truncation_eq_mul_diagonal_mul_transpose {r : ℕ} {A : Matrix m n ℝ}
+    {ρ : ℝ} (hρ : 0 < ρ) (hσ : ρ ≤ (toEuclideanLin A).singularValues (r - 1)) :
     ∃ (U : Matrix m (Fin r) ℝ) (V : Matrix n (Fin r) ℝ) (σ : Fin r → ℝ),
       Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ (∀ i, ρ ≤ σ i) ∧ truncation A r = U * diagonal σ * Vᵀ := by
   have hd : r ≤ Module.finrank ℝ (EuclideanSpace ℝ n) := by
@@ -503,6 +508,25 @@ private theorem truncation_factor {r : ℕ} (hr : 0 < r) {A : Matrix m n ℝ} {�
       rw [Matrix.mul_assoc (A * V), hD, Matrix.mul_one, Matrix.mul_assoc]
     rw [h3, hVV, truncation, Matrix.mul_assoc]
 
+/-- **The truncated SVD has full rank `r`.** If `0 < ρ ≤ σ_{r-1}(A)`, then `truncation A r` has
+rank `r` (and not only rank at most `r`, `EckartYoung.rank_truncation_le`). -/
+theorem EckartYoung.rank_truncation_of_le_singularValues {r : ℕ} {A : Matrix m n ℝ} {ρ : ℝ}
+    (hρ : 0 < ρ) (hσ : ρ ≤ (toEuclideanLin A).singularValues (r - 1)) :
+    (truncation A r).rank = r := by
+  obtain ⟨U, V, σ, hU, hV, hσi, hT⟩ := exists_truncation_eq_mul_diagonal_mul_transpose hρ hσ
+  refine (SVD.rank_eq_iff_exists_factor _).2 ⟨U, diagonal σ, V, hU, hV, ?_, hT⟩
+  rw [det_diagonal, isUnit_iff_ne_zero]
+  exact Finset.prod_ne_zero_iff.mpr fun i _ => (lt_of_lt_of_le hρ (hσi i)).ne'
+
+/-- **The `r`-th singular value of the truncated SVD.** If `0 < r` and `0 < ρ ≤ σ_{r-1}(A)`, then
+`ρ ≤ σ_{r-1}(truncation A r)`: a lower bound for the `r`-th singular value of `A` is one for its
+truncated SVD of rank `r`. -/
+theorem EckartYoung.le_singularValues_truncation {r : ℕ} (hr : 0 < r) {A : Matrix m n ℝ} {ρ : ℝ}
+    (hρ : 0 < ρ) (hσ : ρ ≤ (toEuclideanLin A).singularValues (r - 1)) :
+    ρ ≤ (toEuclideanLin (truncation A r)).singularValues (r - 1) := by
+  obtain ⟨U, V, σ, hU, hV, hσi, hT⟩ := exists_truncation_eq_mul_diagonal_mul_transpose hρ hσ
+  exact SVD.le_singularValues_of_eq_mul hr hU hV hT (Curvature.diagonal_bounded_below hρ.le hσi)
+
 /-- **Quasi-optimality of matrix DLRA.** Let `X(t) = T_r(A(t))` be a differentiable best
 rank-`r` approximation with `σ_r(A(t)) ≥ ρ`, `‖X(t) - A(t)‖_F ≤ ρ/16` and `‖Ȧ‖_F ≤ μ`, and let
 `Y = U S Vᵀ` solve the DLRA equation `Ẏ = P(Y) Ȧ` with `Y(0) = X(0)`. Then, for every
@@ -527,13 +551,9 @@ theorem dlra_norm_sub_truncation_le_integral {r : ℕ} (hr : 0 < r)
   have hμ0 : 0 ≤ μ := (norm_nonneg _).trans (hμ 0 ⟨le_rfl, hT⟩)
   have hfac : ∀ s ∈ Icc (0 : ℝ) T,
       (X s).rank = r ∧ ρ ≤ (toEuclideanLin (X s)).singularValues (r - 1) := fun s hs => by
-    obtain ⟨U₀, V₀, σ₀, hU₀, hV₀, hσ₀, hXeq⟩ := truncation_factor hr hρ (hσ s hs)
-    rw [← hXbest s hs] at hXeq
-    refine ⟨(SVD.rank_eq_iff_exists_factor _).2 ⟨U₀, diagonal σ₀, V₀, hU₀, hV₀, ?_, hXeq⟩,
-      SVD.le_singularValues_of_eq_mul hr hU₀ hV₀ hXeq
-        (Curvature.diagonal_bounded_below hρ.le hσ₀)⟩
-    rw [det_diagonal, isUnit_iff_ne_zero]
-    exact Finset.prod_ne_zero_iff.mpr fun i _ => (lt_of_lt_of_le hρ (hσ₀ i)).ne'
+    rw [hXbest s hs]
+    exact ⟨rank_truncation_of_le_singularValues hρ (hσ s hs),
+      le_singularValues_truncation hr hρ (hσ s hs)⟩
   have hA' : ODESolution (fun t (_ : Matrix m n ℝ) => A' t) A 0 T :=
     ⟨fun s hs => (hA s hs).continuousAt.continuousWithinAt,
       fun s hs => (hA s (Ico_subset_Icc_self hs)).hasDerivWithinAt⟩
@@ -571,8 +591,9 @@ end QuasiOptimal
 /-! ### Examples
 
 The namespace `QuasiOptimalityExamples` holds the facts on the rank-one matrices `c e₁ e₁ᵀ` of
-`ℝ^{2×2}` that the examples of this file, of `LeanDLRA/DLRA/QuasiOptimalityTube.lean` and of
-`LeanDLRA/DLRA/QuasiOptimalityGap.lean` use. -/
+`ℝ^{2×2}` that the examples of this file, of `LeanDLRA/DLRA/QuasiOptimalityTube.lean`, of
+`LeanDLRA/DLRA/QuasiOptimalityGap.lean` and of `LeanDLRA/DLRA/QuasiOptimalityTruncation.lean`
+use. -/
 
 namespace QuasiOptimalityExamples
 
@@ -921,6 +942,44 @@ private theorem truncation_diag {c : ℝ} (hc : 1 ≤ c) :
   ext a b
   fin_cases a <;> fin_cases b <;> simp [Matrix.mul_apply, Fin.sum_univ_two, hx1, hx00]
 
+/-- The rank-one truncation of `A t = (1 + t) e₁ e₁ᵀ + diag(0, 1/16)`, `t ≥ 0`, is
+`(1 + t) e₁ e₁ᵀ`. -/
+theorem truncation_smul_e₁_add {t : ℝ} (ht : 0 ≤ t) :
+    EckartYoung.truncation ((1 + t) • (e₁ * e₁ᵀ) + !![0, 0; 0, 1 / 16]) 1 =
+      (1 + t) • (e₁ * e₁ᵀ) := by
+  rw [smul_e₁_add_N₁₆, truncation_diag (by linarith), smul_e₁_eq]
+
+/-- `σ₀(A t) ≥ 1` for `A t = (1 + t) e₁ e₁ᵀ + diag(0, 1/16)`, `t ≥ 0`. -/
+theorem one_le_singularValues_smul_e₁_add {t : ℝ} (ht : 0 ≤ t) :
+    (1 : ℝ) ≤ (toEuclideanLin ((1 + t) • (e₁ * e₁ᵀ) + !![0, 0; 0, 1 / 16])).singularValues
+      (1 - 1) := by
+  change (1 : ℝ) ≤ (toEuclideanLin ((1 + t) • (e₁ * e₁ᵀ) + N₁₆)).singularValues 0
+  rw [smul_e₁_add_N₁₆]
+  exact le_trans (by linarith) le_singularValues_diag
+
+/-- `‖X t - A t‖ ≤ 1/16` for `X t = (1 + t) e₁ e₁ᵀ` and `A t = X t + diag(0, 1/16)`. -/
+theorem norm_smul_e₁_sub_add_le (t : ℝ) :
+    ‖(1 + t) • (e₁ * e₁ᵀ) - ((1 + t) • (e₁ * e₁ᵀ) + !![0, 0; 0, 1 / 16])‖ ≤ 1 / 16 := by
+  rw [sub_add_cancel_left, norm_neg]
+  exact norm_N₁₆_le
+
+/-- `EckartYoung.exists_truncation_eq_mul_diagonal_mul_transpose`,
+`EckartYoung.rank_truncation_of_le_singularValues` and `EckartYoung.le_singularValues_truncation`
+for `A = e₁ e₁ᵀ + diag(0, 1/16)` (`2 × 2`, `r = 1`, `ρ = 1`), where `T₁(A) = e₁ e₁ᵀ ≠ A`. -/
+example :
+    (∃ (U : Matrix (Fin 2) (Fin 1) ℝ) (V : Matrix (Fin 2) (Fin 1) ℝ) (σ : Fin 1 → ℝ),
+      Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ (∀ i, 1 ≤ σ i) ∧
+      EckartYoung.truncation ((1 + 0 : ℝ) • (e₁ * e₁ᵀ) + N₁₆) 1 = U * diagonal σ * Vᵀ) ∧
+    (EckartYoung.truncation ((1 + 0 : ℝ) • (e₁ * e₁ᵀ) + N₁₆) 1).rank = 1 ∧
+    (1 : ℝ) ≤ (toEuclideanLin
+      (EckartYoung.truncation ((1 + 0 : ℝ) • (e₁ * e₁ᵀ) + N₁₆) 1)).singularValues (1 - 1) :=
+  ⟨EckartYoung.exists_truncation_eq_mul_diagonal_mul_transpose one_pos
+      (one_le_singularValues_smul_e₁_add le_rfl),
+    EckartYoung.rank_truncation_of_le_singularValues one_pos
+      (one_le_singularValues_smul_e₁_add le_rfl),
+    EckartYoung.le_singularValues_truncation one_pos one_pos
+      (one_le_singularValues_smul_e₁_add le_rfl)⟩
+
 /-- `dlra_norm_sub_truncation_le_integral` for `2 × 2` matrices, `r = 1`,
 `A t = (1 + t) e₁ e₁ᵀ + diag(0, 1/16)` on `[0, 1]` (`Ȧ = e₁ e₁ᵀ`, `μ = ρ = 1`): the truncation
 `X t = T₁(A t) = (1 + t) e₁ e₁ᵀ` differs from `A t` by `‖X t - A t‖ = 1/16 = ρ/16`, so the
@@ -940,12 +999,9 @@ example : ∀ t ∈ Set.Icc (0 : ℝ) 1,
     (fun t _ => hasDerivAt_smul_e₁ 1 t) (fun t ht => ?_) (fun t _ => ?_)
     (fun t _ => ⟨e₁_transpose_mul_self, e₁_transpose_mul_self, smul_e₁_mul _⟩)
     ⟨fun s _ => (hasDerivAt_smul_e₁ 1 s).continuousAt.continuousWithinAt, fun s hs => ?_⟩ rfl
-  · rw [smul_e₁_add_N₁₆, truncation_diag (by linarith [ht.1]), smul_e₁_eq]
-  · change (1 : ℝ) ≤ (toEuclideanLin ((1 + t) • (e₁ * e₁ᵀ) + N₁₆)).singularValues 0
-    rw [smul_e₁_add_N₁₆]
-    exact le_trans (by linarith [ht.1]) le_singularValues_diag
-  · rw [sub_add_cancel_left, norm_neg]
-    exact norm_N₁₆_le
+  · exact (truncation_smul_e₁_add ht.1).symm
+  · exact one_le_singularValues_smul_e₁_add ht.1
+  · exact norm_smul_e₁_sub_add_le t
   · have h := (hasDerivAt_smul_e₁ 1 s).hasDerivWithinAt (s := Ici s)
     convert h using 1
     rw [← tangentProjAt_smul_e₁ (ne_of_gt (by linarith [hs.1] : (0 : ℝ) < 1 + s))]

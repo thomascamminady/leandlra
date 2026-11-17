@@ -13,13 +13,22 @@ from the two bounds on normal vectors: `‖P(X) N‖ ≤ ρ⁻¹ ‖Y - X‖ ‖
 (`P(Y) N = 0`), and `‖P(Y) N‖ ≤ ρ⁻¹ ‖Y - X‖ ‖N‖` for `N` normal at `X`. All norms of matrices are
 Frobenius norms; the lower bound `ρ` is needed at `X` only, and there is no smallness condition on
 `‖Y - X‖`. The constant `1` cannot be lowered: the example at the end has
-`‖P(X) N‖ = ρ⁻¹ ‖Y - X‖ ‖N‖`.
+`‖P(X) N‖ = ρ⁻¹ ‖Y - X‖ ‖N‖`. The bounds are shown first for factored matrices `X = U S Vᵀ`,
+`Y = U' S' V'ᵀ` with orthonormal columns indexed by any finite type, in the form of
+`Curvature.koch_lubich_tangent_frob`, and then for the tangent projector at a matrix of rank `r`.
 
 ## Main results
 
 * `LeanDLRA.Curvature.norm_sq_tangentProjMat_le_of_normal`: for orthogonal projectors and `N`
   with `Qu N = 0`, `N Qv = 0`: `‖P N‖² ≤ (b² + (1 - b²) a²) ‖N‖²` if `‖Pu (1 - Qu)‖₂ ≤ a` and
   `‖(1 - Qv) Pv‖₂ ≤ b ≤ 1`.
+* `LeanDLRA.Curvature.norm_tangentProjMat_le_of_tangentProjMat_eq_zero`,
+  `LeanDLRA.Curvature.norm_tangentProjMat_le_of_tangentProjMat_eq_zero_symm`,
+  `LeanDLRA.Curvature.norm_sub_tangentProjMat_le_of_tangentProjMat_eq_self`: the bounds on normal
+  vectors and on the normal component of a tangent vector for factored matrices.
+* `LeanDLRA.Curvature.norm_tangentProjMat_sub_le_inv_mul`: the Lipschitz bound with the
+  constant `1` for factored matrices, under the hypotheses of
+  `Curvature.koch_lubich_tangent_frob`.
 * `LeanDLRA.norm_tangentProjAt_apply_le_of_tangentProj_eq_zero`,
   `LeanDLRA.norm_tangentProjAt_apply_le_of_tangentProjAt_eq_zero`: `‖P(X) N‖ ≤ ρ⁻¹ ‖Y - X‖ ‖N‖`
   for `N` normal at `Y`.
@@ -313,6 +322,150 @@ private theorem mul_eq_zero_of_tangentProj_apply_eq_zero {k' : Type*} [Fintype k
       _ = (1 - U * Uᵀ) * N * ((1 - V * Vᵀ) * (V * Vᵀ)) := by rw [Matrix.mul_assoc]
       _ = 0 := by rw [hQQ, Matrix.mul_zero]
 
+omit [DecidableEq m] [DecidableEq n] in
+/-- **The tangent projector at `X` on a vector normal at `Y`, factor form.** Let `X = U S Vᵀ` and
+`Y = U' S' V'ᵀ` with orthonormal columns of `U`, `V`, `U'`, `V'` (any finite index type `k`) and
+`ρ ‖v‖ ≤ ‖S v‖`, `ρ > 0`. If `N` is normal at `Y`, `P(Y) N = 0`, then
+`‖P(X) N‖ ≤ ρ⁻¹ ‖Y - X‖ ‖N‖`. Nothing is assumed on the core `S'`. The constant `1` is sharp
+(equality example at the end of this file). -/
+theorem norm_tangentProjMat_le_of_tangentProjMat_eq_zero {U U' : Matrix m k ℝ}
+    {V V' : Matrix n k ℝ} {S S' : Matrix k k ℝ} {ρ : ℝ} (hρ : 0 < ρ) (hU : Uᵀ * U = 1)
+    (hV : Vᵀ * V = 1) (hU' : U'ᵀ * U' = 1) (hV' : V'ᵀ * V' = 1)
+    (hS : ∀ v : EuclideanSpace ℝ k, ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖) {N : Matrix m n ℝ}
+    (hN : tangentProjMat (U' * U'ᵀ) (V' * V'ᵀ) N = 0) :
+    ‖tangentProjMat (U * Uᵀ) (V * Vᵀ) N‖ ≤ ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ * ‖N‖ := by
+  rw [tangentProjMat_eq_tangentProj] at hN ⊢
+  obtain ⟨h1, h2⟩ := mul_eq_zero_of_tangentProj_apply_eq_zero hU' hV' hN
+  exact (normal_bounds (S' := S') hρ hU hV hU' hV' hS).1 N h1 h2
+
+omit [DecidableEq m] [DecidableEq n] in
+/-- **The tangent projector at `Y` on a vector normal at `X`, factor form.** Under the hypotheses
+of `norm_tangentProjMat_le_of_tangentProjMat_eq_zero` (`X = U S Vᵀ`, `Y = U' S' V'ᵀ`,
+`ρ ‖v‖ ≤ ‖S v‖`), if `N` is normal at `X`, `P(X) N = 0`, then `‖P(Y) N‖ ≤ ρ⁻¹ ‖Y - X‖ ‖N‖`. The
+lower bound `ρ` is needed for the core of `X` only. -/
+theorem norm_tangentProjMat_le_of_tangentProjMat_eq_zero_symm {U U' : Matrix m k ℝ}
+    {V V' : Matrix n k ℝ} {S S' : Matrix k k ℝ} {ρ : ℝ} (hρ : 0 < ρ) (hU : Uᵀ * U = 1)
+    (hV : Vᵀ * V = 1) (hU' : U'ᵀ * U' = 1) (hV' : V'ᵀ * V' = 1)
+    (hS : ∀ v : EuclideanSpace ℝ k, ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖) {N : Matrix m n ℝ}
+    (hN : tangentProjMat (U * Uᵀ) (V * Vᵀ) N = 0) :
+    ‖tangentProjMat (U' * U'ᵀ) (V' * V'ᵀ) N‖ ≤ ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ * ‖N‖ := by
+  rw [tangentProjMat_eq_tangentProj] at hN ⊢
+  obtain ⟨h1, h2⟩ := mul_eq_zero_of_tangentProj_apply_eq_zero hU hV hN
+  exact (normal_bounds (S' := S') hρ hU hV hU' hV' hS).2 N h1 h2
+
+omit [DecidableEq m] [DecidableEq n] in
+/-- **The normal component at `Y` of a tangent vector at `X`, factor form.** Under the hypotheses
+of `norm_tangentProjMat_le_of_tangentProjMat_eq_zero`, if `Z` is tangent at `X`, `P(X) Z = Z`,
+then `‖Z - P(Y) Z‖ ≤ ρ⁻¹ ‖Y - X‖ ‖Z‖`. This is the adjoint form of that bound. -/
+theorem norm_sub_tangentProjMat_le_of_tangentProjMat_eq_self {U U' : Matrix m k ℝ}
+    {V V' : Matrix n k ℝ} {S S' : Matrix k k ℝ} {ρ : ℝ} (hρ : 0 < ρ) (hU : Uᵀ * U = 1)
+    (hV : Vᵀ * V = 1) (hU' : U'ᵀ * U' = 1) (hV' : V'ᵀ * V' = 1)
+    (hS : ∀ v : EuclideanSpace ℝ k, ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖) {Z : Matrix m n ℝ}
+    (hZ : tangentProjMat (U * Uᵀ) (V * Vᵀ) Z = Z) :
+    ‖Z - tangentProjMat (U' * U'ᵀ) (V' * V'ᵀ) Z‖ ≤
+      ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ * ‖Z‖ := by
+  classical
+  rw [tangentProjMat_eq_tangentProj] at hZ ⊢
+  have hP := isOrthProj_tangentProj (m := m) (n := n) hU' hV'
+  have hQ := isOrthProj_tangentProj (m := m) (n := n) hU hV
+  obtain ⟨W, hW⟩ : ∃ W : Matrix m n ℝ, W = Z - tangentProj U' V' Z := ⟨_, rfl⟩
+  rw [← hW]
+  have hPW : tangentProj U' V' W = 0 := by rw [hW, map_sub, hP.idem, sub_self]
+  have h1 : ‖tangentProj U V W‖ ≤ ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ * ‖W‖ := by
+    have h := norm_tangentProjMat_le_of_tangentProjMat_eq_zero (S' := S') hρ hU hV hU' hV' hS
+      (N := W) (by rw [tangentProjMat_eq_tangentProj]; exact hPW)
+    rwa [tangentProjMat_eq_tangentProj] at h
+  have h2 : ⟪Z - tangentProj U' V' Z, W⟫ = ⟪Z, W⟫ := by
+    rw [inner_sub_left, hP.symm, hPW, inner_zero_right, sub_zero]
+  have h3 : ‖W‖ ^ 2 ≤ ‖Z‖ * ‖tangentProj U V W‖ :=
+    calc ‖W‖ ^ 2 = ⟪W, W⟫ := (real_inner_self_eq_norm_sq W).symm
+      _ = ⟪Z - tangentProj U' V' Z, W⟫ := by rw [← hW]
+      _ = ⟪tangentProj U V Z, W⟫ := by rw [h2, hZ]
+      _ = ⟪Z, tangentProj U V W⟫ := hQ.symm Z W
+      _ ≤ ‖Z‖ * ‖tangentProj U V W‖ := real_inner_le_norm _ _
+  by_contra hlt
+  rw [not_le] at hlt
+  have hc : 0 ≤ ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ :=
+    mul_nonneg (inv_nonneg.2 hρ.le) (norm_nonneg _)
+  have hWpos : 0 < ‖W‖ := lt_of_le_of_lt (mul_nonneg hc (norm_nonneg Z)) hlt
+  have h4 : ‖Z‖ * ‖tangentProj U V W‖ ≤ ‖Z‖ * (ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ * ‖W‖) :=
+    mul_le_mul_of_nonneg_left h1 (norm_nonneg Z)
+  have h5 : ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ * ‖Z‖ * ‖W‖ < ‖W‖ * ‖W‖ :=
+    mul_lt_mul_of_pos_right hlt hWpos
+  nlinarith
+
+omit [DecidableEq m] [DecidableEq n] in
+/-- **Lipschitz bound of the tangent projector with the constant `1`, factor form.** Under the
+hypotheses of `koch_lubich_tangent_frob` (`X = U S Vᵀ` and `Y = U' S' V'ᵀ` with orthonormal
+columns of `U`, `V`, `U'`, `V'`, any finite index type `k`, and `ρ ‖v‖ ≤ ‖S v‖`, `ρ > 0`), for
+every `B`: `‖P(Y) B - P(X) B‖ ≤ ρ⁻¹ ‖Y - X‖ ‖B‖` in Frobenius norms, the bound of
+`koch_lubich_tangent_frob` with `1` in place of `2`. With `N = B - P(X) B` and `Z = P(X) B` the
+difference is the orthogonal sum of `P(Y) N` and `-(Z - P(Y) Z)`, and `‖B‖² = ‖N‖² + ‖Z‖²`. -/
+theorem norm_tangentProjMat_sub_le_inv_mul {U U' : Matrix m k ℝ} {V V' : Matrix n k ℝ}
+    {S S' : Matrix k k ℝ} {ρ : ℝ} (hρ : 0 < ρ) (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
+    (hU' : U'ᵀ * U' = 1) (hV' : V'ᵀ * V' = 1)
+    (hS : ∀ v : EuclideanSpace ℝ k, ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖) (B : Matrix m n ℝ) :
+    ‖tangentProjMat (U' * U'ᵀ) (V' * V'ᵀ) B - tangentProjMat (U * Uᵀ) (V * Vᵀ) B‖ ≤
+      ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ * ‖B‖ := by
+  classical
+  have hP := isOrthProj_tangentProj (m := m) (n := n) hU' hV'
+  have hQ := isOrthProj_tangentProj (m := m) (n := n) hU hV
+  obtain ⟨N, hN⟩ : ∃ N : Matrix m n ℝ, N = B - tangentProj U V B := ⟨_, rfl⟩
+  obtain ⟨Z, hZ⟩ : ∃ Z : Matrix m n ℝ, Z = tangentProj U V B := ⟨_, rfl⟩
+  obtain ⟨c, hc⟩ : ∃ c : ℝ, c = ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ := ⟨_, rfl⟩
+  rw [tangentProjMat_eq_tangentProj, tangentProjMat_eq_tangentProj, ← hc]
+  have hc0 : 0 ≤ c := by
+    rw [hc]
+    exact mul_nonneg (inv_nonneg.2 hρ.le) (norm_nonneg _)
+  have hQN : tangentProj U V N = 0 := by rw [hN, map_sub, hQ.idem, sub_self]
+  have hQZ : tangentProj U V Z = Z := by rw [hZ, hQ.idem]
+  have h1 : ‖tangentProj U' V' N‖ ≤ c * ‖N‖ := by
+    have h := norm_tangentProjMat_le_of_tangentProjMat_eq_zero_symm (S' := S') hρ hU hV hU' hV'
+      hS (N := N) (by rw [tangentProjMat_eq_tangentProj]; exact hQN)
+    rwa [tangentProjMat_eq_tangentProj, ← hc] at h
+  have h2 : ‖Z - tangentProj U' V' Z‖ ≤ c * ‖Z‖ := by
+    have h := norm_sub_tangentProjMat_le_of_tangentProjMat_eq_self (S' := S') hρ hU hV hU' hV'
+      hS (Z := Z) (by rw [tangentProjMat_eq_tangentProj]; exact hQZ)
+    rwa [tangentProjMat_eq_tangentProj, ← hc] at h
+  have e : tangentProj U' V' B - tangentProj U V B =
+      tangentProj U' V' N - (Z - tangentProj U' V' Z) := by
+    rw [hN, map_sub, ← hZ]
+    abel
+  have o1 : ⟪tangentProj U' V' N, Z - tangentProj U' V' Z⟫ = 0 := by
+    rw [hP.symm, map_sub, hP.idem, sub_self, inner_zero_right]
+  have o2 : ⟪N, Z⟫ = 0 := by
+    rw [← hQZ, ← hQ.symm, hQN, inner_zero_left]
+  have eB : B = N + Z := by
+    rw [hN, hZ]
+    abel
+  have p1 : ‖tangentProj U' V' B - tangentProj U V B‖ ^ 2 =
+      ‖tangentProj U' V' N‖ ^ 2 + ‖Z - tangentProj U' V' Z‖ ^ 2 := by
+    rw [e, norm_sub_sq_real (tangentProj U' V' N) (Z - tangentProj U' V' Z), o1]
+    ring
+  have p2 : ‖B‖ ^ 2 = ‖N‖ ^ 2 + ‖Z‖ ^ 2 := by
+    rw [eB, norm_add_sq_real N Z, o2]
+    ring
+  have h1' := pow_le_pow_left₀ (norm_nonneg _) h1 2
+  have h2' := pow_le_pow_left₀ (norm_nonneg _) h2 2
+  rw [mul_pow] at h1' h2'
+  refine (pow_le_pow_iff_left₀ (norm_nonneg _) (mul_nonneg hc0 (norm_nonneg _))
+    two_ne_zero).mp ?_
+  rw [p1, mul_pow, p2]
+  nlinarith
+
+/-- `koch_lubich_tangent_frob`, restated verbatim, follows from
+`norm_tangentProjMat_sub_le_inv_mul`. -/
+example {U U' : Matrix m k ℝ} {V V' : Matrix n k ℝ}
+    {S S' : Matrix k k ℝ} {ρ : ℝ} (hρ : 0 < ρ) (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
+    (hU' : U'ᵀ * U' = 1) (hV' : V'ᵀ * V' = 1)
+    (hS : ∀ v : EuclideanSpace ℝ k, ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖) (B : Matrix m n ℝ) :
+    ‖tangentProjMat (U' * U'ᵀ) (V' * V'ᵀ) B - tangentProjMat (U * Uᵀ) (V * Vᵀ) B‖ ≤
+      2 * ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ * ‖B‖ := by
+  have h := norm_tangentProjMat_sub_le_inv_mul (S' := S') hρ hU hV hU' hV' hS B
+  have h0 : 0 ≤ ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ * ‖B‖ :=
+    mul_nonneg (mul_nonneg (inv_nonneg.2 hρ.le) (norm_nonneg _)) (norm_nonneg _)
+  linarith
+
 end NormalVectors
 
 end Curvature
@@ -375,30 +528,14 @@ theorem norm_one_sub_tangentProj_apply_le_of_tangentProjAt_eq_self {r : ℕ} {X 
     (S : Matrix (Fin r) (Fin r) ℝ) {Z : Matrix m n ℝ} (hZ : tangentProjAt X Z = Z) :
     ‖(1 - tangentProj U V) Z‖ ≤ ρ⁻¹ * ‖U * S * Vᵀ - X‖ * ‖Z‖ := by
   classical
-  have hP := isOrthProj_tangentProj (m := m) (n := n) hU hV
-  have hQ := isOrthProj_tangentProjAt X
+  obtain ⟨U₀, S₀, V₀, hU₀, hV₀, hS₀, rfl⟩ := (SVD.rank_eq_iff_exists_factor X).1 hX
+  have hb := WeylSingular.mul_norm_le_norm_toEuclideanLin_core hU₀ hV₀ rfl hρ
+    (by simpa using hσ)
+  rw [tangentProjAt_eq_tangentProj hU₀ hV₀ hS₀] at hZ
   rw [sub_apply, one_apply_eq_self]
-  obtain ⟨W, hW⟩ : ∃ W : Matrix m n ℝ, W = Z - tangentProj U V Z := ⟨_, rfl⟩
-  rw [← hW]
-  have hPW : tangentProj U V W = 0 := by rw [hW, map_sub, hP.idem, sub_self]
-  have h1 := norm_tangentProjAt_apply_le_of_tangentProj_eq_zero hX hρ hσ hU hV S hPW
-  have h2 : ⟪Z - tangentProj U V Z, W⟫ = ⟪Z, W⟫ := by
-    rw [inner_sub_left, hP.symm, hPW, inner_zero_right, sub_zero]
-  have h3 : ‖W‖ ^ 2 ≤ ‖Z‖ * ‖tangentProjAt X W‖ :=
-    calc ‖W‖ ^ 2 = ⟪W, W⟫ := (real_inner_self_eq_norm_sq W).symm
-      _ = ⟪Z - tangentProj U V Z, W⟫ := by rw [← hW]
-      _ = ⟪tangentProjAt X Z, W⟫ := by rw [h2, hZ]
-      _ = ⟪Z, tangentProjAt X W⟫ := hQ.symm Z W
-      _ ≤ ‖Z‖ * ‖tangentProjAt X W‖ := real_inner_le_norm _ _
-  by_contra hlt
-  rw [not_le] at hlt
-  have hc : 0 ≤ ρ⁻¹ * ‖U * S * Vᵀ - X‖ := mul_nonneg (inv_nonneg.2 hρ.le) (norm_nonneg _)
-  have hWpos : 0 < ‖W‖ := lt_of_le_of_lt (mul_nonneg hc (norm_nonneg Z)) hlt
-  have h4 : ‖Z‖ * ‖tangentProjAt X W‖ ≤ ‖Z‖ * (ρ⁻¹ * ‖U * S * Vᵀ - X‖ * ‖W‖) :=
-    mul_le_mul_of_nonneg_left h1 (norm_nonneg Z)
-  have h5 : ρ⁻¹ * ‖U * S * Vᵀ - X‖ * ‖Z‖ * ‖W‖ < ‖W‖ * ‖W‖ :=
-    mul_lt_mul_of_pos_right hlt hWpos
-  nlinarith
+  have h := Curvature.norm_sub_tangentProjMat_le_of_tangentProjMat_eq_self (S' := S) hρ hU₀ hV₀
+    hU hV hb (Z := Z) (by rw [Curvature.tangentProjMat_eq_tangentProj]; exact hZ)
+  rwa [Curvature.tangentProjMat_eq_tangentProj] at h
 
 /-- **Lipschitz bound of the tangent projector with the constant `1`, factored second point.**
 Under the hypotheses of `norm_tangentProj_sub_tangentProjAt_le` (`X` of rank `r`,
@@ -410,48 +547,12 @@ theorem norm_tangentProj_sub_tangentProjAt_le_inv_mul {r : ℕ} {X : Matrix m n 
     (S : Matrix (Fin r) (Fin r) ℝ) (B : Matrix m n ℝ) :
     ‖tangentProj U V B - tangentProjAt X B‖ ≤ ρ⁻¹ * ‖U * S * Vᵀ - X‖ * ‖B‖ := by
   classical
-  have hP := isOrthProj_tangentProj (m := m) (n := n) hU hV
-  have hQ := isOrthProj_tangentProjAt X
-  obtain ⟨N, hN⟩ : ∃ N : Matrix m n ℝ, N = B - tangentProjAt X B := ⟨_, rfl⟩
-  obtain ⟨Z, hZ⟩ : ∃ Z : Matrix m n ℝ, Z = tangentProjAt X B := ⟨_, rfl⟩
-  obtain ⟨c, hc⟩ : ∃ c : ℝ, c = ρ⁻¹ * ‖U * S * Vᵀ - X‖ := ⟨_, rfl⟩
-  rw [← hc]
-  have hc0 : 0 ≤ c := by
-    rw [hc]
-    exact mul_nonneg (inv_nonneg.2 hρ.le) (norm_nonneg _)
-  have hQN : tangentProjAt X N = 0 := by rw [hN, map_sub, hQ.idem, sub_self]
-  have hQZ : tangentProjAt X Z = Z := by rw [hZ, hQ.idem]
-  have h1 : ‖tangentProj U V N‖ ≤ c * ‖N‖ := by
-    rw [hc]
-    exact norm_tangentProj_apply_le_of_tangentProjAt_eq_zero hX hρ hσ hU hV S hQN
-  have h2 : ‖Z - tangentProj U V Z‖ ≤ c * ‖Z‖ := by
-    have h := norm_one_sub_tangentProj_apply_le_of_tangentProjAt_eq_self hX hρ hσ hU hV S hQZ
-    rwa [sub_apply, one_apply_eq_self, ← hc] at h
-  have e : tangentProj U V B - tangentProjAt X B =
-      tangentProj U V N - (Z - tangentProj U V Z) := by
-    rw [hN, map_sub, ← hZ]
-    abel
-  have o1 : ⟪tangentProj U V N, Z - tangentProj U V Z⟫ = 0 := by
-    rw [hP.symm, map_sub, hP.idem, sub_self, inner_zero_right]
-  have o2 : ⟪N, Z⟫ = 0 := by
-    rw [← hQZ, ← hQ.symm, hQN, inner_zero_left]
-  have eB : B = N + Z := by
-    rw [hN, hZ]
-    abel
-  have p1 : ‖tangentProj U V B - tangentProjAt X B‖ ^ 2 =
-      ‖tangentProj U V N‖ ^ 2 + ‖Z - tangentProj U V Z‖ ^ 2 := by
-    rw [e, norm_sub_sq_real (tangentProj U V N) (Z - tangentProj U V Z), o1]
-    ring
-  have p2 : ‖B‖ ^ 2 = ‖N‖ ^ 2 + ‖Z‖ ^ 2 := by
-    rw [eB, norm_add_sq_real N Z, o2]
-    ring
-  have h1' := pow_le_pow_left₀ (norm_nonneg _) h1 2
-  have h2' := pow_le_pow_left₀ (norm_nonneg _) h2 2
-  rw [mul_pow] at h1' h2'
-  refine (pow_le_pow_iff_left₀ (norm_nonneg _) (mul_nonneg hc0 (norm_nonneg _))
-    two_ne_zero).mp ?_
-  rw [p1, mul_pow, p2]
-  nlinarith
+  obtain ⟨U₀, S₀, V₀, hU₀, hV₀, hS₀, rfl⟩ := (SVD.rank_eq_iff_exists_factor X).1 hX
+  have hb := WeylSingular.mul_norm_le_norm_toEuclideanLin_core hU₀ hV₀ rfl hρ
+    (by simpa using hσ)
+  rw [tangentProjAt_eq_tangentProj hU₀ hV₀ hS₀]
+  have h := Curvature.norm_tangentProjMat_sub_le_inv_mul (S' := S) hρ hU₀ hV₀ hU hV hb B
+  rwa [Curvature.tangentProjMat_eq_tangentProj, Curvature.tangentProjMat_eq_tangentProj] at h
 
 /-- **The tangent projector at `X` on a vector normal at `Y`, two matrices of rank `r`.** For
 `X`, `Y` of rank `r` with `0 < ρ ≤ σ_{r-1}(X)` and `P(Y) N = 0`:
@@ -651,6 +752,49 @@ example (B : Matrix (Fin 2) (Fin 2) ℝ) :
   exact ⟨norm_tangentProjAt_apply_le_of_tangentProjAt_eq_zero rank_c₁ hrank one_pos
       one_le_singularValues_c₁ hN,
     norm_tangentProjAt_sub_le_inv_mul rank_c₁ hrank one_pos one_le_singularValues_c₁ B⟩
+
+/-- The core `1` of `X = e₁ 1 e₁ᵀ` is bounded below by `1`. -/
+private theorem one_mul_norm_le_core (v : EuclideanSpace ℝ (Fin 1)) :
+    (1 : ℝ) * ‖v‖ ≤ ‖Matrix.toEuclideanLin (1 : Matrix (Fin 1) (Fin 1) ℝ) v‖ := by
+  rw [toLpLin_one]
+  simp
+
+/-- The four factor-form bounds for `X = e₁ 1 e₁ᵀ` and `Y = v (9/25) vᵀ` (`2 × 2`, one column,
+`ρ = 1`): `P(X) N` for the normal vector `N = w wᵀ` at `Y`, `P(Y) N` for the normal vector
+`N = e₂ e₂ᵀ` at `X`, the normal component at `Y` of the tangent vector `e₁ e₁ᵀ` at `X`, and the
+Lipschitz bound `Curvature.norm_tangentProjMat_sub_le_inv_mul`. -/
+example (B : Matrix (Fin 2) (Fin 2) ℝ) :
+    ‖Curvature.tangentProjMat (c₁ * c₁ᵀ) (c₁ * c₁ᵀ) Nᵥ‖ ≤
+      1⁻¹ * ‖v₁ * S₉ * v₁ᵀ - c₁ * (1 : Matrix (Fin 1) (Fin 1) ℝ) * c₁ᵀ‖ * ‖Nᵥ‖ ∧
+    ‖Curvature.tangentProjMat (v₁ * v₁ᵀ) (v₁ * v₁ᵀ) N₂‖ ≤
+      1⁻¹ * ‖v₁ * S₉ * v₁ᵀ - c₁ * (1 : Matrix (Fin 1) (Fin 1) ℝ) * c₁ᵀ‖ * ‖N₂‖ ∧
+    ‖c₁ * c₁ᵀ - Curvature.tangentProjMat (v₁ * v₁ᵀ) (v₁ * v₁ᵀ) (c₁ * c₁ᵀ)‖ ≤
+      1⁻¹ * ‖v₁ * S₉ * v₁ᵀ - c₁ * (1 : Matrix (Fin 1) (Fin 1) ℝ) * c₁ᵀ‖ * ‖c₁ * c₁ᵀ‖ ∧
+    ‖Curvature.tangentProjMat (v₁ * v₁ᵀ) (v₁ * v₁ᵀ) B -
+        Curvature.tangentProjMat (c₁ * c₁ᵀ) (c₁ * c₁ᵀ) B‖ ≤
+      1⁻¹ * ‖v₁ * S₉ * v₁ᵀ - c₁ * (1 : Matrix (Fin 1) (Fin 1) ℝ) * c₁ᵀ‖ * ‖B‖ := by
+  have hNv : Curvature.tangentProjMat (v₁ * v₁ᵀ) (v₁ * v₁ᵀ) Nᵥ = 0 := by
+    rw [Curvature.tangentProjMat_eq_tangentProj]
+    exact tangentProj_v₁_Nᵥ
+  have hN2 : Curvature.tangentProjMat (c₁ * c₁ᵀ) (c₁ * c₁ᵀ) N₂ = 0 := by
+    rw [Curvature.tangentProjMat_eq_tangentProj, ← tangentProjAt_c₁]
+    exact tangentProjAt_c₁_N₂
+  have hZ : Curvature.tangentProjMat (c₁ * c₁ᵀ) (c₁ * c₁ᵀ) (c₁ * c₁ᵀ) = c₁ * c₁ᵀ := by
+    rw [Curvature.tangentProjMat_eq_tangentProj, tangentProj_apply]
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+  exact ⟨Curvature.norm_tangentProjMat_le_of_tangentProjMat_eq_zero one_pos
+      c₁_transpose_mul_self c₁_transpose_mul_self v₁_transpose_mul_self v₁_transpose_mul_self
+      one_mul_norm_le_core hNv,
+    Curvature.norm_tangentProjMat_le_of_tangentProjMat_eq_zero_symm one_pos
+      c₁_transpose_mul_self c₁_transpose_mul_self v₁_transpose_mul_self v₁_transpose_mul_self
+      one_mul_norm_le_core hN2,
+    Curvature.norm_sub_tangentProjMat_le_of_tangentProjMat_eq_self one_pos
+      c₁_transpose_mul_self c₁_transpose_mul_self v₁_transpose_mul_self v₁_transpose_mul_self
+      one_mul_norm_le_core hZ,
+    Curvature.norm_tangentProjMat_sub_le_inv_mul one_pos c₁_transpose_mul_self
+      c₁_transpose_mul_self v₁_transpose_mul_self v₁_transpose_mul_self one_mul_norm_le_core B⟩
 
 /-- `Curvature.norm_sq_tangentProjMat_le_of_normal` for the projectors `e₁ e₁ᵀ` and `v vᵀ` of
 `ℝ²` and the normal vector `w wᵀ` at `v vᵀ`, with the bounds `a = b = 1`. -/
