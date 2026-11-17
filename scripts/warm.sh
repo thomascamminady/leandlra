@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Scope: both
 # What scripts/fc will check against: the state of the installed `.olean` files. Read-only: it
 # builds nothing, does not regenerate the root files and writes nothing (until 2026-11-10 this
 # script ran `scripts/gen_root.sh` and `lake build LeanDLRA` and saved a snapshot of the imported
@@ -13,7 +14,7 @@
 #   stale     the source is newer than the `.olean`: fc checks against the older, installed state;
 #   behind    an imported module of the library has a newer `.olean`: the module was compiled
 #             against an older state of that import.
-# The catalogue is built apart from the core (`scripts/catalogue.sh`), so `behind` is its normal
+# The catalogue is built apart from the core (`scripts/catalogue/catalogue.sh`), so `behind` is its normal
 # state between two catalogue builds. A leftover snapshot of the old fc is reported with its size.
 set -euo pipefail
 ROOT="${FC_ROOT:-}"

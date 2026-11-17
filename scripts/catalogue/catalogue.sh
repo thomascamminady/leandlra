@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Scope: catalogue
 # Build and check everything, the core library and the catalogue (docs/STRUCTURE.md), outside the gate.
 #
 # The gate (scripts/gate.py) builds and audits the core and the slices of a round only. A change of a
@@ -18,7 +19,7 @@
 # Exit status: 0 everything is fine, 1 a module or a check fails, 3 the gate is busy, 4 the sweep
 # found statements that differ from the rolling dump of the gate (.lake/hashdiff/sweep.md).
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 lock=wip/enqueue.lock
 log=.lake/check/catalogue.log
 mkdir -p .lake/check wip/ready

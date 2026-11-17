@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """Check that no recorded statement changed without anybody noticing.
 
 Two files map theorems to the SHA-256 of their elaborated type, taken before any of them was

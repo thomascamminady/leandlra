@@ -1,5 +1,6 @@
 import Lean.Replay
 import Lean.Util.Path
+-- Scope: both
 
 /-!
 Kernel replay of exactly one module: `leanchecker`'s `replayFromImports` without its

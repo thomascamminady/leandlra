@@ -1,3 +1,4 @@
+-- Scope: both
 
 open Lean Elab Command in
 #eval show CommandElabM Unit from do

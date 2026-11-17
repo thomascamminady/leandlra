@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire", "polars"]
 # ///
+# Scope: catalogue
 """Harvest dynamical low-rank approximation papers from the arXiv API.
 
 Writes papers/catalogue.json (metadata only). PDFs are fetched separately by `pdfs`.
@@ -19,7 +20,7 @@ from pathlib import Path
 import fire
 import polars as pl
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 PAPERS = ROOT / "papers"
 ATOM = "{http://www.w3.org/2005/Atom}"
 API = "http://export.arxiv.org/api/query"

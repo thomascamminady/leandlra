@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire", "polars"]
 # ///
+# Scope: core
 """Index of the definitions of the core library (``docs/DEFINITIONS.md``).
 
 The core library is the set of modules imported by ``LeanDLRA.lean`` (``docs/STRUCTURE.md``). This

@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """Index of the open problems (``docs/OPEN_PROBLEMS.md``).
 
 Sources, all inside the repository:

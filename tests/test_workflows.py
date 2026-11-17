@@ -1,3 +1,4 @@
+# Scope: both
 """The workflows that the pipeline relies on, read as text (no YAML parser, no GitHub)."""
 
 from __future__ import annotations

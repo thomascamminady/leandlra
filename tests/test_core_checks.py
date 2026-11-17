@@ -1,3 +1,4 @@
+# Scope: core
 """Tests for ``scripts/core_checks.py`` (no Lean, no fire)."""
 
 import gzip

@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """Rolling dump: fidelity and hashdiff for one gate round, on the core and the slices only.
 
 A round of ``scripts/gate.py`` builds the core library and its own slices, nothing else: a

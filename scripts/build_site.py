@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """Generate the pages of the project website (Jekyll, just-the-docs theme) in ``website/``.
 
 Inputs: README.md, docs/*.md and the declaration index ``website/decls.json`` written by

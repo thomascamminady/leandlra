@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Scope: both
 # Real-import check of a Lean file: `lake env lean FILE` with the file's own imports, so missing imports
 # and deprecated modules show up. `scripts/fc` runs the same check and adds a memory threshold, an
 # optional axiom report and exit codes that tell a check that did not start from one that failed.

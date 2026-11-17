@@ -1,3 +1,4 @@
+# Scope: both
 """Links of scripts/build_site.py into the API reference, which documents the core only."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# Scope: both
 """Tests of ``scripts/ledger.py`` (``docs/PROVEN.md`` and the status block of the README)."""
 
 from __future__ import annotations

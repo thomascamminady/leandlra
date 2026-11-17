@@ -523,7 +523,7 @@ The rules are in [CONVENTIONS.md](CONVENTIONS.md). In short:
 
 The usage of the single-file check, from the header of the script:
 
-[`scripts/fc`, lines 7–10](../scripts/fc#L7-L10):
+[`scripts/fc`, lines 8–11](../scripts/fc#L8-L11):
 
 ```text
 #   scripts/fc FILE.lean                 errors and warnings, exit 0 only if there are none

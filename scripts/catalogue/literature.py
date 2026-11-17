@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: catalogue
 """Turn the surveyed literature results that are not formalized yet into work slices.
 
 Writes one skeleton ``wip/Lit<id><letter>.lean`` per group of results of a paper, with the results to
@@ -19,7 +20,7 @@ from typing import Any
 
 import fire
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 WIP = ROOT / "wip"
 ORDER = [
     "Foundations & geometry",

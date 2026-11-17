@@ -1,4 +1,5 @@
 import Lean
+-- Scope: both
 /-! Print the elaborated type of declarations compiled below a module prefix, one JSON object per
 line.  Two formats:
 

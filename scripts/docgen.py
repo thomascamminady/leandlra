@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """Pages that quote Lean statements: expand a template from the sources, and check a page.
 
 No Lean is run. A template is a Markdown file in which a line may be one of the directives

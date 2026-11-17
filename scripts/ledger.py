@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """Generate ``docs/PROVEN.md`` and the status block of ``README.md`` from the Lean sources.
 
 Each tracked module contributes its title (the first heading of the module docstring), its number

@@ -1,3 +1,4 @@
+# Scope: both
 """scripts/enqueue.sh in a throwaway tree: the marker, the checks, the lock."""
 
 from __future__ import annotations

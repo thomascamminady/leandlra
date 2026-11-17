@@ -1,3 +1,4 @@
+# Scope: core
 """Tests of ``definitions.py`` (the index of the definitions of the core library)."""
 
 from __future__ import annotations

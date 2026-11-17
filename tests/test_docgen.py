@@ -1,3 +1,4 @@
+# Scope: both
 """Tests of ``scripts/docgen.py`` (pages that quote Lean statements)."""
 
 from __future__ import annotations

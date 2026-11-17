@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: core
 """The environment linters (Batteries' ``#lint``, with the ``@[env_linter]`` checks of Mathlib that
 the core imports) on the core library, summarized by linter.
 

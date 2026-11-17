@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: catalogue
 """Download the core corpus and extract numbered statements (theorems, lemmas, ...)."""
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from pathlib import Path
 
 import fire
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 PDF = ROOT / "papers" / "pdf"
 TXT = ROOT / "papers" / "txt"
 STM = ROOT / "papers" / "statements"

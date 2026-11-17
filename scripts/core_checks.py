@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: core
 """Checks of the core library that need no Lean: where definitions stand, duplicate statements,
 theorems without an example.
 

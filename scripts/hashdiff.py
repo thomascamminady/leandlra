@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """Statement hash diff: did a batch change what any declaration of the library says?
 
 Phase A1 of ``wip/UNIFY.md``. The workflow for one batch of the unification:

@@ -1,3 +1,4 @@
+# Scope: both
 """Tests for ``scripts/private_dups.py`` and its call in ``scripts/audit.sh`` (no Lean is
 started: ``lake`` is a stand-in that fails, which ends the audit after the warning)."""
 

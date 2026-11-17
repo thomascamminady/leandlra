@@ -1,4 +1,5 @@
-"""Tests for the pure parts of ``scripts/connectivity.py``."""
+# Scope: catalogue
+"""Tests for the pure parts of ``scripts/catalogue/connectivity.py``."""
 
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
 #!/bin/zsh
+# Scope: both
 # Queue a group of checked slices so that the gate processes them in ONE round.
 #
 # The gate (scripts/gate.py) takes whole groups from wip/ready, oldest first, as many as fit into

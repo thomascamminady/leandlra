@@ -1,3 +1,4 @@
+# Scope: both
 """Tests for scripts/core.py (the core/catalogue rule)."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# Scope: both
 """Tests for ``scripts/name_clash.py`` (no Lean, no fire)."""
 
 from __future__ import annotations

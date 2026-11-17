@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """Public names of slices that the library declares already: the name check of ``enqueue.sh``.
 
 A round of ``scripts/gate.py`` builds the core and the slices of the round, and ``scripts/fc``

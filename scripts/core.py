@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """The core library and the catalogue: which module is where, and the rule between them.
 
 The repository holds two libraries over the same source tree (``docs/STRUCTURE.md``):

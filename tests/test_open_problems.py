@@ -1,3 +1,4 @@
+# Scope: both
 """Tests of ``open_problems.py`` (the generated index of open problems)."""
 
 from __future__ import annotations

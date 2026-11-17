@@ -1,3 +1,4 @@
+# Scope: both
 """Rounds of scripts/gate.py in a throwaway repository: real git, fake lake and scripts."""
 
 from __future__ import annotations

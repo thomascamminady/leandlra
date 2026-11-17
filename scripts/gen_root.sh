@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Scope: both
 # Regenerate the two root files from the tracked sources (docs/STRUCTURE.md).
 #
 #   LeanDLRA.lean            the core library: every module outside the catalogue folders, plus the

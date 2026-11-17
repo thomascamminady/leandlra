@@ -1,3 +1,4 @@
+# Scope: core
 """Tests for the summary of ``scripts/lint_core.py`` (no Lean)."""
 
 import sys

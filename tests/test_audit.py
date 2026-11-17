@@ -1,3 +1,4 @@
+# Scope: both
 """scripts/audit.sh with a fake `lake`: the ratchet switch (AUDIT_RATCHETS)."""
 
 from __future__ import annotations

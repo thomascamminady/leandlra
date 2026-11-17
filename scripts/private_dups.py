@@ -3,6 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """Warn about private names that are defined in two modules.
 
 The rolling record and the dumps know a private declaration as ``_priv.<name>`` with the

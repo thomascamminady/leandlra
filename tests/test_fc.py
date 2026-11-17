@@ -1,3 +1,4 @@
+# Scope: both
 """Tests for ``scripts/fc`` and ``scripts/warm.sh`` with stand-ins for ``lake``, ``lean`` and
 ``memory_pressure`` (no Lean is started)."""
 

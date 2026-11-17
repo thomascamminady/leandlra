@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """Write `certificate.json`: what `.github/workflows/certify.yml` verified, tied to the exact sources.
 
 The certificate is a claim, not a proof. It lets anyone rerun the checks on the same commit and compare

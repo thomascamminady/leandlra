@@ -1,6 +1,9 @@
-"""Make the scripts in ``scripts/`` importable as modules in the tests."""
+# Scope: both
+"""Make the scripts in ``scripts/`` and ``scripts/catalogue/`` importable as modules in the tests."""
 
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
+sys.path.insert(0, str(SCRIPTS / "catalogue"))
+sys.path.insert(0, str(SCRIPTS))

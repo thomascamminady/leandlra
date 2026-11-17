@@ -1,3 +1,4 @@
+# Scope: both
 """Tests for the pure parts of ``scripts/fidelity.py``."""
 
 from __future__ import annotations

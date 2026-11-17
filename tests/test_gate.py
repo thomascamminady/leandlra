@@ -1,3 +1,4 @@
+# Scope: both
 """The pure parts of scripts/gate.py: markers, selection of a round, rename map, log lines."""
 
 from __future__ import annotations

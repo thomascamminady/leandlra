@@ -3,9 +3,9 @@
 # The library lives in LeanDLRA/ (no `sorry`, zero warnings, standard axioms only).
 
 SHELL := /bin/bash
-PY_SCRIPTS := scripts/certificate.py scripts/fidelity.py scripts/gate.py scripts/build_site.py scripts/ledger.py scripts/corpus.py \
-              scripts/fetch_arxiv.py scripts/hashdiff.py scripts/connectivity.py scripts/rolling.py scripts/core.py \
-              scripts/docgen.py scripts/definitions.py
+PY_SCRIPTS := scripts/certificate.py scripts/fidelity.py scripts/gate.py scripts/build_site.py scripts/ledger.py \
+              scripts/hashdiff.py scripts/rolling.py scripts/core.py scripts/docgen.py scripts/definitions.py \
+              scripts/catalogue/corpus.py scripts/catalogue/fetch_arxiv.py scripts/catalogue/connectivity.py
 PYENV := .lake/check/pyenv
 # Statement dumps of `make dump`; `make hashdiff` compares the last two (scripts/hashdiff.py).
 HASHDIFF := .lake/hashdiff
@@ -32,7 +32,7 @@ build: ## Regenerate the root files and build the core library (docs/STRUCTURE.m
 	lake build LeanDLRA
 
 catalogue: ## Build and check everything, core and catalogue (slow; needs an idle gate)
-	scripts/catalogue.sh
+	scripts/catalogue/catalogue.sh
 
 check: ## Certify one file: make check FILE=LeanDLRA/Integrators/BUG.lean
 	@test -n "$(FILE)" || (echo "usage: make check FILE=<path>"; exit 1)
@@ -86,7 +86,7 @@ test-py: ## Pytest for the Python scripts (tests/)
 ci: verify lint-py test-py ## Everything the core workflow of CI checks
 
 papers: ## Fetch full texts of the surveyed papers into papers/pdf and papers/txt (local only, git-ignored)
-	uv run --script scripts/corpus.py fetch --everything
+	uv run --script scripts/catalogue/corpus.py fetch --everything
 
 clean: ## Remove local check artifacts (keeps the Mathlib cache)
 	rm -rf .lake/check .lake/build/lib/lean/LeanDLRA

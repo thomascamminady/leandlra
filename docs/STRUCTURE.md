@@ -82,3 +82,11 @@ to the core file.
 | `certify.yml` | manual | everything: clean build, audit, replay, external checkers, signed `certificate.json` | for a release |
 
 The API reference on the website covers both the core and the catalogue.
+
+## Scripts
+
+Each script of `scripts/` and each test of `tests/` names the library it serves in a comment near
+its top: `Scope: core`, `Scope: catalogue` or `Scope: both`. Those for the catalogue alone are in
+`scripts/catalogue/` (the full build `scripts/catalogue/catalogue.sh`, the connectivity report and
+its inventory, the paper corpus and the literature slices) and `tests/catalogue/`;
+`tests/test_script_scopes.py` checks the tags.

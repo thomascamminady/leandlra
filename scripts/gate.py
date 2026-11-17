@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["fire"]
 # ///
+# Scope: both
 """The only path from a proof attempt to `main`.
 
 Agents queue checked slices with ``scripts/enqueue.sh``: the slices go to ``wip/ready/`` together with

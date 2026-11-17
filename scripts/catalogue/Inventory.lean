@@ -1,14 +1,15 @@
 import LeanDLRACatalogue
+-- Scope: catalogue
 
 /-!
 Writes `wip/index.json`, the declaration inventory of step 1 of `wip/PLAN.md`: every declaration of
 the library with its module, kind, finer kind (`defKind`: instance, scopedInstance, projection,
 notation, abbrev, def, class, structure, inductive, theorem, opaque), whether it is private,
 structural hashes of its type and (for definitions) its body, the library declarations its type
-mentions, and the library declarations its type or proof uses. `scripts/connectivity.py` reads it
+mentions, and the library declarations its type or proof uses. `scripts/catalogue/connectivity.py` reads it
 to find orphan modules, theorems stated only in local definitions, duplicate statements,
 definitions that unfold to the same term, and definitions outside a `Defs.lean`.
-Run with `lake env lean scripts/Inventory.lean`; set `INVENTORY_OUT` to write another file.
+Run with `lake env lean scripts/catalogue/Inventory.lean`; set `INVENTORY_OUT` to write another file.
 -/
 
 open Lean Elab Command

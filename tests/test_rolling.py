@@ -1,3 +1,4 @@
+# Scope: both
 """scripts/rolling.py with a fake dumper: partial fidelity and hashdiff on a rolling dump."""
 
 from __future__ import annotations

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Scope: both
 # Replay library modules through the kernel with leanchecker, one at a time.
 #   scripts/replay.sh                  every module (build LeanDLRACatalogue first)
 #   scripts/replay.sh <commit>         the modules changed since <commit> (all if the commit is unknown)

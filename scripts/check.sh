@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Scope: both
 # Certify Lean files: compiles with no errors AND no warnings (including the Mathlib style
 # linters), no sorry/admit/axioms, and every declaration in the
 # file depends only on the three standard axioms (propext, Classical.choice, Quot.sound).

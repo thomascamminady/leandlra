@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Scope: both
 # Axiom audit: warns about private names defined in two modules, builds the given targets,
 # then checks that every constant of their `LeanDLRA` modules (private and generated ones
 # included, whatever their namespace) depends only on propext, Classical.choice, Quot.sound,

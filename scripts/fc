@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Scope: both
 # Check of one Lean file against the installed `.olean` files: `lake env lean FILE` with the file's
 # own imports and the options of lakefile.toml. Nothing is built: an import without an installed
 # `.olean` is an error (exit 4), not a reason to compile it, and nothing is written into

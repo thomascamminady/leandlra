@@ -1,4 +1,5 @@
 import LeanDLRACatalogue
+-- Scope: both
 
 /-!
 Writes `website/decls.json`: every declaration of the library with its module, kind, source

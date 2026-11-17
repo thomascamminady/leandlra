@@ -1,3 +1,4 @@
+# Scope: both
 """``scripts/DumpTypes.lean`` on two small modules, with real Lean (opt-in).
 
 Skipped unless ``LEANDLRA_LEAN_TESTS=1``: the file starts ``lean`` seven times (core Lean only, no

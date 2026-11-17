@@ -1,3 +1,4 @@
+# Scope: both
 """The two records of statements of the repository: core and catalogue.
 
 ``docs/statements.json`` (core) and ``docs/statements_catalogue.json`` (catalogue) share no name,
