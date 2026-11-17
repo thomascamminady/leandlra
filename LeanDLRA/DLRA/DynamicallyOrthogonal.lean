@@ -9,8 +9,8 @@ Dynamical low-rank approximation of `Ẏ = F(t, Y)` by rank-`r` matrices `Y = U 
 in three equivalent-looking ways: as the projected equation `Ẏ = P(Y) F(t, Y)`
 (`LeanDLRA.IsDLRASolution`), as the dynamically orthogonal (DO) system for the factors `(U, Z)`
 with `Uᵀ U = 1`, and as the dual (DDO) system for `Y = Z Vᵀ` with `Vᵀ V = 1`; the bi-orthogonal
-(BO) system uses `Zᵀ Z = 1` and `Uᵀ U` diagonal (Koch–Lubich 2007, Musharbash–Nobile–Zhou 2015,
-Cheng–Hou–Zhang 2013). This file proves, from the product rule of `Matrix/GaugeODE.lean`, that
+(BO) system uses `Zᵀ Z = 1` and `Uᵀ U` diagonal ([KochLubich2007], [MusharbashNobileZhou2015],
+[ChengHouZhang2013]). This file proves, from the product rule of `Matrix/GaugeODE.lean`, that
 the first two are the same thing, and that the BO system gives a DLRA solution.
 
 ## Main results
@@ -33,6 +33,14 @@ The rank hypothesis (`Zᵀ Z` invertible) places `Y` on the rank-`r` manifold, w
 interval, because `IsDLRASolution` asks for rank `r` at the endpoint too. In the BO system the
 diagonality of `Uᵀ U` only selects the skew matrix `Ω`; the implication to a DLRA solution uses
 invertibility of `Uᵀ U` and skew-symmetry of `Ω` only.
+
+## References
+
+* [KochLubich2007] O. Koch, Ch. Lubich, *Dynamical low-rank approximation*.
+* [MusharbashNobileZhou2015] E. Musharbash, F. Nobile, T. Zhou, *Error analysis of the
+  dynamically orthogonal approximation of time dependent random PDEs*.
+* [ChengHouZhang2013] M. Cheng, T. Y. Hou, Z. Zhang, *A dynamically bi-orthogonal method for
+  time-dependent stochastic partial differential equations I: Derivation and algorithms*.
 -/
 
 open Set
@@ -135,7 +143,7 @@ open GaugeODE in
 within a set on which derivatives are unique, with `Uᵀ U = 1` and `Zᵀ Z` invertible at `t`, and
 let `Ad` stand for `F(t, Y(t))`. Then `Y = U Zᵀ` satisfies `Ẏ = P(Y) Ad` together with the gauge
 `Uᵀ U̇ = 0` if and only if the DO system holds: `Uᵀ U̇ = 0`, `Ż = Adᵀ U` and
-`U̇ (Zᵀ Z) = (1 - U Uᵀ) Ad Z` (Koch–Lubich 2007; Musharbash–Nobile–Zhou 2015). The rank
+`U̇ (Zᵀ Z) = (1 - U Uᵀ) Ad Z` ([KochLubich2007]; [MusharbashNobileZhou2015]). The rank
 hypothesis on `Z` says that `Y` lies on the rank-`r` manifold, where `P(Y)` is defined. -/
 theorem hasDerivWithinAt_do_iff [DecidableEq m] {U : ℝ → Matrix m r ℝ} {Z : ℝ → Matrix n r ℝ}
     {U' : Matrix m r ℝ} {Z' : Matrix n r ℝ} {Ad : Matrix m n ℝ} {S : Set ℝ} {t : ℝ}
@@ -221,7 +229,7 @@ open GaugeODE in
 differentiable at `t` within `S` with `Zᵀ Z = 1` and `Uᵀ U` invertible, and let `Ω` be
 skew-symmetric. If `U̇ = Ad Z + U Ω` and `Ż = Z Ω + (1 - Z Zᵀ) Adᵀ U (Uᵀ U)⁻¹`, then `Y = U Zᵀ`
 satisfies `Ẏ = P(Y) Ad`. Diagonality of `Uᵀ U` is not used: in the BO formulation it only selects
-the skew matrix `Ω` (Cheng–Hou–Zhang 2013; Musharbash–Nobile–Zhou 2015). -/
+the skew matrix `Ω` ([ChengHouZhang2013]; [MusharbashNobileZhou2015]). -/
 theorem hasDerivWithinAt_tangentProjAt_of_bo [DecidableEq n] {U : ℝ → Matrix m r ℝ}
     {Z : ℝ → Matrix n r ℝ} {U' : Matrix m r ℝ} {Z' : Matrix n r ℝ} {Ω : Matrix r r ℝ}
     {Ad : Matrix m n ℝ} {S : Set ℝ} {t : ℝ} (hU : HasDerivWithinAt U U' S t)

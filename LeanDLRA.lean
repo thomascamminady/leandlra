@@ -133,6 +133,7 @@ import LeanDLRA.Research.StiffGlobalVariation
 import LeanDLRA.Research.StiffOldColumnGalerkin
 import LeanDLRA.Research.StiffOldColumnVariation
 import LeanDLRA.Research.StiffOrderReduction
+import LeanDLRA.Research.StiffVelocityVariation
 import LeanDLRA.Research.SylvesterFlows
 import LeanDLRA.Research.SylvesterGlobal
 import LeanDLRA.Research.TwoSidedLeak

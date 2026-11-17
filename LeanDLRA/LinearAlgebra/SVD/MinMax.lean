@@ -18,11 +18,12 @@ truncated SVD of a matrix of rank at most `r` is the matrix itself.
   `k + 1 ≤ dim W` implies `ρ ≤ σ_k(T)`.
 * `LeanDLRA.SVD.le_singularValues_of_eq_mul`: for `X = U S Vᵀ` with orthonormal `U`, `V` (`r > 0`
   columns) and `ρ ‖w‖ ≤ ‖S w‖` for all `w`: `ρ ≤ σ_{r-1}(X)`.
-* `LeanDLRA.EckartYoung.truncation_eq_self`: `truncation A r = A` if `rank A ≤ r`.
+* `LeanDLRA.EckartYoung.truncation_eq_self`: `truncation A r = A` if `rank A ≤ r`; with
+  `EckartYoung.rank_truncation_le` it gives `LeanDLRA.RandomizedBUG.truncation_eq_self_iff`.
 
 ## References
 
-* R. Bhatia, *Matrix Analysis*, GTM 169, Springer 1997, §III.1 (max-min principle)
+* [Bhatia1997] R. Bhatia, *Matrix Analysis*, GTM 169, Springer 1997, §III.1 (max-min principle)
 -/
 
 open Module Submodule

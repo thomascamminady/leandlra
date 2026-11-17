@@ -3,12 +3,12 @@ import LeanDLRA.Randomized.DRSVDStep
 /-!
 # Runs of the dynamical randomized SVD: existence and error bound
 
-This file closes the theory of the dynamical randomized singular value decomposition (DRSVD) of
-Carrel (arXiv:2410.17091, Algorithm 3), in the variant with an augmented sketch and truncation
-to rank `r` by a best approximation, for a matrix differential equation `Y' = F(t, Y)`: the
-integrator can be run, and every run stays close to the exact solution. The step relation
-`MatrixDRSVD.stepRel F r k l` (sketch basis with `k` columns, range basis with `l` columns) and
-its local error are in `LeanDLRA/Randomized/DRSVDStep.lean`.
+This file gives runs and the error bound of the dynamical randomized singular value
+decomposition (DRSVD) of [Carrel2025], Algorithm 3, in the variant with an augmented sketch and
+truncation to rank `r` by a best approximation, for a matrix differential equation
+`Y' = F(t, Y)`: the integrator can be run, and every run stays close to the exact solution. The
+step relation `MatrixDRSVD.stepRel F r k l` (sketch basis with `k` columns, range basis with `l`
+columns) and its local error are in `LeanDLRA/Randomized/DRSVDStep.lean`.
 
 **Setting.** Let `A` be a solution of `Y' = F(t, Y)` on `[t₀, t₀ + N h]`. The field `F` is only
 assumed to be `L`-Lipschitz and bounded by `B` on the tube of radius `ρ` around `A`
@@ -27,9 +27,13 @@ followed by a best approximation of rank at most `r`, all of rank at most `r`, w
 
 for all `n ≤ N`, where `N h ≤ T`, `c₁ = bugC₁ L H` and `c₂ = bugC₂ L B H`. The constants do not
 depend on the singular values of the matrices `Y n`. The only further hypothesis is that the
-right-hand side plus `3 B h` is less than `ρ`. The same bound holds for every run from a start
-value of rank at most `r` (`MatrixDRSVD.IsRun.norm_sub_le`), in particular for the run with the
-sketches that an implementation draws.
+right-hand side plus `3 B h` is less than `ρ`. The same bound holds for every run of the
+augmented-sketch variant from a start value of rank at most `r` (`MatrixDRSVD.IsRun.norm_sub_le`):
+its sketch bases are orthonormal, have `k` columns and contain the row space of the start value of
+their step. The sketch enters the bound only through the hypothesis on the normal component at
+the factored matrices of the tube with `k` columns (`FactoredNormalBoundOn F k _ ε`), which must
+hold for every such basis. Sketches whose range does not contain the row space of the start
+value, and the probabilistic analysis of [Carrel2025], are not covered.
 
 ## Main results
 
@@ -68,7 +72,7 @@ on the tube, the normal bound at rank `r`, and the larger constants `2 c₁ + 1`
 
 ## References
 
-* B. Carrel, *Randomized methods for dynamical low-rank approximation*, arXiv:2410.17091, §§2–3.
+* [Carrel2025] B. Carrel, *Randomized methods for dynamical low-rank approximation*, §§2–3.
 -/
 
 open Set
@@ -219,7 +223,8 @@ then for all `n ≤ N`
   `‖Y n - A (t₀ + n h)‖ ≤ e^{L T} δ + T e^{L T} ((2 c₁ + 1) ε + (2 c₂ + 10 L B) h)`,
 
 `c₁ = bugC₁ L H`, `c₂ = bugC₂ L B H`. The constants do not depend on the singular values of the
-`Y n` nor on the sketches, and nothing is assumed about `F` outside the tube. The rank of the
+`Y n`; the sketch bases enter only through the normal bound at `k` columns, which is a
+hypothesis. Nothing is assumed about `F` outside the tube. The rank of the
 values is carried along as an invariant (`IsRun.adm_and_norm_sub_le_of_tube_uniformGrid`): a
 step may start from a matrix of rank up to `k`, but the bound on the truncation needs rank at
 most `r`. -/
@@ -261,8 +266,9 @@ approximation of rank at most `r`, all of rank at most `r`, with
 
   `‖Y n - A (t₀ + n h)‖ ≤ e^{L T} δ + T e^{L T} ((2 c₁ + 1) ε + (2 c₂ + 10 L B) h)`
 
-for all `n ≤ N`. The constants are independent of the singular values of the matrices `Y n` and
-of the sketches, and nothing is assumed about `F` outside the tube. No truncation tolerance
+for all `n ≤ N`. The constants are independent of the singular values of the matrices `Y n`; the
+sketch bases enter only through the normal bound at `k` columns, which is a hypothesis. Nothing
+is assumed about `F` outside the tube. No truncation tolerance
 appears.
 
 This is `StepMethod.IsTubeLocal.exists_run_norm_sub_le` for the tube-local method

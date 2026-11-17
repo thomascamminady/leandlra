@@ -3,12 +3,12 @@ import LeanDLRA.Research.FederatedDescentThreshold
 /-!
 # FeDLRT with convex clients: descent up to `s⋆ λ β < 2`
 
-One aggregated round of FeDLRT with variance correction (Schotthöfer–Laiu, arXiv 2406.17887,
-before truncation) is `fedRound`: `s⋆` local steps of length `λ` on every client, then the
-average. For convex client losses `loss_fedRound_le_of_convex` proves a loss descent for
+One aggregated round of FeDLRT with variance correction ([SchotthoferLaiu2024], before
+truncation) is `fedRound`: `s⋆` local steps of length `λ` on every client, then the average. For
+convex client losses `loss_fedRound_le_of_convex` proves a loss descent for
 `(s⋆ + 1) λ β < 2`, and `loss_le_loss_fedRound_zero` shows that there is none in general for
-`s⋆ λ β ≥ 2`. This file removes the gap between the two conditions: for `λ β ≤ 1` the round
-decreases the loss as soon as `s⋆ λ β < 2`.
+`s⋆ λ β ≥ 2`. This file removes the gap between the two conditions when `λ β ≤ 1`, which covers
+every `s⋆ ≥ 2`: then the round decreases the loss as soon as `s⋆ λ β < 2`.
 
 ## Notation
 
@@ -38,12 +38,12 @@ local gradients (so `G_0 = Π ∇ℒ(x)` and `z^s - x = -λ ∑_{j<s} G_j`), and
 * The proof adds the inequality of the first item along the closed chain
   `x, z^1, …, z^j, x`: the function values cancel, and the squared gradient differences cancel
   against the inner products of consecutive gradients.
-* When the global gradient is the average of the client gradients (the setting of the paper),
-  the condition is far from necessary. A numerical computation of the worst case over convex
-  clients (performance estimation, a semidefinite program in the Gram matrix of the gradients)
-  gives descent for `s⋆ λ β` below `4.00`, `5.63`, `6.84` for `s⋆ = 2, 3, 4` and below `6.83` for
-  `s⋆ = 6, …, 16`, which is the value `4 + 2√2` of the quadratic clients with Hessians `0` and
-  `1` (`loss_le_loss_fedRound_linear`). This is an observation, not a theorem of this file.
+* When the global gradient is the average of the client gradients (the setting of
+  [SchotthoferLaiu2024]), the condition is not necessary: for `s⋆ = 2` the round is two
+  projected gradient steps and decreases the loss for `s⋆ λ β < 4` (`loss_fedRound_two_lt`).
+  For `s⋆ ≥ 3` the threshold in that setting is not determined in this library. Quadratic
+  clients bound it from above (`loss_le_loss_fedRound_linear`): with Hessians `0` and `1`
+  (`β = 1`) a round from `0` does not decrease the loss when `s⋆ λ + 1 - (1 - λ)^{s⋆} ≥ 8`.
 -/
 
 open Set Finset

@@ -3,6 +3,7 @@ import LeanDLRA.Integrators.Exactness
 import LeanDLRA.Matrix.Projectors
 import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.LinearAlgebra.Frobenius.Defs
+import LeanDLRA.LinearAlgebra.SVD.MinMax
 
 /-!
 # Dynamical randomized SVD and generalized Nyström as BUG-type steps
@@ -387,17 +388,11 @@ theorem dStep_exact {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A : ℝ →
     Matrix.mul_sub, Matrix.sub_mul]
   abel
 
-/-- The truncated SVD `T_r` fixes exactly the matrices of rank `≤ r` (from Eckart–Young). -/
+/-- The truncated SVD `T_r` fixes exactly the matrices of rank `≤ r`: one direction is
+`EckartYoung.rank_truncation_le`, the other `EckartYoung.truncation_eq_self`. -/
 theorem truncation_eq_self_iff [DecidableEq n] (X : Matrix m n ℝ) (r : ℕ) :
-    EckartYoung.truncation X r = X ↔ X.rank ≤ r := by
-  constructor
-  · intro h
-    rw [← h]
-    exact EckartYoung.rank_truncation_le X r
-  · intro h
-    have h1 := EckartYoung.norm_sub_truncation_le X h
-    rw [sub_self, norm_zero] at h1
-    exact (sub_eq_zero.mp (norm_le_zero_iff.mp h1)).symm
+    EckartYoung.truncation X r = X ↔ X.rank ≤ r :=
+  ⟨fun h => h ▸ EckartYoung.rank_truncation_le X r, EckartYoung.truncation_eq_self⟩
 
 /-- **Corrected exactness of DRSVD** (arXiv 2410.17091, Lemma 3.2, corrected per OP-RS-07; also
 the exact-reconstruction remark of arXiv 2506.15259, §2.3.1, OP-RA-11 (b)).  For

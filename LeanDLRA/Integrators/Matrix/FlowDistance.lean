@@ -14,7 +14,7 @@ This file proves the bound without the `h²` term on a tube:
 
   `dist(Φ t₁, M_{≤ r}) ≤ h ε e^{L h}`
 
-(`distLR_flow_le_exp_of_tube`). It is the bound (15) of Kieri–Vandereycken 2019 (proof of their
+(`distLR_flow_le_exp_of_tube`). It is the bound (15) of [KieriVandereycken2019] (proof of their
 Theorem 2) with `ℓ = L`, there obtained from the solution of the projected equation
 `Y' = P(Y) F(t, Y)` on the rank-`r` manifold; here no such solution and no singular value of
 `Φ t₀` enters.
@@ -45,8 +45,8 @@ distance to `A` at `t₀`, and the substep solutions move by at most `2 B τ` re
 
 ## References
 
-* E. Kieri, B. Vandereycken, *Projection methods for dynamical low-rank approximation of
-  high-dimensional problems*, Comput. Methods Appl. Math. 19 (2019), eq. (15).
+* [KieriVandereycken2019] E. Kieri, B. Vandereycken, *Projection methods for dynamical low-rank
+  approximation of high-dimensional problems*, Comput. Methods Appl. Math. 19 (2019), eq. (15).
 -/
 
 open Set
@@ -125,7 +125,7 @@ theorem distLR_flow_step_of_tube (hε : FactoredNormalBoundOn F r (tubeSet A a b
   have h₃ := distLR_le_add (r := r) (Φ (s + τ)) (Ψ (s + τ))
   linarith
 
-/-- **The `h²`-free distance bound near a reference solution** (Kieri–Vandereycken 2019,
+/-- **The `h²`-free distance bound near a reference solution** ([KieriVandereycken2019],
 eq. (15), with `ℓ = L` and without the projected solution). Let `F` be `L`-Lipschitz and bounded
 by `B` on the tube of radius `ρ` around a solution `A` over `[a, b]`, continuous there, with
 normal part at most `ε` at the factored rank-`r` points of the tube (`FactoredNormalBoundOn`).

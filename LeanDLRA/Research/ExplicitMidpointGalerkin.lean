@@ -1,6 +1,7 @@
 import LeanDLRA.HighOrder.MidpointBUG
 import LeanDLRA.Integrators.Matrix.BUG
 import LeanDLRA.Research.AugmentationRank
+import LeanDLRA.Research.ExplicitMidpointCapture
 
 /-!
 # The explicit midpoint Galerkin step in augmented bases
@@ -19,7 +20,11 @@ The two capture defects
 
 `θ = ‖(1 - Ua Uaᵀ) G (1 - V₀ V₀ᵀ)‖`, `θ' = ‖(1 - U₀ U₀ᵀ) G (1 - Va Vaᵀ)‖`
 
-are parameters of every statement of this file; nothing is proved about their size here.
+are parameters of the statements of this file, with one exception: for the explicit update,
+`norm_update_sub_le_cube_add` bounds both by `C₁ h² + C₂ ε`
+(`LeanDLRA.norm_capture_defect_le_sq_add` of `LeanDLRA.Research.ExplicitMidpointCapture`) and
+obtains a local error `O(h³ + h ε)`. The Galerkin step (`galerkin_local_error`) is not combined
+with those bounds here, and no global error bound for a run of steps is stated.
 
 ## Main statements
 
@@ -38,6 +43,8 @@ are parameters of every statement of this file; nothing is proved about their si
   instance of `LeanDLRA.MidpointBUG.midpointGalerkin_local_error`.
 * `LeanDLRA.ExplicitMidpoint.norm_update_sub_le`: the local error
   `h (θ + θ') + L h² ε/2 + h³ (M₃/24 + L M₂/8)` of the explicit update.
+* `LeanDLRA.ExplicitMidpoint.norm_update_sub_le_cube_add`: with the capture defects bounded, the
+  local error `h³ (2 C₁ + M₃/24 + L M₂/8) + h ε (2 C₂ + L h/2)` of the explicit update.
 
 ## Implementation notes
 
@@ -49,8 +56,8 @@ contains the predictor and the exact solution at the midpoint.
 
 ## References
 
-* G. Ceruti, L. Einkemmer, J. Kusch, Ch. Lubich, *A robust second-order low-rank BUG integrator
-  based on the midpoint rule*, arXiv 2402.08607.
+* [CerutiEtAl2024b] G. Ceruti, L. Einkemmer, J. Kusch, Ch. Lubich, *A robust second-order
+  low-rank BUG integrator based on the midpoint rule*.
 -/
 
 open Set
@@ -222,7 +229,7 @@ theorem norm_predictor_sub_le {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
 /-! ### The local errors -/
 
 /-- **Local error of the Galerkin step in the augmented bases** (the robust midpoint Galerkin
-step of arXiv 2402.08607, Theorem 1, with the explicit predictor in place of a half step). Let
+step of [CerutiEtAl2024b], Theorem 1, with the explicit predictor in place of a half step). Let
 `Ua`, `Va` contain `U₀`, `V₀` and capture `G V₀`, `Gᵀ U₀` for `G = F(t₀ + h/2, Z)`, with capture
 defects at most `θ`, `θ'`, and let `YS` solve the Galerkin equation `Y' = galerkinProj Ua Va F`
 from `Y₀`. With `η = M₂ h²/8 + (h/2) ε` the local error is at most
@@ -308,6 +315,74 @@ theorem norm_update_sub_le [DecidableEq k] {F : ℝ → Matrix m n ℝ → Matri
           (mul_le_mul_of_nonneg_left hcap hh.le)
         exact hLip.trans (mul_le_mul_of_nonneg_left hYh hL)
     _ = _ := by ring
+
+/-- **Local error of order `h³ + h ε` of the explicit update** `Y₁ = Y₀ + h • galerkinProj Ua Va G`:
+`norm_update_sub_le` with the two capture defects bounded by `norm_capture_defect_le_sq_add` and
+`norm_capture_defect_right_le_sq_add`. Let `F` satisfy, on a region `D` that contains
+`[t₀, t₀ + h] × closedBall (U₀ S₀ V₀ᵀ) ρ` and the point `(t₀ + h/2, A(t₀ + h/2))` of the exact
+solution, the factored normal bound with defect `ε`, a Lipschitz bound `L`, a bound `B` and a
+Lipschitz bound `Lₜ` in time; let `r` be smaller than both dimensions, `0 < h ≤ H`, and let
+`κ`, `D₁`, `D₂` and the side condition be as in `norm_capture_defect_le_sq_add`. Then
+
+`‖Y₁ - A(t₀ + h)‖ ≤ h³ (2 C₁ + M₃/24 + L M₂/8) + h ε (2 C₂ + L h/2)`
+
+with the constants `C₁`, `C₂` of `norm_capture_defect_le_sq_add`, which contain `‖S₀‖` but no
+inverse of `S₀`. A global error bound for a run of such steps is not stated. -/
+theorem norm_update_sub_le_cube_add [DecidableEq k] [DecidableEq k']
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {D : Set (ℝ × Matrix m n ℝ)}
+    {ε L Lₜ B ρ H κ D₁ D₂ M₂ M₃ : ℝ}
+    (hN : FactoredNormalBoundOn F r D ε) (hL : IsLipschitzFieldOn F D L) (hL0 : 0 ≤ L)
+    (hB : IsBoundedFieldOn F D B)
+    (hFt : ∀ s t X, (s, X) ∈ D → (t, X) ∈ D → ‖F s X - F t X‖ ≤ Lₜ * |s - t|)
+    (hrm : r < Fintype.card m) (hrn : r < Fintype.card n) {S₀ : Matrix (Fin r) (Fin r) ℝ}
+    (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1) {t₀ h : ℝ} (hh : 0 < h) (hH : h ≤ H) (hρ : 0 < ρ)
+    (hD : ∀ t ∈ Icc t₀ (t₀ + h), ∀ X, ‖X - U₀ * S₀ * V₀ᵀ‖ ≤ ρ → (t, X) ∈ D)
+    (hκ : Real.sqrt r * (1 / 2 + max L (2 * B / ρ)) ≤ κ)
+    (hD₁ : Real.sqrt r * H * max L (2 * B / ρ) / 2 + (2 * κ * B + κ ^ 2 * ‖S₀‖) / 4 +
+      H * κ ^ 2 * B / 8 ≤ D₁)
+    (hD₂ : Real.sqrt r * H * (1 + max L (2 * B / ρ) / 2) ≤ D₂)
+    (hsmall : h / 2 * B + (D₁ * h ^ 2 + D₂ * ε) ≤ ρ / 2) {A : ℝ → Matrix m n ℝ}
+    (hA : ODESolution F A t₀ (t₀ + h)) (hA₀ : A t₀ = U₀ * S₀ * V₀ᵀ)
+    (hA3 : ContDiffOn ℝ 3 A (Icc t₀ (t₀ + h)))
+    (hM₂ : ∀ t ∈ Icc t₀ (t₀ + h), ‖iteratedDerivWithin 2 A (Icc t₀ (t₀ + h)) t‖ ≤ M₂)
+    (hM₃ : ∀ t ∈ Icc t₀ (t₀ + h), ‖iteratedDerivWithin 3 A (Icc t₀ (t₀ + h)) t‖ ≤ M₃)
+    (hDA : (t₀ + h / 2, A (t₀ + h / 2)) ∈ D) {Z : Matrix m n ℝ}
+    (hZ : Z = U₀ * S₀ * V₀ᵀ + (h / 2) • tangentProj U₀ V₀ (F t₀ (U₀ * S₀ * V₀ᵀ)))
+    (hG : G = F (t₀ + h / 2) Z) (hUa : Uaᵀ * Ua = 1) (hVa : Vaᵀ * Va = 1)
+    (augU : Ua * Uaᵀ * U₀ = U₀) (augV : Va * Vaᵀ * V₀ = V₀)
+    (kCap : Ua * Uaᵀ * (G * V₀) = G * V₀) (lCap : Va * Vaᵀ * (Gᵀ * U₀) = Gᵀ * U₀) :
+    ‖U₀ * S₀ * V₀ᵀ + h • galerkinProj Ua Va G - A (t₀ + h)‖ ≤
+      h ^ 3 * (2 * ((L + κ + H / 2 * L * κ) * D₁ + Real.sqrt r * max L (2 * B / ρ) / 2 +
+          κ * (L * B + Lₜ + B * κ) / 4) + M₃ / 24 + L * M₂ / 8) +
+        h * ε * (2 * ((L + κ + H / 2 * L * κ) * D₂ + 1 +
+          Real.sqrt r * (1 + max L (2 * B / ρ) / 2)) + L * h / 2) := by
+  have hY₀D : (t₀, U₀ * S₀ * V₀ᵀ) ∈ D :=
+    hD t₀ ⟨le_rfl, by linarith⟩ _ (by rw [sub_self, norm_zero]; exact hρ.le)
+  have hε : 0 ≤ ε := (norm_nonneg _).trans (hN t₀ U₀ V₀ S₀ hU₀ hV₀ hY₀D)
+  have hB0 : 0 ≤ B := (norm_nonneg _).trans (hB hY₀D)
+  have hH0 : 0 ≤ H := hh.le.trans hH
+  have hLm0 : 0 ≤ max L (2 * B / ρ) := hL0.trans (le_max_left _ _)
+  have hq0 : 0 ≤ Real.sqrt r := Real.sqrt_nonneg _
+  have hκ0 : 0 ≤ κ := le_trans (mul_nonneg hq0 (by linarith)) hκ
+  have hD₁0 : 0 ≤ D₁ := le_trans (add_nonneg (add_nonneg
+    (div_nonneg (mul_nonneg (mul_nonneg hq0 hH0) hLm0) two_pos.le)
+    (div_nonneg (add_nonneg (mul_nonneg (mul_nonneg two_pos.le hκ0) hB0)
+      (mul_nonneg (sq_nonneg κ) (norm_nonneg _))) (by norm_num)))
+    (div_nonneg (mul_nonneg (mul_nonneg hH0 (sq_nonneg κ)) hB0) (by norm_num))) hD₁
+  have hD₂0 : 0 ≤ D₂ := le_trans (mul_nonneg (mul_nonneg hq0 hH0) (by linarith)) hD₂
+  have hZY : ‖Z - U₀ * S₀ * V₀ᵀ‖ ≤ h / 2 * B := by
+    rw [hZ, add_sub_cancel_left, norm_smul, Real.norm_eq_abs, abs_of_pos (by linarith)]
+    exact mul_le_mul_of_nonneg_left
+      (((isOrthProj_tangentProj hU₀ hV₀).norm_le _).trans (hB hY₀D)) (by linarith)
+  have hDZ : (t₀ + h / 2, Z) ∈ D := hD _ ⟨by linarith, by linarith⟩ Z
+    (by nlinarith [mul_nonneg hD₁0 (sq_nonneg h), mul_nonneg hD₂0 hε])
+  have hθ := norm_capture_defect_le_sq_add hN hL hL0 hB hFt hrm hrn hU₀ hV₀ hh hH hρ hD hκ hD₁
+    hD₂ hsmall hZ hG hUa augU kCap
+  have hθ' := norm_capture_defect_right_le_sq_add hN hL hL0 hB hFt hrm hrn hU₀ hV₀ hh hH hρ hD hκ
+    hD₁ hD₂ hsmall hZ hG hVa augV lCap
+  refine (norm_update_sub_le hL hL0 hN hU₀ hV₀ hh hY₀D hA hA₀ hA3 hM₂ hM₃ hZ hDZ hDA hG hUa kCap
+    lCap hθ hθ').trans (le_of_eq ?_)
+  ring
 
 /-! ### Non-vacuity -/
 
@@ -507,6 +582,63 @@ example {h : ℝ} (hh : 0 < h) : ∃ M₂ M₃ : ℝ,
     (by simp) hA3 hM₂ hM₃ rfl rfl orth_augmentedLeft (by simp) augU_augmentedLeft (by simp)
     kCap_augmentedLeft (by simp) le_rfl le_rfl (MatrixBUG.odeSolution_affine _ _ _ _)
     (by simp)⟩
+
+/-- **Non-vacuity of `norm_update_sub_le_cube_add`**: the constant field `F ≡ C`,
+`C = [[0, 1], [1, 0], [0, 1]]` (`L = Lₜ = 0`, `B = ε = ‖C‖`), the start `Y₀ = e₁ e₁ᵀ`, the bases
+`Ua = [e₁, e₂]`, `Va = I₂`, `h = H = 1/2`, `ρ = 16`, `κ = 1`, `D₁ = 2`, `D₂ = 1`; `M₂`, `M₃`
+are bounds of the derivatives of the exact solution `Y₀ + t C`. -/
+example : ∃ M₂ M₃ : ℝ,
+    (∀ t ∈ Icc (0 : ℝ) (0 + 1 / 2), ‖iteratedDerivWithin 2 (fun t : ℝ =>
+      startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
+        (Icc 0 (0 + 1 / 2)) t‖ ≤ M₂) ∧
+    (∀ t ∈ Icc (0 : ℝ) (0 + 1 / 2), ‖iteratedDerivWithin 3 (fun t : ℝ =>
+      startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
+        (Icc 0 (0 + 1 / 2)) t‖ ≤ M₃) ∧
+    ‖startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ +
+        (1 / 2 : ℝ) • galerkinProj augmentedLeft (1 : Matrix (Fin 2) (Fin 2) ℝ) constField -
+      (startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ +
+        ((0 : ℝ) + 1 / 2 - 0) • constField)‖ ≤
+      (1 / 2) ^ 3 * (6 + M₃ / 24) + 1 / 2 * ‖constField‖ * 7 := by
+  have hh : (0 : ℝ) < 1 / 2 := by norm_num
+  have hA3 : ContDiffOn ℝ 3 (fun t : ℝ =>
+      startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
+      (Icc 0 (0 + 1 / 2)) := by fun_prop
+  obtain ⟨M₂, M₃, hM₂, hM₃⟩ := exists_iteratedDerivWithin_bounds hh hA3
+  have hc0 := norm_nonneg constField
+  have hc2 : ‖constField‖ ≤ 2 := by
+    have h3 : ‖constField‖ ^ 2 = 3 := by
+      rw [Frobenius.norm_sq_eq_sum]
+      simp only [Fin.sum_univ_three, Fin.sum_univ_two]
+      norm_num [constField]
+    nlinarith [h3]
+  have hmax : max (0 : ℝ) (2 * ‖constField‖ / 16) = ‖constField‖ / 8 := by
+    rw [max_eq_right (by positivity)]; ring
+  have hsq : Real.sqrt ((1 : ℕ) : ℝ) = 1 := by simp
+  have hone : ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖ = 1 := by
+    have h : ‖(1 : Matrix (Fin 1) (Fin 1) ℝ)‖ ^ 2 = 1 := by
+      rw [Frobenius.norm_sq_eq_sum]
+      simp
+    nlinarith [norm_nonneg (1 : Matrix (Fin 1) (Fin 1) ℝ)]
+  refine ⟨M₂, M₃, hM₂, hM₃, (norm_update_sub_le_cube_add (F := fun _ _ => constField)
+    (D := univ) (L := 0) (Lₜ := 0) (B := ‖constField‖) (ρ := 16) (H := 1 / 2) (κ := 1)
+    (D₁ := 2) (D₂ := 1) (t₀ := 0) (h := 1 / 2) (S₀ := 1) (G := constField)
+    (Ua := augmentedLeft) (Va := (1 : Matrix (Fin 2) (Fin 2) ℝ))
+    (A := fun t => startLeft * (1 : Matrix (Fin 1) (Fin 1) ℝ) * startRightᵀ + (t - 0) • constField)
+    (factoredNormalBound_iff_univ.1 (MatrixBUG.factoredNormalBound_const constField 1))
+    (by intro _ _ _ _ _; simp) le_rfl (by intro _ _ _; exact le_rfl) (fun _ _ _ _ _ => by simp)
+    (by simp) (by simp) startLeft_orth startRight_orth hh le_rfl (by norm_num)
+    (fun _ _ _ _ => mem_univ _) ?_ ?_ ?_ ?_ (MatrixBUG.odeSolution_affine _ _ _ _) (by simp) hA3
+    hM₂ hM₃ (mem_univ _) rfl rfl orth_augmentedLeft (by simp) augU_augmentedLeft (by simp)
+    kCap_augmentedLeft (by simp)).trans ?_⟩
+  · rw [hsq, hmax]
+    linarith
+  · rw [hsq, hmax, hone]
+    linarith
+  · rw [hsq, hmax]
+    linarith
+  · linarith
+  · rw [hsq, hmax]
+    linarith [mul_nonneg hc0 (sub_nonneg.2 hc2)]
 
 end Examples
 

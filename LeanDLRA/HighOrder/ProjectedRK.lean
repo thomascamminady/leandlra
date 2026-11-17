@@ -6,7 +6,7 @@ import LeanDLRA.HighOrder.RungeKuttaBUG
 The projected Runge–Kutta methods of Kieri and Vandereycken approximate the solution of
 `Y' = F(t, Y)` on a set `ℳ` (the matrices or tensor trains of rank at most `r`) by an explicit
 Runge–Kutta scheme whose stage derivatives are projected onto tangent spaces and whose stages
-and result are retracted to `ℳ` (Kieri–Vandereycken 2019, eqs. (26), (27)):
+and result are retracted to `ℳ` ([KieriVandereycken2019], eqs. (26), (27)):
 
   `Z_j = y + h ∑_{l<j} a_{jl} e_l`,  `η_j = ℛ(Z_j)`,  `e_j = P(η_j) F(t_j, η_j)`,
   `y₁ = ℛ(y + h ∑_j b_j e_j)`,
@@ -14,7 +14,7 @@ and result are retracted to `ℳ` (Kieri–Vandereycken 2019, eqs. (26), (27)):
 with a quasi-optimal retraction `ℛ` (`‖ℛ(x) - x‖ ≤ κ ‖z - x‖` for all `z ∈ ℳ`). This file
 compares such a step with the classical Runge–Kutta step
 `Z̃_j = y + h ∑_{l<j} a_{jl} F(t_j, Z̃_l)`, `z̃ = y + h ∑_j b_j F(t_j, Z̃_j)` and with the exact
-solution, and proves the local error `h C (ε + g + K h^{q'})` (Kieri–Vandereycken 2019, Lemma 7
+solution, and proves the local error `h C (ε + g + K h^{q'})` ([KieriVandereycken2019], Lemma 7
 and the proof of Theorem 6).
 
 The setting is abstract: a normed space `E`, a set `ℳ ⊆ E`, and the values of the scheme as
@@ -41,11 +41,11 @@ methods. The step size is at most `1` (the paper's `h ≤ h₀`).
 
 ## Main results
 
-* `ProjectedRK.norm_stage_sub_le` (Kieri–Vandereycken 2019, Lemma 7): the first stage agrees with
+* `ProjectedRK.norm_stage_sub_le` ([KieriVandereycken2019], Lemma 7): the first stage agrees with
   the classical one and its projected derivative is `ε`-close to the classical derivative; for
   the later stages `‖Z_j - Z̃_j‖ ≤ α γ^s h (ε + g + K h^{q₂+1})` and
   `‖e_j - F(Z̃_j)‖ ≤ γ^s (ε + g + K h^{q̃_j + 1})`, `q̃_j = min(q_j, q₂ + 1)`.
-* `ProjectedRK.norm_sub_le_of_stages` (Kieri–Vandereycken 2019, proof of Theorem 6, eq. (38)):
+* `ProjectedRK.norm_sub_le_of_stages` ([KieriVandereycken2019], proof of Theorem 6, eq. (38)):
   `‖y₁ - w_f‖ ≤ h · localErrorConst a b L κ · (ε + g + K h^{q'})` for every admissible `q'`.
 * `ProjectedRK.admissible_min_q₂`, `ProjectedRK.admissible_of_b₂_eq_zero`: the exponent of
   Theorem 6 (`min(p, q₂ + 1)`, and `min(p, q₃ + 1, q₂ + 2)` when `b₂ = 0`) is admissible.
@@ -61,8 +61,8 @@ not optimised.
 
 ## References
 
-* E. Kieri, B. Vandereycken, *Projection methods for dynamical low-rank approximation of
-  high-dimensional problems*, Comput. Methods Appl. Math. 19 (2019), §5.2.
+* [KieriVandereycken2019] E. Kieri, B. Vandereycken, *Projection methods for dynamical low-rank
+  approximation of high-dimensional problems*, Comput. Methods Appl. Math. 19 (2019), §5.2.
 -/
 
 open Finset
@@ -148,7 +148,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {s : ℕ}
   {a : Fin s → Fin s → ℝ} {b : Fin s → ℝ} {ℳ : Set E} {κ L ε g K h : ℝ} {y : E}
   {Z η e Fη Zt FZt w : Fin s → E}
 
-/-- **Stage bounds of a projected Runge–Kutta step** (Kieri–Vandereycken 2019, Lemma 7, with
+/-- **Stage bounds of a projected Runge–Kutta step** ([KieriVandereycken2019], Lemma 7, with
 explicit constants). Let the tableau be explicit, `y ∈ ℳ`, `0 ≤ h ≤ 1`, and let
 
 * `Z j = y + h ∑_l a_{jl} e_l` and `η j` a `κ`-quasi-optimal point of `ℳ` for `Z j`,
@@ -319,7 +319,7 @@ theorem norm_stage_sub_le (ha : ∀ i j, i ≤ j → a i j = 0) (hκ : 0 ≤ κ)
   · refine hEj.trans (mul_le_mul_of_nonneg_right (pow_le_pow_right₀ hγ hjs) ?_)
     exact add_nonneg (add_nonneg hε hg) (mul_nonneg hK (pow_nonneg hh _))
 
-/-- **Local error of a projected Runge–Kutta step** (Kieri–Vandereycken 2019, proof of
+/-- **Local error of a projected Runge–Kutta step** ([KieriVandereycken2019], proof of
 Theorem 6, eq. (38), with explicit constants). In the setting of `ProjectedRK.norm_stage_sub_le`,
 let in addition `y₁` be a `κ`-quasi-optimal point of `ℳ` for `y + h ∑_j b_j e_j`, let
 `zt = y + h ∑_j b_j FZt_j` be the classical result with `‖zt - wf‖ ≤ K h^{p+1}` (order `p`), and
@@ -408,7 +408,7 @@ section Orders
 
 variable {s : ℕ}
 
-/-- **The order of Kieri–Vandereycken 2019, Theorem 6, for `b₂ ≠ 0`**: the exponent
+/-- **The order of [KieriVandereycken2019], Theorem 6, for `b₂ ≠ 0`**: the exponent
 `q' = min(p, q₂ + 1)` is admissible for `ProjectedRK.norm_sub_le_of_stages` whatever the weights
 `b`, if `q₂ ≤ q_j` for the later stages. -/
 theorem admissible_min_q₂ {b : Fin s → ℝ} {q : Fin s → ℕ} {q₂ p : ℕ}
@@ -418,7 +418,7 @@ theorem admissible_min_q₂ {b : Fin s → ℝ} {q : Fin s → ℕ} {q₂ p : �
   have := hq j hj
   omega
 
-/-- **The order of Kieri–Vandereycken 2019, Theorem 6, for `b₂ = 0`**: if the stage with
+/-- **The order of [KieriVandereycken2019], Theorem 6, for `b₂ = 0`**: if the stage with
 `j.val = 1` (the paper's second stage) has weight `0` and the stages after it have stage order at
 least `q₃`, the exponent `q' = min(p, q₃ + 1, q₂ + 2)` is admissible for
 `ProjectedRK.norm_sub_le_of_stages`. -/

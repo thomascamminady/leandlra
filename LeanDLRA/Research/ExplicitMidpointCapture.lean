@@ -11,9 +11,16 @@ by `G V₀`, `G = F(t₀ + h/2, Z)`. This file bounds the capture defect
 
 `θ = ‖(1 - Û Ûᵀ) G (1 - V₀ V₀ᵀ)‖`
 
-of every orthonormal `Û` whose range contains those of `U₀` and `G V₀` by `C₁ h² + C₂ ε`, with
+of every orthonormal `Û` whose range contains those of `U₀` and `G V₀`. The general bound
+(`norm_capture_defect_le`) has free parameters `τ > 0`, `κ`, `e`, `δ`; the choice `τ = h² + ε`
+gives `θ ≤ C₁ h² + C₂ ε` for `0 < h ≤ H` (`norm_capture_defect_le_sq_add`), with explicit
 constants that contain the norm of `S₀` but no inverse of `S₀`: they do not depend on the small
-singular values of `S₀`.
+singular values of `S₀`. The same holds for the capture defect on the right,
+`θ' = ‖(1 - U₀ U₀ᵀ) G (1 - Va Vaᵀ)‖` (`norm_capture_defect_right_le_sq_add`).
+
+The capture defects bounded here are the parameters `θ`, `θ'` of the local error bounds of
+`LeanDLRA.Research.ExplicitMidpointGalerkin`; for the explicit update the two are combined there
+(`ExplicitMidpoint.norm_update_sub_le_cube_add`).
 
 ## Main statements
 
@@ -31,14 +38,22 @@ singular values of `S₀`.
 * `LeanDLRA.norm_one_sub_mul_mul_mul_one_sub_le`: at a factored point `W = Ut S_W Vtᵀ`, the part of
   the mixed component `Ut Utᵀ F(t, W) (1 - Vt Vtᵀ)` outside the range of another basis `Û` is at
   most `κ ‖(1 - Û Ûᵀ) W‖ + e`.
-* `LeanDLRA.norm_capture_defect_le`: the bound of the capture defect.
+* `LeanDLRA.norm_capture_defect_le`, `LeanDLRA.norm_capture_defect_right_le`: the bound of the
+  capture defects in the free parameters `τ`, `κ`, `e`, `δ`.
+* `LeanDLRA.norm_capture_defect_le_sq_add`, `LeanDLRA.norm_capture_defect_right_le_sq_add`:
+  with `τ = h² + ε`, the capture defects are at most `C₁ h² + C₂ ε`.
 
 ## Implementation notes
 
-The splitting `K = K' S + E` replaces the thresholded singular value decomposition of the paper
-argument by the regularized inverse `(Sᵀ S + τ² 1)⁻¹`; the bounds follow from the identity
-`‖S D‖² + τ² ‖D‖² = ⟪D, (Sᵀ S + τ² 1) D⟫`. All norms are Frobenius norms, so the constants carry
-factors `√r` that bounds in the spectral norm would not have.
+The splitting `K = K' S + E` replaces a singular value decomposition of `S` with a threshold
+(the usual pen-and-paper route to such bounds) by the regularized inverse `(Sᵀ S + τ² 1)⁻¹`; the
+bounds follow from the identity `‖S D‖² + τ² ‖D‖² = ⟪D, (Sᵀ S + τ² 1) D⟫`. All norms are
+Frobenius norms, so the constants carry factors `√r` that bounds in the spectral norm would not
+have.
+
+## References
+
+* [CerutiEtAl2024b] (the second-order BUG integrator based on the midpoint rule).
 -/
 
 open Set
@@ -923,6 +938,165 @@ theorem norm_capture_defect_right_le {F : ℝ → Matrix m n ℝ → Matrix m n 
   rw [← Frobenius.norm_transpose, e1]
   exact key
 
+/-- The choice `τ = h² + ε` of the free parameters of `norm_capture_defect_le`: it satisfies the
+conditions on `τ`, `κ`, `e`, `δ` there, the resulting `δ` is at most `D₁ h² + D₂ ε`, and the
+resulting bound is at most `C₁ h² + C₂ ε`. -/
+private theorem capture_params_sq_add {r : ℕ} {ε L Lₜ B ρ H κ D₁ D₂ h s : ℝ} (hε : 0 ≤ ε)
+    (hB0 : 0 ≤ B) (hL0 : 0 ≤ L) (hs : 0 ≤ s) (hh : 0 < h) (hH : h ≤ H)
+    (hκ : Real.sqrt r * (1 / 2 + max L (2 * B / ρ)) ≤ κ)
+    (hD₁ : Real.sqrt r * H * max L (2 * B / ρ) / 2 + (2 * κ * B + κ ^ 2 * s) / 4 +
+      H * κ ^ 2 * B / 8 ≤ D₁)
+    (hD₂ : Real.sqrt r * H * (1 + max L (2 * B / ρ) / 2) ≤ D₂) :
+    ∃ τ e δ : ℝ, 0 < τ ∧ Real.sqrt r * (ε / (2 * τ) + max L (2 * B / ρ)) ≤ κ ∧
+      Real.sqrt r * (ε + max L (2 * B / ρ) * τ / 2) ≤ e ∧
+      h * e + (h / 2) ^ 2 * (2 * κ * B + κ ^ 2 * s) + (h / 2) ^ 3 * (κ ^ 2 * B) ≤ δ ∧
+      δ ≤ D₁ * h ^ 2 + D₂ * ε ∧
+      (L + κ + h / 2 * L * κ) * δ + ε + e + (h / 2) ^ 2 * κ * (L * B + Lₜ + B * κ) ≤
+        ((L + κ + H / 2 * L * κ) * D₁ + Real.sqrt r * max L (2 * B / ρ) / 2 +
+            κ * (L * B + Lₜ + B * κ) / 4) * h ^ 2 +
+          ((L + κ + H / 2 * L * κ) * D₂ + 1 + Real.sqrt r * (1 + max L (2 * B / ρ) / 2)) * ε := by
+  have hLm0 : 0 ≤ max L (2 * B / ρ) := hL0.trans (le_max_left _ _)
+  have hq0 : 0 ≤ Real.sqrt r := Real.sqrt_nonneg _
+  have hH0 : 0 ≤ H := hh.le.trans hH
+  have hHh : 0 ≤ H - h := sub_nonneg.2 hH
+  have hτ : 0 < h ^ 2 + ε := by positivity
+  have hκ0 : 0 ≤ κ := le_trans (mul_nonneg hq0 (by linarith)) hκ
+  generalize max L (2 * B / ρ) = Lm at hLm0 hκ hD₁ hD₂ ⊢
+  generalize Real.sqrt r = q at hq0 hκ hD₁ hD₂ ⊢
+  obtain ⟨e, he⟩ : ∃ e : ℝ, e = q * (ε + Lm * (h ^ 2 + ε) / 2) := ⟨_, rfl⟩
+  obtain ⟨δ, hδ⟩ : ∃ δ : ℝ,
+      δ = h * e + (h / 2) ^ 2 * (2 * κ * B + κ ^ 2 * s) + (h / 2) ^ 3 * (κ ^ 2 * B) :=
+    ⟨_, rfl⟩
+  have he0 : 0 ≤ e := by
+    rw [he]
+    exact mul_nonneg hq0 (add_nonneg hε (div_nonneg (mul_nonneg hLm0 hτ.le) two_pos.le))
+  have hδ0 : 0 ≤ δ := by
+    rw [hδ]
+    exact add_nonneg (add_nonneg (mul_nonneg hh.le he0) (mul_nonneg (sq_nonneg _)
+      (add_nonneg (mul_nonneg (mul_nonneg two_pos.le hκ0) hB0) (mul_nonneg (sq_nonneg κ) hs))))
+      (mul_nonneg (pow_nonneg (by linarith) 3) (mul_nonneg (sq_nonneg κ) hB0))
+  have hhalf : ε / (2 * (h ^ 2 + ε)) ≤ 1 / 2 := by
+    rw [div_le_div_iff₀ (by positivity) two_pos]
+    nlinarith [sq_nonneg h]
+  have hδb : δ ≤ D₁ * h ^ 2 + D₂ * ε := by
+    have h1 : 0 ≤ (H - h) * (q * ε * (1 + Lm / 2)) :=
+      mul_nonneg hHh (mul_nonneg (mul_nonneg hq0 hε) (by linarith))
+    have h2 : 0 ≤ (H - h) * (h ^ 2 * (q * Lm / 2)) :=
+      mul_nonneg hHh (mul_nonneg (sq_nonneg h) (div_nonneg (mul_nonneg hq0 hLm0) two_pos.le))
+    have h3 : 0 ≤ (H - h) * (h ^ 2 * (κ ^ 2 * B / 8)) :=
+      mul_nonneg hHh (mul_nonneg (sq_nonneg h) (div_nonneg (mul_nonneg (sq_nonneg κ) hB0)
+        (by norm_num)))
+    have h4 : (q * H * Lm / 2 + (2 * κ * B + κ ^ 2 * s) / 4 + H * κ ^ 2 * B / 8) * h ^ 2 ≤
+        D₁ * h ^ 2 := mul_le_mul_of_nonneg_right hD₁ (sq_nonneg h)
+    have h5 : q * H * (1 + Lm / 2) * ε ≤ D₂ * ε := mul_le_mul_of_nonneg_right hD₂ hε
+    have h6 : δ = (q * H * Lm / 2 + (2 * κ * B + κ ^ 2 * s) / 4 + H * κ ^ 2 * B / 8) * h ^ 2 +
+        q * H * (1 + Lm / 2) * ε - (H - h) * (q * ε * (1 + Lm / 2)) -
+        (H - h) * (h ^ 2 * (q * Lm / 2)) - (H - h) * (h ^ 2 * (κ ^ 2 * B / 8)) := by
+      rw [hδ, he]
+      ring
+    linarith
+  refine ⟨h ^ 2 + ε, e, δ, hτ, ?_, he.symm.le, hδ.symm.le, hδb, ?_⟩
+  · exact le_trans (mul_le_mul_of_nonneg_left (by linarith) hq0) hκ
+  · have hA0 : 0 ≤ L + κ + H / 2 * L * κ :=
+      add_nonneg (add_nonneg hL0 hκ0) (mul_nonneg (mul_nonneg (div_nonneg hH0 two_pos.le) hL0) hκ0)
+    have h1 : (L + κ + h / 2 * L * κ) * δ ≤ (L + κ + H / 2 * L * κ) * δ := by
+      refine mul_le_mul_of_nonneg_right ?_ hδ0
+      have : 0 ≤ (H - h) / 2 * L * κ :=
+        mul_nonneg (mul_nonneg (div_nonneg hHh two_pos.le) hL0) hκ0
+      linarith
+    have h2 : (L + κ + H / 2 * L * κ) * δ ≤ (L + κ + H / 2 * L * κ) * (D₁ * h ^ 2 + D₂ * ε) :=
+      mul_le_mul_of_nonneg_left hδb hA0
+    have h3 : e = q * Lm / 2 * h ^ 2 + q * (1 + Lm / 2) * ε := by
+      rw [he]
+      ring
+    have h4 : (h / 2) ^ 2 * κ * (L * B + Lₜ + B * κ) = κ * (L * B + Lₜ + B * κ) / 4 * h ^ 2 := by
+      ring
+    have h5 : (L + κ + H / 2 * L * κ) * (D₁ * h ^ 2 + D₂ * ε) =
+        (L + κ + H / 2 * L * κ) * D₁ * h ^ 2 + (L + κ + H / 2 * L * κ) * D₂ * ε := by
+      ring
+    have h6 : ((L + κ + H / 2 * L * κ) * D₁ + q * Lm / 2 + κ * (L * B + Lₜ + B * κ) / 4) * h ^ 2 +
+        ((L + κ + H / 2 * L * κ) * D₂ + 1 + q * (1 + Lm / 2)) * ε =
+        (L + κ + H / 2 * L * κ) * D₁ * h ^ 2 + (L + κ + H / 2 * L * κ) * D₂ * ε + ε +
+          (q * Lm / 2 * h ^ 2 + q * (1 + Lm / 2) * ε) +
+          κ * (L * B + Lₜ + B * κ) / 4 * h ^ 2 := by
+      ring
+    rw [h6, h4, h3]
+    linarith
+
+/-- **The capture defect is of order `h² + ε`.** The choice `τ = h² + ε` in
+`norm_capture_defect_le`. Under its hypotheses on `F`, the predictor `Z`, `G` and `Ua`, let
+`0 < h ≤ H`, `L̃ = max L (2B/ρ)`, `κ ≥ √r (1/2 + L̃)`,
+`D₁ ≥ √r H L̃/2 + (2κB + κ²‖S₀‖)/4 + H κ² B/8`, `D₂ ≥ √r H (1 + L̃/2)`, and
+`h B/2 + D₁ h² + D₂ ε ≤ ρ/2`. Then
+
+`‖(1 - Ua Uaᵀ) G (1 - V₀ V₀ᵀ)‖ ≤ C₁ h² + C₂ ε`,
+
+`C₁ = (L + κ + (H/2) L κ) D₁ + √r L̃/2 + κ (L B + Lₜ + B κ)/4`,
+`C₂ = (L + κ + (H/2) L κ) D₂ + 1 + √r (1 + L̃/2)`.
+
+The constants depend on `r`, `L`, `Lₜ`, `B`, `ρ`, `H` and `‖S₀‖`, and on no inverse of `S₀`. -/
+theorem norm_capture_defect_le_sq_add {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {r : ℕ}
+    {D : Set (ℝ × Matrix m n ℝ)} {ε L Lₜ B ρ H κ D₁ D₂ : ℝ}
+    (hN : FactoredNormalBoundOn F r D ε) (hL : IsLipschitzFieldOn F D L) (hL0 : 0 ≤ L)
+    (hB : IsBoundedFieldOn F D B)
+    (hFt : ∀ s t X, (s, X) ∈ D → (t, X) ∈ D → ‖F s X - F t X‖ ≤ Lₜ * |s - t|)
+    (hrm : r < Fintype.card m) (hrn : r < Fintype.card n)
+    {U₀ : Matrix m (Fin r) ℝ} {S₀ : Matrix (Fin r) (Fin r) ℝ} {V₀ : Matrix n (Fin r) ℝ}
+    (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1) {t₀ h : ℝ} (hh : 0 < h) (hH : h ≤ H) (hρ : 0 < ρ)
+    (hD : ∀ t ∈ Icc t₀ (t₀ + h), ∀ X, ‖X - U₀ * S₀ * V₀ᵀ‖ ≤ ρ → (t, X) ∈ D)
+    (hκ : Real.sqrt r * (1 / 2 + max L (2 * B / ρ)) ≤ κ)
+    (hD₁ : Real.sqrt r * H * max L (2 * B / ρ) / 2 + (2 * κ * B + κ ^ 2 * ‖S₀‖) / 4 +
+      H * κ ^ 2 * B / 8 ≤ D₁)
+    (hD₂ : Real.sqrt r * H * (1 + max L (2 * B / ρ) / 2) ≤ D₂)
+    (hsmall : h / 2 * B + (D₁ * h ^ 2 + D₂ * ε) ≤ ρ / 2) {Z G : Matrix m n ℝ}
+    (hZ : Z = U₀ * S₀ * V₀ᵀ + (h / 2) • tangentProj U₀ V₀ (F t₀ (U₀ * S₀ * V₀ᵀ)))
+    (hG : G = F (t₀ + h / 2) Z) {k : Type*} [Fintype k] [DecidableEq k] {Ua : Matrix m k ℝ}
+    (hUa : Uaᵀ * Ua = 1) (augU : Ua * Uaᵀ * U₀ = U₀) (kCap : Ua * Uaᵀ * (G * V₀) = G * V₀) :
+    ‖(1 - Ua * Uaᵀ) * G * (1 - V₀ * V₀ᵀ)‖ ≤
+      ((L + κ + H / 2 * L * κ) * D₁ + Real.sqrt r * max L (2 * B / ρ) / 2 +
+          κ * (L * B + Lₜ + B * κ) / 4) * h ^ 2 +
+        ((L + κ + H / 2 * L * κ) * D₂ + 1 + Real.sqrt r * (1 + max L (2 * B / ρ) / 2)) * ε := by
+  have hY₀D : (t₀, U₀ * S₀ * V₀ᵀ) ∈ D :=
+    hD t₀ ⟨le_rfl, by linarith⟩ _ (by rw [sub_self, norm_zero]; exact hρ.le)
+  have hε : 0 ≤ ε := (norm_nonneg _).trans (hN t₀ U₀ V₀ S₀ hU₀ hV₀ hY₀D)
+  have hB0 : 0 ≤ B := (norm_nonneg _).trans (hB hY₀D)
+  obtain ⟨τ, e, δ, hτ, hκ', he, hδ, hδb, hbound⟩ := capture_params_sq_add (Lₜ := Lₜ) hε hB0 hL0
+    (norm_nonneg S₀) hh hH hκ hD₁ hD₂
+  exact (norm_capture_defect_le hN hL hL0 hB hFt hrm hrn hU₀ hV₀ hh.le hρ hD hτ hκ' he hδ
+    (by linarith) hZ hG hUa augU kCap).trans hbound
+
+/-- **The capture defect on the right is of order `h² + ε`**: the choice `τ = h² + ε` in
+`norm_capture_defect_right_le`, with the constants of `norm_capture_defect_le_sq_add`. -/
+theorem norm_capture_defect_right_le_sq_add {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {r : ℕ}
+    {D : Set (ℝ × Matrix m n ℝ)} {ε L Lₜ B ρ H κ D₁ D₂ : ℝ}
+    (hN : FactoredNormalBoundOn F r D ε) (hL : IsLipschitzFieldOn F D L) (hL0 : 0 ≤ L)
+    (hB : IsBoundedFieldOn F D B)
+    (hFt : ∀ s t X, (s, X) ∈ D → (t, X) ∈ D → ‖F s X - F t X‖ ≤ Lₜ * |s - t|)
+    (hrm : r < Fintype.card m) (hrn : r < Fintype.card n)
+    {U₀ : Matrix m (Fin r) ℝ} {S₀ : Matrix (Fin r) (Fin r) ℝ} {V₀ : Matrix n (Fin r) ℝ}
+    (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1) {t₀ h : ℝ} (hh : 0 < h) (hH : h ≤ H) (hρ : 0 < ρ)
+    (hD : ∀ t ∈ Icc t₀ (t₀ + h), ∀ X, ‖X - U₀ * S₀ * V₀ᵀ‖ ≤ ρ → (t, X) ∈ D)
+    (hκ : Real.sqrt r * (1 / 2 + max L (2 * B / ρ)) ≤ κ)
+    (hD₁ : Real.sqrt r * H * max L (2 * B / ρ) / 2 + (2 * κ * B + κ ^ 2 * ‖S₀‖) / 4 +
+      H * κ ^ 2 * B / 8 ≤ D₁)
+    (hD₂ : Real.sqrt r * H * (1 + max L (2 * B / ρ) / 2) ≤ D₂)
+    (hsmall : h / 2 * B + (D₁ * h ^ 2 + D₂ * ε) ≤ ρ / 2) {Z G : Matrix m n ℝ}
+    (hZ : Z = U₀ * S₀ * V₀ᵀ + (h / 2) • tangentProj U₀ V₀ (F t₀ (U₀ * S₀ * V₀ᵀ)))
+    (hG : G = F (t₀ + h / 2) Z) {k : Type*} [Fintype k] [DecidableEq k] {Va : Matrix n k ℝ}
+    (hVa : Vaᵀ * Va = 1) (augV : Va * Vaᵀ * V₀ = V₀) (lCap : Va * Vaᵀ * (Gᵀ * U₀) = Gᵀ * U₀) :
+    ‖(1 - U₀ * U₀ᵀ) * G * (1 - Va * Vaᵀ)‖ ≤
+      ((L + κ + H / 2 * L * κ) * D₁ + Real.sqrt r * max L (2 * B / ρ) / 2 +
+          κ * (L * B + Lₜ + B * κ) / 4) * h ^ 2 +
+        ((L + κ + H / 2 * L * κ) * D₂ + 1 + Real.sqrt r * (1 + max L (2 * B / ρ) / 2)) * ε := by
+  have hY₀D : (t₀, U₀ * S₀ * V₀ᵀ) ∈ D :=
+    hD t₀ ⟨le_rfl, by linarith⟩ _ (by rw [sub_self, norm_zero]; exact hρ.le)
+  have hε : 0 ≤ ε := (norm_nonneg _).trans (hN t₀ U₀ V₀ S₀ hU₀ hV₀ hY₀D)
+  have hB0 : 0 ≤ B := (norm_nonneg _).trans (hB hY₀D)
+  obtain ⟨τ, e, δ, hτ, hκ', he, hδ, hδb, hbound⟩ := capture_params_sq_add (Lₜ := Lₜ) hε hB0 hL0
+    (norm_nonneg S₀) hh hH hκ hD₁ hD₂
+  exact (norm_capture_defect_right_le hN hL hL0 hB hFt hrm hrn hU₀ hV₀ hh.le hρ hD hτ hκ' he hδ
+    (by linarith) hZ hG hVa augV lCap).trans hbound
+
 end Capture
 
 /-! ### Non-vacuity -/
@@ -1028,6 +1202,64 @@ example : ∃ κ e δ : ℝ,
     (by rw [Matrix.transpose_transpose]; exact left₂_kCap)⟩
   rw [hmax, hsq, norm_one_one]
   nlinarith [mul_nonneg hc0 hc0, mul_nonneg (mul_nonneg hc0 hc0) hc0]
+
+/-- **Non-vacuity of `norm_capture_defect_le_sq_add`**: the data of the example for
+`norm_capture_defect_le` (constant field `F ≡ C`, `ε = B = ‖C‖`, `L = Lₜ = 0`, start
+`Y₀ = e₁ f₁ᵀ`, basis `Ua = [e₁, e₂]`, `ρ = 8`) with `h = H = 1/2`, `κ = D₁ = D₂ = 1`. The left
+side is `1/2` (the entry `(e₃, f₂)` of `C`). -/
+example : ‖(1 - left₂ * left₂ᵀ) * C * (1 - f₁ * f₁ᵀ)‖ ≤
+    (1 + 3 / 8 * ‖C‖) / 4 + (3 + ‖C‖ / 8) * ‖C‖ := by
+  have hc0 := norm_nonneg C
+  have hc1 : ‖C‖ ≤ 1 := by nlinarith [norm_C_sq]
+  have hmax : max (0 : ℝ) (2 * ‖C‖ / 8) = ‖C‖ / 4 := by
+    rw [max_eq_right (by positivity)]; ring
+  have hsq : Real.sqrt ((1 : ℕ) : ℝ) = 1 := by simp
+  refine (norm_capture_defect_le_sq_add (F := fun _ _ => C) (D := univ) (L := 0) (Lₜ := 0)
+    (B := ‖C‖) (ρ := 8) (H := 1 / 2) (κ := 1) (D₁ := 1) (D₂ := 1) (r := 1) (U₀ := e₁)
+    (S₀ := 1) (V₀ := f₁) (t₀ := 0) (h := 1 / 2) (G := C) (Ua := left₂)
+    (factoredNormalBound_iff_univ.1 (MatrixBUG.factoredNormalBound_const C 1))
+    (by intro _ _ _ _ _; simp) le_rfl (by intro _ _ _; exact le_rfl) (fun _ _ _ _ _ => by simp)
+    (by simp) (by simp) e₁_orth f₁_orth (by norm_num) le_rfl (by norm_num)
+    (fun _ _ _ _ => mem_univ _) ?_ ?_ ?_ ?_ rfl rfl left₂_orth left₂_augU left₂_kCap).trans ?_
+  · rw [hsq, hmax]
+    linarith
+  · rw [hsq, hmax, norm_one_one]
+    nlinarith
+  · rw [hsq, hmax]
+    nlinarith
+  · nlinarith
+  · rw [hsq, hmax]
+    nlinarith
+
+/-- **Non-vacuity of `norm_capture_defect_right_le_sq_add`** on the transposed data: the constant
+field `F ≡ Cᵀ` on `2 × 3` matrices, the start `f₁ e₁ᵀ`, the right basis `Va = [e₁, e₂]`, and the
+parameters of the previous example. -/
+example : ‖(1 - f₁ * f₁ᵀ) * Cᵀ * (1 - left₂ * left₂ᵀ)‖ ≤
+    (1 + 3 / 8 * ‖C‖) / 4 + (3 + ‖C‖ / 8) * ‖C‖ := by
+  have hc0 := norm_nonneg C
+  have hc1 : ‖C‖ ≤ 1 := by nlinarith [norm_C_sq]
+  have hmax : max (0 : ℝ) (2 * ‖C‖ / 8) = ‖C‖ / 4 := by
+    rw [max_eq_right (by positivity)]; ring
+  have hsq : Real.sqrt ((1 : ℕ) : ℝ) = 1 := by simp
+  have hCt : ‖Cᵀ‖ = ‖C‖ := Frobenius.norm_transpose C
+  refine (norm_capture_defect_right_le_sq_add (F := fun _ _ => Cᵀ) (D := univ) (L := 0)
+    (Lₜ := 0) (B := ‖C‖) (ρ := 8) (H := 1 / 2) (κ := 1) (D₁ := 1) (D₂ := 1) (r := 1)
+    (U₀ := f₁) (S₀ := 1) (V₀ := e₁) (t₀ := 0) (h := 1 / 2) (G := Cᵀ) (Va := left₂) (ε := ‖C‖)
+    (hCt ▸ factoredNormalBound_iff_univ.1 (MatrixBUG.factoredNormalBound_const Cᵀ 1))
+    (by intro _ _ _ _ _; simp) le_rfl (by intro _ _ _; exact hCt.le) (fun _ _ _ _ _ => by simp)
+    (by simp) (by simp) f₁_orth e₁_orth (by norm_num) le_rfl (by norm_num)
+    (fun _ _ _ _ => mem_univ _) ?_ ?_ ?_ ?_ rfl rfl left₂_orth left₂_augU
+    (by rw [Matrix.transpose_transpose]; exact left₂_kCap)).trans ?_
+  · rw [hsq, hmax]
+    linarith
+  · rw [hsq, hmax, norm_one_one]
+    nlinarith
+  · rw [hsq, hmax]
+    nlinarith
+  · nlinarith
+  · rw [hsq, hmax]
+    nlinarith
+
 
 /-- **Non-vacuity of the regularized splitting** (`norm_mul_inv_mul_transpose_le`,
 `norm_smul_mul_inv_le`): `K = S = I₂` satisfies the column bound with `ε = 0`, `L = 1`. -/

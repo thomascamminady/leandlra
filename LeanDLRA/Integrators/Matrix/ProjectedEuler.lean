@@ -9,15 +9,15 @@ over a time step `[t₀, t₁]` by one explicit Euler step of the projected diff
 
   `Y₁ = ℛ(Y₀ + (t₁ - t₀) P(Y₀) F(t₀, Y₀))`
 
-(Kieri–Vandereycken 2019, eq. (21)). Here `P(Y₀) Z = U Uᵀ Z + Z V Vᵀ - U Uᵀ Z V Vᵀ` is the
+([KieriVandereycken2019], eq. (21)). Here `P(Y₀) Z = U Uᵀ Z + Z V Vᵀ - U Uᵀ Z V Vᵀ` is the
 orthogonal projector onto the tangent space at `Y₀ = U S Vᵀ` (`tangentProj U V`), and the
 retraction is quasi-optimal: `ℛ(X)` has rank at most `r` and `‖ℛ(X) - X‖ ≤ κ dist(X, M_{≤ r})`
 (their eq. (13) with `C_ℛ = κ`; the truncated singular value decomposition has `κ = 1`). The
 argument `Y₀ + (t₁ - t₀) P(Y₀) F(t₀, Y₀)` of the retraction has rank at most `2 r`.
 
 This file states the method as a step relation (`MatrixProjEuler.stepRel`), shows that it is a
-tube-local method (`StepMethod.IsTubeLocal`), proves its local error (Kieri–Vandereycken 2019,
-Lemma 3) and obtains the existence of runs and the global error bound (Kieri–Vandereycken 2019,
+tube-local method (`StepMethod.IsTubeLocal`), proves its local error ([KieriVandereycken2019],
+Lemma 3) and obtains the existence of runs and the global error bound ([KieriVandereycken2019],
 Theorem 4) from `StepMethod.IsTubeLocal.exists_run_norm_sub_le`.
 
 **Assumptions.** The paper assumes a globally Lipschitz field, a one-sided Lipschitz constant
@@ -43,12 +43,12 @@ of any factorization with `r` orthonormal columns.
 * `sub_tangentProj_apply`: `Z - P Z = (I - U Uᵀ) Z (I - V Vᵀ)`.
 * `MatrixProjEuler.tangentRel.hasLocalError_of_tube`: the step before the retraction has local
   error `(t₁ - t₀) ((L B + Lₜ) / 2 (t₁ - t₀) + ε)`.
-* `MatrixProjEuler.stepRel.hasLocalError_of_tube` (Kieri–Vandereycken 2019, Lemma 3): the
+* `MatrixProjEuler.stepRel.hasLocalError_of_tube` ([KieriVandereycken2019], Lemma 3): the
   projected Euler step has local error
   `(t₁ - t₀) ((10 κ L B + (1 + κ) (L B + Lₜ) / 2) (t₁ - t₀) + (1 + 2 κ) ε)`.
 * `MatrixProjEuler.isTubeLocal_stepRel`: the method is tube-local with margin constant `0`.
 * `MatrixProjEuler.IsRun.norm_sub_le`, `MatrixProjEuler.exists_run_norm_sub_le`
-  (Kieri–Vandereycken 2019, Theorem 4): runs exist, keep rank at most `r`, and satisfy
+  ([KieriVandereycken2019], Theorem 4): runs exist, keep rank at most `r`, and satisfy
   `‖Y n - A (t₀ + n h)‖ ≤ e^{L T} δ + T e^{L T} c` with
   `c = (10 κ L B + (1 + κ) (L B + Lₜ) / 2) h + (1 + 2 κ) ε`.
 
@@ -62,8 +62,8 @@ projected Euler step adds the tangent part of `F₀` only; before the retraction
 
 ## References
 
-* E. Kieri, B. Vandereycken, *Projection methods for dynamical low-rank approximation of
-  high-dimensional problems*, Comput. Methods Appl. Math. 19 (2019), §4.
+* [KieriVandereycken2019] E. Kieri, B. Vandereycken, *Projection methods for dynamical low-rank
+  approximation of high-dimensional problems*, Comput. Methods Appl. Math. 19 (2019), §4.
 -/
 
 open Set
@@ -97,7 +97,7 @@ variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ}
 /-- **The projected Euler step before the retraction.** `tangentRel F r t₀ t₁ Y₀ X` holds if
 `Y₀ = U S Vᵀ` for some `U : m × r`, `V : n × r` with orthonormal columns and `S : r × r`, and
 `X = Y₀ + (t₁ - t₀) P F(t₀, Y₀)` with the tangent projector `P = tangentProj U V` at `Y₀`
-(the argument of the retraction in Kieri–Vandereycken 2019, eq. (21)). For `Y₀` of rank `r` the
+(the argument of the retraction in [KieriVandereycken2019], eq. (21)). For `Y₀` of rank `r` the
 projector does not depend on the factorization; for smaller rank every factorization is
 allowed. -/
 def tangentRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
@@ -105,7 +105,7 @@ def tangentRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepR
     (V : Matrix n (Fin r) ℝ), Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ Y₀ = U * S * Vᵀ ∧
       X = Y₀ + (t₁ - t₀) • tangentProj U V (F t₀ Y₀)
 
-/-- **The projected Euler step** (Kieri–Vandereycken 2019, eq. (21)) with a `κ`-quasi-optimal
+/-- **The projected Euler step** ([KieriVandereycken2019], eq. (21)) with a `κ`-quasi-optimal
 retraction (their eq. (13), `C_ℛ = κ`): `stepRel F r κ t₀ t₁ Y₀ Y₁` holds if `Y₁` has rank at
 most `r` and `‖Y₁ - X‖ ≤ κ dist(X, M_{≤ r})` for a result `X` of `tangentRel F r` from `Y₀`.
 For `κ = 1` these are the best approximations of rank at most `r`, among them the truncated
@@ -249,8 +249,8 @@ theorem tangentRel.hasLocalError_of_tube (h : tangentRel F r t₀ t₁ Y₀ X)
   calc _ ≤ _ := h₁
     _ = _ := by ring
 
-/-- **Local error of the projected Euler step near a reference solution** (Kieri–Vandereycken
-2019, Lemma 3, with explicit constants and tube hypotheses). Let `F` be continuous,
+/-- **Local error of the projected Euler step near a reference solution** ([KieriVandereycken2019],
+Lemma 3, with explicit constants and tube hypotheses). Let `F` be continuous,
 `L`-Lipschitz and bounded by `B` on the tube of radius `ρ` around a solution `A` over `[a, b]`,
 let the normal part of `F` be at most `ε` at the factored rank-`r` points of this tube, and let
 `‖F t Y₀ - F t₀ Y₀‖ ≤ Lₜ (t - t₀)` during the step. If `‖Y₀ - A t₀‖ + 2 B (t₁ - t₀) < ρ` for a
@@ -362,7 +362,7 @@ theorem stepRel.hasLocalError_uniformGrid {k : ℕ} {Z₀ Z₁ : Matrix m n ℝ}
   rwa [hsub] at hloc
 
 /-- **Every run of the projected Euler method satisfies the robust error bound**
-(Kieri–Vandereycken 2019, Theorem 4, for every run). Let `A` solve `Y' = F(t, Y)` on
+([KieriVandereycken2019], Theorem 4, for every run). Let `A` solve `Y' = F(t, Y)` on
 `[t₀, t₀ + N h]`, and let `F` be `L`-Lipschitz and bounded by `B` on the tube of radius `ρ`
 around `A` (`DLRAProblem`), jointly continuous there, with normal component at most `ε` at the
 rank-`r` matrices of the tube (`FactoredNormalBoundOn`), and with
@@ -394,8 +394,8 @@ theorem IsRun.norm_sub_le {Y : ℕ → Matrix m n ℝ}
     (fun n hn Y₀ Y₁ hnear hstep => ?_) hc₀ hδ hNT hsmall
   exact hstep.hasLocalError_uniformGrid hκ hP hc hε hε₀ hFt hh hn (by linarith)
 
-/-- **Existence and robust error bound for the projected Euler method** (Kieri–Vandereycken
-2019, Theorem 4, with explicit constants and tube hypotheses). Let `A` solve `Y' = F(t, Y)` on
+/-- **Existence and robust error bound for the projected Euler method** ([KieriVandereycken2019],
+Theorem 4, with explicit constants and tube hypotheses). Let `A` solve `Y' = F(t, Y)` on
 `[t₀, t₀ + N h]`, and let `F` be `L`-Lipschitz and bounded by `B` on the tube of radius `ρ`
 around `A` (`DLRAProblem`), jointly continuous there, with normal component at most `ε` at the
 rank-`r` matrices of the tube (`FactoredNormalBoundOn`), and with
