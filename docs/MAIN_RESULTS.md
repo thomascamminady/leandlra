@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit c5e539e (2026-11-17). A theorem is quoted from its
+files and were compared with them at commit bb5ff85 (2026-11-17). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -223,7 +223,7 @@ paper and not a theorem of the core.
 Source: [KochLubich2007, §2.1 and Lemma 4.1], as cited in the module docstring of
 `LeanDLRA/FixedRank/TangentSpace/Defs.lean`.
 
-### 2.4 Curvature: the tangent projector depends on the point with constant 2/ρ
+### 2.4 Curvature: the tangent projector depends on the point with constant 1/ρ
 
 `Curvature.koch_lubich_tangent_frob` in [`LeanDLRA/Matrix/Curvature.lean`, lines 1182–1187](../LeanDLRA/Matrix/Curvature.lean#L1182-L1187):
 
@@ -333,6 +333,106 @@ constant contains the lower bound `ρ`; the bound concerns one tangent step of a
 
 Source: the module docstring cites arXiv 2111.14540, Sections 6 and 7 (retraction of a tangent
 step by the truncated singular value decomposition).
+
+**The constant 1.** The constant `2` of the two theorems above can be replaced by `1`. The file
+[`FixedRank/TangentSpace/ProjectorLipschitz.lean`](../LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean) proves the Lipschitz bound with
+`1`, first for factors and then at a matrix:
+
+`Curvature.norm_tangentProjMat_sub_le_inv_mul` in [`LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean`, lines 411–416](../LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean#L411-L416):
+
+```lean
+theorem norm_tangentProjMat_sub_le_inv_mul {U U' : Matrix m k ℝ} {V V' : Matrix n k ℝ}
+    {S S' : Matrix k k ℝ} {ρ : ℝ} (hρ : 0 < ρ) (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
+    (hU' : U'ᵀ * U' = 1) (hV' : V'ᵀ * V' = 1)
+    (hS : ∀ v : EuclideanSpace ℝ k, ρ * ‖v‖ ≤ ‖Matrix.toEuclideanLin S v‖) (B : Matrix m n ℝ) :
+    ‖tangentProjMat (U' * U'ᵀ) (V' * V'ᵀ) B - tangentProjMat (U * Uᵀ) (V * Vᵀ) B‖ ≤
+      ρ⁻¹ * ‖U' * S' * V'ᵀ - U * S * Vᵀ‖ * ‖B‖
+```
+
+`norm_tangentProjAt_sub_le_inv_mul` in [`LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean`, lines 579–582](../LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean#L579-L582):
+
+```lean
+theorem norm_tangentProjAt_sub_le_inv_mul {r : ℕ} {X Y : Matrix m n ℝ} (hX : X.rank = r)
+    (hY : Y.rank = r) {ρ : ℝ} (hρ : 0 < ρ) (hσ : ρ ≤ (toEuclideanLin X).singularValues (r - 1))
+    (B : Matrix m n ℝ) :
+    ‖tangentProjAt Y B - tangentProjAt X B‖ ≤ ρ⁻¹ * ‖Y - X‖ * ‖B‖
+```
+
+The hypotheses are those of `Curvature.koch_lubich_tangent_frob`, and of `norm_tangentProjAt_sub_le`
+in the second statement: `X` and `Y` have rank `r`, and the lower bound `ρ` is needed at `X`
+only. There is no smallness condition on `‖Y - X‖`; all norms are Frobenius norms. The proof
+splits `P(Y) B - P(X) B` into the orthogonal pieces `P(Y) (1 - P(X)) B` and
+`-(1 - P(Y)) P(X) B`, and bounds each by `ρ⁻¹ ‖Y - X‖` times the norm of the vector it is applied
+to. The two bounds on normal vectors are
+
+`norm_tangentProjAt_apply_le_of_tangentProjAt_eq_zero` in [`LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean`, lines 567–571](../LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean#L567-L571):
+
+```lean
+theorem norm_tangentProjAt_apply_le_of_tangentProjAt_eq_zero {r : ℕ} {X Y : Matrix m n ℝ}
+    (hX : X.rank = r) (hY : Y.rank = r) {ρ : ℝ} (hρ : 0 < ρ)
+    (hσ : ρ ≤ (toEuclideanLin X).singularValues (r - 1)) {N : Matrix m n ℝ}
+    (hN : tangentProjAt Y N = 0) :
+    ‖tangentProjAt X N‖ ≤ ρ⁻¹ * ‖Y - X‖ * ‖N‖
+```
+
+`norm_tangentProj_apply_le_of_tangentProjAt_eq_zero` in [`LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean`, lines 521–525](../LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean#L521-L525):
+
+```lean
+theorem norm_tangentProj_apply_le_of_tangentProjAt_eq_zero {r : ℕ} {X : Matrix m n ℝ}
+    (hX : X.rank = r) {ρ : ℝ} (hρ : 0 < ρ) (hσ : ρ ≤ (toEuclideanLin X).singularValues (r - 1))
+    {U : Matrix m (Fin r) ℝ} {V : Matrix n (Fin r) ℝ} (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
+    (S : Matrix (Fin r) (Fin r) ℝ) {N : Matrix m n ℝ} (hN : tangentProjAt X N = 0) :
+    ‖tangentProj U V N‖ ≤ ρ⁻¹ * ‖U * S * Vᵀ - X‖ * ‖N‖
+```
+
+The first says that the tangent projector at `X` is small on a vector `N` that is normal at `Y`,
+`P(Y) N = 0`; the second is the same with the roles of `X` and `Y` exchanged, for `Y = U S Vᵀ`
+given by factors and `N` normal at `X`. The module docstring lists the factor forms
+(`Curvature.norm_tangentProjMat_le_of_tangentProjMat_eq_zero` and its relatives) and the bound
+`‖(1 - P(Y)) Z‖ ≤ ρ⁻¹ ‖Y - X‖ ‖Z‖` for `Z` tangent at `X`
+(`norm_one_sub_tangentProj_apply_le_of_tangentProjAt_eq_self`).
+
+The constant `1` cannot be lowered. An `example` in the file has `X = e₁ e₁ᵀ`
+(`ρ = 1`), `Y = (9/25) v vᵀ`, `v = (3/5, 4/5)ᵀ`, and `N = w wᵀ`, `w = (-4/5, 3/5)ᵀ`, in which
+`norm_tangentProjAt_apply_le_of_tangentProj_eq_zero` holds with equality, so that a bound
+`‖P(X) N‖ ≤ c ρ⁻¹ ‖Y - X‖ ‖N‖` for all `X`, `Y`, `N` needs `c ≥ 1`. The module docstring
+relates this to the literature: the global bound in Frobenius norms, without a smallness condition
+and with the lower bound at one point only, is Lemma 4.1 of [WeiCaiChanLeung2016] with the
+constant `2`, and the constant `1` equals the maximal curvature `1 / σ_r` of the manifold of
+matrices of rank `r` [FepponLermusiaux2018, Theorem 24].
+
+**Normal vectors with the spectral norm.** The file
+[`FixedRank/TangentSpace/ProjectorSpectral.lean`](../LeanDLRA/FixedRank/TangentSpace/ProjectorSpectral.lean) bounds `‖P(X) N‖` by the spectral
+norm `‖N‖₂ = specNorm N` of the normal vector `N` (`P(Y) N = 0`); `‖P(X) N‖` and `‖Y - X‖` stay
+Frobenius norms:
+
+`norm_tangentProjAt_apply_le_one_add_mul_specNorm_of_tangentProjAt_eq_zero` in [`LeanDLRA/FixedRank/TangentSpace/ProjectorSpectral.lean`, lines 355–360](../LeanDLRA/FixedRank/TangentSpace/ProjectorSpectral.lean#L355-L360):
+
+```lean
+theorem norm_tangentProjAt_apply_le_one_add_mul_specNorm_of_tangentProjAt_eq_zero {r : ℕ}
+    {X Y : Matrix m n ℝ} (hX : X.rank = r) (hY : Y.rank = r) {ρ : ℝ} (hρ : 0 < ρ)
+    (hσ : ρ ≤ (toEuclideanLin X).singularValues (r - 1)) {N : Matrix m n ℝ}
+    (hN : tangentProjAt Y N = 0) :
+    ‖tangentProjAt X N‖ ≤
+      ρ⁻¹ * ‖Y - X‖ * (1 + ρ⁻¹ * ‖Y - X‖) * Curvature.specNorm N
+```
+
+`norm_tangentProjAt_apply_le_sqrt_two_mul_specNorm_of_tangentProjAt_eq_zero` in [`LeanDLRA/FixedRank/TangentSpace/ProjectorSpectral.lean`, lines 377–381](../LeanDLRA/FixedRank/TangentSpace/ProjectorSpectral.lean#L377-L381):
+
+```lean
+theorem norm_tangentProjAt_apply_le_sqrt_two_mul_specNorm_of_tangentProjAt_eq_zero {r : ℕ}
+    {X Y : Matrix m n ℝ} (hX : X.rank = r) (hY : Y.rank = r) {ρ : ℝ} (hρ : 0 < ρ)
+    (hσ : ρ ≤ (toEuclideanLin X).singularValues (r - 1)) {N : Matrix m n ℝ}
+    (hN : tangentProjAt Y N = 0) :
+    ‖tangentProjAt X N‖ ≤ Real.sqrt 2 * ρ⁻¹ * ‖Y - X‖ * Curvature.specNorm N
+```
+
+The factor in the first bound is `1` to first order in `‖Y - X‖`, and it is the bound that the
+derivative of the first-order condition of section 3.7 needs. In the second bound the constant is
+`√2` for all `Y`. The two constants are not those of section 2.4: the module docstring says that
+the bound with the constant `1` and `‖N‖₂` does not hold, with a family of examples in which the
+quotient `‖P(X) N‖² / ‖Y - X‖²` tends to `2`; this family is not formalized in the core. The
+squared form with the factor `1 + (ρ⁻¹ ‖Y - X‖)²` and the factor-level bounds are in the file.
 
 ### 2.5 Separation rank and the fixed-rank set
 
@@ -988,7 +1088,8 @@ equations. The two statements on uniqueness and existence cite no theorem of a p
 Let `A` solve `A' = F(t, A)` and let `X` be a curve of rank-`r` matrices that are critical points
 of the distance to `A`, `P(X) (A - X) = 0`, for example best approximations. The theorems of this
 section bound the distance of the DLRA solution `Y` from `X` by the time integral of the
-approximation error `‖X - A‖`. All norms are Frobenius norms.
+approximation error `‖X - A‖`. All norms are Frobenius norms, except where the spectral norm
+`‖·‖₂` (`specNorm`) is written.
 
 `IsDLRASolution.norm_sub_le_integral` in [`LeanDLRA/DLRA/QuasiOptimality.lean`, lines 393–403](../LeanDLRA/DLRA/QuasiOptimality.lean#L393-L403):
 
@@ -1100,9 +1201,313 @@ differentiated first-order condition into the left-hand side of `‖X'‖ ≤ �
 For `θ = 1 / 4` these are the constants of the first theorem of this section, and they are smaller
 for `θ < 1 / 4`; the `example`s at the end of the file restate `dlra_norm_sub_le_integral` and
 `IsDLRASolution.norm_sub_le_integral` and prove them from this theorem with `θ = 1 / 4`. What is
-not shown: the argument stops at `θ < 1 / 2`, since at `θ = 1 / 2` the absorbed inequality says
-nothing; whether a margin up to `ρ` suffices would need a curvature bound for normal directions
-with a constant below the `2` of section 2.4, and the core does not have it.
+not shown in this theorem: it stops at `θ < 1 / 2`, since at `θ = 1 / 2` the absorbed inequality
+says nothing. It uses the constant `2` of section 2.4; with the constant `1` of the same section
+the margin reaches every `θ < 1`, as follows.
+
+**Margins below `ρ`.** With the constant `1` of section 2.4 in place of the `2`, the same
+argument works for every margin `θ < 1`. The file [`DLRA/QuasiOptimalityNormal.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormal.lean)
+differentiates the first-order condition with the constant `1`,
+`‖P(X) (Ȧ - Ẋ)‖ ≤ ρ⁻¹ ‖Ẋ‖ ‖A - X‖` (`norm_tangentProjAt_sub_le_inv_mul_of_hasDerivWithinAt`),
+which gives `‖Ẋ‖ ≤ μ / (1 - θ)` under `‖X - A‖ ≤ θ ρ`
+(`norm_le_div_one_sub_of_tangentProjAt_sub_eq_zero`). The theorem:
+
+`IsDLRASolution.norm_sub_le_integral_of_margin_lt_one` in [`LeanDLRA/DLRA/QuasiOptimalityNormal.lean`, lines 315–326](../LeanDLRA/DLRA/QuasiOptimalityNormal.lean#L315-L326):
+
+```lean
+theorem IsDLRASolution.norm_sub_le_integral_of_margin_lt_one {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A X X' Y : ℝ → Matrix m n ℝ} {a b L μ ρ θ δ : ℝ}
+    (hY : IsDLRASolution r F Y a b) (hρ : 0 < ρ) (hL : 0 ≤ L) (hF : IsLipschitzField F L)
+    (hA : ODESolution F A a b) (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ)
+    (hXc : ContinuousOn X (Icc a b)) (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = r)
+    (hσ : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hopt : ∀ t ∈ Icc a b, tangentProjAt (X t) (A t - X t) = 0) (hθ : θ < 1)
+    (hd : ∀ t ∈ Icc a b, ‖X t - A t‖ ≤ θ * ρ) (hδ : ‖Y a - X a‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖Y t - X t‖ ≤
+      Real.exp ((L + μ / ρ + μ / ((1 - θ) * ρ)) * (t - a)) *
+        (δ + (L + μ / ((1 - θ) * ρ)) * ∫ s in a..t, ‖X s - A s‖)
+```
+
+The hypotheses are those of `IsDLRASolution.norm_sub_le_integral_of_margin`, with `hθ : θ < 1` in
+place of `2 θ < 1`. With `κ = μ / ((1 - θ) ρ)` the bound is
+
+`‖Y t - X t‖ ≤ e^{(L + μ/ρ + κ)(t - a)} (δ + (L + κ) ∫ₐᵗ ‖X s - A s‖ ds)`.
+
+For `2 θ < 1` both constants are at most those of section 3.7 above (the file restates
+`dlra_norm_sub_le_integral_of_margin` and proves it from this theorem in an `example`); for
+`θ = 1 / 4` they are `L + 7 μ / (3 ρ)` and `L + 4 μ / (3 ρ)` in place of `L + 6 μ / ρ` and
+`L + 4 μ / ρ`. The version for `Y` as a solution of `Ẏ = P(Y) F(t, Y)` with factors
+(`dlra_norm_sub_le_integral_of_margin_lt_one`) is in the same file. What is not shown: the
+argument stops at `θ < 1`, since at `θ = 1` the inequality `(1 - θ) ‖Ẋ‖ ≤ μ` says nothing. The
+module docstring says that the bound `‖Ẋ‖ ≤ μ / (1 - θ)` cannot be improved for any `θ < 1`, with
+a family of curves in `ℝ²` that is not formalized in the core; nothing is claimed on the
+optimality of the two constants of the theorem. The `example`s of the file show the hypotheses
+at the margin `θ = 3 / 4` with `A ≠ X`.
+
+**The other forms of the theorem.** The file [`DLRA/QuasiOptimalitySharp.lean`](../LeanDLRA/DLRA/QuasiOptimalitySharp.lean) carries
+the bound with the margin `θ ρ`, `θ < 1`, to the forms that section 3.7 has with the margin
+`ρ / 4`: the bound for the error against `A`
+(`dlra_norm_sub_le_add_integral_of_margin_lt_one`), a curve `X` of best approximations of rank at
+most `r` (`IsDLRASolution.norm_sub_le_integral_of_forall_norm_sub_le_of_margin_lt_one`), a field
+that is Lipschitz on a tube only
+(`IsDLRASolution.norm_sub_lt_of_isLipschitzOnTube_of_margin_lt_one`,
+`IsDLRASolution.norm_sub_le_integral_of_isLipschitzOnTube_of_margin_lt_one`,
+`IsDLRASolution.norm_sub_le_integral_of_forall_norm_sub_le_of_isLipschitzOnTube_of_lt_one`), and
+the truncated singular value decomposition under a gap:
+
+`IsDLRASolution.norm_sub_truncation_le_integral_of_gap_of_margin_lt_one` in [`LeanDLRA/DLRA/QuasiOptimalitySharp.lean`, lines 282–292](../LeanDLRA/DLRA/QuasiOptimalitySharp.lean#L282-L292):
+
+```lean
+theorem IsDLRASolution.norm_sub_truncation_le_integral_of_gap_of_margin_lt_one {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A Y : ℝ → Matrix m n ℝ} {a b L μ ρ θ δ : ℝ}
+    (hY : IsDLRASolution r F Y a b) (hρ : 0 < ρ) (hL : 0 ≤ L) (hF : IsLipschitzField F L)
+    (hA : ODESolution F A a b) (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ)
+    (hgap : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (A t)).singularValues (r - 1) -
+      (toEuclideanLin (A t)).singularValues r) (hθ : θ < 1)
+    (hd : ∀ t ∈ Icc a b, ‖truncation (A t) r - A t‖ ≤ θ * ρ)
+    (hδ : ‖Y a - truncation (A a) r‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖Y t - truncation (A t) r‖ ≤
+      Real.exp ((L + μ / ρ + μ / ((1 - θ) * ρ)) * (t - a)) *
+        (δ + (L + μ / ((1 - θ) * ρ)) * ∫ s in a..t, ‖truncation (A s) r - A s‖)
+```
+
+Here `X t = truncation (A t) r`, the gap condition `ρ ≤ σ_{r-1}(A t) - σ_r(A t)` is that of
+`IsDLRASolution.norm_sub_truncation_le_integral_of_gap`, the margin is
+`‖truncation (A t) r - A t‖ ≤ θ ρ`, and the constants are those of the previous theorem. The
+variant on a tube is
+`IsDLRASolution.norm_sub_truncation_le_integral_of_gap_of_isLipschitzOnTube_of_lt_one`.
+The file also has the Lipschitz constant of the projected field:
+
+`norm_tangentProjAt_field_sub_le_inv_mul` in [`LeanDLRA/DLRA/QuasiOptimalitySharp.lean`, lines 327–331](../LeanDLRA/DLRA/QuasiOptimalitySharp.lean#L327-L331):
+
+```lean
+theorem norm_tangentProjAt_field_sub_le_inv_mul {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {L B : ℝ} (hF : IsLipschitzField F L) (hB : IsBoundedField F B) {X Y : Matrix m n ℝ}
+    (hX : X.rank = r) (hY : Y.rank = r) {ρ : ℝ} (hρ : 0 < ρ)
+    (hσ : ρ ≤ (toEuclideanLin X).singularValues (r - 1)) (t : ℝ) :
+    ‖tangentProjAt Y (F t Y) - tangentProjAt X (F t X)‖ ≤ (ρ⁻¹ * B + L) * ‖Y - X‖
+```
+
+For `F` that is `L`-Lipschitz and bounded by `B` (`hF`, `hB`) and `X`, `Y` of rank `r` with
+`ρ ≤ σ_{r-1}(X)` the projected field `Y ↦ P(Y) F(t, Y)` is Lipschitz with the constant
+`B / ρ + L`, in place of `2 B / ρ + L`. The `example`s of the file restate the theorems of the
+files of the margin `ρ / 4` and prove them from the theorems of this file with `θ = 1 / 4`.
+
+**The truncated singular value decomposition has rank `r`.** The theorems for
+`X t = truncation (A t) r` need that `X t` has rank `r` and that `ρ ≤ σ_{r-1}(X t)` when
+`ρ ≤ σ_{r-1}(A t)`. The file [`DLRA/QuasiOptimality.lean`](../LeanDLRA/DLRA/QuasiOptimality.lean) has these as lemmas, with a
+factorization of the truncation:
+
+`EckartYoung.exists_truncation_eq_mul_diagonal_mul_transpose` in [`LeanDLRA/DLRA/QuasiOptimality.lean`, lines 450–453](../LeanDLRA/DLRA/QuasiOptimality.lean#L450-L453):
+
+```lean
+theorem EckartYoung.exists_truncation_eq_mul_diagonal_mul_transpose {r : ℕ} {A : Matrix m n ℝ}
+    {ρ : ℝ} (hρ : 0 < ρ) (hσ : ρ ≤ (toEuclideanLin A).singularValues (r - 1)) :
+    ∃ (U : Matrix m (Fin r) ℝ) (V : Matrix n (Fin r) ℝ) (σ : Fin r → ℝ),
+      Uᵀ * U = 1 ∧ Vᵀ * V = 1 ∧ (∀ i, ρ ≤ σ i) ∧ truncation A r = U * diagonal σ * Vᵀ
+```
+
+`EckartYoung.rank_truncation_of_le_singularValues` in [`LeanDLRA/DLRA/QuasiOptimality.lean`, lines 513–515](../LeanDLRA/DLRA/QuasiOptimality.lean#L513-L515):
+
+```lean
+theorem EckartYoung.rank_truncation_of_le_singularValues {r : ℕ} {A : Matrix m n ℝ} {ρ : ℝ}
+    (hρ : 0 < ρ) (hσ : ρ ≤ (toEuclideanLin A).singularValues (r - 1)) :
+    (truncation A r).rank = r
+```
+
+`EckartYoung.le_singularValues_truncation` in [`LeanDLRA/DLRA/QuasiOptimality.lean`, lines 524–526](../LeanDLRA/DLRA/QuasiOptimality.lean#L524-L526):
+
+```lean
+theorem EckartYoung.le_singularValues_truncation {r : ℕ} (hr : 0 < r) {A : Matrix m n ℝ} {ρ : ℝ}
+    (hρ : 0 < ρ) (hσ : ρ ≤ (toEuclideanLin A).singularValues (r - 1)) :
+    ρ ≤ (toEuclideanLin (truncation A r)).singularValues (r - 1)
+```
+
+If the `r`-th singular value of `A` is at least `ρ > 0`, then `truncation A r` is `U diag(σ) Vᵀ`
+with `r` orthonormal columns of `U` and of `V` and `σ i ≥ ρ`; hence it has rank `r` (and not only
+at most `r`, `EckartYoung.rank_truncation_le`), and its `r`-th singular value is at least `ρ`
+(for `0 < r`).
+
+**The truncated singular value decomposition with the margin `θ ρ`.** For the case
+`F(t, Y) = Ȧ(t)`, `X t = truncation (A t) r` of section 3.4 the file
+[`DLRA/QuasiOptimalityTruncation.lean`](../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean) has the bound for every `θ < 1`, and the
+corollary with the margin `ρ / 2`:
+
+`dlra_norm_sub_truncation_le_integral_of_margin_lt_one` in [`LeanDLRA/DLRA/QuasiOptimalityTruncation.lean`, lines 62–74](../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean#L62-L74):
+
+```lean
+theorem dlra_norm_sub_truncation_le_integral_of_margin_lt_one {r : ℕ} (hr : 0 < r)
+    {A A' X X' Y : ℝ → Matrix m n ℝ} {T μ ρ θ : ℝ} (hρ : 0 < ρ)
+    (hA : ∀ t ∈ Icc 0 T, HasDerivAt A (A' t) t)
+    (hμ : ∀ t ∈ Icc 0 T, ‖A' t‖ ≤ μ) (hXbest : ∀ t ∈ Icc 0 T, X t = truncation (A t) r)
+    (hX : ∀ t ∈ Icc 0 T, HasDerivAt X (X' t) t)
+    (hσ : ∀ t ∈ Icc 0 T, ρ ≤ (toEuclideanLin (A t)).singularValues (r - 1)) (hθ : θ < 1)
+    (hd : ∀ t ∈ Icc 0 T, ‖X t - A t‖ ≤ θ * ρ)
+    {U : ℝ → Matrix m (Fin r) ℝ} {S : ℝ → Matrix (Fin r) (Fin r) ℝ} {V : ℝ → Matrix n (Fin r) ℝ}
+    (hUV : ∀ t ∈ Icc 0 T, (U t)ᵀ * U t = 1 ∧ (V t)ᵀ * V t = 1 ∧ Y t = U t * S t * (V t)ᵀ)
+    (hY : ODESolution (fun t _ => tangentProj (U t) (V t) (A' t)) Y 0 T) (hY₀ : Y 0 = X 0) :
+    ∀ t ∈ Icc 0 T, ‖Y t - X t‖ ≤
+      μ / ((1 - θ) * ρ) * Real.exp ((μ / ρ + μ / ((1 - θ) * ρ)) * t) *
+        ∫ s in (0 : ℝ)..t, ‖X s - A s‖
+```
+
+`dlra_norm_sub_truncation_le_integral_of_norm_sub_le_half` in [`LeanDLRA/DLRA/QuasiOptimalityTruncation.lean`, lines 105–116](../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean#L105-L116):
+
+```lean
+theorem dlra_norm_sub_truncation_le_integral_of_norm_sub_le_half {r : ℕ} (hr : 0 < r)
+    {A A' X X' Y : ℝ → Matrix m n ℝ} {T μ ρ : ℝ} (hρ : 0 < ρ)
+    (hA : ∀ t ∈ Icc 0 T, HasDerivAt A (A' t) t)
+    (hμ : ∀ t ∈ Icc 0 T, ‖A' t‖ ≤ μ) (hXbest : ∀ t ∈ Icc 0 T, X t = truncation (A t) r)
+    (hX : ∀ t ∈ Icc 0 T, HasDerivAt X (X' t) t)
+    (hσ : ∀ t ∈ Icc 0 T, ρ ≤ (toEuclideanLin (A t)).singularValues (r - 1))
+    (hd : ∀ t ∈ Icc 0 T, ‖X t - A t‖ ≤ ρ / 2)
+    {U : ℝ → Matrix m (Fin r) ℝ} {S : ℝ → Matrix (Fin r) (Fin r) ℝ} {V : ℝ → Matrix n (Fin r) ℝ}
+    (hUV : ∀ t ∈ Icc 0 T, (U t)ᵀ * U t = 1 ∧ (V t)ᵀ * V t = 1 ∧ Y t = U t * S t * (V t)ᵀ)
+    (hY : ODESolution (fun t _ => tangentProj (U t) (V t) (A' t)) Y 0 T) (hY₀ : Y 0 = X 0) :
+    ∀ t ∈ Icc 0 T, ‖Y t - X t‖ ≤
+      2 * μ / ρ * Real.exp (3 * μ / ρ * t) * ∫ s in (0 : ℝ)..t, ‖X s - A s‖
+```
+
+The hypotheses are those of `dlra_norm_sub_truncation_le_integral` of section 3.4 with the
+margin `‖X t - A t‖ ≤ θ ρ` in place of `ρ / 16`. With `κ = μ / ((1 - θ) ρ)` the bound is
+`‖Y t - X t‖ ≤ κ e^{(μ/ρ + κ) t} ∫₀ᵗ ‖X s - A s‖ ds`; for `θ = 1 / 2` the factor is
+`2 μ / ρ` and the exponent `3 μ / ρ`. Under the recorded margin `ρ / 16` the theorem of
+section 3.4 has the factor `2 β = 16 μ / ρ` and the exponent `β = 8 μ / ρ`; the corollary has
+a weaker hypothesis (`ρ / 2` in place of `ρ / 16`) and the smaller constants `2 μ / ρ` and
+`3 μ / ρ`. The `example`s of the file prove `dlra_norm_sub_truncation_le_integral` and the
+recorded matrix form of the quasi-optimality theorem from the corollary, and show the
+hypotheses for a curve with `A ≠ X`. Nothing is claimed on the optimality of the constants.
+
+**The spectral norm of the tail.** In the theorems above the tail `A - X` enters through its
+Frobenius norm, in the margin and in the integrand. The file
+[`DLRA/QuasiOptimalitySpectral.lean`](../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) uses the spectral norm `‖A - X‖₂ = specNorm`
+where the differentiated first-order condition allows it, by means of the bounds of
+section 2.4 on normal vectors with `‖N‖₂`:
+
+`norm_le_div_one_sub_of_specNorm_sub_le` in [`LeanDLRA/DLRA/QuasiOptimalitySpectral.lean`, lines 163–169](../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean#L163-L169):
+
+```lean
+theorem norm_le_div_one_sub_of_specNorm_sub_le {r : ℕ} {A X : ℝ → Matrix m n ℝ}
+    {A' X' : Matrix m n ℝ} {s : Set ℝ} {t ρ μ θ : ℝ} (hA : HasDerivWithinAt A A' s t)
+    (hX : HasDerivWithinAt X X' s t) (ht : t ∈ s) (hs : (𝓝[s \ {t}] t).NeBot) (hρ : 0 < ρ)
+    (hrank : ∀ u ∈ s, (X u).rank = r)
+    (hσ : ∀ u ∈ s, ρ ≤ (toEuclideanLin (X u)).singularValues (r - 1))
+    (hopt : ∀ u ∈ s, tangentProjAt (X u) (A u - X u) = 0) (hμ : ‖A'‖ ≤ μ) (hθ : θ < 1)
+    (hd : Curvature.specNorm (X t - A t) ≤ θ * ρ) : ‖X'‖ ≤ μ / (1 - θ)
+```
+
+The speed of a curve `X` of critical points (`P(X u) (A u - X u) = 0` on `s`, rank `r`,
+`ρ ≤ σ_{r-1}(X u)`) with `‖Ȧ‖ ≤ μ` in the Frobenius norm is at most `μ / (1 - θ)` if
+`‖X t - A t‖₂ ≤ θ ρ`, `θ < 1`. The file has the velocity bound
+`‖X' - P(X t) A'‖ ≤ μ / ((1 - θ) ρ) ‖A t - X t‖₂`
+(`norm_sub_tangentProjAt_le_div_one_sub_mul_specNorm`), and the quasi-optimality theorem:
+
+`dlra_norm_sub_le_integral_of_specNorm_sub_le` in [`LeanDLRA/DLRA/QuasiOptimalitySpectral.lean`, lines 224–240](../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean#L224-L240):
+
+```lean
+theorem dlra_norm_sub_le_integral_of_specNorm_sub_le {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A X X' Y : ℝ → Matrix m n ℝ} {a b L μ ρ θ δ : ℝ}
+    (hρ : 0 < ρ) (hL : 0 ≤ L) (hF : IsLipschitzField F L) (hA : ODESolution F A a b)
+    (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ) (hXc : ContinuousOn X (Icc a b))
+    (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = r)
+    (hσ : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hopt : ∀ t ∈ Icc a b, tangentProjAt (X t) (A t - X t) = 0) (hθ : θ < 1)
+    (hd : ∀ t ∈ Icc a b, Curvature.specNorm (X t - A t) ≤ θ * ρ)
+    {U : ℝ → Matrix m (Fin r) ℝ} {S : ℝ → Matrix (Fin r) (Fin r) ℝ} {V : ℝ → Matrix n (Fin r) ℝ}
+    (hUV : ∀ t ∈ Icc a b, (U t)ᵀ * U t = 1 ∧ (V t)ᵀ * V t = 1 ∧ Y t = U t * S t * (V t)ᵀ)
+    (hY : ODESolution (fun t x => tangentProj (U t) (V t) (F t x)) Y a b)
+    (hδ : ‖Y a - X a‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖Y t - X t‖ ≤
+      Real.exp ((L + μ / ρ) * (t - a)) *
+        (δ + L * (∫ s in a..t, ‖X s - A s‖) +
+          μ / ((1 - θ) * ρ) * ∫ s in a..t, Curvature.specNorm (X s - A s))
+```
+
+With `κ = μ / ((1 - θ) ρ)` the bound is
+
+`‖Y t - X t‖ ≤ e^{(L + μ/ρ)(t - a)} (δ + L ∫ₐᵗ ‖X s - A s‖ ds + κ ∫ₐᵗ ‖X s - A s‖₂ ds)`.
+
+The exponent is `L + μ/ρ`, without the term `κ` of the theorem with the Frobenius norm. The proof
+is Grönwall's inequality for `Y - X` with the splitting
+`P(Y) F(Y) - Ẋ = P(Y) (F(Y) - F(A)) + (P(Y) - P(X)) F(A) + (P(X) F(A) - Ẋ)`, whose three terms are
+at most `L ‖Y - A‖`, `(μ/ρ) ‖Y - X‖` (the constant `1` of section 2.4) and `κ ‖A - X‖₂`. The
+Lipschitz term keeps the Frobenius norm of the tail, and `μ` bounds the field in the Frobenius
+norm. The version for a DLRA solution is `IsDLRASolution.norm_sub_le_integral_of_specNorm_sub_le`.
+Since `‖·‖₂ ≤ ‖·‖` the bounds of the Frobenius norm follow, and the file restates two of them in
+`example`s.
+
+For the truncated singular value decomposition the tail has a closed form,
+
+`specNorm_sub_truncation` in [`LeanDLRA/Classical/EckartYoung.lean`, lines 554–555](../LeanDLRA/Classical/EckartYoung.lean#L554-L555):
+
+```lean
+theorem specNorm_sub_truncation (A : Matrix m n ℝ) (r : ℕ) :
+    specNorm (A - truncation A r) = (toEuclideanLin A).singularValues r
+```
+
+so that the margin is a condition on the singular values, `σ_r(A t) ≤ θ ρ` with
+`ρ ≤ σ_{r-1}(A t)` (singular values are indexed from zero). The theorem for `F(t, Y) = Ȧ(t)`:
+
+`dlra_norm_sub_truncation_le_integral_of_singularValues_le` in [`LeanDLRA/DLRA/QuasiOptimalitySpectral.lean`, lines 425–437](../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean#L425-L437):
+
+```lean
+theorem dlra_norm_sub_truncation_le_integral_of_singularValues_le {r : ℕ} (hr : 0 < r)
+    {A A' X X' Y : ℝ → Matrix m n ℝ} {T μ ρ θ : ℝ} (hρ : 0 < ρ)
+    (hA : ∀ t ∈ Icc 0 T, HasDerivAt A (A' t) t)
+    (hμ : ∀ t ∈ Icc 0 T, ‖A' t‖ ≤ μ) (hXbest : ∀ t ∈ Icc 0 T, X t = truncation (A t) r)
+    (hX : ∀ t ∈ Icc 0 T, HasDerivAt X (X' t) t)
+    (hσ : ∀ t ∈ Icc 0 T, ρ ≤ (toEuclideanLin (A t)).singularValues (r - 1)) (hθ : θ < 1)
+    (hd : ∀ t ∈ Icc 0 T, (toEuclideanLin (A t)).singularValues r ≤ θ * ρ)
+    {U : ℝ → Matrix m (Fin r) ℝ} {S : ℝ → Matrix (Fin r) (Fin r) ℝ} {V : ℝ → Matrix n (Fin r) ℝ}
+    (hUV : ∀ t ∈ Icc 0 T, (U t)ᵀ * U t = 1 ∧ (V t)ᵀ * V t = 1 ∧ Y t = U t * S t * (V t)ᵀ)
+    (hY : ODESolution (fun t _ => tangentProj (U t) (V t) (A' t)) Y 0 T) (hY₀ : Y 0 = X 0) :
+    ∀ t ∈ Icc 0 T, ‖Y t - X t‖ ≤
+      μ / ((1 - θ) * ρ) * Real.exp (μ / ρ * t) *
+        ∫ s in (0 : ℝ)..t, (toEuclideanLin (A s)).singularValues r
+```
+
+The hypotheses are those of `dlra_norm_sub_truncation_le_integral_of_margin_lt_one`, with the
+margin `σ_r(A t) ≤ θ ρ` in place of `‖X t - A t‖ ≤ θ ρ`; the bound is
+`‖Y t - X t‖ ≤ κ e^{(μ/ρ) t} ∫₀ᵗ σ_r(A s) ds`. The form with `‖X t - A t‖₂` in the margin and the
+integrand is `dlra_norm_sub_truncation_le_integral_of_specNorm_sub_le`. The integral of the
+singular value `σ_r` replaces the integral of the Frobenius norm `(∑_{i ≥ r} σ_i²)^{1/2}` of
+section 3.4, which is at least `σ_r`; the exponent has no term `κ`.
+
+The module docstring cites the nearest published statements. The splitting above is that of
+[FepponLermusiaux2018, Theorem 32], whose constants are pointwise, whose tail is measured in the
+Frobenius norm and whose exponent has the constant `2`; the bound on the principal curvatures
+`σ_r(A) / σ_{r-1}(A)` in the normal direction `A - X` is [FepponLermusiaux2018, Theorem 24], and
+the speed bound `‖Ẋ‖ ≤ μ / (1 - σ_r / σ_{r-1})` is the first-order perturbation bound of the
+truncated singular value decomposition [FepponLermusiaux2018, Theorem 25] and
+[CarrelGanderVandereycken2023, Theorem 3.8]. The constants `ρ`, `μ`, `θ` of the file are uniform
+on the interval. The `example`s of the file show the hypotheses for curves with `A ≠ X`.
+
+**The theorems side by side.** `κ₁ = 2 μ / ((1 - 2 θ) ρ)` and `κ = μ / ((1 - θ) ρ)`; `Y` is a
+DLRA solution, `X` a curve of critical points, `δ` the initial error. In the first four rows the
+bound is `e^{E (t - a)} (δ + C ∫ₐᵗ g)` with the exponent `E`, the factor `C` and the integrand `g`
+of the table; the last five rows are the case `F(t, Y) = Ȧ(t)`, `X t = truncation (A t) r`,
+`L = 0`, `δ = 0`, and the bound is `C e^{E t} ∫₀ᵗ g`.
+
+| Theorem | Hypothesis on the tail | Factor and exponent | Integrand | File |
+|---|---|---|---|---|
+| `IsDLRASolution.norm_sub_le_integral` | `‖X - A‖ ≤ ρ / 4` | `L + 4 μ/ρ`; `L + 6 μ/ρ` | `‖X - A‖` | [`DLRA/QuasiOptimality.lean`](../LeanDLRA/DLRA/QuasiOptimality.lean) |
+| `IsDLRASolution.norm_sub_le_integral_of_margin` | `‖X - A‖ ≤ θ ρ`, `2 θ < 1` | `L + κ₁`; `L + 2 μ/ρ + κ₁` | `‖X - A‖` | [`DLRA/QuasiOptimalityMargin.lean`](../LeanDLRA/DLRA/QuasiOptimalityMargin.lean) |
+| `IsDLRASolution.norm_sub_le_integral_of_margin_lt_one` | `‖X - A‖ ≤ θ ρ`, `θ < 1` | `L + κ`; `L + μ/ρ + κ` | `‖X - A‖` | [`DLRA/QuasiOptimalityNormal.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormal.lean) |
+| `IsDLRASolution.norm_sub_le_integral_of_specNorm_sub_le` | `‖X - A‖₂ ≤ θ ρ`, `θ < 1` | `L` and `κ`; `L + μ/ρ` | `‖X - A‖` with `L`, `‖X - A‖₂` with `κ` | [`DLRA/QuasiOptimalitySpectral.lean`](../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) |
+| `dlra_norm_sub_truncation_le_integral` | `‖X - A‖ ≤ ρ / 16` | `16 μ/ρ`; `8 μ/ρ` | `‖X - A‖` | [`DLRA/QuasiOptimality.lean`](../LeanDLRA/DLRA/QuasiOptimality.lean) |
+| `dlra_norm_sub_truncation_le_integral_of_margin_lt_one` | `‖X - A‖ ≤ θ ρ`, `θ < 1` | `κ`; `μ/ρ + κ` | `‖X - A‖` | [`DLRA/QuasiOptimalityTruncation.lean`](../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean) |
+| `dlra_norm_sub_truncation_le_integral_of_norm_sub_le_half` | `‖X - A‖ ≤ ρ / 2` | `2 μ/ρ`; `3 μ/ρ` | `‖X - A‖` | [`DLRA/QuasiOptimalityTruncation.lean`](../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean) |
+| `dlra_norm_sub_truncation_le_integral_of_specNorm_sub_le` | `‖X - A‖₂ ≤ θ ρ`, `θ < 1` | `κ`; `μ / ρ` | `‖X - A‖₂` | [`DLRA/QuasiOptimalitySpectral.lean`](../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) |
+| `dlra_norm_sub_truncation_le_integral_of_singularValues_le` | `σ_r(A) ≤ θ ρ`, `θ < 1` | `κ`; `μ / ρ` | `σ_r(A)` | [`DLRA/QuasiOptimalitySpectral.lean`](../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) |
+
+In all rows `ρ` is a lower bound of `σ_{r-1}(X)` (for the truncation, of `σ_{r-1}(A)`), and `μ`
+bounds `‖F(t, A t)‖` (for the truncation, `‖Ȧ‖`) in the Frobenius norm. The first four rows take a
+field `F` that is `L`-Lipschitz on the whole space; the forms for a field
+that is Lipschitz on a tube, for a curve of best approximations, for the error against `A` and
+for the truncation under a gap are in the files named above. The factor of the fifth row is
+`2 β`, `β = 8 μ / ρ`.
 
 What is not shown. A DLRA solution `Y` is a hypothesis of all of these theorems; section 3.6
 gives existence only on intervals with `B (b - a) < σ_{r-1}(Y a)`, and the two are not combined
@@ -1110,7 +1515,10 @@ here. The bound is quasi-optimality in the sense of the time integral of the bes
 error, with a factor `e^{(L + 6 μ/ρ)(t - a)}` that grows when `ρ` is small; no statement is made for
 `ρ` going to zero. The module docstrings say that the constants `ρ / 4`, `6 μ / ρ`, `4 μ / ρ` are
 those of their own proofs, and that a bound of this kind is in [KochLubich2007]. The tube
-hypotheses are those of [ZhaoOstermannGu2021].
+hypotheses are those of [ZhaoOstermannGu2021]. The theorems with a margin below `ρ` and with the
+spectral norm keep the hypotheses that `X` is a curve of critical points with `σ_{r-1}(X) ≥ ρ`
+and that the margin holds on the whole interval; they say nothing for a margin `θ ≥ 1`, and the
+table above lists the constants of the proofs, not optimal ones.
 
 ## 4. Steps, runs and the global error
 

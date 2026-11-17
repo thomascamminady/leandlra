@@ -6,7 +6,7 @@ read the first two sections of [Getting started](GETTING_STARTED.md); the pages 
 core proves are [Main results](MAIN_RESULTS.md) and [Definitions](DEFINITIONS.md).
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit c5e539e (2026-11-17).
+block links to the lines. The blocks were compared with the files at commit bb5ff85 (2026-11-17).
 
 ## Contents
 
@@ -273,8 +273,16 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
   that is Lipschitz on a tube only in [`DLRA/QuasiOptimalityTube.lean`](../LeanDLRA/DLRA/QuasiOptimalityTube.lean) and for the
   truncated singular value decomposition under a gap in
   [`DLRA/QuasiOptimalityGap.lean`](../LeanDLRA/DLRA/QuasiOptimalityGap.lean); the margin `ρ / 4` can be widened to `θ ρ` with
-  `θ < 1 / 2` in [`DLRA/QuasiOptimalityMargin.lean`](../LeanDLRA/DLRA/QuasiOptimalityMargin.lean) (sections 3.6 and 3.7 of
-  [Main results](MAIN_RESULTS.md)).
+  `θ < 1 / 2` in [`DLRA/QuasiOptimalityMargin.lean`](../LeanDLRA/DLRA/QuasiOptimalityMargin.lean) and to every `θ < 1` in
+  [`DLRA/QuasiOptimalityNormal.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormal.lean), which uses the constant `1` of the Lipschitz
+  bound of the tangent projector in
+  [`FixedRank/TangentSpace/ProjectorLipschitz.lean`](../LeanDLRA/FixedRank/TangentSpace/ProjectorLipschitz.lean). The forms for the error against
+  `A`, a field that is Lipschitz on a tube and the truncation under a gap with `θ < 1` are in
+  [`DLRA/QuasiOptimalitySharp.lean`](../LeanDLRA/DLRA/QuasiOptimalitySharp.lean), the truncation with the margins `θ ρ` and
+  `ρ / 2` in [`DLRA/QuasiOptimalityTruncation.lean`](../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean), and the bounds with the spectral
+  norm of the tail, `σ_r(A)` for the truncation, in
+  [`DLRA/QuasiOptimalitySpectral.lean`](../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) (sections 2.4, 3.6 and 3.7 of
+  [Main results](MAIN_RESULTS.md); the table at the end of 3.7 lists the theorems side by side).
 * **By question about stiffness or training:** what is proved and what is open for stiff problems
   with forcing is in [`Research/StiffGlobalCycle.lean`](../LeanDLRA/Research/StiffGlobalCycle.lean) and the files named in
   [Main results, section
