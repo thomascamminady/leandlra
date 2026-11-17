@@ -7,13 +7,13 @@ import LeanDLRA.Integrators.Matrix.ParallelBUGStep
 # The augmented BUG step as step relations: truncation by a tolerance or to a fixed rank
 
 This file states the rank-adaptive basis-update & Galerkin (BUG) integrator of Ceruti, Kusch and
-Lubich (arXiv:2104.05247) for matrices as relations between the old value `Y₀` and the value `Y₁`
-after one step (`StepRel`), and gives the local error of a step near a reference solution. The
+Lubich ([CerutiKuschLubich2022]) for matrices as relations between the old value `Y₀` and the value
+`Y₁` after one step (`StepRel`), and gives the local error of a step near a reference solution. The
 step at the level of the factors is `MatrixBUG.IsRankAdaptiveStep` of
-`LeanDLRA/Integrators/Matrix/BUG.lean`. Its error analysis at the level of orthogonal projectors
-is in `LeanDLRA/Integrators/BUGCore.lean` and `LeanDLRA/Integrators/RankAdaptiveBUG.lean`; the
-local errors of this file are taken from there. Runs of the integrator with truncation to a
-fixed rank are in `LeanDLRA/Integrators/Matrix/TruncBUGRun.lean`.
+`LeanDLRA/Integrators/Matrix/BUG.lean`. Its error analysis at the level of orthogonal projectors is
+in `LeanDLRA/Integrators/BUGCore.lean` and `LeanDLRA/Integrators/RankAdaptiveBUG.lean`; the local
+errors of this file are taken from there. Runs of the integrator with truncation to a fixed rank are
+in `LeanDLRA/Integrators/Matrix/TruncBUGRun.lean`.
 
 **The step.** Let `Y₀ = U₀ S₀ V₀ᵀ` with `r` orthonormal columns in `U₀` and in `V₀`. The K-step
 and the L-step are those of the fixed-rank BUG integrator. The bases `Û`, `V̂` after the step are
@@ -103,9 +103,9 @@ Joint continuity of `F` on the tube is needed for the distance only.
 ## References
 
 * G. Ceruti, J. Kusch, Ch. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
-  approximation*, arXiv:2104.05247 (BIT Numer. Math. 2022).
+  approximation*, [CerutiKuschLubich2022] (BIT Numer. Math. 2022).
 * G. Ceruti, Ch. Lubich, *An unconventional robust integrator for dynamical low-rank
-  approximation*, arXiv:2010.02022 (BIT Numer. Math. 2022), for the K-, L- and S-step.
+  approximation*, [CerutiLubich2022] (BIT Numer. Math. 2022), for the K-, L- and S-step.
 -/
 
 open Set
@@ -278,7 +278,7 @@ rank-adaptive factor step over `[t₀, t₁] ⊆ [a, b]` has size `t₁ - t₀ �
 satisfies `‖U₀ S₀ V₀ᵀ - A t₀‖ + 4 B (t₁ - t₀) < ρ`, then the augmented matrix `Û Ŝ(t₁) V̂ᵀ`
 differs from the exact solution through the start value by at most
 `(t₁ - t₀) (c₁ ε + c₂ (t₁ - t₀))` with `c₁ = bugC₁ L H` and `c₂ = bugC₂ L B H`
-(arXiv:2104.05247, Theorem 2, local form). Nothing is assumed about `F` outside the tube. -/
+([CerutiKuschLubich2022, Thm. 2], local form). Nothing is assumed about `F` outside the tube. -/
 theorem IsRankAdaptiveStep.hasLocalError_augmented_of_tube
     (hs : IsRankAdaptiveStep F ϑ t₀ t₁ U₀ S₀ V₀ Ua Va K Lf Sa Y₁)
     (hε : FactoredNormalBoundOn F r (tubeSet A a b ρ) ε)
@@ -328,8 +328,8 @@ variable {m n : Type*} [Fintype m] [Fintype n] {r : ℕ}
 `augmentedRel F r t₀ t₁ Y₀ Ŷ` holds if `Y₀ = U₀ S₀ V₀ᵀ` for factors with `r` columns and
 orthonormal `U₀`, `V₀`, and `Ŷ = Û Ŝ(t₁) V̂ᵀ` is the augmented matrix of a step
 `MatrixBUG.IsRankAdaptiveStep` of these factors over `[t₀, t₁]` in which the augmented bases
-`Û`, `V̂` have at most `2 r` columns (arXiv:2104.05247, §2.1, before the truncation). The step
-is taken with tolerance `0` and result `Û Ŝ(t₁) V̂ᵀ`, so its truncation clause is empty. The
+`Û`, `V̂` have at most `2 r` columns ([CerutiKuschLubich2022, §2.1], before the truncation). The
+step is taken with tolerance `0` and result `Û Ŝ(t₁) V̂ᵀ`, so its truncation clause is empty. The
 augmented bases are any orthonormal bases with this number of columns whose ranges contain the
 columns of `K(t₁)` and `U₀`, and of `L(t₁)` and `V₀`. -/
 def augmentedRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel (Matrix m n ℝ) :=
@@ -343,7 +343,7 @@ def augmentedRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : Ste
         Y₁ = Ua * Sa t₁ * Vaᵀ
 
 /-- **The step of the rank-adaptive BUG integrator, as a relation between matrices**
-(arXiv:2104.05247, §2.1). `adaptiveStepRel F R ϑ t₀ t₁ Y₀ Y₁` holds if `Y₁` is within the
+([CerutiKuschLubich2022, §2.1]). `adaptiveStepRel F R ϑ t₀ t₁ Y₀ Y₁` holds if `Y₁` is within the
 tolerance `ϑ` of an augmented matrix `Ŷ` of a step from `Y₀` over `[t₀, t₁]`
 (`MatrixBUG.augmentedRel`), where the start value is factored with `r` columns for some `r` in
 the set `R`. The rank of `Y₁` is not restricted. The relation contains every truncation with
@@ -687,7 +687,7 @@ columns, for every `r` in the set `R` of numbers of columns that a step may star
 step over `[t₀, t₁] ⊆ [a, b]` has size `t₁ - t₀ ≤ H` and its start value satisfies
 `‖Y₀ - A t₀‖ + 4 B (t₁ - t₀) < ρ`, then every step of `MatrixBUG.adaptiveStepRel F R ϑ` from
 `Y₀` has local error at most `(t₁ - t₀) (c₁ ε + c₂ (t₁ - t₀)) + ϑ` with `c₁ = bugC₁ L H` and
-`c₂ = bugC₂ L B H` (arXiv:2104.05247, Theorem 2, local form). The tolerance enters once and is
+`c₂ = bugC₂ L B H` ([CerutiKuschLubich2022, Thm. 2], local form). The tolerance enters once and is
 not multiplied by the step size. -/
 theorem adaptiveStepRel.hasLocalError_of_tube (h : adaptiveStepRel F R ϑ t₀ t₁ Y₀ Y₁)
     (hε : ∀ r ∈ R, FactoredNormalBoundOn F r (tubeSet A a b ρ) ε)

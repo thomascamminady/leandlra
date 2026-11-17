@@ -7,7 +7,7 @@ import LeanDLRA.Tensor.Defs
 Let `P 0, …, P (d - 1)` be orthogonal projectors on a real inner product space `E` and let
 `Π = P 0 ∘ P 1 ∘ ⋯ ∘ P (d - 1)` be their ordered product (`LeanDLRA.modeProd`).  The linear
 telescoping bound `‖x - Π x‖ ≤ ∑ᵢ ‖x - P i x‖` (`LeanDLRA.norm_sub_modeProd_apply_le`, the proof
-of Lemma 6 of Ceruti–Lubich, arXiv 2010.02022) only uses that each `P i` is a contraction.  For
+of Lemma 6 of Ceruti–Lubich, [CerutiLubich2022]) only uses that each `P i` is a contraction.  For
 *orthogonal* projectors the error components are orthogonal, and the bound improves to a
 Pythagorean one:
 
@@ -55,7 +55,7 @@ mode-`i` matricization this is the `√d` quasi-optimality of the higher-order S
 * `LeanDLRA.norm_sub_modeProd_apply_le_of_tol` (per-mode tolerance `ϑ / √d` suffices for the
   global tolerance `ϑ`, compared with `ϑ / d` in `LeanDLRA.norm_sub_le_of_chain`) and
   `LeanDLRA.IsAugTuckerBUGStep.local_error_modeTrunc`: the local error of the rank-adaptive
-  Tucker BUG integrator (Ceruti–Kusch–Lubich, arXiv 2104.05247) when the augmented result is
+  Tucker BUG integrator (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]) when the augmented result is
   truncated by orthogonal mode projectors with per-mode truncation errors `≤ τ` (HOSVD
   truncation): the truncation contributes `√d τ`.
 
@@ -71,9 +71,9 @@ The prefix products `modePrefix` and the constants `tuckerSqrtC₁`, `tuckerSqrt
 * L. Grasedyck, *Hierarchical singular value decomposition of tensors*, SIAM J. Matrix Anal.
   Appl. 31 (2010), Lemma 3.2 / Theorem 3.11.
 * G. Ceruti, C. Lubich, *An unconventional robust integrator for dynamical low-rank
-  approximation*, BIT 62 (2022), arXiv 2010.02022, Lemmas 6 and 7.
+  approximation*, BIT 62 (2022), [CerutiLubich2022], Lemmas 6 and 7.
 * G. Ceruti, J. Kusch, C. Lubich, *A rank-adaptive robust integrator for dynamical low-rank
-  approximation*, BIT 62 (2022), arXiv 2104.05247, §4.
+  approximation*, BIT 62 (2022), [CerutiKuschLubich2022, §4]
 -/
 
 open Set
@@ -290,7 +290,7 @@ section Local
 
 variable {F : ℝ → E → E} {L B ε : ℝ} {t₀ t₁ h : ℝ} {A : ℝ → E} {d : ℕ}
 
-/-- **Lemma 6 of arXiv 2010.02022 with `√d`.**  Under the hypotheses of `tucker_capture`, the
+/-- **Lemma 6 of [CerutiLubich2022] with `√d`.**  Under the hypotheses of `tucker_capture`, the
 new Tucker bases capture the exact solution up to
 
     ‖A t₁ - (P₁ 0 ∘ ⋯ ∘ P₁ (d-1)) A t₁‖ ≤ √d ϑ,    ϑ = h (4 L B h + ε),
@@ -308,7 +308,7 @@ theorem tucker_capture' {P₁ Q₀ : Fin d → E →L[ℝ] E} {YK : Fin d → �
     have := kstep_capture hF hL hB (hP₁ i) (hQ₀ i) ht₁ hh hA (hK i) (hK₀ i) (hKcap i) (hεK i)
     simpa using this
 
-/-- **Robust local error of the Tucker BUG integrator with `√d`** (arXiv 2010.02022, Lemma 7,
+/-- **Robust local error of the Tucker BUG integrator with `√d`** ([CerutiLubich2022, Lemma 7],
 improved constant).  Under the hypotheses of `tucker_local_error`, with `ϑ = h (4 L B h + ε)`,
 
     ‖YS t₁ - A t₁‖ ≤ (e^{L h} - 1) (B h + √d ϑ) + √d ϑ. -/
@@ -369,7 +369,7 @@ theorem local_error_le' (hs : IsTuckerBUGStep F ε Q₀ P₁ t₀ t₁ Y₀ YK Y
 end IsTuckerBUGStep
 
 /-- **Matrix case `d = 2`**: the matrix BUG local error bound with `√2` in place of `2`
-(compare `IsBUGStep.local_error_of_tucker` and arXiv 2010.02022, Lemma 4). -/
+(compare `IsBUGStep.local_error_of_tucker` and [CerutiLubich2022, Lemma 4]). -/
 theorem IsBUGStep.local_error_sqrt_two {P₀ Q₀ P₁ Q₁ : E →L[ℝ] E} {Y₀ : E} {YK YL YS : ℝ → E}
     (hs : IsBUGStep F ε P₀ Q₀ P₁ Q₁ t₀ t₁ Y₀ YK YL YS) (hF : IsLipschitzField F L) (hL : 0 ≤ L)
     (hB : IsBoundedField F B) (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h) (hA : ODESolution F A t₀ t₁)
@@ -418,8 +418,8 @@ theorem norm_sub_modeProd_apply_le_of_tol {d : ℕ} (hd : 0 < d) {P : Fin d → 
 variable {F : ℝ → E → E} {L B ε : ℝ} {t₀ t₁ h : ℝ} {A : ℝ → E} {d : ℕ}
 
 /-- **Local error of the rank-adaptive Tucker BUG integrator with mode-wise truncation**
-(arXiv 2104.05247, §4.1, step 3, and §4.2, with HOSVD-type truncation).  If the augmented result
-`YS t₁` is truncated by orthogonal mode projectors `R i` with per-mode truncation errors
+([CerutiKuschLubich2022, §4.1], step 3, and §4.2, with HOSVD-type truncation). If the augmented
+result `YS t₁` is truncated by orthogonal mode projectors `R i` with per-mode truncation errors
 `‖YS t₁ - R i (YS t₁)‖ ≤ τ`, then the truncated result `Y₁ = (R 0 ∘ ⋯ ∘ R (d - 1)) (YS t₁)`
 satisfies, with `ϑ = h (4 L B h + ε)`,
 

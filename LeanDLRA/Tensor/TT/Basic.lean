@@ -8,17 +8,17 @@ format used by every TT integrator:
 
 * the recursions of the interface matrices `X_{≤k}` (`ttLeft`) and `X_{>k}` (`ttRight`), and
   the factorization of every unfolding `Y⟨k⟩ = X_{≤k} X_{>k}ᵀ` of the tensor train
-  (`unfold_tt`), Lubich–Oseledets–Vandereycken (arXiv 1407.2042, §2) and Dektor–Peng–Venturi
-  (arXiv 2402.18721, Eq. (16));
+  (`unfold_tt`), Lubich–Oseledets–Vandereycken ([LubichOseledetsVandereycken2015, §2]) and
+  Dektor–Peng–Venturi ([Dektor2025, Eq. (16)]);
 * **orthonormality of the interfaces**: if the first `k` cores are left-orthogonal, the columns of
   `X_{≤k}` are orthonormal (`ttLeft_transpose_mul_self`), and if the cores `k + 1, …, d` are
   right-orthogonal, so are the columns of `X_{>k}` (`ttRight_transpose_mul_self`). For matrix
-  product states this is Lemma 1 of arXiv 2603.13990 (left and right state vectors are
-  orthonormal, Eqs. (4.9)–(4.10)), here for real tensors;
+  product states this is Lemma 1 of [PeterssonHodgesHeilmannGunther2026] (left and right state
+  vectors are orthonormal, Eqs. (4.9)–(4.10)), here for real tensors;
 * the interface projectors `P_{≤k}` (`ttLeftProj`) and `P_{>k}` (`ttRightProj`) are orthogonal
   projectors, `P_{≤0} = P_{>d} = 1`, `P_{≤j}` and `P_{>k}` commute for `j ≤ k`, and the ranges are
-  nested: `P_{≤k} P_{≤k+1} = P_{≤k+1}`, `P_{>k+1} P_{>k} = P_{>k}` (arXiv 1407.2042, §3; arXiv
-  2402.18721, Eq. (25) and the sentence before (21)).
+  nested: `P_{≤k} P_{≤k+1} = P_{≤k+1}`, `P_{>k+1} P_{>k} = P_{>k}`
+  ([LubichOseledetsVandereycken2015, §3]; arXiv 2402.18721, Eq. (25) and the sentence before (21)).
 
 ## Main results
 
@@ -153,7 +153,7 @@ theorem tt_apply_eq_sum (k : ℕ) (hk : k ≤ d) (x : ∀ i, ι i) :
     refine Finset.sum_congr rfl fun a _ => Finset.sum_congr rfl fun b _ => ?_
     ring
 
-/-- **TT unfoldings**: `Y⟨k⟩ = X_{≤k} X_{>k}ᵀ` for `k ≤ d` (arXiv 2402.18721, Eq. (16)). -/
+/-- **TT unfoldings**: `Y⟨k⟩ = X_{≤k} X_{>k}ᵀ` for `k ≤ d` ([Dektor2025, Eq. (16)]). -/
 theorem unfold_tt (k : ℕ) (hk : k ≤ d) :
     unfold (fun i : Fin d => i.val < k) (tt G) = ttLeft G k * (ttRight G k)ᵀ := by
   ext a b
@@ -176,7 +176,7 @@ variable [∀ i, Fintype (ι i)] [∀ k, DecidableEq (β k)]
 
 /-- **Left-orthogonal cores give orthonormal left interfaces**: if `β 0` has at most one
 element and the cores `0, …, k - 1` are left-orthogonal, then `X_{≤k}ᵀ X_{≤k} = 1`
-(arXiv 2603.13990, Lemma 1, Eq. (4.9); arXiv 2402.18721, §3.1). -/
+([PeterssonHodgesHeilmannGunther2026, Lemma 1], Eq. (4.9); [Dektor2025, §3.1]). -/
 theorem ttLeft_transpose_mul_self [Subsingleton (β 0)] {A : TTCores ι β} :
     ∀ k ≤ d, (∀ i : Fin d, i.val < k → IsLeftOrth A i) → (ttLeft A k)ᵀ * ttLeft A k = 1
   | 0, _, _ => by
@@ -198,7 +198,7 @@ theorem ttLeft_transpose_mul_self [Subsingleton (β 0)] {A : TTCores ι β} :
 
 /-- **Right-orthogonal cores give orthonormal right interfaces**: if `β d` has at most one
 element and the cores `k, …, d - 1` are right-orthogonal, then `X_{>k}ᵀ X_{>k} = 1`
-(arXiv 2603.13990, Lemma 1, Eq. (4.10)). -/
+([PeterssonHodgesHeilmannGunther2026, Lemma 1], Eq. (4.10)). -/
 theorem ttRight_transpose_mul_self [Subsingleton (β d)] {B : TTCores ι β} (k : ℕ) (hk : k ≤ d)
     (hB : ∀ i : Fin d, k ≤ i.val → IsRightOrth B i) : (ttRight B k)ᵀ * ttRight B k = 1 := by
   induction hn : d - k generalizing k with
@@ -261,7 +261,7 @@ theorem ttRightProj_self [Unique (β d)] (B : TTCores ι β) : ttRightProj B d =
 
 omit [∀ k, DecidableEq (β k)] in
 /-- `P_{≤j}` and `P_{>k}` act on disjoint sets of modes for `j ≤ k`, hence commute
-(arXiv 2402.18721, before Eq. (21)). -/
+([Dektor2025], before Eq. (21)). -/
 theorem ttLeftProj_comm_ttRightProj (A B : TTCores ι β) {j k : ℕ} (hjk : j ≤ k) :
     ttLeftProj A j * ttRightProj B k = ttRightProj B k * ttLeftProj A j :=
   actOn_mul_comm_of_disjoint _
@@ -294,7 +294,7 @@ private lemma sum_sum_mul_right {α γ : Type*} [Fintype α] [Fintype γ] (G : �
   exact Finset.sum_congr rfl fun b _ => Finset.sum_congr rfl fun a _ => by ring
 
 /-- **Nested left interfaces**: `P_{≤k} P_{≤k+1} = P_{≤k+1}` when the first `k` cores are
-left-orthogonal, because `X_{≤k+1} = (X_{≤k} ⊗ I) C_{k+1}^{<l>}` (arXiv 2402.18721, Eq. (28)). -/
+left-orthogonal, because `X_{≤k+1} = (X_{≤k} ⊗ I) C_{k+1}^{<l>}` ([Dektor2025, Eq. (28)]). -/
 theorem ttLeftProj_mul_succ [Subsingleton (β 0)] {A : TTCores ι β} {k : ℕ}
     (hA : ∀ i : Fin d, i.val < k → IsLeftOrth A i) :
     ttLeftProj A k * ttLeftProj A (k + 1) = ttLeftProj A (k + 1) := by

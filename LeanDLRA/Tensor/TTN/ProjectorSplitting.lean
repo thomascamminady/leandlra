@@ -7,7 +7,7 @@ import LeanDLRA.Foundations.Galerkin
 # The recursive TTN projector-splitting integrator on concrete tree tensor networks
 
 The recursive tree tensor network (TTN) projector-splitting integrator of Ceruti–Lubich–Walach
-(arXiv 2002.11392, §4, Algorithms 4–6) is stated on an abstract inner product space
+([CerutiLubichWalach2021, §4], Algorithms 4–6) is stated on an abstract inner product space
 (`Tensor/Steps.lean`), with the projectors of every inner node existentially quantified
 (`IsTTNKSLStep` over a `TreeShape`); its robust global error bound
 (`ttn_ksl_global_error`, Thm 6.1 of the paper) holds for every family of commuting orthogonal
@@ -47,8 +47,8 @@ reduced problem).
 * `DimTree.IsProjectorSplittingStep.isTTNKSLStep`: every concrete step is a step of the abstract
   integrator over the shape `τ.toTreeShape`.
 * `DimTree.projectorSplitting_global_error`: the robust error bound
-  `‖Yₙ - A(tₙ)‖ ≤ c₀ δ + c₁ ε + c₂ h` (arXiv 2002.11392, Thm 6.1) with constants depending only on
-  the tree, `L`, `B` and `T`, uniformly in the mode dimensions and ranks.
+  `‖Yₙ - A(tₙ)‖ ≤ c₀ δ + c₁ ε + c₂ h` ([CerutiLubichWalach2021, Thm. 6.1]) with constants depending
+  only on the tree, `L`, `B` and `T`, uniformly in the mode dimensions and ranks.
 -/
 
 open Set
@@ -63,7 +63,7 @@ section Prolongation
 variable {E F : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
   [NormedAddCommGroup F] [InnerProductSpace ℝ F] [CompleteSpace F]
 
-/-- **Prolongation of a reduced trajectory** (arXiv 2002.11392, Definition 4.2). If `y` solves the
+/-- **Prolongation of a reduced trajectory** ([CerutiLubichWalach2021, Def. 4.2]). If `y` solves the
 reduced problem `ẏ = π† G(t, π y)` on the small space `F`, then `π y` solves the projected
 problem `ż = (π π†) G(t, z)` on the big space `E`. -/
 theorem odeSolution_prolong (π : F →L[ℝ] E) {G : ℝ → E → E} {y : ℝ → F} {a b : ℝ}
@@ -72,7 +72,7 @@ theorem odeSolution_prolong (π : F →L[ℝ] E) {G : ℝ → E → E} {y : ℝ 
   cont := π.continuous.comp_continuousOn hy.cont
   deriv t ht := π.hasFDerivAt.comp_hasDerivWithinAt t (hy.deriv t ht)
 
-/-- **Restriction of a projected trajectory** (arXiv 2002.11392, Definition 4.2). Let
+/-- **Restriction of a projected trajectory** ([CerutiLubichWalach2021, Def. 4.2]). Let
 `π† π = 1`. If `z` solves `ż = (π π†) G(t, z)` with `z a = π y₀`, then `y = π† z` solves the
 reduced problem `ẏ = π† G(t, π y)` with `y a = y₀`, and `z = π y` on `[a, b]`. -/
 theorem odeSolution_restrict (π : F →L[ℝ] E) (hπ : ∀ y, π.adjoint (π y) = y)
@@ -114,8 +114,9 @@ variable {κ : Type*} [Fintype κ] [DecidableEq κ] {ι : κ → Type*} [∀ k, 
 /-! ### The concrete recursive projector-splitting step -/
 
 /-- One step of the **recursive TTN projector-splitting integrator** (Ceruti–Lubich–Walach,
-arXiv 2002.11392, Algorithms 4–6) on concrete tree tensor networks of the dimension tree `τ`, for
-the field `F` on the full tensor space, from `(t₀, Y₀)` to `(t₁, Y₁)` with doubly-normal bound `ε`:
+[CerutiLubichWalach2021], Algorithms 4–6) on concrete tree tensor networks of the dimension tree
+`τ`, for the field `F` on the full tensor space, from `(t₀, Y₀)` to `(t₁, Y₁)` with doubly-normal
+bound `ε`:
 
 * at a **leaf** the step is the exact flow of `F` (Algorithm 5: the leaf matrix differential
   equation is solved exactly);
@@ -196,13 +197,13 @@ theorem IsProjectorSplittingStep.isTTNKSLStep :
       ⟨_, _, X, K, YS, YC, hs, fun i => (hch i).isTTNKSLStep, hY⟩
 
 /-- **Robust error bound of the recursive TTN projector-splitting integrator on concrete tree
-tensor networks** (Ceruti–Lubich–Walach, arXiv 2002.11392, Theorem 6.1). For every dimension tree
-`τ` and `L, B, T ≥ 0` there are constants `c₀, c₁, c₂` such that, for all mode dimensions, all
-ranks and all fields `F` on the tensor space that are `L`-Lipschitz and bounded by `B`, `N` steps
-of the integrator with step size `h ≥ 0`, `N h ≤ T`, from `Y 0` with `‖Y 0 - A t₀‖ ≤ δ` satisfy
+tensor networks** (Ceruti–Lubich–Walach, [CerutiLubichWalach2021, Thm. 6.1]). For every dimension
+tree `τ` and `L, B, T ≥ 0` there are constants `c₀, c₁, c₂` such that, for all mode dimensions, all
+ranks and all fields `F` on the tensor space that are `L`-Lipschitz and bounded by `B`, `N` steps of
+the integrator with step size `h ≥ 0`, `N h ≤ T`, from `Y 0` with `‖Y 0 - A t₀‖ ≤ δ` satisfy
 `‖Y n - A (t₀ + n h)‖ ≤ c₀ δ + c₁ ε + c₂ h`, where `A` is the exact solution and `ε` the
-doubly-normal bound of the node steps. The exact flows from the numerical values exist because
-`F` is continuous in time. -/
+doubly-normal bound of the node steps. The exact flows from the numerical values exist because `F`
+is continuous in time. -/
 theorem projectorSplitting_global_error.{v} (τ : DimTree κ) {L B T : ℝ} (hL : 0 ≤ L)
     (hB : 0 ≤ B) (hT : 0 ≤ T) :
     ∃ c₀ c₁ c₂ : ℝ, ∀ {ι : κ → Type v} [∀ k, Fintype (ι k)] {F : ℝ → Tensor ι → Tensor ι}

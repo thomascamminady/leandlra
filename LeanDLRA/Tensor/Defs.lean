@@ -253,7 +253,7 @@ namespace Tensor
 `∑_{k=1}^{d} P_{≤k-1} P_{>k} - ∑_{k=1}^{d-1} P_{≤k} P_{>k}`, for arbitrary families `Pl k`
 (acting on the modes `< k`) and `Pr k` (acting on the modes `≥ k`). With the orthogonal
 interface projectors it is the TT tangent projector (`ttTangentProj`), with oblique
-(interpolatory) ones the oblique tangent projector of Dektor–Peng–Venturi (arXiv 2402.18721,
+(interpolatory) ones the oblique tangent projector of Dektor–Peng–Venturi ([Dektor2025],
 Eq. (24)). -/
 noncomputable def ttTangentSum {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     (Pl Pr : ℕ → E →L[ℝ] E) (d : ℕ) : E →L[ℝ] E :=
@@ -372,8 +372,9 @@ noncomputable def ttLeftProj (G : TTCores ι β) (k : ℕ) : Tensor ι →L[ℝ]
 noncomputable def ttRightProj (G : TTCores ι β) (k : ℕ) : Tensor ι →L[ℝ] Tensor ι :=
   actOn (fun i : Fin d => ¬ i.val < k) (ttRight G k * (ttRight G k)ᵀ)
 
-/-- The **TT tangent projector** (Lubich–Oseledets–Vandereycken, arXiv 1407.2042, Thm 3.1 and
-Cor. 3.2) at a tensor train with left-orthogonal cores `A` and right-orthogonal cores `B`:
+/-- The **TT tangent projector** (Lubich–Oseledets–Vandereycken,
+[LubichOseledetsVandereycken2015, Thm. 3.1] and Cor. 3.2) at a tensor train with left-orthogonal
+cores `A` and right-orthogonal cores `B`:
 `P_Y = ∑_{k=1}^{d} P_{≤k-1} P_{>k} - ∑_{k=1}^{d-1} P_{≤k} P_{>k}` with `P_{≤0} = P_{>d} = 1`. -/
 noncomputable def ttTangentProj (A B : TTCores ι β) : Tensor ι →L[ℝ] Tensor ι :=
   ttTangentSum (ttLeftProj A) (ttRightProj B) d
@@ -383,9 +384,9 @@ end Tensor
 /-! ### Dimension trees -/
 
 /-- A **dimension tree** whose leaves are labelled by modes `κ`: a leaf is one physical mode, an
-inner node has `m` subtrees (Ceruti–Lubich–Walach, arXiv 2002.11392, Def. 2.1). A tensor train
-with `d` modes corresponds to a comb (each inner node has a leaf and one inner subtree), a Tucker
-tensor to a single inner node with `d` leaves. -/
+inner node has `m` subtrees (Ceruti–Lubich–Walach, [CerutiLubichWalach2021, Def. 2.1]). A tensor
+train with `d` modes corresponds to a comb (each inner node has a leaf and one inner subtree), a
+Tucker tensor to a single inner node with `d` leaves. -/
 inductive DimTree (κ : Type*) : Type _
   | leaf (k : κ) : DimTree κ
   | node {m : ℕ} (cs : Fin m → DimTree κ) : DimTree κ
@@ -424,7 +425,7 @@ end DimTree
 universe u v
 
 /-- A **tree tensor network** on the dimension tree `τ` with rank `r` at the root
-(Ceruti–Lubich–Walach, arXiv 2002.11392, Def. 2.2). A leaf `k` carries a basis matrix
+(Ceruti–Lubich–Walach, [CerutiLubichWalach2021, Def. 2.2]). A leaf `k` carries a basis matrix
 `U : ι k × Fin r`; an inner node with subtrees `cs i` carries tree tensor networks `ds i` of ranks
 `rs i` on the subtrees and a connecting tensor, stored as its matricization in the root
 dimension, `Mat₀(C) : Fin r × ∏ᵢ Fin (rs i)`. -/
@@ -441,7 +442,7 @@ variable {κ : Type u} [DecidableEq κ] {ι : κ → Type v}
 /-- The **basis matrix** `U_τ` of a tree tensor network (rows indexed by the modes of `τ`,
 columns by the rank): `U_ℓ = U` at a leaf and, at an inner node,
 `U_τ(x, a) = ∑_b C(a, b) ∏ᵢ U_{τᵢ}(x_{τᵢ}, bᵢ)`, i.e. `U_τᵀ = Mat₀(C ×ᵢ U_{τᵢ})`
-(arXiv 2002.11392, Eq. (2.3)). -/
+([CerutiLubichWalach2021, Eq. (2.3)]). -/
 noncomputable def basis :
     {τ : DimTree κ} → {r : ℕ} → TTN ι τ r → Matrix (∀ k : {k // k ∈ τ.modes}, ι k) (Fin r) ℝ
   | .leaf k, _, .leaf U => fun x a => U (x ⟨k, Finset.mem_singleton_self k⟩) a
@@ -450,7 +451,7 @@ noncomputable def basis :
 
 /-- A tree tensor network is **orthonormal** when every leaf basis has orthonormal columns and
 every connecting tensor has orthonormal rows of its root matricization, `Mat₀(C) Mat₀(C)ᵀ = 1`
-(arXiv 2002.11392, Def. 2.4). -/
+([CerutiLubichWalach2021, Def. 2.4]). -/
 def IsOrthonormal [∀ k, Fintype (ι k)] : {τ : DimTree κ} → {r : ℕ} → TTN ι τ r → Prop
   | .leaf _, _, .leaf U => Uᵀ * U = 1
   | .node _, _, .node ds C => (∀ i, (ds i).IsOrthonormal) ∧ C * Cᵀ = 1

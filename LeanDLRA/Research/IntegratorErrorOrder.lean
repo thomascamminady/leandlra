@@ -16,13 +16,13 @@ exactly, by best approximation in nested ranges and Pythagoras.
 All projectors are orthogonal (`IsOrthProj`), and the left projectors commute with the right ones
 (`P₀ Q₀ = Q₀ P₀`, `P₁ Q₁ = Q₁ P₁`, `Pa Qa = Qa Pa`).  The outputs are
 
-* KSL (Lubich–Oseledets, arXiv:1301.1058): `P₁ A₁`, where `P₁` fixes the K-step value `Q₀ A₁`
+* KSL (Lubich–Oseledets, [LubichOseledets2014]): `P₁ A₁`, where `P₁` fixes the K-step value `Q₀ A₁`
   (`Exactness.ksl_eq_abstract`);
 * LSK (L-step first): `Q₁ A₁`, where `Q₁` fixes the L-step value `P₀ A₁` (`lsk_eq`);
-* BUG (Ceruti–Lubich, arXiv:2010.02022): `P₁ Q₁ A₁` (`Exactness.bug_eq_abstract`);
-* augmented BUG before truncation (Ceruti–Kusch–Lubich, arXiv:2104.05247): `Pa Qa A₁`, where
+* BUG (Ceruti–Lubich, [CerutiLubich2022]): `P₁ Q₁ A₁` (`Exactness.bug_eq_abstract`);
+* augmented BUG before truncation (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022]): `Pa Qa A₁`, where
   `Pa P₀ = P₀`, `Pa` fixes `Q₀ A₁`, `Qa Q₀ = Q₀`, `Qa` fixes `P₀ A₁` (`augBug_eq`);
-* parallel BUG before truncation (Ceruti–Kusch–Lubich, arXiv:2304.05660): `A₁ - N`,
+* parallel BUG before truncation (Ceruti–Kusch–Lubich, [CerutiKuschLubich2024]): `A₁ - N`,
   `N = (1 - P₀)(1 - Q₀) Δ` (`Exactness.parBug_eq_abstract`).
 
 These are bundled in `StepData` with the hypotheses `StepData.Admissible`; the range inclusion
@@ -38,7 +38,7 @@ Write `e_X = A₁ - Y₁^X`.
 * **(ii)** `Y₁^aug = Y₁^par + Pa Qa N` and `‖e_par‖² = ‖e_aug‖² + ‖Pa Qa N‖²`
   (`aug_eq_par_add`, `norm_sq_sub_par`, ODE form `aug_par_ode`).  For matrices,
   `Pa Qa N = Ũ₁Ũ₁ᵀ N Ṽ₁Ṽ₁ᵀ` is exactly the "doubly new" coefficient block that the parallel
-  integrator sets to zero in its augmented coefficient matrix (arXiv:2304.05660, eq. (3.4)).
+  integrator sets to zero in its augmented coefficient matrix ([CerutiKuschLubich2024, eq. (3.4)]).
 * **(iii)** If `Pa P₁ = P₁` and `Qa Q₁ = Q₁`, then
   `‖e_BUG‖² = ‖e_aug‖² + ‖(Pa Qa - P₁ Q₁) A₁‖²` (`norm_sq_sub_bug_aug`, ODE form `aug_bug_ode`).
 * **(iv)** Word identities `BUG = Q₁ · KSL = P₁ · LSK` (`bug_eq_right_ksl`,
@@ -62,17 +62,17 @@ only serves to make the outputs those of the actual integrators.  The LSK step n
 ## Motivation and relation to the literature
 
 Practitioners report from numerical tests that projector splitting seems more accurate than BUG
-for reversible problems (Einkemmer–Mangott–Prugger, arXiv:2309.08252, §3, citing earlier
-experiments) and that the parallel BUG is less accurate than the rank-adaptive BUG
-(Ceruti–Kusch–Lubich–Sulz, arXiv:2412.00858, §1); the robust error bounds of all of these
+for reversible problems (Einkemmer–Mangott–Prugger, [EinkemmerMangottPrugger2024a, §3], citing
+earlier experiments) and that the parallel BUG is less accurate than the rank-adaptive BUG
+(Ceruti–Kusch–Lubich–Sulz, [CerutiEtAl2024, §1]); the robust error bounds of all of these
 integrators have the same form and cannot explain such rankings (open problem OP-OT-52 of the
-catalog, comparing hidden constants of robust integrators; OP-PA-02 concerns variants of the
-zero block).  To our knowledge no paper states `KSL ≤ BUG`, `aug ≤ par`, the exact Pythagorean
-defects or the word identity `BUG = Q₁ · KSL = P₁ · LSK`.  Inside the library,
-`Integrators/Exactness.lean` gives the individual outputs and exactness criteria and
-`Integrators/TuckerBUG.lean` an `O(h (h + ε))` bound between parallel and rank-adaptive steps;
-here the gap is identified exactly.  The result is for one step with state-independent fields
-and untruncated rank-adaptive steps; it says nothing about stiff or nonlinear problems.
+catalog, comparing hidden constants of robust integrators; OP-PA-02 concerns variants of the zero
+block). To our knowledge no paper states `KSL ≤ BUG`, `aug ≤ par`, the exact Pythagorean defects or
+the word identity `BUG = Q₁ · KSL = P₁ · LSK`. Inside the library, `Integrators/Exactness.lean`
+gives the individual outputs and exactness criteria and `Integrators/TuckerBUG.lean` an
+`O(h (h + ε))` bound between parallel and rank-adaptive steps; here the gap is identified exactly.
+The result is for one step with state-independent fields and untruncated rank-adaptive steps; it
+says nothing about stiff or nonlinear problems.
 
 ## Follow-up questions
 
@@ -80,7 +80,7 @@ and untruncated rank-adaptive steps; it says nothing about stiff or nonlinear pr
   `‖e_KSL‖ ≤ ‖e_BUG‖ + O(h² L ‖F‖)`?
 * Does `aug ≤ par` survive the truncation step to tolerance `ϑ` (with an additive `ϑ`)?
 * Tucker and tree tensor network versions: with `d` mode projectors the outputs are again
-  words; which orderings hold for the TTN BUG and parallel TTN BUG of arXiv:2412.00858?
+  words; which orderings hold for the TTN BUG and parallel TTN BUG of [CerutiEtAl2024]?
 * Where do the midpoint and second-order BUG variants sit in this order?
 * The per-step order does not obviously propagate over several steps (different
   starting values); is there a multi-step comparison?
@@ -221,7 +221,7 @@ section ODE
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
   {F : ℝ → E → E} {A : ℝ → E} {t₀ t₁ : ℝ}
 
-/-- **Explicit output of the augmented BUG step** (Ceruti–Kusch–Lubich, arXiv:2104.05247,
+/-- **Explicit output of the augmented BUG step** (Ceruti–Kusch–Lubich, [CerutiKuschLubich2022],
 before truncation).  The S-step `y' = Pa Qa F(t, y)`, `y(t₀) = A(t₀)`, with `F(t,Y) = Ȧ(t)`
 returns `Pa Qa A(t₁)` when the augmented ranges contain the old ones and `P₀`, `Q₀` fix
 `A(t₀)`.  No capture of `A(t₁)` is assumed. -/

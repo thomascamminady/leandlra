@@ -4,7 +4,7 @@ import LeanDLRA.Training.Descent
 # The step-size constant of the FeDLRT descent bound
 
 `loss_fedRound_le` states the loss descent of one aggregated FeDLRT round (Schotthöfer–Laiu,
-arXiv 2406.17887, Thm 2 and Thm 8) as
+[SchotthoferLaiu2024, Thm. 2] and Thm 8) as
 `ℒ(x⋆) ≤ ℒ(x) - s⋆ λ (1 - 12 s⋆ λ β) ‖Π ∇ℒ(x)‖²` under `λ β s⋆ ≤ 1`.  The bound is a descent
 statement only for `s⋆ λ β < 1/12`.  This file replaces the constant `12` by `1`, under the same
 hypotheses, shows that `1` cannot be replaced by a smaller number in a bound of this form, and
@@ -161,7 +161,7 @@ lemma fed_descent_scalar {β A a r m n : ℝ} (hβ : 0 ≤ β) (hA : 0 ≤ A) (h
   linarith
 
 /-- **Loss descent of the aggregated FeDLRT round, fine form** (setting of Schotthöfer–Laiu,
-arXiv 2406.17887, Thm 8, before truncation; hypotheses of `loss_fedRound_le`): with `A = s⋆ λ`
+[SchotthoferLaiu2024, Thm. 8], before truncation; hypotheses of `loss_fedRound_le`): with `A = s⋆ λ`
 and `θ = β A ≤ 1`,
 `ℒ(x⋆) ≤ ℒ(x) - A (1 - θ (1 - (5/18) θ + (1/18) θ²)) ‖Π ∇ℒ(x)‖²`. -/
 theorem loss_fedRound_le_fine [Fintype ι] [Nonempty ι]
@@ -214,7 +214,7 @@ theorem loss_fedRound_le_fine [Fintype ι] [Nonempty ι]
   linarith
 
 /-- **Loss descent of the aggregated FeDLRT round with the constant one** (setting of
-Schotthöfer–Laiu, arXiv 2406.17887, Thm 8, before truncation): under the hypotheses of
+Schotthöfer–Laiu, [SchotthoferLaiu2024, Thm. 8], before truncation): under the hypotheses of
 `loss_fedRound_le`, `ℒ(x⋆) ≤ ℒ(x) - s⋆ λ (1 - s⋆ λ β) ‖Π ∇ℒ(x)‖²`.  The loss decreases strictly
 for `s⋆ λ β < 1` whenever `Π ∇ℒ(x) ≠ 0`. -/
 theorem loss_fedRound_le_one [Fintype ι] [Nonempty ι]
@@ -257,7 +257,7 @@ theorem loss_fedRound_le_two_ninths [Fintype ι] [Nonempty ι]
   linarith
 
 /-- **Global loss descent of FeDLRT with the constant one** (setting of Schotthöfer–Laiu,
-arXiv 2406.17887, Thm 2, deterministic).  Corollary of `loss_fedRound_le_one`: a round with
+[SchotthoferLaiu2024, Thm. 2], deterministic).  Corollary of `loss_fedRound_le_one`: a round with
 aggregation and a truncation `‖x₁ - x⋆‖ ≤ ϑ` (with `‖∇ℒ‖ ≤ G` on `[x⋆, x₁]`) satisfies
 `ℒ(x₁) - ℒ(x) ≤ -s⋆ λ (1 - s⋆ λ β) ‖Π ∇ℒ(x)‖² + G ϑ`. -/
 theorem loss_truncated_fedRound_le_one [Fintype ι] [Nonempty ι]
@@ -275,10 +275,10 @@ theorem loss_truncated_fedRound_le_one [Fintype ι] [Nonempty ι]
   linarith
 
 /-- **Global convergence of FeDLRT with the constant one** (setting of Schotthöfer–Laiu,
-arXiv 2406.17887, Thm 3, general learning rate).  Corollary of `loss_truncated_fedRound_le_one`:
-after `n > 0` rounds with round-dependent projectors `Π_k`,
-`min_{k<n} ‖Π_k ∇ℒ(x_k)‖² ≤ (ℒ(x₀) - ℒ(x_n)) / (n c) + G ϑ / c` with
-`c = s⋆ λ (1 - s⋆ λ β) > 0`, that is, for every learning rate with `0 < s⋆ λ β < 1`. -/
+[SchotthoferLaiu2024, Thm. 3], general learning rate). Corollary of
+`loss_truncated_fedRound_le_one`: after `n > 0` rounds with round-dependent projectors `Π_k`,
+`min_{k<n} ‖Π_k ∇ℒ(x_k)‖² ≤ (ℒ(x₀) - ℒ(x_n)) / (n c) + G ϑ / c` with `c = s⋆ λ (1 - s⋆ λ β) > 0`,
+that is, for every learning rate with `0 < s⋆ λ β < 1`. -/
 theorem exists_fedGrad_sq_le_one [Fintype ι] [Nonempty ι]
     (hℒ : ∀ x, HasFDerivAt ℒ (innerSL ℝ (g x)) x)
     (hg : ∀ x y, ‖g x - g y‖ ≤ β * ‖x - y‖) (hgc : ∀ c x y, ‖gc c x - gc c y‖ ≤ β * ‖x - y‖)
@@ -306,7 +306,7 @@ theorem exists_fedGrad_sq_le_one [Fintype ι] [Nonempty ι]
   linarith
 
 /-- **Global convergence of FeDLRT at the learning rate `s⋆ λ = 1 / (2 β)`** (setting of
-Schotthöfer–Laiu, arXiv 2406.17887, Thm 3).  Corollary of `exists_fedGrad_sq_le_one` at the
+Schotthöfer–Laiu, [SchotthoferLaiu2024, Thm. 3]).  Corollary of `exists_fedGrad_sq_le_one` at the
 learning rate that maximises `s⋆ λ (1 - s⋆ λ β)`:
 `min_{k<n} ‖Π_k ∇ℒ(x_k)‖² ≤ 4 β / n (ℒ(x₀) - ℒ(x_n)) + 4 β G ϑ`. -/
 theorem exists_fedGrad_sq_le_of_lr_half [Fintype ι] [Nonempty ι]

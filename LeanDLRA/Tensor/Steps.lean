@@ -12,14 +12,14 @@ instances on tensors `Tensor ι` over a dimension tree are in `Tensor/TTN/`.
 ## Main definitions
 
 * `kslModeField`, `IsTuckerKSLStep`, `IsExactKSteps`: the nested Tucker projector-splitting
-  integrator (Lubich–Vandereycken–Walach, arXiv 1709.02594, §4): the field of the `K`-substep of
-  a mode, one step with given `K`-values, and the condition that the `K`-values are the exact
-  substep values.
+  integrator (Lubich–Vandereycken–Walach, [LubichVandereyckenWalach2018, §4]): the field of the
+  `K`-substep of a mode, one step with given `K`-values, and the condition that the `K`-values are
+  the exact substep values.
 * `IsTTNKSLStep`: one step of the recursive TTN projector-splitting integrator
-  (Ceruti–Lubich–Walach, arXiv 2002.11392, §4) over a `TreeShape`.
+  (Ceruti–Lubich–Walach, [CerutiLubichWalach2021, §4]) over a `TreeShape`.
 * `IsTTNBUGStep`, `IsAugTTNBUGStep`, `IsParTTNBUGStep`: one step of the fixed-rank, the
   rank-adaptive and the parallel TTN BUG integrator over a `TTNFrame` (Ceruti–Lubich–Sulz,
-  SINUM 2023; arXiv 2412.00858, §4).
+  SINUM 2023; [CerutiEtAl2024, §4]).
 * `IsTTNRecoverable`: recursive recoverability along a frame.
 * `modeTangentProj`: the tangent projector of the Tucker manifold in terms of abstract mode
   projectors, `∏ᵢ P₀ i + ∑ᵢ (1 - P₀ i) Q₀ i`.
@@ -51,9 +51,9 @@ def kslModeField {d : ℕ} (Q₀ P₁ : Fin d → E →L[ℝ] E) (F : ℝ → E 
   fun t x => Q₀ i (modePrefix P₁ (i : ℕ) (F t x))
 
 /-- One step of the **nested Tucker projector-splitting integrator** (Lubich–Vandereycken–Walach,
-arXiv 1709.02594, §4) from `(t₀, Y₀)` to `(t₁, YC t₁)`, with the `K`-values `K i` *given* (exact
-or computed by a sub-integrator).  The modes are processed in the order `0, …, d-1`; `X i` is the
-state before mode `i` (`X 0 = Y₀`):
+[LubichVandereyckenWalach2018, §4]) from `(t₀, Y₀)` to `(t₁, YC t₁)`, with the `K`-values `K i`
+*given* (exact or computed by a sub-integrator). The modes are processed in the order `0, …, d-1`;
+`X i` is the state before mode `i` (`X 0 = Y₀`):
 
 * `Q₀ i` is the co-range projector of the mode-`i` matricization of `X i` (`Q₀ i (X i) = X i`);
 * the new mode basis `P₁ i` captures the mode-`i` `K`-value, with doubly-normal component of the
@@ -115,18 +115,18 @@ section TTNKSL
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- One step of the **recursive TTN projector-splitting integrator** (Ceruti–Lubich–Walach,
-arXiv 2002.11392, §4) with tree shape `τ`, field `F` and doubly-normal bound `ε`, from `(t₀, Y₀)`
-to `(t₁, Y₁)`: exact flow at a leaf; at an inner node a nested Tucker KSL step
+[CerutiLubichWalach2021, §4]) with tree shape `τ`, field `F` and doubly-normal bound `ε`, from
+`(t₀, Y₀)` to `(t₁, Y₁)`: exact flow at a leaf; at an inner node a nested Tucker KSL step
 (`IsTuckerKSLStep`) whose `K`-values are computed by the same integrator applied to the subtree
 problems (fields `kslModeField Q₀ P₁ F i`, started at `X i`).
 
 On a comb tree the step has the structure of the tensor-train projector-splitting step of
-Lubich–Oseledets–Vandereycken (arXiv 1407.2042; `Tensor.IsTTKSLStep`), but as a step relation
-it is a different one: at every inner node the substeps of the last child are followed by a
-backward substep and the core step, whose fields are `-P F` and `P F` with the same projector
-`P` when the co-range projector of the last child is the product of the new basis projectors
-of the other children. This pair of substeps cancels for autonomous fields only, so for a
-time-dependent `F` the two step relations are not the same. -/
+Lubich–Oseledets–Vandereycken ([LubichOseledetsVandereycken2015]; `Tensor.IsTTKSLStep`), but as a
+step relation it is a different one: at every inner node the substeps of the last child are followed
+by a backward substep and the core step, whose fields are `-P F` and `P F` with the same projector
+`P` when the co-range projector of the last child is the product of the new basis projectors of the
+other children. This pair of substeps cancels for autonomous fields only, so for a time-dependent
+`F` the two step relations are not the same. -/
 def IsTTNKSLStep : TreeShape → (ℝ → E → E) → ℝ → ℝ → ℝ → E → E → Prop
   | .leaf, F, _, t₀, t₁, Y₀, Y₁ => ∃ y : ℝ → E, ODESolution F y t₀ t₁ ∧ y t₀ = Y₀ ∧ y t₁ = Y₁
   | .node m cs, F, ε, t₀, t₁, Y₀, Y₁ =>
@@ -146,8 +146,9 @@ variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- One step of the **(fixed-rank) TTN BUG integrator** (the rank-adaptive TTN integrator of
 Ceruti–Lubich–Sulz, SINUM 2023, without augmentation and truncation; recursive structure of the
-projector-splitting TTN integrator of Ceruti–Lubich–Walach, arXiv 2002.11392, §4) for the field `G`
-from `(t₀, Y₀)` to `(t₁, Y₁)` with frame `fr` and doubly-normal bound `ε`, as a recursive predicate:
+projector-splitting TTN integrator of Ceruti–Lubich–Walach, [CerutiLubichWalach2021, §4]) for the
+field `G` from `(t₀, Y₀)` to `(t₁, Y₁)` with frame `fr` and doubly-normal bound `ε`, as a recursive
+predicate:
 
 * at a **leaf** the step is the exact flow of `G`;
 * at an **inner node** with old projectors `P₀ i`, `Q₀ i` (which fix `Y₀`), there are new mode
@@ -191,7 +192,7 @@ def IsAugTTNBUGStep : TTNFrame E → (ℝ → E → E) → ℝ → ℝ → ℝ �
         ODESolution (fun t x => modeProd P₁ (G t x)) YS t₀ t₁ ∧
         YS t₀ = Y₀ ∧ ‖Y₁ - YS t₁‖ ≤ ϑ
 
-/-- One step of the **parallel TTN BUG integrator** (Ceruti–Kusch–Lubich–Sulz, arXiv 2412.00858,
+/-- One step of the **parallel TTN BUG integrator** (Ceruti–Kusch–Lubich–Sulz, [CerutiEtAl2024],
 §4, Algorithms 3–4) with truncation tolerance `ϑ` at every inner node.  At an inner node: new
 directions `Pa i` orthogonal to the old bases (`P₀ i Pa i = 0`; all projectors commute), the
 subtree steps (again parallel) for the `K`-step fields give `K i`, captured by the augmented bases

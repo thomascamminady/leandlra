@@ -8,7 +8,7 @@ The rank-adaptive and parallel tree tensor network (TTN) BUG integrators of the 
 over an abstract `TTNFrame`: a tree whose inner nodes carry, for every child `i`, the old basis
 projector `P₀ i`, the co-range projector `Q₀ i` of the `K`-step and a class of operators acting on
 the child; the parallel TTN BUG step `IsParTTNBUGStep` (Ceruti–Kusch–Lubich–Sulz,
-arXiv 2412.00858, §4) assumes these projectors to be orthogonal and to commute. This file builds
+[CerutiEtAl2024, §4]) assumes these projectors to be orthogonal and to commute. This file builds
 such frames from actual tree tensor network data on a dimension tree `τ : DimTree κ`:
 
 * a **basis frame** (`DimTree.BasisFrame`) carries at every inner node `τ = (τ₁, …, τ_m)` an old
@@ -25,7 +25,7 @@ such frames from actual tree tensor network data on a dimension tree `τ : DimTr
   `P₀ i Pa i = 0` and all commutations are derived from the orthonormality of the matrices and the
   disjointness of the subtrees.
 
-The robust global error bound of the parallel TTN BUG integrator (arXiv 2412.00858, Thm 4.5;
+The robust global error bound of the parallel TTN BUG integrator ([CerutiEtAl2024, Thm. 4.5];
 `parTTN_global_error_le`) therefore holds for concrete tree tensor networks
 (`BasisFrame.parBUG_global_error`), with constants depending only on `L`, `B`, `Lₜ`, `T` and the
 number of nodes of the tree.
@@ -33,7 +33,7 @@ number of nodes of the tree.
 ## Main definitions
 
 * `DimTree.nodeCount`, `DimTree.treeHeight`: the number of nodes (leaves included) and the height
-  of a dimension tree (arXiv 2002.11392, proof of Thm 5.1).
+  of a dimension tree ([CerutiLubichWalach2021], proof of Thm 5.1).
 * `DimTree.BasisFrame`, `DimTree.BasisFrame.toTTNFrame`, `DimTree.BasisFrame.IsParBUGStep`.
 
 ## Main results
@@ -42,7 +42,7 @@ number of nodes of the tree.
   subtree annihilate each other.
 * `DimTree.BasisFrame.toTTNFrame_size`, `DimTree.BasisFrame.toTTNFrame_height`.
 * `DimTree.BasisFrame.IsParBUGStep.isParTTNBUGStep`: concrete steps are abstract steps.
-* `DimTree.BasisFrame.parBUG_global_error`: Theorem 4.5 of arXiv 2412.00858 on concrete tree
+* `DimTree.BasisFrame.parBUG_global_error`: Theorem 4.5 of [CerutiEtAl2024] on concrete tree
   tensor networks.
 -/
 
@@ -67,7 +67,7 @@ def nodeCount : DimTree κ → ℕ
   | node cs => 1 + ∑ i, (cs i).nodeCount
 
 /-- The height of a dimension tree: `0` for a leaf, `1 + max` of the heights of the subtrees for
-an inner node (arXiv 2002.11392, proof of Thm 5.1; `TTNFrame.height`). -/
+an inner node ([CerutiLubichWalach2021], proof of Thm 5.1; `TTNFrame.height`). -/
 def treeHeight : DimTree κ → ℕ
   | leaf _ => 0
   | node cs => (Finset.univ.sup fun i => (cs i).treeHeight) + 1
@@ -92,8 +92,8 @@ variable {κ : Type u} [DecidableEq κ]
 basis `U i` (rows indexed by the modes of `τᵢ`, rank `r i`) and a co-range basis `V i` (rows
 indexed by the modes outside `τᵢ`, `s i` columns) for every child, and a basis frame of every
 child. These are the matrices `U⁰_{τᵢ}` and `V⁰_{τᵢ}` that the old approximation `Y⁰` determines in
-the TTN integrators of arXiv 2002.11392 (§4.2) and arXiv 2412.00858 (§4.1), prolongated to the full
-tensor space. -/
+the TTN integrators of [CerutiLubichWalach2021] (§4.2) and [CerutiEtAl2024] (§4.1), prolongated to
+the full tensor space. -/
 inductive BasisFrame (ι : κ → Type v) : DimTree κ → Type (max u v)
   | leaf (k : κ) : BasisFrame ι (.leaf k)
   | node {m : ℕ} {cs : Fin m → DimTree κ} (r s : Fin m → ℕ)
@@ -143,7 +143,7 @@ theorem toTTNFrame_height : ∀ {τ : DimTree κ} (f : BasisFrame ι τ),
   | _, .node _ _ _ _ fs => by
     simp only [toTTNFrame, TTNFrame.height, treeHeight_node, fun i => toTTNFrame_height (fs i)]
 
-/-- One step of the **parallel TTN BUG integrator** (Ceruti–Kusch–Lubich–Sulz, arXiv 2412.00858,
+/-- One step of the **parallel TTN BUG integrator** (Ceruti–Kusch–Lubich–Sulz, [CerutiEtAl2024],
 §4, Algorithms 1–4) on concrete tree tensor networks with basis frame `f`, for the field `G` on
 the full tensor space, doubly-normal bound `ε` and truncation tolerance `ϑ`, from `(t₀, Y₀)` to
 `(t₁, Y₁)`:
@@ -213,7 +213,7 @@ theorem IsParBUGStep.isParTTNBUGStep : ∀ {τ : DimTree κ} (f : BasisFrame ι 
     · exact subtreeProj_comm_of_disjoint (hv.disjoint hij) _ _ x
 
 /-- **Robust global error of the parallel TTN BUG integrator on concrete tree tensor networks**
-(Ceruti–Kusch–Lubich–Sulz, arXiv 2412.00858, Theorem 4.5). Let `τ` be a valid dimension tree with
+(Ceruti–Kusch–Lubich–Sulz, [CerutiEtAl2024, Thm. 4.5]). Let `τ` be a valid dimension tree with
 `s` nodes and height `ℓ`, `F` a field on the tensor space that is `L`-Lipschitz, bounded by `B`,
 continuous in time and `Lₜ`-Lipschitz in time, `tₙ = t₀ + n h` with `2 L h ℓ ≤ 1`, and `A` the
 exact solution on `[t₀, t_N]`. If every step `n < N` is a concrete parallel TTN BUG step with some

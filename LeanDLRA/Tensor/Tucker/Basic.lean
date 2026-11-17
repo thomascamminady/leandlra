@@ -5,8 +5,8 @@ import LeanDLRA.Integrators.TuckerBUG
 # Tucker tensors: mode projectors, mode-wise interpolation and the Tucker integrators
 
 The Tucker integrators of `LeanDLRA/Integrators/TuckerBUG.lean` (Tucker BUG, rank-adaptive and
-parallel Tucker BUG; Ceruti–Lubich, arXiv 2010.02022, §5; Ceruti–Kusch–Lubich, arXiv
-2104.05247, §4.2; Ceruti–Kusch–Lubich–Sulz, arXiv 2412.00858, §3) are stated for an abstract
+parallel Tucker BUG; Ceruti–Lubich, [CerutiLubich2022, §5]; Ceruti–Kusch–Lubich, arXiv
+2104.05247, §4.2; Ceruti–Kusch–Lubich–Sulz, [CerutiEtAl2024, §3]) are stated for an abstract
 family of mode projectors `P₁ i` and co-range projectors `Q₀ i`, assumed to be orthogonal
 projectors and to commute. This file realizes them on actual tensors with `d` modes
 (`Tensor ι`, `ι : Fin d → Type*`) and derives these structural hypotheses:
@@ -21,7 +21,7 @@ projectors and to commute. This file realizes them on actual tensors with `d` mo
   so the robust error bounds (`tucker_local_error`, `tucker_global_error_le`) apply to it.
 
 It also provides the mode-wise interpolation property used by tensor DEIM / cross methods
-(Ghahremani–Babaee, arXiv 2401.04249, Eq. (12) for three modes; Dektor–Peng–Venturi, arXiv
+(Ghahremani–Babaee, [GhahremaniBabaee2024, Eq. (12)] for three modes; Dektor–Peng–Venturi, arXiv
 2402.18721): if each matrix `Aᵢ` has unit rows at the sampled indices `Sᵢ` (as the oblique
 projectors `Uᵢ (Sᵢᵀ Uᵢ)⁻¹ Sᵢᵀ` do), then `Z ×₁ A₁ ⋯ ×_d A_d` agrees with `Z` at every sampled
 multi-index (`modeProd_modeAct_apply_eq`).
@@ -100,7 +100,7 @@ capture `P_{U¹ᵢ} Kᵢ(t₁) = Kᵢ(t₁)`, doubly-normal bound `ε` and Galer
 satisfies `IsTuckerBUGStep` with `P₁ i = modeProj i (U¹ i)` and
 `Q₀ i = actOn {j ≠ i} (V⁰ᵢ V⁰ᵢᵀ)`: orthogonality and commutation of the projectors are
 derived, not assumed. Hence the robust local and global error bounds of Ceruti–Lubich
-(arXiv 2010.02022, Lemma 7 and Thm 7: `IsTuckerBUGStep.local_error_le`,
+([CerutiLubich2022, Lemma 7] and Thm 7: `IsTuckerBUGStep.local_error_le`,
 `tucker_global_error_le`) hold for it. -/
 theorem isTuckerBUGStep_of_orthonormal {r s : Fin d → Type*} [∀ i, Fintype (r i)]
     [∀ i, DecidableEq (r i)] [∀ i, Fintype (s i)] [∀ i, DecidableEq (s i)]
@@ -139,7 +139,7 @@ theorem modeProj_modeProj_of_orth (k : Fin d) {r s : Type*} [Fintype r] [Fintype
     Matrix.zero_mul, Matrix.mul_zero, modeAct_zero]
   rfl
 
-/-- **Concrete parallel Tucker BUG steps** (Ceruti–Kusch–Lubich–Sulz, arXiv 2412.00858, §3).
+/-- **Concrete parallel Tucker BUG steps** (Ceruti–Kusch–Lubich–Sulz, [CerutiEtAl2024, §3]).
 With old bases `U⁰ᵢ` and new directions `Ũᵢ` (both with orthonormal columns, `U⁰ᵢᵀ Ũᵢ = 0`)
 and co-range bases `V⁰ᵢ`, the mode projectors `P₀ i = modeProj i (U⁰ i)`,
 `Pa i = modeProj i (Ũ i)` and `Q₀ i = actOn {j ≠ i} (V⁰ᵢ V⁰ᵢᵀ)` satisfy all structural hypotheses
@@ -215,7 +215,7 @@ theorem modeAct_apply_eq_of_row_eq_one (k : Fin d) {A : Matrix (ι k) (ι k) ℝ
     modeAct k A Z x = Z x := by
   simp [modeAct_apply, hA, Matrix.one_apply]
 
-/-- **Mode-wise (DEIM) interpolation** (arXiv 2401.04249, Eq. (12) for `d = 3`): if every `Aᵢ`
+/-- **Mode-wise (DEIM) interpolation** ([GhahremaniBabaee2024, Eq. (12)] for `d = 3`): if every `Aᵢ`
 has unit rows at the sampled indices `Sᵢ`, then `Z ×₁ A₁ ⋯ ×_d A_d` agrees with `Z` at every
 multi-index whose entries are all sampled. For the oblique (DEIM) projectors
 `Aᵢ = Uᵢ (Sᵢᵀ Uᵢ)⁻¹ Sᵢᵀ` the unit-row property is `Sᵢᵀ Aᵢ = Sᵢᵀ`. -/

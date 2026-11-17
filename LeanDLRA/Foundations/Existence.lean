@@ -4,8 +4,8 @@ import LeanDLRA.Foundations.ODE
 # Global existence of solutions under the standing DLRA assumptions
 
 The error analyses of dynamical low-rank integrators (Kieri–Lubich–Walach 2016;
-Ceruti–Lubich 2022, arXiv 2010.02022, Section 2 and Theorems 2–4; Ceruti–Kusch–Lubich 2022,
-arXiv 2104.05247; Ceruti–Kusch–Lubich 2024, arXiv 2304.05660) work under the standing
+Ceruti–Lubich 2022, [CerutiLubich2022, Sec. 2] and Theorems 2–4; Ceruti–Kusch–Lubich 2022,
+[CerutiKuschLubich2022]; Ceruti–Kusch–Lubich 2024, [CerutiKuschLubich2024]) work under the standing
 assumption that the right-hand side `F(t, Y)` of the full matrix/tensor ODE `Ȧ = F(t, A)` is
 
 * Lipschitz continuous in `Y`, uniformly in `t`, with constant `L`, and
@@ -156,7 +156,7 @@ theorem exists_ODESolution_of_mem_of_continuousOn (hL : IsLipschitzField F L)
 /-- **Global existence (Picard–Lindelöf) on a compact interval**, with time continuity only
 required on `[a, b]`.  If `F` is Lipschitz in the state (uniformly in time) and bounded, then
 `y' = F(t, y)`, `y a = y₀` has a solution on `[a, b]`.  This is the standing existence
-assumption of the DLRA error analyses (e.g. Ceruti–Lubich, arXiv 2010.02022, Section 2). -/
+assumption of the DLRA error analyses (e.g. Ceruti–Lubich, [CerutiLubich2022, Sec. 2]). -/
 theorem exists_ODESolution_of_continuousOn (hL : IsLipschitzField F L) (hB : IsBoundedField F B)
     {a b : ℝ} (hcont : ∀ x, ContinuousOn (fun t => F t x) (Icc a b)) (hab : a ≤ b) (y₀ : E) :
     ∃ y : ℝ → E, ODESolution F y a b ∧ y a = y₀ :=
@@ -166,7 +166,7 @@ theorem exists_ODESolution_of_continuousOn (hL : IsLipschitzField F L) (hB : IsB
 state uniformly in time (`IsLipschitzField F L`), bounded (`IsBoundedField F B`) and continuous
 in time, then for every `a ≤ b` and `y₀` the initial value problem `y' = F(t, y)`, `y a = y₀`
 has a solution on `[a, b]`.  These are exactly the standing assumptions of
-Ceruti–Lubich (arXiv 2010.02022, Section 2) and Kieri–Lubich–Walach (2016). -/
+Ceruti–Lubich ([CerutiLubich2022, Sec. 2]) and Kieri–Lubich–Walach (2016). -/
 theorem exists_ODESolution (hL : IsLipschitzField F L) (hB : IsBoundedField F B)
     (hcont : ∀ x, Continuous fun t => F t x) {a b : ℝ} (hab : a ≤ b) (y₀ : E) :
     ∃ y : ℝ → E, ODESolution F y a b ∧ y a = y₀ :=
@@ -246,7 +246,7 @@ theorem exists_ODESolution_clm (hL : IsLipschitzField F L) (hB : IsBoundedField 
     y₀
 
 /-- **Existence for doubly projected fields** `y' = P (Q (F(t, y)))` (e.g. the Galerkin S-step
-`YS' = P₁ Q₁ F(t, YS)` of the BUG integrator, Ceruti–Lubich arXiv 2010.02022, Section 3). -/
+`YS' = P₁ Q₁ F(t, YS)` of the BUG integrator, Ceruti–Lubich [CerutiLubich2022, Sec. 3]). -/
 theorem exists_ODESolution_comp (hL : IsLipschitzField F L) (hB : IsBoundedField F B)
     (hcont : ∀ x, Continuous fun t => F t x) (P Q : E →L[ℝ] E) {a b : ℝ} (hab : a ≤ b)
     (y₀ : E) : ∃ y : ℝ → E, ODESolution (fun t x => P (Q (F t x))) y a b ∧ y a = y₀ :=
@@ -274,7 +274,7 @@ theorem exists_flowFamily (hL : IsLipschitzField F L) (hB : IsBoundedField F B)
 /-- **Exact flow family for Lady Windermere's fan.**  On the grid `tₙ = t₀ + n h` (`h ≥ 0`),
 for arbitrary values `Y n` (the numerical approximations) there are exact solutions `Φ n` of
 `y' = F(t, y)` on `[tₙ, tₙ₊₁]` with `Φ n tₙ = Y n`.  These are the "fan" trajectories of the
-global error analysis (Hairer–Nørsett–Wanner I.II.3; Ceruti–Lubich arXiv 2010.02022, proof of
+global error analysis (Hairer–Nørsett–Wanner I.II.3; Ceruti–Lubich [CerutiLubich2022], proof of
 Theorem 4). -/
 theorem exists_exactFlowFamily (hL : IsLipschitzField F L) (hB : IsBoundedField F B)
     (hcont : ∀ x, Continuous fun t => F t x) {t₀ h : ℝ} (hh : 0 ≤ h) (Y : ℕ → E) :

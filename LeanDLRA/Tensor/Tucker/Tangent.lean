@@ -4,14 +4,14 @@ import LeanDLRA.Tensor.Steps
 /-!
 # The tangent space of constrained Tucker manifolds and its orthogonal projector
 
-Bachmayr–Eisenmann–Uschmajew (arXiv 2308.16720, Sec. 4.1) consider manifolds of tensors
-`X = C ×₁ U₁ ⋯ ×_d U_d` whose core `C` lies in a submanifold `ℳ_c` of the full-rank cores that
-is invariant under changes of basis: the Tucker manifold (`ℳ_c` open), and tensor train or
-hierarchical Tucker manifolds for other choices of `ℳ_c`. By their Thm 4.1(iii) the tangent space
-at `X` is spanned by `Ċ ×ₖ Uₖ + ∑ₖ C ×ₖ U̇ₖ ×_{j ≠ k} Uⱼ` with `Ċ ∈ T_C ℳ_c` and `Uₖᵀ U̇ₖ = 0`
-(4.5), and their Prop. 4.2 gives its orthogonal projector `P_X = P_X⁰ + ∑ₖ P_Xᵏ`. This file
-proves Prop. 4.2 for finite tensors (`Tensor ι`, `ι : Fin d → Type*`) in the core vocabulary:
-mode projectors `modeProj`, co-range projectors `actOn (· ≠ k) (W Wᵀ)` and unfoldings `unfold`.
+Bachmayr–Eisenmann–Uschmajew ([BachmayrEisenmannUschmajew2025, Sec. 4.1]) consider manifolds of
+tensors `X = C ×₁ U₁ ⋯ ×_d U_d` whose core `C` lies in a submanifold `ℳ_c` of the full-rank cores
+that is invariant under changes of basis: the Tucker manifold (`ℳ_c` open), and tensor train or
+hierarchical Tucker manifolds for other choices of `ℳ_c`. By their Thm 4.1(iii) the tangent space at
+`X` is spanned by `Ċ ×ₖ Uₖ + ∑ₖ C ×ₖ U̇ₖ ×_{j ≠ k} Uⱼ` with `Ċ ∈ T_C ℳ_c` and `Uₖᵀ U̇ₖ = 0` (4.5),
+and their Prop. 4.2 gives its orthogonal projector `P_X = P_X⁰ + ∑ₖ P_Xᵏ`. This file proves Prop.
+4.2 for finite tensors (`Tensor ι`, `ι : Fin d → Type*`) in the core vocabulary: mode projectors
+`modeProj`, co-range projectors `actOn (· ≠ k) (W Wᵀ)` and unfoldings `unfold`.
 
 Differences from the paper: finite dimensions instead of `ℓ²(ℕ^d)`; the manifold structure
 (Thm 4.1(i)–(ii)) is not formalized, and `T_X ℳ` is the span of (4.5), which is Thm 4.1(iii); the
@@ -200,22 +200,23 @@ noncomputable def tuckerCLM (U : ∀ k, Matrix (ι k) (r k) ℝ) : Tensor r →L
 
 variable (U : ∀ k, Matrix (ι k) (r k) ℝ) (C : Tensor r) (PC : Tensor r →L[ℝ] Tensor r)
 
-/-- The tangent vectors (4.5) of Bachmayr–Eisenmann–Uschmajew (arXiv 2308.16720, Thm 4.1(iii))
-at `X = C ×ₖ Uₖ`: `Ċ ×ₖ Uₖ + ∑ₖ C ×ₖ U̇ₖ ×_{j ≠ k} Uⱼ` with `Ċ` in the tangent space
-`{Ċ | P_C Ċ = Ċ}` of the core manifold and `Uₖᵀ U̇ₖ = 0`. -/
+/-- The tangent vectors (4.5) of Bachmayr–Eisenmann–Uschmajew
+([BachmayrEisenmannUschmajew2025, Thm. 4.1](iii)) at `X = C ×ₖ Uₖ`:
+`Ċ ×ₖ Uₖ + ∑ₖ C ×ₖ U̇ₖ ×_{j ≠ k} Uⱼ` with `Ċ` in the tangent space `{Ċ | P_C Ċ = Ċ}` of the core
+manifold and `Uₖᵀ U̇ₖ = 0`. -/
 def tuckerTangentGen : Set (Tensor ι) :=
   {ξ | ∃ Cdot : Tensor r, PC Cdot = Cdot ∧ ∃ Udot : ∀ k, Matrix (ι k) (r k) ℝ,
     (∀ k, (U k)ᵀ * Udot k = 0) ∧
       ξ = tucker Cdot U + ∑ k, tucker C (Function.update U k (Udot k))}
 
 /-- The **tangent space** `T_X ℳ` at `X = C ×ₖ Uₖ` of a constrained Tucker manifold whose core
-manifold has the tangent projector `P_C` (arXiv 2308.16720, Thm 4.1(iii)): the span of the
-tangent vectors (4.5) (`tuckerTangentGen`; they already form a subspace when `P_C` is
+manifold has the tangent projector `P_C` ([BachmayrEisenmannUschmajew2025, Thm. 4.1](iii)): the span
+of the tangent vectors (4.5) (`tuckerTangentGen`; they already form a subspace when `P_C` is
 linear). -/
 noncomputable def tuckerTangentSpace : Submodule ℝ (Tensor ι) :=
   Submodule.span ℝ (tuckerTangentGen U C PC)
 
-/-- The **tangent projector** (4.7)–(4.9) of arXiv 2308.16720, Prop. 4.2:
+/-- The **tangent projector** (4.7)–(4.9) of [BachmayrEisenmannUschmajew2025, Prop. 4.2]:
 `P_X = P_X⁰ + ∑ₖ P_Xᵏ` with `P_X⁰ Z = P_C(Z ×ₖ Uₖᵀ) ×ₖ Uₖ` and
 `P_Xᵏ = (I - P_{Uₖ}) ∘ Q_k`, where `Q_k = actOn {j ≠ k} (W_k W_kᵀ)` is the co-range projector of
 the `k`-th matricization (`W_k` an orthonormal basis of the space `Vᵏ` spanned by the rows of
@@ -351,12 +352,11 @@ theorem inner_sub_tuckerTangentProj_update {s : Fin d → Type*} [∀ k, Fintype
     ite_true, zero_add, sub_self]
 
 /-- **Tangent projector of a constrained Tucker manifold** (Bachmayr–Eisenmann–Uschmajew,
-arXiv 2308.16720, Prop. 4.2, finite-dimensional): at `X = C ×ₖ Uₖ` with orthonormal `Uₖ`, an
-orthogonal projector `P_C` onto the tangent space of the core manifold, and matrices `W_k`
-whose columns span the co-range `Vᵏ` of `Mat_k(X)` (`W_k = Mat_{≠k}(X) B_k`) with
-`W_k W_kᵀ` fixing `Mat_k(X)` (for instance an orthonormal basis of `Vᵏ`), the operator
-`P_X = P_X⁰ + ∑ₖ P_Xᵏ` of (4.7)–(4.9) is the orthogonal projection onto the tangent space
-`T_X ℳ` spanned by (4.5). -/
+[BachmayrEisenmannUschmajew2025, Prop. 4.2], finite-dimensional): at `X = C ×ₖ Uₖ` with orthonormal
+`Uₖ`, an orthogonal projector `P_C` onto the tangent space of the core manifold, and matrices `W_k`
+whose columns span the co-range `Vᵏ` of `Mat_k(X)` (`W_k = Mat_{≠k}(X) B_k`) with `W_k W_kᵀ` fixing
+`Mat_k(X)` (for instance an orthonormal basis of `Vᵏ`), the operator `P_X = P_X⁰ + ∑ₖ P_Xᵏ` of
+(4.7)–(4.9) is the orthogonal projection onto the tangent space `T_X ℳ` spanned by (4.5). -/
 theorem tuckerTangentProj_eq_starProjection (hPC : IsOrthProj PC) {s : Fin d → Type*}
     [∀ k, Fintype (s k)] {W : ∀ k, Matrix (∀ j : {j : Fin d // j ≠ k}, ι j) (s k) ℝ}
     (hWX : ∀ k, actOn (· ≠ k) (W k * (W k)ᵀ) (tucker C U) = tucker C U)
@@ -490,9 +490,9 @@ example :
 
 /-- **The two tangent projectors of the Tucker manifold agree.** For the trivial core projector
 `P_C = 1` (the Tucker manifold itself), the tangent projector `tuckerTangentProj U 1 W` of
-arXiv 2308.16720, Prop. 4.2, is the abstract tangent projector `LeanDLRA.modeTangentProj` of
-the mode projectors `P₀ k = modeProj k (U k)` and the co-range projectors
-`Q₀ k = actOn (· ≠ k) (W k (W k)ᵀ)`. -/
+[BachmayrEisenmannUschmajew2025, Prop. 4.2], is the abstract tangent projector
+`LeanDLRA.modeTangentProj` of the mode projectors `P₀ k = modeProj k (U k)` and the co-range
+projectors `Q₀ k = actOn (· ≠ k) (W k (W k)ᵀ)`. -/
 theorem tuckerTangentProj_one_eq {s : Fin d → Type*} [∀ k, Fintype (s k)]
     (U : ∀ k, Matrix (ι k) (r k) ℝ)
     (W : ∀ k, Matrix (∀ j : {j : Fin d // j ≠ k}, ι j) (s k) ℝ) :
