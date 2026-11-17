@@ -68,17 +68,18 @@ The theorems of the other fixed-rank integrators have the same hypotheses `hP`, 
 | dynamical randomized SVD | `MatrixDRSVD.exists_run_norm_sub_le` | @file(LeanDLRA/Randomized/DRSVDRun.lean) | sketch and range bases with `k` and `l` columns, `r ≤ k ≤ l`; the normal bound at `r` and at `k` columns |
 | projected Euler method | `MatrixProjEuler.exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/ProjectedEuler.lean) | the field is Lipschitz in time with `Lt`; `hκ : 1 ≤ κ`, the quality of the retraction |
 | projected Runge–Kutta methods | `MatrixPRK.exists_run_norm_sub_le` | @file(LeanDLRA/Integrators/Matrix/ProjectedRK.lean) | a Butcher tableau, `hκ`, and as a hypothesis (`hRK`) the order of the classical scheme |
+| midpoint BUG, fixed rank (the 4r variant) | `MatrixMidpointBUG.exists_run_norm_sub_le` | @file(LeanDLRA/HighOrder/MidpointBUGRun.lean) | the field is of class `C²` with bounds `M₁`, `M₂` on its derivatives; normal bounds `ε` at rank `r` and `ε₂` at rank `2 r`, with `2 r` at most the matrix sizes; the error is of order `h²` up to the terms in `ε`, `ε₂` |
 | BUG for Tucker tensors | `TuckerBUG.exists_run_norm_sub_le` | @file(LeanDLRA/Tensor/Tucker/BUGRun.lean) | the field is on `Tensor ι`; the normal bound is at the triples `TuckerBUG.normalTriples r`; margin `(d + 2) B h` |
 
-The table with the error bounds and the margins is in
-[Getting started, section 3.4](GETTING_STARTED.md#34-other-integrators). A rank that changes from
-step to step, with a truncation to a tolerance, is treated by the rows for the rank-adaptive
-and the parallel integrator; their step relations are in
-@file(LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean) and the run theorem with a tolerance for
-every step is in @file(LeanDLRA/Integrators/MethodTolerance.lean). For the rows with a
-tolerance, a Tucker tensor or a retraction, the hypotheses on `F` and `A` are the same `hP`,
-`hc`, `hε`; the page [Main results, section 4.3](MAIN_RESULTS.md#43-one-run-theorem-many-methods)
-lists the margin constants.
+The table with the error bounds and the margins is in [Getting started, section
+3.4](GETTING_STARTED.md#34-other-integrators). A rank that changes from step to step, with a
+truncation to a tolerance, is treated by the rows for the rank-adaptive and the parallel
+integrator; their step relations are in @file(LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean)
+and the run theorem with a tolerance for every step is in
+@file(LeanDLRA/Integrators/MethodTolerance.lean). For the rows with a tolerance, a Tucker tensor,
+a retraction or the midpoint rule, the hypotheses on `F` and `A` are the same `hP`, `hc`, `hε`;
+the page [Main results, section 4.3](MAIN_RESULTS.md#43-one-run-theorem-many-methods) lists the
+margin constants.
 
 **If your method is not in the table**, show that it is tube-local (section 4) and apply the same
 theorem; the integrators of the table are the examples, and the shortest ones to read are
@@ -184,7 +185,19 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
 * **By topic:** [Main results](MAIN_RESULTS.md) lists the main theorems of the core with their
   statements.
 * **By integrator:** the `…Run.lean` files of @file(LeanDLRA/Integrators/Matrix/) hold the
-  existence and error theorems; start with the module docstring.
+  existence and error theorems; start with the module docstring. The midpoint BUG integrator is
+  in @file(LeanDLRA/HighOrder/MidpointBUGRun.lean).
+* **By question about the solution:** existence and uniqueness of the DLRA solution of rank `r`
+  on a short interval are in @file(LeanDLRA/DLRA/Existence.lean); its distance from the best
+  approximation of rank `r` is bounded in @file(LeanDLRA/DLRA/QuasiOptimality.lean), for a field
+  that is Lipschitz on a tube only in @file(LeanDLRA/DLRA/QuasiOptimalityTube.lean) and for the
+  truncated singular value decomposition under a gap in
+  @file(LeanDLRA/DLRA/QuasiOptimalityGap.lean) (sections 3.6 and 3.7 of
+  [Main results](MAIN_RESULTS.md)).
+* **By question about stiffness or training:** what is proved and what is open for stiff problems
+  with forcing is in @file(LeanDLRA/Research/StiffGlobalCycle.lean) and the files named in
+  [Main results, section 7.6](MAIN_RESULTS.md#76-stiff-problems-with-forcing-five-results-and-what-stays-open);
+  the descent thresholds of federated rounds are in section 10.1 of the same page.
 * **By paper:** [PROVEN.md](PROVEN.md) lists every module with the papers it cites.
 * **By shape:** names say what a theorem bounds or states (`norm_sub_le`, `exists_run`, an ending iff);
   the rules are in section 7 of [CONVENTIONS.md](CONVENTIONS.md). A search for the key word in

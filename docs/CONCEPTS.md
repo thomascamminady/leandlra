@@ -76,7 +76,7 @@ section "Weighted norms"). Statements written with the unfolded `leftProj U * ri
 Core file: `LeanDLRA/LinearAlgebra/Factorization/Defs.lean` (`Matrix.svdTrunc`, `tailSqSum` and
 `IsBestLowRankApprox` are to move to `LinearAlgebra/SVD/Defs.lean` and
 `LinearAlgebra/LowRank/Defs.lean` with unchanged statements). `epsRank`, `distLR`
-(`Matrix/LowRankDistance.lean`) and `WeylSingular.tailNorm` (`Classical/WeylSingular.lean`) are
+(`LinearAlgebra/LowRank/Defs.lean`) and `WeylSingular.tailNorm` (`Classical/WeylSingular.lean`) are
 existing core definitions.
 
 | Concept | Core | Relation (lemma) |
@@ -93,6 +93,11 @@ existing core definitions.
 | `tolRank A tol = min {r : τ_r(A) ≤ tol}` (`Literature/RankAdaptive/P2602_14854a`) | `epsRank tol A` | equal: `P2602_14854.epsRank_eq_sInf_tailNorm` (the tail is `distLR`, `tailNorm_eq_infDist`), replaced |
 | `adaptiveRank S ϑ` (`Literature/RankAdaptive/P2104_05247a`, same definition) | `epsRank ϑ S` | equal (same argument), replaced |
 | `tolRank ϑ X`, `svTail` (`Novel/BlindSpotII`) | `epsRank ϑ X`, `WeylSingular.tailNorm` | equal (`WeylSingular.epsRank_eq_sInf_tailNorm`; `svTail` had the body of `tailNorm`), replaced in `Novel/BlindSpotII` and `Novel/GeoLoRAFreeze` (deprecated aliases, 2026-11-10) |
+| Lower bound `ρ ≤ σ_{r-1}(U S Vᵀ)` from `ρ ‖w‖ ≤ ‖S w‖` for orthonormal `U`, `V` | `SVD.le_singularValues_of_eq_mul` (`LinearAlgebra/SVD/MinMax.lean`), from the max-min bound `LinearMap.le_singularValues_of_mul_norm_le` | converse of `WeylSingular.mul_norm_le_norm_toEuclideanLin_core` (module docstring) |
+| Truncation of a matrix of rank at most `r` | `EckartYoung.truncation A r` | equals `A`: `EckartYoung.truncation_eq_self`; with `EckartYoung.rank_truncation_le` it gives `RandomizedBUG.truncation_eq_self_iff` |
+| Derivative of `B ↦ truncation B r` at `A` with the gap `σ_r(A) < σ_{r-1}(A)` | `EckartYoung.hasFDerivAt_truncation`, `EckartYoung.hasDerivWithinAt_truncation` (`LinearAlgebra/SVD/TruncationDeriv.lean`) | the projector onto the top `r` right singular vectors is the only orthogonal projector with the properties of `EckartYoung.truncation_eq_mul_of_isOrthProjMat`, so the derivative is defined without a choice of vectors |
+| Two perturbation bounds for singular subspaces | `norm_sub_le_of_isOrthProjMat` (`LinearAlgebra/SVD/TruncationDeriv.lean`: gaps on both sides, any orthogonal projectors that commute with `Aᵀ A`, `Bᵀ B`) and `SinTheta.wedin_frobenius`, `SinTheta.norm_truncation_sub_le_of_gap` (`LinearAlgebra/SVD/SinTheta.lean`: a gap on one side, singular vectors) | neither implies the other (module docstrings of both files) |
+| Growth of `distLR r` along an exact solution | `distLR_flow_le_exp_mul_add` (`Matrix/LowRankDistance.lean`), `distLR_flow_le_sharp` (`Matrix/LowRankDistanceFlow.lean`), `distLR_flow_le_exp_of_tube` (`Integrators/Matrix/FlowDistance.lean`) | the second keeps the recorded form of the first (with continuity of the field in time); for a start of rank at most `r` both give `h ε e^{L h}`: `distLR_flow_le_exp`; the third is the form on a tube |
 
 **Not bridged, with reason.** `IsPartitionedSVD` (`P2609_32615a`) does not sort the singular values
 and splits them into two blocks with a gap `τⱼ < σᵢ`, so it is not an `IsSVD` of the concatenated
@@ -179,6 +184,9 @@ A point of the fixed-rank manifold is a point of `fixedRankSet m n r`
 | Left/right multiplication by an orthogonal projector matrix | `Frobenius.leftMulCLM P`, `Frobenius.rightMulCLM P` | implies `IsOrthProj`: `Curvature.IsOrthProjMat.isOrthProj_leftMulCLM`, `…_rightMulCLM`, and `IsOrthProjMat.isOrthProj_tangent` for the tangent projector |
 | Oblique (interpolatory) tangent projector, sketched tangent projector | `LeanDLRA.obliqueTangentProj U SU V SV = tangent (leftOblique U SU) (rightOblique V SV)`, `LeanDLRA.sketchTangentProj` (instance with `SU = Θᵀ Θ P`, `SV = Ωᵀ Ω W`) | `obliqueTangentProj_apply` |
 | Two-sided sketch `Z ↦ Θ Z Ωᵀ` (`sketchCLM`, `Matrix/Interpolation.lean`) | `Frobenius.sandwichCLM Θ Ωᵀ` | equal: `sketchCLM_eq_sandwichCLM` |
+| Lipschitz bound of `Y ↦ tangentProjAt Y` between matrices of rank `r`, with `ρ ≤ σ_{r-1}(X)` | `norm_tangentProjAt_sub_le`, `norm_tangentProj_sub_tangentProjAt_le` (`FixedRank/TangentSpace/Curvature.lean`) | the constant `2 ρ⁻¹` of `Curvature.koch_lubich_tangent_frob`, stated at a matrix instead of for factors; the lower bound is needed at one of the two points only |
+| Velocity of a curve of rank-`r` matrices; first-order optimality of a best approximation | `mem_tangentSpaceAt_of_hasDerivWithinAt`, `tangentProjAt_sub_eq_zero_of_forall_norm_sub_le`, `tangentProjAt_truncation_sub_eq_zero` | the derivative lies in `tangentSpaceAt`; `P(X) (A - X) = 0` for a best approximation `X` and for the truncated SVD |
+| Distance to the matrices of rank at most `r` after an explicit tangent step | `tailNorm_add_tangent_le` (`FixedRank/TangentStepTruncation.lean`) | `WeylSingular.tailNorm (U S Vᵀ + Z) r ≤ ‖Z‖² / ρ` for a tangent `Z`; `tailNorm` is `distLR` (`WeylSingular.tailNorm_eq_infDist`) |
 
 ### Local forms of the catalogue
 
@@ -298,6 +306,7 @@ step predicates of the tensor integrators are the subject of the next section.
 | Factor-wise (LoRA) preconditioner | `FactorizedDynamics.loraPrecond` | quadratic form: `inner_loraPrecond`, `inner_loraPrecond_self_nonneg` |
 | Kalman–Bucy covariance field `A P + P Aᵀ - ρ P² + Qn` | `LeanDLRA.riccatiField` | the only definition; in `namespace LeanDLRA.KalmanBucy` the bare name resolves to it |
 | One Kalman analysis step | `innovCov`, `kalmanGain`, `analysisCov`, `josephCov` | Joseph identity `josephCov_sub_analysisCov`, `analysisCov_mono` (`Stochastic/KalmanBucy.lean`) |
+| Federated round with two local steps | `fedRound P gc g lr 2 x` | two projected gradient steps of the global loss if `g` is the average of the `gc c`: `fedRound_two_eq_projGradStep` (`Research/FederatedTwoSteps.lean`) |
 
 ## Tensor step vocabulary
 
@@ -326,6 +335,7 @@ space), `LeanDLRA/Tensor/Tucker/Tangent.lean` and `LeanDLRA/Tensor/TT/TangentPro
 | Tangent projector of the Tucker manifold on tensors, with core projector `P_C` | `Tensor.tuckerTangentProj U PC W` (`Tensor/Tucker/Tangent.lean`) | orthogonal projection onto the tangent space: `Tensor.tuckerTangentProj_eq_starProjection`; a different object from `modeTangentProj` (general `P_C`), equal to it for `P_C = 1` (row above) |
 | Alternating sum of interface operators of a tensor train | `Tensor.ttTangentSum` (`Tensor/Defs.lean`) | projector properties: `Tensor.ttTangentSum_idem`, `Tensor.ttTangentSum_isOrthProj`, `Tensor.ttTangentSum_isObliqueProj` (`Tensor/TT/TangentProjector.lean`), used by `Tensor.isOrthProj_ttTangentProj`; the catalogue copy `OpenProblems.TensorNetworks.ttTangentSum` is the same expression: `ttTangentSum_eq_tensor` (`OpenProblems/TensorNetworks/Part2Defs.lean`); `OpenProblems.Randomized.ttTangent` is equal after the index shift `R k ↦ R (k + 1)`: `ttTangent_eq_ttTangentSum` (`OpenProblems/Randomized/Part4Defs.lean`) |
 | Multilinear product `C ×₁ U₁ ⋯ ×_d U_d` | `Tensor.tucker` (`Tensor/Defs.lean`) | on three modes its entries are the triple sum `OpenProblems.TensorNetworks.tucker3`: `tucker_apply_eq_tucker3` (`OpenProblems/TensorNetworks/Part3Defs.lean`) |
+| One step of the tensor-train projector-splitting integrator | `Tensor.IsTTKSLStep` (`Tensor/TT/ProjectorSplitting.lean`) | exactness `Tensor.IsTTKSLStep.exact` and the increment form `Tensor.IsTTKSLStep.eq_add_ttTangentProj` (`Tensor/TT/ProjectorSplittingExactness.lean`), robust error `Tensor.IsTTKSLStep.local_error`, `Tensor.tt_ksl_global_error` (`Tensor/TT/ProjectorSplittingError.lean`); it is not a step `IsTTNKSLStep` of the linear tree (every inner node of the latter has an additional backward substep) |
 
 Kept in the catalogue:
 
@@ -405,6 +415,9 @@ closed interval. The factor systems are the dynamically orthogonal (DO) system f
 | DDO system for `Y = Z Vᵀ` | none | `DynamicallyOrthogonal.ddoSystem_iff_isDLRASolution`; pointwise: `DynamicallyOrthogonal.hasDerivWithinAt_ddo_iff` |
 | BO factors `U`, `Z` with `Zᵀ Z = 1`, skew `Ω`, `U̇ = F Z + U Ω`, `Ż = Z Ω + (1 - Z Zᵀ) Fᵀ U (Uᵀ U)⁻¹` | none | imply `IsDLRASolution r F (fun t => U t * (Z t)ᵀ) a b`: `DynamicallyOrthogonal.isDLRASolution_of_bo`; the converse is not stated in the core |
 | Tangent projector at `U Zᵀ` for factors of full rank | `tangentProjAt` | `DynamicallyOrthogonal.tangentProjAt_mul_transpose_apply : P(Y) A = Π_U A + A Π_Z - Π_U A Π_Z` with the Gram projectors `Matrix.colProj`; the transpose commutes: `DynamicallyOrthogonal.tangentProjAt_transpose`; rank of `U Zᵀ`: `DynamicallyOrthogonal.rank_mul_transpose` |
+| Existence and uniqueness of a DLRA solution of rank `r` from `Y₀` with `B (b - a) < σ_{r-1}(Y₀)` | `exists_isDLRASolution`, `IsDLRASolution.eqOn` (`DLRA/Existence.lean`) | in factored form `exists_factors_isDLRASolution`; the converse `IsDLRASolution.exists_factors`; the solution of the factor equations is a DLRA solution of rank `r` |
+| Distance of a DLRA solution `Y` from a curve `X` of critical points of the distance to `A` | `IsDLRASolution.norm_sub_le_integral` (`DLRA/QuasiOptimality.lean`) | same conclusion as `dlra_norm_sub_le_integral`, which takes an `ODESolution` of `tangentProj (U t) (V t) (F t x)` with factors; `dlra_norm_sub_truncation_le_integral` is the case `F t Y = Ȧ t`, `X t = truncation (A t) r`; the forms for a field that is Lipschitz on a tube and for the truncation under a gap are in `DLRA/QuasiOptimalityTube.lean` and `DLRA/QuasiOptimalityGap.lean` |
+| Velocity of `U Σ Yᵀ` with factor velocities written with a gauge `A` and a skew `B` | `Literature.P2503_18271.tdb_velocity_gauge_free` (`DLRA/GaugeInvariance.lean`) | equals `tangentProj U Y M`, so it does not depend on the gauge; the factor equations of the DO system are the case `A = B = 0` |
 
 ## Time grids, step relations, runs and the local error
 
@@ -554,6 +567,12 @@ hypothesis is `FactoredNormalBoundOn F r (tubeSet A t₀ (t₀ + N * h) ρ) ε`.
 | BUG with augmented bases and truncation by a tolerance `ϑ` (rank-adaptive) | `MatrixBUG.adaptiveStepRel F R ϑ` | from an augmented step: `MatrixBUG.augmentedRel.adaptiveStepRel`; local error on a tube: `MatrixBUG.adaptiveStepRel.hasLocalError_of_tube`; runs: next section |
 | BUG with augmented bases and truncation to rank `r` | `MatrixBUG.truncStepRel F r κ` (`∃ Yh, augmentedRel F r t₀ t₁ Y₀ Yh ∧ Y₁.rank ≤ r ∧ ‖Y₁ - Yh‖ ≤ κ * distLR r Yh`) | every augmented step can be completed for `1 ≤ κ`: `MatrixBUG.augmentedRel.exists_truncStepRel`; rank: `MatrixBUG.truncStepRel.rank_le`; step near the solution: `MatrixBUG.truncStepRel_tubeExt_iff_of_near`; local error on a tube: `MatrixBUG.truncStepRel.hasLocalError_of_tube` |
 | Truncated BUG is tube-local; existence of a run and error bound | `MatrixBUG.isTubeLocal_truncStepRel`, `MatrixBUG.trunc_exists_run_norm_sub_le` (`Integrators/Matrix/TruncBUGRun.lean`) | instance of `StepMethod.IsTubeLocal` with `κ = 4` (the margin constant; the factor of the truncation is a different `κ`) and `Adm Y = (Y.rank ≤ r)`; bound `Real.exp (L * T) * δ + T * Real.exp (L * T) * (κ * (10 * L * B * h + ε) + (1 + κ) * (bugC₁ L H * ε + bugC₂ L B H * h))` under `… + 4 * B * h < ρ`, `h ≤ H`, `1 ≤ κ`; every run: `MatrixBUG.IsRun.norm_sub_le_of_truncStepRel` |
+| Midpoint BUG step in projector form | `MidpointBUG.IsMidpointBUGStep` (`HighOrder/MidpointBUG.lean`) | defined on a general state space; the error bound of the older form is `midpointBUG_global_error_le` |
+| Midpoint BUG step at the level of factors, without truncation | `MatrixMidpointBUG.IsStep` (`HighOrder/Defs.lean`) | a step in the sense of the previous row: `MatrixMidpointBUG.IsStep.isMidpointBUGStep`, with `leftProj U₀`, `rightProj V₀`, `leftProj Uh`, `rightProj Vh`, `galerkinProj Ub Vb` |
+| Midpoint BUG, augmented step relation (result of rank at most `4 r`) and with truncation to rank `r` | `MatrixMidpointBUG.augmentedRel F r`, `MatrixMidpointBUG.stepRel F r` (`∃ Yh, augmentedRel F r t₀ t₁ Y₀ Yh ∧ Y₁.rank ≤ r ∧ ‖Y₁ - Yh‖ ≤ distLR r Yh`) | from a factor step: `MatrixMidpointBUG.IsStep.augmentedRel`; local errors `MatrixMidpointBUG.augmentedRel.hasLocalError`, `MatrixMidpointBUG.stepRel.hasLocalError` (`HighOrder/MidpointBUGStep.lean`) |
+| Midpoint BUG with fixed rank is tube-local; existence of a run and error bound | `MatrixMidpointBUG.isTubeLocal_stepRel`, `MatrixMidpointBUG.exists_run_norm_sub_le` (`HighOrder/MidpointBUGRun.lean`) | instance of `StepMethod.IsTubeLocal` with `κ = 2`; the run theorem uses `StepMethod.IsTubeLocal.mono` with `κ = 3`; the bound holds for every run: `MatrixMidpointBUG.IsRun.norm_sub_le` |
+| Auxiliary flows `P`, `Q` of a Sylvester field `𝒜 Y + Y ℬ` | `AugmentationRank.exists_rightFactor_of_sylvester`, `AugmentationRank.exists_leftFactor_of_sylvester` (`Research/SylvesterFlows.lean`) | they are the hypotheses of `AugmentationRank.capture_of_sylvester` and `AugmentationRank.error_le_of_sylvester`; `…_of_continuousOn` drops them for continuous coefficients |
+| Capture defect `θ` of the explicit midpoint step | `norm_capture_defect_le` (free parameter `τ`) and `norm_capture_defect_le_sq_add` (`τ = h² + ε`, `Research/ExplicitMidpointCapture.lean`) | the second is the first with this choice; `ExplicitMidpoint.norm_update_sub_le_cube_add` (`Research/ExplicitMidpointGalerkin.lean`) inserts it into `ExplicitMidpoint.norm_update_sub_le` |
 
 **Two spellings of one hypothesis (finding).** `MatrixBUG.stepRel.hasLocalError` takes the global
 normal-component bound as `MatrixBUG.FactoredNormalBound F r ε`, `MatrixKSL.stepRel.hasLocalError`
@@ -568,8 +587,10 @@ the next section. The other step predicates of the core are predicates on the da
 (bases, substep solutions) and have no step relation of type `StepRel`: among them
 `IsTuckerBUGStep` (the step relation of the Tucker integrator is `TuckerBUG.stepRel`, next
 section), `IsParTuckerBUGStep`, `IsAugTuckerBUGStep`, `IsRankAdaptiveBUGStep`,
-`IsParallelBUGStep`, `IsMidpointBUGStep`, `IsImplicitBUGStep`, and the tensor-train steps
-`IsTTKSLStep`, `IsTTAugBUGStep`. The error bounds of the core for these steps are stated for
+`IsParallelBUGStep`, `IsImplicitBUGStep`, and the tensor-train steps `IsTTKSLStep`,
+`IsTTAugBUGStep`. The midpoint BUG step has a step relation on matrices,
+`MatrixMidpointBUG.stepRel`, in the files `HighOrder/Defs.lean`, `HighOrder/MidpointBUGStep.lean`
+and `HighOrder/MidpointBUGRun.lean`; its projector form `MidpointBUG.IsMidpointBUGStep` has none. The error bounds of the core for these steps are stated for
 chains of steps and are not instances of `StepMethod.IsTubeLocal.exists_run_norm_sub_le`.
 
 ## Further step methods: tolerance, sketches, retractions, Tucker tensors
