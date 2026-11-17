@@ -22,7 +22,8 @@ isometric embedding in the sense `π† (π Y) = Y`, and `π† = π.adjoint` is
   (`‖F − P(Y)F‖ ≤ ε`) is NOT formalized: it needs the tangent spaces of the reduced manifold,
   which are not modelled here.
 
-The other results of the paper are in part b (`P2002_11392b.lean`) and in the tensor core:
+The other results of the paper are in part b (`Tensor/TTN/BasisOrthonormality.lean`) and in
+the tensor core:
 Lemma 2.4 (`P2002_11392.basis_transpose_mul_self_iff`, `TTN.basis_transpose_mul_self`), the
 concrete prolongation and restriction of Lemma 4.1 and Definition 4.2
 (`LeanDLRA/Tensor/TTN/Prolongation.lean`), Theorem 5.1

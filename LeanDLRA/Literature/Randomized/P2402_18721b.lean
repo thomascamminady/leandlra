@@ -6,7 +6,7 @@ import LeanDLRA.Tensor.TT.ObliqueProjector
 Dektor, *Collocation methods for nonlinear differential equations on low-rank manifolds*. This
 module states Prop. 4.1, Lemma 4.1 and Thm 4.1 of the paper in its form, as corollaries of the
 core tensor layer (`Tensor/TT/ObliqueProjector.lean`, `Tensor/TT/TangentProjector.lean`). The
-companion module `P2402_18721a` proves Eq. (5).
+core module `Randomized/CrossInterpolation.lean` proves Eq. (5).
 
 Notation. Modes are numbered `0, …, d - 1`; the paper's mode `j` is our mode `j - 1`. The paper's
 `P_{≤k}` acts on our modes `< k`, its `P_{>k}` on our modes `≥ k`, its core `C_k` is our core
@@ -43,7 +43,7 @@ Finite dimensions and real tensors throughout.
 
 ## Already in the library, or left out
 
-* Eq. (5) is `obliqueTangentProj_eq_of_mem_range` (companion module `P2402_18721a`).
+* Eq. (5) is `obliqueTangentProj_eq_of_mem_range` (`Randomized/CrossInterpolation.lean`).
 * Eqs. (26)–(33) (the summands of `P_Y` are single-core variations / bond-centred tensor trains)
   are the core theorems `actOn_mul_actOn_mul_eq_tt_update` and `actOn_mul_actOn_mul_eq_ttBond`.
 * Eq. (7) (CUR reconstruction of a rank-`r` matrix) is `P2408_16591.cur_eq_self_of_rank_le`, and
