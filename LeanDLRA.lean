@@ -158,6 +158,7 @@ import LeanDLRA.Research.ImplicitBUGStiffLemmas
 import LeanDLRA.Research.ImplicitBUGStiffLocal
 import LeanDLRA.Research.ImplicitBUGStiffRows
 import LeanDLRA.Research.ImplicitBUGStiffRowsRun
+import LeanDLRA.Research.ImplicitBUGStiffSemilinear
 import LeanDLRA.Research.ImplicitBUGStiffSharpRun
 import LeanDLRA.Research.ImplicitBUGStiffTruncation
 import LeanDLRA.Research.ImplicitBUGStiffTwoSided
