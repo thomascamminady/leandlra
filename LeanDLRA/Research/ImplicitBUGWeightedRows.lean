@@ -1,4 +1,4 @@
-import LeanDLRA.Research.ImplicitBUGStiffRows
+import LeanDLRA.Research.ImplicitBUGStiffLemmas
 
 /-!
 # The implicit BUG integrator with a stiff row operator: a weighted Lyapunov functional
@@ -52,128 +52,13 @@ open Matrix
 
 namespace LeanDLRA
 
-namespace ImplicitBUGWeightedRows
+open ImplicitBUGStiffLemmas
 
-private theorem orth_mul_cancel {m k p : Type*} [Fintype m] [Fintype k] [DecidableEq k]
-    {U : Matrix m k ℝ} (hU : Uᵀ * U = 1) (X : Matrix k p ℝ) : Uᵀ * (U * X) = X := by
-  rw [← Matrix.mul_assoc, hU, Matrix.one_mul]
+namespace ImplicitBUGWeightedRows
 
 section Lemmas
 
 variable {m n k p : Type*} [Fintype m] [Fintype n] [Fintype k] [Fintype p]
-
-/-- A matrix with nonpositive quadratic form is dissipative on matrices with any number of
-columns, in the Frobenius inner product. -/
-private theorem inner_mul_self_nonpos {M : Matrix m m ℝ} (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0)
-    (Z : Matrix m p ℝ) : ⟪M * Z, Z⟫ ≤ 0 := by
-  rw [Frobenius.inner_def, Finset.sum_comm]
-  refine Finset.sum_nonpos fun j _ => ?_
-  have h := hdiss fun i => Z i j
-  have e : ∑ i, (M * Z) i j * Z i j = (fun i => Z i j) ⬝ᵥ M *ᵥ fun i => Z i j := by
-    simp only [dotProduct, Matrix.mulVec, Matrix.mul_apply]
-    exact Finset.sum_congr rfl fun i _ => mul_comm _ _
-  rw [e]
-  exact h
-
-/-- A bound of the quadratic form of `Mᵀ M` bounds left multiplication by `M` in the Frobenius
-norm. -/
-private theorem norm_mul_le_mul_norm {M : Matrix m m ℝ} {μ : ℝ} (hμ0 : 0 ≤ μ)
-    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (Z : Matrix m p ℝ) :
-    ‖M * Z‖ ≤ μ * ‖Z‖ := by
-  refine (pow_le_pow_iff_left₀ (norm_nonneg _) (mul_nonneg hμ0 (norm_nonneg _)) two_ne_zero).1 ?_
-  rw [mul_pow, Frobenius.norm_sq_eq_sum, Frobenius.norm_sq_eq_sum, Finset.sum_comm,
-    Finset.sum_comm (f := fun i j => Z i j ^ 2), Finset.mul_sum]
-  refine Finset.sum_le_sum fun j _ => ?_
-  have h := hμ fun i => Z i j
-  have e1 : ∑ i, (M * Z) i j ^ 2 = (M *ᵥ fun i => Z i j) ⬝ᵥ (M *ᵥ fun i => Z i j) := by
-    simp only [dotProduct, Matrix.mulVec, Matrix.mul_apply, sq]
-  have e2 : ∑ i, Z i j ^ 2 = (fun i => Z i j) ⬝ᵥ fun i => Z i j := by
-    simp only [dotProduct, sq]
-  rw [e1, e2]
-  exact h
-
-/-- Left multiplication by a symmetric idempotent matrix is self-adjoint. -/
-private theorem inner_proj_mul {P : Matrix m m ℝ} (hPt : Pᵀ = P) (A B : Matrix m p ℝ) :
-    ⟪P * A, B⟫ = ⟪A, P * B⟫ := by
-  rw [Frobenius.inner_mul_left, hPt]
-
-/-- Right multiplication by a symmetric idempotent matrix is self-adjoint. -/
-private theorem inner_mul_proj {Q : Matrix n n ℝ} (hQt : Qᵀ = Q) (A B : Matrix m n ℝ) :
-    ⟪A * Q, B⟫ = ⟪A, B * Q⟫ := by
-  rw [Frobenius.inner_mul_right, hQt]
-
-private theorem le_of_sq_le_mul {a b : ℝ} (hb : 0 ≤ b) (h : a ^ 2 ≤ b * a) :
-    a ≤ b := by
-  by_contra hc
-  rw [not_le] at hc
-  nlinarith [hb, h, hc]
-
-/-- Left multiplication by an orthogonal projector does not increase the Frobenius norm. -/
-private theorem norm_proj_mul_le {P : Matrix m m ℝ} (hP : P * P = P) (hPt : Pᵀ = P)
-    (A : Matrix m p ℝ) : ‖P * A‖ ≤ ‖A‖ := by
-  refine le_of_sq_le_mul (norm_nonneg _) ?_
-  rw [← real_inner_self_eq_norm_sq, inner_proj_mul hPt, ← Matrix.mul_assoc, hP]
-  exact real_inner_le_norm _ _
-
-/-- Right multiplication by an orthogonal projector does not increase the Frobenius norm. -/
-private theorem norm_mul_proj_le {Q : Matrix n n ℝ} (hQ : Q * Q = Q) (hQt : Qᵀ = Q)
-    (A : Matrix m n ℝ) : ‖A * Q‖ ≤ ‖A‖ := by
-  refine le_of_sq_le_mul (norm_nonneg _) ?_
-  rw [← real_inner_self_eq_norm_sq, inner_mul_proj hQt, Matrix.mul_assoc, hQ]
-  exact real_inner_le_norm _ _
-
-/-- **Energy estimate of a Galerkin backward Euler step** for a dissipative `M` on the range of
-an orthogonal projector `P`: if `W = P W` and `W - h P M W = P R`, then `‖W‖ ≤ ‖R‖`. -/
-private theorem norm_le_of_galerkin {M P : Matrix m m ℝ} {h : ℝ}
-    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hPt : Pᵀ = P) (hh : 0 ≤ h) {W R : Matrix m p ℝ}
-    (hW : P * W = W) (heq : W - h • (P * (M * W)) = P * R) : ‖W‖ ≤ ‖R‖ := by
-  refine le_of_sq_le_mul (norm_nonneg _) ?_
-  have e : W = h • (P * (M * W)) + P * R := by rw [← heq]; abel
-  have h1 : ⟪W, W⟫ = h * ⟪M * W, W⟫ + ⟪R, W⟫ := by
-    have h0 : ⟪W, W⟫ = ⟪h • (P * (M * W)) + P * R, W⟫ := congrArg (fun X => ⟪X, W⟫) e
-    rw [h0, inner_add_left, real_inner_smul_left, inner_proj_mul hPt, inner_proj_mul hPt, hW]
-  rw [← real_inner_self_eq_norm_sq, h1]
-  nlinarith [inner_mul_self_nonpos hdiss W, real_inner_le_norm R W]
-
-/-- **The Galerkin resolvent exists.** For a dissipative `M`, an orthogonal projector `P` and
-`h ≥ 0` the equation `Φ - h P M Φ = P G` has a solution with `P Φ = Φ`. -/
-private theorem exists_galerkin_resolvent {M P : Matrix m m ℝ} {h : ℝ}
-    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hP : P * P = P) (hPt : Pᵀ = P) (hh : 0 ≤ h)
-    (G : Matrix m m ℝ) : ∃ Φ : Matrix m m ℝ, P * Φ = Φ ∧ Φ - h • (P * (M * Φ)) = P * G := by
-  classical
-  have hdet : (1 - h • (P * M)).det ≠ 0 := by
-    intro h0
-    obtain ⟨v, hv, hAv⟩ := Matrix.exists_mulVec_eq_zero_iff.2 h0
-    apply hv
-    set W : Matrix m Unit ℝ := Matrix.replicateCol Unit v with hWdef
-    have hAW : (1 - h • (P * M)) * W = 0 := by
-      ext i j
-      have := congrFun hAv i
-      simpa [hWdef, Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
-    have hW1 : W = h • (P * (M * W)) := by
-      have := hAW
-      rw [Matrix.sub_mul, Matrix.one_mul, Matrix.smul_mul, Matrix.mul_assoc, sub_eq_zero] at this
-      exact this
-    have hPW : P * W = W := by
-      conv_lhs => rw [hW1]
-      rw [Matrix.mul_smul, ← Matrix.mul_assoc, hP, ← hW1]
-    have hle := norm_le_of_galerkin (R := (0 : Matrix m Unit ℝ)) hdiss hPt hh hPW
-      (by rw [Matrix.mul_zero, sub_eq_zero]; exact hW1)
-    have hW0 : W = 0 := by simpa using hle
-    funext i
-    have := congrFun (congrFun hW0 i) ()
-    simpa [hWdef] using this
-  set Φ := (1 - h • (P * M))⁻¹ * (P * G) with hΦ
-  have hA : (1 - h • (P * M)) * Φ = P * G := by
-    rw [hΦ, ← Matrix.mul_assoc, Matrix.mul_nonsing_inv _ (isUnit_iff_ne_zero.2 hdet),
-      Matrix.one_mul]
-  have e : Φ = h • (P * (M * Φ)) + P * G := by
-    rw [← hA, Matrix.sub_mul, Matrix.one_mul, Matrix.smul_mul, Matrix.mul_assoc]; abel
-  refine ⟨Φ, ?_, ?_⟩
-  · have e' : P * Φ = P * (h • (P * (M * Φ)) + P * G) := congrArg (fun X => P * X) e
-    rw [e', Matrix.mul_add, Matrix.mul_smul, ← Matrix.mul_assoc P P, ← Matrix.mul_assoc P P, hP,
-      ← e]
-  · rw [← hA, Matrix.sub_mul, Matrix.one_mul, Matrix.smul_mul, Matrix.mul_assoc]
 
 /-- The three substeps of the integrator for `F(Z) = M Z - Z CᵀC` in terms of the orthogonal
 projectors onto the old and new column and row spaces. -/
@@ -232,18 +117,6 @@ private theorem ProjStep.lstep_energy [DecidableEq n] (hs : ProjStep M C h P₀ 
   nlinarith [sq_nonneg (‖Y₀ * (1 - Q)‖ - ‖X‖), mul_nonneg hh (sq_nonneg ‖YL * Cᵀ‖),
     mul_nonpos_of_nonneg_of_nonpos hh h3]
 
-omit [Fintype p] in
-/-- The equation of the Galerkin resolvent composed with the old column projector, applied to a
-matrix. -/
-private theorem xi_mul_sub [DecidableEq m] {Ξ : Matrix m m ℝ}
-    (hΞ : Ξ - h • (P₁ * (M * Ξ)) = P₁ * (1 - h • (P₀ * M))) (X : Matrix m p ℝ) :
-    Ξ * X - h • (P₁ * (M * (Ξ * X))) = P₁ * (X - h • (P₀ * (M * X))) := by
-  have := congrArg (fun A => A * X) hΞ
-  rw [Matrix.sub_mul, Matrix.smul_mul, Matrix.mul_assoc P₁, Matrix.mul_assoc M,
-    Matrix.mul_assoc P₁, Matrix.sub_mul, Matrix.one_mul, Matrix.smul_mul,
-    Matrix.mul_assoc P₀] at this
-  exact this
-
 /-- The Galerkin resolvent composed with the old column projector is bounded by `1 + h μ`. -/
 private theorem norm_xi_mul_le [DecidableEq m] {Ξ : Matrix m m ℝ}
     (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
@@ -270,76 +143,20 @@ private theorem ProjStep.exists_sstep_decomposition [DecidableEq m]
     ∃ (Ξ : Matrix m m ℝ) (D : Matrix m n ℝ), P₁ * Ξ = Ξ ∧
       Ξ - h • (P₁ * (M * Ξ)) = P₁ * (1 - h • (P₀ * M)) ∧ Y₁ = Ξ * YL + D ∧
       ‖D‖ ≤ h * μ * (√h * ‖YL * Cᵀ‖) ∧ ‖D * Cᵀ‖ ≤ 2 * (h * μ) * ‖YL * Cᵀ‖ := by
-  obtain ⟨Ξ, hΞP, hΞ⟩ := exists_galerkin_resolvent hdiss hs.hP₁ hs.hP₁t hh.le (1 - h • (P₀ * M))
-  obtain ⟨D, hD⟩ : ∃ D, D = Y₁ - Ξ * YL := ⟨_, rfl⟩
-  refine ⟨Ξ, D, hΞP, hΞ, by rw [hD]; abel, ?_⟩
-  have hPD : P₁ * D = D := by
-    rw [hD, Matrix.mul_sub, hs.sP, ← Matrix.mul_assoc, hΞP]
-  have hDQ : D * Q₁ = D := by
-    rw [hD, Matrix.sub_mul, hs.sQ, Matrix.mul_assoc, hs.lQ]
-  -- the equation of the remainder
-  have e2 : Ξ * YL = P₁ * (h • (M * (Ξ * YL)) + (YL - h • (P₀ * (M * YL)))) * Q₁ := by
-    have e : Ξ * YL = P₁ * (h • (M * (Ξ * YL)) + (YL - h • (P₀ * (M * YL)))) := by
-      rw [Matrix.mul_add, Matrix.mul_smul]
-      exact (sub_eq_iff_eq_add'.1 (xi_mul_sub hΞ YL))
-    have e' : Ξ * YL * Q₁ = Ξ * YL := by rw [Matrix.mul_assoc, hs.lQ]
-    rw [← e, e']
-  have e3 : Y₀ = YL - h • (P₀ * (M * YL)) + h • (YL * (Cᵀ * C)) := by
-    have := hs.lEq
-    rw [Matrix.mul_sub, ← Matrix.mul_assoc P₀ YL, hs.lP, smul_sub] at this
-    have h' : Y₀ = YL - (h • (P₀ * (M * YL)) - h • (YL * (Cᵀ * C))) :=
-      eq_sub_of_add_eq this.symm
-    rw [h']; abel
-  have eD : D = P₁ * (h • (M * D) - h • ((Y₁ - YL) * (Cᵀ * C))) * Q₁ := by
-    have h0 : Y₁ - Ξ * YL = P₁ * (Y₀ + h • (M * Y₁ - Y₁ * (Cᵀ * C))) * Q₁ -
-        P₁ * (h • (M * (Ξ * YL)) + (YL - h • (P₀ * (M * YL)))) * Q₁ :=
-      congrArg₂ (fun A B => A - B) hs.sEq e2
-    refine (hD.trans h0).trans ?_
-    rw [← Matrix.sub_mul, ← Matrix.mul_sub]
-    congr 2
-    rw [e3, hD]
-    simp only [Matrix.mul_sub, Matrix.sub_mul, smul_sub]
-    abel
-  -- energy estimate
-  have hDC : D * Cᵀ = P₁ * (D * Cᵀ) := by rw [← Matrix.mul_assoc, hPD]
+  obtain ⟨Ξ, D, hΞP, hΞ, hY, hDe⟩ := ImplicitBUGStiffLemmas.exists_sstep_decomposition hs.hP₁
+    hs.hP₁t hs.hQ₁t hs.lEq hs.lP hs.lQ hs.sEq hs.sP hs.sQ hdiss hh
+  refine ⟨Ξ, D, hΞP, hΞ, hY, ?_⟩
   obtain ⟨Da, hDa⟩ : ∃ Da, Da = (Ξ - P₁) * YL := ⟨_, rfl⟩
-  have hsplit : P₁ * ((Y₁ - YL) * Cᵀ) = D * Cᵀ + Da * Cᵀ := by
-    have : Y₁ - Ξ * YL + (Ξ - P₁) * YL = Y₁ - P₁ * YL := by rw [Matrix.sub_mul]; abel
-    rw [← Matrix.mul_assoc, Matrix.mul_sub, hs.sP, ← Matrix.add_mul, hD, hDa, this]
-  have h1 : ⟪D, D⟫ = h * ⟪M * D, D⟫ - h * (⟪D * Cᵀ, D * Cᵀ⟫ + ⟪Da * Cᵀ, D * Cᵀ⟫) := by
-    have h0 : ⟪D, D⟫ = ⟪P₁ * (h • (M * D) - h • ((Y₁ - YL) * (Cᵀ * C))) * Q₁, D⟫ :=
-      congrArg (fun A => ⟪A, D⟫) eD
-    rw [h0, inner_mul_proj hs.hQ₁t, inner_proj_mul hs.hP₁t, hDQ, hPD, inner_sub_left,
-      real_inner_smul_left, real_inner_smul_left, ← Matrix.mul_assoc (Y₁ - YL),
-      Frobenius.inner_mul_right ((Y₁ - YL) * Cᵀ) C D, hDC, ← inner_proj_mul hs.hP₁t, hsplit,
-      ← hDC, inner_add_left]
-  have hDa1 : P₁ * (Da * Cᵀ) = Da * Cᵀ := by
-    rw [hDa, ← Matrix.mul_assoc, ← Matrix.mul_assoc, Matrix.mul_sub, hΞP, hs.hP₁]
-  have hDa2 : Da * Cᵀ - h • (P₁ * (M * (Da * Cᵀ))) =
-      P₁ * (h • (M * (P₁ * (YL * Cᵀ)) - P₀ * (M * (YL * Cᵀ)))) := by
-    have e : Da * Cᵀ = Ξ * (YL * Cᵀ) - P₁ * (YL * Cᵀ) := by
-      rw [hDa, Matrix.mul_assoc, Matrix.sub_mul]
-    rw [e, Matrix.mul_sub, Matrix.mul_sub, smul_sub, sub_sub_sub_comm, xi_mul_sub hΞ]
-    simp only [Matrix.mul_smul, Matrix.mul_sub, smul_sub]
-    abel
   have ha : ‖Da * Cᵀ‖ ≤ 2 * (h * μ) * ‖YL * Cᵀ‖ := by
-    refine (norm_le_of_galerkin hdiss hs.hP₁t hh.le hDa1 hDa2).trans ?_
-    rw [norm_smul, Real.norm_of_nonneg hh.le]
-    have h2 := norm_sub_le (M * (P₁ * (YL * Cᵀ))) (P₀ * (M * (YL * Cᵀ)))
-    have h3 := (norm_mul_le_mul_norm hμ0 hμ (P₁ * (YL * Cᵀ))).trans
-      (mul_le_mul_of_nonneg_left (norm_proj_mul_le hs.hP₁ hs.hP₁t (YL * Cᵀ)) hμ0)
-    have h4 := (norm_proj_mul_le hs.hP₀ hs.hP₀t (M * (YL * Cᵀ))).trans
-      (norm_mul_le_mul_norm hμ0 hμ (YL * Cᵀ))
-    calc h * ‖M * (P₁ * (YL * Cᵀ)) - P₀ * (M * (YL * Cᵀ))‖
-        ≤ h * (μ * ‖YL * Cᵀ‖ + μ * ‖YL * Cᵀ‖) :=
-          mul_le_mul_of_nonneg_left (h2.trans (add_le_add h3 h4)) hh.le
-      _ = 2 * (h * μ) * ‖YL * Cᵀ‖ := by ring
-  rw [real_inner_self_eq_norm_sq, real_inner_self_eq_norm_sq] at h1
+    rw [hDa, Matrix.mul_assoc]
+    exact norm_xi_sub_mul_le hdiss hμ0 hμ hh.le hs.hP₀ hs.hP₀t hs.hP₁ hs.hP₁t hΞP hΞ (YL * Cᵀ)
+  have h2 : ⟪(Ξ - P₁) * YL * (Cᵀ * C), D⟫ = ⟪Da * Cᵀ, D * Cᵀ⟫ := by
+    rw [← hDa, ← Matrix.mul_assoc Da, Frobenius.inner_mul_right (Da * Cᵀ) C D]
+  rw [h2] at hDe
   have hin : -(‖Da * Cᵀ‖ * ‖D * Cᵀ‖) ≤ ⟪Da * Cᵀ, D * Cᵀ⟫ :=
     neg_le_of_abs_le (abs_real_inner_le_norm _ _)
-  have hMD := inner_mul_self_nonpos hdiss D
   have key : ‖D‖ ^ 2 + h * ‖D * Cᵀ‖ ^ 2 ≤ h * (‖Da * Cᵀ‖ * ‖D * Cᵀ‖) := by
-    nlinarith [mul_nonpos_of_nonneg_of_nonpos hh.le hMD, mul_le_mul_of_nonneg_left hin hh.le]
+    nlinarith [mul_le_mul_of_nonneg_left hin hh.le]
   have hb : ‖D * Cᵀ‖ ≤ ‖Da * Cᵀ‖ := by
     refine le_of_sq_le_mul (norm_nonneg _) ?_
     have : h * ‖D * Cᵀ‖ ^ 2 ≤ h * (‖Da * Cᵀ‖ * ‖D * Cᵀ‖) := by nlinarith [sq_nonneg ‖D‖]
@@ -416,11 +233,6 @@ private theorem ProjStep.norm_mul_transpose_le
   rw [e]
   refine (norm_add_le _ _).trans ?_
   nlinarith [norm_nonneg (YL * Cᵀ), mul_nonneg hh.le hμ0]
-
-/-- Moving a Gram matrix `CᵀC` and a row projector through the Frobenius inner product. -/
-private theorem inner_mul_gram_proj (hQ₀t : Q₀ᵀ = Q₀) {A : Matrix m n ℝ} (hA : A * Q₀ = A)
-    (B : Matrix m n ℝ) : ⟪A, B * (Cᵀ * C) * Q₀⟫ = ⟪A * Cᵀ, B * Cᵀ⟫ := by
-  rw [Frobenius.inner_mul_right', hQ₀t, hA, ← Matrix.mul_assoc, Frobenius.inner_mul_right']
 
 /-- **The K-step.** The stiff term `Λ = h Y_K CᵀC Q₀` of the K-step is bounded by the start value
 and by the square root of its stiff energy. -/
