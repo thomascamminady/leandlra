@@ -151,6 +151,7 @@ import LeanDLRA.Research.FederatedManySteps
 import LeanDLRA.Research.FederatedThreeSteps
 import LeanDLRA.Research.FederatedTwoSteps
 import LeanDLRA.Research.ImplicitBUGEnergyProjection
+import LeanDLRA.Research.ImplicitBUGRationalKrylov
 import LeanDLRA.Research.ImplicitBUGSmoothRows
 import LeanDLRA.Research.ImplicitBUGStiffAugmented
 import LeanDLRA.Research.ImplicitBUGStiffRows
