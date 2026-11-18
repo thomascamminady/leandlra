@@ -70,6 +70,8 @@ import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
 import LeanDLRA.Integrators.Matrix.BUG
 import LeanDLRA.Integrators.Matrix.BUGHybridQuasiOptimality
 import LeanDLRA.Integrators.Matrix.BUGQuasiOptimality
+import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityNormalStep
+import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityNormalTruncation
 import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityStep
 import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityTruncation
 import LeanDLRA.Integrators.Matrix.BUGRun
