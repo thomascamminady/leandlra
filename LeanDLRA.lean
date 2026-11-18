@@ -75,6 +75,8 @@ import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityNormalStep
 import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityNormalTruncation
 import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityStep
 import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityTruncation
+import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityWeingartenStep
+import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityWeingartenTruncation
 import LeanDLRA.Integrators.Matrix.BUGRun
 import LeanDLRA.Integrators.Matrix.BUGRunOneSided
 import LeanDLRA.Integrators.Matrix.BUGStep
