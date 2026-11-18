@@ -236,6 +236,8 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Tensor/Tucker/BUGStep`](../../LeanDLRA/Tensor/Tucker/BUGStep.lean) | The Tucker BUG step as a step relation | 13 |  |
 | [`Tensor/Tucker/Basic`](../../LeanDLRA/Tensor/Tucker/Basic.lean) | Tucker tensors: mode projectors, mode-wise interpolation and the Tucker integrators | 12 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.18721](https://arxiv.org/abs/2402.18721) |
 | [`Tensor/Tucker/ProjectorLipschitz`](../../LeanDLRA/Tensor/Tucker/ProjectorLipschitz.lean) | A Lipschitz bound of the tangent projector of the Tucker manifold | 17 |  |
+| [`Tensor/Tucker/ProjectorLipschitzRankOne`](../../LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOne.lean) | The Lipschitz constant of the tangent projector for tensors of rank one | 37 | [2307.04224](https://arxiv.org/abs/2307.04224) |
+| [`Tensor/Tucker/ProjectorLipschitzRankOneSharp`](../../LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOneSharp.lean) | The Lipschitz constant `√(2 (d - 1)/d)` for tensors of rank one cannot be lowered | 8 |  |
 | [`Tensor/Tucker/ProjectorLowerBound`](../../LeanDLRA/Tensor/Tucker/ProjectorLowerBound.lean) | The Lipschitz constant of the tangent projector of the Tucker manifold is larger than one | 35 |  |
 | [`Tensor/Tucker/Tangent`](../../LeanDLRA/Tensor/Tucker/Tangent.lean) | The tangent space of constrained Tucker manifolds and its orthogonal projector | 27 |  |
 | [`Tensor/Tucker/TangentNormal`](../../LeanDLRA/Tensor/Tucker/TangentNormal.lean) | Normal components with respect to the tangent projector of the Tucker manifold | 15 |  |
