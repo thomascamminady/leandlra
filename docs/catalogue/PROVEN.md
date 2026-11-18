@@ -116,8 +116,8 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/Matrix/AdaptiveBUGRun`](../../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean) | Runs of the rank-adaptive BUG integrator with truncation by a tolerance | 6 |  |
 | [`Integrators/Matrix/AdaptiveBUGStep`](../../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean) | The augmented BUG step as step relations: truncation by a tolerance or to a fixed rank | 36 |  |
 | [`Integrators/Matrix/BUG`](../../LeanDLRA/Integrators/Matrix/BUG.lean) | The BUG integrator for matrices, at the level of the factors | 58 |  |
-| [`Integrators/Matrix/BUGRun`](../../LeanDLRA/Integrators/Matrix/BUGRun.lean) | Runs of the fixed-rank BUG integrator: existence and error bound | 9 |  |
-| [`Integrators/Matrix/BUGRunOneSided`](../../LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean) | The fixed-rank BUG integrator: runs with a one-sided Lipschitz constant and smaller constants | 4 |  |
+| [`Integrators/Matrix/BUGRun`](../../LeanDLRA/Integrators/Matrix/BUGRun.lean) | Runs of the fixed-rank BUG integrator: existence and error bound | 11 |  |
+| [`Integrators/Matrix/BUGRunOneSided`](../../LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean) | The fixed-rank BUG integrator: runs with a one-sided Lipschitz constant and smaller constants | 6 |  |
 | [`Integrators/Matrix/BUGStep`](../../LeanDLRA/Integrators/Matrix/BUGStep.lean) | The matrix BUG step as a step relation | 16 |  |
 | [`Integrators/Matrix/BUGTube`](../../LeanDLRA/Integrators/Matrix/BUGTube.lean) | The BUG integrator near the solution: global error from tube hypotheses | 2 |  |
 | [`Integrators/Matrix/Defs`](../../LeanDLRA/Integrators/Matrix/Defs.lean) | Definitions: normal-component bounds for matrix integrators | 15 |  |
@@ -138,7 +138,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/Matrix/TruncBUGRun`](../../LeanDLRA/Integrators/Matrix/TruncBUGRun.lean) | Runs of the augmented BUG integrator with truncation to a fixed rank | 8 |  |
 | [`Integrators/Method`](../../LeanDLRA/Integrators/Method.lean) | Step methods: existence of a run and error bound from four properties of one step | 9 |  |
 | [`Integrators/MethodGrid`](../../LeanDLRA/Integrators/MethodGrid.lean) | Tube-local methods on general grids | 3 |  |
-| [`Integrators/MethodOneSided`](../../LeanDLRA/Integrators/MethodOneSided.lean) | Runs of a method with a one-sided Lipschitz constant in the error bound | 19 |  |
+| [`Integrators/MethodOneSided`](../../LeanDLRA/Integrators/MethodOneSided.lean) | Runs of a method with a one-sided Lipschitz constant in the error bound | 20 |  |
 | [`Integrators/MethodTolerance`](../../LeanDLRA/Integrators/MethodTolerance.lean) | Tube-local methods with a tolerance per step | 5 |  |
 | [`Integrators/ParallelBUG`](../../LeanDLRA/Integrators/ParallelBUG.lean) | The parallel rank-adaptive BUG integrator: robust local and global error bounds | 29 |  |
 | [`Integrators/PerturbedField`](../../LeanDLRA/Integrators/PerturbedField.lean) | Hyper-reduced, surrogate and frozen-coupling vector fields | 21 |  |
@@ -181,8 +181,8 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Stiff/Defs`](../../LeanDLRA/Stiff/Defs.lean) | Implicit low-rank integrators: definitions | 0 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Stiff/DualWeightedResidual`](../../LeanDLRA/Stiff/DualWeightedResidual.lean) | Dual-weighted residual identities for low-rank implicit Euler steps | 35 | [1901.05343](https://arxiv.org/abs/1901.05343), [2206.09374](https://arxiv.org/abs/2206.09374), [2609.18246](https://arxiv.org/abs/2609.18246) |
 | [`Stiff/ImplicitBUG`](../../LeanDLRA/Stiff/ImplicitBUG.lean) | Implicit BUG integrators: implicit K-step capture, robust first order, B-convergence | 51 | [2010.02022](https://arxiv.org/abs/2010.02022), [2311.15143](https://arxiv.org/abs/2311.15143), [2402.05347](https://arxiv.org/abs/2402.05347), [2410.07465](https://arxiv.org/abs/2410.07465), [2412.09400](https://arxiv.org/abs/2412.09400), [2503.04932](https://arxiv.org/abs/2503.04932), [2609.02721](https://arxiv.org/abs/2609.02721), [2610.18419](https://arxiv.org/abs/2610.18419) |
-| [`Stiff/ImplicitBUGRun`](../../LeanDLRA/Stiff/ImplicitBUGRun.lean) | Runs of the fixed-rank BUG integrator with backward Euler substeps | 3 |  |
-| [`Stiff/ImplicitBUGStep`](../../LeanDLRA/Stiff/ImplicitBUGStep.lean) | The BUG integrator with backward Euler substeps as a step relation | 29 | [2610.18419](https://arxiv.org/abs/2610.18419) |
+| [`Stiff/ImplicitBUGRun`](../../LeanDLRA/Stiff/ImplicitBUGRun.lean) | Runs of the fixed-rank BUG integrator with backward Euler substeps | 6 |  |
+| [`Stiff/ImplicitBUGStep`](../../LeanDLRA/Stiff/ImplicitBUGStep.lean) | The BUG integrator with backward Euler substeps as a step relation | 33 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Stiff/ImplicitSolvability`](../../LeanDLRA/Stiff/ImplicitSolvability.lean) | Unique solvability of projected implicit stages | 59 |  |
 
 ## Stability and structure
