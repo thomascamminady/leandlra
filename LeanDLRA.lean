@@ -68,6 +68,7 @@ import LeanDLRA.Integrators.KStep
 import LeanDLRA.Integrators.Matrix.AdaptiveBUGRun
 import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
 import LeanDLRA.Integrators.Matrix.BUG
+import LeanDLRA.Integrators.Matrix.BUGHybridQuasiOptimality
 import LeanDLRA.Integrators.Matrix.BUGQuasiOptimality
 import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityStep
 import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityTruncation
