@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit bd9d5ae (2026-11-18). A theorem is quoted from its
+files and were compared with them at commit 7337b98 (2026-11-18). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -2194,7 +2194,7 @@ def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel 
       Y₀ = U₀ * S₀ * V₀ᵀ ∧ IsStep F t₀ t₁ U₀ S₀ V₀ U₁ Ŝ₁ K S Lf ∧ Y₁ = U₁ * (Lf t₁)ᵀ
 ```
 
-`MatrixKSL.isTubeLocal_stepRel` in [`LeanDLRA/Integrators/Matrix/KSLRun.lean`, lines 270–272](../LeanDLRA/Integrators/Matrix/KSLRun.lean#L270-L272):
+`MatrixKSL.isTubeLocal_stepRel` in [`LeanDLRA/Integrators/Matrix/KSLRun.lean`, lines 271–273](../LeanDLRA/Integrators/Matrix/KSLRun.lean#L271-L273):
 
 ```lean
 theorem isTubeLocal_stepRel (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n) :
@@ -2202,7 +2202,7 @@ theorem isTubeLocal_stepRel (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.ca
       (fun Y => Y.rank ≤ r) 4
 ```
 
-`MatrixKSL.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/KSLRun.lean`, lines 302–312](../LeanDLRA/Integrators/Matrix/KSLRun.lean#L302-L312):
+`MatrixKSL.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/KSLRun.lean`, lines 303–313](../LeanDLRA/Integrators/Matrix/KSLRun.lean#L303-L313):
 
 ```lean
 theorem exists_run_norm_sub_le
@@ -2310,7 +2310,7 @@ distance of `Yh` to the set of matrices of rank at most `r`). The docstring of t
 notes that such a `Y₁` is computed by a truncated singular value decomposition of `Yh`; the
 truncation of section 2.2 has rank at most `r` and attains the distance.
 
-`MatrixParallelBUG.isTubeLocal_stepRel` in [`LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean`, lines 288–290](../LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean#L288-L290):
+`MatrixParallelBUG.isTubeLocal_stepRel` in [`LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean`, lines 289–291](../LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean#L289-L291):
 
 ```lean
 theorem isTubeLocal_stepRel (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n) :
@@ -2318,7 +2318,7 @@ theorem isTubeLocal_stepRel (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.ca
       (fun Y => Y.rank ≤ r) 2
 ```
 
-`MatrixParallelBUG.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean`, lines 322–333](../LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean#L322-L333):
+`MatrixParallelBUG.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean`, lines 323–334](../LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean#L323-L334):
 
 ```lean
 theorem exists_run_norm_sub_le
@@ -2400,7 +2400,7 @@ Source: [CerutiKuschLubich2024, §3 and Thm. 4.1]; the docstring of
 
 **Truncation tolerance, runs on a tube.**
 
-`MatrixParallelBUG.adaptiveStepRel` in [`LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean`, lines 114–116](../LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean#L114-L116):
+`MatrixParallelBUG.adaptiveStepRel` in [`LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean`, lines 115–117](../LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean#L115-L117):
 
 ```lean
 def adaptiveStepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (R : Set ℕ) (ϑ : ℝ) :
@@ -2408,7 +2408,7 @@ def adaptiveStepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (R : Set ℕ
   fun t₀ t₁ Y₀ Y₁ => ∃ r ∈ R, ∃ Yh : Matrix m n ℝ, augmentedRel F r t₀ t₁ Y₀ Yh ∧ ‖Y₁ - Yh‖ ≤ ϑ
 ```
 
-`MatrixParallelBUG.isTubeLocal_adaptiveStepRel_Ici` in [`LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean`, lines 263–267](../LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean#L263-L267):
+`MatrixParallelBUG.isTubeLocal_adaptiveStepRel_Ici` in [`LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean`, lines 264–268](../LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean#L264-L268):
 
 ```lean
 theorem isTubeLocal_adaptiveStepRel_Ici (hϑ : 0 ≤ ϑ) (hrm : r₀ ≤ Fintype.card m)
@@ -2418,7 +2418,7 @@ theorem isTubeLocal_adaptiveStepRel_Ici (hϑ : 0 ≤ ϑ) (hrm : r₀ ≤ Fintype
       (fun _ => True) 2
 ```
 
-`MatrixParallelBUG.adaptive_exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean`, lines 427–439](../LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean#L427-L439):
+`MatrixParallelBUG.adaptive_exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean`, lines 428–440](../LeanDLRA/Integrators/Matrix/ParallelBUGTolRun.lean#L428-L440):
 
 ```lean
 theorem adaptive_exists_run_norm_sub_le
@@ -2570,7 +2570,7 @@ upper bound for a Galerkin step whose space contains a point close to the exact 
 + Y ℬ(t)` (`AugmentationRank.error_le_of_sylvester`; section 6.10 removes the hypotheses on the
 auxiliary flows); they are not quoted here. The theorem cites no theorem of a paper.
 
-`MatrixBUG.truncStepRel` in [`LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean`, lines 365–368](../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean#L365-L368):
+`MatrixBUG.truncStepRel` in [`LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean`, lines 366–369](../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean#L366-L369):
 
 ```lean
 def truncStepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) (κ : ℝ) :
@@ -2579,7 +2579,7 @@ def truncStepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) (κ :
     ‖Y₁ - Yh‖ ≤ κ * distLR r Yh
 ```
 
-`MatrixBUG.trunc_exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/TruncBUGRun.lean`, lines 238–250](../LeanDLRA/Integrators/Matrix/TruncBUGRun.lean#L238-L250):
+`MatrixBUG.trunc_exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/TruncBUGRun.lean`, lines 239–251](../LeanDLRA/Integrators/Matrix/TruncBUGRun.lean#L239-L251):
 
 ```lean
 theorem trunc_exists_run_norm_sub_le
@@ -2622,7 +2622,7 @@ theorem of a paper.
 
 **Truncation tolerance, runs on a tube.**
 
-`MatrixBUG.isTubeLocal_adaptiveStepRel_Ici` in [`LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean`, lines 125–129](../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean#L125-L129):
+`MatrixBUG.isTubeLocal_adaptiveStepRel_Ici` in [`LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean`, lines 126–130](../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean#L126-L130):
 
 ```lean
 theorem isTubeLocal_adaptiveStepRel_Ici (hϑ : 0 ≤ ϑ) (hrm : r₀ ≤ Fintype.card m)
@@ -2632,7 +2632,7 @@ theorem isTubeLocal_adaptiveStepRel_Ici (hϑ : 0 ≤ ϑ) (hrm : r₀ ≤ Fintype
       (fun _ => True) 4
 ```
 
-`MatrixBUG.adaptive_exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean`, lines 235–246](../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean#L235-L246):
+`MatrixBUG.adaptive_exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean`, lines 236–247](../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean#L236-L247):
 
 ```lean
 theorem adaptive_exists_run_norm_sub_le
@@ -2794,7 +2794,7 @@ integrator with fixed rank `r`: the result `Y₁` has rank at most `r`, and its 
 result `Yh` of the step without truncation is at most `distLR r Yh`, the distance of `Yh` from
 the matrices of rank at most `r`.
 
-`MatrixEulerBUG.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/EulerBUGRun.lean`, lines 342–356](../LeanDLRA/Integrators/Matrix/EulerBUGRun.lean#L342-L356):
+`MatrixEulerBUG.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/EulerBUGRun.lean`, lines 343–357](../LeanDLRA/Integrators/Matrix/EulerBUGRun.lean#L343-L357):
 
 ```lean
 theorem exists_run_norm_sub_le
@@ -3463,7 +3463,7 @@ local error of the BUG step. The local error of the theorem above is
 `(t₁ - t₀) ((2 c₁ + 1) ε + (2 c₂ + 10 L B) (t₁ - t₀))` with `c₁ = bugC₁ L H`,
 `c₂ = bugC₂ L B H`, under the normal bound `ε` at rank `r` and at `k` columns, `k ≤ l`.
 
-`MatrixDRSVD.isTubeLocal_stepRel` in [`LeanDLRA/Randomized/DRSVDRun.lean`, lines 166–169](../LeanDLRA/Randomized/DRSVDRun.lean#L166-L169):
+`MatrixDRSVD.isTubeLocal_stepRel` in [`LeanDLRA/Randomized/DRSVDRun.lean`, lines 167–170](../LeanDLRA/Randomized/DRSVDRun.lean#L167-L170):
 
 ```lean
 theorem isTubeLocal_stepRel (hrk : r ≤ k) (hkn : k ≤ Fintype.card n) (hkl : k ≤ l)
@@ -3472,7 +3472,7 @@ theorem isTubeLocal_stepRel (hrk : r ≤ k) (hkn : k ≤ Fintype.card n) (hkl : 
       (fun Y => Y.rank ≤ r) 3
 ```
 
-`MatrixDRSVD.exists_run_norm_sub_le` in [`LeanDLRA/Randomized/DRSVDRun.lean`, lines 277–288](../LeanDLRA/Randomized/DRSVDRun.lean#L277-L288):
+`MatrixDRSVD.exists_run_norm_sub_le` in [`LeanDLRA/Randomized/DRSVDRun.lean`, lines 278–289](../LeanDLRA/Randomized/DRSVDRun.lean#L278-L289):
 
 ```lean
 theorem exists_run_norm_sub_le
@@ -3509,7 +3509,7 @@ Source: Carrel, arXiv 2410.17091, §§2–3, as cited in the module docstrings.
 
 ### 6.8 The projected Euler method and projected Runge–Kutta methods
 
-`distLR_flow_le_exp_of_tube` in [`LeanDLRA/Integrators/Matrix/FlowDistance.lean`, lines 142–149](../LeanDLRA/Integrators/Matrix/FlowDistance.lean#L142-L149):
+`distLR_flow_le_exp_of_tube` in [`LeanDLRA/Integrators/Matrix/FlowDistance.lean`, lines 143–150](../LeanDLRA/Integrators/Matrix/FlowDistance.lean#L143-L150):
 
 ```lean
 theorem distLR_flow_le_exp_of_tube (hε : FactoredNormalBoundOn F r (tubeSet A a b ρ) ε)
@@ -3569,7 +3569,7 @@ the recorded form of the statement; for a start of rank at most `r` it gives
 lowered is not proved there; the docstring names a constant field for which the library
 certifies a lower bound `t / 3`.
 
-`MatrixProjEuler.stepRel` in [`LeanDLRA/Integrators/Matrix/ProjectedEuler.lean`, lines 113–115](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean#L113-L115):
+`MatrixProjEuler.stepRel` in [`LeanDLRA/Integrators/Matrix/ProjectedEuler.lean`, lines 114–116](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean#L114-L116):
 
 ```lean
 def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) (κ : ℝ) : StepRel (Matrix m n ℝ) :=
@@ -3577,7 +3577,7 @@ def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) (κ : ℝ)
     ‖Y₁ - X‖ ≤ κ * distLR r X
 ```
 
-`MatrixProjEuler.stepRel.hasLocalError_of_tube` in [`LeanDLRA/Integrators/Matrix/ProjectedEuler.lean`, lines 267–276](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean#L267-L276):
+`MatrixProjEuler.stepRel.hasLocalError_of_tube` in [`LeanDLRA/Integrators/Matrix/ProjectedEuler.lean`, lines 268–277](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean#L268-L277):
 
 ```lean
 theorem stepRel.hasLocalError_of_tube (h : stepRel F r κ t₀ t₁ Y₀ Y₁) (hκ : 0 ≤ κ)
@@ -3592,7 +3592,7 @@ theorem stepRel.hasLocalError_of_tube (h : stepRel F r κ t₀ t₁ Y₀ Y₁) (
       ((10 * κ * L * B + (1 + κ) * (L * B + Lt) / 2) * (t₁ - t₀) + (1 + 2 * κ) * ε))
 ```
 
-`MatrixProjEuler.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/ProjectedEuler.lean`, lines 417–432](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean#L417-L432):
+`MatrixProjEuler.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/ProjectedEuler.lean`, lines 418–433](../LeanDLRA/Integrators/Matrix/ProjectedEuler.lean#L418-L433):
 
 ```lean
 theorem exists_run_norm_sub_le

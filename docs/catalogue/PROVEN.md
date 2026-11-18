@@ -229,7 +229,9 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Tensor/Tucker/BUGRun`](../../LeanDLRA/Tensor/Tucker/BUGRun.lean) | Runs of the Tucker BUG integrator: existence and error bound | 7 |  |
 | [`Tensor/Tucker/BUGStep`](../../LeanDLRA/Tensor/Tucker/BUGStep.lean) | The Tucker BUG step as a step relation | 13 |  |
 | [`Tensor/Tucker/Basic`](../../LeanDLRA/Tensor/Tucker/Basic.lean) | Tucker tensors: mode projectors, mode-wise interpolation and the Tucker integrators | 12 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.18721](https://arxiv.org/abs/2402.18721) |
+| [`Tensor/Tucker/ProjectorLipschitz`](../../LeanDLRA/Tensor/Tucker/ProjectorLipschitz.lean) | A Lipschitz bound of the tangent projector of the Tucker manifold | 17 |  |
 | [`Tensor/Tucker/Tangent`](../../LeanDLRA/Tensor/Tucker/Tangent.lean) | The tangent space of constrained Tucker manifolds and its orthogonal projector | 27 |  |
+| [`Tensor/Tucker/TangentNormal`](../../LeanDLRA/Tensor/Tucker/TangentNormal.lean) | Normal components with respect to the tangent projector of the Tucker manifold | 15 |  |
 | [`Tensor/Unfolding`](../../LeanDLRA/Tensor/Unfolding.lean) | Unfoldings and linear maps acting on a set of modes | 47 |  |
 
 ## Low-rank training
