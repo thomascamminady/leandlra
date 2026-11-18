@@ -26,6 +26,7 @@ import LeanDLRA.DLRA.QuasiOptimalitySharp
 import LeanDLRA.DLRA.QuasiOptimalitySpectral
 import LeanDLRA.DLRA.QuasiOptimalitySpeedSharp
 import LeanDLRA.DLRA.QuasiOptimalityStiff
+import LeanDLRA.DLRA.QuasiOptimalityStiffTruncation
 import LeanDLRA.DLRA.QuasiOptimalityTimeLocal
 import LeanDLRA.DLRA.QuasiOptimalityTruncation
 import LeanDLRA.DLRA.QuasiOptimalityTube
@@ -148,6 +149,7 @@ import LeanDLRA.Research.FederatedDescentThreshold
 import LeanDLRA.Research.FederatedManySteps
 import LeanDLRA.Research.FederatedThreeSteps
 import LeanDLRA.Research.FederatedTwoSteps
+import LeanDLRA.Research.ImplicitBUGStiffRows
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.PerturbedSylvester
 import LeanDLRA.Research.RankOneGalerkinBarrier
@@ -174,6 +176,7 @@ import LeanDLRA.Stiff.DualWeightedResidual
 import LeanDLRA.Stiff.ImplicitBUG
 import LeanDLRA.Stiff.ImplicitBUGRun
 import LeanDLRA.Stiff.ImplicitBUGStep
+import LeanDLRA.Stiff.ImplicitGalerkinTangential
 import LeanDLRA.Stiff.ImplicitSolvability
 import LeanDLRA.Stochastic.GramianLowerBound
 import LeanDLRA.Stochastic.KalmanBucy
