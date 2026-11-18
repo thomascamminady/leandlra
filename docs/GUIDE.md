@@ -6,7 +6,7 @@ read the first two sections of [Getting started](GETTING_STARTED.md); the pages 
 core proves are [Main results](MAIN_RESULTS.md) and [Definitions](DEFINITIONS.md).
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit 9a1cc20 (2026-11-18).
+block links to the lines. The blocks were compared with the files at commit 9118e20 (2026-11-18).
 
 ## Contents
 
@@ -25,7 +25,7 @@ block links to the lines. The blocks were compared with the files at commit 9a1c
 says that the fixed-rank BUG integrator can be run and that the run stays near the exact
 solution; it is the theorem to start with.
 
-`MatrixBUG.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 279–288](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L279-L288):
+`MatrixBUG.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 280–289](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L280-L289):
 
 ```lean
 theorem exists_run_norm_sub_le

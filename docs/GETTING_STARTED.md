@@ -15,7 +15,7 @@ The page describes the core library, the modules imported by `LeanDLRA.lean`. Th
 * [Conventions](CONVENTIONS.md): the rules for names, statements and docstrings.
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit 9a1cc20 (2026-11-18).
+block links to the lines. The blocks were compared with the files at commit 9118e20 (2026-11-18).
 Installation is described in the [README](../README.md#using-leandlra-in-your-project).
 
 ## Contents
@@ -137,7 +137,7 @@ theorem and with the keyword `variable`, the index types `m n` of the matrices, 
 field `F`, the exact solution `A`, the real numbers `t₀ h H T ρ L B ε δ` and the number of steps
 `N`; they are not repeated in the statement.
 
-`MatrixBUG.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 279–288](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L279-L288):
+`MatrixBUG.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 280–289](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L280-L289):
 
 ```lean
 theorem exists_run_norm_sub_le
@@ -201,7 +201,7 @@ The same file applies the theorem to the linear field `F(t, Y) = M Y + Y Nᵀ + 
 stationary point `C`, that is, a matrix with `M C + C Nᵀ + G = 0`. Before the example the file
 declares `m n` and `r` with `variable`.
 
-[`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 380–392](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L380-L392):
+[`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 381–393](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L381-L393):
 
 ```lean
 example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
@@ -333,7 +333,7 @@ To apply the theorem to a field `F` of your own you provide the same things.
 
 The lemma for the smallness condition:
 
-`exists_bugGlobalBound_lt` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 314–316](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L314-L316):
+`exists_bugGlobalBound_lt` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 315–317](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L315-L317):
 
 ```lean
 theorem exists_bugGlobalBound_lt {L B H T ε ρ : ℝ} (hH : 0 < H)
@@ -345,7 +345,7 @@ The next example of the file uses it for the linear field. Its statement has no 
 `δ` and `h`; the only condition left is `hG`, which says that the part of the error bound that
 does not vanish with `δ` and `h` is smaller than the tube radius:
 
-[`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 400–408](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L400-L408):
+[`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 401–409](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L401-L409):
 
 ```lean
 example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
@@ -455,7 +455,7 @@ declarations.
 
 The Lean sources below `LeanDLRA/` form two libraries ([STRUCTURE.md](STRUCTURE.md)).
 
-* The **core** is the set of modules imported by `LeanDLRA.lean`, 200 modules at the commit
+* The **core** is the set of modules imported by `LeanDLRA.lean`, 201 modules at the commit
   named above. Its theorems are stated in shared definitions, so they can be combined: the
   solution of one theorem is the solution of the next, a run is a run. This page,
   [Main results](MAIN_RESULTS.md) and [Definitions](DEFINITIONS.md) describe the core only.

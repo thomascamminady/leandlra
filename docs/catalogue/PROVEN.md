@@ -117,7 +117,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/Matrix/AdaptiveBUGStep`](../../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean) | The augmented BUG step as step relations: truncation by a tolerance or to a fixed rank | 36 |  |
 | [`Integrators/Matrix/BUG`](../../LeanDLRA/Integrators/Matrix/BUG.lean) | The BUG integrator for matrices, at the level of the factors | 58 |  |
 | [`Integrators/Matrix/BUGQuasiOptimality`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean) | Quasi-optimality of the BUG integrator for given data | 34 |  |
-| [`Integrators/Matrix/BUGRun`](../../LeanDLRA/Integrators/Matrix/BUGRun.lean) | Runs of the fixed-rank BUG integrator: existence and error bound | 11 |  |
+| [`Integrators/Matrix/BUGRun`](../../LeanDLRA/Integrators/Matrix/BUGRun.lean) | Runs of the fixed-rank BUG integrator: existence and error bound | 9 |  |
 | [`Integrators/Matrix/BUGRunOneSided`](../../LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean) | The fixed-rank BUG integrator: runs with a one-sided Lipschitz constant and smaller constants | 6 |  |
 | [`Integrators/Matrix/BUGStep`](../../LeanDLRA/Integrators/Matrix/BUGStep.lean) | The matrix BUG step as a step relation | 16 |  |
 | [`Integrators/Matrix/BUGTube`](../../LeanDLRA/Integrators/Matrix/BUGTube.lean) | The BUG integrator near the solution: global error from tube hypotheses | 2 |  |
@@ -128,6 +128,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/Matrix/FlowDistance`](../../LeanDLRA/Integrators/Matrix/FlowDistance.lean) | Distance of an exact solution to the low-rank matrices, near a reference solution | 2 |  |
 | [`Integrators/Matrix/KSLRun`](../../LeanDLRA/Integrators/Matrix/KSLRun.lean) | Runs of the matrix projector-splitting integrator: existence and error bound | 11 |  |
 | [`Integrators/Matrix/KSLStep`](../../LeanDLRA/Integrators/Matrix/KSLStep.lean) | The matrix projector-splitting step as a step relation | 18 |  |
+| [`Integrators/Matrix/LinearFieldExample`](../../LeanDLRA/Integrators/Matrix/LinearFieldExample.lean) | A concrete instance of the linear test field | 11 |  |
 | [`Integrators/Matrix/ParallelBUG`](../../LeanDLRA/Integrators/Matrix/ParallelBUG.lean) | The parallel BUG integrator for matrices | 48 |  |
 | [`Integrators/Matrix/ParallelBUGRun`](../../LeanDLRA/Integrators/Matrix/ParallelBUGRun.lean) | Runs of the fixed-rank parallel BUG integrator: existence and error bound | 10 | [2304.05660](https://arxiv.org/abs/2304.05660) |
 | [`Integrators/Matrix/ParallelBUGStep`](../../LeanDLRA/Integrators/Matrix/ParallelBUGStep.lean) | The fixed-rank parallel BUG step as a step relation | 20 | [2304.05660](https://arxiv.org/abs/2304.05660) |
@@ -182,8 +183,8 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Stiff/Defs`](../../LeanDLRA/Stiff/Defs.lean) | Implicit low-rank integrators: definitions | 0 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Stiff/DualWeightedResidual`](../../LeanDLRA/Stiff/DualWeightedResidual.lean) | Dual-weighted residual identities for low-rank implicit Euler steps | 35 | [1901.05343](https://arxiv.org/abs/1901.05343), [2206.09374](https://arxiv.org/abs/2206.09374), [2609.18246](https://arxiv.org/abs/2609.18246) |
 | [`Stiff/ImplicitBUG`](../../LeanDLRA/Stiff/ImplicitBUG.lean) | Implicit BUG integrators: implicit K-step capture, robust first order, B-convergence | 51 | [2010.02022](https://arxiv.org/abs/2010.02022), [2311.15143](https://arxiv.org/abs/2311.15143), [2402.05347](https://arxiv.org/abs/2402.05347), [2410.07465](https://arxiv.org/abs/2410.07465), [2412.09400](https://arxiv.org/abs/2412.09400), [2503.04932](https://arxiv.org/abs/2503.04932), [2609.02721](https://arxiv.org/abs/2609.02721), [2610.18419](https://arxiv.org/abs/2610.18419) |
-| [`Stiff/ImplicitBUGRun`](../../LeanDLRA/Stiff/ImplicitBUGRun.lean) | Runs of the fixed-rank BUG integrator with backward Euler substeps | 6 |  |
-| [`Stiff/ImplicitBUGStep`](../../LeanDLRA/Stiff/ImplicitBUGStep.lean) | The BUG integrator with backward Euler substeps as a step relation | 33 | [2610.18419](https://arxiv.org/abs/2610.18419) |
+| [`Stiff/ImplicitBUGRun`](../../LeanDLRA/Stiff/ImplicitBUGRun.lean) | Runs of the fixed-rank BUG integrator with backward Euler substeps | 3 |  |
+| [`Stiff/ImplicitBUGStep`](../../LeanDLRA/Stiff/ImplicitBUGStep.lean) | The BUG integrator with backward Euler substeps as a step relation | 30 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Stiff/ImplicitSolvability`](../../LeanDLRA/Stiff/ImplicitSolvability.lean) | Unique solvability of projected implicit stages | 59 |  |
 
 ## Stability and structure

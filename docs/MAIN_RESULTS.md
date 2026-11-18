@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit 9a1cc20 (2026-11-18). A theorem is quoted from its
+files and were compared with them at commit 9118e20 (2026-11-18). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -1937,7 +1937,7 @@ Source: [CerutiLubich2022, §3.1].
 
 ### 5.2 Existence of a run and the robust error bound
 
-`MatrixBUG.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 279–288](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L279-L288):
+`MatrixBUG.exists_run_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 280–289](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L280-L289):
 
 ```lean
 theorem exists_run_norm_sub_le
@@ -1991,7 +1991,7 @@ conclusion; nothing is assumed about the field outside the tube.
 
 The theorem is the instance of the run theorem of section 4.3 for the BUG integrator:
 
-`MatrixBUG.isTubeLocal_stepRel` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 248–250](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L248-L250):
+`MatrixBUG.isTubeLocal_stepRel` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 249–251](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L249-L251):
 
 ```lean
 theorem isTubeLocal_stepRel (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n) :
@@ -2001,7 +2001,7 @@ theorem isTubeLocal_stepRel (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.ca
 
 The admissible values are the matrices of rank at most `r` and the margin constant is 4.
 
-`MatrixBUG.IsRun.norm_sub_le` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 189–196](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L189-L196):
+`MatrixBUG.IsRun.norm_sub_le` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 190–197](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L190-L197):
 
 ```lean
 theorem IsRun.norm_sub_le {Y : ℕ → Matrix m n ℝ}
@@ -2019,7 +2019,7 @@ field, every run `Y` of the BUG integrator with `‖Y 0 - A t₀‖ ≤ δ` sati
 Here no rank condition on the start value is needed, because a step from `Y 0` exists only if
 `Y 0` has rank at most `r` (`MatrixBUG.exists_stepRel_iff`).
 
-`exists_bugGlobalBound_lt` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 314–316](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L314-L316):
+`exists_bugGlobalBound_lt` in [`LeanDLRA/Integrators/Matrix/BUGRun.lean`, lines 315–317](../LeanDLRA/Integrators/Matrix/BUGRun.lean#L315-L317):
 
 ```lean
 theorem exists_bugGlobalBound_lt {L B H T ε ρ : ℝ} (hH : 0 < H)
@@ -4170,7 +4170,7 @@ def stepRel (F : ℝ → Matrix m n ℝ → Matrix m n ℝ) (r : ℕ) : StepRel 
       Y₀ = U₀ * S₀ * V₀ᵀ ∧ IsStep F t₀ t₁ U₀ S₀ V₀ K₁ L₁ U₁ V₁ S₁ ∧ Y₁ = U₁ * S₁ * V₁ᵀ
 ```
 
-`MatrixImplicitBUG.exists_stepRel` in [`LeanDLRA/Stiff/ImplicitBUGStep.lean`, lines 786–788](../LeanDLRA/Stiff/ImplicitBUGStep.lean#L786-L788):
+`MatrixImplicitBUG.exists_stepRel` in [`LeanDLRA/Stiff/ImplicitBUGStep.lean`, lines 787–789](../LeanDLRA/Stiff/ImplicitBUGStep.lean#L787-L789):
 
 ```lean
 theorem exists_stepRel (hG : IsLipschitzField G L) (h01 : t₀ ≤ t₁) (hhL : (t₁ - t₀) * L < 1)
@@ -4178,7 +4178,7 @@ theorem exists_stepRel (hG : IsLipschitzField G L) (h01 : t₀ ≤ t₁) (hhL : 
     (hY₀ : Y₀.rank ≤ r) : ∃ Y₁, stepRel G r t₀ t₁ Y₀ Y₁
 ```
 
-`MatrixImplicitBUG.exists_run_norm_sub_le` in [`LeanDLRA/Stiff/ImplicitBUGRun.lean`, lines 124–138](../LeanDLRA/Stiff/ImplicitBUGRun.lean#L124-L138):
+`MatrixImplicitBUG.exists_run_norm_sub_le` in [`LeanDLRA/Stiff/ImplicitBUGRun.lean`, lines 125–139](../LeanDLRA/Stiff/ImplicitBUGRun.lean#L125-L139):
 
 ```lean
 theorem exists_run_norm_sub_le
