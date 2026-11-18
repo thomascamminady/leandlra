@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.Matrix.ParallelBUGStep
+import LeanDLRA.Integrators.Matrix.LinearFieldExample
 
 /-!
 # Runs of the fixed-rank parallel BUG integrator: existence and error bound
@@ -404,6 +405,26 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
   exists_run_norm_sub_le (A := fun _ => C) (dlraProblem_linear M N G C hC _ _ hρ)
     (continuous_uncurry_linear M N G).continuousOn
     (factoredNormalBoundOn_linear M N G _) (norm_nonneg G) hh hKT hrm hrn hY₀ hδ hsmall
+
+/-- **A concrete instance of the previous example** (the data of `LinearFieldExample`). On
+`2 × 2` matrices with rank `r = 1`, take `M = -E`, `N = 0` and `G = C = E` with `E = e₁ e₁ᵀ`, so
+that `L = ‖M‖ + ‖N‖ = 1`, `B = ρ` and `‖G‖ = 1`; the start value `Y₀ = (5/4) E` has rank one and
+`‖Y₀ - C‖ = 1/4`. With `K = 10` steps of size `h = 1/100` up to `T = 1/10` and the tube radius
+`ρ = 4` the smallness condition holds (`e^{1/10} ≤ 3`): a run of the fixed-rank parallel BUG
+integrator exists, stays of rank one and satisfies the error bound. -/
+example (t₀ : ℝ) :
+    ∃ Y : ℕ → Matrix (Fin 2) (Fin 2) ℝ, Y 0 = Matrix.vecMulVec ![5 / 4, 0] ![1, 0] ∧
+      IsRun (stepRel (fun _ Y => -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y +
+        Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ + Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) 1)
+        (uniformGrid t₀ (1 / 100)) 10 Y ∧
+      ∀ j ≤ 10, (Y j).rank ≤ 1 ∧ ‖Y j - Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ≤
+        Real.exp (1 * (1 / 10)) * (1 / 4) +
+          1 / 10 * Real.exp (1 * (1 / 10)) * (24 * 1 * 4 * (1 / 100) + 3 * 1) := by
+  have he := LinearFieldExample.exp_le_three
+  exact exists_run_norm_sub_le (LinearFieldExample.dlraProblem _ _ (ρ := 4) (by norm_num))
+    (continuous_uncurry_linear _ _ _).continuousOn (LinearFieldExample.factoredNormalBoundOn _ _)
+    zero_le_one (by norm_num) (by norm_num) (by simp) (by simp) (Matrix.rank_vecMulVec_le _ _)
+    LinearFieldExample.norm_start_sub_le (by linarith)
 
 end Examples
 

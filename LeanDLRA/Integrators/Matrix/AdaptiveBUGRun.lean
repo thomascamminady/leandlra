@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
+import LeanDLRA.Integrators.Matrix.LinearFieldExample
 
 /-!
 # Runs of the rank-adaptive BUG integrator with truncation by a tolerance
@@ -334,6 +335,45 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
     (dlraProblem_linear M N G C hC _ _ hρ) (continuous_uncurry_linear M N G).continuousOn
     (fun r _ => factoredNormalBoundOn_linear M N G _) (norm_nonneg G) hϑ hh hhH hKT hsmall hY
     (by rw [hY0]; exact hδ)
+
+/-- **A concrete instance of the previous example** (the data of `LinearFieldExample`). On
+`2 × 2` matrices with at least `r₀ = 1` column, take `M = -E`, `N = 0` and `G = C = E` with
+`E = e₁ e₁ᵀ`, so that `L = ‖M‖ + ‖N‖ = 1`, `B = ρ` and `‖G‖ = 1`, the start value `Y₀ = (5/4) E`
+with `‖Y₀ - C‖ = 1/4` and the tolerance `ϑ = 1/10000`. With `K = 10` steps of size
+`h = H = 1/100` up to `T = 1/10` and the tube radius `ρ = 4` the smallness condition holds
+(`e^{1/10} ≤ 3`, `bugC₁ ≤ 21/10`, `bugC₂ ≤ 45`): a run of the rank-adaptive BUG integrator
+exists, and every run from `Y₀`, with any set `R` of numbers of columns, satisfies the error
+bound. -/
+example (t₀ : ℝ) {R : Set ℕ} :
+    (∃ Y : ℕ → Matrix (Fin 2) (Fin 2) ℝ, Y 0 = Matrix.vecMulVec ![5 / 4, 0] ![1, 0] ∧
+      IsRun (adaptiveStepRel (fun (_ : ℝ) (Y : Matrix (Fin 2) (Fin 2) ℝ) =>
+        -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y + Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ +
+          Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) (Set.Ici 1) (1 / 10000))
+        (uniformGrid t₀ (1 / 100)) 10 Y) ∧
+    ∀ Y : ℕ → Matrix (Fin 2) (Fin 2) ℝ, Y 0 = Matrix.vecMulVec ![5 / 4, 0] ![1, 0] →
+      IsRun (adaptiveStepRel (fun (_ : ℝ) (Y : Matrix (Fin 2) (Fin 2) ℝ) =>
+        -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y + Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ +
+          Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) R (1 / 10000)) (uniformGrid t₀ (1 / 100)) 10 Y →
+      ∀ j ≤ 10, ‖Y j - Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ≤
+        bugGlobalBound 1 4 (1 / 100) (1 / 10) (1 / 4) 1 (1 / 100) +
+          1 / 10 * Real.exp (1 * (1 / 10)) * (1 / 10000 / (1 / 100)) := by
+  have he := LinearFieldExample.exp_le_three
+  have hc₁ : 0 ≤ bugC₁ 1 (1 / 100) := bugC₁_nonneg zero_le_one (by norm_num)
+  have hc₂ : 0 ≤ bugC₂ 1 4 (1 / 100) := bugC₂_nonneg zero_le_one (by norm_num) (by norm_num)
+  have hsmall : bugGlobalBound 1 4 (1 / 100) (1 / 10) (1 / 4) 1 (1 / 100) +
+      1 / 10 * Real.exp (1 * (1 / 10)) * (1 / 10000 / (1 / 100)) + 4 * 4 * (1 / 100) < 4 := by
+    unfold bugGlobalBound
+    nlinarith [mul_le_mul he LinearFieldExample.bugC₁_le hc₁ (by norm_num),
+      mul_le_mul he LinearFieldExample.bugC₂_le hc₂ (by norm_num)]
+  refine ⟨adaptive_exists_run LinearFieldExample.isLipschitzField
+    (isGrid_uniformGrid (by norm_num) 10) (fun _ => continuousOn_const) (by norm_num) (by simp)
+    (by simp) _, fun Y hY0 hY => ?_⟩
+  exact IsRun.norm_sub_le_of_adaptiveStepRel (A := fun _ => Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+    (LinearFieldExample.dlraProblem _ _ (ρ := 4) (by norm_num))
+    (continuous_uncurry_linear _ _ _).continuousOn
+    (fun _ _ => LinearFieldExample.factoredNormalBoundOn _ _) zero_le_one (by norm_num)
+    (by norm_num) le_rfl (by norm_num) hsmall hY
+    (by rw [hY0]; exact LinearFieldExample.norm_start_sub_le)
 
 end Examples
 

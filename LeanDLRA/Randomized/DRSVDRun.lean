@@ -1,4 +1,5 @@
 import LeanDLRA.Randomized.DRSVDStep
+import LeanDLRA.Integrators.Matrix.LinearFieldExample
 
 /-!
 # Runs of the dynamical randomized SVD: existence and error bound
@@ -367,6 +368,44 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
     (continuous_uncurry_linear M N G).continuousOn
     (fun s _ => factoredNormalBoundOn_linear M N G _) (norm_nonneg G) hkl hh hhH hKT hsmall hY
     (by rw [hY0]; exact hY₀) (by rw [hY0]; exact hδ)
+
+/-- **A concrete instance of the previous example** (the data of `LinearFieldExample`). On
+`2 × 2` matrices with rank `r = 1`, sketch sizes `k = 1` and `l = 2`, take `M = -E`, `N = 0` and
+`G = C = E` with `E = e₁ e₁ᵀ`, so that `L = ‖M‖ + ‖N‖ = 1`, `B = ρ` and `‖G‖ = 1`; the start value
+`Y₀ = (5/4) E` has rank one and `‖Y₀ - C‖ = 1/4`. With `K = 10` steps of size `h = H = 1/100` up
+to `T = 1/10` and the tube radius `ρ = 4` the smallness condition holds (`e^{1/10} ≤ 3`,
+`bugC₁ ≤ 21/10`, `bugC₂ ≤ 45`): a run of the DRSVD integrator exists, and every run from `Y₀`
+satisfies the error bound, whatever sketches it uses. -/
+example (t₀ : ℝ) :
+    (∃ Y : ℕ → Matrix (Fin 2) (Fin 2) ℝ, Y 0 = Matrix.vecMulVec ![5 / 4, 0] ![1, 0] ∧
+      IsRun (stepRel (fun (_ : ℝ) (Y : Matrix (Fin 2) (Fin 2) ℝ) =>
+        -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y + Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ +
+          Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) 1 1 2) (uniformGrid t₀ (1 / 100)) 10 Y) ∧
+    ∀ Y : ℕ → Matrix (Fin 2) (Fin 2) ℝ, Y 0 = Matrix.vecMulVec ![5 / 4, 0] ![1, 0] →
+      IsRun (stepRel (fun (_ : ℝ) (Y : Matrix (Fin 2) (Fin 2) ℝ) =>
+        -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y + Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ +
+          Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) 1 1 2) (uniformGrid t₀ (1 / 100)) 10 Y →
+      ∀ j ≤ 10, ‖Y j - Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ≤
+        Real.exp (1 * (1 / 10)) * (1 / 4) + 1 / 10 * Real.exp (1 * (1 / 10)) *
+          ((2 * bugC₁ 1 (1 / 100) + 1) * 1 +
+            (2 * bugC₂ 1 4 (1 / 100) + 10 * 1 * 4) * (1 / 100)) := by
+  have he := LinearFieldExample.exp_le_three
+  have hc₁ : 0 ≤ bugC₁ 1 (1 / 100) := bugC₁_nonneg zero_le_one (by norm_num)
+  have hc₂ : 0 ≤ bugC₂ 1 4 (1 / 100) := bugC₂_nonneg zero_le_one (by norm_num) (by norm_num)
+  have hsmall : Real.exp (1 * (1 / 10)) * (1 / 4) + 1 / 10 * Real.exp (1 * (1 / 10)) *
+      ((2 * bugC₁ 1 (1 / 100) + 1) * 1 + (2 * bugC₂ 1 4 (1 / 100) + 10 * 1 * 4) * (1 / 100)) +
+      3 * 4 * (1 / 100) < 4 := by
+    nlinarith [mul_le_mul he LinearFieldExample.bugC₁_le hc₁ (by norm_num),
+      mul_le_mul he LinearFieldExample.bugC₂_le hc₂ (by norm_num)]
+  refine ⟨exists_run LinearFieldExample.isLipschitzField (isGrid_uniformGrid (by norm_num) 10)
+    (fun _ => continuousOn_const) le_rfl (by simp) (by norm_num) (by simp)
+    (Matrix.rank_vecMulVec_le _ _), fun Y hY0 hY => ?_⟩
+  exact IsRun.norm_sub_le (A := fun _ => Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+    (LinearFieldExample.dlraProblem _ _ (ρ := 4) (by norm_num))
+    (continuous_uncurry_linear _ _ _).continuousOn
+    (fun _ _ => LinearFieldExample.factoredNormalBoundOn _ _) zero_le_one (by norm_num)
+    (by norm_num) le_rfl (by norm_num) hsmall hY (by rw [hY0]; exact Matrix.rank_vecMulVec_le _ _)
+    (by rw [hY0]; exact LinearFieldExample.norm_start_sub_le)
 
 end Examples
 

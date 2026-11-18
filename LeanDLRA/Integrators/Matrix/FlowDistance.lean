@@ -1,4 +1,5 @@
 import LeanDLRA.Integrators.Matrix.ParallelBUGStep
+import LeanDLRA.Integrators.Matrix.LinearFieldExample
 
 /-!
 # Distance of an exact solution to the low-rank matrices, near a reference solution
@@ -231,6 +232,54 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
     hP.lipschitz hP.L_nonneg hP.bounded hP.B_nonneg
     (continuous_uncurry_linear M N G).continuousOn continuousOn_const le_rfl le_rfl h01 hP.sol
     hΦ hrank hsmall
+
+/-- **A concrete instance of the previous example** (the data of `LinearFieldExample`). On
+`2 × 2` matrices with rank `r = 1`, take `M = -E`, `N = 0` and `G = C = E` with `E = e₁ e₁ᵀ`, so
+that `L = ‖M‖ + ‖N‖ = 1`, `B = ρ` and `‖G‖ = 1`. The solution from `Φ(t₀) = (5/4) E` is
+`Φ(t) = (1 + e^{-(t - t₀)}/4) E` (since `E² = E`); it has rank one at the start and
+`‖Φ(t₀) - C‖ = 1/4`, so with `t₁ = t₀ + 1/100` and the tube radius `ρ = 4` the smallness
+condition `1/4 + 3 · 4 / 100 < 4` holds, and `Φ(t₁)` is within `e^{1/100}/100` of the matrices of
+rank at most one. -/
+example (t₀ : ℝ) :
+    ∃ Φ : ℝ → Matrix (Fin 2) (Fin 2) ℝ,
+      ODESolution (fun _ Y => -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y +
+        Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ + Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) Φ t₀
+        (t₀ + 1 / 100) ∧
+      Φ t₀ = Matrix.vecMulVec ![5 / 4, 0] ![1, 0] ∧
+      distLR 1 (Φ (t₀ + 1 / 100)) ≤ 1 / 100 * 1 * Real.exp (1 * (1 / 100)) := by
+  have hEE : Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] =
+      Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] := by
+    have h := LinearFieldExample.stationary_vecMulVec_one_zero
+    rw [Matrix.transpose_zero, Matrix.mul_zero, add_zero, neg_mul, neg_add_eq_zero] at h
+    exact h
+  have hsub : t₀ + 1 / 100 - t₀ = 1 / 100 := add_sub_cancel_left t₀ (1 / 100)
+  have h0 : (1 + Real.exp (-(t₀ - t₀)) / 4) • Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] =
+      Matrix.vecMulVec ![5 / 4, 0] ![1, 0] := by
+    rw [sub_self, neg_zero, Real.exp_zero]
+    ext i j
+    fin_cases i <;> fin_cases j <;> norm_num [Matrix.vecMulVec_apply]
+  have hΦ : ODESolution (fun _ Y => -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y +
+      Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ + Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+      (fun t => (1 + Real.exp (-(t - t₀)) / 4) • Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) t₀
+      (t₀ + 1 / 100) := by
+    refine ⟨Continuous.continuousOn (by fun_prop), fun t _ => ?_⟩
+    have hc : HasDerivAt (fun t => 1 + Real.exp (-(t - t₀)) / 4)
+        (Real.exp (-(t - t₀)) * -1 / 4) t :=
+      ((((hasDerivAt_id' t).sub_const t₀).neg.exp).div_const 4).const_add 1
+    convert (hc.smul_const (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])).hasDerivWithinAt using 1
+    simp only [Matrix.transpose_zero, Matrix.mul_zero, add_zero, neg_mul, Matrix.mul_smul, hEE]
+    module
+  have hP := LinearFieldExample.dlraProblem t₀ (t₀ + 1 / 100) (ρ := 4) (by norm_num)
+  have h := distLR_flow_le_exp_of_tube (LinearFieldExample.factoredNormalBoundOn 1 _)
+    zero_le_one hP.lipschitz hP.L_nonneg hP.bounded hP.B_nonneg
+    (continuous_uncurry_linear _ _ _).continuousOn continuousOn_const le_rfl le_rfl
+    (by linarith) hP.sol hΦ (by simp only [h0]; exact Matrix.rank_vecMulVec_le _ _)
+    (by
+      change ‖(1 + Real.exp (-(t₀ - t₀)) / 4) • Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] -
+        Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ + 3 * 4 * (t₀ + 1 / 100 - t₀) < 4
+      rw [h0, hsub]
+      linarith [LinearFieldExample.norm_start_sub_le])
+  exact ⟨_, hΦ, h0, h.trans_eq (by rw [hsub])⟩
 
 end FlowDistance
 

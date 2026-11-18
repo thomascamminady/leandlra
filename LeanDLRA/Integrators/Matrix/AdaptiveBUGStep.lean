@@ -2,6 +2,7 @@ import LeanDLRA.Classical.EckartYoung
 import LeanDLRA.Integrators.MethodTolerance
 import LeanDLRA.Integrators.Matrix.BUGStep
 import LeanDLRA.Integrators.Matrix.ParallelBUGStep
+import LeanDLRA.Integrators.Matrix.LinearFieldExample
 
 /-!
 # The augmented BUG step as step relations: truncation by a tolerance or to a fixed rank
@@ -788,6 +789,34 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
     hP.lipschitz hP.L_nonneg hP.bounded hP.B_nonneg ha hb h01 le_rfl (hP.sol.mono ha hb)
     hsmall⟩
 
+/-- **A concrete instance of the previous example** (the data of `LinearFieldExample`). On
+`2 × 2` matrices with at least `r₀ = 1` column, take `M = -E`, `N = 0` and `G = C = E` with
+`E = e₁ e₁ᵀ`, so that `L = ‖M‖ + ‖N‖ = 1`, `B = ρ` and `‖G‖ = 1`, the start value
+`Y₀ = (5/4) E` with `‖Y₀ - C‖ = 1/4`, the tolerance `ϑ = 1/10000` and the step size `1/100`.
+With the tube radius `ρ = 4`, `‖Y₀ - C‖ + 4 B h = 1/4 + 16/100 < 4`: a step of the rank-adaptive
+integrator exists, and it has local error `h (bugC₁ ‖G‖ + bugC₂ h) + ϑ`. -/
+example (t₀ : ℝ) :
+    ∃ Y₁, adaptiveStepRel (fun (_ : ℝ) (Y : Matrix (Fin 2) (Fin 2) ℝ) =>
+        -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y + Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ +
+          Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) (Set.Ici 1) (1 / 10000) t₀ (t₀ + 1 / 100)
+        (Matrix.vecMulVec ![5 / 4, 0] ![1, 0]) Y₁ ∧
+      HasLocalError (fun (_ : ℝ) (Y : Matrix (Fin 2) (Fin 2) ℝ) =>
+          -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y + Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ +
+            Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) t₀ (t₀ + 1 / 100)
+        (Matrix.vecMulVec ![5 / 4, 0] ![1, 0]) Y₁
+        (1 / 100 * (bugC₁ 1 (1 / 100) * 1 + bugC₂ 1 4 (1 / 100) * (1 / 100)) + 1 / 10000) := by
+  have hsub : t₀ + 1 / 100 - t₀ = 1 / 100 := add_sub_cancel_left t₀ (1 / 100)
+  have hP := LinearFieldExample.dlraProblem t₀ (t₀ + 1 / 100) (ρ := 4) (by norm_num)
+  obtain ⟨Y₁, hY₁⟩ := exists_adaptiveStepRel_Ici LinearFieldExample.isLipschitzField
+    (fun _ => continuousOn_const) (by linarith : t₀ ≤ t₀ + 1 / 100)
+    (by norm_num : (0 : ℝ) ≤ 1 / 10000) (r₀ := 1) (by simp) (by simp)
+    (Matrix.vecMulVec ![5 / 4, 0] ![1, 0])
+  have h := hY₁.hasLocalError_of_tube (fun _ _ => LinearFieldExample.factoredNormalBoundOn _ _)
+    hP.lipschitz hP.L_nonneg hP.bounded hP.B_nonneg le_rfl le_rfl (by linarith) hsub.le hP.sol
+    (by rw [hsub]; linarith [LinearFieldExample.norm_start_sub_le])
+  rw [hsub] at h
+  exact ⟨Y₁, hY₁, h⟩
+
 /-- **Non-vacuity of the step with truncation to rank `r` and of its local error.** For the
 linear field `F(t, Y) = M Y + Y Nᵀ + G` with a stationary point `C` and every `κ ≥ 1`, a step
 with truncation to rank `r` exists from every `Y₀` of rank at most `r` (`r ≤ m`, `r ≤ n`); its
@@ -812,6 +841,36 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
     (factoredNormalBoundOn_linear M N G _) (norm_nonneg G) hP.lipschitz hP.L_nonneg hP.bounded
     hP.B_nonneg (continuous_uncurry_linear M N G).continuousOn hP.sol.cont ha hb h01 le_rfl
     (hP.sol.mono ha hb) hsmall⟩
+
+/-- **A concrete instance of the previous example** (the data of `LinearFieldExample`). On
+`2 × 2` matrices with rank `r = 1` and the exact truncation `κ = 1`, take `M = -E`, `N = 0` and
+`G = C = E` with `E = e₁ e₁ᵀ`, so that `L = ‖M‖ + ‖N‖ = 1`, `B = ρ` and `‖G‖ = 1`, the start value
+`Y₀ = (5/4) E` of rank one with `‖Y₀ - C‖ = 1/4` and the step size `1/100`. With the tube radius
+`ρ = 4`, `‖Y₀ - C‖ + 4 B h = 1/4 + 16/100 < 4`: a step with truncation to rank one exists, its
+result has rank one, and it has the local error of
+`MatrixBUG.truncStepRel.hasLocalError_of_tube`. -/
+example (t₀ : ℝ) :
+    ∃ Y₁, truncStepRel (fun (_ : ℝ) (Y : Matrix (Fin 2) (Fin 2) ℝ) =>
+        -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y + Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ +
+          Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) 1 1 t₀ (t₀ + 1 / 100)
+        (Matrix.vecMulVec ![5 / 4, 0] ![1, 0]) Y₁ ∧ Y₁.rank ≤ 1 ∧
+      HasLocalError (fun (_ : ℝ) (Y : Matrix (Fin 2) (Fin 2) ℝ) =>
+          -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y + Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ +
+            Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) t₀ (t₀ + 1 / 100)
+        (Matrix.vecMulVec ![5 / 4, 0] ![1, 0]) Y₁
+        (1 / 100 * (1 * (10 * 1 * 4 * (1 / 100) + 1) +
+          (1 + 1) * (bugC₁ 1 (1 / 100) * 1 + bugC₂ 1 4 (1 / 100) * (1 / 100)))) := by
+  have hsub : t₀ + 1 / 100 - t₀ = 1 / 100 := add_sub_cancel_left t₀ (1 / 100)
+  have hP := LinearFieldExample.dlraProblem t₀ (t₀ + 1 / 100) (ρ := 4) (by norm_num)
+  obtain ⟨Y₁, hY₁⟩ := exists_truncStepRel LinearFieldExample.isLipschitzField
+    (fun _ => continuousOn_const) (by linarith : t₀ ≤ t₀ + 1 / 100) le_rfl (by simp) (by simp)
+    (Matrix.rank_vecMulVec_le ![(5 / 4 : ℝ), 0] ![1, 0])
+  have h := hY₁.hasLocalError_of_tube zero_le_one (LinearFieldExample.factoredNormalBoundOn _ _)
+    zero_le_one hP.lipschitz hP.L_nonneg hP.bounded hP.B_nonneg
+    (continuous_uncurry_linear _ _ _).continuousOn hP.sol.cont le_rfl le_rfl (by linarith)
+    hsub.le hP.sol (by rw [hsub]; linarith [LinearFieldExample.norm_start_sub_le])
+  rw [hsub] at h
+  exact ⟨Y₁, hY₁, hY₁.rank_le, h⟩
 
 end Examples
 
