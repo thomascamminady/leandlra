@@ -95,6 +95,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`DLRA/QuasiOptimalitySharp`](../../LeanDLRA/DLRA/QuasiOptimalitySharp.lean) | Quasi-optimality of matrix DLRA with the Lipschitz constant `1` of the tangent projector | 11 |  |
 | [`DLRA/QuasiOptimalitySpectral`](../../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) | Quasi-optimality of matrix DLRA with the spectral norm of the tail | 11 |  |
 | [`DLRA/QuasiOptimalitySpeedSharp`](../../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean) | The speed and velocity bounds of a curve of critical points are attained | 22 |  |
+| [`DLRA/QuasiOptimalityStiff`](../../LeanDLRA/DLRA/QuasiOptimalityStiff.lean) | Quasi-optimality of matrix DLRA for fields with a tangential stiff part | 13 |  |
 | [`DLRA/QuasiOptimalityTimeLocal`](../../LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean) | Quasi-optimality of matrix DLRA with constants that depend on time | 10 |  |
 | [`DLRA/QuasiOptimalityTruncation`](../../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean) | Quasi-optimality of matrix DLRA against the truncated SVD with a margin below `ρ` | 3 |  |
 | [`DLRA/QuasiOptimalityTube`](../../LeanDLRA/DLRA/QuasiOptimalityTube.lean) | Quasi-optimality of dynamical low-rank approximation for a field Lipschitz near the solution | 18 |  |
@@ -215,6 +216,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Tensor/Steps`](../../LeanDLRA/Tensor/Steps.lean) | Step predicates of the Tucker and tree tensor network integrators | 0 |  |
 | [`Tensor/TT/AugmentedBUG`](../../LeanDLRA/Tensor/TT/AugmentedBUG.lean) | The augmented BUG integrator for tensor trains (MPS-BUG) | 18 |  |
 | [`Tensor/TT/Basic`](../../LeanDLRA/Tensor/TT/Basic.lean) | Tensor trains: interfaces, orthonormality and interface projectors | 27 |  |
+| [`Tensor/TT/NormalSecondOrder`](../../LeanDLRA/Tensor/TT/NormalSecondOrder.lean) | The normal component of a nearby vector for the tensor-train tangent projector | 3 |  |
 | [`Tensor/TT/ObliqueProjector`](../../LeanDLRA/Tensor/TT/ObliqueProjector.lean) | Oblique TT tangent projectors and the TT tangent space | 42 |  |
 | [`Tensor/TT/Operations`](../../LeanDLRA/Tensor/TT/Operations.lean) | Tensor trains: operations on cores, gauge transformations and the bond-centred form | 29 |  |
 | [`Tensor/TT/ProjectorSplitting`](../../LeanDLRA/Tensor/TT/ProjectorSplitting.lean) | The tensor-train projector-splitting integrator (TT-KSL, one-site TDVP) | 41 |  |
@@ -238,10 +240,12 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Tensor/Tucker/BUGRun`](../../LeanDLRA/Tensor/Tucker/BUGRun.lean) | Runs of the Tucker BUG integrator: existence and error bound | 7 |  |
 | [`Tensor/Tucker/BUGStep`](../../LeanDLRA/Tensor/Tucker/BUGStep.lean) | The Tucker BUG step as a step relation | 13 |  |
 | [`Tensor/Tucker/Basic`](../../LeanDLRA/Tensor/Tucker/Basic.lean) | Tucker tensors: mode projectors, mode-wise interpolation and the Tucker integrators | 12 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.18721](https://arxiv.org/abs/2402.18721) |
+| [`Tensor/Tucker/NormalSecondOrder`](../../LeanDLRA/Tensor/Tucker/NormalSecondOrder.lean) | The normal component of a nearby Tucker tensor, with a constant independent of the order | 18 |  |
 | [`Tensor/Tucker/ProjectorLipschitz`](../../LeanDLRA/Tensor/Tucker/ProjectorLipschitz.lean) | A Lipschitz bound of the tangent projector of the Tucker manifold | 17 |  |
 | [`Tensor/Tucker/ProjectorLipschitzRankOne`](../../LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOne.lean) | The Lipschitz constant of the tangent projector for tensors of rank one | 37 | [2307.04224](https://arxiv.org/abs/2307.04224) |
 | [`Tensor/Tucker/ProjectorLipschitzRankOneSharp`](../../LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOneSharp.lean) | The Lipschitz constant `√(2 (d - 1)/d)` for tensors of rank one cannot be lowered | 8 |  |
 | [`Tensor/Tucker/ProjectorLowerBound`](../../LeanDLRA/Tensor/Tucker/ProjectorLowerBound.lean) | The Lipschitz constant of the tangent projector of the Tucker manifold is larger than one | 35 |  |
+| [`Tensor/Tucker/QuasiOptimalityNormalVelocity`](../../LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean) | Quasi-optimality of Tucker DLRA with the normal velocity as growth rate | 6 |  |
 | [`Tensor/Tucker/Tangent`](../../LeanDLRA/Tensor/Tucker/Tangent.lean) | The tangent space of constrained Tucker manifolds and its orthogonal projector | 27 |  |
 | [`Tensor/Tucker/TangentNormal`](../../LeanDLRA/Tensor/Tucker/TangentNormal.lean) | Normal components with respect to the tangent projector of the Tucker manifold | 15 |  |
 | [`Tensor/Unfolding`](../../LeanDLRA/Tensor/Unfolding.lean) | Unfoldings and linear maps acting on a set of modes | 47 |  |
