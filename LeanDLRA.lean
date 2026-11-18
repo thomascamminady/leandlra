@@ -150,6 +150,8 @@ import LeanDLRA.Research.FederatedDescentThreshold
 import LeanDLRA.Research.FederatedManySteps
 import LeanDLRA.Research.FederatedThreeSteps
 import LeanDLRA.Research.FederatedTwoSteps
+import LeanDLRA.Research.ImplicitBUGEnergyProjection
+import LeanDLRA.Research.ImplicitBUGStiffAugmented
 import LeanDLRA.Research.ImplicitBUGStiffRows
 import LeanDLRA.Research.ImplicitBUGStiffRowsRun
 import LeanDLRA.Research.ImplicitBUGStiffTwoSided
