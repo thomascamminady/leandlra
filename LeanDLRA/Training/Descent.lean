@@ -1357,6 +1357,12 @@ example {T : E →L[ℝ] E} (hT : IsOrthProj T) {y : E} (hy : T y ≠ y) :
     ∃ x, ¬ ∃ γ < 1, ‖x - T x‖ ≤ γ * ‖x - (0 : E →L[ℝ] E) x‖ :=
   not_exists_contraction_of_absorbs IsOrthProj.zero hT (fun x => by simp) ⟨y, hy⟩
 
+/-- A concrete instance: on `ℝ` the orthogonal projector `Q = 0` and `y = 1` satisfy `Q y ≠ y`,
+so the negative result on spectral contraction applies to `P = Q = 0`. -/
+example : ∃ x : ℝ, ¬ ∃ γ < 1, ‖x - (0 : ℝ →L[ℝ] ℝ) x‖ ≤ γ * ‖x - (0 : ℝ →L[ℝ] ℝ) x‖ :=
+  not_exists_contraction_of_absorbs IsOrthProj.zero IsOrthProj.zero (fun x => by simp)
+    ⟨1, by simp⟩
+
 /-- The hypotheses of `robustDLRT_stability` hold for the Tikhonov-type regulariser
 `R(S) = ‖S‖²` with `r(S) = 2 S`, `β = 1`, `M = 0` and the solution `S(t) = e^{-3t} S₀`. -/
 example (S₀ : E) (T : ℝ) :
@@ -1389,6 +1395,20 @@ example {T : E →L[ℝ] E} (hT : IsOrthProj T) {y : E} (hy : T y ≠ y) :
   rw [h2]
   simp only [sub_apply, one_apply_eq_self, hv, sub_zero]
   exact sub_ne_zero.2 (Ne.symm hy)
+
+/-- A concrete instance of the previous configuration: on `ℝ` the orthogonal projector `T = 0`
+and `y = 1` satisfy `T y ≠ y`; with `L = 0`, `R = 1` and `v = 1` the naive direction vanishes
+and the tangent gradient `R v = 1` does not. -/
+example : (0 : ℝ →L[ℝ] ℝ) (((1 : ℝ →L[ℝ] ℝ) - 0) (1 - (0 : ℝ →L[ℝ] ℝ) 1)) = 0 ∧
+    tangent (0 : ℝ →L[ℝ] ℝ) ((1 : ℝ →L[ℝ] ℝ) - 0) (1 - (0 : ℝ →L[ℝ] ℝ) 1) ≠ 0 := by
+  have hc : ∀ x : ℝ, (0 : ℝ →L[ℝ] ℝ) (((1 : ℝ →L[ℝ] ℝ) - 0) x) =
+      ((1 : ℝ →L[ℝ] ℝ) - 0) ((0 : ℝ →L[ℝ] ℝ) x) := fun x => by
+    simp
+  have hv : (0 : ℝ →L[ℝ] ℝ) (1 - (0 : ℝ →L[ℝ] ℝ) 1) = 0 := by simp
+  obtain ⟨h1, h2⟩ := naiveMomentum_apply_eq_zero_of_left hc hv
+  refine ⟨h1, ?_⟩
+  rw [h2]
+  simp
 
 end Examples
 

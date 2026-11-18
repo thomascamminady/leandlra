@@ -759,14 +759,17 @@ example {n : ℕ} (K K' : Submodule ℂ (EuclideanSpace ℂ (Fin n))) :
     rw [Submodule.inner_starProjection_left_eq_right]
 
 /-- The hypotheses of the discrete conservation law `inner_projEulerIter_eq_of_mem` are
-satisfiable with a non-trivial dynamics: for orthogonal `P` and `c ∈ range P`, the field
-`F(t, x) = x - ⟪c, x⟫ • c` (with `‖c‖ = 1`) has `⟪c, F⟫ = 0` and moves every `x ∉ span {c}`. -/
-example (hP : IsOrthProj P) {c : E} (hc : P c = c) (hc1 : ‖c‖ = 1) {h t₀ : ℝ} {x₀ : E}
-    (n : ℕ) :
-    ⟪c, projEulerIter P (fun _ x => x - ⟪c, x⟫ • c) h t₀ x₀ n⟫ = ⟪c, x₀⟫ := by
-  refine inner_projEulerIter_eq_of_mem hP hc (fun _ x => ?_) n
-  rw [inner_sub_right, real_inner_smul_right, real_inner_self_eq_norm_sq, hc1]
-  ring
+satisfiable with a non-trivial dynamics: on `ℝ²` with `P = 1` and the unit vector `c = e₁`, the
+field `F(t, x) = x - ⟪c, x⟫ • c` has `⟪c, F⟫ = 0` and moves every `x ∉ span {c}` (for example
+`e₂`), and the first coordinate of the projected Euler iterates is conserved. -/
+example {h t₀ : ℝ} (x₀ : EuclideanSpace ℝ (Fin 2)) (n : ℕ) :
+    ⟪EuclideanSpace.single (0 : Fin 2) (1 : ℝ),
+      projEulerIter (1 : EuclideanSpace ℝ (Fin 2) →L[ℝ] EuclideanSpace ℝ (Fin 2))
+        (fun _ x => x - ⟪EuclideanSpace.single (0 : Fin 2) (1 : ℝ), x⟫ •
+          EuclideanSpace.single (0 : Fin 2) (1 : ℝ)) h t₀ x₀ n⟫ =
+      ⟪EuclideanSpace.single (0 : Fin 2) (1 : ℝ), x₀⟫ := by
+  refine inner_projEulerIter_eq_of_mem IsOrthProj.one (by simp) (fun _ x => ?_) n
+  simp [inner_sub_right, EuclideanSpace.inner_single_left]
 
 /-- A **non-constant** solution to which the norm- and energy-conservation results apply
 (`ODESolution.galerkin_norm_eq'` and `ODESolution.galerkin_energy_eq_of_skew`): on `ℂ` viewed as a

@@ -195,57 +195,92 @@ private theorem factoredNormalBoundOn_neg (D : Set (ℝ × Matrix m n ℝ)) :
   change ‖(1 - U * Uᵀ) * ((-1 : ℝ) • (U * S * Vᵀ)) * (1 - V * Vᵀ)‖ ≤ 0
   rw [h0, norm_zero]
 
+/-- The rank-one start value `(1/4, 0)ᵀ (1, 0)` of the examples has norm at most `1/4`. -/
+private theorem norm_vecMulVec_quarter_le :
+    ‖Matrix.vecMulVec ![(1 / 4 : ℝ), 0] ![1, 0]‖ ≤ 1 / 4 := by
+  have h2 : ‖Matrix.vecMulVec ![(1 / 4 : ℝ), 0] ![1, 0]‖ ^ 2 = 1 / 16 := by
+    rw [Frobenius.norm_sq_eq_sum]
+    norm_num [Matrix.vecMulVec_apply, Fin.sum_univ_two]
+  nlinarith [norm_nonneg (Matrix.vecMulVec ![(1 / 4 : ℝ), 0] ![1, 0])]
+
+/-- The term `c₂ h` of the local error for `L = B = 1` and `h = H = 1/100` is at most `7/100`:
+`e^{1/100} ≤ 3` and `√2 ≤ 3/2`. -/
+private theorem localErrorConst_le :
+    1 * 1 * (Real.exp (1 * (1 / 100)) + 2 * √2 * (1 + 1 * (1 / 100) * Real.exp (1 * (1 / 100))))
+      * (1 / 100) ≤ (7 / 100 : ℝ) := by
+  have he : Real.exp (1 * (1 / 100)) ≤ 3 :=
+    (Real.exp_le_exp.2 (by norm_num : (1 : ℝ) * (1 / 100) ≤ 1)).trans
+      (Real.exp_one_lt_d9.le.trans (by norm_num))
+  have he0 := Real.exp_pos (1 * (1 / 100))
+  have hs0 := Real.sqrt_nonneg 2
+  have hs : √2 ≤ 3 / 2 := by nlinarith [Real.sq_sqrt (show (0 : ℝ) ≤ 2 by norm_num)]
+  nlinarith [mul_le_mul hs he he0.le (by norm_num : (0 : ℝ) ≤ 3 / 2)]
+
 /-- **Non-vacuity of `MatrixBUG.exists_run_norm_sub_le_of_oneSided_neg`**, for the dissipative
-field `F(t, Y) = -Y` on `m × n` matrices with the solution `A = 0`: Lipschitz constant `1`, bound
-`ρ` on the tube of radius `ρ`, one-sided Lipschitz constant `-1`, and no normal component
-(`ε = 0`). For every number of steps `N` and every start value of rank at most `r` with
-`‖Y₀‖ ≤ δ`, the theorem gives a run of the BUG integrator if the smallness condition holds;
-here `c₂ h = ρ (e^{H} + 2 √2 (1 + H e^{H})) h > 0` for `h > 0`. -/
-example {t₀ h H ρ δ : ℝ} {N : ℕ} (hρ : 0 ≤ ρ) (hh : 0 ≤ h) (hhH : h ≤ H)
-    (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n) {Y₀ : Matrix m n ℝ}
-    (hY₀ : Y₀.rank ≤ r) (hδ : ‖Y₀‖ ≤ δ)
-    (hsmall : δ + (h - (-1)⁻¹) * (√2 * (1 + 1 * H * Real.exp (1 * H)) * 0
-      + 1 * ρ * (Real.exp (1 * H) + 2 * √2 * (1 + 1 * H * Real.exp (1 * H))) * h)
-      + 4 * ρ * h < ρ) :
-    ∃ Y : ℕ → Matrix m n ℝ, Y 0 = Y₀ ∧
-      IsRun (stepRel (fun _ Y => (-1 : ℝ) • Y) r) (uniformGrid t₀ h) N Y ∧
-      ∀ n ≤ N, (Y n).rank ≤ r ∧ ‖Y n - 0‖ ≤ Real.exp (-1 * (n * h)) * δ
-        + (h - (-1)⁻¹) * (√2 * (1 + 1 * H * Real.exp (1 * H)) * 0
-          + 1 * ρ * (Real.exp (1 * H) + 2 * √2 * (1 + 1 * H * Real.exp (1 * H))) * h) := by
-  have hP : DLRAProblem (fun _ (Y : Matrix m n ℝ) => (-1 : ℝ) • Y) (fun _ => 0) t₀ (t₀ + N * h)
-      ρ 1 ρ := by
-    refine ⟨⟨continuousOn_const, fun t _ => ?_⟩, zero_le_one, hρ, fun t _ x y _ _ => ?_,
+field `F(t, Y) = -Y` on `2 × 2` matrices with the solution `A = 0` (Lipschitz constant `1`, bound
+`ρ = 1` on the tube of radius `1`, one-sided Lipschitz constant `-1`, no normal component, so
+`ε = 0`), rank `r = 1`, step size `h = H = 1/100` and the rank-one start value
+`Y₀ = (1/4, 0)ᵀ (1, 0)` with `δ = 1/4`. Here `c₂ h ≤ 7/100`, so the smallness condition holds,
+and for every number of steps `N` the theorem gives a run of the BUG integrator of rank at most
+`1` with `‖Y n‖ ≤ e^{-n/100} / 4 + 1/10`. -/
+example (t₀ : ℝ) (N : ℕ) :
+    ∃ Y : ℕ → Matrix (Fin 2) (Fin 2) ℝ, Y 0 = Matrix.vecMulVec ![1 / 4, 0] ![1, 0] ∧
+      IsRun (stepRel (fun _ Y => (-1 : ℝ) • Y) 1) (uniformGrid t₀ (1 / 100)) N Y ∧
+      ∀ n ≤ N, (Y n).rank ≤ 1 ∧ ‖Y n‖ ≤ Real.exp (-(n / 100)) / 4 + 1 / 10 := by
+  have hP : DLRAProblem (fun _ (Y : Matrix (Fin 2) (Fin 2) ℝ) => (-1 : ℝ) • Y) (fun _ => 0) t₀
+      (t₀ + N * (1 / 100)) 1 1 1 := by
+    refine ⟨⟨continuousOn_const, fun t _ => ?_⟩, zero_le_one, zero_le_one, fun t _ x y _ _ => ?_,
       fun t _ x hx => ?_⟩
-    · simpa using hasDerivWithinAt_const t (Ici t) (0 : Matrix m n ℝ)
+    · simpa using hasDerivWithinAt_const t (Ici t) (0 : Matrix (Fin 2) (Fin 2) ℝ)
     · exact le_of_eq (by rw [← smul_sub, norm_smul, norm_neg, norm_one, one_mul])
     · simpa [norm_smul] using hx
-  exact exists_run_norm_sub_le_of_oneSided_neg hP (continuous_snd.const_smul (-1 : ℝ)).continuousOn
+  have hc := localErrorConst_le
+  obtain ⟨Y, hY0, hY, hbd⟩ := exists_run_norm_sub_le_of_oneSided_neg hP
+    (continuous_snd.const_smul (-1 : ℝ)).continuousOn
     (fun t x y _ _ => isOneSidedLipschitzField_smul_id (-1) t x y) (by norm_num)
-    (factoredNormalBoundOn_neg _) le_rfl hh hhH hrm hrn hY₀ (by simpa using hδ) hsmall
+    (factoredNormalBoundOn_neg _) le_rfl (by norm_num) (le_refl (1 / 100 : ℝ)) (by simp)
+    (by simp) (Y₀ := Matrix.vecMulVec ![(1 / 4 : ℝ), 0] ![1, 0])
+    (Matrix.rank_vecMulVec_le _ _) (δ := 1 / 4)
+    (by simp only [sub_zero]; exact norm_vecMulVec_quarter_le) (by linarith)
+  refine ⟨Y, hY0, hY, fun n hn => ⟨(hbd n hn).1, ?_⟩⟩
+  have h1 := (hbd n hn).2
+  have hexp : Real.exp (-1 * (n * (1 / 100))) = Real.exp (-(n / 100)) := by
+    congr 1
+    ring
+  rw [sub_zero, hexp] at h1
+  linarith
 
 /-- **Non-vacuity of `MatrixBUG.stepRel.hasLocalError_of_tube_two_mul`** for the dissipative
-field `F(t, Y) = -Y` on `m × n` matrices with the solution `A = 0` (Lipschitz constant `1`, bound
-`ρ` on the tube of radius `ρ`, no normal component, `ε = 0`): from every `Y₀` of rank at most `r`
-with `‖Y₀‖ + 4 ρ (t₁ - t₀) < ρ` there is a BUG step, and every such step of size `t₁ - t₀ ≤ H` has
-local error at most `(t₁ - t₀)² ρ (e^{H} + 2 √2 (1 + H e^{H}))`. -/
-example {t₀ t₁ H ρ : ℝ} (hρ : 0 ≤ ρ) (h01 : t₀ ≤ t₁) (hH : t₁ - t₀ ≤ H)
-    (hrm : r ≤ Fintype.card m) (hrn : r ≤ Fintype.card n) {Y₀ : Matrix m n ℝ}
-    (hY₀ : Y₀.rank ≤ r) (hsmall : ‖Y₀‖ + 4 * ρ * (t₁ - t₀) < ρ) :
-    ∃ Y₁, stepRel (fun _ Y => (-1 : ℝ) • Y) r t₀ t₁ Y₀ Y₁ ∧
-      HasLocalError (fun _ Y => (-1 : ℝ) • Y) t₀ t₁ Y₀ Y₁
-        ((t₁ - t₀) * (√2 * (1 + 1 * H * Real.exp (1 * H)) * 0
-          + 1 * ρ * (Real.exp (1 * H) + 2 * √2 * (1 + 1 * H * Real.exp (1 * H))) * (t₁ - t₀))) := by
-  have hP : DLRAProblem (fun _ (Y : Matrix m n ℝ) => (-1 : ℝ) • Y) (fun _ => 0) t₀ t₁ ρ 1 ρ := by
-    refine ⟨⟨continuousOn_const, fun t _ => ?_⟩, zero_le_one, hρ, fun t _ x y _ _ => ?_,
+field `F(t, Y) = -Y` on `2 × 2` matrices with the solution `A = 0` (Lipschitz constant `1`, bound
+`ρ = 1` on the tube of radius `1`, no normal component, `ε = 0`), rank `r = 1` and the rank-one
+start value `Y₀ = (1/4, 0)ᵀ (1, 0)`: the margin `‖Y₀‖ + 4 ρ (t₁ - t₀) < ρ` holds for the step size
+`t₁ - t₀ = H = 1/100`, there is a BUG step, and every such step has local error at most
+`(1/100) (7/100)`. -/
+example (t₀ : ℝ) :
+    ∃ Y₁, stepRel (fun _ Y => (-1 : ℝ) • Y) 1 t₀ (t₀ + 1 / 100)
+        (Matrix.vecMulVec ![(1 / 4 : ℝ), 0] ![1, 0]) Y₁ ∧
+      HasLocalError (fun _ Y => (-1 : ℝ) • Y) t₀ (t₀ + 1 / 100)
+        (Matrix.vecMulVec ![(1 / 4 : ℝ), 0] ![1, 0]) Y₁ (1 / 100 * (7 / 100)) := by
+  have h01 : t₀ ≤ t₀ + 1 / 100 := by linarith
+  have hsub : t₀ + 1 / 100 - t₀ = 1 / 100 := add_sub_cancel_left t₀ (1 / 100)
+  have hP : DLRAProblem (fun _ (Y : Matrix (Fin 2) (Fin 2) ℝ) => (-1 : ℝ) • Y) (fun _ => 0) t₀
+      (t₀ + 1 / 100) 1 1 1 := by
+    refine ⟨⟨continuousOn_const, fun t _ => ?_⟩, zero_le_one, zero_le_one, fun t _ x y _ _ => ?_,
       fun t _ x hx => ?_⟩
-    · simpa using hasDerivWithinAt_const t (Ici t) (0 : Matrix m n ℝ)
+    · simpa using hasDerivWithinAt_const t (Ici t) (0 : Matrix (Fin 2) (Fin 2) ℝ)
     · exact le_of_eq (by rw [← smul_sub, norm_smul, norm_neg, norm_one, one_mul])
     · simpa [norm_smul] using hx
-  have hlip : IsLipschitzField (fun _ (Y : Matrix m n ℝ) => (-1 : ℝ) • Y) 1 := fun _ x y =>
-    le_of_eq (by rw [← smul_sub, norm_smul, norm_neg, norm_one, one_mul])
-  obtain ⟨Y₁, hstep⟩ := exists_stepRel hlip (fun _ => continuousOn_const) h01 hrm hrn hY₀
-  exact ⟨Y₁, hstep, hstep.hasLocalError_of_tube_two_mul (factoredNormalBoundOn_neg _)
-    hP.lipschitz zero_le_one hP.bounded hρ le_rfl le_rfl h01 hH hP.sol (by simpa using hsmall)⟩
+  have hlip : IsLipschitzField (fun _ (Y : Matrix (Fin 2) (Fin 2) ℝ) => (-1 : ℝ) • Y) 1 :=
+    fun _ x y => le_of_eq (by rw [← smul_sub, norm_smul, norm_neg, norm_one, one_mul])
+  obtain ⟨Y₁, hstep⟩ := exists_stepRel hlip (fun _ => continuousOn_const) h01 (by simp) (by simp)
+    (Matrix.rank_vecMulVec_le ![(1 / 4 : ℝ), 0] ![1, 0])
+  refine ⟨Y₁, hstep, (hstep.hasLocalError_of_tube_two_mul (H := 1 / 100)
+    (factoredNormalBoundOn_neg _) hP.lipschitz zero_le_one hP.bounded zero_le_one le_rfl le_rfl
+    h01 hsub.le hP.sol ?_).mono ?_⟩
+  · simp only [hsub, sub_zero]
+    linarith [norm_vecMulVec_quarter_le]
+  · rw [hsub]
+    linarith [localErrorConst_le]
 
 end Examples
 

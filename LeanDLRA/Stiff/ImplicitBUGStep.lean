@@ -932,6 +932,115 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
       hP.lipschitz hP.L_nonneg hP.bounded hP.B_nonneg le_rfl (fun _ _ _ _ _ _ => by simp)
       le_rfl le_rfl h01 hhL hP.sol hsmall
 
+/-- The rank-one matrix `E = e₁ e₁ᵀ` on `ℝ²` of the concrete examples below has norm `1`. -/
+private theorem norm_vecMulVec_one_zero : ‖Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ = 1 := by
+  have h2 : ‖Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ^ 2 = 1 := by
+    rw [Frobenius.norm_sq_eq_sum]
+    norm_num [Matrix.vecMulVec_apply, Fin.sum_univ_two]
+  have h0 := norm_nonneg (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+  nlinarith
+
+/-- `C = E = e₁ e₁ᵀ` is a stationary point of `F(t, Y) = -E Y + Y 0ᵀ + E`, since `E² = E`. -/
+private theorem stationary_vecMulVec_one_zero :
+    -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] +
+      Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ +
+      Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] = 0 := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
+
+/-- The Lipschitz constant `‖M‖ + ‖N‖` of the concrete linear field with `M = -E`, `N = 0` is
+`1`. -/
+private theorem norm_neg_vecMulVec_add_norm_zero :
+    ‖-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ + ‖(0 : Matrix (Fin 2) (Fin 2) ℝ)‖ = 1 := by
+  rw [norm_neg, norm_zero, norm_vecMulVec_one_zero, add_zero]
+
+/-- The column `e₁` of `ℝ^{2×1}` is orthonormal. -/
+private theorem transpose_mul_col_one_zero :
+    (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)ᵀ * (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) = 1 := by
+  ext i j
+  fin_cases i
+  fin_cases j
+  simp [Matrix.mul_apply, Fin.sum_univ_two]
+
+/-- **A concrete instance of `MatrixImplicitBUG.exists_isStep` and
+`MatrixImplicitBUG.IsStep.of_lipschitz`.** For the linear field `F(t, Y) = -E Y + E` on `2 × 2`
+matrices with `E = e₁ e₁ᵀ` (Lipschitz constant `‖-E‖ + ‖0‖ = 1`), the step size `1/2`, rank
+`r = 1` and the orthonormal factors `U₀ = V₀ = e₁` with `S₀ = 5/4`, a step exists, and its stage
+equations alone determine it. -/
+example (t₀ : ℝ) :
+    ∃ Y₁, stepRel (fun _ Y => -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y +
+      Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ + Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) 1 t₀
+      (t₀ + 1 / 2) ((!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) * (!![5 / 4] : Matrix (Fin 1) (Fin 1) ℝ) *
+        (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)ᵀ) Y₁ := by
+  have h01 : t₀ ≤ t₀ + 1 / 2 := by linarith
+  have hhL : (t₀ + 1 / 2 - t₀) * (‖-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ +
+      ‖(0 : Matrix (Fin 2) (Fin 2) ℝ)‖) < 1 := by
+    rw [norm_neg_vecMulVec_add_norm_zero, add_sub_cancel_left]
+    norm_num
+  obtain ⟨K₁, L₁, U₁, V₁, S₁, hs⟩ := exists_isStep
+    (isLipschitzField_linear (-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+      (0 : Matrix (Fin 2) (Fin 2) ℝ) (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]))
+    h01 hhL transpose_mul_col_one_zero !![5 / 4] transpose_mul_col_one_zero (by simp) (by simp)
+  have hs' := IsStep.of_lipschitz (isLipschitzField_linear _ _ _) h01 hhL hs.orthU₀ hs.orthV₀
+    hs.kStep hs.lStep hs.orthU₁ hs.kCap hs.orthV₁ hs.lCap hs.sStep
+  exact ⟨_, hs'.stepRel⟩
+
+/-- **A concrete instance of `MatrixImplicitBUG.isStep_tubeExt_iff_of_near` and
+`MatrixImplicitBUG.stepRel_tubeExt_iff_of_near`.** For the linear field `F(t, Y) = -E Y + E` on
+`2 × 2` matrices with `E = e₁ e₁ᵀ` and the stationary point `C = E` (`L = 1`, bound `B = ρ = 4` on
+the tube of radius `4`), the step size `1/100`, rank `r = 1` and the factors `U₀ = V₀ = e₁`,
+`S₀ = 5/4`, the start value `(5/4) E` satisfies `‖U₀ S₀ V₀ᵀ - C‖ + 4 B h = 1/4 + 16/100 < 4`: a
+step of `F` exists, and it is a step of the tube extension of `F`. -/
+example (t₀ : ℝ) :
+    ∃ (K₁ : Matrix (Fin 2) (Fin 1) ℝ) (L₁ : Matrix (Fin 2) (Fin 1) ℝ)
+      (U₁ : Matrix (Fin 2) (Fin 1) ℝ) (V₁ : Matrix (Fin 2) (Fin 1) ℝ)
+      (S₁ : Matrix (Fin 1) (Fin 1) ℝ),
+      IsStep (tubeExt (fun _ Y => -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y +
+          Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ + Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+          (fun _ => Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) t₀ (t₀ + 1 / 100) 4) t₀
+        (t₀ + 1 / 100) !![1; 0] !![5 / 4] !![1; 0] K₁ L₁ U₁ V₁ S₁ ∧
+      stepRel (tubeExt (fun _ Y => -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y +
+          Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ + Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+          (fun _ => Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) t₀ (t₀ + 1 / 100) 4) 1 t₀
+        (t₀ + 1 / 100) ((!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) *
+          (!![5 / 4] : Matrix (Fin 1) (Fin 1) ℝ) * (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)ᵀ)
+        (U₁ * S₁ * V₁ᵀ) := by
+  have h01 : t₀ ≤ t₀ + 1 / 100 := by linarith
+  have hsub : t₀ + 1 / 100 - t₀ = 1 / 100 := add_sub_cancel_left t₀ (1 / 100)
+  have hhL : (t₀ + 1 / 100 - t₀) * (‖-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ +
+      ‖(0 : Matrix (Fin 2) (Fin 2) ℝ)‖) < 1 := by
+    rw [norm_neg_vecMulVec_add_norm_zero, hsub]
+    norm_num
+  have hP := dlraProblem_linear (-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+    (0 : Matrix (Fin 2) (Fin 2) ℝ) (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+    (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) stationary_vecMulVec_one_zero t₀ (t₀ + 1 / 100)
+    (ρ := 4) (by norm_num)
+  have hnear : ‖(!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) * (!![5 / 4] : Matrix (Fin 1) (Fin 1) ℝ) *
+      (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)ᵀ - Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ≤ 1 / 4 := by
+    have h2 : ‖(!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) * (!![5 / 4] : Matrix (Fin 1) (Fin 1) ℝ) *
+        (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)ᵀ - Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ^ 2 =
+        1 / 16 := by
+      rw [Frobenius.norm_sq_eq_sum]
+      norm_num [Matrix.mul_apply, Matrix.vecMulVec_apply, Fin.sum_univ_two, Matrix.vecHead,
+        Function.swap]
+    nlinarith [norm_nonneg ((!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) *
+      (!![5 / 4] : Matrix (Fin 1) (Fin 1) ℝ) * (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)ᵀ -
+        Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])]
+  have hsmall : ‖(!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ) * (!![5 / 4] : Matrix (Fin 1) (Fin 1) ℝ) *
+      (!![1; 0] : Matrix (Fin 2) (Fin 1) ℝ)ᵀ - Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ +
+      4 * ((‖-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ + ‖(0 : Matrix (Fin 2) (Fin 2) ℝ)‖) * 4) *
+        (t₀ + 1 / 100 - t₀) < 4 := by
+    rw [norm_neg_vecMulVec_add_norm_zero, hsub]
+    linarith
+  obtain ⟨K₁, L₁, U₁, V₁, S₁, hs⟩ := exists_isStep
+    (isLipschitzField_linear (-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+      (0 : Matrix (Fin 2) (Fin 2) ℝ) (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]))
+    h01 hhL transpose_mul_col_one_zero !![5 / 4] transpose_mul_col_one_zero (by simp) (by simp)
+  exact ⟨K₁, L₁, U₁, V₁, S₁,
+    (isStep_tubeExt_iff_of_near hP.bounded hP.B_nonneg le_rfl le_rfl h01 hP.sol hsmall).2 hs,
+    (stepRel_tubeExt_iff_of_near hP.bounded hP.B_nonneg le_rfl le_rfl h01 hP.sol hsmall).2
+      hs.stepRel⟩
+
 end Examples
 
 end MatrixImplicitBUG
