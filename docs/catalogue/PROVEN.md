@@ -86,10 +86,12 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`DLRA/Existence`](../../LeanDLRA/DLRA/Existence.lean) | Existence and uniqueness of the DLRA solution | 22 |  |
 | [`DLRA/GaugeInvariance`](../../LeanDLRA/DLRA/GaugeInvariance.lean) | Results of arXiv 2503.18271: On-the-fly ROM of the filter density function (TDB/DO) | 4 | [2503.18271](https://arxiv.org/abs/2503.18271) |
 | [`DLRA/QuasiOptimality`](../../LeanDLRA/DLRA/QuasiOptimality.lean) | Quasi-optimality of dynamical low-rank approximation for matrices | 39 |  |
+| [`DLRA/QuasiOptimalityDefect`](../../LeanDLRA/DLRA/QuasiOptimalityDefect.lean) | The defect of a curve of critical points, to first order in the gap | 22 |  |
 | [`DLRA/QuasiOptimalityGap`](../../LeanDLRA/DLRA/QuasiOptimalityGap.lean) | Quasi-optimality of dynamical low-rank approximation against the truncated SVD under a gap | 5 |  |
 | [`DLRA/QuasiOptimalityMargin`](../../LeanDLRA/DLRA/QuasiOptimalityMargin.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ / 2` | 10 |  |
 | [`DLRA/QuasiOptimalityNormal`](../../LeanDLRA/DLRA/QuasiOptimalityNormal.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ` | 11 |  |
 | [`DLRA/QuasiOptimalityNormalVelocity`](../../LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean) | Quasi-optimality of matrix DLRA with the normal velocity as growth rate | 15 |  |
+| [`DLRA/QuasiOptimalityNormalVelocitySpectral`](../../LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean) | Quasi-optimality with the spectral norm of the normal velocity, and the a posteriori form | 27 |  |
 | [`DLRA/QuasiOptimalitySharp`](../../LeanDLRA/DLRA/QuasiOptimalitySharp.lean) | Quasi-optimality of matrix DLRA with the Lipschitz constant `1` of the tangent projector | 11 |  |
 | [`DLRA/QuasiOptimalitySpectral`](../../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) | Quasi-optimality of matrix DLRA with the spectral norm of the tail | 11 |  |
 | [`DLRA/QuasiOptimalitySpeedSharp`](../../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean) | The speed and velocity bounds of a curve of critical points are attained | 22 |  |
