@@ -10,7 +10,7 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 199 modules with 567 definitions (0 of them without a docstring) and 63 private definitions, which are helpers of one file and are not listed.
+The core has 200 modules with 570 definitions (0 of them without a docstring) and 63 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 
@@ -24,7 +24,7 @@ The core has 199 modules with 567 definitions (0 of them without a docstring) an
 | `Foundations` | 1 | 2 | 0 |
 | `HighOrder` | 4 | 21 | 0 |
 | `Integrators` | 12 | 60 | 0 |
-| `Integrators/Matrix` | 12 | 44 | 0 |
+| `Integrators/Matrix` | 13 | 47 | 0 |
 | `Kinetic` | 1 | 14 | 0 |
 | `LinearAlgebra/Factorization` | 1 | 18 | 0 |
 | `LinearAlgebra/Frobenius` | 1 | 13 | 0 |
@@ -234,6 +234,9 @@ The core has 199 modules with 567 definitions (0 of them without a docstring) an
 | `LeanDLRA.MatrixBUG.exS` | def | [Integrators/Matrix/BUG.lean:992](../LeanDLRA/Integrators/Matrix/BUG.lean#L992) | The S-step solution of the BUG example: `S(t) = 1 + t`. |
 | `LeanDLRA.MatrixBUG.exSa` | def | [Integrators/Matrix/BUG.lean:995](../LeanDLRA/Integrators/Matrix/BUG.lean#L995) | The augmented S-step solution of the rank-adaptive example: `Ŝ(t) = e₁ e₁ᵀ + t I`. |
 | `LeanDLRA.MatrixBUG.exA` | def | [Integrators/Matrix/BUG.lean:999](../LeanDLRA/Integrators/Matrix/BUG.lean#L999) | The exact solution of the examples: `A(t) = e₁ e₁ᵀ + t I`. |
+| `LeanDLRA.BUGQuasiOptimalityExamples.e₁` | def | [Integrators/Matrix/BUGQuasiOptimality.lean:778](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean#L778) | The first unit vector of `ℝ²` as a column. |
+| `LeanDLRA.BUGQuasiOptimalityExamples.dg` | def | [Integrators/Matrix/BUGQuasiOptimality.lean:781](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean#L781) | The matrix `diag(s, t)`. |
+| `LeanDLRA.BUGQuasiOptimalityExamples.sc` | def | [Integrators/Matrix/BUGQuasiOptimality.lean:858](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean#L858) | The `1 × 1` matrix with the entry `s`. |
 | `LeanDLRA.MatrixBUG.stepRel` | def | [Integrators/Matrix/BUGStep.lean:72](../LeanDLRA/Integrators/Matrix/BUGStep.lean#L72) | **The step relation of the rank-`r` matrix BUG integrator.** `stepRel F r t₀ t₁ Y₀ Y₁` holds if `Y₀ = U₀ S₀ V₀ᵀ` for some factors with orthonormal `U₀`, `V₀`, and `Y₁ = U₁ S(t₁) V₁ᵀ` is the result of a BUG step (`MatrixBUG.IsStep`) over `[t₀, t₁]` started from these factors. |
 | `LeanDLRA.MatrixBUG.FactoredNormalBound` | def | [Integrators/Matrix/Defs.lean:68](../LeanDLRA/Integrators/Matrix/Defs.lean#L68) | The **factored normal-component assumption** at rank `r` (assumption 2 of [CerutiLubich2022, Thm. 2], in factored global form): |
 | `LeanDLRA.NearNormalBound` | def | [Integrators/Matrix/Defs.lean:85](../LeanDLRA/Integrators/Matrix/Defs.lean#L85) | The **localized factored normal-component assumption**: on `[t₀, t₁]`, the doubly-normal part `(I - U Uᵀ) F(t, U S Vᵀ) (I - V Vᵀ)` is `ε`-small at all points `U S Vᵀ` (orthonormal `U : m × r`, `V : n × r`, arbitrary `S`) within distance `ρ` of `Y`. |

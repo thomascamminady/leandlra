@@ -116,6 +116,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/Matrix/AdaptiveBUGRun`](../../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean) | Runs of the rank-adaptive BUG integrator with truncation by a tolerance | 6 |  |
 | [`Integrators/Matrix/AdaptiveBUGStep`](../../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean) | The augmented BUG step as step relations: truncation by a tolerance or to a fixed rank | 36 |  |
 | [`Integrators/Matrix/BUG`](../../LeanDLRA/Integrators/Matrix/BUG.lean) | The BUG integrator for matrices, at the level of the factors | 58 |  |
+| [`Integrators/Matrix/BUGQuasiOptimality`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean) | Quasi-optimality of the BUG integrator for given data | 34 |  |
 | [`Integrators/Matrix/BUGRun`](../../LeanDLRA/Integrators/Matrix/BUGRun.lean) | Runs of the fixed-rank BUG integrator: existence and error bound | 11 |  |
 | [`Integrators/Matrix/BUGRunOneSided`](../../LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean) | The fixed-rank BUG integrator: runs with a one-sided Lipschitz constant and smaller constants | 6 |  |
 | [`Integrators/Matrix/BUGStep`](../../LeanDLRA/Integrators/Matrix/BUGStep.lean) | The matrix BUG step as a step relation | 16 |  |
