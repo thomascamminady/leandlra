@@ -20,6 +20,7 @@ import LeanDLRA.DLRA.QuasiOptimalityMargin
 import LeanDLRA.DLRA.QuasiOptimalityNormal
 import LeanDLRA.DLRA.QuasiOptimalitySharp
 import LeanDLRA.DLRA.QuasiOptimalitySpectral
+import LeanDLRA.DLRA.QuasiOptimalitySpeedSharp
 import LeanDLRA.DLRA.QuasiOptimalityTimeLocal
 import LeanDLRA.DLRA.QuasiOptimalityTruncation
 import LeanDLRA.DLRA.QuasiOptimalityTube
@@ -51,6 +52,7 @@ import LeanDLRA.HighOrder.ProjectedRK
 import LeanDLRA.HighOrder.RungeKuttaBUG
 import LeanDLRA.Integrators.BUG
 import LeanDLRA.Integrators.BUGCapture
+import LeanDLRA.Integrators.BUGCaptureSharp
 import LeanDLRA.Integrators.BUGCore
 import LeanDLRA.Integrators.Defs
 import LeanDLRA.Integrators.EulerBUG
