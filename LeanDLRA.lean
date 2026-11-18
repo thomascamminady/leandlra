@@ -186,11 +186,14 @@ import LeanDLRA.Tensor.Steps
 import LeanDLRA.Tensor.TT.AugmentedBUG
 import LeanDLRA.Tensor.TT.Basic
 import LeanDLRA.Tensor.TT.NormalSecondOrder
+import LeanDLRA.Tensor.TT.NormalSecondOrderTrain
 import LeanDLRA.Tensor.TT.ObliqueProjector
 import LeanDLRA.Tensor.TT.Operations
 import LeanDLRA.Tensor.TT.ProjectorSplitting
 import LeanDLRA.Tensor.TT.ProjectorSplittingError
 import LeanDLRA.Tensor.TT.ProjectorSplittingExactness
+import LeanDLRA.Tensor.TT.QuasiOptimalityNormalVelocity
+import LeanDLRA.Tensor.TT.TangentNormal
 import LeanDLRA.Tensor.TT.TangentProjector
 import LeanDLRA.Tensor.TTN.Abstract.BUG
 import LeanDLRA.Tensor.TTN.Abstract.ParallelBUG
@@ -217,6 +220,7 @@ import LeanDLRA.Tensor.Tucker.ProjectorLowerBound
 import LeanDLRA.Tensor.Tucker.QuasiOptimalityNormalVelocity
 import LeanDLRA.Tensor.Tucker.Tangent
 import LeanDLRA.Tensor.Tucker.TangentNormal
+import LeanDLRA.Tensor.Tucker.TangentNormalPrefix
 import LeanDLRA.Tensor.Unfolding
 import LeanDLRA.Training.ConvergenceRates
 import LeanDLRA.Training.Defs
