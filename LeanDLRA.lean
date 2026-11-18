@@ -154,6 +154,7 @@ import LeanDLRA.Research.ImplicitBUGEnergyProjection
 import LeanDLRA.Research.ImplicitBUGRationalKrylov
 import LeanDLRA.Research.ImplicitBUGSmoothRows
 import LeanDLRA.Research.ImplicitBUGStiffAugmented
+import LeanDLRA.Research.ImplicitBUGStiffDamped
 import LeanDLRA.Research.ImplicitBUGStiffLemmas
 import LeanDLRA.Research.ImplicitBUGStiffLocal
 import LeanDLRA.Research.ImplicitBUGStiffRows
@@ -162,6 +163,7 @@ import LeanDLRA.Research.ImplicitBUGStiffSemilinear
 import LeanDLRA.Research.ImplicitBUGStiffSharpRun
 import LeanDLRA.Research.ImplicitBUGStiffTruncation
 import LeanDLRA.Research.ImplicitBUGStiffTwoSided
+import LeanDLRA.Research.ImplicitBUGTwoSidedDamped
 import LeanDLRA.Research.ImplicitBUGWeightedRows
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.PerturbedSylvester
