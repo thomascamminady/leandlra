@@ -41,6 +41,7 @@ import LeanDLRA.Foundations.Localization
 import LeanDLRA.Foundations.ODE
 import LeanDLRA.Foundations.OneSided
 import LeanDLRA.Foundations.Projector
+import LeanDLRA.Foundations.SweepAposteriori
 import LeanDLRA.HighOrder.Defs
 import LeanDLRA.HighOrder.MidpointBUG
 import LeanDLRA.HighOrder.MidpointBUGGlobal
@@ -62,6 +63,8 @@ import LeanDLRA.Integrators.Matrix.AdaptiveBUGRun
 import LeanDLRA.Integrators.Matrix.AdaptiveBUGStep
 import LeanDLRA.Integrators.Matrix.BUG
 import LeanDLRA.Integrators.Matrix.BUGQuasiOptimality
+import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityStep
+import LeanDLRA.Integrators.Matrix.BUGQuasiOptimalityTruncation
 import LeanDLRA.Integrators.Matrix.BUGRun
 import LeanDLRA.Integrators.Matrix.BUGRunOneSided
 import LeanDLRA.Integrators.Matrix.BUGStep
