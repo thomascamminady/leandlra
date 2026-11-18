@@ -2,6 +2,7 @@ import LeanDLRA.Integrators.Matrix.BUGTube
 import LeanDLRA.Integrators.Method
 import LeanDLRA.Matrix.LowRankDistance
 import LeanDLRA.Foundations.ConjugatedField
+import LeanDLRA.Integrators.Matrix.LinearFieldExample
 
 /-!
 # Runs of the fixed-rank BUG integrator: existence and error bound
@@ -431,80 +432,43 @@ example (M : Matrix m m ℝ) (N : Matrix n n ℝ) (G C : Matrix m n ℝ)
     (continuous_uncurry_linear M N G).continuousOn
     (factoredNormalBoundOn_linear M N G _) (norm_nonneg G) hh hhH hKT hsmall hY hδ
 
-/-- The rank-one matrix `E = e₁ e₁ᵀ` on `ℝ²` of the concrete example below has norm `1`. -/
-private theorem norm_vecMulVec_one_zero : ‖Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ = 1 := by
-  have h2 : ‖Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ^ 2 = 1 := by
-    rw [Frobenius.norm_sq_eq_sum]
-    norm_num [Matrix.vecMulVec_apply, Fin.sum_univ_two]
-  have h0 := norm_nonneg (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
-  nlinarith
-
-/-- `C = E = e₁ e₁ᵀ` is a stationary point of `F(t, Y) = -E Y + Y 0ᵀ + E`, since `E² = E`. -/
-private theorem stationary_vecMulVec_one_zero :
-    -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] +
-      Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ +
-      Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] = 0 := by
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
-
 /-- **A concrete instance of `exists_run_norm_sub_le` and `MatrixBUG.IsRun.norm_sub_le` for the
-linear field.** On `2 × 2` matrices with rank `r = 1`, take `M = -E`, `N = 0` and `G = C = E` with
-`E = e₁ e₁ᵀ`, so that `M C + C Nᵀ + G = 0`, `L = ‖M‖ + ‖N‖ = 1` and `‖G‖ = 1`; the start value
-`Y₀ = (5/4) e₁ e₁ᵀ` has rank one and `‖Y₀ - C‖ = 1/4`. With `K = 10` steps of size `h = H = 1/100`
-up to `T = 1/10` and the tube radius `ρ = 4` the smallness condition holds
-(`e^{1/10}, e^{1/100} ≤ 3`): a run of the fixed-rank BUG integrator exists, and, as every run that
-starts near `C`, it satisfies the error bound. -/
+linear field** (the data of `LinearFieldExample`). On `2 × 2` matrices with rank `r = 1`, take
+`M = -E`, `N = 0` and `G = C = E` with `E = e₁ e₁ᵀ`, so that `M C + C Nᵀ + G = 0`,
+`L = ‖M‖ + ‖N‖ = 1`, `B = ρ` and `‖G‖ = 1`; the start value `Y₀ = (5/4) e₁ e₁ᵀ` has rank one and
+`‖Y₀ - C‖ = 1/4`. With `K = 10` steps of size `h = H = 1/100` up to `T = 1/10` and the tube radius
+`ρ = 4` the smallness condition holds (`e^{1/10}, e^{1/100} ≤ 3`): a run of the fixed-rank BUG
+integrator exists, and, as every run that starts near `C`, it satisfies the error bound. -/
 example (t₀ : ℝ) :
     ∃ Y : ℕ → Matrix (Fin 2) (Fin 2) ℝ, Y 0 = Matrix.vecMulVec ![5 / 4, 0] ![1, 0] ∧
       IsRun (stepRel (fun _ Y => -Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0] * Y +
         Y * (0 : Matrix (Fin 2) (Fin 2) ℝ)ᵀ + Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) 1)
         (uniformGrid t₀ (1 / 100)) 10 Y ∧
       ∀ j ≤ 10, (Y j).rank ≤ 1 ∧ ‖Y j - Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ≤
-        bugGlobalBound 1 (1 * 4) (1 / 100) (1 / 10) (1 / 4) 1 (1 / 100) := by
-  have hE := norm_vecMulVec_one_zero
-  have hL : ‖-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ + ‖(0 : Matrix (Fin 2) (Fin 2) ℝ)‖ = 1 := by
-    rw [norm_neg, norm_zero, hE, add_zero]
-  have hδ : ‖Matrix.vecMulVec ![(5 / 4 : ℝ), 0] ![1, 0] -
-      Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ≤ 1 / 4 := by
-    have h2 : ‖Matrix.vecMulVec ![(5 / 4 : ℝ), 0] ![1, 0] -
-        Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ^ 2 = 1 / 16 := by
-      rw [Frobenius.norm_sq_eq_sum]
-      norm_num [Matrix.vecMulVec_apply, Fin.sum_univ_two]
-    nlinarith [norm_nonneg (Matrix.vecMulVec ![(5 / 4 : ℝ), 0] ![1, 0] -
-      Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])]
-  have hsmall : bugGlobalBound 1 (1 * 4) (1 / 100) (1 / 10) (1 / 4) 1 (1 / 100) +
-      4 * (1 * 4) * (1 / 100) < 4 := by
+        bugGlobalBound 1 4 (1 / 100) (1 / 10) (1 / 4) 1 (1 / 100) := by
+  have he := LinearFieldExample.exp_le_three
+  have hc₁ : 0 ≤ bugC₁ 1 (1 / 100) := bugC₁_nonneg zero_le_one (by norm_num)
+  have hc₂ : 0 ≤ bugC₂ 1 4 (1 / 100) := bugC₂_nonneg zero_le_one (by norm_num) (by norm_num)
+  have hsmall : bugGlobalBound 1 4 (1 / 100) (1 / 10) (1 / 4) 1 (1 / 100) +
+      4 * 4 * (1 / 100) < 4 := by
     rw [bugGlobalBound_eq]
-    unfold bugC₁ bugC₂
-    have h1 : Real.exp (1 * (1 / 10)) ≤ 3 :=
-      (Real.exp_le_exp.2 (by norm_num : (1 : ℝ) * (1 / 10) ≤ 1)).trans
-        (Real.exp_one_lt_d9.le.trans (by norm_num))
-    have h2 : Real.exp (1 * (1 / 100)) ≤ 3 :=
-      (Real.exp_le_exp.2 (by norm_num : (1 : ℝ) * (1 / 100) ≤ 1)).trans
-        (Real.exp_one_lt_d9.le.trans (by norm_num))
-    have h1' := Real.exp_pos (1 * (1 / 10))
-    have h2' := Real.exp_pos (1 * (1 / 100))
-    nlinarith [mul_le_mul h1 h2 h2'.le (by norm_num : (0 : ℝ) ≤ 3)]
-  have hP := dlraProblem_linear (-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
-    (0 : Matrix (Fin 2) (Fin 2) ℝ) (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
-    (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) stationary_vecMulVec_one_zero t₀
-    (t₀ + ((10 : ℕ) : ℝ) * (1 / 100)) (ρ := 4) (by norm_num)
-  rw [hL] at hP
-  have hε := factoredNormalBoundOn_linear (r := 1) (-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
-    (0 : Matrix (Fin 2) (Fin 2) ℝ) (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
+    nlinarith [mul_le_mul he LinearFieldExample.bugC₁_le hc₁ (by norm_num),
+      mul_le_mul he LinearFieldExample.bugC₂_le hc₂ (by norm_num)]
+  have hP := LinearFieldExample.dlraProblem t₀ (t₀ + ((10 : ℕ) : ℝ) * (1 / 100)) (ρ := 4)
+    (by norm_num)
+  have hε := LinearFieldExample.factoredNormalBoundOn 1
     (tubeSet (fun _ => Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) t₀
       (t₀ + ((10 : ℕ) : ℝ) * (1 / 100)) 4)
-  rw [hE] at hε
   have hc := (continuous_uncurry_linear (-Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])
     (0 : Matrix (Fin 2) (Fin 2) ℝ) (Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0])).continuousOn
     (s := tubeSet (fun _ => Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]) t₀
       (t₀ + ((10 : ℕ) : ℝ) * (1 / 100)) 4)
   obtain ⟨Y, hY0, hY, hbd⟩ := exists_run_norm_sub_le hP hc hε zero_le_one (by norm_num)
-    (le_refl (1 / 100 : ℝ)) (by norm_num) (by simp) (by simp) (Matrix.rank_vecMulVec_le _ _) hδ
-    hsmall
+    (le_refl (1 / 100 : ℝ)) (by norm_num) (by simp) (by simp) (Matrix.rank_vecMulVec_le _ _)
+    LinearFieldExample.norm_start_sub_le hsmall
   have hδY : ‖Y 0 - Matrix.vecMulVec ![(1 : ℝ), 0] ![1, 0]‖ ≤ 1 / 4 := by
     rw [hY0]
-    exact hδ
+    exact LinearFieldExample.norm_start_sub_le
   have hrun := IsRun.norm_sub_le hP hc hε zero_le_one (by norm_num) (le_refl (1 / 100 : ℝ))
     (by norm_num) hsmall hY hδY
   exact ⟨Y, hY0, hY, fun j hj => ⟨(hbd j hj).1, hrun j hj⟩⟩
