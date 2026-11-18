@@ -123,6 +123,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/Matrix/AdaptiveBUGRun`](../../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean) | Runs of the rank-adaptive BUG integrator with truncation by a tolerance | 6 |  |
 | [`Integrators/Matrix/AdaptiveBUGStep`](../../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean) | The augmented BUG step as step relations: truncation by a tolerance or to a fixed rank | 36 |  |
 | [`Integrators/Matrix/BUG`](../../LeanDLRA/Integrators/Matrix/BUG.lean) | The BUG integrator for matrices, at the level of the factors | 58 |  |
+| [`Integrators/Matrix/BUGHybridQuasiOptimality`](../../LeanDLRA/Integrators/Matrix/BUGHybridQuasiOptimality.lean) | Error certificates that are robust and quasi-optimal for runs with changing rank | 12 |  |
 | [`Integrators/Matrix/BUGQuasiOptimality`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean) | Quasi-optimality of the BUG integrator for given data | 34 |  |
 | [`Integrators/Matrix/BUGQuasiOptimalityStep`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityStep.lean) | One BUG step for given data: the bound in the step, the gap and the tail | 14 |  |
 | [`Integrators/Matrix/BUGQuasiOptimalityTruncation`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean) | Quasi-optimality of the BUG integrator against the truncated singular value decomposition | 11 |  |
