@@ -16,10 +16,12 @@ import LeanDLRA.DLRA.DynamicallyOrthogonal
 import LeanDLRA.DLRA.Existence
 import LeanDLRA.DLRA.GaugeInvariance
 import LeanDLRA.DLRA.QuasiOptimality
+import LeanDLRA.DLRA.QuasiOptimalityDefect
 import LeanDLRA.DLRA.QuasiOptimalityGap
 import LeanDLRA.DLRA.QuasiOptimalityMargin
 import LeanDLRA.DLRA.QuasiOptimalityNormal
 import LeanDLRA.DLRA.QuasiOptimalityNormalVelocity
+import LeanDLRA.DLRA.QuasiOptimalityNormalVelocitySpectral
 import LeanDLRA.DLRA.QuasiOptimalitySharp
 import LeanDLRA.DLRA.QuasiOptimalitySpectral
 import LeanDLRA.DLRA.QuasiOptimalitySpeedSharp
