@@ -25,6 +25,7 @@ import LeanDLRA.DLRA.QuasiOptimalityNormalVelocitySpectral
 import LeanDLRA.DLRA.QuasiOptimalitySharp
 import LeanDLRA.DLRA.QuasiOptimalitySpectral
 import LeanDLRA.DLRA.QuasiOptimalitySpeedSharp
+import LeanDLRA.DLRA.QuasiOptimalityStiff
 import LeanDLRA.DLRA.QuasiOptimalityTimeLocal
 import LeanDLRA.DLRA.QuasiOptimalityTruncation
 import LeanDLRA.DLRA.QuasiOptimalityTube
@@ -179,6 +180,7 @@ import LeanDLRA.Tensor.Defs
 import LeanDLRA.Tensor.Steps
 import LeanDLRA.Tensor.TT.AugmentedBUG
 import LeanDLRA.Tensor.TT.Basic
+import LeanDLRA.Tensor.TT.NormalSecondOrder
 import LeanDLRA.Tensor.TT.ObliqueProjector
 import LeanDLRA.Tensor.TT.Operations
 import LeanDLRA.Tensor.TT.ProjectorSplitting
@@ -202,10 +204,12 @@ import LeanDLRA.Tensor.TTN.RankAdaptiveBUG
 import LeanDLRA.Tensor.Tucker.BUGRun
 import LeanDLRA.Tensor.Tucker.BUGStep
 import LeanDLRA.Tensor.Tucker.Basic
+import LeanDLRA.Tensor.Tucker.NormalSecondOrder
 import LeanDLRA.Tensor.Tucker.ProjectorLipschitz
 import LeanDLRA.Tensor.Tucker.ProjectorLipschitzRankOne
 import LeanDLRA.Tensor.Tucker.ProjectorLipschitzRankOneSharp
 import LeanDLRA.Tensor.Tucker.ProjectorLowerBound
+import LeanDLRA.Tensor.Tucker.QuasiOptimalityNormalVelocity
 import LeanDLRA.Tensor.Tucker.Tangent
 import LeanDLRA.Tensor.Tucker.TangentNormal
 import LeanDLRA.Tensor.Unfolding
