@@ -90,6 +90,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`DLRA/QuasiOptimalityNormal`](../../LeanDLRA/DLRA/QuasiOptimalityNormal.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ` | 11 |  |
 | [`DLRA/QuasiOptimalitySharp`](../../LeanDLRA/DLRA/QuasiOptimalitySharp.lean) | Quasi-optimality of matrix DLRA with the Lipschitz constant `1` of the tangent projector | 11 |  |
 | [`DLRA/QuasiOptimalitySpectral`](../../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) | Quasi-optimality of matrix DLRA with the spectral norm of the tail | 11 |  |
+| [`DLRA/QuasiOptimalitySpeedSharp`](../../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean) | The speed and velocity bounds of a curve of critical points are attained | 22 |  |
 | [`DLRA/QuasiOptimalityTimeLocal`](../../LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean) | Quasi-optimality of matrix DLRA with constants that depend on time | 10 |  |
 | [`DLRA/QuasiOptimalityTruncation`](../../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean) | Quasi-optimality of matrix DLRA against the truncated SVD with a margin below `ρ` | 3 |  |
 | [`DLRA/QuasiOptimalityTube`](../../LeanDLRA/DLRA/QuasiOptimalityTube.lean) | Quasi-optimality of dynamical low-rank approximation for a field Lipschitz near the solution | 18 |  |
@@ -106,6 +107,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 |---|---|---:|---|
 | [`Integrators/BUG`](../../LeanDLRA/Integrators/BUG.lean) | Robust error bound of the basis-update & Galerkin (BUG) integrator | 16 |  |
 | [`Integrators/BUGCapture`](../../LeanDLRA/Integrators/BUGCapture.lean) | The capture estimate of the BUG integrator with smaller constants | 9 |  |
+| [`Integrators/BUGCaptureSharp`](../../LeanDLRA/Integrators/BUGCaptureSharp.lean) | Lower bounds for the constants of the BUG capture estimate and of the local error | 13 |  |
 | [`Integrators/BUGCore`](../../LeanDLRA/Integrators/BUGCore.lean) | The basis update and the BUG step without analysis constants | 20 |  |
 | [`Integrators/Defs`](../../LeanDLRA/Integrators/Defs.lean) | Definitions: time grids, local errors, step relations and runs | 11 |  |
 | [`Integrators/EulerBUG`](../../LeanDLRA/Integrators/EulerBUG.lean) | Explicit-Euler BUG, XL/sXL and GAP integrators | 51 | [2209.00550](https://arxiv.org/abs/2209.00550), [2502.07040](https://arxiv.org/abs/2502.07040), [2502.08951](https://arxiv.org/abs/2502.08951), [2505.19929](https://arxiv.org/abs/2505.19929), [2609.02721](https://arxiv.org/abs/2609.02721) |

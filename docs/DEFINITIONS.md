@@ -10,20 +10,20 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 206 modules with 570 definitions (0 of them without a docstring) and 63 private definitions, which are helpers of one file and are not listed.
+The core has 208 modules with 576 definitions (0 of them without a docstring) and 63 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 
 | Folder | Modules | Definitions | Without docstring |
 |---|---:|---:|---:|
 | `Analysis` | 1 | 31 | 0 |
-| `DLRA` | 1 | 3 | 0 |
+| `DLRA` | 2 | 7 | 0 |
 | `Filtering` | 1 | 9 | 0 |
 | `FixedRank` | 1 | 6 | 0 |
 | `FixedRank/TangentSpace` | 1 | 2 | 0 |
 | `Foundations` | 1 | 2 | 0 |
 | `HighOrder` | 4 | 21 | 0 |
-| `Integrators` | 12 | 60 | 0 |
+| `Integrators` | 13 | 62 | 0 |
 | `Integrators/Matrix` | 13 | 47 | 0 |
 | `Kinetic` | 1 | 14 | 0 |
 | `LinearAlgebra/Factorization` | 1 | 18 | 0 |
@@ -86,6 +86,10 @@ The core has 206 modules with 570 definitions (0 of them without a docstring) an
 | `LeanDLRA.DLRAProblem` | structure | [DLRA/Defs.lean:69](../LeanDLRA/DLRA/Defs.lean#L69) | A **DLRA problem** on the time interval `[a, b]`, posed around a reference solution: `A` is an exact solution of `y' = F(t, y)` on `[a, b]`, and on the tube of radius `ρ` around `A` (the states `x` with `‖x - A t‖ ≤ ρ` at time `t ∈ [a, b]`) the field `F` is Lipschitz in the state with constant `L` and bounded by `B`. |
 | `LeanDLRA.NormalBoundOn` | def | [DLRA/Defs.lean:165](../LeanDLRA/DLRA/Defs.lean#L165) | **Normal-component bound on a region.** A low-rank approximation at a point `Y` is described by a left projector `P` and a right projector `Q` (for a matrix `Y = U S Vᵀ`: `P X = U Uᵀ X` and `Q X = X V Vᵀ`); the part of a vector that both discard, `(1 - P) ((1 - Q) x)`, is its normal component, which a low-rank integrator cannot follow. |
 | `LeanDLRA.IsDLRASolution` | def | [DLRA/Defs.lean:218](../LeanDLRA/DLRA/Defs.lean#L218) | A **DLRA solution of rank `r`** of `Ẏ = P(Y) F(t, Y)` on `[a, b]`: `Y` solves the projected equation, with `P(Y) = tangentProjAt Y` the orthogonal projector onto the tangent space of the rank-`r` matrices at `Y` (`ODESolution`: continuity on `[a, b]` and right derivatives on `[a, b)`), and `Y t` has rank exactly `r` for every `t ∈ [a, b]`. |
+| `LeanDLRA.QuasiOptimalitySpeedExample.rotCol` | def | [DLRA/QuasiOptimalitySpeedSharp.lean:56](../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean#L56) | The unit column `u(t) = (cos t, sin t)`. |
+| `LeanDLRA.QuasiOptimalitySpeedExample.rotProj` | def | [DLRA/QuasiOptimalitySpeedSharp.lean:59](../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean#L59) | The projector `X t = u(t) u(t)ᵀ` of rank one. |
+| `LeanDLRA.QuasiOptimalitySpeedExample.rotProjDeriv` | def | [DLRA/QuasiOptimalitySpeedSharp.lean:62](../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean#L62) | The derivative of `rotProj`. |
+| `LeanDLRA.QuasiOptimalitySpeedExample.rotData` | def | [DLRA/QuasiOptimalitySpeedSharp.lean:67](../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean#L67) | The data `A t = θ • 1 + (1 - θ) • X t`. |
 
 ## `LeanDLRA/Filtering`
 
@@ -157,6 +161,8 @@ The core has 206 modules with 570 definitions (0 of them without a docstring) an
 | Name | Kind | File and line | First sentence of the docstring |
 |---|---|---|---|
 | `LeanDLRA.IsBUGStep` | structure | [Integrators/BUG.lean:245](../LeanDLRA/Integrators/BUG.lean#L245) | All hypotheses of one step of the BUG integrator from `(t₀, Y₀)` to `t₁` with initial projectors `P₀, Q₀` (bases `U₀`, `V₀`), new projectors `P₁, Q₁` (bases `U₁`, `V₁`), K-, L- and S-step trajectories `YK`, `YL`, `YS` (the new approximation is `YS t₁`), and normal-component bound `ε` at the points `YK t₁`, `YL t₁`. |
+| `LeanDLRA.BUGCaptureExample.shearField` | def | [Integrators/BUGCaptureSharp.lean:138](../LeanDLRA/Integrators/BUGCaptureSharp.lean#L138) | The field `F(x) = 1 + i L min(\|Re x\|, 1)`. |
+| `LeanDLRA.BUGCaptureExample.shearCurve` | def | [Integrators/BUGCaptureSharp.lean:142](../LeanDLRA/Integrators/BUGCaptureSharp.lean#L142) | The solution `A t = t + i L t² / 2` of `Ȧ = shearField L A` from `0`, on `[0, 1]`. |
 | `LeanDLRA.BasisUpdate` | structure | [Integrators/BUGCore.lean:82](../LeanDLRA/Integrators/BUGCore.lean#L82) | The **basis update** of the BUG integrator from `(t₀, Y₀)` to `t₁` for a family of modes `i : ι` [CerutiLubich2022, §3.1]. |
 | `LeanDLRA.IsBUGStepCore` | structure | [Integrators/BUGCore.lean:133](../LeanDLRA/Integrators/BUGCore.lean#L133) | One step of the fixed-rank **BUG integrator** from `(t₀, Y₀)` to `t₁`, as an algorithm [CerutiLubich2022, §3.1]: a basis update for two modes (K-step with the old projector `Q₀`, L-step with the old projector `P₀`, new projectors `P₁` and `Q₁`, see `basisUpdate_two_iff`) followed by the Galerkin step `Ẏ = P₁ (Q₁ (F (t, Y)))` from the start value `P₁ (Q₁ Y₀)`. |
 | `LeanDLRA.IsGrid` | structure | [Integrators/Defs.lean:65](../LeanDLRA/Integrators/Defs.lean#L65) | A **time grid** with `N` steps: times `τ 0 ≤ τ 1 ≤ ⋯ ≤ τ N`. |
