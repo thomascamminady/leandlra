@@ -23,6 +23,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
 | [`Analysis/Defs`](../../LeanDLRA/Analysis/Defs.lean) | Definitions: ODE solutions and conditions on vector fields | 17 |  |
+| [`Analysis/GronwallInner`](../../LeanDLRA/Analysis/GronwallInner.lean) | Grönwall's inequality from a bound on the inner product with the derivative | 2 |  |
 | [`Analysis/GronwallVariableRate`](../../LeanDLRA/Analysis/GronwallVariableRate.lean) | Grönwall's inequality with a time-dependent rate | 2 |  |
 
 ## Linear algebra
@@ -88,6 +89,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`DLRA/QuasiOptimalityGap`](../../LeanDLRA/DLRA/QuasiOptimalityGap.lean) | Quasi-optimality of dynamical low-rank approximation against the truncated SVD under a gap | 5 |  |
 | [`DLRA/QuasiOptimalityMargin`](../../LeanDLRA/DLRA/QuasiOptimalityMargin.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ / 2` | 10 |  |
 | [`DLRA/QuasiOptimalityNormal`](../../LeanDLRA/DLRA/QuasiOptimalityNormal.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ` | 11 |  |
+| [`DLRA/QuasiOptimalityNormalVelocity`](../../LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean) | Quasi-optimality of matrix DLRA with the normal velocity as growth rate | 15 |  |
 | [`DLRA/QuasiOptimalitySharp`](../../LeanDLRA/DLRA/QuasiOptimalitySharp.lean) | Quasi-optimality of matrix DLRA with the Lipschitz constant `1` of the tangent projector | 11 |  |
 | [`DLRA/QuasiOptimalitySpectral`](../../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) | Quasi-optimality of matrix DLRA with the spectral norm of the tail | 11 |  |
 | [`DLRA/QuasiOptimalitySpeedSharp`](../../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean) | The speed and velocity bounds of a curve of critical points are attained | 22 |  |
