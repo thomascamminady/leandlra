@@ -125,6 +125,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/Matrix/AdaptiveBUGRun`](../../LeanDLRA/Integrators/Matrix/AdaptiveBUGRun.lean) | Runs of the rank-adaptive BUG integrator with truncation by a tolerance | 6 |  |
 | [`Integrators/Matrix/AdaptiveBUGStep`](../../LeanDLRA/Integrators/Matrix/AdaptiveBUGStep.lean) | The augmented BUG step as step relations: truncation by a tolerance or to a fixed rank | 36 |  |
 | [`Integrators/Matrix/BUG`](../../LeanDLRA/Integrators/Matrix/BUG.lean) | The BUG integrator for matrices, at the level of the factors | 58 |  |
+| [`Integrators/Matrix/BUGAdaptiveQuasiOptimality`](../../LeanDLRA/Integrators/Matrix/BUGAdaptiveQuasiOptimality.lean) | An error certificate for rank-adaptive BUG runs with the tail seen from the old reference | 31 |  |
 | [`Integrators/Matrix/BUGHybridQuasiOptimality`](../../LeanDLRA/Integrators/Matrix/BUGHybridQuasiOptimality.lean) | Error certificates that are robust and quasi-optimal for runs with changing rank | 12 |  |
 | [`Integrators/Matrix/BUGQuasiOptimality`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean) | Quasi-optimality of the BUG integrator for given data | 34 |  |
 | [`Integrators/Matrix/BUGQuasiOptimalityNormalStep`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalStep.lean) | One BUG step for given data: the growth factor without the increment of the reference | 7 |  |
