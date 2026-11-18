@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit 9a24f98 (2026-11-18). A theorem is quoted from its
+files and were compared with them at commit d9cbc81 (2026-11-18). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
