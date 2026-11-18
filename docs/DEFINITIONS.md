@@ -10,7 +10,7 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 227 modules with 576 definitions (0 of them without a docstring) and 73 private definitions, which are helpers of one file and are not listed.
+The core has 231 modules with 579 definitions (0 of them without a docstring) and 73 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 
@@ -38,7 +38,7 @@ The core has 227 modules with 576 definitions (0 of them without a docstring) an
 | `Stiff` | 4 | 27 | 0 |
 | `Stochastic` | 1 | 2 | 0 |
 | `Tensor` | 2 | 50 | 0 |
-| `Tensor/TT` | 5 | 27 | 0 |
+| `Tensor/TT` | 6 | 30 | 0 |
 | `Tensor/TTN` | 7 | 17 | 0 |
 | `Tensor/Tucker` | 2 | 9 | 0 |
 | `Training` | 3 | 16 | 0 |
@@ -669,6 +669,9 @@ The core has 227 modules with 576 definitions (0 of them without a docstring) an
 | `LeanDLRA.Tensor.IsTTAugRightSweep` | structure | [Tensor/TT/AugmentedBUG.lean:188](../LeanDLRA/Tensor/TT/AugmentedBUG.lean#L188) | **Right augmentation sweep of the MPS-BUG integrator** (the mirror image of the left sweep; [PeterssonHodgesHeilmannGunther2026, Eq. (5.11)]) over the cores `i ≥ m`: the old state is in left-orthonormal form (left-orthogonal cores `A i`, `i < d - 1`), the K-step of core `i` solves `YL i' = P_{≤i} P̂_{>i+1} F(t, YL i)` from `P̂_{>i+1} Y₀`, and the new right-orthogonal core `B i` spans `YL i t₀` and `YL i t₁`. |
 | `LeanDLRA.Tensor.IsTTAugBUGStep` | structure | [Tensor/TT/AugmentedBUG.lean:239](../LeanDLRA/Tensor/TT/AugmentedBUG.lean#L239) | **One step of the augmented MPS-BUG integrator** ([KapasEtAl2026], §II B, with `m = n`, a bond-centred Galerkin step; [PeterssonHodgesHeilmannGunther2026, §5.2], with `m = n + 1`, a site-centred one): a left sweep producing the augmented left cores `Ah` (from the right-orthonormal form `B` of `Y₀`), a right sweep producing the augmented right cores `Bh` (from the left-orthonormal form `A` of `Y₀`), the Galerkin step in the augmented bases and a truncation. |
 | `LeanDLRA.Tensor.IsTTMidpointBUGStep` | structure | [Tensor/TT/AugmentedBUG.lean:297](../LeanDLRA/Tensor/TT/AugmentedBUG.lean#L297) | **The Galerkin part of the midpoint MPS-BUG integrator** ([KapasEtAl2026], §II C, steps (iii)–(iv)): the Galerkin step over the full interval from `t₀`, in bases of up to four times the bond dimension that contain the bases at `t₀` (`augL`, `augR` of the Galerkin step) and the predictor `Yh` at the midpoint (`midL`, `midR`). |
+| `LeanDLRA.Tensor.TTNormalSecondOrderTrainExamples.elemCores` | def | [Tensor/TT/NormalSecondOrderTrain.lean:364](../LeanDLRA/Tensor/TT/NormalSecondOrderTrain.lean#L364) | The cores of the elementary tensor train `v ⊗ v ⊗ v` on three modes of size two (all bond dimensions one). |
+| `LeanDLRA.Tensor.TTNormalSecondOrderTrainExamples.baseCores` | def | [Tensor/TT/NormalSecondOrderTrain.lean:368](../LeanDLRA/Tensor/TT/NormalSecondOrderTrain.lean#L368) | The cores of `e₁ ⊗ e₁ ⊗ e₁`. |
+| `LeanDLRA.Tensor.TTNormalSecondOrderTrainExamples.nearCores` | def | [Tensor/TT/NormalSecondOrderTrain.lean:371](../LeanDLRA/Tensor/TT/NormalSecondOrderTrain.lean#L371) | The cores of `v ⊗ v ⊗ v` with the unit vector `v = (40/41, 9/41)`. |
 | `LeanDLRA.Tensor.ttCoreVarₗ` | def | [Tensor/TT/ObliqueProjector.lean:97](../LeanDLRA/Tensor/TT/ObliqueProjector.lean#L97) | The single-core variation `K ↦ U_{≤k} K V_{>k+1} = tt (Function.update (ttMix A B k) k K)` as a linear map of the core `K` (`tt_update_add`, `tt_update_smul`); the `k`-th term `C₁ ⋯ δC_{k+1} ⋯ C_d` of Eq. (18) of [Dektor2025], in 0-based numbering. |
 | `LeanDLRA.Tensor.ttTangentSpace` | def | [Tensor/TT/ObliqueProjector.lean:114](../LeanDLRA/Tensor/TT/ObliqueProjector.lean#L114) | The **TT tangent space** at a tensor train in mixed canonical form, with left-orthogonal cores `A` and right-orthogonal cores `B`: the span of all single-core variations `U_{≤k} δC V_{>k+1} = tt (Function.update (ttMix A B k) k δC)`, `k = 0, …, d - 1` ([Dektor2025, Eq. (18)]: every first-order variation of the cores is a sum of such terms after absorbing the gauge into the varied core; [LubichOseledetsVandereycken2015, §3]). |
 | `LeanDLRA.Tensor.ttLeftObliqueProj` | def | [Tensor/TT/ObliqueProjector.lean:293](../LeanDLRA/Tensor/TT/ObliqueProjector.lean#L293) | The **oblique left interface projector** `P_{≤k} Z = Ten_k(U_{≤k} (X_{≤k}ᵀ U_{≤k})⁻¹ X_{≤k}ᵀ Z^{⟨k⟩})` of [Dektor2025, Eqs. (22)–(23)], acting on the modes `< k`, with test matrices `X k = X_{≤k}`; `P_{≤0} = 1` as in the paper. |

@@ -221,11 +221,14 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Tensor/TT/AugmentedBUG`](../../LeanDLRA/Tensor/TT/AugmentedBUG.lean) | The augmented BUG integrator for tensor trains (MPS-BUG) | 18 |  |
 | [`Tensor/TT/Basic`](../../LeanDLRA/Tensor/TT/Basic.lean) | Tensor trains: interfaces, orthonormality and interface projectors | 27 |  |
 | [`Tensor/TT/NormalSecondOrder`](../../LeanDLRA/Tensor/TT/NormalSecondOrder.lean) | The normal component of a nearby vector for the tensor-train tangent projector | 3 |  |
+| [`Tensor/TT/NormalSecondOrderTrain`](../../LeanDLRA/Tensor/TT/NormalSecondOrderTrain.lean) | The normal component of a nearby tensor train, with a constant independent of the order | 28 | [2110.03975](https://arxiv.org/abs/2110.03975) |
 | [`Tensor/TT/ObliqueProjector`](../../LeanDLRA/Tensor/TT/ObliqueProjector.lean) | Oblique TT tangent projectors and the TT tangent space | 42 |  |
 | [`Tensor/TT/Operations`](../../LeanDLRA/Tensor/TT/Operations.lean) | Tensor trains: operations on cores, gauge transformations and the bond-centred form | 29 |  |
 | [`Tensor/TT/ProjectorSplitting`](../../LeanDLRA/Tensor/TT/ProjectorSplitting.lean) | The tensor-train projector-splitting integrator (TT-KSL, one-site TDVP) | 41 |  |
 | [`Tensor/TT/ProjectorSplittingError`](../../LeanDLRA/Tensor/TT/ProjectorSplittingError.lean) | Robust error bound of the tensor-train projector-splitting integrator | 4 |  |
 | [`Tensor/TT/ProjectorSplittingExactness`](../../LeanDLRA/Tensor/TT/ProjectorSplittingExactness.lean) | Exactness of the tensor-train projector-splitting integrator | 34 |  |
+| [`Tensor/TT/QuasiOptimalityNormalVelocity`](../../LeanDLRA/Tensor/TT/QuasiOptimalityNormalVelocity.lean) | Quasi-optimality of tensor-train DLRA with the normal velocity as growth rate | 4 |  |
+| [`Tensor/TT/TangentNormal`](../../LeanDLRA/Tensor/TT/TangentNormal.lean) | Tangent vectors at one tensor train are almost tangent at a nearby one | 15 | [2110.03975](https://arxiv.org/abs/2110.03975) |
 | [`Tensor/TT/TangentProjector`](../../LeanDLRA/Tensor/TT/TangentProjector.lean) | The TT tangent projector and cross interpolation | 12 |  |
 | [`Tensor/TTN/Abstract/BUG`](../../LeanDLRA/Tensor/TTN/Abstract/BUG.lean) | Error bounds and exactness of the fixed-rank BUG integrator for tree tensor networks | 12 |  |
 | [`Tensor/TTN/Abstract/ParallelBUG`](../../LeanDLRA/Tensor/TTN/Abstract/ParallelBUG.lean) | Error bounds of the parallel BUG integrator for tree tensor networks | 3 |  |
@@ -252,6 +255,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Tensor/Tucker/QuasiOptimalityNormalVelocity`](../../LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean) | Quasi-optimality of Tucker DLRA with the normal velocity as growth rate | 6 |  |
 | [`Tensor/Tucker/Tangent`](../../LeanDLRA/Tensor/Tucker/Tangent.lean) | The tangent space of constrained Tucker manifolds and its orthogonal projector | 27 |  |
 | [`Tensor/Tucker/TangentNormal`](../../LeanDLRA/Tensor/Tucker/TangentNormal.lean) | Normal components with respect to the tangent projector of the Tucker manifold | 15 |  |
+| [`Tensor/Tucker/TangentNormalPrefix`](../../LeanDLRA/Tensor/Tucker/TangentNormalPrefix.lean) | Tangent vectors at one Tucker frame are almost tangent at a nearby one: the abstract form | 3 |  |
 | [`Tensor/Unfolding`](../../LeanDLRA/Tensor/Unfolding.lean) | Unfoldings and linear maps acting on a set of modes | 47 |  |
 
 ## Low-rank training
