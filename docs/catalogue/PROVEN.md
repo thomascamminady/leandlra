@@ -96,6 +96,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`DLRA/QuasiOptimalitySpectral`](../../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) | Quasi-optimality of matrix DLRA with the spectral norm of the tail | 11 |  |
 | [`DLRA/QuasiOptimalitySpeedSharp`](../../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean) | The speed and velocity bounds of a curve of critical points are attained | 22 |  |
 | [`DLRA/QuasiOptimalityStiff`](../../LeanDLRA/DLRA/QuasiOptimalityStiff.lean) | Quasi-optimality of matrix DLRA for fields with a tangential stiff part | 13 |  |
+| [`DLRA/QuasiOptimalityStiffTruncation`](../../LeanDLRA/DLRA/QuasiOptimalityStiffTruncation.lean) | Quasi-optimality against the truncated SVD for fields with a tangential stiff part | 10 |  |
 | [`DLRA/QuasiOptimalityTimeLocal`](../../LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean) | Quasi-optimality of matrix DLRA with constants that depend on time | 10 |  |
 | [`DLRA/QuasiOptimalityTruncation`](../../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean) | Quasi-optimality of matrix DLRA against the truncated SVD with a margin below `ρ` | 3 |  |
 | [`DLRA/QuasiOptimalityTube`](../../LeanDLRA/DLRA/QuasiOptimalityTube.lean) | Quasi-optimality of dynamical low-rank approximation for a field Lipschitz near the solution | 18 |  |
@@ -200,6 +201,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Stiff/ImplicitBUG`](../../LeanDLRA/Stiff/ImplicitBUG.lean) | Implicit BUG integrators: implicit K-step capture, robust first order, B-convergence | 51 | [2010.02022](https://arxiv.org/abs/2010.02022), [2311.15143](https://arxiv.org/abs/2311.15143), [2402.05347](https://arxiv.org/abs/2402.05347), [2410.07465](https://arxiv.org/abs/2410.07465), [2412.09400](https://arxiv.org/abs/2412.09400), [2503.04932](https://arxiv.org/abs/2503.04932), [2609.02721](https://arxiv.org/abs/2609.02721), [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Stiff/ImplicitBUGRun`](../../LeanDLRA/Stiff/ImplicitBUGRun.lean) | Runs of the fixed-rank BUG integrator with backward Euler substeps | 3 |  |
 | [`Stiff/ImplicitBUGStep`](../../LeanDLRA/Stiff/ImplicitBUGStep.lean) | The BUG integrator with backward Euler substeps as a step relation | 30 | [2610.18419](https://arxiv.org/abs/2610.18419) |
+| [`Stiff/ImplicitGalerkinTangential`](../../LeanDLRA/Stiff/ImplicitGalerkinTangential.lean) | Implicit Galerkin steps for fields with a stiff linear part: where the stiff part enters | 10 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Stiff/ImplicitSolvability`](../../LeanDLRA/Stiff/ImplicitSolvability.lean) | Unique solvability of projected implicit stages | 59 |  |
 
 ## Stability and structure
@@ -309,6 +311,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Research/FederatedManySteps`](../../LeanDLRA/Research/FederatedManySteps.lean) | FeDLRT with averaged gradients: descent for every number of local steps | 5 |  |
 | [`Research/FederatedThreeSteps`](../../LeanDLRA/Research/FederatedThreeSteps.lean) | FeDLRT with averaged gradients: three local steps | 13 | [2406.17887](https://arxiv.org/abs/2406.17887) |
 | [`Research/FederatedTwoSteps`](../../LeanDLRA/Research/FederatedTwoSteps.lean) | FeDLRT with averaged gradients: two local steps are two global gradient steps | 4 | [2406.17887](https://arxiv.org/abs/2406.17887) |
+| [`Research/ImplicitBUGStiffRows`](../../LeanDLRA/Research/ImplicitBUGStiffRows.lean) | The implicit BUG step is not stable uniformly in the stiffness: a family of `2 × 2` steps | 11 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Research/IntegratorErrorOrder`](../../LeanDLRA/Research/IntegratorErrorOrder.lean) | An error partial order of KSL, BUG, augmented BUG and parallel BUG | 53 |  |
 | [`Research/PerturbedSylvester`](../../LeanDLRA/Research/PerturbedSylvester.lean) | The rank-adaptive BUG step for a Sylvester field with a Lipschitz perturbation | 40 |  |
 | [`Research/RankOneGalerkinBarrier`](../../LeanDLRA/Research/RankOneGalerkinBarrier.lean) | No Galerkin step in a fixed rank-one space is of second order | 13 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.08607](https://arxiv.org/abs/2402.08607) |
