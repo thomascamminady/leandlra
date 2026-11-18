@@ -151,6 +151,9 @@ import LeanDLRA.Research.FederatedManySteps
 import LeanDLRA.Research.FederatedThreeSteps
 import LeanDLRA.Research.FederatedTwoSteps
 import LeanDLRA.Research.ImplicitBUGStiffRows
+import LeanDLRA.Research.ImplicitBUGStiffRowsRun
+import LeanDLRA.Research.ImplicitBUGStiffTwoSided
+import LeanDLRA.Research.ImplicitBUGWeightedRows
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.PerturbedSylvester
 import LeanDLRA.Research.RankOneGalerkinBarrier
