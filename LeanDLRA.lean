@@ -155,8 +155,10 @@ import LeanDLRA.Research.ImplicitBUGRationalKrylov
 import LeanDLRA.Research.ImplicitBUGSmoothRows
 import LeanDLRA.Research.ImplicitBUGStiffAugmented
 import LeanDLRA.Research.ImplicitBUGStiffLemmas
+import LeanDLRA.Research.ImplicitBUGStiffLocal
 import LeanDLRA.Research.ImplicitBUGStiffRows
 import LeanDLRA.Research.ImplicitBUGStiffRowsRun
+import LeanDLRA.Research.ImplicitBUGStiffSharpRun
 import LeanDLRA.Research.ImplicitBUGStiffTruncation
 import LeanDLRA.Research.ImplicitBUGStiffTwoSided
 import LeanDLRA.Research.ImplicitBUGWeightedRows
