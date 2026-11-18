@@ -22,6 +22,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
 | [`Analysis/Defs`](../../LeanDLRA/Analysis/Defs.lean) | Definitions: ODE solutions and conditions on vector fields | 17 |  |
+| [`Analysis/GronwallVariableRate`](../../LeanDLRA/Analysis/GronwallVariableRate.lean) | Grönwall's inequality with a time-dependent rate | 2 |  |
 
 ## Linear algebra
 
@@ -88,6 +89,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`DLRA/QuasiOptimalityNormal`](../../LeanDLRA/DLRA/QuasiOptimalityNormal.lean) | Quasi-optimality of matrix DLRA with a margin below `ρ` | 11 |  |
 | [`DLRA/QuasiOptimalitySharp`](../../LeanDLRA/DLRA/QuasiOptimalitySharp.lean) | Quasi-optimality of matrix DLRA with the Lipschitz constant `1` of the tangent projector | 11 |  |
 | [`DLRA/QuasiOptimalitySpectral`](../../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) | Quasi-optimality of matrix DLRA with the spectral norm of the tail | 11 |  |
+| [`DLRA/QuasiOptimalityTimeLocal`](../../LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean) | Quasi-optimality of matrix DLRA with constants that depend on time | 10 |  |
 | [`DLRA/QuasiOptimalityTruncation`](../../LeanDLRA/DLRA/QuasiOptimalityTruncation.lean) | Quasi-optimality of matrix DLRA against the truncated SVD with a margin below `ρ` | 3 |  |
 | [`DLRA/QuasiOptimalityTube`](../../LeanDLRA/DLRA/QuasiOptimalityTube.lean) | Quasi-optimality of dynamical low-rank approximation for a field Lipschitz near the solution | 18 |  |
 
