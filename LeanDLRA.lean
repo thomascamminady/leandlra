@@ -198,6 +198,7 @@ import LeanDLRA.Tensor.Tucker.BUGRun
 import LeanDLRA.Tensor.Tucker.BUGStep
 import LeanDLRA.Tensor.Tucker.Basic
 import LeanDLRA.Tensor.Tucker.ProjectorLipschitz
+import LeanDLRA.Tensor.Tucker.ProjectorLowerBound
 import LeanDLRA.Tensor.Tucker.Tangent
 import LeanDLRA.Tensor.Tucker.TangentNormal
 import LeanDLRA.Tensor.Unfolding
