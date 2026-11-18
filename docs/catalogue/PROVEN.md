@@ -130,6 +130,8 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Integrators/Matrix/BUGQuasiOptimalityNormalTruncation`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalTruncation.lean) | Quasi-optimality of the BUG integrator with the normal velocity as growth rate | 7 |  |
 | [`Integrators/Matrix/BUGQuasiOptimalityStep`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityStep.lean) | One BUG step for given data: the bound in the step, the gap and the tail | 14 |  |
 | [`Integrators/Matrix/BUGQuasiOptimalityTruncation`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean) | Quasi-optimality of the BUG integrator against the truncated singular value decomposition | 11 |  |
+| [`Integrators/Matrix/BUGQuasiOptimalityWeingartenStep`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityWeingartenStep.lean) | One BUG step for given data: the tail seen from the old reference as source | 14 |  |
+| [`Integrators/Matrix/BUGQuasiOptimalityWeingartenTruncation`](../../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityWeingartenTruncation.lean) | Quasi-optimality of the BUG integrator: the tail seen from the old reference as source | 22 |  |
 | [`Integrators/Matrix/BUGRun`](../../LeanDLRA/Integrators/Matrix/BUGRun.lean) | Runs of the fixed-rank BUG integrator: existence and error bound | 9 |  |
 | [`Integrators/Matrix/BUGRunOneSided`](../../LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean) | The fixed-rank BUG integrator: runs with a one-sided Lipschitz constant and smaller constants | 6 |  |
 | [`Integrators/Matrix/BUGStep`](../../LeanDLRA/Integrators/Matrix/BUGStep.lean) | The matrix BUG step as a step relation | 16 |  |
