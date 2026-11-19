@@ -172,6 +172,7 @@ import LeanDLRA.Research.ImplicitMidpointBUGStiff
 import LeanDLRA.Research.InformationLowerBound
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.PerturbedSylvester
+import LeanDLRA.Research.RankInformationUpperBound
 import LeanDLRA.Research.RankOneGalerkinBarrier
 import LeanDLRA.Research.SameMinibatchAugmentation
 import LeanDLRA.Research.StiffEnergyGalerkin
