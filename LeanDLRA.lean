@@ -176,6 +176,7 @@ import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.PerturbedSylvester
 import LeanDLRA.Research.RankInformationUpperBound
 import LeanDLRA.Research.RankOneGalerkinBarrier
+import LeanDLRA.Research.RankStatePrice
 import LeanDLRA.Research.SameMinibatchAugmentation
 import LeanDLRA.Research.StiffEnergyGalerkin
 import LeanDLRA.Research.StiffGlobalCycle
