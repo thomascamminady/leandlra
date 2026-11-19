@@ -179,6 +179,7 @@ import LeanDLRA.Research.RankInformationUpperBound
 import LeanDLRA.Research.RankOneGalerkinBarrier
 import LeanDLRA.Research.RankStatePrice
 import LeanDLRA.Research.SameMinibatchAugmentation
+import LeanDLRA.Research.StackedTruncation
 import LeanDLRA.Research.StiffEnergyGalerkin
 import LeanDLRA.Research.StiffGlobalCycle
 import LeanDLRA.Research.StiffGlobalVariation
