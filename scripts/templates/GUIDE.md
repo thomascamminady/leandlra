@@ -235,10 +235,24 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
   tensors and tensor trains the same rate, with a constant that does not depend on the number of
   modes, is in @file(LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean) and
   @file(LeanDLRA/Tensor/TT/QuasiOptimalityNormalVelocity.lean).
+* **By question about optimality:** what any method that uses the field on matrices of rank at
+  most `k` can achieve is in @file(LeanDLRA/Research/InformationLowerBound.lean) (lower bound) and
+  @file(LeanDLRA/Research/RankInformationUpperBound.lean) (a full state with the same information);
+  what a state of rank `r` costs along a turning tangent space in
+  @file(LeanDLRA/Research/RankStatePrice.lean); the rank of a tolerance truncation in time stepping
+  in @file(LeanDLRA/Research/DynamicRecompression.lean) and, for Lyapunov equations, in
+  @file(LeanDLRA/Research/LoewnerRank.lean) ([Main results, section
+  3.9](MAIN_RESULTS.md#39-optimality-of-low-rank-time-integration)). The factor `√(s - 1)` in the
+  error bound of the BUG integrator on tree tensor networks is in
+  @file(LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean).
 * **By question about stiffness or training:** what is proved and what is open for stiff problems
   with forcing is in @file(LeanDLRA/Research/StiffGlobalCycle.lean) and the files named in
   [Main results, section
   7.6](MAIN_RESULTS.md#76-stiff-problems-with-forcing-six-results-and-what-stays-open);
+  Implicit midpoint Galerkin steps for `M Z - Z CᵀC` have run bounds with the factor one ([section
+  7.8](MAIN_RESULTS.md#78-implicit-midpoint-galerkin-steps-for-a-stiff-row-operator)); a companion
+  run with a certified bound encloses the error of a run from both sides ([section
+  7.9](MAIN_RESULTS.md#79-a-certified-companion-encloses-the-error-of-a-run)).
   the descent thresholds of federated rounds are in section 10.1 of the same page.
 * **By paper:** [PROVEN.md](catalogue/PROVEN.md) lists every module with the papers it cites.
 * **By shape:** names say what a theorem bounds or states (`norm_sub_le`, `exists_run`, an ending iff);
