@@ -10,7 +10,7 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 254 modules with 585 definitions (0 of them without a docstring) and 87 private definitions, which are helpers of one file and are not listed.
+The core has 255 modules with 586 definitions (0 of them without a docstring) and 87 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 
@@ -33,7 +33,7 @@ The core has 254 modules with 585 definitions (0 of them without a docstring) an
 | `LinearAlgebra/SVD` | 1 | 6 | 0 |
 | `Matrix` | 3 | 16 | 0 |
 | `Randomized` | 3 | 18 | 0 |
-| `Research` | 15 | 130 | 0 |
+| `Research` | 16 | 131 | 0 |
 | `Stability` | 2 | 13 | 0 |
 | `Stiff` | 4 | 27 | 0 |
 | `Stochastic` | 1 | 2 | 0 |
@@ -460,6 +460,7 @@ The core has 254 modules with 585 definitions (0 of them without a docstring) an
 | `LeanDLRA.AugmentationRank.Examples.pertMap` | def | [Research/PerturbedSylvester.lean:606](../LeanDLRA/Research/PerturbedSylvester.lean#L606) | The perturbation `G(Y) = Y₁₁ E₃₂`: Lipschitz with constant `‖E₃₂‖`, not constant, and nonzero at `Y₀ = e₁ e₁ᵀ`. |
 | `LeanDLRA.AugmentationRank.Examples.pertField` | def | [Research/PerturbedSylvester.lean:611](../LeanDLRA/Research/PerturbedSylvester.lean#L611) | The field `F(Y) = E₂₁ Y + Y E₁₂ + Y₁₁ E₃₂`: `sylField` with the perturbation `pertMap`. |
 | `LeanDLRA.AugmentationRank.Examples.pertSolution` | def | [Research/PerturbedSylvester.lean:625](../LeanDLRA/Research/PerturbedSylvester.lean#L625) | The exact solution `A(t) = [[1, t], [t, t²], [0, t]]` of `A' = pertField A`, `A(0) = e₁ e₁ᵀ`. |
+| `LeanDLRA.RankInformationUpperBoundExample.hiddenData` | def | [Research/RankInformationUpperBound.lean:137](../LeanDLRA/Research/RankInformationUpperBound.lean#L137) | The data `A t = X t + ε (1 - X 0)`: the rotating projector and a constant part. |
 | `LeanDLRA.AugmentationRank.Examples.rotStart` | def | [Research/RankOneGalerkinBarrier.lean:51](../LeanDLRA/Research/RankOneGalerkinBarrier.lean#L51) | The starting value `Y₀ = e₁ e₁ᵀ`. |
 | `LeanDLRA.AugmentationRank.Examples.rotVelocity` | def | [Research/RankOneGalerkinBarrier.lean:54](../LeanDLRA/Research/RankOneGalerkinBarrier.lean#L54) | The matrix `W Y₀ = e₂ e₁ᵀ`. |
 | `LeanDLRA.AugmentationRank.Examples.rotSolution` | def | [Research/RankOneGalerkinBarrier.lean:57](../LeanDLRA/Research/RankOneGalerkinBarrier.lean#L57) | The exact solution `A(t) = (cos t, sin t)ᵀ e₁ᵀ` of `A' = W A`, `A(0) = e₁ e₁ᵀ`. |
