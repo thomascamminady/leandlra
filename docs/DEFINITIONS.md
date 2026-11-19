@@ -10,7 +10,7 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 257 modules with 586 definitions (0 of them without a docstring) and 87 private definitions, which are helpers of one file and are not listed.
+The core has 258 modules with 590 definitions (0 of them without a docstring) and 87 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 
@@ -33,7 +33,7 @@ The core has 257 modules with 586 definitions (0 of them without a docstring) an
 | `LinearAlgebra/SVD` | 1 | 6 | 0 |
 | `Matrix` | 3 | 16 | 0 |
 | `Randomized` | 3 | 18 | 0 |
-| `Research` | 16 | 131 | 0 |
+| `Research` | 17 | 135 | 0 |
 | `Stability` | 2 | 13 | 0 |
 | `Stiff` | 4 | 27 | 0 |
 | `Stochastic` | 1 | 2 | 0 |
@@ -464,6 +464,10 @@ The core has 257 modules with 586 definitions (0 of them without a docstring) an
 | `LeanDLRA.AugmentationRank.Examples.rotStart` | def | [Research/RankOneGalerkinBarrier.lean:51](../LeanDLRA/Research/RankOneGalerkinBarrier.lean#L51) | The starting value `Y₀ = e₁ e₁ᵀ`. |
 | `LeanDLRA.AugmentationRank.Examples.rotVelocity` | def | [Research/RankOneGalerkinBarrier.lean:54](../LeanDLRA/Research/RankOneGalerkinBarrier.lean#L54) | The matrix `W Y₀ = e₂ e₁ᵀ`. |
 | `LeanDLRA.AugmentationRank.Examples.rotSolution` | def | [Research/RankOneGalerkinBarrier.lean:57](../LeanDLRA/Research/RankOneGalerkinBarrier.lean#L57) | The exact solution `A(t) = (cos t, sin t)ᵀ e₁ᵀ` of `A' = W A`, `A(0) = e₁ e₁ᵀ`. |
+| `LeanDLRA.RankStatePriceExample.involuteState` | def | [Research/RankStatePrice.lean:75](../LeanDLRA/Research/RankStatePrice.lean#L75) | The state `Y t = u(t) e₁ᵀ`, `u(t) = (cos t, sin t)`. |
+| `LeanDLRA.RankStatePriceExample.involuteStateDeriv` | def | [Research/RankStatePrice.lean:79](../LeanDLRA/Research/RankStatePrice.lean#L79) | The derivative `u⊥(t) e₁ᵀ` of the state. |
+| `LeanDLRA.RankStatePriceExample.involuteData` | def | [Research/RankStatePrice.lean:83](../LeanDLRA/Research/RankStatePrice.lean#L83) | The data `A t = u(t) (e₁ + ε t e₂)ᵀ + ε u⊥(t) e₂ᵀ`. |
+| `LeanDLRA.RankStatePriceExample.involuteDeriv` | def | [Research/RankStatePrice.lean:87](../LeanDLRA/Research/RankStatePrice.lean#L87) | The derivative `u⊥(t) (e₁ + ε t e₂)ᵀ` of the data. |
 | `LeanDLRA.StochasticDescent.augBasis` | def | [Research/SameMinibatchAugmentation.lean:238](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L238) | The same-minibatch augmentation `[U₀, A V₀]` of a rank-one basis by the (minibatch) gradient `A`, as in `Û = orth[U₀, G_ξ V₀]`. |
 | `LeanDLRA.StochasticDescent.SameBatchExample.W₀` | def | [Research/SameMinibatchAugmentation.lean:294](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L294) | The current weight `W₀ = e₁ e₁ᵀ`. |
 | `LeanDLRA.StochasticDescent.SameBatchExample.G` | def | [Research/SameMinibatchAugmentation.lean:297](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L297) | The full gradient `∇ℒ(W₀) = G`. |
