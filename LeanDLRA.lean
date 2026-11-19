@@ -154,6 +154,7 @@ import LeanDLRA.Research.ImplicitBUGEnergyProjection
 import LeanDLRA.Research.ImplicitBUGRationalKrylov
 import LeanDLRA.Research.ImplicitBUGSmoothRows
 import LeanDLRA.Research.ImplicitBUGStiffAugmented
+import LeanDLRA.Research.ImplicitBUGStiffColumnAngle
 import LeanDLRA.Research.ImplicitBUGStiffColumnSpace
 import LeanDLRA.Research.ImplicitBUGStiffDamped
 import LeanDLRA.Research.ImplicitBUGStiffLemmas
