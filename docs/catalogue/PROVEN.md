@@ -348,6 +348,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Research/RankOneGalerkinBarrier`](../../LeanDLRA/Research/RankOneGalerkinBarrier.lean) | No Galerkin step in a fixed rank-one space is of second order | 13 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.08607](https://arxiv.org/abs/2402.08607) |
 | [`Research/RankStatePrice`](../../LeanDLRA/Research/RankStatePrice.lean) | The loss of a state of rank `r` along a turning frame, and buffer modes | 13 |  |
 | [`Research/SameMinibatchAugmentation`](../../LeanDLRA/Research/SameMinibatchAugmentation.lean) | Stochastic descent of DLRT: same-minibatch augmentation (draft) | 76 | [2410.18720](https://arxiv.org/abs/2410.18720) |
+| [`Research/StackedTruncation`](../../LeanDLRA/Research/StackedTruncation.lean) | Ranks of a rectangular low-rank backward Euler scheme with stacked-factor truncation | 13 |  |
 | [`Research/StiffEnergyGalerkin`](../../LeanDLRA/Research/StiffEnergyGalerkin.lean) | Stiff problems: an energy bound for the Galerkin step without coupling numbers | 10 |  |
 | [`Research/StiffGlobalCycle`](../../LeanDLRA/Research/StiffGlobalCycle.lean) | No stiffness-uniform global bound for the rank-adaptive BUG integrator when the forcing may | 35 |  |
 | [`Research/StiffGlobalVariation`](../../LeanDLRA/Research/StiffGlobalVariation.lean) | The global error of the rank-adaptive BUG integrator grows with the variation of the forcing | 4 |  |
