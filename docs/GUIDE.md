@@ -6,7 +6,7 @@ read the first two sections of [Getting started](GETTING_STARTED.md); the pages 
 core proves are [Main results](MAIN_RESULTS.md) and [Definitions](DEFINITIONS.md).
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit 3a21242 (2026-11-19).
+block links to the lines. The blocks were compared with the files at commit 8c39a5f (2026-11-19).
 
 ## Contents
 
@@ -72,6 +72,15 @@ same bound for it under the same hypotheses on `F` and `A`. **If you only need t
 hypotheses can be met**, `exists_bugGlobalBound_lt` produces a start tolerance `δ` and a step size
 `h` for which `hsmall` holds as soon as the part of the bound that does not vanish with `δ` and `h`
 is smaller than the tube radius.
+
+**If you want the error against the best approximation of rank `r`** for given data `A(t)` (field
+`F(t, Y) = Ȧ(t)`), and not against the exact solution, use
+`norm_bugRun_sub_truncation_le_mul_of_forall_le` in
+[`Integrators/Matrix/BUGQuasiOptimalityTruncation.lean`](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean): the bound is
+`e^{9/2 lam t_n} (‖Y_0 - T_r(A(0))‖ + 12/5 lam t_n τ)` with `lam = μ / (ρ - τ)`, under a gap
+`σ_r(A) ≤ τ < ρ ≤ σ_{r-1}(A)` and `h lam ≤ 1/16`. The variants with the normal velocity as growth
+rate, with the tail seen from the old reference and for runs with changing rank are in [section
+5.4](MAIN_RESULTS.md#54-quasi-optimality-of-the-bug-integrator-for-given-data).
 
 ## 2. I want the same for another integrator
 
@@ -267,6 +276,11 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
   [`Integrators/Matrix/BUGRunOneSided.lean`](../LeanDLRA/Integrators/Matrix/BUGRunOneSided.lean) for the BUG integrator and in
   [`Integrators/MethodOneSided.lean`](../LeanDLRA/Integrators/MethodOneSided.lean) for every tube-local method; the implicit BUG
   integrator on matrices is in [`Stiff/ImplicitBUGRun.lean`](../LeanDLRA/Stiff/ImplicitBUGRun.lean) (not a stiff bound).
+  The implicit BUG integrator for the fields `M Z - Z CᵀC` and `-BᵀB Z - Z CᵀC` has runs that are
+  uniform in the stiffness in several classes and counterexamples outside them ([section
+  7.7](MAIN_RESULTS.md#77-the-implicit-bug-integrator-for-stiff-sylvester-type-fields)); for the BUG
+  integrator against the truncated singular value decomposition see [section
+  5.4](MAIN_RESULTS.md#54-quasi-optimality-of-the-bug-integrator-for-given-data).
 * **By question about the solution:** existence and uniqueness of the DLRA solution of rank `r`
   on a short interval are in [`DLRA/Existence.lean`](../LeanDLRA/DLRA/Existence.lean); its distance from the best
   approximation of rank `r` is bounded in [`DLRA/QuasiOptimality.lean`](../LeanDLRA/DLRA/QuasiOptimality.lean), for a field
@@ -283,6 +297,18 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
   norm of the tail, `σ_r(A)` for the truncation, in
   [`DLRA/QuasiOptimalitySpectral.lean`](../LeanDLRA/DLRA/QuasiOptimalitySpectral.lean) (sections 2.4, 3.6 and 3.7 of
   [Main results](MAIN_RESULTS.md); the table at the end of 3.7 lists the theorems side by side).
+  The rates in which the velocity enters through its normal component only are in
+  [`DLRA/QuasiOptimalityNormalVelocity.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean),
+  [`DLRA/QuasiOptimalityDefect.lean`](../LeanDLRA/DLRA/QuasiOptimalityDefect.lean) (the defect of the truncation in closed form),
+  [`DLRA/QuasiOptimalityNormalVelocitySpectral.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean) (spectral norms, an a posteriori
+  form), [`DLRA/QuasiOptimalityTimeLocal.lean`](../LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean) (constants that depend on time) and, for
+  a field with a tangential stiff part, [`DLRA/QuasiOptimalityStiff.lean`](../LeanDLRA/DLRA/QuasiOptimalityStiff.lean) and
+  [`DLRA/QuasiOptimalityStiffTruncation.lean`](../LeanDLRA/DLRA/QuasiOptimalityStiffTruncation.lean); the speed and velocity bounds are shown
+  to be attained in [`DLRA/QuasiOptimalitySpeedSharp.lean`](../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean) ([Main results, section
+  3.8](MAIN_RESULTS.md#38-quasi-optimality-with-the-normal-velocity-as-growth-rate)). For Tucker
+  tensors and tensor trains the same rate, with a constant that does not depend on the number of
+  modes, is in [`Tensor/Tucker/QuasiOptimalityNormalVelocity.lean`](../LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean) and
+  [`Tensor/TT/QuasiOptimalityNormalVelocity.lean`](../LeanDLRA/Tensor/TT/QuasiOptimalityNormalVelocity.lean).
 * **By question about stiffness or training:** what is proved and what is open for stiff problems
   with forcing is in [`Research/StiffGlobalCycle.lean`](../LeanDLRA/Research/StiffGlobalCycle.lean) and the files named in
   [Main results, section

@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit 3a21242 (2026-11-19). A theorem is quoted from its
+files and were compared with them at commit 8c39a5f (2026-11-19). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -1518,7 +1518,490 @@ those of their own proofs, and that a bound of this kind is in [KochLubich2007].
 hypotheses are those of [ZhaoOstermannGu2021]. The theorems with a margin below `ρ` and with the
 spectral norm keep the hypotheses that `X` is a curve of critical points with `σ_{r-1}(X) ≥ ρ`
 and that the margin holds on the whole interval; they say nothing for a margin `θ ≥ 1`, and the
-table above lists the constants of the proofs, not optimal ones.
+table above lists the constants of the proofs, not optimal ones. The growth rates in which the
+velocity enters through its normal component only are in section 3.8.
+
+### 3.8 Quasi-optimality with the normal velocity as growth rate
+
+In the bounds of section 3.7 the growth rate is `L + μ/ρ`, where `μ` bounds the whole velocity
+`‖F(t, A t)‖` of the exact solution. The files of this section bound the error `‖Y - X‖` of a
+DLRA solution `Y` against a curve `X` of rank-`r` matrices with a rate in which the velocity
+enters at leading order only through its component `ν ≥ ‖(1 - P(X)) F(t, A t)‖` normal to the
+manifold at `X`; the whole velocity is multiplied by the radius `ε < ρ` of a tube around `X`
+that contains `Y`. All norms are Frobenius norms except where `‖·‖₂` or `specNorm` is written.
+
+**The rate `L + ν/ρ + ν/(ρ - ε) + μ ε/ρ²`.** The file
+[`DLRA/QuasiOptimalityNormalVelocity.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean) pairs the two tangent projectors with the
+error. For `X`, `Y` of rank `r` with `ρ ≤ σ_{r-1}(X)`, `ρ' ≤ σ_{r-1}(Y)`:
+
+`inner_sub_tangentProjAt_sub_le_norm_sq_mul` in [`LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean`, lines 103–108](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean#L103-L108):
+
+```lean
+theorem inner_sub_tangentProjAt_sub_le_norm_sq_mul {r : ℕ} {X Y : Matrix m n ℝ}
+    (hX : X.rank = r) (hY : Y.rank = r) {ρ ρ' : ℝ} (hρ : 0 < ρ)
+    (hσ : ρ ≤ (toEuclideanLin X).singularValues (r - 1)) (hρ' : 0 < ρ')
+    (hσ' : ρ' ≤ (toEuclideanLin Y).singularValues (r - 1)) (Z : Matrix m n ℝ) :
+    ⟪Y - X, tangentProjAt Y Z - tangentProjAt X Z⟫ ≤
+      (ρ⁻¹ * ‖Z - tangentProjAt Y Z‖ + ρ'⁻¹ * ‖Z - tangentProjAt X Z‖) * ‖Y - X‖ ^ 2
+```
+
+Only the component of `Ẏ - Ẋ` along `Y - X` changes `‖Y - X‖`, so the term
+`(P(Y) - P(X)) F(t, A t)` enters through its inner product with `Y - X`, which is the sum of two
+inner products of normal components; the normal components `(1 - P(Y)) X` and `(1 - P(X)) Y` are
+of second order in `‖Y - X‖` (section 2.4). The theorem for a solution that is not assumed to
+stay in the tube: the bound itself has to stay below `ε`.
+
+`IsDLRASolution.norm_sub_le_integral_exp_integral_of_integral_lt` in [`LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean`, lines 315–341](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean#L315-L341):
+
+```lean
+theorem IsDLRASolution.norm_sub_le_integral_exp_integral_of_integral_lt {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A X X' Y : ℝ → Matrix m n ℝ}
+    {ρ μ ν d ε : ℝ → ℝ} {a b L δ : ℝ} (hY : IsDLRASolution r F Y a b) (hL : 0 ≤ L)
+    (hF : IsLipschitzField F L) (hAc : ContinuousOn A (Icc a b))
+    (hρc : ContinuousOn ρ (Icc a b)) (hμc : ContinuousOn μ (Icc a b))
+    (hνc : ContinuousOn ν (Icc a b)) (hdc : ContinuousOn d (Icc a b))
+    (hεc : ContinuousOn ε (Icc a b)) (hXc : ContinuousOn X (Icc a b))
+    (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = r)
+    (hσ : ∀ t ∈ Icc a b, ρ t ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ t)
+    (hν : ∀ t ∈ Ico a b, ‖F t (A t) - tangentProjAt (X t) (F t (A t))‖ ≤ ν t)
+    (hd : ∀ t ∈ Ico a b, ‖tangentProjAt (X t) (F t (A t)) - X' t‖ ≤ d t)
+    (hε0 : ∀ t ∈ Icc a b, 0 ≤ ε t) (hερ : ∀ t ∈ Icc a b, ε t < ρ t)
+    (hδ : ‖Y a - X a‖ ≤ δ)
+    (hB : ∀ t ∈ Icc a b,
+      Real.exp (∫ u in a..t,
+        (L + ν u / ρ u + ν u / (ρ u - ε u) + μ u * ε u / ρ u ^ 2)) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t,
+          (L + ν u / ρ u + ν u / (ρ u - ε u) + μ u * ε u / ρ u ^ 2)) *
+          (L * ‖X s - A s‖ + d s) < ε t) :
+    ∀ t ∈ Icc a b, ‖Y t - X t‖ ≤
+      Real.exp (∫ u in a..t,
+        (L + ν u / ρ u + ν u / (ρ u - ε u) + μ u * ε u / ρ u ^ 2)) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t,
+          (L + ν u / ρ u + ν u / (ρ u - ε u) + μ u * ε u / ρ u ^ 2)) *
+          (L * ‖X s - A s‖ + d s)
+```
+
+The curve `X` is any differentiable curve of rank-`r` matrices: it need not consist of critical
+points of the distance to `A`, and `A` need not solve the differential equation; both enter
+through the defect `d ≥ ‖P(X) F(t, A t) - Ẋ‖` and through `‖X - A‖`. The module docstring names
+the Weingarten map of [FepponLermusiaux2018, Proposition 22] as the growth generator at leading
+order. For `X t = truncation (A t) r` under the gap `σ_r(A t) < σ_{r-1}(A t)`, with
+`ρ = σ_{r-1}(A t)` and the defect bound `μ σ_r/(σ_{r-1} - σ_r)`:
+
+`IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_integral_lt` in [`LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean`, lines 379–415](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean#L379-L415):
+
+```lean
+theorem IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_integral_lt {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A Y : ℝ → Matrix m n ℝ} {μ ν ε : ℝ → ℝ}
+    {a b L δ : ℝ} (hY : IsDLRASolution r F Y a b) (hL : 0 ≤ L) (hF : IsLipschitzField F L)
+    (hA : ODESolution F A a b) (hμc : ContinuousOn μ (Icc a b))
+    (hνc : ContinuousOn ν (Icc a b)) (hεc : ContinuousOn ε (Icc a b))
+    (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ t)
+    (hν : ∀ t ∈ Ico a b,
+      ‖F t (A t) - tangentProjAt (truncation (A t) r) (F t (A t))‖ ≤ ν t)
+    (hgap : ∀ t ∈ Icc a b, (toEuclideanLin (A t)).singularValues r <
+      (toEuclideanLin (A t)).singularValues (r - 1))
+    (hε0 : ∀ t ∈ Icc a b, 0 ≤ ε t)
+    (hερ : ∀ t ∈ Icc a b, ε t < (toEuclideanLin (A t)).singularValues (r - 1))
+    (hδ : ‖Y a - truncation (A a) r‖ ≤ δ)
+    (hB : ∀ t ∈ Icc a b,
+      Real.exp (∫ u in a..t, (L + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+        ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+        μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2)) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t,
+          (L + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+          ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+          μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2)) *
+          (L * ‖truncation (A s) r - A s‖ +
+            μ s / ((toEuclideanLin (A s)).singularValues (r - 1) -
+              (toEuclideanLin (A s)).singularValues r) *
+              (toEuclideanLin (A s)).singularValues r) < ε t) :
+    ∀ t ∈ Icc a b, ‖Y t - truncation (A t) r‖ ≤
+      Real.exp (∫ u in a..t, (L + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+        ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+        μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2)) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t,
+          (L + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+          ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+          μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2)) *
+          (L * ‖truncation (A s) r - A s‖ +
+            μ s / ((toEuclideanLin (A s)).singularValues (r - 1) -
+              (toEuclideanLin (A s)).singularValues r) *
+              (toEuclideanLin (A s)).singularValues r)
+```
+
+**The defect of the truncation.** Let `X` be a curve of critical points (`P(X)(A - X) = 0`, the
+truncated singular value decomposition is one) with tail `R = A - X`, `τ = ‖R‖₂ < ρ ≤ σ_{r-1}(X)`.
+With the Moore–Penrose inverse `X⁺` and `W(Z) = (X⁺)ᵀ Zᵀ R + R Zᵀ (X⁺)ᵀ` the file
+[`DLRA/QuasiOptimalityDefect.lean`](../LeanDLRA/DLRA/QuasiOptimalityDefect.lean) gives the defect in closed form,
+
+`tangentProjAt_sub_eq_neg_pinv_transpose_mul_add_of_hasDerivWithinAt` in [`LeanDLRA/DLRA/QuasiOptimalityDefect.lean`, lines 276–281](../LeanDLRA/DLRA/QuasiOptimalityDefect.lean#L276-L281):
+
+```lean
+theorem tangentProjAt_sub_eq_neg_pinv_transpose_mul_add_of_hasDerivWithinAt
+    {A X : ℝ → Matrix m n ℝ} {A' X' : Matrix m n ℝ} {s : Set ℝ} {t : ℝ}
+    (hA : HasDerivWithinAt A A' s t) (hX : HasDerivWithinAt X X' s t) (ht : t ∈ s)
+    (hs : (𝓝[s \ {t}] t).NeBot) (hopt : ∀ u ∈ s, tangentProjAt (X u) (A u - X u) = 0) :
+    tangentProjAt (X t) (A' - X') =
+      -((X t).pinvᵀ * X'ᵀ * (A t - X t) + (A t - X t) * X'ᵀ * (X t).pinvᵀ)
+```
+
+that is, `P(X)(Ȧ - Ẋ) = -W(Ẋ)`, and bounds it from both sides by `W(Ȧ)`:
+
+`norm_sub_tangentProjAt_le_div_sub_mul_norm_pinv_transpose_mul_add` in [`LeanDLRA/DLRA/QuasiOptimalityDefect.lean`, lines 392–401](../LeanDLRA/DLRA/QuasiOptimalityDefect.lean#L392-L401):
+
+```lean
+theorem norm_sub_tangentProjAt_le_div_sub_mul_norm_pinv_transpose_mul_add {r : ℕ}
+    {A X : ℝ → Matrix m n ℝ} {A' X' : Matrix m n ℝ} {s : Set ℝ} {t ρ₀ ρ : ℝ}
+    (hA : HasDerivWithinAt A A' s t) (hX : HasDerivWithinAt X X' s t) (ht : t ∈ s)
+    (hs : (𝓝[s \ {t}] t).NeBot) (hρ₀ : 0 < ρ₀) (hrank : ∀ u ∈ s, (X u).rank = r)
+    (hσ₀ : ∀ u ∈ s, ρ₀ ≤ (toEuclideanLin (X u)).singularValues (r - 1))
+    (hσ : ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hopt : ∀ u ∈ s, tangentProjAt (X u) (A u - X u) = 0)
+    (hd : Curvature.specNorm (X t - A t) < ρ) :
+    ‖X' - tangentProjAt (X t) A'‖ ≤ ρ / (ρ - Curvature.specNorm (X t - A t)) *
+      ‖(X t).pinvᵀ * A'ᵀ * (A t - X t) + (A t - X t) * A'ᵀ * (X t).pinvᵀ‖
+```
+
+`norm_pinv_transpose_mul_add_le_one_add_mul_norm_sub_tangentProjAt` in [`LeanDLRA/DLRA/QuasiOptimalityDefect.lean`, lines 427–435](../LeanDLRA/DLRA/QuasiOptimalityDefect.lean#L427-L435):
+
+```lean
+theorem norm_pinv_transpose_mul_add_le_one_add_mul_norm_sub_tangentProjAt {r : ℕ}
+    {A X : ℝ → Matrix m n ℝ} {A' X' : Matrix m n ℝ} {s : Set ℝ} {t ρ₀ ρ : ℝ}
+    (hA : HasDerivWithinAt A A' s t) (hX : HasDerivWithinAt X X' s t) (ht : t ∈ s)
+    (hs : (𝓝[s \ {t}] t).NeBot) (hρ₀ : 0 < ρ₀) (hrank : ∀ u ∈ s, (X u).rank = r)
+    (hσ₀ : ∀ u ∈ s, ρ₀ ≤ (toEuclideanLin (X u)).singularValues (r - 1)) (hρ : 0 < ρ)
+    (hσ : ρ ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hopt : ∀ u ∈ s, tangentProjAt (X u) (A u - X u) = 0) :
+    ‖(X t).pinvᵀ * A'ᵀ * (A t - X t) + (A t - X t) * A'ᵀ * (X t).pinvᵀ‖ ≤
+      (1 + ρ⁻¹ * Curvature.specNorm (X t - A t)) * ‖X' - tangentProjAt (X t) A'‖
+```
+
+The two bounds differ by the factor `(ρ + τ)/(ρ - τ)`. `W(Z)` sees only the two mixed blocks
+`Pu Z (1 - Pv)` and `(1 - Pu) Z Pv` of `Z` (`Pu`, `Pv` the projectors onto the column and the row
+space of `X`), so `‖P(X) Ȧ - Ẋ‖ ≤ μ τ/(ρ - τ)` holds with `μ` a bound of the mixed blocks of `Ȧ`
+only. The quasi-optimality theorem against the truncation, with the source
+`ρ/(ρ - τ) ω s`, `ω ≥ ‖W(F(t, A t))‖`, in place of `μ σ_r/(σ_{r-1} - σ_r)`:
+
+`IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_norm_pinv_le` in [`LeanDLRA/DLRA/QuasiOptimalityDefect.lean`, lines 607–646](../LeanDLRA/DLRA/QuasiOptimalityDefect.lean#L607-L646):
+
+```lean
+theorem IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_norm_pinv_le {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A Y : ℝ → Matrix m n ℝ} {μ ν ω ε : ℝ → ℝ}
+    {a b L δ : ℝ} (hY : IsDLRASolution r F Y a b) (hL : 0 ≤ L) (hF : IsLipschitzField F L)
+    (hA : ODESolution F A a b) (hμc : ContinuousOn μ (Icc a b))
+    (hνc : ContinuousOn ν (Icc a b)) (hωc : ContinuousOn ω (Icc a b))
+    (hεc : ContinuousOn ε (Icc a b)) (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ t)
+    (hν : ∀ t ∈ Ico a b,
+      ‖F t (A t) - tangentProjAt (truncation (A t) r) (F t (A t))‖ ≤ ν t)
+    (hω : ∀ t ∈ Ico a b,
+      ‖(truncation (A t) r).pinvᵀ * (F t (A t))ᵀ * (A t - truncation (A t) r) +
+        (A t - truncation (A t) r) * (F t (A t))ᵀ * (truncation (A t) r).pinvᵀ‖ ≤ ω t)
+    (hgap : ∀ t ∈ Icc a b, (toEuclideanLin (A t)).singularValues r <
+      (toEuclideanLin (A t)).singularValues (r - 1))
+    (hε0 : ∀ t ∈ Icc a b, 0 ≤ ε t)
+    (hερ : ∀ t ∈ Icc a b, ε t < (toEuclideanLin (A t)).singularValues (r - 1))
+    (hδ : ‖Y a - truncation (A a) r‖ ≤ δ)
+    (hB : ∀ t ∈ Icc a b,
+      Real.exp (∫ u in a..t, (L + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+        ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+        μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2)) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t,
+          (L + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+          ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+          μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2)) *
+          (L * ‖truncation (A s) r - A s‖ +
+            (toEuclideanLin (A s)).singularValues (r - 1) /
+              ((toEuclideanLin (A s)).singularValues (r - 1) -
+                (toEuclideanLin (A s)).singularValues r) * ω s) < ε t) :
+    ∀ t ∈ Icc a b, ‖Y t - truncation (A t) r‖ ≤
+      Real.exp (∫ u in a..t, (L + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+        ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+        μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2)) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t,
+          (L + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+          ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+          μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2)) *
+          (L * ‖truncation (A s) r - A s‖ +
+            (toEuclideanLin (A s)).singularValues (r - 1) /
+              ((toEuclideanLin (A s)).singularValues (r - 1) -
+                (toEuclideanLin (A s)).singularValues r) * ω s)
+```
+
+**Spectral norms of the normal components, and an a posteriori form.** The file
+[`DLRA/QuasiOptimalityNormalVelocitySpectral.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean) has the pairing of the two
+projectors with spectral norms of the normal components and the factor `(1 + s)/2`, where `s₁`,
+`s₂` are the products of the sines of the largest angles between the column spaces and between
+the row spaces of `X` and `Y`:
+
+`inner_sub_tangentProjAt_sub_le_half_mul_specNorm` in [`LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean`, lines 310–320](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean#L310-L320):
+
+```lean
+theorem inner_sub_tangentProjAt_sub_le_half_mul_specNorm {r : ℕ} {X Y : Matrix m n ℝ}
+    (hX : X.rank = r) (hY : Y.rank = r) {ρ ρ' : ℝ} (hρ : 0 < ρ)
+    (hσ : ρ ≤ (toEuclideanLin X).singularValues (r - 1)) (hρ' : 0 < ρ')
+    (hσ' : ρ' ≤ (toEuclideanLin Y).singularValues (r - 1)) (Z : Matrix m n ℝ) :
+    ⟪Y - X, tangentProjAt Y Z - tangentProjAt X Z⟫ ≤
+      (ρ⁻¹ * ((1 + Curvature.specNorm (X.rangeProj * (1 - Y.rangeProj)) *
+          Curvature.specNorm (Xᵀ.rangeProj * (1 - Yᵀ.rangeProj))) / 2) *
+          Curvature.specNorm (Z - tangentProjAt Y Z) +
+        ρ'⁻¹ * ((1 + Curvature.specNorm (Y.rangeProj * (1 - X.rangeProj)) *
+          Curvature.specNorm (Yᵀ.rangeProj * (1 - Xᵀ.rangeProj))) / 2) *
+          Curvature.specNorm (Z - tangentProjAt X Z)) * ‖Y - X‖ ^ 2
+```
+
+To leading order in `‖Y - X‖` the rate is `‖(1 - P(X)) Z‖₂/σ_{r-1}(X)`, half of the rate of the
+Frobenius form and with the spectral norm. The a posteriori form has the singular value
+`σ_{r-1}(Y t)`, the normal components at `Y` and the sines measured on the computed solution; it
+needs no smallness condition:
+
+`IsDLRASolution.norm_sub_le_integral_exp_integral_of_specNorm_sub_tangentProjAt_le` in [`LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean`, lines 527–554](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean#L527-L554):
+
+```lean
+theorem IsDLRASolution.norm_sub_le_integral_exp_integral_of_specNorm_sub_tangentProjAt_le
+    [DecidableEq m] {r : ℕ} {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A X X' Y : ℝ → Matrix m n ℝ}
+    {ρ ρ' ν ν' ς d : ℝ → ℝ} {a b L δ : ℝ} (hY : IsDLRASolution r F Y a b) (hL : 0 ≤ L)
+    (hF : IsLipschitzField F L) (hAc : ContinuousOn A (Icc a b))
+    (hρc : ContinuousOn ρ (Icc a b)) (hρc' : ContinuousOn ρ' (Icc a b))
+    (hνc : ContinuousOn ν (Icc a b)) (hνc' : ContinuousOn ν' (Icc a b))
+    (hςc : ContinuousOn ς (Icc a b)) (hdc : ContinuousOn d (Icc a b))
+    (hXc : ContinuousOn X (Icc a b))
+    (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = r) (hρ : ∀ t ∈ Icc a b, 0 < ρ t)
+    (hσ : ∀ t ∈ Icc a b, ρ t ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hρ' : ∀ t ∈ Icc a b, 0 < ρ' t)
+    (hσ' : ∀ t ∈ Icc a b, ρ' t ≤ (toEuclideanLin (Y t)).singularValues (r - 1))
+    (hν : ∀ t ∈ Ico a b,
+      Curvature.specNorm (F t (A t) - tangentProjAt (X t) (F t (A t))) ≤ ν t)
+    (hν' : ∀ t ∈ Ico a b,
+      Curvature.specNorm (F t (A t) - tangentProjAt (Y t) (F t (A t))) ≤ ν' t)
+    (hς : ∀ t ∈ Ico a b,
+      Curvature.specNorm ((X t).rangeProj * (1 - (Y t).rangeProj)) *
+          Curvature.specNorm ((X t)ᵀ.rangeProj * (1 - (Y t)ᵀ.rangeProj)) ≤ ς t ∧
+        Curvature.specNorm ((Y t).rangeProj * (1 - (X t).rangeProj)) *
+          Curvature.specNorm ((Y t)ᵀ.rangeProj * (1 - (X t)ᵀ.rangeProj)) ≤ ς t)
+    (hd : ∀ t ∈ Ico a b, ‖tangentProjAt (X t) (F t (A t)) - X' t‖ ≤ d t)
+    (hδ : ‖Y a - X a‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖Y t - X t‖ ≤
+      Real.exp (∫ u in a..t, (L + (1 + ς u) / 2 * (ν' u / ρ u + ν u / ρ' u))) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t, (L + (1 + ς u) / 2 * (ν' u / ρ u + ν u / ρ' u))) *
+          (L * ‖X s - A s‖ + d s)
+```
+
+**Constants that depend on time.** The bounds of section 3.7 have `ρ`, `μ`, `θ` constant on the
+interval. In [`DLRA/QuasiOptimalityTimeLocal.lean`](../LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean) they are functions of time, with
+`τ(s) = ‖X s - A s‖₂ < ρ(s)`. For the truncation under the gap, with `ρ(t) = σ_{r-1}(A t)` and
+no hypothesis on the curve besides the gap:
+
+`IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_singularValues_lt` in [`LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean`, lines 296–311](../LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean#L296-L311):
+
+```lean
+theorem IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_singularValues_lt {r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A Y : ℝ → Matrix m n ℝ} {μ : ℝ → ℝ} {a b L δ : ℝ}
+    (hY : IsDLRASolution r F Y a b) (hL : 0 ≤ L) (hF : IsLipschitzField F L)
+    (hA : ODESolution F A a b) (hμc : ContinuousOn μ (Icc a b))
+    (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ t)
+    (hgap : ∀ t ∈ Icc a b, (toEuclideanLin (A t)).singularValues r <
+      (toEuclideanLin (A t)).singularValues (r - 1))
+    (hδ : ‖Y a - truncation (A a) r‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖Y t - truncation (A t) r‖ ≤
+      Real.exp (∫ u in a..t, (L + μ u / (toEuclideanLin (A u)).singularValues (r - 1))) * δ +
+        ∫ s in a..t,
+          Real.exp (∫ u in s..t, (L + μ u / (toEuclideanLin (A u)).singularValues (r - 1))) *
+          (L * ‖truncation (A s) r - A s‖ +
+            μ s / ((toEuclideanLin (A s)).singularValues (r - 1) -
+              (toEuclideanLin (A s)).singularValues r) *
+              (toEuclideanLin (A s)).singularValues r)
+```
+
+The module docstring restates `dlra_norm_sub_le_integral_of_specNorm_sub_le` as an `example` and
+derives the bound of [FepponLermusiaux2018, Theorem 32] from it (kernel `e^{η (t - s)}` with
+`η ≥ L + 2 ‖F(t, A t)‖/σ_{r-1}(A t)`, gap term with the Frobenius norm of the tail).
+
+**The speed and velocity bounds are attained.** For a curve of critical points with the margin
+`‖X - A‖ ≤ θ ρ`, `θ < 1`, the file [`DLRA/QuasiOptimalityNormal.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormal.lean) has
+`‖P(X)(Ȧ - Ẋ)‖ ≤ ρ⁻¹ ‖Ẋ‖ ‖A - X‖`, `‖Ẋ‖ ≤ μ/(1 - θ)` and
+`‖Ẋ - P(X) Ȧ‖ ≤ μ/((1 - θ) ρ) ‖A - X‖`. The file
+[`DLRA/QuasiOptimalitySpeedSharp.lean`](../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean) shows that all three are equalities for the
+rotating projector of rank one in `ℝ²`, `X t = u uᵀ`, `A t = θ • 1 + (1 - θ) • X t`,
+`u = (cos t, sin t)`, for every `θ` with `0 ≤ θ < 1`:
+
+`QuasiOptimalitySpeedExample.norm_sub_tangentProjAt_eq` in [`LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean`, lines 227–229](../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean#L227-L229):
+
+```lean
+theorem norm_sub_tangentProjAt_eq {θ : ℝ} (hθ0 : 0 ≤ θ) (hθ : θ < 1) (t : ℝ) :
+    ‖rotProjDeriv t - tangentProjAt (rotProj t) ((1 - θ) • rotProjDeriv t)‖ =
+      (1 - θ) * √2 / ((1 - θ) * 1) * ‖rotData θ t - rotProj t‖
+```
+
+`exists_mul_div_lt_norm_deriv` in [`LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean`, lines 324–330](../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean#L324-L330):
+
+```lean
+theorem exists_mul_div_lt_norm_deriv {θ c : ℝ} (hθ0 : 0 ≤ θ) (hθ : θ < 1) (hc : c < 1) :
+    ∃ (A X : ℝ → Matrix (Fin 2) (Fin 2) ℝ) (A' X' : Matrix (Fin 2) (Fin 2) ℝ) (μ : ℝ),
+      0 < μ ∧ HasDerivWithinAt A A' univ 0 ∧ HasDerivWithinAt X X' univ 0 ∧
+        (∀ u ∈ (univ : Set ℝ), (X u).rank = 1) ∧
+        (∀ u ∈ (univ : Set ℝ), (1 : ℝ) ≤ (toEuclideanLin (X u)).singularValues (1 - 1)) ∧
+        (∀ u ∈ (univ : Set ℝ), tangentProjAt (X u) (A u - X u) = 0) ∧ ‖A'‖ ≤ μ ∧
+        ‖X 0 - A 0‖ ≤ θ * 1 ∧ c * (μ / (1 - θ)) < ‖X'‖
+```
+
+The second theorem says that for every `c < 1` there are curves that satisfy the hypotheses with
+`c μ/(1 - θ) < ‖Ẋ‖`. Not shown: the quasi-optimality bounds that are derived from the velocity
+bound by Grönwall's inequality are not shown to be attained.
+
+**A tangential stiff part.** Let `F(t, Z) = S(t, Z) + G(t, Z)`, where `S` maps every matrix of
+rank `r` into the tangent space at that matrix; the main case is the Sylvester operator
+`S(Z) = M Z + Z N`, whose norm grows with the mesh refinement. The tangent projector does not see
+`S`, so `Y` solves `Ẏ = S(t, Y) + P(Y) G(t, Y)`. In
+[`DLRA/QuasiOptimalityStiff.lean`](../LeanDLRA/DLRA/QuasiOptimalityStiff.lean) the stiff part enters only through the one-sided
+Lipschitz constant `ℓ` of `F` (which may be negative) and through the defect
+`d ≥ ‖S(t, X t) + P(X t) G(t, A t) - Ẋ t‖` of the curve; the Lipschitz constant and the size of
+`S` do not occur:
+
+`IsDLRASolution.norm_sub_le_integral_exp_integral_of_tangent_add_of_integral_lt` in [`LeanDLRA/DLRA/QuasiOptimalityStiff.lean`, lines 305–334](../LeanDLRA/DLRA/QuasiOptimalityStiff.lean#L305-L334):
+
+```lean
+theorem IsDLRASolution.norm_sub_le_integral_exp_integral_of_tangent_add_of_integral_lt {r : ℕ}
+    {F S G : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A X X' Y : ℝ → Matrix m n ℝ}
+    {ρ μ ν d ε : ℝ → ℝ} {a b ℓ L δ : ℝ} (hY : IsDLRASolution r F Y a b)
+    (hFS : ∀ t Z, F t Z = S t Z + G t Z)
+    (hS : ∀ t ∈ Ico a b, tangentProjAt (Y t) (S t (Y t)) = S t (Y t))
+    (hℓ : IsOneSidedLipschitzField F ℓ) (hL : 0 ≤ L) (hG : IsLipschitzField G L)
+    (hAc : ContinuousOn A (Icc a b))
+    (hρc : ContinuousOn ρ (Icc a b)) (hμc : ContinuousOn μ (Icc a b))
+    (hνc : ContinuousOn ν (Icc a b)) (hdc : ContinuousOn d (Icc a b))
+    (hεc : ContinuousOn ε (Icc a b)) (hXc : ContinuousOn X (Icc a b))
+    (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = r)
+    (hσ : ∀ t ∈ Icc a b, ρ t ≤ (toEuclideanLin (X t)).singularValues (r - 1))
+    (hμ : ∀ t ∈ Ico a b, ‖G t (A t)‖ ≤ μ t)
+    (hν : ∀ t ∈ Ico a b, ‖G t (A t) - tangentProjAt (X t) (G t (A t))‖ ≤ ν t)
+    (hd : ∀ t ∈ Ico a b, ‖S t (X t) + tangentProjAt (X t) (G t (A t)) - X' t‖ ≤ d t)
+    (hε0 : ∀ t ∈ Icc a b, 0 ≤ ε t) (hερ : ∀ t ∈ Icc a b, ε t < ρ t)
+    (hδ : ‖Y a - X a‖ ≤ δ)
+    (hB : ∀ t ∈ Icc a b,
+      Real.exp (∫ u in a..t,
+        (ℓ + ν u / ρ u + ν u / (ρ u - ε u) + μ u * ε u / ρ u ^ 2 + L * ε u / ρ u)) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t,
+          (ℓ + ν u / ρ u + ν u / (ρ u - ε u) + μ u * ε u / ρ u ^ 2 + L * ε u / ρ u)) *
+          (L * ‖X s - A s‖ + d s) < ε t) :
+    ∀ t ∈ Icc a b, ‖Y t - X t‖ ≤
+      Real.exp (∫ u in a..t,
+        (ℓ + ν u / ρ u + ν u / (ρ u - ε u) + μ u * ε u / ρ u ^ 2 + L * ε u / ρ u)) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t,
+          (ℓ + ν u / ρ u + ν u / (ρ u - ε u) + μ u * ε u / ρ u ^ 2 + L * ε u / ρ u)) *
+          (L * ‖X s - A s‖ + d s)
+```
+
+Here `L` is the Lipschitz constant of `G`, `μ ≥ ‖G(t, A t)‖` and `ν ≥ ‖(1 - P(X t)) G(t, A t)‖`.
+The case `F(t, Z) = M Z + Z N + G(t, Z)` is `…_of_sylvester_add_of_integral_lt` of the same file.
+For the truncated singular value decomposition of a solution `A` with a gap,
+[`DLRA/QuasiOptimalityStiffTruncation.lean`](../LeanDLRA/DLRA/QuasiOptimalityStiffTruncation.lean) bounds the source `d` by the defect of
+the truncation plus `κ ‖A - T‖`, where `κ` measures how far the tangent space at `T` is from
+being invariant under the adjoint of `S`:
+
+`IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_sylvester_add` in [`LeanDLRA/DLRA/QuasiOptimalityStiffTruncation.lean`, lines 254–312](../LeanDLRA/DLRA/QuasiOptimalityStiffTruncation.lean#L254-L312):
+
+```lean
+theorem IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_sylvester_add
+    {r : ℕ} {M : Matrix m m ℝ} {N : Matrix n n ℝ}
+    {G : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A Y : ℝ → Matrix m n ℝ}
+    {μ ν ω κ ε : ℝ → ℝ} {a b ℓ L δ : ℝ}
+    (hY : IsDLRASolution r (fun t Z => M * Z + Z * N + G t Z) Y a b)
+    (hℓ : IsOneSidedLipschitzField (fun t Z => M * Z + Z * N + G t Z) ℓ) (hL : 0 ≤ L)
+    (hG : IsLipschitzField G L)
+    (hA : ODESolution (fun t Z => M * Z + Z * N + G t Z) A a b)
+    (hμc : ContinuousOn μ (Icc a b)) (hνc : ContinuousOn ν (Icc a b))
+    (hωc : ContinuousOn ω (Icc a b)) (hκc : ContinuousOn κ (Icc a b))
+    (hεc : ContinuousOn ε (Icc a b)) (hμ : ∀ t ∈ Ico a b, ‖G t (A t)‖ ≤ μ t)
+    (hν : ∀ t ∈ Ico a b,
+      ‖G t (A t) - tangentProjAt (truncation (A t) r) (G t (A t))‖ ≤ ν t)
+    (hω : ∀ t ∈ Ico a b,
+      ‖(truncation (A t) r).pinvᵀ * (M * A t + A t * N + G t (A t))ᵀ *
+          (A t - truncation (A t) r) +
+        (A t - truncation (A t) r) * (M * A t + A t * N + G t (A t))ᵀ *
+          (truncation (A t) r).pinvᵀ‖ ≤ ω t)
+    (hκ0 : ∀ t ∈ Ico a b, 0 ≤ κ t)
+    (hκ : ∀ t ∈ Ico a b, ∀ W,
+      ‖Mᵀ * tangentProjAt (truncation (A t) r) W +
+          tangentProjAt (truncation (A t) r) W * Nᵀ -
+        tangentProjAt (truncation (A t) r) (Mᵀ * tangentProjAt (truncation (A t) r) W +
+          tangentProjAt (truncation (A t) r) W * Nᵀ)‖ ≤ κ t * ‖W‖)
+    (hgap : ∀ t ∈ Icc a b, (toEuclideanLin (A t)).singularValues r <
+      (toEuclideanLin (A t)).singularValues (r - 1))
+    (hε0 : ∀ t ∈ Icc a b, 0 ≤ ε t)
+    (hερ : ∀ t ∈ Icc a b, ε t < (toEuclideanLin (A t)).singularValues (r - 1))
+    (hδ : ‖Y a - truncation (A a) r‖ ≤ δ)
+    (hB : ∀ t ∈ Icc a b,
+      Real.exp (∫ u in a..t, (ℓ + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+        ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+        μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2 +
+        L * ε u / (toEuclideanLin (A u)).singularValues (r - 1))) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t,
+          (ℓ + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+          ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+          μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2 +
+          L * ε u / (toEuclideanLin (A u)).singularValues (r - 1))) *
+          (L * ‖truncation (A s) r - A s‖ +
+            ((toEuclideanLin (A s)).singularValues (r - 1) /
+              ((toEuclideanLin (A s)).singularValues (r - 1) -
+                (toEuclideanLin (A s)).singularValues r) * ω s +
+              κ s * ‖truncation (A s) r - A s‖)) < ε t) :
+    ∀ t ∈ Icc a b, ‖Y t - truncation (A t) r‖ ≤
+      Real.exp (∫ u in a..t, (ℓ + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+        ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+        μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2 +
+        L * ε u / (toEuclideanLin (A u)).singularValues (r - 1))) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t,
+          (ℓ + ν u / (toEuclideanLin (A u)).singularValues (r - 1) +
+          ν u / ((toEuclideanLin (A u)).singularValues (r - 1) - ε u) +
+          μ u * ε u / (toEuclideanLin (A u)).singularValues (r - 1) ^ 2 +
+          L * ε u / (toEuclideanLin (A u)).singularValues (r - 1))) *
+          (L * ‖truncation (A s) r - A s‖ +
+            ((toEuclideanLin (A s)).singularValues (r - 1) /
+              ((toEuclideanLin (A s)).singularValues (r - 1) -
+                (toEuclideanLin (A s)).singularValues r) * ω s +
+              κ s * ‖truncation (A s) r - A s‖))
+```
+
+The stiff part enters the source through the failure of the tangent space at `T` to be invariant
+under `S'`, `‖(1 - P(T)) S' P(T) w‖ ≤ κ ‖w‖`, and not through its norm.
+
+**The theorems side by side.** `Y` is a DLRA solution of rank `r`, `δ` the initial error, the
+bound is `e^{∫ k} δ + ∫ e^{∫ₛᵗ k} (source)`, and `ε < ρ` is the radius of a tube that the bound
+itself must stay below.
+
+| Theorem | Growth rate `k` | Source | File |
+|---|---|---|---|
+| `IsDLRASolution.norm_sub_le_integral_exp_integral_of_integral_lt` | `L + ν/ρ + ν/(ρ - ε) + μ ε/ρ²` | `L ‖X - A‖ + d` | [`DLRA/QuasiOptimalityNormalVelocity.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean) |
+| `IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_integral_lt` | the same, `ρ = σ_{r-1}(A)` | `L ‖T - A‖ + μ σ_r/(σ_{r-1} - σ_r)` | [`DLRA/QuasiOptimalityNormalVelocity.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean) |
+| `IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_norm_pinv_le` | the same | `L ‖T - A‖ + ρ/(ρ - τ) ω` | [`DLRA/QuasiOptimalityDefect.lean`](../LeanDLRA/DLRA/QuasiOptimalityDefect.lean) |
+| `IsDLRASolution.norm_sub_le_integral_exp_integral_of_specNorm_sub_tangentProjAt_le` | `L + (1 + ς)/2 (ν'/ρ + ν/ρ')` | `L ‖X - A‖ + d` | [`DLRA/QuasiOptimalityNormalVelocitySpectral.lean`](../LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean) |
+| `IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_singularValues_lt` | `L + μ(t)/ρ(t)` | `L ‖T - A‖ + μ/(ρ - τ) τ` | [`DLRA/QuasiOptimalityTimeLocal.lean`](../LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean) |
+| `IsDLRASolution.norm_sub_le_integral_exp_integral_of_tangent_add_of_integral_lt` | `ℓ + ν/ρ + ν/(ρ - ε) + μ ε/ρ² + L ε/ρ` | `L ‖X - A‖ + d` | [`DLRA/QuasiOptimalityStiff.lean`](../LeanDLRA/DLRA/QuasiOptimalityStiff.lean) |
+| `IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_sylvester_add` | the same, `ρ = σ_{r-1}(A)` | `L ‖T - A‖ + ρ/(ρ - τ) ω + κ ‖T - A‖` | [`DLRA/QuasiOptimalityStiffTruncation.lean`](../LeanDLRA/DLRA/QuasiOptimalityStiffTruncation.lean) |
+
+In the third and fourth rows `τ`, `ω`, `ς`, `ν'`, `ρ'` are the quantities of the statements above
+(the tail, the Weingarten map of the velocity, the sines, the normal component at `Y` and the
+singular value at `Y`). The last two rows are for `F = S + G` with `S` tangential.
+
+What is not shown. A DLRA solution `Y` is a hypothesis; the smallness condition on the bound
+(`hB`) is a hypothesis on the data and is not derived. No statement is made for `ρ` going to
+zero, and the constants are those of the proofs. In the stiff rows the stiff part `S` must map
+the matrices of rank `r` into their tangent spaces (`hS`), and the numbers `d` or `κ` are
+data; the files do not bound them for a given discretization beyond the formulas above.
+
+Literature. The pairing of the projectors with normal components is the mechanism of the curvature
+estimates of [FepponLermusiaux2018] (Proposition 22, Theorems 24, 25, 32). A stiffness-uniform
+DLRA error bound against the exact solution with the one-sided constant is published, with a term
+for the rank-`r` approximation error and not a best-approximation term, in
+[CarrelVandereycken2023] (Theorem 7) and [KieriVandereycken2019] (Lemma 1); the bounds of this
+section are against a best approximation or a curve of critical points, and no priority claim is
+made. The hypothesis that the stiff part is tangential is the standard one of Bachmayr, Eisenmann,
+Kieri and Uschmajew (arXiv 2002.12197, assumption A4) and of [KochLubich2007].
 
 ## 4. Steps, runs and the global error
 
@@ -2153,6 +2636,555 @@ bound is therefore not uniform in the stiffness. The `example`s prove
 `MatrixBUG.exists_run_norm_sub_le` from the first theorem, and satisfy the hypotheses of the
 second for the dissipative field `F(t, Y) = -Y`. The module docstring cites
 [CerutiLubich2022, Thm. 4] for the bound of section 5.2.
+
+### 5.4 Quasi-optimality of the BUG integrator for given data
+
+The robust bounds of sections 5.2 and 5.3 compare the iterate with the exact solution and hold
+without a condition on singular values. The files of this section compare the BUG iterate with a
+reference of rank `r`, the truncated singular value decomposition `T_r(A(t_n))`, for the matrix
+approximation problem: given data `A(t)`, field `F(t, Y) = Ȧ(t)`. This is the discrete counterpart
+of section 3.7 and 3.8. One step of the integrator of [CerutiLubich2022] from `Y₀` with the
+orthogonal projectors `P₀`, `Q₀` onto its column and row space is `Y₁ = P₁ (Y₀ + (A₁ - A₀)) Q₁`,
+where the range of `P₁` contains the range of `(Y₀ + (A₁ - A₀)) Q₀` (K-step) and the range of `Q₁`
+contains the row space of `P₀ (Y₀ + (A₁ - A₀))` (L-step). All norms are Frobenius norms and `‖·‖₂`
+is the spectral norm.
+
+**The identity of the step.** With `D = A₁ - A₀`, the file
+[`Integrators/Matrix/BUGQuasiOptimality.lean`](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean) writes the step as
+
+`MatrixBUG.projStep_eq_add_sub` in [`LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean`, lines 123–126](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean#L123-L126):
+
+```lean
+theorem projStep_eq_add_sub (hY₀P : P₀ * Y₀ = Y₀) (hY₀Q : Y₀ * Q₀ = Y₀)
+    (hK : P * ((Y₀ + D) * Q₀) = (Y₀ + D) * Q₀) (hL : P₀ * (Y₀ + D) * Q = P₀ * (Y₀ + D)) :
+    P * (Y₀ + D) * Q =
+      Y₀ + D - (1 - P) * D * (1 - Q₀) - P * ((1 - P₀) * D * (1 - Q))
+```
+
+and bounds the error against a reference `X₁` of rank `r`. The references are described by
+generalized inverses (`X G X = X`, `X G` and `G X` symmetric, `‖G‖₂ ≤ g`, so that `g⁻¹` is a
+lower bound of the smallest nonzero singular value), and the tail `A - X` is orthogonal to the
+column and the row space of `X`, as it is for the truncated singular value decomposition. The
+one-step bound has the tail times the path length of the reference in one step as source:
+
+
+`MatrixBUG.norm_projStep_sub_le_tail` in [`LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean`, lines 564–580](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean#L564-L580):
+
+```lean
+theorem norm_projStep_sub_le_tail (hP : IsOrthProjMat P) (hQ : IsOrthProjMat Q)
+    (hP₀ : IsOrthProjMat P₀) (hQ₀ : IsOrthProjMat Q₀) (hY₀P : P₀ * Y₀ = Y₀)
+    (hY₀Q : Y₀ * Q₀ = Y₀) (hGYP : Y₀ * GY = P₀) (hGYQ : GY * Y₀ = Q₀)
+    (hK : P * ((Y₀ + (A₁ - A₀)) * Q₀) = (Y₀ + (A₁ - A₀)) * Q₀)
+    (hL : P₀ * (Y₀ + (A₁ - A₀)) * Q = P₀ * (Y₀ + (A₁ - A₀)))
+    (hX₀ : X₀ * G₀ * X₀ = X₀) (hc₀ : (X₀ * G₀)ᵀ = X₀ * G₀) (hr₀ : (G₀ * X₀)ᵀ = G₀ * X₀)
+    (hX₁ : X₁ * G₁ * X₁ = X₁) (hc₁ : (X₁ * G₁)ᵀ = X₁ * G₁) (hr₁ : (G₁ * X₁)ᵀ = G₁ * X₁)
+    (hRG₀ : (A₀ - X₀) * G₀ = 0) (hGR₀ : G₀ * (A₀ - X₀) = 0) (hRG₁ : (A₁ - X₁) * G₁ = 0)
+    (hGR₁ : G₁ * (A₁ - X₁) = 0) (hM : X₁ * Q₀ * M = X₁) (hN : N * P₀ * X₁ = X₁)
+    (hMc : specNorm M ≤ c) (hNc : specNorm N ≤ c) (hG₀ : specNorm G₀ ≤ g)
+    (hG₁ : specNorm G₁ ≤ g) (hγ : specNorm GY ≤ γ) (hξ : specNorm (X₁ - X₀) ≤ ξ)
+    (hτ : specNorm (A₁ - X₁) ≤ τ) (hδ : specNorm (A₁ - X₁ - (A₀ - X₀)) ≤ δ)
+    (hdK : specNorm (P * (1 - P₀)) ≤ dK) (hdL : specNorm ((1 - Q₀) * Q) ≤ dL) :
+    ‖P * (Y₀ + (A₁ - A₀)) * Q - X₁‖ ≤
+      (1 + 2 * (1 + c) * (g * ξ) + 2 * (2 + c * (g * ξ)) * (δ * γ)) * ‖Y₀ - X₀‖ +
+        2 * (2 + c * (g * ξ)) * (τ * g * ‖X₁ - X₀‖) +
+        dK * dL * ‖A₁ - X₁ - (A₀ - X₀)‖
+```
+
+`MatrixBUG.norm_projRun_sub_le` in [`LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean`, lines 635–660](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean#L635-L660):
+
+```lean
+theorem norm_projRun_sub_le {N : ℕ} (hP : ∀ k ≤ N, IsOrthProjMat (P k))
+    (hQ : ∀ k ≤ N, IsOrthProjMat (Q k)) (hYGY : ∀ k < N, Y k * GY k * Y k = Y k)
+    (hGYP : ∀ k < N, Y k * GY k = P k) (hGYQ : ∀ k < N, GY k * Y k = Q k)
+    (hK : ∀ k < N, P (k + 1) * ((Y k + (A (k + 1) - A k)) * Q k) =
+      (Y k + (A (k + 1) - A k)) * Q k)
+    (hL : ∀ k < N, P k * (Y k + (A (k + 1) - A k)) * Q (k + 1) =
+      P k * (Y k + (A (k + 1) - A k)))
+    (hY : ∀ k < N, Y (k + 1) = P (k + 1) * (Y k + (A (k + 1) - A k)) * Q (k + 1))
+    (hX : ∀ k ≤ N, X k * G k * X k = X k) (hXc : ∀ k ≤ N, (X k * G k)ᵀ = X k * G k)
+    (hXr : ∀ k ≤ N, (G k * X k)ᵀ = G k * X k) (hRG : ∀ k ≤ N, (A k - X k) * G k = 0)
+    (hGR : ∀ k ≤ N, G k * (A k - X k) = 0)
+    (hM : ∀ k < N, X (k + 1) * Q k * M k = X (k + 1))
+    (hNl : ∀ k < N, Nl k * P k * X (k + 1) = X (k + 1))
+    (hMc : ∀ k < N, specNorm (M k) ≤ c) (hNc : ∀ k < N, specNorm (Nl k) ≤ c)
+    (hG : ∀ k ≤ N, specNorm (G k) ≤ g) (hγ : ∀ k < N, specNorm (GY k) ≤ γ)
+    (hξ : ∀ k < N, specNorm (X (k + 1) - X k) ≤ ξ)
+    (hτ : ∀ k < N, specNorm (A (k + 1) - X (k + 1)) ≤ τ k)
+    (hδ : ∀ k < N, specNorm (A (k + 1) - X (k + 1) - (A k - X k)) ≤ δ)
+    (hdK : ∀ k < N, specNorm (P (k + 1) * (1 - P k)) ≤ dK)
+    (hdL : ∀ k < N, specNorm ((1 - Q k) * Q (k + 1)) ≤ dL) :
+    ∀ n ≤ N, ‖Y n - X n‖ ≤
+      (1 + 2 * (1 + c) * (g * ξ) + 2 * (2 + c * (g * ξ)) * (δ * γ)) ^ n * ‖Y 0 - X 0‖ +
+        ∑ k ∈ range n,
+          (1 + 2 * (1 + c) * (g * ξ) + 2 * (2 + c * (g * ξ)) * (δ * γ)) ^ (n - 1 - k) *
+            (2 * (2 + c * (g * ξ)) * (τ k * g * ‖X (k + 1) - X k‖) +
+              dK * dL * ‖A (k + 1) - X (k + 1) - (A k - X k)‖)
+```
+
+Here `τ ≥ ‖A₁ - X₁‖₂`, `ξ ≥ ‖X₁ - X₀‖₂`, `d_K ≥ ‖P₁ (1 - P₀)‖₂`, `d_L ≥ ‖(1 - Q₀) Q₁‖₂` are the
+sines of the angles between the old bases and the bases after the step, `c` bounds the inverses of
+the overlaps of the old bases with the reference, and `ΔR = (A₁ - X₁) - (A₀ - X₀)`. The sum over
+the steps is a Riemann sum of `∫ σ_{r+1}(A) ‖Ẋ‖ dt`; all terms vanish with the tail, which is the
+exactness property of [CerutiLubich2022, Theorem 3] and [LubichOseledets2014, Theorem 4.1]. The
+robust bound [CerutiLubich2022, Theorem 4] has the normal component of the field in place of the
+tail; for given data this is the size of the derivative of the tail.
+
+**Constants from the distances.** In [`Integrators/Matrix/BUGQuasiOptimalityStep.lean`](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityStep.lean)
+the constants for the overlaps and the sines are derived from `‖Y₀ - X₀‖` and the increments, for
+projectors of equal trace. With `g ‖X₁ - X₀‖₂ ≤ η_X`, `g ‖ΔR‖₂ ≤ η_R`, `g ‖X₁ - X₀‖ ≤ η_F`,
+`g ‖A₁ - A₀‖ ≤ η_F`, `η_X ≤ η_F ≤ 1/16` and `g ‖Y₀ - X₀‖ ≤ 1/16`:
+
+`MatrixBUG.norm_projStep_sub_le_of_trace` in [`LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityStep.lean`, lines 479–495](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityStep.lean#L479-L495):
+
+```lean
+theorem norm_projStep_sub_le_of_trace (hP : IsOrthProjMat P) (hQ : IsOrthProjMat Q)
+    (hP₀ : IsOrthProjMat P₀) (hQ₀ : IsOrthProjMat Q₀) (hY₀P : P₀ * Y₀ = Y₀)
+    (hY₀Q : Y₀ * Q₀ = Y₀)
+    (hK : P * ((Y₀ + (A₁ - A₀)) * Q₀) = (Y₀ + (A₁ - A₀)) * Q₀)
+    (hL : P₀ * (Y₀ + (A₁ - A₀)) * Q = P₀ * (Y₀ + (A₁ - A₀)))
+    (hX₀ : X₀ * G₀ * X₀ = X₀) (hc₀ : (X₀ * G₀)ᵀ = X₀ * G₀) (hr₀ : (G₀ * X₀)ᵀ = G₀ * X₀)
+    (hX₁ : X₁ * G₁ * X₁ = X₁) (hc₁ : (X₁ * G₁)ᵀ = X₁ * G₁) (hr₁ : (G₁ * X₁)ᵀ = G₁ * X₁)
+    (hRG₀ : (A₀ - X₀) * G₀ = 0) (hGR₀ : G₀ * (A₀ - X₀) = 0) (hRG₁ : (A₁ - X₁) * G₁ = 0)
+    (hGR₁ : G₁ * (A₁ - X₁) = 0) (htrP : trace P = trace P₀) (htrQ : trace Q = trace Q₀)
+    (htrP₀ : trace P₀ = trace (X₀ * G₀)) (htrQ₀ : trace Q₀ = trace (G₀ * X₀))
+    (hG₀ : specNorm G₀ ≤ g) (hG₁ : specNorm G₁ ≤ g) (hξ₂ : g * specNorm (X₁ - X₀) ≤ ηX)
+    (hδ : g * specNorm (A₁ - X₁ - (A₀ - X₀)) ≤ ηR) (hξ : g * ‖X₁ - X₀‖ ≤ ηF)
+    (hν : g * ‖A₁ - A₀‖ ≤ ηF) (hηX : ηX ≤ ηF) (hηF : ηF ≤ 1 / 16)
+    (he : g * ‖Y₀ - X₀‖ ≤ 1 / 16) (hτ : specNorm (A₁ - X₁) ≤ τ) :
+    ‖P * (Y₀ + (A₁ - A₀)) * Q - X₁‖ ≤
+      (1 + 23 / 10 * ηX + 43 / 20 * ηR) * ‖Y₀ - X₀‖ + 11 / 5 * ηF * τ +
+        4 / 3 * ηF ^ 2 * specNorm (A₁ - X₁ - (A₀ - X₀))
+```
+
+The factors `23 / 10`, `43 / 20`, `11 / 5` are `2` in the limit of small step numbers and
+`g ‖Y₀ - X₀‖`; those of `MatrixBUG.norm_projStep_sub_le_tail` are `4`. No generalized inverse of
+`Y₀` is used.
+
+**Against the truncated singular value decomposition.** With `‖Ȧ‖ ≤ μ`,
+`σ_r(A) ≤ τ < ρ ≤ σ_{r-1}(A)` (indices start at zero), `lam = μ / (ρ - τ)` and `h lam ≤ 1/16`,
+the file [`Integrators/Matrix/BUGQuasiOptimalityTruncation.lean`](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean) has one step and a
+run in the quantities of
+`IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_singularValues_lt` (section 3.8):
+
+`Exactness.IsBUGIncrementStep.norm_sub_truncation_le` in [`LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean`, lines 221–237](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean#L221-L237):
+
+```lean
+theorem Exactness.IsBUGIncrementStep.norm_sub_truncation_le {r : ℕ} {A A' : ℝ → Matrix m n ℝ}
+    {a b ρ μ τ lam : ℝ} {U₀ U₁ : Matrix m (Fin r) ℝ} {S₀ S₁ : Matrix (Fin r) (Fin r) ℝ}
+    {V₀ V₁ : Matrix n (Fin r) ℝ}
+    (hs : Exactness.IsBUGIncrementStep (A a) (A b) U₀ S₀ V₀ U₁ S₁ V₁) (hab : a < b)
+    (hAc : ContinuousOn A (Icc a b))
+    (hA : ∀ t ∈ Ico a b, HasDerivWithinAt A (A' t) (Ici t) t)
+    (hμ : ∀ t ∈ Ico a b, ‖A' t‖ ≤ μ)
+    (hσ : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (A t)).singularValues (r - 1))
+    (hτ : ∀ t ∈ Icc a b, (toEuclideanLin (A t)).singularValues r ≤ τ) (hτρ : τ < ρ)
+    (hlam : μ ≤ lam * (ρ - τ)) (hstep : (b - a) * lam ≤ 1 / 16)
+    (hU₀ : U₀ᵀ * U₀ = 1) (hV₀ : V₀ᵀ * V₀ = 1) (hU₁ : U₁ᵀ * U₁ = 1) (hV₁ : V₁ᵀ * V₁ = 1)
+    (he : ‖U₀ * S₀ * V₀ᵀ - truncation (A a) r‖ ≤ ρ / 16) :
+    ‖U₁ * S₁ * V₁ᵀ - truncation (A b) r‖ ≤
+      (1 + 9 / 2 * ((b - a) * lam)) * ‖U₀ * S₀ * V₀ᵀ - truncation (A a) r‖ +
+        11 / 5 * ((b - a) * lam) * (toEuclideanLin (A b)).singularValues r +
+        4 / 3 * ((b - a) * lam) ^ 2 * ((toEuclideanLin (A a)).singularValues r +
+          (toEuclideanLin (A b)).singularValues r)
+```
+
+`norm_bugRun_sub_truncation_le_mul_of_forall_le` in [`LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean`, lines 595–612](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean#L595-L612):
+
+```lean
+theorem norm_bugRun_sub_truncation_le_mul_of_forall_le {r N : ℕ} {A A' : ℝ → Matrix m n ℝ}
+    {U : ℕ → Matrix m (Fin r) ℝ} {S : ℕ → Matrix (Fin r) (Fin r) ℝ}
+    {V : ℕ → Matrix n (Fin r) ℝ} {h ρ μ τ : ℝ} (hh : 0 < h)
+    (hAc : ContinuousOn A (Icc 0 (N * h)))
+    (hA : ∀ t ∈ Ico 0 (N * h), HasDerivWithinAt A (A' t) (Ici t) t)
+    (hμ : ∀ t ∈ Ico 0 (N * h), ‖A' t‖ ≤ μ)
+    (hσ : ∀ t ∈ Icc 0 (N * h), ρ ≤ (toEuclideanLin (A t)).singularValues (r - 1))
+    (hτ : ∀ t ∈ Icc 0 (N * h), (toEuclideanLin (A t)).singularValues r ≤ τ) (hτρ : τ < ρ)
+    (hstep : h * (μ / (ρ - τ)) ≤ 1 / 16)
+    (hU : ∀ k ≤ N, (U k)ᵀ * U k = 1) (hV : ∀ k ≤ N, (V k)ᵀ * V k = 1)
+    (hs : ∀ k < N, Exactness.IsBUGIncrementStep (A (k * h)) (A ((k + 1 : ℕ) * h)) (U k) (S k)
+      (V k) (U (k + 1)) (S (k + 1)) (V (k + 1)))
+    (htube : Real.exp (9 / 2 * (μ / (ρ - τ)) * (N * h)) *
+      (‖U 0 * S 0 * (V 0)ᵀ - truncation (A 0) r‖ + 12 / 5 * (μ / (ρ - τ)) * (N * h) * τ) ≤
+        ρ / 16) :
+    ∀ n ≤ N, ‖U n * S n * (V n)ᵀ - truncation (A (n * h)) r‖ ≤
+      Real.exp (9 / 2 * (μ / (ρ - τ)) * (n * h)) *
+        (‖U 0 * S 0 * (V 0)ᵀ - truncation (A 0) r‖ + 12 / 5 * (μ / (ρ - τ)) * (n * h) * τ)
+```
+
+The bound has the values `σ_r(A(t_k))` on the grid and not the integral of `σ_r(A)`, since the
+integrator sees the data on the grid only. The smallness condition `htube` is needed for the
+overlap of the bases of the iterate with those of the reference. The exponent `9/2 lam` is not
+sharp: the continuous bound has `μ / ρ`.
+
+**The normal velocity as growth rate.** The growth factor of the bound above contains the whole
+velocity `μ`. The file [`Integrators/Matrix/BUGQuasiOptimalityNormalStep.lean`](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalStep.lean) has
+a step in which the increment of the reference enters the factor of the old error only multiplied
+by a small number, the discrete form of the rate of section 3.8:
+
+`MatrixBUG.norm_projStep_sub_le_of_trace_of_ginv_mul_norm_le` in [`LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalStep.lean`, lines 304–320](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalStep.lean#L304-L320):
+
+```lean
+theorem norm_projStep_sub_le_of_trace_of_ginv_mul_norm_le (hP : IsOrthProjMat P)
+    (hQ : IsOrthProjMat Q) (hP₀ : IsOrthProjMat P₀) (hQ₀ : IsOrthProjMat Q₀)
+    (hY₀P : P₀ * Y₀ = Y₀) (hY₀Q : Y₀ * Q₀ = Y₀)
+    (hK : P * ((Y₀ + (A₁ - A₀)) * Q₀) = (Y₀ + (A₁ - A₀)) * Q₀)
+    (hL : P₀ * (Y₀ + (A₁ - A₀)) * Q = P₀ * (Y₀ + (A₁ - A₀)))
+    (hX₀ : X₀ * G₀ * X₀ = X₀) (hc₀ : (X₀ * G₀)ᵀ = X₀ * G₀) (hr₀ : (G₀ * X₀)ᵀ = G₀ * X₀)
+    (hX₁ : X₁ * G₁ * X₁ = X₁) (hc₁ : (X₁ * G₁)ᵀ = X₁ * G₁) (hr₁ : (G₁ * X₁)ᵀ = G₁ * X₁)
+    (hRG₀ : (A₀ - X₀) * G₀ = 0) (hGR₀ : G₀ * (A₀ - X₀) = 0) (hRG₁ : (A₁ - X₁) * G₁ = 0)
+    (hGR₁ : G₁ * (A₁ - X₁) = 0) (htrP : trace P = trace P₀) (htrQ : trace Q = trace Q₀)
+    (htrP₀ : trace P₀ = trace (X₀ * G₀)) (htrQ₀ : trace Q₀ = trace (G₀ * X₀))
+    (hG₀ : specNorm G₀ ≤ g) (hG₁ : specNorm G₁ ≤ g) (hξ₂ : g * specNorm (X₁ - X₀) ≤ ηX)
+    (hδ : g * specNorm (A₁ - X₁ - (A₀ - X₀)) ≤ ηR) (hξ : g * ‖X₁ - X₀‖ ≤ ηF)
+    (hν : g * ‖A₁ - A₀‖ ≤ ηF) (hηX : ηX ≤ ηF) (hηF : ηF ≤ 1 / 16)
+    (he : g * ‖Y₀ - X₀‖ ≤ θ) (hθ : θ ≤ 1 / 16) (hτ : specNorm (A₁ - X₁) ≤ τ) :
+    ‖P * (Y₀ + (A₁ - A₀)) * Q - X₁‖ ≤
+      (1 + 9 / 4 * ηR + 5 / 2 * ηX * (θ + 2 * ηF)) * ‖Y₀ - X₀‖ + 9 / 4 * ηF * τ +
+        4 / 3 * ηF ^ 2 * specNorm (A₁ - X₁ - (A₀ - X₀))
+```
+
+The mechanism is that of the continuous case: in the identity of the step the only term of leading
+order that carries the increment of the reference is `W = (1 - P₁) (X₁ - X₀) (1 - Q₀)`, which
+meets the old error through the orthogonal projector `M ↦ (1 - P₁) M (1 - Q₀)` of the Frobenius
+space only in a component of second order. The run, with `ν ≥ ‖(1 - P(T_r(A))) Ȧ‖` and a relative
+tube radius `θ ≤ 1/16`, is in
+[`Integrators/Matrix/BUGQuasiOptimalityNormalTruncation.lean`](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalTruncation.lean):
+
+`norm_bugRun_sub_truncation_le_mul_of_norm_sub_tangentProjAt_le` in [`LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalTruncation.lean`, lines 449–469](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalTruncation.lean#L449-L469):
+
+```lean
+theorem norm_bugRun_sub_truncation_le_mul_of_norm_sub_tangentProjAt_le {r N : ℕ}
+    {A A' : ℝ → Matrix m n ℝ} {U : ℕ → Matrix m (Fin r) ℝ} {S : ℕ → Matrix (Fin r) (Fin r) ℝ}
+    {V : ℕ → Matrix n (Fin r) ℝ} {h ρ μ ν τ θ : ℝ} (hh : 0 < h)
+    (hAc : ContinuousOn A (Icc 0 (N * h)))
+    (hA : ∀ t ∈ Ico 0 (N * h), HasDerivWithinAt A (A' t) (Ici t) t)
+    (hμ : ∀ t ∈ Ico 0 (N * h), ‖A' t‖ ≤ μ)
+    (hν : ∀ t ∈ Ico 0 (N * h), ‖A' t - tangentProjAt (truncation (A t) r) (A' t)‖ ≤ ν)
+    (hσ : ∀ t ∈ Icc 0 (N * h), ρ ≤ (toEuclideanLin (A t)).singularValues (r - 1))
+    (hτ : ∀ t ∈ Icc 0 (N * h), (toEuclideanLin (A t)).singularValues r ≤ τ) (hτρ : τ < ρ)
+    (hstep : h * (μ / (ρ - τ)) ≤ 1 / 16) (hθ : θ ≤ 1 / 16)
+    (hU : ∀ k ≤ N, (U k)ᵀ * U k = 1) (hV : ∀ k ≤ N, (V k)ᵀ * V k = 1)
+    (hs : ∀ k < N, Exactness.IsBUGIncrementStep (A (k * h)) (A ((k + 1 : ℕ) * h)) (U k) (S k)
+      (V k) (U (k + 1)) (S (k + 1)) (V (k + 1)))
+    (htube : Real.exp ((9 / 4 * ((ν + μ / (ρ - τ) * τ) / ρ) +
+        5 / 2 * (μ / (ρ - τ)) * (θ + 2 * (h * (μ / (ρ - τ))))) * (N * h)) *
+      (‖U 0 * S 0 * (V 0)ᵀ - truncation (A 0) r‖ + 5 / 2 * (μ / (ρ - τ)) * (N * h) * τ) ≤
+        θ * ρ) :
+    ∀ n ≤ N, ‖U n * S n * (V n)ᵀ - truncation (A (n * h)) r‖ ≤
+      Real.exp ((9 / 4 * ((ν + μ / (ρ - τ) * τ) / ρ) +
+          5 / 2 * (μ / (ρ - τ)) * (θ + 2 * (h * (μ / (ρ - τ))))) * (n * h)) *
+        (‖U 0 * S 0 * (V 0)ᵀ - truncation (A 0) r‖ + 5 / 2 * (μ / (ρ - τ)) * (n * h) * τ)
+```
+
+The growth rate is `K = 9/4 (ν + lam τ)/ρ + 5/2 lam (θ + 2 h lam)`: the whole velocity is
+multiplied by the relative tail `τ / ρ`, by the relative radius `θ` or by the step number `h lam`.
+
+**The tail seen from the old reference.** In
+[`Integrators/Matrix/BUGQuasiOptimalityWeingartenStep.lean`](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityWeingartenStep.lean) the source `9/4 η_F τ`
+is replaced by `ω`, with `ω² ≥ ‖(A₁ - X₁) Pv₀‖² + ‖Pu₀ (A₁ - X₁)‖²`, the tail at the end of the
+step seen from the row and the column space of the old reference, with the factor `1` at leading
+order and with every tube radius `θ < 1/2` with `η_F + θ < 1`:
+
+`MatrixBUG.norm_projStep_sub_le_of_trace_of_norm_tail_sq_le` in [`LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityWeingartenStep.lean`, lines 443–463](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityWeingartenStep.lean#L443-L463):
+
+```lean
+theorem norm_projStep_sub_le_of_trace_of_norm_tail_sq_le (hP : IsOrthProjMat P)
+    (hQ : IsOrthProjMat Q) (hP₀ : IsOrthProjMat P₀) (hQ₀ : IsOrthProjMat Q₀)
+    (hY₀P : P₀ * Y₀ = Y₀) (hY₀Q : Y₀ * Q₀ = Y₀)
+    (hK : P * ((Y₀ + (A₁ - A₀)) * Q₀) = (Y₀ + (A₁ - A₀)) * Q₀)
+    (hL : P₀ * (Y₀ + (A₁ - A₀)) * Q = P₀ * (Y₀ + (A₁ - A₀)))
+    (hX₀ : X₀ * G₀ * X₀ = X₀) (hc₀ : (X₀ * G₀)ᵀ = X₀ * G₀) (hr₀ : (G₀ * X₀)ᵀ = G₀ * X₀)
+    (hX₁ : X₁ * G₁ * X₁ = X₁) (hc₁ : (X₁ * G₁)ᵀ = X₁ * G₁) (hr₁ : (G₁ * X₁)ᵀ = G₁ * X₁)
+    (hRG₀ : (A₀ - X₀) * G₀ = 0) (hGR₀ : G₀ * (A₀ - X₀) = 0)
+    (htrP : trace P = trace P₀) (htrQ : trace Q = trace Q₀)
+    (htrP₀ : trace P₀ = trace (X₀ * G₀)) (htrQ₀ : trace Q₀ = trace (G₀ * X₀))
+    (hG₀ : specNorm G₀ ≤ g) (hG₁ : specNorm G₁ ≤ g) (hξ₂ : g * specNorm (X₁ - X₀) ≤ ηX)
+    (hδ : g * specNorm (A₁ - X₁ - (A₀ - X₀)) ≤ ηR) (hξ : g * ‖X₁ - X₀‖ ≤ ηF)
+    (hν : g * ‖A₁ - A₀‖ ≤ ηF) (he : g * ‖Y₀ - X₀‖ ≤ θ) (hc0 : 0 ≤ c)
+    (hc : 1 ≤ (1 - 2 * θ) * c) (hd0 : 0 ≤ d) (hd : 1 ≤ (1 - (ηF + θ)) * d) (hβ0 : 0 ≤ β)
+    (hβ : 2 * (ηX * (ηX + θ) * d * (1 + d)) ≤ β ^ 2) (hω0 : 0 ≤ ω)
+    (hω : ‖(A₁ - X₁) * (G₀ * X₀)‖ ^ 2 + ‖X₀ * G₀ * (A₁ - X₁)‖ ^ 2 ≤ ω ^ 2) :
+    ‖P * (Y₀ + (A₁ - A₀)) * Q - X₁‖ ≤
+      (1 + 3 / 2 * ηR + ηX * (ηX + θ) * d * (1 + d) * (1 + ηR) ^ 2 +
+          c * ηF * (ηR + ηX * (d * (1 + ηR) + 1))) * ‖Y₀ - X₀‖ +
+        (1 + β + c * ηF * (1 + d * ηX)) * ω +
+        c ^ 2 * ηF ^ 2 * specNorm (A₁ - X₁ - (A₀ - X₀))
+```
+
+The source has a form in the increment of the data: for a reflexive generalized inverse `G₀` and
+`g ‖A₁ - X₁‖₂ ≤ q ≤ 1`, `(1 - q)² (‖(A₁ - X₁) Pv₀‖² + ‖Pu₀ (A₁ - X₁)‖²)` is at most
+`‖(A₁ - X₁) (A₁ - A₀)ᵀ G₀ᵀ‖² + ‖G₀ᵀ (A₁ - A₀)ᵀ (A₁ - X₁)‖²`, the two parts of the Weingarten map
+`Z ↦ G₀ᵀ Zᵀ R + R Zᵀ G₀ᵀ` of section 3.8 at the increment of the data. The run, for every
+sequence `B` that satisfies the recursion of the module docstring:
+
+`norm_bugRun_sub_truncation_le_of_norm_tail_sq_le` in [`LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityWeingartenTruncation.lean`, lines 239–269](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityWeingartenTruncation.lean#L239-L269):
+
+```lean
+theorem norm_bugRun_sub_truncation_le_of_norm_tail_sq_le {r N : ℕ} (hr : 0 < r)
+    {A : ℕ → Matrix m n ℝ} {U : ℕ → Matrix m (Fin r) ℝ} {S : ℕ → Matrix (Fin r) (Fin r) ℝ}
+    {V : ℕ → Matrix n (Fin r) ℝ} {ρ ηX ηR ηF θ c d β ω B : ℕ → ℝ} (hρ : ∀ k < N, 0 < ρ k)
+    (hσ₀ : ∀ k < N, ρ k ≤ (toEuclideanLin (A k)).singularValues (r - 1))
+    (hσ₁ : ∀ k < N, ρ k ≤ (toEuclideanLin (A (k + 1))).singularValues (r - 1))
+    (hηX : ∀ k < N,
+      specNorm (truncation (A (k + 1)) r - truncation (A k) r) ≤ ηX k * ρ k)
+    (hηR : ∀ k < N, specNorm (A (k + 1) - truncation (A (k + 1)) r -
+      (A k - truncation (A k) r)) ≤ ηR k * ρ k)
+    (hηF : ∀ k < N, ‖truncation (A (k + 1)) r - truncation (A k) r‖ ≤ ηF k * ρ k)
+    (hηA : ∀ k < N, ‖A (k + 1) - A k‖ ≤ ηF k * ρ k)
+    (hc0 : ∀ k < N, 0 ≤ c k) (hc : ∀ k < N, 1 ≤ (1 - 2 * θ k) * c k)
+    (hd0 : ∀ k < N, 0 ≤ d k) (hd : ∀ k < N, 1 ≤ (1 - (ηF k + θ k)) * d k)
+    (hβ0 : ∀ k < N, 0 ≤ β k)
+    (hβ : ∀ k < N, 2 * (ηX k * (ηX k + θ k) * d k * (1 + d k)) ≤ β k ^ 2)
+    (hω0 : ∀ k < N, 0 ≤ ω k)
+    (hω : ∀ k < N, ‖(A (k + 1) - truncation (A (k + 1)) r) *
+          ((truncation (A k) r).pinv * truncation (A k) r)‖ ^ 2 +
+        ‖truncation (A k) r * (truncation (A k) r).pinv *
+          (A (k + 1) - truncation (A (k + 1)) r)‖ ^ 2 ≤ ω k ^ 2)
+    (hU : ∀ k ≤ N, (U k)ᵀ * U k = 1) (hV : ∀ k ≤ N, (V k)ᵀ * V k = 1)
+    (hs : ∀ k < N, Exactness.IsBUGIncrementStep (A k) (A (k + 1)) (U k) (S k) (V k)
+      (U (k + 1)) (S (k + 1)) (V (k + 1)))
+    (h0 : ‖U 0 * S 0 * (V 0)ᵀ - truncation (A 0) r‖ ≤ B 0)
+    (htube : ∀ k < N, B k ≤ θ k * ρ k)
+    (hB : ∀ k < N,
+      (1 + 3 / 2 * ηR k + ηX k * (ηX k + θ k) * d k * (1 + d k) * (1 + ηR k) ^ 2 +
+          c k * ηF k * (ηR k + ηX k * (d k * (1 + ηR k) + 1))) * B k +
+        (1 + β k + c k * ηF k * (1 + d k * ηX k)) * ω k +
+        c k ^ 2 * ηF k ^ 2 * (ηR k * ρ k) ≤ B (k + 1)) :
+    ∀ n ≤ N, ‖U n * S n * (V n)ᵀ - truncation (A n) r‖ ≤ B n
+```
+
+At leading order in the step the recursion is `B (k+1) = (1 + 3/2 η_R + η_X θ d (1 + d)) B k + ω k`.
+Here the hypotheses are on the data at the grid points only.
+
+**Robust and quasi-optimal certificates on one run.** The quasi-optimal bounds need a gap
+`σ_r(A) ≤ τ < ρ ≤ σ_{r-1}(A)` on every step, the robust bounds do not. In
+[`Integrators/Matrix/BUGHybridQuasiOptimality.lean`](../LeanDLRA/Integrators/Matrix/BUGHybridQuasiOptimality.lean) both are combined on a run in
+which the rank `r n` changes from step to step. With `a n = ‖Y n - A n‖`,
+`d n = ‖Y n - T_{r n}(A n)‖`, the tail `s n = ‖A n - T_{r n}(A n)‖` and local errors `δ n`, every
+step satisfies `a (n + 1) ≤ a n + δ n` and `|a n - d n| ≤ s n`, and a step may be certified:
+`d n ≤ Ed n → d (n + 1) ≤ Ed (n + 1)`.
+
+`le_and_le_of_forall_hybrid_step` in [`LeanDLRA/Integrators/Matrix/BUGHybridQuasiOptimality.lean`, lines 74–81](../LeanDLRA/Integrators/Matrix/BUGHybridQuasiOptimality.lean#L74-L81):
+
+```lean
+theorem le_and_le_of_forall_hybrid_step {N : ℕ} {a d s δ Ea Ed : ℕ → ℝ} {g : ℕ → Prop}
+    (ha : ∀ k < N, a (k + 1) ≤ a k + δ k)
+    (hda : ∀ k ≤ N, d k ≤ a k + s k) (had : ∀ k ≤ N, a k ≤ d k + s k)
+    (hq : ∀ k < N, g k → d k ≤ Ed k → d (k + 1) ≤ Ed (k + 1))
+    (h0a : a 0 ≤ Ea 0) (h0d : d 0 ≤ Ed 0)
+    (hEd : ∀ k < N, g k ∨ Ea k + δ k + s (k + 1) ≤ Ed (k + 1))
+    (hEa : ∀ k < N, Ea k + δ k ≤ Ea (k + 1) ∨ Ed (k + 1) + s (k + 1) ≤ Ea (k + 1)) :
+    ∀ n ≤ N, d n ≤ Ed n ∧ a n ≤ Ea n
+```
+
+Every pair `Ea`, `Ed` that dominates the initial errors and satisfies the two inequalities on
+every step bounds both errors; the choice `Ea n = a 0 + ∑ δ` is the robust bound. A truncation of
+an iterate to a lower rank is a certified step by
+`EckartYoung.norm_truncation_sub_truncation_le_of_norm_sub_le`, and the gap is checked on the
+iterate by `EckartYoung.le_singularValues_of_norm_sub_truncation_le`. The run of BUG steps at the
+current rank with the gap checked on the iterate:
+
+`norm_bugRun_sub_truncation_le_and_norm_sub_le_of_forall_hybrid_step` in [`LeanDLRA/Integrators/Matrix/BUGHybridQuasiOptimality.lean`, lines 288–320](../LeanDLRA/Integrators/Matrix/BUGHybridQuasiOptimality.lean#L288-L320):
+
+```lean
+theorem norm_bugRun_sub_truncation_le_and_norm_sub_le_of_forall_hybrid_step {N : ℕ}
+    {A A' : ℝ → Matrix m n ℝ} {Y : ℕ → Matrix m n ℝ} {r : ℕ → ℕ}
+    {U₀ U₁ : ∀ k, Matrix m (Fin (r k)) ℝ} {S₀ S₁ : ∀ k, Matrix (Fin (r k)) (Fin (r k)) ℝ}
+    {V₀ V₁ : ∀ k, Matrix n (Fin (r k)) ℝ} {h : ℝ} {ρ μ τ lam δ Ea Ed : ℕ → ℝ} {g : ℕ → Prop}
+    (hh : 0 < h) (hAc : ContinuousOn A (Icc 0 (N * h)))
+    (hA : ∀ t ∈ Ico 0 (N * h), HasDerivWithinAt A (A' t) (Ici t) t)
+    (hδ : ∀ k < N, ‖Y (k + 1) - Y k - (A ((k + 1 : ℕ) * h) - A (k * h))‖ ≤ δ k)
+    (hμ : ∀ k < N, g k → ∀ t ∈ Ico (k * h) ((k + 1 : ℕ) * h), ‖A' t‖ ≤ μ k)
+    (hτ : ∀ k < N, g k → ∀ t ∈ Icc (k * h) ((k + 1 : ℕ) * h),
+      (toEuclideanLin (A t)).singularValues (r k) ≤ τ k)
+    (hτρ : ∀ k < N, g k → τ k < ρ k) (hlam : ∀ k < N, g k → μ k ≤ lam k * (ρ k - τ k))
+    (hstep : ∀ k < N, g k → h * lam k ≤ 1 / 16)
+    (hr : ∀ k < N, g k → r (k + 1) = r k)
+    (hY₀ : ∀ k < N, g k → Y k = U₀ k * S₀ k * (V₀ k)ᵀ)
+    (hY₁ : ∀ k < N, g k → Y (k + 1) = U₁ k * S₁ k * (V₁ k)ᵀ)
+    (hU₀ : ∀ k < N, g k → (U₀ k)ᵀ * U₀ k = 1) (hV₀ : ∀ k < N, g k → (V₀ k)ᵀ * V₀ k = 1)
+    (hU₁ : ∀ k < N, g k → (U₁ k)ᵀ * U₁ k = 1) (hV₁ : ∀ k < N, g k → (V₁ k)ᵀ * V₁ k = 1)
+    (hs : ∀ k < N, g k → Exactness.IsBUGIncrementStep (A (k * h)) (A ((k + 1 : ℕ) * h))
+      (U₀ k) (S₀ k) (V₀ k) (U₁ k) (S₁ k) (V₁ k))
+    (hgap : ∀ k < N, g k → ρ k + Ed k + τ k + μ k * h ≤
+      (toEuclideanLin (Y k)).singularValues (r k - 1))
+    (hE16 : ∀ k < N, g k → Ed k ≤ ρ k / 16)
+    (hQ : ∀ k < N, g k → (1 + 9 / 2 * (h * lam k)) * Ed k +
+        11 / 5 * (h * lam k) * (toEuclideanLin (A ((k + 1 : ℕ) * h))).singularValues (r k) +
+        4 / 3 * (h * lam k) ^ 2 * ((toEuclideanLin (A (k * h))).singularValues (r k) +
+          (toEuclideanLin (A ((k + 1 : ℕ) * h))).singularValues (r k)) ≤ Ed (k + 1))
+    (h0a : ‖Y 0 - A ((0 : ℕ) * h)‖ ≤ Ea 0)
+    (h0d : ‖Y 0 - truncation (A ((0 : ℕ) * h)) (r 0)‖ ≤ Ed 0)
+    (hEd : ∀ k < N, g k ∨ Ea k + δ k +
+      ‖A ((k + 1 : ℕ) * h) - truncation (A ((k + 1 : ℕ) * h)) (r (k + 1))‖ ≤ Ed (k + 1))
+    (hEa : ∀ k < N, Ea k + δ k ≤ Ea (k + 1) ∨ Ed (k + 1) +
+      ‖A ((k + 1 : ℕ) * h) - truncation (A ((k + 1 : ℕ) * h)) (r (k + 1))‖ ≤ Ea (k + 1)) :
+    ∀ n ≤ N, ‖Y n - truncation (A (n * h)) (r n)‖ ≤ Ed n ∧ ‖Y n - A (n * h)‖ ≤ Ea n
+```
+
+**Rank-adaptive runs.** The file [`Integrators/Matrix/BUGAdaptiveQuasiOptimality.lean`](../LeanDLRA/Integrators/Matrix/BUGAdaptiveQuasiOptimality.lean)
+uses the tail seen from the old reference as source and allows two kinds of certified steps: a
+step whose result is within `γ k` of a BUG step at the current rank `r k` (the gap checked on the
+iterate: `ρ k + Ed k + τ k + ψ k ≤ σ_{r k - 1}(Y k)`), and a truncation
+`Y (k+1) = T_{r (k+1)}(Z k)` of a matrix `Z k` with `‖Z k - Y k - ΔA‖ ≤ ζ k` to a lower, the same
+or a higher rank (the augmented solution of [CerutiKuschLubich2022] is one such `Z k`), with the
+gap checked on `Z k`. On every other step the bound continues with the local error `δ k` and the
+tail.
+
+`norm_adaptiveBugRun_sub_truncation_le_and_norm_sub_le` in [`LeanDLRA/Integrators/Matrix/BUGAdaptiveQuasiOptimality.lean`, lines 288–341](../LeanDLRA/Integrators/Matrix/BUGAdaptiveQuasiOptimality.lean#L288-L341):
+
+```lean
+theorem norm_adaptiveBugRun_sub_truncation_le_and_norm_sub_le {N : ℕ}
+    {A Y Z : ℕ → Matrix m n ℝ} {r : ℕ → ℕ}
+    {U₀ U₁ : ∀ k, Matrix m (Fin (r k)) ℝ} {S₀ S₁ : ∀ k, Matrix (Fin (r k)) (Fin (r k)) ℝ}
+    {V₀ V₁ : ∀ k, Matrix n (Fin (r k)) ℝ}
+    {ρ τ ψ ηX ηR ηF θ c d β ω γ ρT τT ζ δ Ea Ed : ℕ → ℝ} {g t : ℕ → Prop}
+    (hδ : ∀ k < N, ‖Y (k + 1) - Y k - (A (k + 1) - A k)‖ ≤ δ k)
+    (hr : ∀ k < N, g k → r (k + 1) = r k) (hr0 : ∀ k < N, g k → 0 < r k)
+    (hY₀ : ∀ k < N, g k → Y k = U₀ k * S₀ k * (V₀ k)ᵀ)
+    (hγ : ∀ k < N, g k → ‖Y (k + 1) - U₁ k * S₁ k * (V₁ k)ᵀ‖ ≤ γ k)
+    (hU₀ : ∀ k < N, g k → (U₀ k)ᵀ * U₀ k = 1) (hV₀ : ∀ k < N, g k → (V₀ k)ᵀ * V₀ k = 1)
+    (hU₁ : ∀ k < N, g k → (U₁ k)ᵀ * U₁ k = 1) (hV₁ : ∀ k < N, g k → (V₁ k)ᵀ * V₁ k = 1)
+    (hs : ∀ k < N, g k → Exactness.IsBUGIncrementStep (A k) (A (k + 1))
+      (U₀ k) (S₀ k) (V₀ k) (U₁ k) (S₁ k) (V₁ k))
+    (hρ : ∀ k < N, g k → 0 < ρ k)
+    (hτ : ∀ k < N, g k → (toEuclideanLin (A k)).singularValues (r k) ≤ τ k)
+    (hψ : ∀ k < N, g k → Curvature.specNorm (A (k + 1) - A k) ≤ ψ k)
+    (hgap : ∀ k < N, g k → ρ k + Ed k + τ k + ψ k ≤
+      (toEuclideanLin (Y k)).singularValues (r k - 1))
+    (hηX : ∀ k < N, g k → Curvature.specNorm
+      (truncation (A (k + 1)) (r k) - truncation (A k) (r k)) ≤ ηX k * ρ k)
+    (hηR : ∀ k < N, g k → Curvature.specNorm (A (k + 1) - truncation (A (k + 1)) (r k) -
+      (A k - truncation (A k) (r k))) ≤ ηR k * ρ k)
+    (hηF : ∀ k < N, g k →
+      ‖truncation (A (k + 1)) (r k) - truncation (A k) (r k)‖ ≤ ηF k * ρ k)
+    (hηA : ∀ k < N, g k → ‖A (k + 1) - A k‖ ≤ ηF k * ρ k)
+    (htube : ∀ k < N, g k → Ed k ≤ θ k * ρ k)
+    (hc0 : ∀ k < N, g k → 0 ≤ c k) (hc : ∀ k < N, g k → 1 ≤ (1 - 2 * θ k) * c k)
+    (hd0 : ∀ k < N, g k → 0 ≤ d k) (hd : ∀ k < N, g k → 1 ≤ (1 - (ηF k + θ k)) * d k)
+    (hβ0 : ∀ k < N, g k → 0 ≤ β k)
+    (hβ : ∀ k < N, g k → 2 * (ηX k * (ηX k + θ k) * d k * (1 + d k)) ≤ β k ^ 2)
+    (hω0 : ∀ k < N, g k → 0 ≤ ω k)
+    (hω : ∀ k < N, g k → ‖(A (k + 1) - truncation (A (k + 1)) (r k)) *
+          ((truncation (A k) (r k)).pinv * truncation (A k) (r k))‖ ^ 2 +
+        ‖truncation (A k) (r k) * (truncation (A k) (r k)).pinv *
+          (A (k + 1) - truncation (A (k + 1)) (r k))‖ ^ 2 ≤ ω k ^ 2)
+    (hB : ∀ k < N, g k →
+      (1 + 3 / 2 * ηR k + ηX k * (ηX k + θ k) * d k * (1 + d k) * (1 + ηR k) ^ 2 +
+          c k * ηF k * (ηR k + ηX k * (d k * (1 + ηR k) + 1))) * Ed k +
+        (1 + β k + c k * ηF k * (1 + d k * ηX k)) * ω k +
+        c k ^ 2 * ηF k ^ 2 * (ηR k * ρ k) + γ k ≤ Ed (k + 1))
+    (hZ : ∀ k < N, t k → Y (k + 1) = truncation (Z k) (r (k + 1)))
+    (hζ : ∀ k < N, t k → ‖Z k - Y k - (A (k + 1) - A k)‖ ≤ ζ k)
+    (hτT : ∀ k < N, t k → (toEuclideanLin (A (k + 1))).singularValues (r (k + 1)) ≤ τT k)
+    (hρT : ∀ k < N, t k → ρT k + (Ea k + ζ k) ≤
+      (toEuclideanLin (Z k)).singularValues (r (k + 1) - 1))
+    (hgapT : ∀ k < N, t k → τT k + 2 * (Ea k + ζ k) < ρT k)
+    (hT : ∀ k < N, t k →
+      (ρT k - (Ea k + ζ k)) / (ρT k - τT k - 2 * (Ea k + ζ k)) * (Ea k + ζ k) ≤ Ed (k + 1))
+    (h0a : ‖Y 0 - A 0‖ ≤ Ea 0) (h0d : ‖Y 0 - truncation (A 0) (r 0)‖ ≤ Ed 0)
+    (hEd : ∀ k < N, g k ∨ t k ∨
+      Ea k + δ k + ‖A (k + 1) - truncation (A (k + 1)) (r (k + 1))‖ ≤ Ed (k + 1))
+    (hEa : ∀ k < N, Ea k + δ k ≤ Ea (k + 1) ∨
+      Ed (k + 1) + ‖A (k + 1) - truncation (A (k + 1)) (r (k + 1))‖ ≤ Ea (k + 1)) :
+    ∀ n ≤ N, ‖Y n - truncation (A n) (r n)‖ ≤ Ed n ∧ ‖Y n - A n‖ ≤ Ea n
+```
+
+All hypotheses are on the data at the grid points and on the iterates; the sequences `Ed`, `Ea`
+are any solution of the inequalities.
+
+What is not shown. The truncation of the augmented solution is not treated in the fixed-rank files
+(there `d_K`, `d_L` are not small); the adaptive file treats it through the certified steps and
+the gap on `Z k`. The smallness conditions are hypotheses on the data or on the iterates. The
+constants `9 / 4`, `5 / 2`, `4 / 3`, `23 / 10` are those of the proofs. The example of
+[`Integrators/Matrix/BUGQuasiOptimalityTruncation.lean`](../LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean) satisfies the hypotheses
+of the step bound for a moving reference with a tail and an error that are not zero.
+
+### 5.5 The constants of the BUG capture estimate and of the local error are attained
+
+The local error bound `IsBUGStep.local_error_two_mul` (section 5.3) is
+`‖Y₁ - A(t₁)‖ ≤ (e^{L h} - 1) (B h + √2 ϑ) + √2 ϑ`, `ϑ = h (2 L B h + ε)`, and rests on the
+capture estimate `‖(1 - P₁) A(t₁)‖ ≤ h (2 L B h + ε)` (`kstep_capture_two_mul`). The file
+[`Integrators/BUGCaptureSharp.lean`](../LeanDLRA/Integrators/BUGCaptureSharp.lean) has examples in `ℂ`, as a real inner product
+space of dimension two, that bound the constants from below.
+
+`BUGCaptureExample.norm_sub_eq_local_error_two_mul` in [`LeanDLRA/Integrators/BUGCaptureSharp.lean`, lines 102–105](../LeanDLRA/Integrators/BUGCaptureSharp.lean#L102-L105):
+
+```lean
+theorem norm_sub_eq_local_error_two_mul {ε h : ℝ} (hε : 0 ≤ ε) (hh : 0 ≤ h) :
+    ‖(fun _ : ℝ => (0 : ℂ)) h - (fun t : ℝ => 0 + (t : ℂ) * ((ε : ℂ) * (1 + Complex.I))) h‖ =
+      (Real.exp (0 * h) - 1) * (√2 * ε * h + √2 * (h * (2 * 0 * (√2 * ε) * h + ε)))
+        + √2 * (h * (2 * 0 * (√2 * ε) * h + ε))
+```
+
+`exists_isBUGStep_mul_lt_norm_sub` in [`LeanDLRA/Integrators/BUGCaptureSharp.lean`, lines 249–252](../LeanDLRA/Integrators/BUGCaptureSharp.lean#L249-L252):
+
+```lean
+theorem exists_isBUGStep_mul_lt_norm_sub {c : ℝ} (hc : c < √2) :
+    ∃ (F : ℝ → ℂ → ℂ) (P₀ Q₀ P₁ Q₁ : ℂ →L[ℝ] ℂ) (YK YL YS A : ℝ → ℂ) (B : ℝ),
+      IsBUGStep F 1 P₀ Q₀ P₁ Q₁ 0 1 0 YK YL YS ∧ IsLipschitzField F 0 ∧ IsBoundedField F B ∧
+        ODESolution F A 0 1 ∧ A 0 = 0 ∧ c * (1 * 1) < ‖YS 1 - A 1‖
+```
+
+`exists_kstep_mul_lt_norm` in [`LeanDLRA/Integrators/BUGCaptureSharp.lean`, lines 265–270](../LeanDLRA/Integrators/BUGCaptureSharp.lean#L265-L270):
+
+```lean
+theorem exists_kstep_mul_lt_norm {c : ℝ} (hc : c < 1 / 2) :
+    ∃ (F : ℝ → ℂ → ℂ) (P₁ Q₀ : ℂ →L[ℝ] ℂ) (YK A : ℝ → ℂ) (L B : ℝ),
+      0 < L ∧ IsLipschitzField F L ∧ IsBoundedField F B ∧ IsOrthProj P₁ ∧ IsOrthProj Q₀ ∧
+        ODESolution F A 0 1 ∧ ODESolution (fun t x => Q₀ (F t x)) YK 0 1 ∧ YK 0 = A 0 ∧
+        P₁ (YK 1) = YK 1 ∧ (∀ t ∈ Icc (0 : ℝ) 1, ‖(1 - P₁) ((1 - Q₀) (F t (YK 1)))‖ ≤ 0) ∧
+        1 * (c * L * B * 1 + 0) < ‖(1 - P₁) (A 1)‖
+```
+
+For the constant field `ε (1 + i)` (`L = 0`), the zero old projectors and projectors after the step
+onto the real and the imaginary axis, the local error bound is an equality, `‖Y₁ - A(t₁)‖ = √2 h ε`
+for every `ε ≥ 0` and `h ≥ 0`; so the factor `√2` of `ε` cannot be lowered. For the field
+`F(x) = 1 + i L min(|Re x|, 1)` the capture is `‖(1 - P₁) A(t₁)‖ = L / 2`, so the constant `2` of
+`kstep_capture_two_mul` cannot be replaced by a number below `1 / 2`. Not shown: the optimal
+constant between `1 / 2` and `2`, and the sharpness of the dependence on `L` in the exponential.
+
+### 5.6 A posteriori bound through a lagged sweep
+
+Let `A' = F(t, A)` with `F = M + N` one-sided Lipschitz with constant `ℓ`, and `N` Lipschitz with
+constant `κ`. For any curve `Y` (for example the interpolant of the iterates of a low-rank
+integrator; no differentiability is needed) let `Z` solve the equation in which `N` is evaluated
+along `Y`, `Z' = M(t, Z) + N(t, Y t)`. The defect of `Z` in the full equation is
+`N(t, Y) - N(t, Z)`, of norm at most `κ ‖Y - Z‖`. In
+[`Foundations/SweepAposteriori.lean`](../LeanDLRA/Foundations/SweepAposteriori.lean):
+
+`norm_sub_le_add_gronwallBound_of_sweep` in [`LeanDLRA/Foundations/SweepAposteriori.lean`, lines 65–71](../LeanDLRA/Foundations/SweepAposteriori.lean#L65-L71):
+
+```lean
+theorem norm_sub_le_add_gronwallBound_of_sweep (hF : IsOneSidedLipschitzField F ℓ)
+    (hN : IsLipschitzField N κ) (hκ : 0 ≤ κ) (hsplit : ∀ t x, F t x = M t x + N t x)
+    {a b δ ρ : ℝ} (hA : ODESolution F A a b)
+    (hZ : ODESolution (fun t z => M t z + N t (Y t)) Z a b)
+    (hρ : ∀ t ∈ Ico a b, ‖Y t - Z t‖ ≤ ρ) (h0 : ‖Z a - A a‖ ≤ δ) :
+    ∀ t ∈ Icc a b,
+      ‖Y t - A t‖ ≤ ‖Y t - Z t‖ + gronwallBound δ ℓ (κ * ρ) (t - a)
+```
+
+`norm_sub_le_add_of_sweep_steps` in [`LeanDLRA/Foundations/SweepAposteriori.lean`, lines 82–90](../LeanDLRA/Foundations/SweepAposteriori.lean#L82-L90):
+
+```lean
+theorem norm_sub_le_add_of_sweep_steps (hF : IsOneSidedLipschitzField F ℓ)
+    (hN : IsLipschitzField N κ) (hκ : 0 ≤ κ) (hsplit : ∀ t x, F t x = M t x + N t x)
+    {t₀ h : ℝ} (hh : 0 ≤ h) {K : ℕ} (hA : ODESolution F A t₀ (t₀ + K * h))
+    (hZ : ODESolution (fun t z => M t z + N t (Y t)) Z t₀ (t₀ + K * h)) {ρ q : ℕ → ℝ}
+    (hρ : ∀ n < K, ∀ t ∈ Ico (t₀ + n * h) (t₀ + (n + 1) * h), ‖Y t - Z t‖ ≤ ρ n)
+    (h0 : ‖Z t₀ - A t₀‖ ≤ q 0)
+    (hq : ∀ n < K, gronwallBound (q n) ℓ (κ * ρ n) h ≤ q (n + 1)) :
+    ∀ n ≤ K, ‖Y (t₀ + n * h) - A (t₀ + n * h)‖ ≤
+      ‖Y (t₀ + n * h) - Z (t₀ + n * h)‖ + q n
+```
+
+The error of `Y` is bounded by the computable distance `‖Y - Z‖`, plus a Grönwall term in which
+only `ℓ` and the constant `κ` of the part `N` enter. The distance `Y - Z` is the residual of `Y`
+integrated with the flow of `M`, so the bound sees the norm of the integrated residual and not the
+integral of its norm. For `M = 0` the curve `Z` is the Picard iterate of `Y`. The module docstring
+names Picard iteration and waveform relaxation as the mechanism and [BillaudFriessNouy2017,
+Prop. 1] for the residual bound with a moving reduced space.
 
 ## 6. Projector splitting and variants of the BUG integrator
 
@@ -4784,6 +5816,613 @@ Source: the integrator is that of [CerutiKuschLubich2022]; the energy bound and 
 docstrings refer to [OstermannPiazzolaWalach2019] and [CarrelVandereycken2023, §2.3] for stiff
 problems. None of the statements cites a theorem of a paper.
 
+### 7.7 The implicit BUG integrator for stiff Sylvester-type fields
+
+The files of this section study the global error of the BUG integrator with backward Euler
+substeps (`IsMatrixImplicitBUGStep`, section 7.1) for the linear stiff field
+`F(Z) = M Z - Z CᵀC`: `M` is dissipative and bounded by `μ`, and `C` is arbitrary, so that the
+matrix `N = -CᵀC` acting on the rows is symmetric negative semidefinite of any norm (the
+stiffness). Two-sided stiffness is the field `-BᵀB Z - Z CᵀC` or `N Z + Z N`. The question is
+whether the error of a run is bounded with constants that do not depend on `‖C‖`. The answer in
+the files depends on the class: it is no for one step in general, yes for runs when the reference
+is smooth in the rows, no for stiffness on both sides, and the section ends with a table. Norms
+are Frobenius norms. The constants are those of the proofs.
+
+**Where the stiff part enters one step.** Every substep is an implicit Galerkin step
+`x₁ = P (x₀ + h F(t, x₁))` with an orthogonal projector `P` (`Q₀` in the K-step, `P₀` in the
+L-step, `P₁ Q₁` in the S-step). For `F = S + G` with `S` additive and `G` Lipschitz with the
+constant `L`, the file [`Stiff/ImplicitGalerkinTangential.lean`](../LeanDLRA/Stiff/ImplicitGalerkinTangential.lean) compares the step
+with an arbitrary pair of reference states `u₀`, `u₁`:
+
+`implicitGalerkin_compare_of_add` in [`LeanDLRA/Stiff/ImplicitGalerkinTangential.lean`, lines 84–90](../LeanDLRA/Stiff/ImplicitGalerkinTangential.lean#L84-L90):
+
+```lean
+theorem implicitGalerkin_compare_of_add (hP : IsOrthProj P) (hh : 0 ≤ h) {x₀ x₁ u₀ u₁ : E}
+    (hx : x₁ = P (x₀ + h • F t x₁)) (hF : ∀ z, F t z = S z + G z)
+    (hS : ∀ z w, S (z - w) = S z - S w) (hG : ‖G u₁ - G (P u₁)‖ ≤ L * ‖u₁ - P u₁‖)
+    (hos : ⟪F t x₁ - F t (P u₁), x₁ - P u₁⟫ ≤ ℓ * ‖x₁ - P u₁‖ ^ 2) :
+    (1 - h * ℓ) * ‖x₁ - P u₁‖ ≤
+      ‖x₀ - u₀‖ + ‖P (u₁ - u₀ - h • F t u₁)‖ + h * ‖P (S (u₁ - P u₁))‖ +
+        h * L * ‖u₁ - P u₁‖
+```
+
+The stiff part enters through the one-sided Lipschitz constant `ℓ` of `F`, through the backward
+Euler defect of the reference, and through `P S (1 - P) u₁`: the block of `S` that maps the
+complement of the Galerkin space into it, applied to the part of the reference that the Galerkin
+space does not contain. The block vanishes if `S` commutes with `P`
+(`apply_apply_sub_apply_eq_zero_of_comm`). For `S(Z) = M Z + Z N` the K-step sees
+`u₁ (1 - Q₀) N Q₀` and the L-step `P₀ M (1 - P₀) u₁`, with the projectors of the numerical
+solution (`IsMatrixImplicitBUGStep.norm_kstep_sub_le_of_sylvester_add`).
+
+**One step: no bound uniform in the stiffness.** The K-step uses the compression `V₀ᵀ N V₀` of
+the stiff matrix to the row space of the numerical solution. If this row space carries a small
+rough component of angle `θ`, the compression is of size `‖N‖ θ²` and the K-step has the
+effective step size `h/(1 + h ‖N‖ θ²)`. The file [`Research/ImplicitBUGStiffRows.lean`](../LeanDLRA/Research/ImplicitBUGStiffRows.lean)
+has a family of `2 × 2` matrices of rank `1`: `M = diag(0, -1)`, `N = diag(0, -lam)`,
+`X(t) = (3/5, 4/5 e^{-t})ᵀ (1, 0)`, `Y₀ = (3/5, 4/5)ᵀ (c, s)`, `c² + s² = 1`, `h lam s² = 1`.
+`X` is an exact solution of rank `1` with singular value at least `3 / 5`, the field is linear and
+dissipative, `‖Y₀ - X(0)‖² ≤ 2 s² = 2/(h lam)`, and every step from `Y₀` loses `2h / 25`:
+
+`StiffRowsExample.two_mul_div_le_norm_sub` in [`LeanDLRA/Research/ImplicitBUGStiffRows.lean`, lines 153–159](../LeanDLRA/Research/ImplicitBUGStiffRows.lean#L153-L159):
+
+```lean
+theorem two_mul_div_le_norm_sub {h lam c s ε t₁ : ℝ} (hh : 0 < h) (hh1 : h ≤ 1)
+    (ha : h * lam * s ^ 2 = 1) {S₀ S₁ : Matrix (Fin 1) (Fin 1) ℝ}
+    {U₀ K₁ L₁ U₁ V₁ : Matrix (Fin 2) (Fin 1) ℝ} {Y₁ : Matrix (Fin 2) (Fin 2) ℝ}
+    (hs : IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix (Fin 2) (Fin 2) ℝ) =>
+      Mₛ * Z + Z * Nₛ lam) ε 0 0 t₁ h U₀ S₀ !![c; s] K₁ L₁ U₁ V₁ S₁ Y₁)
+    (hK₀ : U₀ * S₀ = u₀) :
+    2 * h / 25 ≤ ‖Y₁ - !![3 / 5, 0; 4 / 5 * Real.exp (-h), 0]‖
+```
+
+`StiffRowsExample.not_exists_forall_norm_sub_le` in [`LeanDLRA/Research/ImplicitBUGStiffRows.lean`, lines 450–458](../LeanDLRA/Research/ImplicitBUGStiffRows.lean#L450-L458):
+
+```lean
+theorem not_exists_forall_norm_sub_le :
+    ¬ ∃ C₁ C₂ : ℝ, ∀ (h lam c s ε t₁ : ℝ) (S₁ : Matrix (Fin 1) (Fin 1) ℝ)
+      (K₁ L₁ U₁ V₁ : Matrix (Fin 2) (Fin 1) ℝ) (Y₁ : Matrix (Fin 2) (Fin 2) ℝ),
+      0 < h → h ≤ 1 → 0 ≤ lam → 0 ≤ c →
+      IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix (Fin 2) (Fin 2) ℝ) =>
+        Mₛ * Z + Z * Nₛ lam) ε 0 0 t₁ h u₀ 1 !![c; s] K₁ L₁ U₁ V₁ S₁ Y₁ →
+      ‖Y₁ - !![3 / 5, 0; 4 / 5 * Real.exp (-h), 0]‖ ≤
+        C₁ * ‖u₀ * (1 : Matrix (Fin 1) (Fin 1) ℝ) * !![c; s]ᵀ - !![3 / 5, 0; 4 / 5, 0]‖ +
+          C₂ * h ^ 2
+```
+
+So no bound `‖Y₁ - X(t₁)‖ ≤ C₁ ‖Y₀ - X(t₀)‖ + C₂ h²` holds with constants independent of `lam`,
+although the flow on the matrices of rank `1` is non-expansive.
+
+**Runs on the same family are uniform.** The loss of a step is of size `h a/(1 + a)` with
+`a = h lam sₙ²`, the stiff energy of the numerical row basis. The L-step is a full resolvent step
+for the rough component of the row basis: with `tₙ = sₙ/cₙ`, `tₙ₊₁² + h lam tₙ₊₁² ≤ tₙ²`, so
+the squared tangent of the row angle decreases and its decrease pays the stiff energy of all later
+row bases, `∑_{k ≥ 1} h lam tₖ² ≤ t₀²`. Only the initial step can lose `≈ h`. The file
+[`Research/ImplicitBUGStiffRowsRun.lean`](../LeanDLRA/Research/ImplicitBUGStiffRowsRun.lean):
+
+`StiffRowsExample.norm_run_sub_le` in [`LeanDLRA/Research/ImplicitBUGStiffRowsRun.lean`, lines 607–616](../LeanDLRA/Research/ImplicitBUGStiffRowsRun.lean#L607-L616):
+
+```lean
+theorem norm_run_sub_le {h lam c s : ℝ} (hh : 0 < h) (hh1 : h ≤ 1) (hlam : 0 ≤ lam)
+    (hc : 1 / 2 ≤ c) (hcs : c ^ 2 + s ^ 2 = 1) {n : ℕ} {ε t : ℕ → ℝ}
+    {U K L V : ℕ → Matrix (Fin 2) (Fin 1) ℝ} {S : ℕ → Matrix (Fin 1) (Fin 1) ℝ}
+    {Y : ℕ → Matrix (Fin 2) (Fin 2) ℝ}
+    (hstep : ∀ k < n, IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix (Fin 2) (Fin 2) ℝ) =>
+      Mᵣ * Z + Z * Nᵣ lam) (ε k) 0 0 (t k) h (U k) (S k) (V k) (K k) (L k) (U (k + 1))
+      (V (k + 1)) (S (k + 1)) (Y k))
+    (hK₀ : U 0 * S 0 = uᵣ) (hV₀ : V 0 = !![c; s]) :
+    ‖U n * S n * (V n)ᵀ - !![3 / 5, 0; 4 / 5 * Real.exp (-(n * h)), 0]‖ ≤
+      4 * ‖uᵣ * !![c; s]ᵀ - !![3 / 5, 0; 4 / 5, 0]‖ + 18 * (1 + n * h) * h
+```
+
+**Runs with the reference rows in the kernel of the stiffness.** Let `Q` be an orthogonal
+projector with `C Q = 0`. In [`Research/ImplicitBUGWeightedRows.lean`](../LeanDLRA/Research/ImplicitBUGWeightedRows.lean) the functional
+`‖Y (1 - Q)‖²`, the angles between the numerical row space and the range of `Q` weighted by the
+singular values of `Y`, satisfies `‖Y₁ (1 - Q)‖² + 2 h ‖U₀ L₁ᵀ Cᵀ‖² ≤ (1 + 5 h μ) ‖Y₀ (1 - Q)‖²`
+for one step: its decrease pays the stiff energy of all later steps, and the loss of a step is
+`h μ` times the square root of a stiff energy. For every rank and every `C`, for backward Euler
+steps `X_{j+1} - h M X_{j+1} = X_j` of a reference with rows in the range of `Q`:
+
+`norm_implicitBUG_run_sub_le_of_sylvester` in [`LeanDLRA/Research/ImplicitBUGWeightedRows.lean`, lines 525–535](../LeanDLRA/Research/ImplicitBUGWeightedRows.lean#L525-L535):
+
+```lean
+theorem norm_implicitBUG_run_sub_le_of_sylvester {X : ℕ → Matrix m n ℝ}
+    (hstep : ∀ j < N, IsMatrixImplicitBUGStep
+      (fun (_ : ℝ) (Z : Matrix m n ℝ) => M * Z - Z * (Cᵀ * C)) (ε j) 0 0 (t j) h (U j) (S j) (V j)
+      (K j) (L j) (U (j + 1)) (V (j + 1)) (S (j + 1)) (Y j))
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
+    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (hh : 0 < h) (hhμ : h * μ ≤ 1)
+    (hQ : Q * Q = Q) (hQt : Qᵀ = Q) (hCQ : C * Q = 0)
+    (hX : ∀ j < N, X (j + 1) - h • (M * X (j + 1)) = X j) :
+    ‖U N * S N * (V N)ᵀ - X N‖ ≤ ‖U 0 * S 0 * (V 0)ᵀ * Q - X 0‖ +
+      2 * (h * μ) * ‖U 0 * S 0 * (V 0)ᵀ‖ +
+      (1 + 4 * (h * μ) * √N) * √((1 + 5 * (h * μ)) ^ N) * ‖U 0 * S 0 * (V 0)ᵀ * (1 - Q)‖
+```
+
+**Runs against a reference with smooth rows.** The file
+[`Research/ImplicitBUGSmoothRows.lean`](../LeanDLRA/Research/ImplicitBUGSmoothRows.lean) compares the integrator (exact capture, no
+truncation) with a sequence `X_{j+1} - h M X_{j+1} + h X_{j+1} CᵀC = X_j + δ_j`, `‖δ_j‖ ≤ d`,
+`‖X_j CᵀC‖ ≤ κ`, `‖X_{j+1} - X_j‖ ≤ h ω`, which need not lie in the kernel of `N`. For
+`h μ ≤ 1/8`:
+
+`norm_implicitBUG_run_sub_le_of_sylvester_of_norm_mul_gram_le` in [`LeanDLRA/Research/ImplicitBUGSmoothRows.lean`, lines 251–263](../LeanDLRA/Research/ImplicitBUGSmoothRows.lean#L251-L263):
+
+```lean
+theorem norm_implicitBUG_run_sub_le_of_sylvester_of_norm_mul_gram_le
+    (hstep : ∀ j < N, IsMatrixImplicitBUGStep
+      (fun (_ : ℝ) (Z : Matrix m n ℝ) => M * Z - Z * (Cᵀ * C)) (ε j) 0 0 (t j) h (U j) (S j) (V j)
+      (K j) (L j) (U (j + 1)) (V (j + 1)) (S (j + 1)) (Y j))
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
+    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (hh : 0 < h)
+    (hhμ : h * μ ≤ 1 / 8)
+    (hX : ∀ j < N, X (j + 1) - h • (M * X (j + 1)) + h • (X (j + 1) * (Cᵀ * C)) = X j + δ j)
+    (hκ : ∀ j ≤ N, ‖X j * (Cᵀ * C)‖ ≤ κ) (hω : ∀ j < N, ‖X (j + 1) - X j‖ ≤ h * ω)
+    (hδ : ∀ j < N, ‖δ j‖ ≤ d) :
+    ‖U N * S N * (V N)ᵀ - X N‖ ≤
+      (1 + 9 * (h * μ)) ^ N * (‖U 0 * S 0 * (V 0)ᵀ - X 0‖ + 2 * (h * μ) * ‖U 0 * S 0 * (V 0)ᵀ‖ +
+        N * (2 * d + 2 * (h * μ) * (h * (7 * κ + 3 * ω))))
+```
+
+Neither `C` nor the singular values of the numerical solution enter, and the rank is arbitrary.
+Every loss of a step carries the factor `h μ` and is bounded by the current error with its stiff
+energy, by `h ‖X CᵀC‖` and by `‖X₁ - X₀‖`. The file
+[`Research/ImplicitBUGStiffLemmas.lean`](../LeanDLRA/Research/ImplicitBUGStiffLemmas.lean) has the step lemmas in terms of the
+projectors, for bases of any size with exact capture.
+
+**Runs with truncation, and against an exact solution.** In
+[`Research/ImplicitBUGStiffTruncation.lean`](../LeanDLRA/Research/ImplicitBUGStiffTruncation.lean) the rank may change from step to step:
+step `j` starts from `Y_j` of any rank, uses bases of any size with exact capture, and is
+followed by a truncation by an orthogonal projector `T_j` acting from the left (the truncated
+singular value decomposition is of this form) with `‖Y_{j+1} - Ŷ_{j+1}‖ ≤ ϑ_j`:
+
+`norm_implicitBUG_truncated_run_sub_le_of_sylvester` in [`LeanDLRA/Research/ImplicitBUGStiffTruncation.lean`, lines 266–282](../LeanDLRA/Research/ImplicitBUGStiffTruncation.lean#L266-L282):
+
+```lean
+theorem norm_implicitBUG_truncated_run_sub_le_of_sylvester
+    (hstep : ∀ j < N, ∃ (r k₁ k₂ : ℕ) (U₀ : Matrix m (Fin r) ℝ) (S₀ : Matrix (Fin r) (Fin r) ℝ)
+      (V₀ : Matrix n (Fin r) ℝ) (K₁ : Matrix m (Fin r) ℝ) (L₁ : Matrix n (Fin r) ℝ)
+      (U₁ : Matrix m (Fin k₁) ℝ) (V₁ : Matrix n (Fin k₂) ℝ) (S₁ : Matrix (Fin k₁) (Fin k₂) ℝ)
+      (ε t : ℝ), Y j = U₀ * S₀ * V₀ᵀ ∧ Yh (j + 1) = U₁ * S₁ * V₁ᵀ ∧
+        IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix m n ℝ) => M * Z - Z * (Cᵀ * C)) ε 0
+          (ϑ j) t h U₀ S₀ V₀ K₁ L₁ U₁ V₁ S₁ (Y (j + 1)))
+    (htrunc : ∀ j < N, IsOrthProjMat (T j) ∧ Y (j + 1) = T j * Yh (j + 1))
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
+    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (hh : 0 < h)
+    (hhμ : h * μ ≤ 1 / 8)
+    (hX : ∀ j < N, X (j + 1) - h • (M * X (j + 1)) + h • (X (j + 1) * (Cᵀ * C)) = X j + δ j)
+    (hκ : ∀ j ≤ N, ‖X j * (Cᵀ * C)‖ ≤ κ) (hω : ∀ j < N, ‖X (j + 1) - X j‖ ≤ h * ω)
+    (hδ : ∀ j < N, ‖δ j‖ ≤ d) :
+    ‖Y N - X N‖ ≤
+      (1 + 9 * (h * μ)) ^ N * (‖Y 0 - X 0‖ + 2 * (h * μ) * ‖Y 0‖ +
+        N * (2 * d + 2 * (h * μ) * (h * (7 * κ + 3 * ω))) + 2 * ∑ j ∈ range N, ϑ j)
+```
+
+For an exact solution `A` of the differential equation whose velocity is `K₂`-Lipschitz in time
+the same bound holds for `‖Y_N - A(N h)‖` with `d = K₂ h²`
+(`norm_implicitBUG_truncated_run_sub_solution_le_of_sylvester`).
+
+**Comparison with backward Euler of the full problem; the factor one.** Backward Euler of the
+full problem does not increase the Frobenius norm. In
+[`Research/ImplicitBUGStiffLocal.lean`](../LeanDLRA/Research/ImplicitBUGStiffLocal.lean) one step of the integrator is compared with
+the backward Euler step `Ỹ` of the full problem from the same start value, `Ỹ - h M Ỹ + h Ỹ CᵀC
+= Y₀`. The local error depends on the start value only, and it is bounded by `h μ` times the
+stiff energy of the start value minus a free comparison matrix `Z`; no term of the size of the
+error enters, and there is no restriction on `h μ`:
+
+`IsMatrixImplicitBUGStep.sqrt_sq_norm_galerkin_sub_backwardEuler_add_le_of_sylvester` in [`LeanDLRA/Research/ImplicitBUGStiffLocal.lean`, lines 652–659](../LeanDLRA/Research/ImplicitBUGStiffLocal.lean#L652-L659):
+
+```lean
+theorem IsMatrixImplicitBUGStep.sqrt_sq_norm_galerkin_sub_backwardEuler_add_le_of_sylvester
+    (hs : IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix m n ℝ) => M * Z - Z * (Cᵀ * C)) ε 0 ϑ
+      t₁ h U₀ S₀ V₀ K₁ L₁ U₁ V₁ S₁ Y₁) (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
+    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (hh : 0 < h)
+    (hYt : Yt - h • (M * Yt) + h • (Yt * (Cᵀ * C)) = U₀ * S₀ * V₀ᵀ) (Z : Matrix m n ℝ) :
+    √(‖U₁ * S₁ * V₁ᵀ - Yt‖ ^ 2 + 2 * (h * ‖(U₁ * S₁ * V₁ᵀ - Yt) * Cᵀ‖ ^ 2)) ≤
+      (27 / 4 + 2 * (h * μ)) * (h * μ) * min ‖U₀ * S₀ * V₀ᵀ‖
+        (√h * ‖(U₀ * S₀ * V₀ᵀ - Z) * Cᵀ‖ / 2 + h * ‖Z * (Cᵀ * C)‖)
+```
+
+The error of any sequence against a backward Euler reference is then the start error plus the
+defects plus the sum of the local errors, and the start error enters with the factor one
+([`Research/ImplicitBUGStiffSharpRun.lean`](../LeanDLRA/Research/ImplicitBUGStiffSharpRun.lean)):
+
+`ImplicitBUGStiffSharpRun.norm_sub_le_add_sum_of_backwardEuler` in [`LeanDLRA/Research/ImplicitBUGStiffSharpRun.lean`, lines 105–109](../LeanDLRA/Research/ImplicitBUGStiffSharpRun.lean#L105-L109):
+
+```lean
+theorem norm_sub_le_add_sum_of_backwardEuler {N : ℕ} {Y W X δ : ℕ → Matrix m n ℝ}
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hh : 0 ≤ h)
+    (hW : ∀ j < N, W j - h • (M * W j) + h • (W j * (Cᵀ * C)) = Y j)
+    (hX : ∀ j < N, X (j + 1) - h • (M * X (j + 1)) + h • (X (j + 1) * (Cᵀ * C)) = X j + δ j) :
+    ‖Y N - X N‖ ≤ ‖Y 0 - X 0‖ + ∑ j ∈ range N, (‖δ j‖ + ‖Y (j + 1) - W j‖)
+```
+
+With the energy identity of backward Euler the sum of the local errors gives a closed bound whose
+growth factor is `(1 + c² (h μ)² / 16)^N`, `c = 27/4 + 2 h μ`, instead of an exponential in `μ t`,
+for runs with truncation by projectors acting from the left:
+
+`norm_implicitBUG_truncated_run_sub_le_of_sylvester_of_sq` in [`LeanDLRA/Research/ImplicitBUGStiffSharpRun.lean`, lines 248–265](../LeanDLRA/Research/ImplicitBUGStiffSharpRun.lean#L248-L265):
+
+```lean
+theorem norm_implicitBUG_truncated_run_sub_le_of_sylvester_of_sq
+    (hstep : ∀ j < N, ∃ (r k₁ k₂ : ℕ) (U₀ : Matrix m (Fin r) ℝ) (S₀ : Matrix (Fin r) (Fin r) ℝ)
+      (V₀ : Matrix n (Fin r) ℝ) (K₁ : Matrix m (Fin r) ℝ) (L₁ : Matrix n (Fin r) ℝ)
+      (U₁ : Matrix m (Fin k₁) ℝ) (V₁ : Matrix n (Fin k₂) ℝ) (S₁ : Matrix (Fin k₁) (Fin k₂) ℝ)
+      (ε t : ℝ), Y j = U₀ * S₀ * V₀ᵀ ∧ Yh (j + 1) = U₁ * S₁ * V₁ᵀ ∧
+        IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix m n ℝ) => M * Z - Z * (Cᵀ * C)) ε 0
+          (ϑ j) t h U₀ S₀ V₀ K₁ L₁ U₁ V₁ S₁ (Y (j + 1)))
+    (htrunc : ∀ j < N, IsOrthProjMat (T j) ∧ Y (j + 1) = T j * Yh (j + 1))
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
+    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (hh : 0 < h)
+    (hX : ∀ j < N, X (j + 1) - h • (M * X (j + 1)) + h • (X (j + 1) * (Cᵀ * C)) = X j + δ j)
+    (hκ : ∀ j ≤ N, ‖X j * (Cᵀ * C)‖ ≤ κ) :
+    ‖Y N - X N‖ ≤
+      (1 + ((27 / 4 + 2 * (h * μ)) * (h * μ)) ^ 2 / 16) ^ N * (‖Y 0 - X 0‖ +
+        (27 / 4 + 2 * (h * μ)) * (h * μ) *
+          min ‖Y 0‖ (√h * ‖(Y 0 - X 0) * Cᵀ‖ / 2 + h * ‖X 0 * (Cᵀ * C)‖) +
+        ∑ j ∈ range N, ‖δ j‖ + ∑ j ∈ range N, ϑ j +
+        N * ((27 / 4 + 2 * (h * μ)) * (h * μ) * (h * κ)))
+```
+
+The same comparison for a semilinear field `F(Z) = G(Z) - Z CᵀC` is in
+[`Research/ImplicitBUGStiffSemilinear.lean`](../LeanDLRA/Research/ImplicitBUGStiffSemilinear.lean): two backward Euler steps of the full
+problem satisfy `(1 - h ℓ) ‖W - W'‖ ≤ ‖R - R'‖` if `G` is one-sided Lipschitz with the constant
+`ℓ` at the pair, the sum of the local errors is propagated with `q = (1 - h ℓ)⁻¹`, and the local
+error in the energy norm is bounded by the normal part of the K-step and the defect of a
+comparison matrix, with no constant that depends on `C` or on the singular values
+(`ImplicitBUGStiffSemilinear.norm_implicitBUG_run_sub_le_of_semilinear` is the run bound).
+
+**Stiffness on both sides: one step can lose a fixed part of the solution.** For the field
+`N Z + Z N`, with the same stiff matrix on both sides, the stiff energy of the numerical column
+basis reduces the effective step size of the L-step, so that a rough component of the row basis
+is not damped by the full resolvent; the S-step then damps the whole component of the solution
+along this row vector. The file [`Research/ImplicitBUGStiffTwoSided.lean`](../LeanDLRA/Research/ImplicitBUGStiffTwoSided.lean) has the
+family `N = diag(0, -lam)`, `X(t) = diag(1, 0)` (stationary), `Y₀ = (c, s)ᵀ (c, s)`,
+`c² + s² = 1`, `h lam s⁶ = 1`, with `‖Y₀ - X‖² = 2 s² = 2 (h lam)^{-1/3}`:
+
+`StiffTwoSidedExample.one_div_le_norm_sub` in [`LeanDLRA/Research/ImplicitBUGStiffTwoSided.lean`, lines 189–194](../LeanDLRA/Research/ImplicitBUGStiffTwoSided.lean#L189-L194):
+
+```lean
+theorem one_div_le_norm_sub {h lam c s ε t₁ : ℝ} (ha : h * lam * s ^ 6 = 1)
+    {S₁ : Matrix (Fin 1) (Fin 1) ℝ} {K₁ L₁ U₁ V₁ : Matrix (Fin 2) (Fin 1) ℝ}
+    {Y₁ : Matrix (Fin 2) (Fin 2) ℝ}
+    (hs : IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix (Fin 2) (Fin 2) ℝ) =>
+      (Nₜ lam) * Z + Z * Nₜ lam) ε 0 0 t₁ h !![c; s] 1 !![c; s] K₁ L₁ U₁ V₁ S₁ Y₁) :
+    1 / 11 ≤ ‖Y₁ - Xₜ‖
+```
+
+`StiffTwoSidedExample.not_exists_forall_norm_sub_le` in [`LeanDLRA/Research/ImplicitBUGStiffTwoSided.lean`, lines 456–463](../LeanDLRA/Research/ImplicitBUGStiffTwoSided.lean#L456-L463):
+
+```lean
+theorem not_exists_forall_norm_sub_le :
+    ¬ ∃ C₁ C₂ : ℝ, ∀ (h lam c s ε t₁ : ℝ) (S₁ : Matrix (Fin 1) (Fin 1) ℝ)
+      (K₁ L₁ U₁ V₁ : Matrix (Fin 2) (Fin 1) ℝ) (Y₁ : Matrix (Fin 2) (Fin 2) ℝ),
+      0 < h → h ≤ 1 → 0 ≤ lam →
+      IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix (Fin 2) (Fin 2) ℝ) =>
+        (Nₜ lam) * Z + Z * (Nₜ lam)) ε 0 0 t₁ h !![c; s] 1 !![c; s] K₁ L₁ U₁ V₁ S₁ Y₁ →
+      ‖Y₁ - Xₜ‖ ≤ C₁ * ‖(!![c; s] : Matrix (Fin 2) (Fin 1) ℝ) *
+        (1 : Matrix (Fin 1) (Fin 1) ℝ) * !![c; s]ᵀ - Xₜ‖ + C₂ * h
+```
+
+Every step from `Y₀` has `‖Y₁ - X‖ ≥ 1/11` for every step size `h > 0`; the loss does not vanish
+with the step size, and no bound `C₁ ‖Y₀ - X‖ + C₂ h` holds. With stiffness on one side only and
+the rows of the reference in the kernel, the loss of a step is at most `2 h μ ‖Y₀‖`
+(`IsMatrixImplicitBUGStep.norm_mul_sub_le_of_sylvester`).
+
+**Augmenting the bases does not prevent the loss.** The file
+[`Research/ImplicitBUGStiffAugmented.lean`](../LeanDLRA/Research/ImplicitBUGStiffAugmented.lean) has a family of `3 × 2` matrices of rank
+`1` with `M = diag(0, -μ, -3μ)` and `N = diag(0, -lam)`, `X(t) = e₁ e₁ᵀ` stationary, in which the
+span of the old column basis and of the K-step result contains no vector that is close to the
+smooth direction and has a small stiff energy. For every step whose column basis lies in that span
+(the augmented basis, and the basis of the fixed-rank integrator), every row basis after the step
+and every truncation by an orthogonal projector from the right, the result is at distance `≥ 1/3`
+from `X`, for every step size:
+
+`StiffAugmentedExample.one_div_three_le_norm_sub` in [`LeanDLRA/Research/ImplicitBUGStiffAugmented.lean`, lines 157–166](../LeanDLRA/Research/ImplicitBUGStiffAugmented.lean#L157-L166):
+
+```lean
+theorem one_div_three_le_norm_sub {h lam μ c s c' t ε τ ϑ t₁ : ℝ}
+    (hμ : h * μ = 1 + h * lam * t ^ 2) (hg : 31 ≤ 4 * s ^ 2 * (h * μ))
+    {k k' : Type*} [Fintype k] [DecidableEq k] [Fintype k'] [DecidableEq k']
+    {K₁ : Matrix (Fin 3) (Fin 1) ℝ} {L₁ : Matrix (Fin 2) (Fin 1) ℝ} {U₁ : Matrix (Fin 3) k ℝ}
+    {V₁ : Matrix (Fin 2) k' ℝ} {S₁ : Matrix k k' ℝ} {Y₁ : Matrix (Fin 3) (Fin 2) ℝ}
+    (hs : IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix (Fin 3) (Fin 2) ℝ) =>
+      (Mₐ μ) * Z + Z * Nₐ lam) ε τ ϑ t₁ h !![c; s; s] 1 !![c'; t] K₁ L₁ U₁ V₁ S₁ Y₁)
+    (hU₁ : ∃ R₀ R₁ : Matrix (Fin 1) k ℝ, U₁ = !![c; s; s] * R₀ + K₁ * R₁)
+    {Q : Matrix (Fin 2) (Fin 2) ℝ} (hQ : Q * Q = Q) (hQt : Qᵀ = Q) :
+    1 / 3 ≤ ‖U₁ * S₁ * V₁ᵀ * Q - Xₐ‖
+```
+
+The start error `‖Y₀ - X‖² = 2 (1 - c c')` tends to zero while the hypotheses are kept by
+`lam → ∞`.
+
+**The S-step is an energy projection.** For `F(Z) = -BᵀB Z - Z CᵀC` the backward Euler step
+`A + h (BᵀB A + A CᵀC) = Y₀` of the full matrix is the minimizer of a quadratic functional
+with the energy `E(Z) = ‖Z‖² + h ‖B Z‖² + h ‖Z Cᵀ‖²`. The S-step is the Galerkin equation of the
+same problem on the space `{U₁ G V₁ᵀ}` of the bases after the step. Hence, whatever the bases
+are, in the file [`Research/ImplicitBUGEnergyProjection.lean`](../LeanDLRA/Research/ImplicitBUGEnergyProjection.lean):
+
+`IsMatrixImplicitBUGStep.energy_sub_le_of_sylvester` in [`LeanDLRA/Research/ImplicitBUGEnergyProjection.lean`, lines 253–261](../LeanDLRA/Research/ImplicitBUGEnergyProjection.lean#L253-L261):
+
+```lean
+theorem IsMatrixImplicitBUGStep.energy_sub_le_of_sylvester
+    (hs : IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix m n ℝ) =>
+      -(Bᵀ * B * Z) - Z * (Cᵀ * C)) ε τ ϑ t₁ h U₀ S₀ V₀ K₁ L₁ U₁ V₁ S₁ Y₁) (hh : 0 ≤ h)
+    {A : Matrix m n ℝ} (hA : A + h • (Bᵀ * B * A + A * (Cᵀ * C)) = U₀ * S₀ * V₀ᵀ)
+    (G : Matrix k₁ k₂ ℝ) :
+    ‖U₁ * S₁ * V₁ᵀ - A‖ ^ 2 + h * ‖B * (U₁ * S₁ * V₁ᵀ - A)‖ ^ 2 +
+        h * ‖(U₁ * S₁ * V₁ᵀ - A) * Cᵀ‖ ^ 2 ≤
+      ‖U₁ * G * V₁ᵀ - A‖ ^ 2 + h * ‖B * (U₁ * G * V₁ᵀ - A)‖ ^ 2 +
+        h * ‖(U₁ * G * V₁ᵀ - A) * Cᵀ‖ ^ 2
+```
+
+So `U₁ S₁ V₁ᵀ` is the best approximation of the full backward Euler step in this space in the
+energy norm; the stiffness enters the error of the step only through the energy distance of `A`
+to the space of the bases, and no bound of `B` or `C` is used. The nearest published statement of
+this form is the energy-best approximation in the norm of `I + h B` of the projected step in the
+preprint version of [KieriVandereycken2019].
+
+**Rational Krylov bases: the error is an ADI residual.** The equation for `A` is a Sylvester
+equation with the right-hand side `U₀ S₀ V₀ᵀ` of rank `r`. If the bases after the step contain
+the shifted resolvents of the old bases (a rational Krylov space), the factored alternating
+direction implicit (ADI) iteration with `k` pairs of shifts lies in the space, and the energy
+error of the step against the full backward Euler step is at most the squared norm of the ADI
+residual `Ûₖ S₀ V̂ₖᵀ`, `Ûₖ = ∏ⱼ (h BᵀB + 1 - tⱼ) (h BᵀB + sⱼ)⁻¹ U₀` and likewise `V̂ₖ`
+([`Research/ImplicitBUGRationalKrylov.lean`](../LeanDLRA/Research/ImplicitBUGRationalKrylov.lean); ADI: Beckermann and Townsend,
+arXiv 1609.09494, Theorem 2.1 and Corollary 3.2):
+
+`IsMatrixImplicitBUGStep.energy_sub_le_sq_norm_adi_of_sylvester` in [`LeanDLRA/Research/ImplicitBUGRationalKrylov.lean`, lines 215–227](../LeanDLRA/Research/ImplicitBUGRationalKrylov.lean#L215-L227):
+
+```lean
+theorem IsMatrixImplicitBUGStep.energy_sub_le_sq_norm_adi_of_sylvester
+    (hs : IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix m n ℝ) =>
+      -(Bᵀ * B * Z) - Z * (Cᵀ * C)) ε τ ϑ t₁ h U₀ S₀ V₀ K₁ L₁ U₁ V₁ S₁ Y₁) (hh : 0 ≤ h)
+    {A : Matrix m n ℝ} (hA : A + h • (Bᵀ * B * A + A * (Cᵀ * C)) = U₀ * S₀ * V₀ᵀ)
+    {k : ℕ} {s t : ℕ → ℝ} {Uh : ℕ → Matrix m (Fin r) ℝ} {Vh : ℕ → Matrix n (Fin r) ℝ}
+    {R : ℕ → Matrix k₁ (Fin r) ℝ} {T : ℕ → Matrix k₂ (Fin r) ℝ}
+    (hU0 : Uh 0 = U₀) (hV0 : Vh 0 = V₀)
+    (hR : ∀ j < k, s j • (U₁ * R j) + h • (Bᵀ * B * (U₁ * R j)) = Uh j)
+    (hT : ∀ j < k, t j • (V₁ * T j) + h • (Cᵀ * C * (V₁ * T j)) = Vh j)
+    (hUh : ∀ j < k, Uh (j + 1) = Uh j - (s j + t j - 1) • (U₁ * R j))
+    (hVh : ∀ j < k, Vh (j + 1) = Vh j - (s j + t j - 1) • (V₁ * T j)) :
+    ‖U₁ * S₁ * V₁ᵀ - A‖ ^ 2 + h * ‖B * (U₁ * S₁ * V₁ᵀ - A)‖ ^ 2 +
+        h * ‖(U₁ * S₁ * V₁ᵀ - A) * Cᵀ‖ ^ 2 ≤ ‖Uh k * S₀ * (Vh k)ᵀ‖ ^ 2
+```
+
+In the `3 × 2` family of the previous paragraph, where every step with the column basis in the
+span of `U₀` and `K₁` loses `1 / 3`, the step with the resolvent bases is within
+`‖Y₀ - X‖ + 2 abs (s t)` of the solution for all `h`, `μ`, `lam ≥ 0`
+(`RationalKrylovExample.exists_isMatrixImplicitBUGStep_norm_sub_le`). The run with truncation
+tolerances stays within `∑ (δⱼ + ϑⱼ)` of backward Euler on the full matrix
+(`norm_implicitBUG_run_sub_le_of_sylvester_residual`), where `δⱼ` bounds a residual of step `j`.
+
+**Damped a posteriori bounds.** Let `𝒫 Z = Z - h M Z + h Z CᵀC` be the operator of a backward
+Euler step and `R = 𝒫⁻¹`. For any sequence `Y_j` with residuals `ρ_j = Y_j - 𝒫 Y_{j+1}` and a
+backward Euler reference `𝒫 X_{j+1} = X_j + δ_j` the error is
+`R^N (Y₀ - X₀) - ∑ R^{N-j} (ρ_j + δ_j)`, so each local residual is damped by the steps that follow
+it. In [`Research/ImplicitBUGStiffDamped.lean`](../LeanDLRA/Research/ImplicitBUGStiffDamped.lean) the exact representation holds for any
+sequence, with no hypothesis on the integrator, the truncation or the tolerance, and the powers of
+`R` are bounded by the powers of the two one-sided resolvents `(1 - h M)⁻¹` and `(1 + h CᵀC)⁻¹`,
+applied to factors of a low-rank matrix one side at a time:
+
+`ImplicitBUGStiffDamped.sub_eq_sub_sum_of_backwardEuler` in [`LeanDLRA/Research/ImplicitBUGStiffDamped.lean`, lines 188–197](../LeanDLRA/Research/ImplicitBUGStiffDamped.lean#L188-L197):
+
+```lean
+theorem sub_eq_sub_sum_of_backwardEuler {N : ℕ} {Y X δ E : ℕ → Matrix m n ℝ}
+    {W : ℕ → ℕ → Matrix m n ℝ} (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hh : 0 ≤ h)
+    (hX : ∀ j < N, X (j + 1) - h • (M * X (j + 1)) + h • (X (j + 1) * (Cᵀ * C)) = X j + δ j)
+    (hE0 : E 0 = Y 0 - X 0)
+    (hE : ∀ i < N, E (i + 1) - h • (M * E (i + 1)) + h • (E (i + 1) * (Cᵀ * C)) = E i)
+    (hW0 : ∀ j < N, W j 0 =
+      Y j - (Y (j + 1) - h • (M * Y (j + 1)) + h • (Y (j + 1) * (Cᵀ * C))) + δ j)
+    (hW : ∀ j < N, ∀ i < N - j,
+      W j (i + 1) - h • (M * W j (i + 1)) + h • (W j (i + 1) * (Cᵀ * C)) = W j i) :
+    Y N - X N = E N - ∑ j ∈ range N, W j (N - j)
+```
+
+`ImplicitBUGStiffDamped.norm_sub_le_min_add_sum_min_of_backwardEuler` in [`LeanDLRA/Research/ImplicitBUGStiffDamped.lean`, lines 399–408](../LeanDLRA/Research/ImplicitBUGStiffDamped.lean#L399-L408):
+
+```lean
+theorem norm_sub_le_min_add_sum_min_of_backwardEuler {ι : Type*} (s : Finset ι) {N : ℕ}
+    {Y X δ : ℕ → Matrix m n ℝ} {P : ℕ → ι → Matrix m n ℝ}
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hh : 0 ≤ h)
+    (hX : ∀ j < N, X (j + 1) - h • (M * X (j + 1)) + h • (X (j + 1) * (Cᵀ * C)) = X j + δ j)
+    (hP : ∀ j < N, ∑ a ∈ s, P j a =
+      Y j - (Y (j + 1) - h • (M * Y (j + 1)) + h • (Y (j + 1) * (Cᵀ * C))) + δ j) :
+    ‖Y N - X N‖ ≤
+      min ‖(1 - h • M)⁻¹ ^ N * (Y 0 - X 0)‖ ‖(Y 0 - X 0) * (1 + h • (Cᵀ * C))⁻¹ ^ N‖ +
+      ∑ j ∈ range N, ∑ a ∈ s, min ‖(1 - h • M)⁻¹ ^ (N - j) * P j a‖
+        ‖P j a * (1 + h • (Cᵀ * C))⁻¹ ^ (N - j)‖
+```
+
+In the second theorem the sum is over any splitting `ρ_j + δ_j = ∑_a P_{j,a}`, and each part takes
+the better of the two resolvent powers. For `F(Z) = -BᵀB Z - Z CᵀC` the file
+[`Research/ImplicitBUGTwoSidedDamped.lean`](../LeanDLRA/Research/ImplicitBUGTwoSidedDamped.lean) splits the residuals with partitions of
+unity, one acting on each side, before the choice of the side is made part by part:
+
+`ImplicitBUGTwoSidedDamped.norm_sub_le_min_add_sum_min_of_sylvester` in [`LeanDLRA/Research/ImplicitBUGTwoSidedDamped.lean`, lines 94–102](../LeanDLRA/Research/ImplicitBUGTwoSidedDamped.lean#L94-L102):
+
+```lean
+theorem norm_sub_le_min_add_sum_min_of_sylvester {ι : Type*} (s : Finset ι) {N : ℕ}
+    {Y X δ : ℕ → Matrix m n ℝ} {P : ℕ → ι → Matrix m n ℝ} (hh : 0 ≤ h)
+    (hX : ∀ j < N, X (j + 1) + h • (Bᵀ * B * X (j + 1) + X (j + 1) * (Cᵀ * C)) = X j + δ j)
+    (hP : ∀ j < N, ∑ a ∈ s, P j a =
+      Y j - (Y (j + 1) + h • (Bᵀ * B * Y (j + 1) + Y (j + 1) * (Cᵀ * C))) + δ j) :
+    ‖Y N - X N‖ ≤
+      min ‖(1 + h • (Bᵀ * B))⁻¹ ^ N * (Y 0 - X 0)‖ ‖(Y 0 - X 0) * (1 + h • (Cᵀ * C))⁻¹ ^ N‖ +
+      ∑ j ∈ range N, ∑ a ∈ s, min ‖(1 + h • (Bᵀ * B))⁻¹ ^ (N - j) * P j a‖
+        ‖P j a * (1 + h • (Cᵀ * C))⁻¹ ^ (N - j)‖
+```
+
+The resolvent `(1 + h BᵀB)⁻¹` and its complement `h BᵀB (1 + h BᵀB)⁻¹` form such a partition
+(`norm_sub_le_sum_min_add_sum_min_of_sylvester_resolvent`).
+
+**Error inside and outside the column space.** With `A_j` a reference with
+`𝒫 A_{j+1} = A_j + g_j + δ_j` and orthogonal projectors `T_j` acting from the left with
+`T_j Y_j = Y_j`, the error splits orthogonally,
+`‖Y_j - A_j‖² = ‖Y_j - T_j A_j‖² + ‖A_j - T_j A_j‖²`, into the distance to the best approximation
+of the reference with columns in the range of `T_j` and the part of the reference outside it.
+In [`Research/ImplicitBUGStiffColumnSpace.lean`](../LeanDLRA/Research/ImplicitBUGStiffColumnSpace.lean), with `W_j` the backward Euler step
+of the full problem from `Y_j` and `γ_j ≥ ‖T_{j+1} (1 - T_j)‖₂` the rotation of the range:
+
+`ImplicitBUGStiffColumnSpace.norm_sub_proj_mul_le_add_sum_of_backwardEuler` in [`LeanDLRA/Research/ImplicitBUGStiffColumnSpace.lean`, lines 300–309](../LeanDLRA/Research/ImplicitBUGStiffColumnSpace.lean#L300-L309):
+
+```lean
+theorem norm_sub_proj_mul_le_add_sum_of_backwardEuler
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
+    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (hh : 0 ≤ h)
+    (hT : ∀ j ≤ N, IsOrthProjMat (T j))
+    (hW : ∀ j < N, W j - h • (M * W j) + h • (W j * (Cᵀ * C)) = Y j + g j)
+    (hA : ∀ j < N,
+      A (j + 1) - h • (M * A (j + 1)) + h • (A (j + 1) * (Cᵀ * C)) = A j + g j + δ j)
+    (hγ : ∀ j < N, specNorm (T (j + 1) * (1 - T j)) ≤ γ j) :
+    ‖Y N - T N * A N‖ ≤ ‖Y 0 - T 0 * A 0‖ + ∑ j ∈ range N,
+      ((h * μ + γ j) * ‖A j - T j * A j‖ + ‖δ j‖ + ‖Y (j + 1) - T (j + 1) * W j‖)
+```
+
+For a run with truncation `Y_{j+1} = T_{j+1} Ŷ_{j+1}` the last term is at most the local error
+`‖Ŷ_{j+1} - W_j‖` before the truncation: the truncated parts do not enter. What enters instead is
+the part of the reference outside the range, weighted by `h μ` and the rotation; neither `C` nor a
+singular value enters (`norm_implicitBUG_truncated_run_sub_le_sqrt_of_sylvester`).
+
+**Angles to the best-approximation column space.** The file
+[`Research/ImplicitBUGStiffColumnAngle.lean`](../LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean) compares the part `‖A_j - T_j A_j‖` and
+the rotation with the same quantities for the projectors `P_j` onto the dominant left singular
+vectors of `A_j`: with `s_j` the sine of the largest angle between the two ranges,
+`‖A_j - T_j A_j‖ ≤ ‖A_j - P_j A_j‖ + s_j ‖P_j A_j‖` and
+`‖T_{j+1} (1 - T_j)‖₂ ≤ ‖P_{j+1} (1 - P_j)‖₂ + s_{j+1} + s_j`.
+
+`ImplicitBUGStiffColumnAngle.norm_sub_proj_mul_le_add_sum_of_backwardEuler_of_specNorm_le` in [`LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean`, lines 148–160](../LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean#L148-L160):
+
+```lean
+theorem norm_sub_proj_mul_le_add_sum_of_backwardEuler_of_specNorm_le
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
+    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (hh : 0 ≤ h)
+    (hT : ∀ j ≤ N, IsOrthProjMat (T j)) (hP : ∀ j ≤ N, IsOrthProjMat (P j))
+    (hW : ∀ j < N, W j - h • (M * W j) + h • (W j * (Cᵀ * C)) = Y j + g j)
+    (hA : ∀ j < N,
+      A (j + 1) - h • (M * A (j + 1)) + h • (A (j + 1) * (Cᵀ * C)) = A j + g j + δ j)
+    (hγ : ∀ j < N, specNorm (P (j + 1) * (1 - P j)) ≤ γ j)
+    (hs : ∀ j ≤ N, specNorm ((1 - T j) * P j) ≤ s j)
+    (hs' : ∀ j ≤ N, specNorm (T j * (1 - P j)) ≤ s j) :
+    ‖Y N - T N * A N‖ ≤ ‖Y 0 - T 0 * A 0‖ + ∑ j ∈ range N,
+      ((h * μ + (γ j + s j + s (j + 1))) * (‖A j - P j * A j‖ + s j * ‖P j * A j‖) + ‖δ j‖ +
+        ‖Y (j + 1) - T (j + 1) * W j‖)
+```
+
+The angles cannot be removed. The last section of the file gives a stationary reference and a
+stationary sequence that is reproduced exactly by a backward Euler step followed by the
+truncation to the dominant left singular vector, with `M = 0`, no defect and no local error, and
+whose distance from the reference is at least `δ/(δ² + w)` times the error of a rank-one
+approximation, where `w` is the quotient of the weights `h λ/(1 + h λ)` of the slowest and of the
+fastest row mode:
+
+`ImplicitBUGStiffColumnAngleExample.mul_norm_reference_sub_rankOne_lt_norm_sub` in [`LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean`, lines 328–330](../LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean#L328-L330):
+
+```lean
+theorem mul_norm_reference_sub_rankOne_lt_norm_sub {c K : ℝ} (hc : 0 < c) (hc1 : c ≤ 1)
+    (hK0 : 0 ≤ K) (hK : 4 * K * c < 1) :
+    K * ‖Aᵍ[c, 1, c] - Xᵍ[c, 1, c]‖ < ‖Yᵍ[c] - Aᵍ[c, 1, c]‖
+```
+
+So the run bound of `ImplicitBUGStiffColumnSpace` does not hold with `‖A_j - T_j A_j‖` replaced by
+a multiple of the error of the best approximation with a constant that depends neither on the
+stiff operator nor on the step size.
+
+**Weighted norms on the rows.** Let `S` commute with `CᵀC`. A backward Euler step commutes with
+the multiplication by `S` from the right, and so does a projector acting from the left; hence
+every bound of the previous two paragraphs holds verbatim in the weighted norm `‖Z S‖`
+([`Research/ImplicitBUGStiffWeighted.lean`](../LeanDLRA/Research/ImplicitBUGStiffWeighted.lean)). For `M = 0` the truncation itself has a
+weight: with `R Rᵀ = (1 + h CᵀC)⁻¹` and `S Sᵀ = 1 - R Rᵀ = h CᵀC (1 + h CᵀC)⁻¹` the backward Euler
+step `W` from `Y` satisfies `W - A₁ = E R Rᵀ` for `E = Y - A`, and
+
+`ImplicitBUGStiffWeighted.sq_norm_sub_mul_eq` in [`LeanDLRA/Research/ImplicitBUGStiffWeighted.lean`, lines 134–136](../LeanDLRA/Research/ImplicitBUGStiffWeighted.lean#L134-L136):
+
+```lean
+theorem sq_norm_sub_mul_eq [DecidableEq n] (hSR : S * Sᵀ + R * Rᵀ = 1) (z E : Matrix m n ℝ) :
+    ‖z - E * (R * Rᵀ)‖ ^ 2 =
+      ‖z * S‖ ^ 2 + ‖(z - E) * R‖ ^ 2 + (‖E * (R * Rᵀ)‖ ^ 2 - ‖E * R‖ ^ 2)
+```
+
+so a step `Y₁` that is at most as far from `W` as a competitor `Z` (for the truncation to rank
+`r`: every matrix of rank `r`, in particular the old value) satisfies
+`‖(Y₁ - A₁) S‖² + ‖(Y₁ - A₁ - E) R‖² ≤ ‖(Z - A₁) S‖² + ‖(Z - A₁ - E) R‖²`. For a stationary
+reference the error in the norm `‖Z S‖` does not increase, whatever `C` and `h` are:
+
+`ImplicitBUGStiffWeighted.norm_sub_mul_le_of_norm_sub_le_of_stationary` in [`LeanDLRA/Research/ImplicitBUGStiffWeighted.lean`, lines 256–260](../LeanDLRA/Research/ImplicitBUGStiffWeighted.lean#L256-L260):
+
+```lean
+theorem norm_sub_mul_le_of_norm_sub_le_of_stationary [DecidableEq n] {A : Matrix m n ℝ}
+    (hSR : S * Sᵀ + R * Rᵀ = 1) (hG : (1 + h • (Cᵀ * C)) * (R * Rᵀ) = 1)
+    (hW : ∀ j < N, W j + h • (W j * (Cᵀ * C)) = Y j + h • (A * (Cᵀ * C)))
+    (hstep : ∀ j < N, ‖Y (j + 1) - W j‖ ≤ ‖Y j - W j‖) :
+    ‖(Y N - A) * S‖ ≤ ‖(Y 0 - A) * S‖
+```
+
+For a moving reference it grows at most by the weighted increments of the reference that the
+competitor does not follow (`norm_sub_mul_le_add_sum_of_norm_sub_le`). The examples of the file
+are a stationary relaxation with two row modes whose stationary truncated sequence is far from
+the best approximation in the Frobenius norm and is the best approximation in the weighted norm,
+and one whose stationary sequence is the best approximation in the Frobenius norm and not in the
+weighted norm.
+
+**The results side by side.** `e₀ = ‖Y₀ - X₀‖`; "one-sided" means stiffness on the rows only
+(`-CᵀC`), "two-sided" on rows and columns; `κ`, `ω`, `d` are the bounds of the smooth reference
+above; `ϑ_j` are the truncation tolerances.
+
+| Setting | What is proved | Constants | File |
+|---|---|---|---|
+| one-sided, `M = diag(0, -1)`, `N = diag(0, -lam)`, one step, `2 × 2`, rank `1` | counterexample: no `C₁ e₀ + C₂ h²` uniform in `lam` | loss `2h / 25`, `h lam s² = 1` | [`Research/ImplicitBUGStiffRows.lean`](../LeanDLRA/Research/ImplicitBUGStiffRows.lean) |
+| one-sided, the same family, runs | bound uniform in `lam` | `4 e₀ + 18 (1 + n h) h`, `h ≤ 1`, `c ≥ 1/2` | [`Research/ImplicitBUGStiffRowsRun.lean`](../LeanDLRA/Research/ImplicitBUGStiffRowsRun.lean) |
+| one-sided, kernel class `C Q = 0`, rows of the reference in the range of `Q`, any rank | run bound | `e₀' + 2 h μ ‖Y₀‖ + (1 + 4 h μ √N) √((1 + 5 h μ)^N) ‖Y₀ (1 - Q)‖`, `h μ ≤ 1` | [`Research/ImplicitBUGWeightedRows.lean`](../LeanDLRA/Research/ImplicitBUGWeightedRows.lean) |
+| one-sided, smooth rows (`‖X CᵀC‖ ≤ κ`, `‖X₁ - X₀‖ ≤ h ω`, defect `d`) | run bound | `(1 + 9 h μ)^N (e₀ + 2 h μ ‖Y₀‖ + N (2 d + 2 h μ h (7 κ + 3 ω)))`, `h μ ≤ 1/8` | [`Research/ImplicitBUGSmoothRows.lean`](../LeanDLRA/Research/ImplicitBUGSmoothRows.lean) |
+| one-sided, smooth rows, truncation, exact solution | run bound | the same plus `2 ∑ ϑ_j`; `d = K₂ h²` for an exact solution | [`Research/ImplicitBUGStiffTruncation.lean`](../LeanDLRA/Research/ImplicitBUGStiffTruncation.lean) |
+| one-sided, one step against backward Euler of the full problem | local error bound | `(27/4 + 2 h μ) h μ λ`, no restriction on `h μ` | [`Research/ImplicitBUGStiffLocal.lean`](../LeanDLRA/Research/ImplicitBUGStiffLocal.lean) |
+| one-sided, runs, sharp factor | factor one on `e₀`; closed form | `e₀ + ∑ (‖δ_j‖ + ϑ_j + c h μ λ_j)`; growth `(1 + c² (h μ)²/16)^N` | [`Research/ImplicitBUGStiffSharpRun.lean`](../LeanDLRA/Research/ImplicitBUGStiffSharpRun.lean) |
+| one-sided, semilinear `G(Z) - Z CᵀC` | run bound with `ℓ` | factors `(1 - h ℓ)⁻¹` | [`Research/ImplicitBUGStiffSemilinear.lean`](../LeanDLRA/Research/ImplicitBUGStiffSemilinear.lean) |
+| two-sided `N Z + Z N`, one step, `2 × 2`, rank `1` | counterexample: no `C₁ e₀ + C₂ h` uniform in `lam` | loss `1 / 11` for every `h > 0`, `h lam s⁶ = 1` | [`Research/ImplicitBUGStiffTwoSided.lean`](../LeanDLRA/Research/ImplicitBUGStiffTwoSided.lean) |
+| two-sided, bases augmented, `3 × 2`, rank `1` | counterexample: augmentation does not remove the loss | loss `1 / 3` for every `h` | [`Research/ImplicitBUGStiffAugmented.lean`](../LeanDLRA/Research/ImplicitBUGStiffAugmented.lean) |
+| two-sided, `-BᵀB Z - Z CᵀC`, one step | S-step is the energy projection of the full step | equality of energies | [`Research/ImplicitBUGEnergyProjection.lean`](../LeanDLRA/Research/ImplicitBUGEnergyProjection.lean) |
+| two-sided, rational Krylov bases | energy error at most the squared ADI residual | example: `‖Y₀ - X‖ + 2 abs (s t)` | [`Research/ImplicitBUGRationalKrylov.lean`](../LeanDLRA/Research/ImplicitBUGRationalKrylov.lean) |
+| one- and two-sided, any sequence | exact damped representation; damped a posteriori bounds | minimum of two resolvent powers, part by part | [`Research/ImplicitBUGStiffDamped.lean`](../LeanDLRA/Research/ImplicitBUGStiffDamped.lean), [`Research/ImplicitBUGTwoSidedDamped.lean`](../LeanDLRA/Research/ImplicitBUGTwoSidedDamped.lean) |
+| one-sided, truncation by left projectors | error inside and outside the column space; run bound | `(h μ + γ_j) ‖A_j - T_j A_j‖` per step | [`Research/ImplicitBUGStiffColumnSpace.lean`](../LeanDLRA/Research/ImplicitBUGStiffColumnSpace.lean) |
+| the same, against the best approximation | comparison through angles; counterexample without angles | `‖A - T A‖ ≤ ‖A - P A‖ + s ‖P A‖` | [`Research/ImplicitBUGStiffColumnAngle.lean`](../LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean) |
+| the same, weighted norm `‖Z S‖` | stationary reference: error not increasing; Frobenius counterexample | factor one | [`Research/ImplicitBUGStiffWeighted.lean`](../LeanDLRA/Research/ImplicitBUGStiffWeighted.lean) |
+| a field `S + G`, any step | comparison of a Galerkin substep with a reference | `(1 - h ℓ)`, defect, block `P S (1 - P) u₁` | [`Stiff/ImplicitGalerkinTangential.lean`](../LeanDLRA/Stiff/ImplicitGalerkinTangential.lean) |
+
+What is not shown. The one-step counterexamples are for `2 × 2` and `3 × 2` matrices of rank `1`.
+The run bounds hold in the classes of the table: the core does not show a stiffness-uniform bound
+for a run of the integrator for stiffness on both sides, or for one-sided stiffness with a
+reference whose rows are neither in the kernel nor smooth. The weighted functional of the kernel
+class and the weighted norm of the last rows are tools for the stationary reference, not a bound
+for a moving one. The a posteriori bounds are for any sequence and are not bounds for the
+integrator before the residuals are bounded. The constants (`4`, `18`, `5`, `27 / 4`, `9`) are
+those of the proofs.
+
+Literature. The run device of the sharp-factor rows (compare each step with the backward Euler
+step of the full problem from the same start value, propagate by the contractive full scheme) is
+that of the analysis of parametrized implicit integrators in [LubichNick2025], Theorem 5.1 (arXiv
+2501.12118), and of Feischl, Lasser, Lubich and Nick, arXiv 2403.19234, §9.5.3; their local terms
+are defect sizes that are available a posteriori. For the BUG step the files bound the local term
+a priori, uniformly in the stiff operator and the singular values and without a step-size
+restriction; the nearest published local bound for a compressed implicit Euler step depends on the
+spectral radius of the stiff matrix (Kieri and Vandereycken, preprint 2017, Theorem 9, which is
+not in [KieriVandereycken2019]). Run bounds uniform in the stiffness are published for other
+integrators: Ostermann, Piazzola and Walach, arXiv 1803.10473, Theorem 1; Scalone and Guglielmi,
+arXiv 2602.07437, Theorem 1; Hu and Yu, arXiv 2610.41606, Theorems 5.2 and 6.2. For BUG
+integrators, Hauck, Kusch and Schotthöfer (arXiv 2608.27749, §8.2) and the review of Einkemmer et
+al., arXiv 2412.05912, §8, say that no rigorous error bound is available. That the
+projector-splitting and BUG integrators are not robust to stiffness in general is observed
+numerically, with accurate substeps, in [CarrelVandereycken2023], §2.3 and Figure 1; the
+counterexamples above are proved and show the mechanism (the compression `V₀ᵀ N V₀`). For
+stiffness on both sides the loss is a damping, consistent with published unconditional norm
+stability of a low-rank integrator (Saha, Yang and Yin, arXiv 2610.18419, Theorem 3.6). Published
+a posteriori bounds for time-dependent problems damp propagated residuals by scalars (Zhang, Chen,
+Vanden-Eijnden and Peherstorfer, arXiv 2404.01145, Proposition 6; Lakkis, Makridakis and Pryer,
+arXiv 0709.0916) or by the norms of both propagators (Kirsten and Simoncini, arXiv 1905.12119,
+Proposition 5.3), or drop the damping (Koskela and Mena, arXiv 1705.07507); for Sylvester-type
+backward Euler the files bound each propagated residual by the better one-sided resolvent power
+applied to it. The module docstrings cite [CerutiLubich2022] and [CerutiKuschLubich2022] for the
+integrator.
+
 ## 8. Tensors
 
 A tensor with mode index types `ι k` is an element of `Tensor ι`, the Euclidean space of
@@ -4924,6 +6563,112 @@ bound of section 8.3 does not apply to it directly.
 Source: the module docstrings cite [LubichOseledetsVandereycken2015], Theorem 4.1 for the
 substeps and Theorem 5.1 and Lemma 5.2 for exactness, and [KieriLubichWalach2016], §2.6.3 for the
 inexact substeps.
+
+**The tangent projector of tensor trains and quasi-optimality.** Let `X` and `Y` be tensor
+trains with `d` modes and the same bond dimensions, with tangent projectors `P(X)`, `P(Y)`
+(`ttTangentProj`), and let `ρ` be a lower bound of the singular values `σ_{|β k|}` of the
+unfoldings of `X` and of `Y`. The file [`Tensor/TT/TangentNormal.lean`](../LeanDLRA/Tensor/TT/TangentNormal.lean) shows, for
+all tensors `Z` and without a smallness condition on `‖X - Y‖`:
+
+`Tensor.norm_ttTangentProj_sub_le` in [`LeanDLRA/Tensor/TT/TangentNormal.lean`, lines 544–553](../LeanDLRA/Tensor/TT/TangentNormal.lean#L544-L553):
+
+```lean
+theorem norm_ttTangentProj_sub_le [Unique (β 0)] [Unique (β d)] {A B A' B' : TTCores ι β}
+    (hd : 0 < d) (hA : ∀ i, IsLeftOrth A i) (hB : ∀ i, IsRightOrth B i) (hAB : tt B = tt A)
+    (hA' : ∀ i, IsLeftOrth A' i) (hB' : ∀ i, IsRightOrth B' i) (hAB' : tt B' = tt A') {ρ : ℝ}
+    (hρ : 0 < ρ)
+    (hσ : ∀ k, 0 < k → k < d → ρ ≤ (toEuclideanLin (unfold (fun i : Fin d => i.val < k)
+      (tt A))).singularValues (Fintype.card (β k) - 1))
+    (hσ' : ∀ k, 0 < k → k < d → ρ ≤ (toEuclideanLin (unfold (fun i : Fin d => i.val < k)
+      (tt A'))).singularValues (Fintype.card (β k) - 1))
+    (Z : Tensor ι) :
+    ‖ttTangentProj A B Z - ttTangentProj A' B' Z‖ ≤ 2 * ρ⁻¹ * ‖tt A' - tt A‖ * ‖Z‖
+```
+
+The constant `2` does not depend on the number of modes. A vector in the range of the alternating
+sum of nested interface projectors is tangent at every interface, and
+`∑_{k < n} ‖(Ql k - Ql (k + 1)) z‖² ≤ ‖z‖²` for nested orthogonal projectors; these are the two
+facts on which the bound rests. The bounds of the difference of the projectors in
+[BachmayrEisenmannUschmajew2025, Prop. 4.11] and in Budzinskiy and Zamarashkin (arXiv 2110.03975,
+Lemma 3.1) have the constants `4 d` and `2 (d - 1)`. The lemmas
+`Tensor.norm_sub_ttTangentProj_apply_le_add` and
+`Tensor.mul_norm_sub_ttTangentProj_apply_le_two_mul` of the file are the bound for a vector
+tangent at `X` and the bound for an arbitrary `Z` in terms of `‖Z - P(X) Z‖`.
+
+The normal component of a nearby tensor train is of second order with a constant that does not
+depend on the number of modes. For `Y = tt A` with left-orthogonal cores `A` and right-orthogonal
+cores `B` (`tt B = tt A`) and `e = ‖X - Y‖`, in
+[`Tensor/TT/NormalSecondOrderTrain.lean`](../LeanDLRA/Tensor/TT/NormalSecondOrderTrain.lean):
+
+`Tensor.norm_sub_ttTangentProj_tt_le` in [`LeanDLRA/Tensor/TT/NormalSecondOrderTrain.lean`, lines 328–335](../LeanDLRA/Tensor/TT/NormalSecondOrderTrain.lean#L328-L335):
+
+```lean
+theorem norm_sub_ttTangentProj_tt_le [Unique (β 0)] [Unique (β d)] {A B G : TTCores ι β}
+    (hd : 0 < d) (hA : ∀ i, IsLeftOrth A i) (hB : ∀ i, IsRightOrth B i) (hAB : tt B = tt A)
+    {ρ : ℝ}
+    (hσ : ∀ k, 0 < k → k < d → ρ ≤ (toEuclideanLin (unfold (fun i : Fin d => i.val < k)
+      (tt A))).singularValues (Fintype.card (β k) - 1))
+    (he : 2 * ‖tt G - tt A‖ < ρ) :
+    ‖tt G - ttTangentProj A B (tt G)‖ ≤
+      ‖tt G - tt A‖ ^ 2 / √(2 * ρ * (ρ - 2 * ‖tt G - tt A‖))
+```
+
+To leading order in `e` the constant is `1 / √2`. The normal projector is the orthogonal sum
+`1 - P = ∑_{k < n} (Ql k - Ql (k + 1)) (1 - Qr (k + 1))` over the interfaces
+([`Tensor/TT/NormalSecondOrder.lean`](../LeanDLRA/Tensor/TT/NormalSecondOrder.lean)); the hypothesis at every interface is the
+inequality `‖A M B‖ ≤ ρ⁻¹ ‖A M‖ ‖M B‖` for the `k`-th unfolding `M`, whose rank is at most the
+`k`-th bond dimension. The bound of [BachmayrEisenmannUschmajew2025, Prop. 4.11] has the factor
+`√(d - 1)` and the bound of Budzinskiy and Zamarashkin (arXiv 2110.03975, Lemma 3.1) the factor
+`d - 1`, both for all `e`; the bound above needs `2 e < ρ` and has `ρ` at `Y` (the variant with
+`ρ` at `X` is `Tensor.norm_sub_ttTangentProj_tt_le_of_le_singularValues_tt`).
+
+For a solution `Y` of `Ẏ = P(Y) F(t, Y)` on the manifold of tensor trains of fixed bond
+dimensions and a curve `X` of such tensor trains, the file
+[`Tensor/TT/QuasiOptimalityNormalVelocity.lean`](../LeanDLRA/Tensor/TT/QuasiOptimalityNormalVelocity.lean) has the analogue of the rate of
+section 3.8 in a tube `‖Y - X‖ ≤ ε < ρ/2`, with `ρ` a lower bound of the singular values of the
+unfoldings of `X` only, `ν ≥ ‖(1 - P(X)) F(t, A)‖`, `ν' ≥ ‖(1 - P(Y)) F(t, A)‖`,
+`g ≥ ‖P(X) F(t, A) - Ẋ‖`, and the rate `k = L + (ν + ν') / √(2 ρ (ρ - 2 ε))`:
+
+`Tensor.norm_tt_sub_tt_le_integral_exp_integral` in [`LeanDLRA/Tensor/TT/QuasiOptimalityNormalVelocity.lean`, lines 131–160](../LeanDLRA/Tensor/TT/QuasiOptimalityNormalVelocity.lean#L131-L160):
+
+```lean
+theorem norm_tt_sub_tt_le_integral_exp_integral [Unique (β 0)] [Unique (β d)]
+    {F : ℝ → Tensor ι → Tensor ι} {A X' : ℝ → Tensor ι} {AX BX AY BY : ℝ → TTCores ι β}
+    {ρ ν ν' g ε : ℝ → ℝ} {a b L δ : ℝ} (hd : 0 < d) (hL : 0 ≤ L) (hF : IsLipschitzField F L)
+    (hAX : ∀ t ∈ Icc a b, ∀ i, IsLeftOrth (AX t) i)
+    (hBX : ∀ t ∈ Icc a b, ∀ i, IsRightOrth (BX t) i)
+    (hABX : ∀ t ∈ Icc a b, tt (BX t) = tt (AX t))
+    (hAY : ∀ t ∈ Icc a b, ∀ i, IsLeftOrth (AY t) i)
+    (hBY : ∀ t ∈ Icc a b, ∀ i, IsRightOrth (BY t) i)
+    (hABY : ∀ t ∈ Icc a b, tt (BY t) = tt (AY t))
+    (hσX : ∀ t ∈ Icc a b, ∀ k, 0 < k → k < d → ρ t ≤ (toEuclideanLin
+      (unfold (fun i : Fin d => i.val < k) (tt (AX t)))).singularValues
+        (Fintype.card (β k) - 1))
+    (hYc : ContinuousOn (fun t => tt (AY t)) (Icc a b))
+    (hY : ∀ t ∈ Ico a b, HasDerivWithinAt (fun t => tt (AY t))
+      (ttTangentProj (AY t) (BY t) (F t (tt (AY t)))) (Ici t) t)
+    (hAc : ContinuousOn A (Icc a b)) (hXc : ContinuousOn (fun t => tt (AX t)) (Icc a b))
+    (hX : ∀ t ∈ Ico a b, HasDerivWithinAt (fun t => tt (AX t)) (X' t) (Ici t) t)
+    (hρc : ContinuousOn ρ (Icc a b)) (hνc : ContinuousOn ν (Icc a b))
+    (hν'c : ContinuousOn ν' (Icc a b)) (hgc : ContinuousOn g (Icc a b))
+    (hεc : ContinuousOn ε (Icc a b))
+    (hν : ∀ t ∈ Ico a b, ‖F t (A t) - ttTangentProj (AX t) (BX t) (F t (A t))‖ ≤ ν t)
+    (hν' : ∀ t ∈ Ico a b, ‖F t (A t) - ttTangentProj (AY t) (BY t) (F t (A t))‖ ≤ ν' t)
+    (hg : ∀ t ∈ Ico a b, ‖ttTangentProj (AX t) (BX t) (F t (A t)) - X' t‖ ≤ g t)
+    (hε0 : ∀ t ∈ Icc a b, 0 ≤ ε t) (hερ : ∀ t ∈ Icc a b, 2 * ε t < ρ t)
+    (htube : ∀ t ∈ Ico a b, ‖tt (AY t) - tt (AX t)‖ ≤ ε t)
+    (hδ : ‖tt (AY a) - tt (AX a)‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖tt (AY t) - tt (AX t)‖ ≤
+      Real.exp (∫ u in a..t, (L + (ν u + ν' u) / √(2 * ρ u * (ρ u - 2 * ε u)))) * δ +
+        ∫ s in a..t, Real.exp (∫ u in s..t, (L + (ν u + ν' u) / √(2 * ρ u * (ρ u - 2 * ε u)))) *
+          (L * ‖tt (AX s) - A s‖ + g s)
+```
+
+The second theorem of the file, `…_of_norm_ttTangentProj_le`, has the rate
+`L + (2 ν + 2 ε μ/ρ) / √(2 ρ (ρ - 2 ε))` with `μ ≥ ‖P(X) F(t, A)‖`: all data are taken at the curve
+`X`. No constant depends on the number `d` of modes; to leading order in `ε` the rate is
+`L + √2 ν/ρ`. Not shown: the existence of the solution `Y` on the manifold of tensor trains is a
+hypothesis of the theorems, as in section 3.7, and so is the tube condition `‖Y - X‖ ≤ ε`.
 
 ### 8.2 Tucker tensors
 
@@ -5095,6 +6840,217 @@ result of the step is `A t₁`. The recoverability takes the place of the invert
 of the paper (docstring of the theorem).
 
 Source: [LubichVandereyckenWalach2018, Thm. 3].
+
+**The tangent projector of Tucker tensors: Lipschitz constant, lower bound and sharp constant.**
+Let `X = C ×ₖ Uₖ` and `Y = C' ×ₖ U'ₖ` be Tucker tensors with `d` modes and the same multilinear
+rank, with tangent projectors `P(X)`, `P(Y)` (`tuckerTangentProj` with the core projector `1`,
+[BachmayrEisenmannUschmajew2025, Prop. 4.2]), and let `ρ` be a lower bound of the smallest nonzero
+singular values of the `d` matricizations of `X`. In
+[`Tensor/Tucker/ProjectorLipschitz.lean`](../LeanDLRA/Tensor/Tucker/ProjectorLipschitz.lean):
+
+`Tensor.norm_tuckerTangentProj_sub_le` in [`LeanDLRA/Tensor/Tucker/ProjectorLipschitz.lean`, lines 345–357](../LeanDLRA/Tensor/Tucker/ProjectorLipschitz.lean#L345-L357):
+
+```lean
+theorem norm_tuckerTangentProj_sub_le (hU : ∀ k, (U k)ᵀ * U k = 1)
+    (hWX : ∀ k, actOn (· ≠ k) (W k * (W k)ᵀ) (tucker C U) = tucker C U)
+    (hWB : ∀ k, ∃ B : Matrix _ (s k) ℝ, W k = unfold (· ≠ k) (tucker C U) * B)
+    (hr : ∀ k, (unfold (· ≠ k) (tucker C U)).rank = Fintype.card (r k))
+    (hU' : ∀ k, (U' k)ᵀ * U' k = 1)
+    (hWX' : ∀ k, actOn (· ≠ k) (W' k * (W' k)ᵀ) (tucker C' U') = tucker C' U')
+    (hWB' : ∀ k, ∃ B : Matrix _ (s' k) ℝ, W' k = unfold (· ≠ k) (tucker C' U') * B)
+    (hr' : ∀ k, (unfold (· ≠ k) (tucker C' U')).rank = Fintype.card (r k)) {ρ : ℝ}
+    (hρ : 0 < ρ)
+    (hσ : ∀ k, ρ ≤ (toEuclideanLin (unfold (· ≠ k) (tucker C U))).singularValues
+      (Fintype.card (r k) - 1)) (B : Tensor ι) :
+    ‖tuckerTangentProj U' 1 W' B - tuckerTangentProj U 1 W B‖ ≤
+      √d * ρ⁻¹ * ‖tucker C' U' - tucker C U‖ * ‖B‖
+```
+
+The bound is `‖P(Y) B - P(X) B‖ ≤ √d ρ⁻¹ ‖Y - X‖ ‖B‖` for all tensors `B`, in Frobenius norms,
+without a smallness condition on `‖Y - X‖` and with `ρ` at `X` only. It rests on a comparison of
+the normal component of the tangent projector with the `d` normal components of the tangent
+projectors of the matricizations ([`Tensor/Tucker/TangentNormal.lean`](../LeanDLRA/Tensor/Tucker/TangentNormal.lean)):
+`‖z - P z‖² ≤ ∑ᵢ ‖z - Tᵢ z‖²`. The bound of [BachmayrEisenmannUschmajew2025, Prop. 4.7] (also
+global, in the operator norm, for constrained core manifolds) has the constant
+`2 (√2 + 1) d` for the Tucker manifold. For matrices (`d = 2`) the constant is `1`
+(`norm_tangentProjAt_sub_le_inv_mul`); the constant `√d` is not claimed to be optimal.
+
+The constant `1` of the matrix case is not valid for three modes. The file
+[`Tensor/Tucker/ProjectorLowerBound.lean`](../LeanDLRA/Tensor/Tucker/ProjectorLowerBound.lean) has tensors of multilinear rank `(1, 1, 1)`
+in `ℝ^{2 × 2 × 2}` with `ρ = 1`:
+
+`Tensor.exists_mul_le_norm_tuckerTangentProj_sub` in [`LeanDLRA/Tensor/Tucker/ProjectorLowerBound.lean`, lines 483–499](../LeanDLRA/Tensor/Tucker/ProjectorLowerBound.lean#L483-L499):
+
+```lean
+theorem exists_mul_le_norm_tuckerTangentProj_sub :
+    ∃ (U U' : ∀ _ : Fin 3, Matrix (Fin 2) (Fin 1) ℝ) (C C' : Tensor fun _ : Fin 3 => Fin 1)
+      (W W' : ∀ k : Fin 3, Matrix (∀ _ : {j : Fin 3 // j ≠ k}, Fin 2) (Fin 1) ℝ) (ρ : ℝ)
+      (B : Tensor fun _ : Fin 3 => Fin 2),
+      (∀ k, (U k)ᵀ * U k = 1) ∧
+      (∀ k, actOn (· ≠ k) (W k * (W k)ᵀ) (tucker C U) = tucker C U) ∧
+      (∀ k, ∃ B : Matrix _ (Fin 1) ℝ, W k = unfold (· ≠ k) (tucker C U) * B) ∧
+      (∀ k, (unfold (· ≠ k) (tucker C U)).rank = Fintype.card (Fin 1)) ∧
+      (∀ k, (U' k)ᵀ * U' k = 1) ∧
+      (∀ k, actOn (· ≠ k) (W' k * (W' k)ᵀ) (tucker C' U') = tucker C' U') ∧
+      (∀ k, ∃ B : Matrix _ (Fin 1) ℝ, W' k = unfold (· ≠ k) (tucker C' U') * B) ∧
+      (∀ k, (unfold (· ≠ k) (tucker C' U')).rank = Fintype.card (Fin 1)) ∧
+      0 < ρ ∧
+      (∀ k, ρ ≤ (toEuclideanLin (unfold (· ≠ k) (tucker C U))).singularValues
+        (Fintype.card (Fin 1) - 1)) ∧
+      23 / 20 * (ρ⁻¹ * ‖tucker C' U' - tucker C U‖ * ‖B‖) ≤
+        ‖tuckerTangentProj U' 1 W' B - tuckerTangentProj U 1 W B‖
+```
+
+So every constant `c` in `‖P(Y) B - P(X) B‖ ≤ c ρ⁻¹ ‖Y - X‖ ‖B‖` for three modes satisfies
+`c ≥ 23/20`, while `norm_tuckerTangentProj_sub_le` has `c = √3`. The example is
+`X = e₁ ⊗ e₁ ⊗ e₁`, `Y = v ⊗ v ⊗ v` with `v = (840/841, 41/841)` and the tangent vector
+`B = e₂ ⊗ e₁ ⊗ e₁ + e₁ ⊗ e₂ ⊗ e₁ + e₁ ⊗ e₁ ⊗ e₂` at `X`; the quotient `|⟪B, N⟫|/(‖Y - X‖ ‖B‖ ‖N‖)`
+for the normal vector `N` at `Y` tends to `2 / √3` as the angle tends to zero, the norm of the
+second fundamental form of the manifold of tensors of rank one with three modes at a tensor of
+norm one.
+
+For tensors of multilinear rank `(1, …, 1)` (elementary tensors, the cone over the Segre manifold)
+with `d ≥ 2` modes the constant is `√(2 (d - 1)/d)`, in
+[`Tensor/Tucker/ProjectorLipschitzRankOne.lean`](../LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOne.lean):
+
+`Tensor.norm_tuckerTangentProj_sub_le_of_unique` in [`LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOne.lean`, lines 674–682](../LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOne.lean#L674-L682):
+
+```lean
+theorem norm_tuckerTangentProj_sub_le_of_unique (hd : 2 ≤ d) (hU : ∀ k, (U k)ᵀ * U k = 1)
+    (hWX : ∀ k, actOn (· ≠ k) (W k * (W k)ᵀ) (tucker C U) = tucker C U)
+    (hWB : ∀ k, ∃ B : Matrix _ (s k) ℝ, W k = unfold (· ≠ k) (tucker C U) * B)
+    (hX : tucker C U ≠ 0) (hU' : ∀ k, (U' k)ᵀ * U' k = 1)
+    (hWX' : ∀ k, actOn (· ≠ k) (W' k * (W' k)ᵀ) (tucker C' U') = tucker C' U')
+    (hWB' : ∀ k, ∃ B : Matrix _ (s' k) ℝ, W' k = unfold (· ≠ k) (tucker C' U') * B)
+    (hY : tucker C' U' ≠ 0) (B : Tensor ι) :
+    ‖tuckerTangentProj U' 1 W' B - tuckerTangentProj U 1 W B‖ ≤
+      √(2 * ((d : ℝ) - 1) / d) * ‖tucker C U‖⁻¹ * ‖tucker C' U' - tucker C U‖ * ‖B‖
+```
+
+Here `‖X‖` is the nonzero singular value of every matricization of `X`, and the constant
+`√(2 (d - 1)/d) < √2` replaces `√d`; for `d = 2` it is `1`. The value is the maximal curvature of
+the geodesics of the Segre manifold in the unit sphere (Breiding and Eggleston, arXiv 2307.04224,
+Theorem 1.2). The proof has three parts: the distance `(1 - ∏ₖ cₖ²) ‖X‖² ≤ ‖Y - X‖²` with the
+cosines `cₖ` of the angles of the factors; the inequality `‖Z - P(Y) Z‖² ≤ 2 (d - 1)/d
+(1 - ∏ₖ cₖ²) ‖Z‖²` for `Z` tangent at `X`; and the bound of the difference of two orthogonal
+projectors by the two one-sided bounds. The constant cannot be lowered
+([`Tensor/Tucker/ProjectorLipschitzRankOneSharp.lean`](../LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOneSharp.lean)):
+
+`Tensor.exists_mul_lt_norm_tuckerTangentProj_sub_of_unique` in [`LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOneSharp.lean`, lines 341–355](../LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOneSharp.lean#L341-L355):
+
+```lean
+theorem exists_mul_lt_norm_tuckerTangentProj_sub_of_unique {d : ℕ} (hd : 2 ≤ d) {q : ℝ}
+    (hq : q < √(2 * ((d : ℝ) - 1) / d)) :
+    ∃ (U U' : ∀ _ : Fin d, Matrix (Fin 2) (Fin 1) ℝ) (C : Tensor fun _ : Fin d => Fin 1)
+      (W W' : ∀ k : Fin d, Matrix (∀ _ : {j : Fin d // j ≠ k}, Fin 2) (Fin 1) ℝ)
+      (B : Tensor fun _ : Fin d => Fin 2),
+      (∀ k, (U k)ᵀ * U k = 1) ∧
+      (∀ k, actOn (· ≠ k) (W k * (W k)ᵀ) (tucker C U) = tucker C U) ∧
+      (∀ k, ∃ B : Matrix _ (Fin 1) ℝ, W k = unfold (· ≠ k) (tucker C U) * B) ∧
+      tucker C U ≠ 0 ∧
+      (∀ k, (U' k)ᵀ * U' k = 1) ∧
+      (∀ k, actOn (· ≠ k) (W' k * (W' k)ᵀ) (tucker C U') = tucker C U') ∧
+      (∀ k, ∃ B : Matrix _ (Fin 1) ℝ, W' k = unfold (· ≠ k) (tucker C U') * B) ∧
+      tucker C U' ≠ 0 ∧
+      q * (‖tucker C U‖⁻¹ * ‖tucker C U' - tucker C U‖ * ‖B‖) <
+        ‖tuckerTangentProj U' 1 W' B - tuckerTangentProj U 1 W B‖
+```
+
+For every `d ≥ 2` and every `q < √(2 (d - 1)/d)` there are such tensors in `ℝ^{2 × ⋯ × 2}` and a
+tensor `B` with `q ‖X‖⁻¹ ‖Y - X‖ ‖B‖ < ‖P(Y) B - P(X) B‖`
+(`Tensor.sqrt_le_of_forall_norm_tuckerTangentProj_sub_le` says that every valid constant is at
+least `√(2 (d - 1)/d)`). Not shown: the optimal constant for `d ≥ 3` over all multilinear
+ranks; for `d = 3` it lies between `23 / 20` and `√3`.
+
+**The normal component of a nearby Tucker tensor.** With `ρ` a lower bound of the smallest
+nonzero singular values of the matricizations of `Y` and `e = ‖X - Y‖`, in
+[`Tensor/Tucker/NormalSecondOrder.lean`](../LeanDLRA/Tensor/Tucker/NormalSecondOrder.lean):
+
+`Tensor.norm_sub_tuckerTangentProj_tucker_le` in [`LeanDLRA/Tensor/Tucker/NormalSecondOrder.lean`, lines 433–442](../LeanDLRA/Tensor/Tucker/NormalSecondOrder.lean#L433-L442):
+
+```lean
+theorem norm_sub_tuckerTangentProj_tucker_le (hU : ∀ k, (U k)ᵀ * U k = 1)
+    (hU' : ∀ k, (U' k)ᵀ * U' k = 1)
+    (hWX' : ∀ k, actOn (· ≠ k) (W' k * (W' k)ᵀ) (tucker C' U') = tucker C' U')
+    (hWB' : ∀ k, ∃ B : Matrix _ (s' k) ℝ, W' k = unfold (· ≠ k) (tucker C' U') * B) {ρ : ℝ}
+    (hσ' : ∀ k, ρ ≤ (toEuclideanLin (unfold (· ≠ k) (tucker C' U'))).singularValues
+      (Fintype.card (r k) - 1))
+    (he : 2 * ‖tucker C U - tucker C' U'‖ < ρ) :
+    ‖tucker C U - tuckerTangentProj U' 1 W' (tucker C U)‖ ≤
+      ‖tucker C U - tucker C' U'‖ ^ 2 /
+        √(2 * ρ * (ρ - 2 * ‖tucker C U - tucker C' U'‖))
+```
+
+The normal component of `X` at `Y` is of second order in `e` with a constant that does not depend
+on the number of modes; to leading order the constant is `1 / √2`. The bound of
+[BachmayrEisenmannUschmajew2025, Prop. 4.9] is `√d e²/ρ` (for all `e`, with `ρ` at the other
+point). The proof uses the prefix products `P₀ 0 ⋯ P₀ (i - 1)` of the mode projectors and the
+inequality `‖A M B‖ ≤ ρ⁻¹ ‖A M‖ ‖M B‖` for a matrix `M` of rank at most `q` with `ρ ≤ σ_{q-1}(M)`.
+The abstract form of the comparison of tangent vectors at two frames without the factor `√d` is
+in [`Tensor/Tucker/TangentNormalPrefix.lean`](../LeanDLRA/Tensor/Tucker/TangentNormalPrefix.lean); there the bound
+`σ ‖T - P T‖ ≤ 2 ‖x - y‖ ‖T‖` holds under two hypotheses per mode that are instances of the
+inequality above, and the file does not carry out the matricization.
+
+**Quasi-optimality of Tucker DLRA with the normal velocity as growth rate.** For a solution `Y`
+of `Ẏ = P(Y) F(t, Y)` in the tube `‖Y - X‖ ≤ ε < ρ/2` around a curve `X` of Tucker tensors, with
+`ν ≥ ‖(1 - P(X)) F(t, A)‖`, `ν' ≥ ‖(1 - P(Y)) F(t, A)‖`, `g ≥ ‖P(X) F(t, A) - Ẋ‖` and `ρ` a lower
+bound of the smallest nonzero singular values of all matricizations of `X` and of `Y`, the file
+[`Tensor/Tucker/QuasiOptimalityNormalVelocity.lean`](../LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean) has the bound of section 3.8
+with the rate `k = L + (ν + ν') / √(2 ρ (ρ - 2 ε))`, which does not depend on `d`:
+
+`Tensor.norm_tucker_sub_tucker_le_integral_exp_integral` in [`LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean`, lines 266–306](../LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean#L266-L306):
+
+```lean
+theorem norm_tucker_sub_tucker_le_integral_exp_integral {F : ℝ → Tensor ι → Tensor ι}
+    {A X' : ℝ → Tensor ι} {CX CY : ℝ → Tensor r} {UX UY : ℝ → ∀ k, Matrix (ι k) (r k) ℝ}
+    {WX : ℝ → ∀ k, Matrix (∀ j : {j : Fin d // j ≠ k}, ι j) (s k) ℝ}
+    {WY : ℝ → ∀ k, Matrix (∀ j : {j : Fin d // j ≠ k}, ι j) (s' k) ℝ}
+    {ρ ν ν' g ε : ℝ → ℝ} {a b L δ : ℝ} (hL : 0 ≤ L) (hF : IsLipschitzField F L)
+    (hUX : ∀ t ∈ Icc a b, ∀ k, (UX t k)ᵀ * UX t k = 1)
+    (hWXfix : ∀ t ∈ Icc a b, ∀ k,
+      actOn (· ≠ k) (WX t k * (WX t k)ᵀ) (tucker (CX t) (UX t)) = tucker (CX t) (UX t))
+    (hWXB : ∀ t ∈ Icc a b, ∀ k,
+      ∃ B : Matrix _ (s k) ℝ, WX t k = unfold (· ≠ k) (tucker (CX t) (UX t)) * B)
+    (hUY : ∀ t ∈ Icc a b, ∀ k, (UY t k)ᵀ * UY t k = 1)
+    (hWYfix : ∀ t ∈ Icc a b, ∀ k,
+      actOn (· ≠ k) (WY t k * (WY t k)ᵀ) (tucker (CY t) (UY t)) = tucker (CY t) (UY t))
+    (hWYB : ∀ t ∈ Icc a b, ∀ k,
+      ∃ B : Matrix _ (s' k) ℝ, WY t k = unfold (· ≠ k) (tucker (CY t) (UY t)) * B)
+    (hσX : ∀ t ∈ Icc a b, ∀ k, ρ t ≤ (toEuclideanLin (unfold (· ≠ k)
+      (tucker (CX t) (UX t)))).singularValues (Fintype.card (r k) - 1))
+    (hσY : ∀ t ∈ Icc a b, ∀ k, ρ t ≤ (toEuclideanLin (unfold (· ≠ k)
+      (tucker (CY t) (UY t)))).singularValues (Fintype.card (r k) - 1))
+    (hYc : ContinuousOn (fun t => tucker (CY t) (UY t)) (Icc a b))
+    (hY : ∀ t ∈ Ico a b, HasDerivWithinAt (fun t => tucker (CY t) (UY t))
+      (tuckerTangentProj (UY t) 1 (WY t) (F t (tucker (CY t) (UY t)))) (Ici t) t)
+    (hAc : ContinuousOn A (Icc a b))
+    (hXc : ContinuousOn (fun t => tucker (CX t) (UX t)) (Icc a b))
+    (hX : ∀ t ∈ Ico a b, HasDerivWithinAt (fun t => tucker (CX t) (UX t)) (X' t) (Ici t) t)
+    (hρc : ContinuousOn ρ (Icc a b)) (hνc : ContinuousOn ν (Icc a b))
+    (hν'c : ContinuousOn ν' (Icc a b)) (hgc : ContinuousOn g (Icc a b))
+    (hεc : ContinuousOn ε (Icc a b))
+    (hν : ∀ t ∈ Ico a b,
+      ‖F t (A t) - tuckerTangentProj (UX t) 1 (WX t) (F t (A t))‖ ≤ ν t)
+    (hν' : ∀ t ∈ Ico a b,
+      ‖F t (A t) - tuckerTangentProj (UY t) 1 (WY t) (F t (A t))‖ ≤ ν' t)
+    (hg : ∀ t ∈ Ico a b, ‖tuckerTangentProj (UX t) 1 (WX t) (F t (A t)) - X' t‖ ≤ g t)
+    (hε0 : ∀ t ∈ Icc a b, 0 ≤ ε t) (hερ : ∀ t ∈ Icc a b, 2 * ε t < ρ t)
+    (htube : ∀ t ∈ Ico a b, ‖tucker (CY t) (UY t) - tucker (CX t) (UX t)‖ ≤ ε t)
+    (hδ : ‖tucker (CY a) (UY a) - tucker (CX a) (UX a)‖ ≤ δ) :
+    ∀ t ∈ Icc a b, ‖tucker (CY t) (UY t) - tucker (CX t) (UX t)‖ ≤
+      Real.exp (∫ u in a..t, (L + (ν u + ν' u) / √(2 * ρ u * (ρ u - 2 * ε u)))) * δ +
+        ∫ s in a..t,
+          Real.exp (∫ u in s..t, (L + (ν u + ν' u) / √(2 * ρ u * (ρ u - 2 * ε u)))) *
+            (L * ‖tucker (CX s) (UX s) - A s‖ + g s)
+```
+
+To leading order in `ε` the rate is `L + √2 ν/ρ`. The error bound in a real inner product space for
+a curve `Y` with `Ẏ = P_Y(t) F(t, Y)` and any rate `κ` with
+`⟪Y - X, (P_Y - P_X) F(t, A)⟫ ≤ κ ‖Y - X‖²` is
+`LeanDLRA.norm_sub_le_integral_exp_integral_of_inner_apply_sub_apply_le`, and for Tucker tensors
+`Tensor.inner_sub_tuckerTangentProj_sub_le` gives the pairing with the factor
+`1/√(2 ρ (ρ - 2 ‖Y - X‖))`. What is not shown: the existence of the solution `Y` is a hypothesis,
+as is the tube condition.
 
 ### 8.3 Tree tensor networks
 
