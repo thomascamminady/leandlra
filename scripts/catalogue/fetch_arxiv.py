@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PAPERS = ROOT / "papers"
 ATOM = "{http://www.w3.org/2005/Atom}"
 API = "http://export.arxiv.org/api/query"
-USER_AGENT = "leandlra-literature-harvest/0.1"
+USER_AGENT = "python-arxiv-harvest/1.0"
 
 QUERIES: list[str] = [
     'ti:"dynamical low-rank"',
