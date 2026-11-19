@@ -334,6 +334,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Research/ImplicitBUGStiffWeighted`](../../LeanDLRA/Research/ImplicitBUGStiffWeighted.lean) | Backward Euler of a stiff linear problem: the error in norms weighted on the rows | 21 |  |
 | [`Research/ImplicitBUGTwoSidedDamped`](../../LeanDLRA/Research/ImplicitBUGTwoSidedDamped.lean) | A posteriori error bounds with damping for backward Euler of a two-sided stiff problem | 7 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Research/ImplicitBUGWeightedRows`](../../LeanDLRA/Research/ImplicitBUGWeightedRows.lean) | The implicit BUG integrator with a stiff row operator: a weighted Lyapunov functional | 14 | [2610.18419](https://arxiv.org/abs/2610.18419) |
+| [`Research/ImplicitMidpointBUGStiff`](../../LeanDLRA/Research/ImplicitMidpointBUGStiff.lean) | Implicit midpoint Galerkin steps for a stiff row operator: run bounds with the factor one | 12 |  |
 | [`Research/InformationLowerBound`](../../LeanDLRA/Research/InformationLowerBound.lean) | A lower bound for methods that evaluate the field on low-rank matrices only | 25 |  |
 | [`Research/IntegratorErrorOrder`](../../LeanDLRA/Research/IntegratorErrorOrder.lean) | An error partial order of KSL, BUG, augmented BUG and parallel BUG | 53 |  |
 | [`Research/PerturbedSylvester`](../../LeanDLRA/Research/PerturbedSylvester.lean) | The rank-adaptive BUG step for a Sylvester field with a Lipschitz perturbation | 40 |  |
