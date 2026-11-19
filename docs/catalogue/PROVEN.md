@@ -196,6 +196,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 
 | Module | Content | Theorems | Sources |
 |---|---|---:|---|
+| [`Stiff/CompanionEnclosure`](../../LeanDLRA/Stiff/CompanionEnclosure.lean) | Two-sided error enclosure by a certified companion | 6 |  |
 | [`Stiff/CouplingLocalError`](../../LeanDLRA/Stiff/CouplingLocalError.lean) | Stiff problems: a local error bound for the rank-adaptive BUG step with coupling numbers | 60 |  |
 | [`Stiff/Defs`](../../LeanDLRA/Stiff/Defs.lean) | Implicit low-rank integrators: definitions | 0 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Stiff/DualWeightedResidual`](../../LeanDLRA/Stiff/DualWeightedResidual.lean) | Dual-weighted residual identities for low-rank implicit Euler steps | 35 | [1901.05343](https://arxiv.org/abs/1901.05343), [2206.09374](https://arxiv.org/abs/2206.09374), [2609.18246](https://arxiv.org/abs/2609.18246) |
