@@ -10,7 +10,7 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 249 modules with 579 definitions (0 of them without a docstring) and 87 private definitions, which are helpers of one file and are not listed.
+The core has 250 modules with 583 definitions (0 of them without a docstring) and 87 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 
@@ -33,7 +33,7 @@ The core has 249 modules with 579 definitions (0 of them without a docstring) an
 | `LinearAlgebra/SVD` | 1 | 6 | 0 |
 | `Matrix` | 3 | 16 | 0 |
 | `Randomized` | 3 | 18 | 0 |
-| `Research` | 14 | 126 | 0 |
+| `Research` | 15 | 130 | 0 |
 | `Stability` | 2 | 13 | 0 |
 | `Stiff` | 4 | 27 | 0 |
 | `Stochastic` | 1 | 2 | 0 |
@@ -434,6 +434,10 @@ The core has 249 modules with 579 definitions (0 of them without a docstring) an
 | `LeanDLRA.AugmentationRank.Examples.sylField` | def | [Research/AugmentationRank.lean:803](../LeanDLRA/Research/AugmentationRank.lean#L803) | The linear field `F(Y) = E₂₁ Y + Y E₁₂` on `3 × 2` matrices, of Sylvester type. |
 | `LeanDLRA.DataDriven.subErr` | def | [Research/DataDrivenErrorRecursion.lean:114](../LeanDLRA/Research/DataDrivenErrorRecursion.lean#L114) | The local subspace error `d n = ‖(1 - Π n) A n‖`: the best-approximation error of the data `A n` in the range of the Galerkin projector `Π n` (`IsOrthProj.norm_sub_le_of_mem_range`). |
 | `LeanDLRA.DataDriven.drift` | def | [Research/DataDrivenErrorRecursion.lean:119](../LeanDLRA/Research/DataDrivenErrorRecursion.lean#L119) | The drift `s n = ‖Π (n + 1) (1 - Π n)‖` of consecutive Galerkin spaces. |
+| `LeanDLRA.InformationLowerBoundExample.dirB` | def | [Research/InformationLowerBound.lean:236](../LeanDLRA/Research/InformationLowerBound.lean#L236) | The direction `e₂ e₂ᵀ` of the common field on rank-one matrices. |
+| `LeanDLRA.InformationLowerBoundExample.dirW` | def | [Research/InformationLowerBound.lean:239](../LeanDLRA/Research/InformationLowerBound.lean#L239) | The direction `e₁ e₁ᵀ` of the perturbation. |
+| `LeanDLRA.InformationLowerBoundExample.pairField` | def | [Research/InformationLowerBound.lean:242](../LeanDLRA/Research/InformationLowerBound.lean#L242) | The field `F_c(t, Z) = e₂e₂ᵀ + c dist(Z, M_{≤ 1}) e₁e₁ᵀ`. |
+| `LeanDLRA.InformationLowerBoundExample.pairSol` | def | [Research/InformationLowerBound.lean:247](../LeanDLRA/Research/InformationLowerBound.lean#L247) | The curve `A_c(t) = diag(a + c t²/2, t)`. |
 | `LeanDLRA.ErrorOrder.StepData` | structure | [Research/IntegratorErrorOrder.lean:316](../LeanDLRA/Research/IntegratorErrorOrder.lean#L316) | The data of one step of the four integrators for a state-independent field: the old and new values `A₀ = A(t₀)`, `A₁ = A(t₁)`, the old projectors `P₀`, `Q₀`, the new BUG/KSL projectors `P₁` (from the K-step) and `Q₁` (from the L-step), and the augmented projectors `Pa`, `Qa`. |
 | `LeanDLRA.ErrorOrder.StepData.ksl` | def | [Research/IntegratorErrorOrder.lean:339](../LeanDLRA/Research/IntegratorErrorOrder.lean#L339) | Output of the KSL (projector-splitting) step: `P₁ A₁` (`Exactness.ksl_eq_abstract`). |
 | `LeanDLRA.ErrorOrder.StepData.lsk` | def | [Research/IntegratorErrorOrder.lean:342](../LeanDLRA/Research/IntegratorErrorOrder.lean#L342) | Output of the LSK step (L-step first): `Q₁ A₁` (`lsk_eq`). |
