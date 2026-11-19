@@ -824,7 +824,159 @@ those of their own proofs, and that a bound of this kind is in [KochLubich2007].
 hypotheses are those of [ZhaoOstermannGu2021]. The theorems with a margin below `ρ` and with the
 spectral norm keep the hypotheses that `X` is a curve of critical points with `σ_{r-1}(X) ≥ ρ`
 and that the margin holds on the whole interval; they say nothing for a margin `θ ≥ 1`, and the
-table above lists the constants of the proofs, not optimal ones.
+table above lists the constants of the proofs, not optimal ones. The growth rates in which the
+velocity enters through its normal component only are in section 3.8.
+
+### 3.8 Quasi-optimality with the normal velocity as growth rate
+
+In the bounds of section 3.7 the growth rate is `L + μ/ρ`, where `μ` bounds the whole velocity
+`‖F(t, A t)‖` of the exact solution. The files of this section bound the error `‖Y - X‖` of a
+DLRA solution `Y` against a curve `X` of rank-`r` matrices with a rate in which the velocity
+enters at leading order only through its component `ν ≥ ‖(1 - P(X)) F(t, A t)‖` normal to the
+manifold at `X`; the whole velocity is multiplied by the radius `ε < ρ` of a tube around `X`
+that contains `Y`. All norms are Frobenius norms except where `‖·‖₂` or `specNorm` is written.
+
+**The rate `L + ν/ρ + ν/(ρ - ε) + μ ε/ρ²`.** The file
+@file(LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean) pairs the two tangent projectors with the
+error. For `X`, `Y` of rank `r` with `ρ ≤ σ_{r-1}(X)`, `ρ' ≤ σ_{r-1}(Y)`:
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean inner_sub_tangentProjAt_sub_le_norm_sq_mul inner_sub_tangentProjAt_sub_le_norm_sq_mul
+
+Only the component of `Ẏ - Ẋ` along `Y - X` changes `‖Y - X‖`, so the term
+`(P(Y) - P(X)) F(t, A t)` enters through its inner product with `Y - X`, which is the sum of two
+inner products of normal components; the normal components `(1 - P(Y)) X` and `(1 - P(X)) Y` are
+of second order in `‖Y - X‖` (section 2.4). The theorem for a solution that is not assumed to
+stay in the tube: the bound itself has to stay below `ε`.
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean IsDLRASolution.norm_sub_le_integral_exp_integral_of_integral_lt IsDLRASolution.norm_sub_le_integral_exp_integral_of_integral_lt
+
+The curve `X` is any differentiable curve of rank-`r` matrices: it need not consist of critical
+points of the distance to `A`, and `A` need not solve the differential equation; both enter
+through the defect `d ≥ ‖P(X) F(t, A t) - Ẋ‖` and through `‖X - A‖`. The module docstring names
+the Weingarten map of [FepponLermusiaux2018, Proposition 22] as the growth generator at leading
+order. For `X t = truncation (A t) r` under the gap `σ_r(A t) < σ_{r-1}(A t)`, with
+`ρ = σ_{r-1}(A t)` and the defect bound `μ σ_r/(σ_{r-1} - σ_r)`:
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_integral_lt IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_integral_lt
+
+**The defect of the truncation.** Let `X` be a curve of critical points (`P(X)(A - X) = 0`, the
+truncated singular value decomposition is one) with tail `R = A - X`, `τ = ‖R‖₂ < ρ ≤ σ_{r-1}(X)`.
+With the Moore–Penrose inverse `X⁺` and `W(Z) = (X⁺)ᵀ Zᵀ R + R Zᵀ (X⁺)ᵀ` the file
+@file(LeanDLRA/DLRA/QuasiOptimalityDefect.lean) gives the defect in closed form,
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityDefect.lean tangentProjAt_sub_eq_neg_pinv_transpose_mul_add_of_hasDerivWithinAt tangentProjAt_sub_eq_neg_pinv_transpose_mul_add_of_hasDerivWithinAt
+
+that is, `P(X)(Ȧ - Ẋ) = -W(Ẋ)`, and bounds it from both sides by `W(Ȧ)`:
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityDefect.lean norm_sub_tangentProjAt_le_div_sub_mul_norm_pinv_transpose_mul_add norm_sub_tangentProjAt_le_div_sub_mul_norm_pinv_transpose_mul_add
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityDefect.lean norm_pinv_transpose_mul_add_le_one_add_mul_norm_sub_tangentProjAt norm_pinv_transpose_mul_add_le_one_add_mul_norm_sub_tangentProjAt
+
+The two bounds differ by the factor `(ρ + τ)/(ρ - τ)`. `W(Z)` sees only the two mixed blocks
+`Pu Z (1 - Pv)` and `(1 - Pu) Z Pv` of `Z` (`Pu`, `Pv` the projectors onto the column and the row
+space of `X`), so `‖P(X) Ȧ - Ẋ‖ ≤ μ τ/(ρ - τ)` holds with `μ` a bound of the mixed blocks of `Ȧ`
+only. The quasi-optimality theorem against the truncation, with the source
+`ρ/(ρ - τ) ω s`, `ω ≥ ‖W(F(t, A t))‖`, in place of `μ σ_r/(σ_{r-1} - σ_r)`:
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityDefect.lean IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_norm_pinv_le IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_norm_pinv_le
+
+**Spectral norms of the normal components, and an a posteriori form.** The file
+@file(LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean) has the pairing of the two
+projectors with spectral norms of the normal components and the factor `(1 + s)/2`, where `s₁`,
+`s₂` are the products of the sines of the largest angles between the column spaces and between
+the row spaces of `X` and `Y`:
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean inner_sub_tangentProjAt_sub_le_half_mul_specNorm inner_sub_tangentProjAt_sub_le_half_mul_specNorm
+
+To leading order in `‖Y - X‖` the rate is `‖(1 - P(X)) Z‖₂/σ_{r-1}(X)`, half of the rate of the
+Frobenius form and with the spectral norm. The a posteriori form has the singular value
+`σ_{r-1}(Y t)`, the normal components at `Y` and the sines measured on the computed solution; it
+needs no smallness condition:
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean IsDLRASolution.norm_sub_le_integral_exp_integral_of_specNorm_sub_tangentProjAt_le IsDLRASolution.norm_sub_le_integral_exp_integral_of_specNorm_sub_tangentProjAt_le
+
+**Constants that depend on time.** The bounds of section 3.7 have `ρ`, `μ`, `θ` constant on the
+interval. In @file(LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean) they are functions of time, with
+`τ(s) = ‖X s - A s‖₂ < ρ(s)`. For the truncation under the gap, with `ρ(t) = σ_{r-1}(A t)` and
+no hypothesis on the curve besides the gap:
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_singularValues_lt IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_singularValues_lt
+
+The module docstring restates `dlra_norm_sub_le_integral_of_specNorm_sub_le` as an `example` and
+derives the bound of [FepponLermusiaux2018, Theorem 32] from it (kernel `e^{η (t - s)}` with
+`η ≥ L + 2 ‖F(t, A t)‖/σ_{r-1}(A t)`, gap term with the Frobenius norm of the tail).
+
+**The speed and velocity bounds are attained.** For a curve of critical points with the margin
+`‖X - A‖ ≤ θ ρ`, `θ < 1`, the file @file(LeanDLRA/DLRA/QuasiOptimalityNormal.lean) has
+`‖P(X)(Ȧ - Ẋ)‖ ≤ ρ⁻¹ ‖Ẋ‖ ‖A - X‖`, `‖Ẋ‖ ≤ μ/(1 - θ)` and
+`‖Ẋ - P(X) Ȧ‖ ≤ μ/((1 - θ) ρ) ‖A - X‖`. The file
+@file(LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean) shows that all three are equalities for the
+rotating projector of rank one in `ℝ²`, `X t = u uᵀ`, `A t = θ • 1 + (1 - θ) • X t`,
+`u = (cos t, sin t)`, for every `θ` with `0 ≤ θ < 1`:
+
+@stmt LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean norm_sub_tangentProjAt_eq QuasiOptimalitySpeedExample.norm_sub_tangentProjAt_eq
+
+@stmt LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean exists_mul_div_lt_norm_deriv exists_mul_div_lt_norm_deriv
+
+The second theorem says that for every `c < 1` there are curves that satisfy the hypotheses with
+`c μ/(1 - θ) < ‖Ẋ‖`. Not shown: the quasi-optimality bounds that are derived from the velocity
+bound by Grönwall's inequality are not shown to be attained.
+
+**A tangential stiff part.** Let `F(t, Z) = S(t, Z) + G(t, Z)`, where `S` maps every matrix of
+rank `r` into the tangent space at that matrix; the main case is the Sylvester operator
+`S(Z) = M Z + Z N`, whose norm grows with the mesh refinement. The tangent projector does not see
+`S`, so `Y` solves `Ẏ = S(t, Y) + P(Y) G(t, Y)`. In
+@file(LeanDLRA/DLRA/QuasiOptimalityStiff.lean) the stiff part enters only through the one-sided
+Lipschitz constant `ℓ` of `F` (which may be negative) and through the defect
+`d ≥ ‖S(t, X t) + P(X t) G(t, A t) - Ẋ t‖` of the curve; the Lipschitz constant and the size of
+`S` do not occur:
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityStiff.lean IsDLRASolution.norm_sub_le_integral_exp_integral_of_tangent_add_of_integral_lt IsDLRASolution.norm_sub_le_integral_exp_integral_of_tangent_add_of_integral_lt
+
+Here `L` is the Lipschitz constant of `G`, `μ ≥ ‖G(t, A t)‖` and `ν ≥ ‖(1 - P(X t)) G(t, A t)‖`.
+The case `F(t, Z) = M Z + Z N + G(t, Z)` is `…_of_sylvester_add_of_integral_lt` of the same file.
+For the truncated singular value decomposition of a solution `A` with a gap,
+@file(LeanDLRA/DLRA/QuasiOptimalityStiffTruncation.lean) bounds the source `d` by the defect of
+the truncation plus `κ ‖A - T‖`, where `κ` measures how far the tangent space at `T` is from
+being invariant under the adjoint of `S`:
+
+@stmt LeanDLRA/DLRA/QuasiOptimalityStiffTruncation.lean IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_sylvester_add IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_sylvester_add
+
+The stiff part enters the source through the failure of the tangent space at `T` to be invariant
+under `S'`, `‖(1 - P(T)) S' P(T) w‖ ≤ κ ‖w‖`, and not through its norm.
+
+**The theorems side by side.** `Y` is a DLRA solution of rank `r`, `δ` the initial error, the
+bound is `e^{∫ k} δ + ∫ e^{∫ₛᵗ k} (source)`, and `ε < ρ` is the radius of a tube that the bound
+itself must stay below.
+
+| Theorem | Growth rate `k` | Source | File |
+|---|---|---|---|
+| `IsDLRASolution.norm_sub_le_integral_exp_integral_of_integral_lt` | `L + ν/ρ + ν/(ρ - ε) + μ ε/ρ²` | `L ‖X - A‖ + d` | @file(LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean) |
+| `IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_integral_lt` | the same, `ρ = σ_{r-1}(A)` | `L ‖T - A‖ + μ σ_r/(σ_{r-1} - σ_r)` | @file(LeanDLRA/DLRA/QuasiOptimalityNormalVelocity.lean) |
+| `IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_norm_pinv_le` | the same | `L ‖T - A‖ + ρ/(ρ - τ) ω` | @file(LeanDLRA/DLRA/QuasiOptimalityDefect.lean) |
+| `IsDLRASolution.norm_sub_le_integral_exp_integral_of_specNorm_sub_tangentProjAt_le` | `L + (1 + ς)/2 (ν'/ρ + ν/ρ')` | `L ‖X - A‖ + d` | @file(LeanDLRA/DLRA/QuasiOptimalityNormalVelocitySpectral.lean) |
+| `IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_singularValues_lt` | `L + μ(t)/ρ(t)` | `L ‖T - A‖ + μ/(ρ - τ) τ` | @file(LeanDLRA/DLRA/QuasiOptimalityTimeLocal.lean) |
+| `IsDLRASolution.norm_sub_le_integral_exp_integral_of_tangent_add_of_integral_lt` | `ℓ + ν/ρ + ν/(ρ - ε) + μ ε/ρ² + L ε/ρ` | `L ‖X - A‖ + d` | @file(LeanDLRA/DLRA/QuasiOptimalityStiff.lean) |
+| `IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_sylvester_add` | the same, `ρ = σ_{r-1}(A)` | `L ‖T - A‖ + ρ/(ρ - τ) ω + κ ‖T - A‖` | @file(LeanDLRA/DLRA/QuasiOptimalityStiffTruncation.lean) |
+
+In the third and fourth rows `τ`, `ω`, `ς`, `ν'`, `ρ'` are the quantities of the statements above
+(the tail, the Weingarten map of the velocity, the sines, the normal component at `Y` and the
+singular value at `Y`). The last two rows are for `F = S + G` with `S` tangential.
+
+What is not shown. A DLRA solution `Y` is a hypothesis; the smallness condition on the bound
+(`hB`) is a hypothesis on the data and is not derived. No statement is made for `ρ` going to
+zero, and the constants are those of the proofs. In the stiff rows the stiff part `S` must map
+the matrices of rank `r` into their tangent spaces (`hS`), and the numbers `d` or `κ` are
+data; the files do not bound them for a given discretization beyond the formulas above.
+
+Literature. The pairing of the projectors with normal components is the mechanism of the curvature
+estimates of [FepponLermusiaux2018] (Proposition 22, Theorems 24, 25, 32). A stiffness-uniform
+DLRA error bound against the exact solution with the one-sided constant is published, with a term
+for the rank-`r` approximation error and not a best-approximation term, in
+[CarrelVandereycken2023] (Theorem 7) and [KieriVandereycken2019] (Lemma 1); the bounds of this
+section are against a best approximation or a curve of critical points, and no priority claim is
+made. The hypothesis that the stiff part is tangential is the standard one of Bachmayr, Eisenmann,
+Kieri and Uschmajew (arXiv 2002.12197, assumption A4) and of [KochLubich2007].
 
 ## 4. Steps, runs and the global error
 
@@ -1154,6 +1306,187 @@ bound is therefore not uniform in the stiffness. The `example`s prove
 `MatrixBUG.exists_run_norm_sub_le` from the first theorem, and satisfy the hypotheses of the
 second for the dissipative field `F(t, Y) = -Y`. The module docstring cites
 [CerutiLubich2022, Thm. 4] for the bound of section 5.2.
+
+### 5.4 Quasi-optimality of the BUG integrator for given data
+
+The robust bounds of sections 5.2 and 5.3 compare the iterate with the exact solution and hold
+without a condition on singular values. The files of this section compare the BUG iterate with a
+reference of rank `r`, the truncated singular value decomposition `T_r(A(t_n))`, for the matrix
+approximation problem: given data `A(t)`, field `F(t, Y) = Ȧ(t)`. This is the discrete counterpart
+of section 3.7 and 3.8. One step of the integrator of [CerutiLubich2022] from `Y₀` with the
+orthogonal projectors `P₀`, `Q₀` onto its column and row space is `Y₁ = P₁ (Y₀ + (A₁ - A₀)) Q₁`,
+where the range of `P₁` contains the range of `(Y₀ + (A₁ - A₀)) Q₀` (K-step) and the range of `Q₁`
+contains the row space of `P₀ (Y₀ + (A₁ - A₀))` (L-step). All norms are Frobenius norms and `‖·‖₂`
+is the spectral norm.
+
+**The identity of the step.** With `D = A₁ - A₀`, the file
+@file(LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean) writes the step as
+
+@stmt LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean projStep_eq_add_sub MatrixBUG.projStep_eq_add_sub
+
+and bounds the error against a reference `X₁` of rank `r`. The references are described by
+generalized inverses (`X G X = X`, `X G` and `G X` symmetric, `‖G‖₂ ≤ g`, so that `g⁻¹` is a
+lower bound of the smallest nonzero singular value), and the tail `A - X` is orthogonal to the
+column and the row space of `X`, as it is for the truncated singular value decomposition. The
+one-step bound has the tail times the path length of the reference in one step as source:
+
+
+@stmt LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean norm_projStep_sub_le_tail MatrixBUG.norm_projStep_sub_le_tail
+
+@stmt LeanDLRA/Integrators/Matrix/BUGQuasiOptimality.lean norm_projRun_sub_le MatrixBUG.norm_projRun_sub_le
+
+Here `τ ≥ ‖A₁ - X₁‖₂`, `ξ ≥ ‖X₁ - X₀‖₂`, `d_K ≥ ‖P₁ (1 - P₀)‖₂`, `d_L ≥ ‖(1 - Q₀) Q₁‖₂` are the
+sines of the angles between the old bases and the bases after the step, `c` bounds the inverses of
+the overlaps of the old bases with the reference, and `ΔR = (A₁ - X₁) - (A₀ - X₀)`. The sum over
+the steps is a Riemann sum of `∫ σ_{r+1}(A) ‖Ẋ‖ dt`; all terms vanish with the tail, which is the
+exactness property of [CerutiLubich2022, Theorem 3] and [LubichOseledets2014, Theorem 4.1]. The
+robust bound [CerutiLubich2022, Theorem 4] has the normal component of the field in place of the
+tail; for given data this is the size of the derivative of the tail.
+
+**Constants from the distances.** In @file(LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityStep.lean)
+the constants for the overlaps and the sines are derived from `‖Y₀ - X₀‖` and the increments, for
+projectors of equal trace. With `g ‖X₁ - X₀‖₂ ≤ η_X`, `g ‖ΔR‖₂ ≤ η_R`, `g ‖X₁ - X₀‖ ≤ η_F`,
+`g ‖A₁ - A₀‖ ≤ η_F`, `η_X ≤ η_F ≤ 1/16` and `g ‖Y₀ - X₀‖ ≤ 1/16`:
+
+@stmt LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityStep.lean norm_projStep_sub_le_of_trace MatrixBUG.norm_projStep_sub_le_of_trace
+
+The factors `23 / 10`, `43 / 20`, `11 / 5` are `2` in the limit of small step numbers and
+`g ‖Y₀ - X₀‖`; those of `MatrixBUG.norm_projStep_sub_le_tail` are `4`. No generalized inverse of
+`Y₀` is used.
+
+**Against the truncated singular value decomposition.** With `‖Ȧ‖ ≤ μ`,
+`σ_r(A) ≤ τ < ρ ≤ σ_{r-1}(A)` (indices start at zero), `lam = μ / (ρ - τ)` and `h lam ≤ 1/16`,
+the file @file(LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean) has one step and a
+run in the quantities of
+`IsDLRASolution.norm_sub_truncation_le_integral_exp_integral_of_singularValues_lt` (section 3.8):
+
+@stmt LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean Exactness.IsBUGIncrementStep.norm_sub_truncation_le Exactness.IsBUGIncrementStep.norm_sub_truncation_le
+
+@stmt LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean norm_bugRun_sub_truncation_le_mul_of_forall_le norm_bugRun_sub_truncation_le_mul_of_forall_le
+
+The bound has the values `σ_r(A(t_k))` on the grid and not the integral of `σ_r(A)`, since the
+integrator sees the data on the grid only. The smallness condition `htube` is needed for the
+overlap of the bases of the iterate with those of the reference. The exponent `9/2 lam` is not
+sharp: the continuous bound has `μ / ρ`.
+
+**The normal velocity as growth rate.** The growth factor of the bound above contains the whole
+velocity `μ`. The file @file(LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalStep.lean) has
+a step in which the increment of the reference enters the factor of the old error only multiplied
+by a small number, the discrete form of the rate of section 3.8:
+
+@stmt LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalStep.lean norm_projStep_sub_le_of_trace_of_ginv_mul_norm_le MatrixBUG.norm_projStep_sub_le_of_trace_of_ginv_mul_norm_le
+
+The mechanism is that of the continuous case: in the identity of the step the only term of leading
+order that carries the increment of the reference is `W = (1 - P₁) (X₁ - X₀) (1 - Q₀)`, which
+meets the old error through the orthogonal projector `M ↦ (1 - P₁) M (1 - Q₀)` of the Frobenius
+space only in a component of second order. The run, with `ν ≥ ‖(1 - P(T_r(A))) Ȧ‖` and a relative
+tube radius `θ ≤ 1/16`, is in
+@file(LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalTruncation.lean):
+
+@stmt LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityNormalTruncation.lean norm_bugRun_sub_truncation_le_mul_of_norm_sub_tangentProjAt_le norm_bugRun_sub_truncation_le_mul_of_norm_sub_tangentProjAt_le
+
+The growth rate is `K = 9/4 (ν + lam τ)/ρ + 5/2 lam (θ + 2 h lam)`: the whole velocity is
+multiplied by the relative tail `τ / ρ`, by the relative radius `θ` or by the step number `h lam`.
+
+**The tail seen from the old reference.** In
+@file(LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityWeingartenStep.lean) the source `9/4 η_F τ`
+is replaced by `ω`, with `ω² ≥ ‖(A₁ - X₁) Pv₀‖² + ‖Pu₀ (A₁ - X₁)‖²`, the tail at the end of the
+step seen from the row and the column space of the old reference, with the factor `1` at leading
+order and with every tube radius `θ < 1/2` with `η_F + θ < 1`:
+
+@stmt LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityWeingartenStep.lean norm_projStep_sub_le_of_trace_of_norm_tail_sq_le MatrixBUG.norm_projStep_sub_le_of_trace_of_norm_tail_sq_le
+
+The source has a form in the increment of the data: for a reflexive generalized inverse `G₀` and
+`g ‖A₁ - X₁‖₂ ≤ q ≤ 1`, `(1 - q)² (‖(A₁ - X₁) Pv₀‖² + ‖Pu₀ (A₁ - X₁)‖²)` is at most
+`‖(A₁ - X₁) (A₁ - A₀)ᵀ G₀ᵀ‖² + ‖G₀ᵀ (A₁ - A₀)ᵀ (A₁ - X₁)‖²`, the two parts of the Weingarten map
+`Z ↦ G₀ᵀ Zᵀ R + R Zᵀ G₀ᵀ` of section 3.8 at the increment of the data. The run, for every
+sequence `B` that satisfies the recursion of the module docstring:
+
+@stmt LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityWeingartenTruncation.lean norm_bugRun_sub_truncation_le_of_norm_tail_sq_le norm_bugRun_sub_truncation_le_of_norm_tail_sq_le
+
+At leading order in the step the recursion is `B (k+1) = (1 + 3/2 η_R + η_X θ d (1 + d)) B k + ω k`.
+Here the hypotheses are on the data at the grid points only.
+
+**Robust and quasi-optimal certificates on one run.** The quasi-optimal bounds need a gap
+`σ_r(A) ≤ τ < ρ ≤ σ_{r-1}(A)` on every step, the robust bounds do not. In
+@file(LeanDLRA/Integrators/Matrix/BUGHybridQuasiOptimality.lean) both are combined on a run in
+which the rank `r n` changes from step to step. With `a n = ‖Y n - A n‖`,
+`d n = ‖Y n - T_{r n}(A n)‖`, the tail `s n = ‖A n - T_{r n}(A n)‖` and local errors `δ n`, every
+step satisfies `a (n + 1) ≤ a n + δ n` and `|a n - d n| ≤ s n`, and a step may be certified:
+`d n ≤ Ed n → d (n + 1) ≤ Ed (n + 1)`.
+
+@stmt LeanDLRA/Integrators/Matrix/BUGHybridQuasiOptimality.lean le_and_le_of_forall_hybrid_step le_and_le_of_forall_hybrid_step
+
+Every pair `Ea`, `Ed` that dominates the initial errors and satisfies the two inequalities on
+every step bounds both errors; the choice `Ea n = a 0 + ∑ δ` is the robust bound. A truncation of
+an iterate to a lower rank is a certified step by
+`EckartYoung.norm_truncation_sub_truncation_le_of_norm_sub_le`, and the gap is checked on the
+iterate by `EckartYoung.le_singularValues_of_norm_sub_truncation_le`. The run of BUG steps at the
+current rank with the gap checked on the iterate:
+
+@stmt LeanDLRA/Integrators/Matrix/BUGHybridQuasiOptimality.lean norm_bugRun_sub_truncation_le_and_norm_sub_le_of_forall_hybrid_step norm_bugRun_sub_truncation_le_and_norm_sub_le_of_forall_hybrid_step
+
+**Rank-adaptive runs.** The file @file(LeanDLRA/Integrators/Matrix/BUGAdaptiveQuasiOptimality.lean)
+uses the tail seen from the old reference as source and allows two kinds of certified steps: a
+step whose result is within `γ k` of a BUG step at the current rank `r k` (the gap checked on the
+iterate: `ρ k + Ed k + τ k + ψ k ≤ σ_{r k - 1}(Y k)`), and a truncation
+`Y (k+1) = T_{r (k+1)}(Z k)` of a matrix `Z k` with `‖Z k - Y k - ΔA‖ ≤ ζ k` to a lower, the same
+or a higher rank (the augmented solution of [CerutiKuschLubich2022] is one such `Z k`), with the
+gap checked on `Z k`. On every other step the bound continues with the local error `δ k` and the
+tail.
+
+@stmt LeanDLRA/Integrators/Matrix/BUGAdaptiveQuasiOptimality.lean norm_adaptiveBugRun_sub_truncation_le_and_norm_sub_le norm_adaptiveBugRun_sub_truncation_le_and_norm_sub_le
+
+All hypotheses are on the data at the grid points and on the iterates; the sequences `Ed`, `Ea`
+are any solution of the inequalities.
+
+What is not shown. The truncation of the augmented solution is not treated in the fixed-rank files
+(there `d_K`, `d_L` are not small); the adaptive file treats it through the certified steps and
+the gap on `Z k`. The smallness conditions are hypotheses on the data or on the iterates. The
+constants `9 / 4`, `5 / 2`, `4 / 3`, `23 / 10` are those of the proofs. The example of
+@file(LeanDLRA/Integrators/Matrix/BUGQuasiOptimalityTruncation.lean) satisfies the hypotheses
+of the step bound for a moving reference with a tail and an error that are not zero.
+
+### 5.5 The constants of the BUG capture estimate and of the local error are attained
+
+The local error bound `IsBUGStep.local_error_two_mul` (section 5.3) is
+`‖Y₁ - A(t₁)‖ ≤ (e^{L h} - 1) (B h + √2 ϑ) + √2 ϑ`, `ϑ = h (2 L B h + ε)`, and rests on the
+capture estimate `‖(1 - P₁) A(t₁)‖ ≤ h (2 L B h + ε)` (`kstep_capture_two_mul`). The file
+@file(LeanDLRA/Integrators/BUGCaptureSharp.lean) has examples in `ℂ`, as a real inner product
+space of dimension two, that bound the constants from below.
+
+@stmt LeanDLRA/Integrators/BUGCaptureSharp.lean norm_sub_eq_local_error_two_mul BUGCaptureExample.norm_sub_eq_local_error_two_mul
+
+@stmt LeanDLRA/Integrators/BUGCaptureSharp.lean exists_isBUGStep_mul_lt_norm_sub exists_isBUGStep_mul_lt_norm_sub
+
+@stmt LeanDLRA/Integrators/BUGCaptureSharp.lean exists_kstep_mul_lt_norm exists_kstep_mul_lt_norm
+
+For the constant field `ε (1 + i)` (`L = 0`), the zero old projectors and projectors after the step
+onto the real and the imaginary axis, the local error bound is an equality, `‖Y₁ - A(t₁)‖ = √2 h ε`
+for every `ε ≥ 0` and `h ≥ 0`; so the factor `√2` of `ε` cannot be lowered. For the field
+`F(x) = 1 + i L min(|Re x|, 1)` the capture is `‖(1 - P₁) A(t₁)‖ = L / 2`, so the constant `2` of
+`kstep_capture_two_mul` cannot be replaced by a number below `1 / 2`. Not shown: the optimal
+constant between `1 / 2` and `2`, and the sharpness of the dependence on `L` in the exponential.
+
+### 5.6 A posteriori bound through a lagged sweep
+
+Let `A' = F(t, A)` with `F = M + N` one-sided Lipschitz with constant `ℓ`, and `N` Lipschitz with
+constant `κ`. For any curve `Y` (for example the interpolant of the iterates of a low-rank
+integrator; no differentiability is needed) let `Z` solve the equation in which `N` is evaluated
+along `Y`, `Z' = M(t, Z) + N(t, Y t)`. The defect of `Z` in the full equation is
+`N(t, Y) - N(t, Z)`, of norm at most `κ ‖Y - Z‖`. In
+@file(LeanDLRA/Foundations/SweepAposteriori.lean):
+
+@stmt LeanDLRA/Foundations/SweepAposteriori.lean norm_sub_le_add_gronwallBound_of_sweep norm_sub_le_add_gronwallBound_of_sweep
+
+@stmt LeanDLRA/Foundations/SweepAposteriori.lean norm_sub_le_add_of_sweep_steps norm_sub_le_add_of_sweep_steps
+
+The error of `Y` is bounded by the computable distance `‖Y - Z‖`, plus a Grönwall term in which
+only `ℓ` and the constant `κ` of the part `N` enter. The distance `Y - Z` is the residual of `Y`
+integrated with the flow of `M`, so the bound sees the norm of the integrated residual and not the
+integral of its norm. For `M = 0` the curve `Z` is the Picard iterate of `Y`. The module docstring
+names Picard iteration and waveform relaxation as the mechanism and [BillaudFriessNouy2017,
+Prop. 1] for the residual bound with a moving reduced space.
 
 ## 6. Projector splitting and variants of the BUG integrator
 
@@ -2383,6 +2716,330 @@ Source: the integrator is that of [CerutiKuschLubich2022]; the energy bound and 
 docstrings refer to [OstermannPiazzolaWalach2019] and [CarrelVandereycken2023, §2.3] for stiff
 problems. None of the statements cites a theorem of a paper.
 
+### 7.7 The implicit BUG integrator for stiff Sylvester-type fields
+
+The files of this section study the global error of the BUG integrator with backward Euler
+substeps (`IsMatrixImplicitBUGStep`, section 7.1) for the linear stiff field
+`F(Z) = M Z - Z CᵀC`: `M` is dissipative and bounded by `μ`, and `C` is arbitrary, so that the
+matrix `N = -CᵀC` acting on the rows is symmetric negative semidefinite of any norm (the
+stiffness). Two-sided stiffness is the field `-BᵀB Z - Z CᵀC` or `N Z + Z N`. The question is
+whether the error of a run is bounded with constants that do not depend on `‖C‖`. The answer in
+the files depends on the class: it is no for one step in general, yes for runs when the reference
+is smooth in the rows, no for stiffness on both sides, and the section ends with a table. Norms
+are Frobenius norms. The constants are those of the proofs.
+
+**Where the stiff part enters one step.** Every substep is an implicit Galerkin step
+`x₁ = P (x₀ + h F(t, x₁))` with an orthogonal projector `P` (`Q₀` in the K-step, `P₀` in the
+L-step, `P₁ Q₁` in the S-step). For `F = S + G` with `S` additive and `G` Lipschitz with the
+constant `L`, the file @file(LeanDLRA/Stiff/ImplicitGalerkinTangential.lean) compares the step
+with an arbitrary pair of reference states `u₀`, `u₁`:
+
+@stmt LeanDLRA/Stiff/ImplicitGalerkinTangential.lean implicitGalerkin_compare_of_add implicitGalerkin_compare_of_add
+
+The stiff part enters through the one-sided Lipschitz constant `ℓ` of `F`, through the backward
+Euler defect of the reference, and through `P S (1 - P) u₁`: the block of `S` that maps the
+complement of the Galerkin space into it, applied to the part of the reference that the Galerkin
+space does not contain. The block vanishes if `S` commutes with `P`
+(`apply_apply_sub_apply_eq_zero_of_comm`). For `S(Z) = M Z + Z N` the K-step sees
+`u₁ (1 - Q₀) N Q₀` and the L-step `P₀ M (1 - P₀) u₁`, with the projectors of the numerical
+solution (`IsMatrixImplicitBUGStep.norm_kstep_sub_le_of_sylvester_add`).
+
+**One step: no bound uniform in the stiffness.** The K-step uses the compression `V₀ᵀ N V₀` of
+the stiff matrix to the row space of the numerical solution. If this row space carries a small
+rough component of angle `θ`, the compression is of size `‖N‖ θ²` and the K-step has the
+effective step size `h/(1 + h ‖N‖ θ²)`. The file @file(LeanDLRA/Research/ImplicitBUGStiffRows.lean)
+has a family of `2 × 2` matrices of rank `1`: `M = diag(0, -1)`, `N = diag(0, -lam)`,
+`X(t) = (3/5, 4/5 e^{-t})ᵀ (1, 0)`, `Y₀ = (3/5, 4/5)ᵀ (c, s)`, `c² + s² = 1`, `h lam s² = 1`.
+`X` is an exact solution of rank `1` with singular value at least `3 / 5`, the field is linear and
+dissipative, `‖Y₀ - X(0)‖² ≤ 2 s² = 2/(h lam)`, and every step from `Y₀` loses `2h / 25`:
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffRows.lean two_mul_div_le_norm_sub StiffRowsExample.two_mul_div_le_norm_sub
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffRows.lean not_exists_forall_norm_sub_le StiffRowsExample.not_exists_forall_norm_sub_le
+
+So no bound `‖Y₁ - X(t₁)‖ ≤ C₁ ‖Y₀ - X(t₀)‖ + C₂ h²` holds with constants independent of `lam`,
+although the flow on the matrices of rank `1` is non-expansive.
+
+**Runs on the same family are uniform.** The loss of a step is of size `h a/(1 + a)` with
+`a = h lam sₙ²`, the stiff energy of the numerical row basis. The L-step is a full resolvent step
+for the rough component of the row basis: with `tₙ = sₙ/cₙ`, `tₙ₊₁² + h lam tₙ₊₁² ≤ tₙ²`, so
+the squared tangent of the row angle decreases and its decrease pays the stiff energy of all later
+row bases, `∑_{k ≥ 1} h lam tₖ² ≤ t₀²`. Only the initial step can lose `≈ h`. The file
+@file(LeanDLRA/Research/ImplicitBUGStiffRowsRun.lean):
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffRowsRun.lean norm_run_sub_le StiffRowsExample.norm_run_sub_le
+
+**Runs with the reference rows in the kernel of the stiffness.** Let `Q` be an orthogonal
+projector with `C Q = 0`. In @file(LeanDLRA/Research/ImplicitBUGWeightedRows.lean) the functional
+`‖Y (1 - Q)‖²`, the angles between the numerical row space and the range of `Q` weighted by the
+singular values of `Y`, satisfies `‖Y₁ (1 - Q)‖² + 2 h ‖U₀ L₁ᵀ Cᵀ‖² ≤ (1 + 5 h μ) ‖Y₀ (1 - Q)‖²`
+for one step: its decrease pays the stiff energy of all later steps, and the loss of a step is
+`h μ` times the square root of a stiff energy. For every rank and every `C`, for backward Euler
+steps `X_{j+1} - h M X_{j+1} = X_j` of a reference with rows in the range of `Q`:
+
+@stmt LeanDLRA/Research/ImplicitBUGWeightedRows.lean norm_implicitBUG_run_sub_le_of_sylvester norm_implicitBUG_run_sub_le_of_sylvester
+
+**Runs against a reference with smooth rows.** The file
+@file(LeanDLRA/Research/ImplicitBUGSmoothRows.lean) compares the integrator (exact capture, no
+truncation) with a sequence `X_{j+1} - h M X_{j+1} + h X_{j+1} CᵀC = X_j + δ_j`, `‖δ_j‖ ≤ d`,
+`‖X_j CᵀC‖ ≤ κ`, `‖X_{j+1} - X_j‖ ≤ h ω`, which need not lie in the kernel of `N`. For
+`h μ ≤ 1/8`:
+
+@stmt LeanDLRA/Research/ImplicitBUGSmoothRows.lean norm_implicitBUG_run_sub_le_of_sylvester_of_norm_mul_gram_le norm_implicitBUG_run_sub_le_of_sylvester_of_norm_mul_gram_le
+
+Neither `C` nor the singular values of the numerical solution enter, and the rank is arbitrary.
+Every loss of a step carries the factor `h μ` and is bounded by the current error with its stiff
+energy, by `h ‖X CᵀC‖` and by `‖X₁ - X₀‖`. The file
+@file(LeanDLRA/Research/ImplicitBUGStiffLemmas.lean) has the step lemmas in terms of the
+projectors, for bases of any size with exact capture.
+
+**Runs with truncation, and against an exact solution.** In
+@file(LeanDLRA/Research/ImplicitBUGStiffTruncation.lean) the rank may change from step to step:
+step `j` starts from `Y_j` of any rank, uses bases of any size with exact capture, and is
+followed by a truncation by an orthogonal projector `T_j` acting from the left (the truncated
+singular value decomposition is of this form) with `‖Y_{j+1} - Ŷ_{j+1}‖ ≤ ϑ_j`:
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffTruncation.lean norm_implicitBUG_truncated_run_sub_le_of_sylvester norm_implicitBUG_truncated_run_sub_le_of_sylvester
+
+For an exact solution `A` of the differential equation whose velocity is `K₂`-Lipschitz in time
+the same bound holds for `‖Y_N - A(N h)‖` with `d = K₂ h²`
+(`norm_implicitBUG_truncated_run_sub_solution_le_of_sylvester`).
+
+**Comparison with backward Euler of the full problem; the factor one.** Backward Euler of the
+full problem does not increase the Frobenius norm. In
+@file(LeanDLRA/Research/ImplicitBUGStiffLocal.lean) one step of the integrator is compared with
+the backward Euler step `Ỹ` of the full problem from the same start value, `Ỹ - h M Ỹ + h Ỹ CᵀC
+= Y₀`. The local error depends on the start value only, and it is bounded by `h μ` times the
+stiff energy of the start value minus a free comparison matrix `Z`; no term of the size of the
+error enters, and there is no restriction on `h μ`:
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffLocal.lean IsMatrixImplicitBUGStep.sqrt_sq_norm_galerkin_sub_backwardEuler_add_le_of_sylvester IsMatrixImplicitBUGStep.sqrt_sq_norm_galerkin_sub_backwardEuler_add_le_of_sylvester
+
+The error of any sequence against a backward Euler reference is then the start error plus the
+defects plus the sum of the local errors, and the start error enters with the factor one
+(@file(LeanDLRA/Research/ImplicitBUGStiffSharpRun.lean)):
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffSharpRun.lean norm_sub_le_add_sum_of_backwardEuler ImplicitBUGStiffSharpRun.norm_sub_le_add_sum_of_backwardEuler
+
+With the energy identity of backward Euler the sum of the local errors gives a closed bound whose
+growth factor is `(1 + c² (h μ)² / 16)^N`, `c = 27/4 + 2 h μ`, instead of an exponential in `μ t`,
+for runs with truncation by projectors acting from the left:
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffSharpRun.lean norm_implicitBUG_truncated_run_sub_le_of_sylvester_of_sq norm_implicitBUG_truncated_run_sub_le_of_sylvester_of_sq
+
+The same comparison for a semilinear field `F(Z) = G(Z) - Z CᵀC` is in
+@file(LeanDLRA/Research/ImplicitBUGStiffSemilinear.lean): two backward Euler steps of the full
+problem satisfy `(1 - h ℓ) ‖W - W'‖ ≤ ‖R - R'‖` if `G` is one-sided Lipschitz with the constant
+`ℓ` at the pair, the sum of the local errors is propagated with `q = (1 - h ℓ)⁻¹`, and the local
+error in the energy norm is bounded by the normal part of the K-step and the defect of a
+comparison matrix, with no constant that depends on `C` or on the singular values
+(`ImplicitBUGStiffSemilinear.norm_implicitBUG_run_sub_le_of_semilinear` is the run bound).
+
+**Stiffness on both sides: one step can lose a fixed part of the solution.** For the field
+`N Z + Z N`, with the same stiff matrix on both sides, the stiff energy of the numerical column
+basis reduces the effective step size of the L-step, so that a rough component of the row basis
+is not damped by the full resolvent; the S-step then damps the whole component of the solution
+along this row vector. The file @file(LeanDLRA/Research/ImplicitBUGStiffTwoSided.lean) has the
+family `N = diag(0, -lam)`, `X(t) = diag(1, 0)` (stationary), `Y₀ = (c, s)ᵀ (c, s)`,
+`c² + s² = 1`, `h lam s⁶ = 1`, with `‖Y₀ - X‖² = 2 s² = 2 (h lam)^{-1/3}`:
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffTwoSided.lean one_div_le_norm_sub StiffTwoSidedExample.one_div_le_norm_sub
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffTwoSided.lean not_exists_forall_norm_sub_le StiffTwoSidedExample.not_exists_forall_norm_sub_le
+
+Every step from `Y₀` has `‖Y₁ - X‖ ≥ 1/11` for every step size `h > 0`; the loss does not vanish
+with the step size, and no bound `C₁ ‖Y₀ - X‖ + C₂ h` holds. With stiffness on one side only and
+the rows of the reference in the kernel, the loss of a step is at most `2 h μ ‖Y₀‖`
+(`IsMatrixImplicitBUGStep.norm_mul_sub_le_of_sylvester`).
+
+**Augmenting the bases does not prevent the loss.** The file
+@file(LeanDLRA/Research/ImplicitBUGStiffAugmented.lean) has a family of `3 × 2` matrices of rank
+`1` with `M = diag(0, -μ, -3μ)` and `N = diag(0, -lam)`, `X(t) = e₁ e₁ᵀ` stationary, in which the
+span of the old column basis and of the K-step result contains no vector that is close to the
+smooth direction and has a small stiff energy. For every step whose column basis lies in that span
+(the augmented basis, and the basis of the fixed-rank integrator), every row basis after the step
+and every truncation by an orthogonal projector from the right, the result is at distance `≥ 1/3`
+from `X`, for every step size:
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffAugmented.lean one_div_three_le_norm_sub StiffAugmentedExample.one_div_three_le_norm_sub
+
+The start error `‖Y₀ - X‖² = 2 (1 - c c')` tends to zero while the hypotheses are kept by
+`lam → ∞`.
+
+**The S-step is an energy projection.** For `F(Z) = -BᵀB Z - Z CᵀC` the backward Euler step
+`A + h (BᵀB A + A CᵀC) = Y₀` of the full matrix is the minimizer of a quadratic functional
+with the energy `E(Z) = ‖Z‖² + h ‖B Z‖² + h ‖Z Cᵀ‖²`. The S-step is the Galerkin equation of the
+same problem on the space `{U₁ G V₁ᵀ}` of the bases after the step. Hence, whatever the bases
+are, in the file @file(LeanDLRA/Research/ImplicitBUGEnergyProjection.lean):
+
+@stmt LeanDLRA/Research/ImplicitBUGEnergyProjection.lean IsMatrixImplicitBUGStep.energy_sub_le_of_sylvester IsMatrixImplicitBUGStep.energy_sub_le_of_sylvester
+
+So `U₁ S₁ V₁ᵀ` is the best approximation of the full backward Euler step in this space in the
+energy norm; the stiffness enters the error of the step only through the energy distance of `A`
+to the space of the bases, and no bound of `B` or `C` is used. The nearest published statement of
+this form is the energy-best approximation in the norm of `I + h B` of the projected step in the
+preprint version of [KieriVandereycken2019].
+
+**Rational Krylov bases: the error is an ADI residual.** The equation for `A` is a Sylvester
+equation with the right-hand side `U₀ S₀ V₀ᵀ` of rank `r`. If the bases after the step contain
+the shifted resolvents of the old bases (a rational Krylov space), the factored alternating
+direction implicit (ADI) iteration with `k` pairs of shifts lies in the space, and the energy
+error of the step against the full backward Euler step is at most the squared norm of the ADI
+residual `Ûₖ S₀ V̂ₖᵀ`, `Ûₖ = ∏ⱼ (h BᵀB + 1 - tⱼ) (h BᵀB + sⱼ)⁻¹ U₀` and likewise `V̂ₖ`
+(@file(LeanDLRA/Research/ImplicitBUGRationalKrylov.lean); ADI: Beckermann and Townsend,
+arXiv 1609.09494, Theorem 2.1 and Corollary 3.2):
+
+@stmt LeanDLRA/Research/ImplicitBUGRationalKrylov.lean IsMatrixImplicitBUGStep.energy_sub_le_sq_norm_adi_of_sylvester IsMatrixImplicitBUGStep.energy_sub_le_sq_norm_adi_of_sylvester
+
+In the `3 × 2` family of the previous paragraph, where every step with the column basis in the
+span of `U₀` and `K₁` loses `1 / 3`, the step with the resolvent bases is within
+`‖Y₀ - X‖ + 2 abs (s t)` of the solution for all `h`, `μ`, `lam ≥ 0`
+(`RationalKrylovExample.exists_isMatrixImplicitBUGStep_norm_sub_le`). The run with truncation
+tolerances stays within `∑ (δⱼ + ϑⱼ)` of backward Euler on the full matrix
+(`norm_implicitBUG_run_sub_le_of_sylvester_residual`), where `δⱼ` bounds a residual of step `j`.
+
+**Damped a posteriori bounds.** Let `𝒫 Z = Z - h M Z + h Z CᵀC` be the operator of a backward
+Euler step and `R = 𝒫⁻¹`. For any sequence `Y_j` with residuals `ρ_j = Y_j - 𝒫 Y_{j+1}` and a
+backward Euler reference `𝒫 X_{j+1} = X_j + δ_j` the error is
+`R^N (Y₀ - X₀) - ∑ R^{N-j} (ρ_j + δ_j)`, so each local residual is damped by the steps that follow
+it. In @file(LeanDLRA/Research/ImplicitBUGStiffDamped.lean) the exact representation holds for any
+sequence, with no hypothesis on the integrator, the truncation or the tolerance, and the powers of
+`R` are bounded by the powers of the two one-sided resolvents `(1 - h M)⁻¹` and `(1 + h CᵀC)⁻¹`,
+applied to factors of a low-rank matrix one side at a time:
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffDamped.lean sub_eq_sub_sum_of_backwardEuler ImplicitBUGStiffDamped.sub_eq_sub_sum_of_backwardEuler
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffDamped.lean norm_sub_le_min_add_sum_min_of_backwardEuler ImplicitBUGStiffDamped.norm_sub_le_min_add_sum_min_of_backwardEuler
+
+In the second theorem the sum is over any splitting `ρ_j + δ_j = ∑_a P_{j,a}`, and each part takes
+the better of the two resolvent powers. For `F(Z) = -BᵀB Z - Z CᵀC` the file
+@file(LeanDLRA/Research/ImplicitBUGTwoSidedDamped.lean) splits the residuals with partitions of
+unity, one acting on each side, before the choice of the side is made part by part:
+
+@stmt LeanDLRA/Research/ImplicitBUGTwoSidedDamped.lean norm_sub_le_min_add_sum_min_of_sylvester ImplicitBUGTwoSidedDamped.norm_sub_le_min_add_sum_min_of_sylvester
+
+The resolvent `(1 + h BᵀB)⁻¹` and its complement `h BᵀB (1 + h BᵀB)⁻¹` form such a partition
+(`norm_sub_le_sum_min_add_sum_min_of_sylvester_resolvent`).
+
+**Error inside and outside the column space.** With `A_j` a reference with
+`𝒫 A_{j+1} = A_j + g_j + δ_j` and orthogonal projectors `T_j` acting from the left with
+`T_j Y_j = Y_j`, the error splits orthogonally,
+`‖Y_j - A_j‖² = ‖Y_j - T_j A_j‖² + ‖A_j - T_j A_j‖²`, into the distance to the best approximation
+of the reference with columns in the range of `T_j` and the part of the reference outside it.
+In @file(LeanDLRA/Research/ImplicitBUGStiffColumnSpace.lean), with `W_j` the backward Euler step
+of the full problem from `Y_j` and `γ_j ≥ ‖T_{j+1} (1 - T_j)‖₂` the rotation of the range:
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffColumnSpace.lean norm_sub_proj_mul_le_add_sum_of_backwardEuler ImplicitBUGStiffColumnSpace.norm_sub_proj_mul_le_add_sum_of_backwardEuler
+
+For a run with truncation `Y_{j+1} = T_{j+1} Ŷ_{j+1}` the last term is at most the local error
+`‖Ŷ_{j+1} - W_j‖` before the truncation: the truncated parts do not enter. What enters instead is
+the part of the reference outside the range, weighted by `h μ` and the rotation; neither `C` nor a
+singular value enters (`norm_implicitBUG_truncated_run_sub_le_sqrt_of_sylvester`).
+
+**Angles to the best-approximation column space.** The file
+@file(LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean) compares the part `‖A_j - T_j A_j‖` and
+the rotation with the same quantities for the projectors `P_j` onto the dominant left singular
+vectors of `A_j`: with `s_j` the sine of the largest angle between the two ranges,
+`‖A_j - T_j A_j‖ ≤ ‖A_j - P_j A_j‖ + s_j ‖P_j A_j‖` and
+`‖T_{j+1} (1 - T_j)‖₂ ≤ ‖P_{j+1} (1 - P_j)‖₂ + s_{j+1} + s_j`.
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean norm_sub_proj_mul_le_add_sum_of_backwardEuler_of_specNorm_le ImplicitBUGStiffColumnAngle.norm_sub_proj_mul_le_add_sum_of_backwardEuler_of_specNorm_le
+
+The angles cannot be removed. The last section of the file gives a stationary reference and a
+stationary sequence that is reproduced exactly by a backward Euler step followed by the
+truncation to the dominant left singular vector, with `M = 0`, no defect and no local error, and
+whose distance from the reference is at least `δ/(δ² + w)` times the error of a rank-one
+approximation, where `w` is the quotient of the weights `h λ/(1 + h λ)` of the slowest and of the
+fastest row mode:
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean mul_norm_reference_sub_rankOne_lt_norm_sub ImplicitBUGStiffColumnAngleExample.mul_norm_reference_sub_rankOne_lt_norm_sub
+
+So the run bound of `ImplicitBUGStiffColumnSpace` does not hold with `‖A_j - T_j A_j‖` replaced by
+a multiple of the error of the best approximation with a constant that depends neither on the
+stiff operator nor on the step size.
+
+**Weighted norms on the rows.** Let `S` commute with `CᵀC`. A backward Euler step commutes with
+the multiplication by `S` from the right, and so does a projector acting from the left; hence
+every bound of the previous two paragraphs holds verbatim in the weighted norm `‖Z S‖`
+(@file(LeanDLRA/Research/ImplicitBUGStiffWeighted.lean)). For `M = 0` the truncation itself has a
+weight: with `R Rᵀ = (1 + h CᵀC)⁻¹` and `S Sᵀ = 1 - R Rᵀ = h CᵀC (1 + h CᵀC)⁻¹` the backward Euler
+step `W` from `Y` satisfies `W - A₁ = E R Rᵀ` for `E = Y - A`, and
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffWeighted.lean sq_norm_sub_mul_eq ImplicitBUGStiffWeighted.sq_norm_sub_mul_eq
+
+so a step `Y₁` that is at most as far from `W` as a competitor `Z` (for the truncation to rank
+`r`: every matrix of rank `r`, in particular the old value) satisfies
+`‖(Y₁ - A₁) S‖² + ‖(Y₁ - A₁ - E) R‖² ≤ ‖(Z - A₁) S‖² + ‖(Z - A₁ - E) R‖²`. For a stationary
+reference the error in the norm `‖Z S‖` does not increase, whatever `C` and `h` are:
+
+@stmt LeanDLRA/Research/ImplicitBUGStiffWeighted.lean norm_sub_mul_le_of_norm_sub_le_of_stationary ImplicitBUGStiffWeighted.norm_sub_mul_le_of_norm_sub_le_of_stationary
+
+For a moving reference it grows at most by the weighted increments of the reference that the
+competitor does not follow (`norm_sub_mul_le_add_sum_of_norm_sub_le`). The examples of the file
+are a stationary relaxation with two row modes whose stationary truncated sequence is far from
+the best approximation in the Frobenius norm and is the best approximation in the weighted norm,
+and one whose stationary sequence is the best approximation in the Frobenius norm and not in the
+weighted norm.
+
+**The results side by side.** `e₀ = ‖Y₀ - X₀‖`; "one-sided" means stiffness on the rows only
+(`-CᵀC`), "two-sided" on rows and columns; `κ`, `ω`, `d` are the bounds of the smooth reference
+above; `ϑ_j` are the truncation tolerances.
+
+| Setting | What is proved | Constants | File |
+|---|---|---|---|
+| one-sided, `M = diag(0, -1)`, `N = diag(0, -lam)`, one step, `2 × 2`, rank `1` | counterexample: no `C₁ e₀ + C₂ h²` uniform in `lam` | loss `2h / 25`, `h lam s² = 1` | @file(LeanDLRA/Research/ImplicitBUGStiffRows.lean) |
+| one-sided, the same family, runs | bound uniform in `lam` | `4 e₀ + 18 (1 + n h) h`, `h ≤ 1`, `c ≥ 1/2` | @file(LeanDLRA/Research/ImplicitBUGStiffRowsRun.lean) |
+| one-sided, kernel class `C Q = 0`, rows of the reference in the range of `Q`, any rank | run bound | `e₀' + 2 h μ ‖Y₀‖ + (1 + 4 h μ √N) √((1 + 5 h μ)^N) ‖Y₀ (1 - Q)‖`, `h μ ≤ 1` | @file(LeanDLRA/Research/ImplicitBUGWeightedRows.lean) |
+| one-sided, smooth rows (`‖X CᵀC‖ ≤ κ`, `‖X₁ - X₀‖ ≤ h ω`, defect `d`) | run bound | `(1 + 9 h μ)^N (e₀ + 2 h μ ‖Y₀‖ + N (2 d + 2 h μ h (7 κ + 3 ω)))`, `h μ ≤ 1/8` | @file(LeanDLRA/Research/ImplicitBUGSmoothRows.lean) |
+| one-sided, smooth rows, truncation, exact solution | run bound | the same plus `2 ∑ ϑ_j`; `d = K₂ h²` for an exact solution | @file(LeanDLRA/Research/ImplicitBUGStiffTruncation.lean) |
+| one-sided, one step against backward Euler of the full problem | local error bound | `(27/4 + 2 h μ) h μ λ`, no restriction on `h μ` | @file(LeanDLRA/Research/ImplicitBUGStiffLocal.lean) |
+| one-sided, runs, sharp factor | factor one on `e₀`; closed form | `e₀ + ∑ (‖δ_j‖ + ϑ_j + c h μ λ_j)`; growth `(1 + c² (h μ)²/16)^N` | @file(LeanDLRA/Research/ImplicitBUGStiffSharpRun.lean) |
+| one-sided, semilinear `G(Z) - Z CᵀC` | run bound with `ℓ` | factors `(1 - h ℓ)⁻¹` | @file(LeanDLRA/Research/ImplicitBUGStiffSemilinear.lean) |
+| two-sided `N Z + Z N`, one step, `2 × 2`, rank `1` | counterexample: no `C₁ e₀ + C₂ h` uniform in `lam` | loss `1 / 11` for every `h > 0`, `h lam s⁶ = 1` | @file(LeanDLRA/Research/ImplicitBUGStiffTwoSided.lean) |
+| two-sided, bases augmented, `3 × 2`, rank `1` | counterexample: augmentation does not remove the loss | loss `1 / 3` for every `h` | @file(LeanDLRA/Research/ImplicitBUGStiffAugmented.lean) |
+| two-sided, `-BᵀB Z - Z CᵀC`, one step | S-step is the energy projection of the full step | equality of energies | @file(LeanDLRA/Research/ImplicitBUGEnergyProjection.lean) |
+| two-sided, rational Krylov bases | energy error at most the squared ADI residual | example: `‖Y₀ - X‖ + 2 abs (s t)` | @file(LeanDLRA/Research/ImplicitBUGRationalKrylov.lean) |
+| one- and two-sided, any sequence | exact damped representation; damped a posteriori bounds | minimum of two resolvent powers, part by part | @file(LeanDLRA/Research/ImplicitBUGStiffDamped.lean), @file(LeanDLRA/Research/ImplicitBUGTwoSidedDamped.lean) |
+| one-sided, truncation by left projectors | error inside and outside the column space; run bound | `(h μ + γ_j) ‖A_j - T_j A_j‖` per step | @file(LeanDLRA/Research/ImplicitBUGStiffColumnSpace.lean) |
+| the same, against the best approximation | comparison through angles; counterexample without angles | `‖A - T A‖ ≤ ‖A - P A‖ + s ‖P A‖` | @file(LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean) |
+| the same, weighted norm `‖Z S‖` | stationary reference: error not increasing; Frobenius counterexample | factor one | @file(LeanDLRA/Research/ImplicitBUGStiffWeighted.lean) |
+| a field `S + G`, any step | comparison of a Galerkin substep with a reference | `(1 - h ℓ)`, defect, block `P S (1 - P) u₁` | @file(LeanDLRA/Stiff/ImplicitGalerkinTangential.lean) |
+
+What is not shown. The one-step counterexamples are for `2 × 2` and `3 × 2` matrices of rank `1`.
+The run bounds hold in the classes of the table: the core does not show a stiffness-uniform bound
+for a run of the integrator for stiffness on both sides, or for one-sided stiffness with a
+reference whose rows are neither in the kernel nor smooth. The weighted functional of the kernel
+class and the weighted norm of the last rows are tools for the stationary reference, not a bound
+for a moving one. The a posteriori bounds are for any sequence and are not bounds for the
+integrator before the residuals are bounded. The constants (`4`, `18`, `5`, `27 / 4`, `9`) are
+those of the proofs.
+
+Literature. The run device of the sharp-factor rows (compare each step with the backward Euler
+step of the full problem from the same start value, propagate by the contractive full scheme) is
+that of the analysis of parametrized implicit integrators in [LubichNick2025], Theorem 5.1 (arXiv
+2501.12118), and of Feischl, Lasser, Lubich and Nick, arXiv 2403.19234, §9.5.3; their local terms
+are defect sizes that are available a posteriori. For the BUG step the files bound the local term
+a priori, uniformly in the stiff operator and the singular values and without a step-size
+restriction; the nearest published local bound for a compressed implicit Euler step depends on the
+spectral radius of the stiff matrix (Kieri and Vandereycken, preprint 2017, Theorem 9, which is
+not in [KieriVandereycken2019]). Run bounds uniform in the stiffness are published for other
+integrators: Ostermann, Piazzola and Walach, arXiv 1803.10473, Theorem 1; Scalone and Guglielmi,
+arXiv 2602.07437, Theorem 1; Hu and Yu, arXiv 2610.41606, Theorems 5.2 and 6.2. For BUG
+integrators, Hauck, Kusch and Schotthöfer (arXiv 2608.27749, §8.2) and the review of Einkemmer et
+al., arXiv 2412.05912, §8, say that no rigorous error bound is available. That the
+projector-splitting and BUG integrators are not robust to stiffness in general is observed
+numerically, with accurate substeps, in [CarrelVandereycken2023], §2.3 and Figure 1; the
+counterexamples above are proved and show the mechanism (the compression `V₀ᵀ N V₀`). For
+stiffness on both sides the loss is a damping, consistent with published unconditional norm
+stability of a low-rank integrator (Saha, Yang and Yin, arXiv 2610.18419, Theorem 3.6). Published
+a posteriori bounds for time-dependent problems damp propagated residuals by scalars (Zhang, Chen,
+Vanden-Eijnden and Peherstorfer, arXiv 2404.01145, Proposition 6; Lakkis, Makridakis and Pryer,
+arXiv 0709.0916) or by the norms of both propagators (Kirsten and Simoncini, arXiv 1905.12119,
+Proposition 5.3), or drop the damping (Koskela and Mena, arXiv 1705.07507); for Sylvester-type
+backward Euler the files bound each propagated residual by the better one-sided resolvent power
+applied to it. The module docstrings cite [CerutiLubich2022] and [CerutiKuschLubich2022] for the
+integrator.
+
 ## 8. Tensors
 
 A tensor with mode index types `ι k` is an element of `Tensor ι`, the Euclidean space of
@@ -2467,6 +3124,55 @@ Source: the module docstrings cite [LubichOseledetsVandereycken2015], Theorem 4.
 substeps and Theorem 5.1 and Lemma 5.2 for exactness, and [KieriLubichWalach2016], §2.6.3 for the
 inexact substeps.
 
+**The tangent projector of tensor trains and quasi-optimality.** Let `X` and `Y` be tensor
+trains with `d` modes and the same bond dimensions, with tangent projectors `P(X)`, `P(Y)`
+(`ttTangentProj`), and let `ρ` be a lower bound of the singular values `σ_{|β k|}` of the
+unfoldings of `X` and of `Y`. The file @file(LeanDLRA/Tensor/TT/TangentNormal.lean) shows, for
+all tensors `Z` and without a smallness condition on `‖X - Y‖`:
+
+@stmt LeanDLRA/Tensor/TT/TangentNormal.lean norm_ttTangentProj_sub_le Tensor.norm_ttTangentProj_sub_le
+
+The constant `2` does not depend on the number of modes. A vector in the range of the alternating
+sum of nested interface projectors is tangent at every interface, and
+`∑_{k < n} ‖(Ql k - Ql (k + 1)) z‖² ≤ ‖z‖²` for nested orthogonal projectors; these are the two
+facts on which the bound rests. The bounds of the difference of the projectors in
+[BachmayrEisenmannUschmajew2025, Prop. 4.11] and in Budzinskiy and Zamarashkin (arXiv 2110.03975,
+Lemma 3.1) have the constants `4 d` and `2 (d - 1)`. The lemmas
+`Tensor.norm_sub_ttTangentProj_apply_le_add` and
+`Tensor.mul_norm_sub_ttTangentProj_apply_le_two_mul` of the file are the bound for a vector
+tangent at `X` and the bound for an arbitrary `Z` in terms of `‖Z - P(X) Z‖`.
+
+The normal component of a nearby tensor train is of second order with a constant that does not
+depend on the number of modes. For `Y = tt A` with left-orthogonal cores `A` and right-orthogonal
+cores `B` (`tt B = tt A`) and `e = ‖X - Y‖`, in
+@file(LeanDLRA/Tensor/TT/NormalSecondOrderTrain.lean):
+
+@stmt LeanDLRA/Tensor/TT/NormalSecondOrderTrain.lean norm_sub_ttTangentProj_tt_le Tensor.norm_sub_ttTangentProj_tt_le
+
+To leading order in `e` the constant is `1 / √2`. The normal projector is the orthogonal sum
+`1 - P = ∑_{k < n} (Ql k - Ql (k + 1)) (1 - Qr (k + 1))` over the interfaces
+(@file(LeanDLRA/Tensor/TT/NormalSecondOrder.lean)); the hypothesis at every interface is the
+inequality `‖A M B‖ ≤ ρ⁻¹ ‖A M‖ ‖M B‖` for the `k`-th unfolding `M`, whose rank is at most the
+`k`-th bond dimension. The bound of [BachmayrEisenmannUschmajew2025, Prop. 4.11] has the factor
+`√(d - 1)` and the bound of Budzinskiy and Zamarashkin (arXiv 2110.03975, Lemma 3.1) the factor
+`d - 1`, both for all `e`; the bound above needs `2 e < ρ` and has `ρ` at `Y` (the variant with
+`ρ` at `X` is `Tensor.norm_sub_ttTangentProj_tt_le_of_le_singularValues_tt`).
+
+For a solution `Y` of `Ẏ = P(Y) F(t, Y)` on the manifold of tensor trains of fixed bond
+dimensions and a curve `X` of such tensor trains, the file
+@file(LeanDLRA/Tensor/TT/QuasiOptimalityNormalVelocity.lean) has the analogue of the rate of
+section 3.8 in a tube `‖Y - X‖ ≤ ε < ρ/2`, with `ρ` a lower bound of the singular values of the
+unfoldings of `X` only, `ν ≥ ‖(1 - P(X)) F(t, A)‖`, `ν' ≥ ‖(1 - P(Y)) F(t, A)‖`,
+`g ≥ ‖P(X) F(t, A) - Ẋ‖`, and the rate `k = L + (ν + ν') / √(2 ρ (ρ - 2 ε))`:
+
+@stmt LeanDLRA/Tensor/TT/QuasiOptimalityNormalVelocity.lean norm_tt_sub_tt_le_integral_exp_integral Tensor.norm_tt_sub_tt_le_integral_exp_integral
+
+The second theorem of the file, `…_of_norm_ttTangentProj_le`, has the rate
+`L + (2 ν + 2 ε μ/ρ) / √(2 ρ (ρ - 2 ε))` with `μ ≥ ‖P(X) F(t, A)‖`: all data are taken at the curve
+`X`. No constant depends on the number `d` of modes; to leading order in `ε` the rate is
+`L + √2 ν/ρ`. Not shown: the existence of the solution `Y` on the manifold of tensor trains is a
+hypothesis of the theorems, as in section 3.7, and so is the tube condition `‖Y - X‖ ≤ ε`.
+
 ### 8.2 Tucker tensors
 
 @stmt LeanDLRA/Tensor/Tucker/Tangent.lean tuckerTangentProj_eq_starProjection Tensor.tuckerTangentProj_eq_starProjection
@@ -2548,6 +3254,94 @@ result of the step is `A t₁`. The recoverability takes the place of the invert
 of the paper (docstring of the theorem).
 
 Source: [LubichVandereyckenWalach2018, Thm. 3].
+
+**The tangent projector of Tucker tensors: Lipschitz constant, lower bound and sharp constant.**
+Let `X = C ×ₖ Uₖ` and `Y = C' ×ₖ U'ₖ` be Tucker tensors with `d` modes and the same multilinear
+rank, with tangent projectors `P(X)`, `P(Y)` (`tuckerTangentProj` with the core projector `1`,
+[BachmayrEisenmannUschmajew2025, Prop. 4.2]), and let `ρ` be a lower bound of the smallest nonzero
+singular values of the `d` matricizations of `X`. In
+@file(LeanDLRA/Tensor/Tucker/ProjectorLipschitz.lean):
+
+@stmt LeanDLRA/Tensor/Tucker/ProjectorLipschitz.lean norm_tuckerTangentProj_sub_le Tensor.norm_tuckerTangentProj_sub_le
+
+The bound is `‖P(Y) B - P(X) B‖ ≤ √d ρ⁻¹ ‖Y - X‖ ‖B‖` for all tensors `B`, in Frobenius norms,
+without a smallness condition on `‖Y - X‖` and with `ρ` at `X` only. It rests on a comparison of
+the normal component of the tangent projector with the `d` normal components of the tangent
+projectors of the matricizations (@file(LeanDLRA/Tensor/Tucker/TangentNormal.lean)):
+`‖z - P z‖² ≤ ∑ᵢ ‖z - Tᵢ z‖²`. The bound of [BachmayrEisenmannUschmajew2025, Prop. 4.7] (also
+global, in the operator norm, for constrained core manifolds) has the constant
+`2 (√2 + 1) d` for the Tucker manifold. For matrices (`d = 2`) the constant is `1`
+(`norm_tangentProjAt_sub_le_inv_mul`); the constant `√d` is not claimed to be optimal.
+
+The constant `1` of the matrix case is not valid for three modes. The file
+@file(LeanDLRA/Tensor/Tucker/ProjectorLowerBound.lean) has tensors of multilinear rank `(1, 1, 1)`
+in `ℝ^{2 × 2 × 2}` with `ρ = 1`:
+
+@stmt LeanDLRA/Tensor/Tucker/ProjectorLowerBound.lean exists_mul_le_norm_tuckerTangentProj_sub Tensor.exists_mul_le_norm_tuckerTangentProj_sub
+
+So every constant `c` in `‖P(Y) B - P(X) B‖ ≤ c ρ⁻¹ ‖Y - X‖ ‖B‖` for three modes satisfies
+`c ≥ 23/20`, while `norm_tuckerTangentProj_sub_le` has `c = √3`. The example is
+`X = e₁ ⊗ e₁ ⊗ e₁`, `Y = v ⊗ v ⊗ v` with `v = (840/841, 41/841)` and the tangent vector
+`B = e₂ ⊗ e₁ ⊗ e₁ + e₁ ⊗ e₂ ⊗ e₁ + e₁ ⊗ e₁ ⊗ e₂` at `X`; the quotient `|⟪B, N⟫|/(‖Y - X‖ ‖B‖ ‖N‖)`
+for the normal vector `N` at `Y` tends to `2 / √3` as the angle tends to zero, the norm of the
+second fundamental form of the manifold of tensors of rank one with three modes at a tensor of
+norm one.
+
+For tensors of multilinear rank `(1, …, 1)` (elementary tensors, the cone over the Segre manifold)
+with `d ≥ 2` modes the constant is `√(2 (d - 1)/d)`, in
+@file(LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOne.lean):
+
+@stmt LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOne.lean norm_tuckerTangentProj_sub_le_of_unique Tensor.norm_tuckerTangentProj_sub_le_of_unique
+
+Here `‖X‖` is the nonzero singular value of every matricization of `X`, and the constant
+`√(2 (d - 1)/d) < √2` replaces `√d`; for `d = 2` it is `1`. The value is the maximal curvature of
+the geodesics of the Segre manifold in the unit sphere (Breiding and Eggleston, arXiv 2307.04224,
+Theorem 1.2). The proof has three parts: the distance `(1 - ∏ₖ cₖ²) ‖X‖² ≤ ‖Y - X‖²` with the
+cosines `cₖ` of the angles of the factors; the inequality `‖Z - P(Y) Z‖² ≤ 2 (d - 1)/d
+(1 - ∏ₖ cₖ²) ‖Z‖²` for `Z` tangent at `X`; and the bound of the difference of two orthogonal
+projectors by the two one-sided bounds. The constant cannot be lowered
+(@file(LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOneSharp.lean)):
+
+@stmt LeanDLRA/Tensor/Tucker/ProjectorLipschitzRankOneSharp.lean exists_mul_lt_norm_tuckerTangentProj_sub_of_unique Tensor.exists_mul_lt_norm_tuckerTangentProj_sub_of_unique
+
+For every `d ≥ 2` and every `q < √(2 (d - 1)/d)` there are such tensors in `ℝ^{2 × ⋯ × 2}` and a
+tensor `B` with `q ‖X‖⁻¹ ‖Y - X‖ ‖B‖ < ‖P(Y) B - P(X) B‖`
+(`Tensor.sqrt_le_of_forall_norm_tuckerTangentProj_sub_le` says that every valid constant is at
+least `√(2 (d - 1)/d)`). Not shown: the optimal constant for `d ≥ 3` over all multilinear
+ranks; for `d = 3` it lies between `23 / 20` and `√3`.
+
+**The normal component of a nearby Tucker tensor.** With `ρ` a lower bound of the smallest
+nonzero singular values of the matricizations of `Y` and `e = ‖X - Y‖`, in
+@file(LeanDLRA/Tensor/Tucker/NormalSecondOrder.lean):
+
+@stmt LeanDLRA/Tensor/Tucker/NormalSecondOrder.lean norm_sub_tuckerTangentProj_tucker_le Tensor.norm_sub_tuckerTangentProj_tucker_le
+
+The normal component of `X` at `Y` is of second order in `e` with a constant that does not depend
+on the number of modes; to leading order the constant is `1 / √2`. The bound of
+[BachmayrEisenmannUschmajew2025, Prop. 4.9] is `√d e²/ρ` (for all `e`, with `ρ` at the other
+point). The proof uses the prefix products `P₀ 0 ⋯ P₀ (i - 1)` of the mode projectors and the
+inequality `‖A M B‖ ≤ ρ⁻¹ ‖A M‖ ‖M B‖` for a matrix `M` of rank at most `q` with `ρ ≤ σ_{q-1}(M)`.
+The abstract form of the comparison of tangent vectors at two frames without the factor `√d` is
+in @file(LeanDLRA/Tensor/Tucker/TangentNormalPrefix.lean); there the bound
+`σ ‖T - P T‖ ≤ 2 ‖x - y‖ ‖T‖` holds under two hypotheses per mode that are instances of the
+inequality above, and the file does not carry out the matricization.
+
+**Quasi-optimality of Tucker DLRA with the normal velocity as growth rate.** For a solution `Y`
+of `Ẏ = P(Y) F(t, Y)` in the tube `‖Y - X‖ ≤ ε < ρ/2` around a curve `X` of Tucker tensors, with
+`ν ≥ ‖(1 - P(X)) F(t, A)‖`, `ν' ≥ ‖(1 - P(Y)) F(t, A)‖`, `g ≥ ‖P(X) F(t, A) - Ẋ‖` and `ρ` a lower
+bound of the smallest nonzero singular values of all matricizations of `X` and of `Y`, the file
+@file(LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean) has the bound of section 3.8
+with the rate `k = L + (ν + ν') / √(2 ρ (ρ - 2 ε))`, which does not depend on `d`:
+
+@stmt LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean norm_tucker_sub_tucker_le_integral_exp_integral Tensor.norm_tucker_sub_tucker_le_integral_exp_integral
+
+To leading order in `ε` the rate is `L + √2 ν/ρ`. The error bound in a real inner product space for
+a curve `Y` with `Ẏ = P_Y(t) F(t, Y)` and any rate `κ` with
+`⟪Y - X, (P_Y - P_X) F(t, A)⟫ ≤ κ ‖Y - X‖²` is
+`LeanDLRA.norm_sub_le_integral_exp_integral_of_inner_apply_sub_apply_le`, and for Tucker tensors
+`Tensor.inner_sub_tuckerTangentProj_sub_le` gives the pairing with the factor
+`1/√(2 ρ (ρ - 2 ‖Y - X‖))`. What is not shown: the existence of the solution `Y` is a hypothesis,
+as is the tube condition.
 
 ### 8.3 Tree tensor networks
 
