@@ -342,6 +342,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Research/ImplicitMidpointBUGStiff`](../../LeanDLRA/Research/ImplicitMidpointBUGStiff.lean) | Implicit midpoint Galerkin steps for a stiff row operator: run bounds with the factor one | 12 |  |
 | [`Research/InformationLowerBound`](../../LeanDLRA/Research/InformationLowerBound.lean) | A lower bound for methods that evaluate the field on low-rank matrices only | 25 |  |
 | [`Research/IntegratorErrorOrder`](../../LeanDLRA/Research/IntegratorErrorOrder.lean) | An error partial order of KSL, BUG, augmented BUG and parallel BUG | 53 |  |
+| [`Research/LoewnerRank`](../../LeanDLRA/Research/LoewnerRank.lean) | Ranks of truncated backward Euler runs through the Loewner order | 12 | [1304.7796](https://arxiv.org/abs/1304.7796) |
 | [`Research/PerturbedSylvester`](../../LeanDLRA/Research/PerturbedSylvester.lean) | The rank-adaptive BUG step for a Sylvester field with a Lipschitz perturbation | 40 |  |
 | [`Research/RankInformationUpperBound`](../../LeanDLRA/Research/RankInformationUpperBound.lean) | An upper bound for a method that evaluates the field on low-rank matrices only | 10 |  |
 | [`Research/RankOneGalerkinBarrier`](../../LeanDLRA/Research/RankOneGalerkinBarrier.lean) | No Galerkin step in a fixed rank-one space is of second order | 13 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.08607](https://arxiv.org/abs/2402.08607) |
