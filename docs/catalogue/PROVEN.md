@@ -238,8 +238,10 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Tensor/TTN/Abstract/ProjectorSplittingExactness`](../../LeanDLRA/Tensor/TTN/Abstract/ProjectorSplittingExactness.lean) | Exactness of the nested Tucker projector-splitting integrator | 4 |  |
 | [`Tensor/TTN/Abstract/RankAdaptiveBUG`](../../LeanDLRA/Tensor/TTN/Abstract/RankAdaptiveBUG.lean) | Error bounds and exactness of the rank-adaptive BUG integrator for tree tensor networks | 9 |  |
 | [`Tensor/TTN/BUG`](../../LeanDLRA/Tensor/TTN/BUG.lean) | The fixed-rank BUG integrator on concrete tree tensor networks | 30 |  |
+| [`Tensor/TTN/BUGSqrtNodes`](../../LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean) | The TTN BUG error bound with the square root of the number of nodes | 15 |  |
 | [`Tensor/TTN/Basic`](../../LeanDLRA/Tensor/TTN/Basic.lean) | Tree tensor networks: subtree projectors and nested orthonormal bases | 16 |  |
 | [`Tensor/TTN/BasisOrthonormality`](../../LeanDLRA/Tensor/TTN/BasisOrthonormality.lean) | Results of arXiv 2002.11392: Time integration of tree tensor networks (part b) | 1 | [2002.11392](https://arxiv.org/abs/2002.11392) |
+| [`Tensor/TTN/Defs`](../../LeanDLRA/Tensor/TTN/Defs.lean) | Tree tensor network frames: further definitions | 0 |  |
 | [`Tensor/TTN/Integrators`](../../LeanDLRA/Tensor/TTN/Integrators.lean) | Tree tensor network integrators on concrete tree tensor networks | 6 |  |
 | [`Tensor/TTN/ParallelBUG`](../../LeanDLRA/Tensor/TTN/ParallelBUG.lean) | Basis frames and the parallel BUG integrator on concrete tree tensor networks | 9 |  |
 | [`Tensor/TTN/ProjectorSplitting`](../../LeanDLRA/Tensor/TTN/ProjectorSplitting.lean) | The recursive TTN projector-splitting integrator on concrete tree tensor networks | 6 |  |

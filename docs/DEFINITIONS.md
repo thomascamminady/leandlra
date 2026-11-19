@@ -10,7 +10,7 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 252 modules with 583 definitions (0 of them without a docstring) and 87 private definitions, which are helpers of one file and are not listed.
+The core has 254 modules with 585 definitions (0 of them without a docstring) and 87 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 
@@ -39,7 +39,7 @@ The core has 252 modules with 583 definitions (0 of them without a docstring) an
 | `Stochastic` | 1 | 2 | 0 |
 | `Tensor` | 2 | 50 | 0 |
 | `Tensor/TT` | 6 | 30 | 0 |
-| `Tensor/TTN` | 7 | 17 | 0 |
+| `Tensor/TTN` | 9 | 19 | 0 |
 | `Tensor/Tucker` | 2 | 9 | 0 |
 | `Training` | 3 | 16 | 0 |
 
@@ -709,6 +709,8 @@ The core has 252 modules with 583 definitions (0 of them without a docstring) an
 | `LeanDLRA.DimTree.BUGExample.coCol` | def | [Tensor/TTN/BUG.lean:217](../LeanDLRA/Tensor/TTN/BUG.lean#L217) | The co-range column of the vector `u` on the mode `1 - i` outside the leaf `i`. |
 | `LeanDLRA.DimTree.BUGExample.frame` | def | [Tensor/TTN/BUG.lean:268](../LeanDLRA/Tensor/TTN/BUG.lean#L268) | The basis frame of the start value `e₀ ⊗ e₀` on the tree with the two leaves `0`, `1`: the bases `e₀` on both leaves and the co-range bases `e₀` on the other mode (`e₀ = (1, 0)`). |
 | `LeanDLRA.DimTree.BUGExample.field` | def | [Tensor/TTN/BUG.lean:278](../LeanDLRA/Tensor/TTN/BUG.lean#L278) | The field `g = (2, 4) ⊗ e₀ + e₁ ⊗ e₁` of the example (`e₁ = (0, 1)`); its part `e₁ ⊗ e₁` is doubly normal to both leaves. |
+| `LeanDLRA.SqrtNodesExample.starFrame` | def | [Tensor/TTN/BUGSqrtNodes.lean:469](../LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean#L469) | The frame of a star with `m` leaves in which the old projectors, the co-range projectors and the admissible new projectors of leaf `i` are all the projector `1 - nᵢ nᵢᵀ` that removes one direction `n i`. |
+| `LeanDLRA.TTNFrame.IsCoRangeCommuting` | def | [Tensor/TTN/Defs.lean:25](../LeanDLRA/Tensor/TTN/Defs.lean#L25) | At every inner node of the frame, the admissible mode operators of every child (the class that contains the new mode projector `P₁ i`) commute with the co-range projector `Q₀ i` of that child. |
 | `LeanDLRA.DimTree.toTreeShape` | def | [Tensor/TTN/Integrators.lean:51](../LeanDLRA/Tensor/TTN/Integrators.lean#L51) | The shape of a dimension tree, forgetting the mode labels of the leaves (bridge to the `TreeShape` of the abstract TTN projector-splitting integrator). |
 | `LeanDLRA.DimTree.nodeCount` | def | [Tensor/TTN/ParallelBUG.lean:65](../LeanDLRA/Tensor/TTN/ParallelBUG.lean#L65) | The number of nodes of a dimension tree, leaves included (`TTNFrame.size`). |
 | `LeanDLRA.DimTree.treeHeight` | def | [Tensor/TTN/ParallelBUG.lean:71](../LeanDLRA/Tensor/TTN/ParallelBUG.lean#L71) | The height of a dimension tree: `0` for a leaf, `1 + max` of the heights of the subtrees for an inner node ([CerutiLubichWalach2021], proof of Thm 5.1; `TTNFrame.height`). |
