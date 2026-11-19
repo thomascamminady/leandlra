@@ -173,6 +173,7 @@ import LeanDLRA.Research.ImplicitBUGWeightedRows
 import LeanDLRA.Research.ImplicitMidpointBUGStiff
 import LeanDLRA.Research.InformationLowerBound
 import LeanDLRA.Research.IntegratorErrorOrder
+import LeanDLRA.Research.LoewnerRank
 import LeanDLRA.Research.PerturbedSylvester
 import LeanDLRA.Research.RankInformationUpperBound
 import LeanDLRA.Research.RankOneGalerkinBarrier
