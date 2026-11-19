@@ -165,6 +165,7 @@ import LeanDLRA.Research.ImplicitBUGStiffSemilinear
 import LeanDLRA.Research.ImplicitBUGStiffSharpRun
 import LeanDLRA.Research.ImplicitBUGStiffTruncation
 import LeanDLRA.Research.ImplicitBUGStiffTwoSided
+import LeanDLRA.Research.ImplicitBUGStiffWeighted
 import LeanDLRA.Research.ImplicitBUGTwoSidedDamped
 import LeanDLRA.Research.ImplicitBUGWeightedRows
 import LeanDLRA.Research.IntegratorErrorOrder
