@@ -168,6 +168,7 @@ import LeanDLRA.Research.ImplicitBUGStiffTwoSided
 import LeanDLRA.Research.ImplicitBUGStiffWeighted
 import LeanDLRA.Research.ImplicitBUGTwoSidedDamped
 import LeanDLRA.Research.ImplicitBUGWeightedRows
+import LeanDLRA.Research.ImplicitMidpointBUGStiff
 import LeanDLRA.Research.InformationLowerBound
 import LeanDLRA.Research.IntegratorErrorOrder
 import LeanDLRA.Research.PerturbedSylvester
