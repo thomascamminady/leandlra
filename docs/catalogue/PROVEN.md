@@ -311,6 +311,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 |---|---|---:|---|
 | [`Research/AugmentationRank`](../../LeanDLRA/Research/AugmentationRank.lean) | Galerkin steps that contain a predictor: a two-column K-step basis, Sylvester fields | 48 |  |
 | [`Research/DataDrivenErrorRecursion`](../../LeanDLRA/Research/DataDrivenErrorRecursion.lean) | Pythagorean error recursion for data-driven BUG and KSL | 32 | [1507.07953](https://arxiv.org/abs/1507.07953) |
+| [`Research/DynamicRecompression`](../../LeanDLRA/Research/DynamicRecompression.lean) | Tolerance truncation in time stepping: rank freeze and dynamic recompression | 10 | [1304.7796](https://arxiv.org/abs/1304.7796) |
 | [`Research/ExplicitMidpointCapture`](../../LeanDLRA/Research/ExplicitMidpointCapture.lean) | The capture defect of the explicit midpoint step | 38 |  |
 | [`Research/ExplicitMidpointGalerkin`](../../LeanDLRA/Research/ExplicitMidpointGalerkin.lean) | The explicit midpoint Galerkin step in augmented bases | 20 |  |
 | [`Research/ExplicitMidpointRun`](../../LeanDLRA/Research/ExplicitMidpointRun.lean) | Runs of the explicit midpoint method in augmented bases: existence and second-order error | 23 |  |
@@ -321,6 +322,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Research/FederatedTwoSteps`](../../LeanDLRA/Research/FederatedTwoSteps.lean) | FeDLRT with averaged gradients: two local steps are two global gradient steps | 4 | [2406.17887](https://arxiv.org/abs/2406.17887) |
 | [`Research/ImplicitBUGEnergyProjection`](../../LeanDLRA/Research/ImplicitBUGEnergyProjection.lean) | The S-step of the implicit BUG integrator is an energy projection | 16 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Research/ImplicitBUGRationalKrylov`](../../LeanDLRA/Research/ImplicitBUGRationalKrylov.lean) | Implicit BUG steps with rational Krylov bases: the error is an ADI residual | 22 | [1609.09494](https://arxiv.org/abs/1609.09494), [2610.18419](https://arxiv.org/abs/2610.18419) |
+| [`Research/ImplicitBUGRunEnergy`](../../LeanDLRA/Research/ImplicitBUGRunEnergy.lean) | Runs of the implicit BUG integrator for the Sylvester heat field: summable stiff energies | 4 | [1609.09494](https://arxiv.org/abs/1609.09494), [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Research/ImplicitBUGSmoothRows`](../../LeanDLRA/Research/ImplicitBUGSmoothRows.lean) | The implicit BUG integrator with a stiff row operator: smooth reference rows | 4 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Research/ImplicitBUGStiffAugmented`](../../LeanDLRA/Research/ImplicitBUGStiffAugmented.lean) | Stiffness on both sides: augmenting the bases does not prevent the loss | 10 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Research/ImplicitBUGStiffColumnAngle`](../../LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean) | Backward Euler of a stiff linear problem: the angle to the best-approximation column space | 15 |  |
