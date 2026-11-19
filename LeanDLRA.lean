@@ -222,8 +222,10 @@ import LeanDLRA.Tensor.TTN.Abstract.ProjectorSplitting
 import LeanDLRA.Tensor.TTN.Abstract.ProjectorSplittingExactness
 import LeanDLRA.Tensor.TTN.Abstract.RankAdaptiveBUG
 import LeanDLRA.Tensor.TTN.BUG
+import LeanDLRA.Tensor.TTN.BUGSqrtNodes
 import LeanDLRA.Tensor.TTN.Basic
 import LeanDLRA.Tensor.TTN.BasisOrthonormality
+import LeanDLRA.Tensor.TTN.Defs
 import LeanDLRA.Tensor.TTN.Integrators
 import LeanDLRA.Tensor.TTN.ParallelBUG
 import LeanDLRA.Tensor.TTN.ProjectorSplitting
