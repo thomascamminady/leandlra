@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit fa5b3f4 (2026-11-19). A theorem is quoted from its
+files and were compared with them at commit 1d3def7 (2026-11-19). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -2003,6 +2003,481 @@ section are against a best approximation or a curve of critical points, and no p
 made. The hypothesis that the stiff part is tangential is the standard one of Bachmayr, Eisenmann,
 Kieri and Uschmajew (arXiv 2002.12197, assumption A4) and of [KochLubich2007].
 
+**Grönwall's inequality with a time-dependent rate.** The bounds of this section have a rate
+`k(t)` that depends on time. Mathlib's `gronwallBound` and `gronwallIntegralBound` solve the
+comparison equation `u' = K u + η` with a constant `K`. The file
+[`Analysis/GronwallVariableRate.lean`](../LeanDLRA/Analysis/GronwallVariableRate.lean) compares with the solution of
+`u' = k(t) u + g(t)`, `u(a) = δ`, for continuous `k` and `g`, without a sign condition on `k`,
+`g` or `δ`:
+
+`norm_le_exp_integral_mul_add_integral_exp_integral_mul` in [`LeanDLRA/Analysis/GronwallVariableRate.lean`, lines 68–74](../LeanDLRA/Analysis/GronwallVariableRate.lean#L68-L74):
+
+```lean
+theorem norm_le_exp_integral_mul_add_integral_exp_integral_mul {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E] {f f' : ℝ → E} {δ a b : ℝ} {k g : ℝ → ℝ}
+    (hk : Continuous k) (hg : Continuous g) (hf : ContinuousOn f (Icc a b))
+    (hf' : ∀ x ∈ Ico a b, HasDerivWithinAt f (f' x) (Ici x) x) (ha : ‖f a‖ ≤ δ)
+    (bound : ∀ x ∈ Ico a b, ‖f' x‖ ≤ k x * ‖f x‖ + g x) :
+    ∀ x ∈ Icc a b, ‖f x‖ ≤ Real.exp (∫ u in a..x, k u) * δ +
+      ∫ s in a..x, Real.exp (∫ u in s..x, k u) * g s
+```
+
+In an inner product space only the component of `f'` along `f` changes `‖f‖`. The file
+[`Analysis/GronwallInner.lean`](../LeanDLRA/Analysis/GronwallInner.lean) has the same conclusion under the one-sided bound
+`⟪f, f'⟫ ≤ (k ‖f‖ + g) ‖f‖` with `g ≥ 0` on `[a, b)`, and no bound on the part of `f'` orthogonal
+to `f`:
+
+`norm_le_exp_integral_mul_add_integral_exp_integral_mul_of_inner_le` in [`LeanDLRA/Analysis/GronwallInner.lean`, lines 94–101](../LeanDLRA/Analysis/GronwallInner.lean#L94-L101):
+
+```lean
+theorem norm_le_exp_integral_mul_add_integral_exp_integral_mul_of_inner_le {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] {f f' : ℝ → E} {δ a b : ℝ} {k g : ℝ → ℝ}
+    (hk : Continuous k) (hg : Continuous g) (hg0 : ∀ x ∈ Ico a b, 0 ≤ g x)
+    (hf : ContinuousOn f (Icc a b))
+    (hf' : ∀ x ∈ Ico a b, HasDerivWithinAt f (f' x) (Ici x) x) (ha : ‖f a‖ ≤ δ)
+    (bound : ∀ x ∈ Ico a b, ⟪f x, f' x⟫ ≤ (k x * ‖f x‖ + g x) * ‖f x‖) :
+    ∀ x ∈ Icc a b, ‖f x‖ ≤ Real.exp (∫ u in a..x, k u) * δ +
+      ∫ s in a..x, Real.exp (∫ u in s..x, k u) * g s
+```
+
+The condition `0 ≤ g` cannot be dropped: `f = 0` satisfies the hypothesis for every `g`.
+
+### 3.9 Optimality of low-rank time integration
+
+The sections above bound the error of a method against the exact solution or against a best
+approximation. The files of this section ask how much a method can achieve at all when it uses the
+field only on matrices of low rank, what a method with a full state achieves with the same
+information, what a state of rank `r` costs, and what a tolerance truncation does to the rank of a
+run. `distLR k Z` is the distance of `Z` from the matrices of rank at most `k`
+(`lowRankSet`), `L` is a Lipschitz constant of the field `F` and `A` the exact solution. Norms are
+Frobenius norms. The constants are those of the proofs, and the statements are for the matrix
+case.
+
+**A lower bound for the information on matrices of rank at most `k`.** A method of rank `k` for
+`y' = F(t, y)` uses the field only through values `F(t, Z)` at matrices `Z` of rank at most `k`.
+Two fields that agree on these matrices are treated alike by every such method, adaptive or not,
+whatever the output is. In [`Research/InformationLowerBound.lean`](../LeanDLRA/Research/InformationLowerBound.lean):
+
+`InformationLowerBound.half_norm_sub_le_max_error` in [`LeanDLRA/Research/InformationLowerBound.lean`, lines 62–66](../LeanDLRA/Research/InformationLowerBound.lean#L62-L66):
+
+```lean
+theorem half_norm_sub_le_max_error {X Y V : Type*} [NormedAddCommGroup V] {S : Set (ℝ × X)}
+    (Φ : (ℝ → X → Y) → V)
+    (hΦ : ∀ F G : ℝ → X → Y, (∀ p ∈ S, F p.1 p.2 = G p.1 p.2) → Φ F = Φ G)
+    {F₁ F₂ : ℝ → X → Y} (h : ∀ p ∈ S, F₁ p.1 p.2 = F₂ p.1 p.2) (A₁ A₂ : V) :
+    ‖A₁ - A₂‖ / 2 ≤ max ‖Φ F₁ - A₁‖ ‖Φ F₂ - A₂‖
+```
+
+`Φ` maps a field to the output, and `S` is the set of points at which the field is evaluated. If
+the solutions `A₁`, `A₂` of two fields that agree on `S` differ, the output has error at least
+`‖A₁ - A₂‖ / 2` for one of the two fields. Two fields `G ± c distLR k(·) W` agree with `G` on the
+matrices of rank at most `k`, and the perturbation raises the Lipschitz constant by at most
+`|c| ‖W‖`:
+
+`InformationLowerBound.isLipschitzField_add_distLR_smul` in [`LeanDLRA/Research/InformationLowerBound.lean`, lines 92–94](../LeanDLRA/Research/InformationLowerBound.lean#L92-L94):
+
+```lean
+theorem isLipschitzField_add_distLR_smul (hG : IsLipschitzField G L₀) (W : Matrix m n ℝ)
+    (c : ℝ) (k : ℕ) :
+    IsLipschitzField (fun t Z => G t Z + (c * distLR k Z) • W) (L₀ + |c| * ‖W‖)
+```
+
+`InformationLowerBound.isOneSidedLipschitzField_add_distLR_smul` is the same for the one-sided
+Lipschitz constant. For `2 × 2` matrices, `k = 1`, the constant field `G = e₂e₂ᵀ`, `W = e₁e₁ᵀ`
+and the start `a e₁e₁ᵀ`, the solutions of the two fields are `diag(a ± L t²/2, t)` with
+`distLR 1 = t`, and their distance at `T` is `L T² = 2 L ∫₀ᵀ distLR 1 (A(s)) ds`:
+
+`InformationLowerBoundExample.mul_integral_distLR_le_max_error` in [`LeanDLRA/Research/InformationLowerBound.lean`, lines 372–378](../LeanDLRA/Research/InformationLowerBound.lean#L372-L378):
+
+```lean
+theorem mul_integral_distLR_le_max_error {a L T c : ℝ} (hL : 0 ≤ L) (h0 : 0 ≤ T)
+    (hT : T + L * T ^ 2 / 2 ≤ a) (hc : c = L ∨ c = -L)
+    (Φ : (ℝ → Matrix (Fin 2) (Fin 2) ℝ → Matrix (Fin 2) (Fin 2) ℝ) → Matrix (Fin 2) (Fin 2) ℝ)
+    (hΦ : ∀ F G : ℝ → Matrix (Fin 2) (Fin 2) ℝ → Matrix (Fin 2) (Fin 2) ℝ,
+      (∀ t (Z : Matrix (Fin 2) (Fin 2) ℝ), Z.rank ≤ 1 → F t Z = G t Z) → Φ F = Φ G) :
+    L * ∫ s in (0 : ℝ)..T, distLR 1 (pairSol a c s) ≤
+      max ‖Φ (pairField L) - pairSol a L T‖ ‖Φ (pairField (-L)) - pairSol a (-L) T‖
+```
+
+So for `0 ≤ T`, `T + L T²/2 ≤ a` and every `Φ` that depends on the field only through the
+matrices of rank at most one, one of the two `L`-Lipschitz fields has an error of at least
+`L ∫₀ᵀ distLR 1 (A(s)) ds`. The constant `1` in front of `L ∫ distLR` cannot be raised for this
+information: if `F` is `L`-Lipschitz and equals a constant `B` on the matrices of rank at most
+`k`, the output `A(0) + T B` has the error
+
+`InformationLowerBound.norm_sub_affine_le_integral_distLR` in [`LeanDLRA/Research/InformationLowerBound.lean`, lines 151–155](../LeanDLRA/Research/InformationLowerBound.lean#L151-L155):
+
+```lean
+theorem norm_sub_affine_le_integral_distLR {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {A : ℝ → Matrix m n ℝ} {B : Matrix m n ℝ} {L T : ℝ} {k : ℕ} (hF : IsLipschitzField F L)
+    (hL : 0 ≤ L) (hB : ∀ t (Z : Matrix m n ℝ), Z.rank ≤ k → F t Z = B)
+    (hA : ODESolution F A 0 T) (hT : 0 ≤ T) :
+    ‖A T - (A 0 + T • B)‖ ≤ L * ∫ s in (0 : ℝ)..T, distLR k (A s)
+```
+
+and for the two fields of the pair above this output has the error exactly
+`L T²/2 = L ∫₀ᵀ distLR 1 (A(s)) ds`, because
+`InformationLowerBoundExample.norm_pairSol_sub_central` gives `|c| T²/2`. The bound does not apply
+to every field: a linear field is determined by its values on the matrices of rank at most one,
+
+`InformationLowerBound.linearMap_ext_of_rank_le_one` in [`LeanDLRA/Research/InformationLowerBound.lean`, lines 207–208](../LeanDLRA/Research/InformationLowerBound.lean#L207-L208):
+
+```lean
+theorem linearMap_ext_of_rank_le_one {V : Type*} [AddCommGroup V] [Module ℝ V]
+    {f g : Matrix m n ℝ →ₗ[ℝ] V} (h : ∀ Z : Matrix m n ℝ, Z.rank ≤ 1 → f Z = g Z) : f = g
+```
+
+so no pair of linear fields agrees on them. What is not shown: the bound is for the information,
+that is, for maps that depend on `F` only through its restriction to the matrices of rank at most
+`k`; it is not a bound for DLRA or for a method that evaluates `F` elsewhere. The pair is for
+`2 × 2` matrices and rank one, and polynomial fields are not treated.
+
+**A full state with the same information.** A method that evaluates `F` only at matrices of rank at
+most `k` but keeps a full matrix as its state has an error bound of the same form. If a curve `Z`
+satisfies `‖Ż - F(t, Z)‖ ≤ L distLR k Z + η`, for example `Ż = F(t, W)` with `W` a best
+approximation of rank at most `k` of `Z` (`η = 0`;
+`RankInformationUpperBound.norm_sub_le_mul_distLR_of_norm_sub_eq`) or the interpolant of an
+explicit Euler method with these field values (`η` its consistency error), then in
+[`Research/RankInformationUpperBound.lean`](../LeanDLRA/Research/RankInformationUpperBound.lean):
+
+`RankInformationUpperBound.norm_sub_le_exp_mul_add_integral_distLR` in [`LeanDLRA/Research/RankInformationUpperBound.lean`, lines 59–66](../LeanDLRA/Research/RankInformationUpperBound.lean#L59-L66):
+
+```lean
+theorem norm_sub_le_exp_mul_add_integral_distLR {F : ℝ → Matrix m n ℝ → Matrix m n ℝ}
+    {A Z Z' : ℝ → Matrix m n ℝ} {L T η : ℝ} {k : ℕ} (hF : IsLipschitzField F L) (hL : 0 ≤ L)
+    (hA : ODESolution F A 0 T) (hZc : ContinuousOn Z (Icc 0 T))
+    (hZ : ∀ t ∈ Ico (0 : ℝ) T, HasDerivWithinAt Z (Z' t) (Ici t) t)
+    (hdef : ∀ t ∈ Ico (0 : ℝ) T, ‖Z' t - F t (Z t)‖ ≤ L * distLR k (Z t) + η)
+    (hT : 0 ≤ T) :
+    ‖Z T - A T‖ ≤ Real.exp (2 * L * T) * ‖Z 0 - A 0‖ +
+      ∫ s in (0 : ℝ)..T, Real.exp (2 * L * (T - s)) * (L * distLR k (A s) + η)
+```
+
+Neither a singular value of `A` or `Z` nor a gap enters. With the lower bound above, the worst case
+of the information on matrices of rank at most `k` is determined up to the factor `e^{2LT}`. A best
+approximation of rank at most `r` of the result has the error
+
+`RankInformationUpperBound.norm_sub_le_distLR_add_two_mul` in [`LeanDLRA/Research/RankInformationUpperBound.lean`, lines 101–102](../LeanDLRA/Research/RankInformationUpperBound.lean#L101-L102):
+
+```lean
+theorem norm_sub_le_distLR_add_two_mul {r : ℕ} {A Z X : Matrix m n ℝ}
+    (hX : ‖X - Z‖ = distLR r Z) : ‖X - A‖ ≤ distLR r A + 2 * ‖Z - A‖
+```
+
+What is not shown: the state is a full matrix, so the statement says nothing about a method at
+low-rank cost. The example of the file is the rotating projector `X(t) = u(t) u(t)ᵀ` of
+[`DLRA/QuasiOptimalitySpeedSharp.lean`](../LeanDLRA/DLRA/QuasiOptimalitySpeedSharp.lean) with the data `A(t) = X(t) + ε (1 - X(0))` and
+the field `F(t, Z) = Ẋ(t)` (Lipschitz constant `0`):
+
+`RankInformationUpperBoundExample.dlra_error_eq_at_rank_one` in [`LeanDLRA/Research/RankInformationUpperBound.lean`, lines 187–193](../LeanDLRA/Research/RankInformationUpperBound.lean#L187-L193):
+
+```lean
+theorem dlra_error_eq_at_rank_one {ε : ℝ} (hε : 0 ≤ ε) (hε1 : ε ≤ 1) :
+    IsDLRASolution 1 (fun t _ => rotProjDeriv t) rotProj 0 (Real.pi / 2) ∧
+      ODESolution (fun t _ => rotProjDeriv t) (hiddenData ε) 0 (Real.pi / 2) ∧
+      IsLipschitzField (fun t (_ : Matrix (Fin 2) (Fin 2) ℝ) => rotProjDeriv t) 0 ∧
+      ‖hiddenData ε 0 - rotProj 0‖ = distLR 1 (hiddenData ε 0) ∧
+      (hiddenData ε (Real.pi / 2)).rank ≤ 1 ∧
+      ‖hiddenData ε (Real.pi / 2) - rotProj (Real.pi / 2)‖ = ε
+```
+
+`X` is the DLRA solution of rank one from the best approximation `X(0)` of `A(0) = diag(1, ε)`,
+its error is `ε` at every time, also at `t = π/2`, where the data have rank one, while the full
+state `Z = A` of the bound above has the error `0`.
+
+**The price of a state of rank `r`.** For a field without dependence on the state,
+`F(t, Z) = Ȧ(t)` (Lipschitz constant `0`), a method that integrates `Ȧ` and truncates has the
+error `distLR r (A(T))`. The projected equation `Ẏ = P(Y) Ȧ` of rank `r` loses the part of `Ȧ`
+that is normal at `Y`, and the loss adds up while the tangent space turns. In
+[`Research/RankStatePrice.lean`](../LeanDLRA/Research/RankStatePrice.lean) the family in `ℝ^{2 × 2}` with `r = 1`,
+`u(t) = (cos t, sin t)`, `Y t = u(t) e₁ᵀ` and
+`A t = u(t) (e₁ + ε t e₂)ᵀ + ε u⊥(t) e₂ᵀ` has the following properties.
+
+`RankStatePriceExample.dlra_error_eq_mul_sqrt` in [`LeanDLRA/Research/RankStatePrice.lean`, lines 224–230](../LeanDLRA/Research/RankStatePrice.lean#L224-L230):
+
+```lean
+theorem dlra_error_eq_mul_sqrt {ε : ℝ} (hε : 0 ≤ ε) (hε1 : ε ≤ 1) (T : ℝ) :
+    IsDLRASolution 1 (fun t _ => involuteDeriv ε t) involuteState 0 T ∧
+      ODESolution (fun t _ => involuteDeriv ε t) (involuteData ε) 0 T ∧
+      IsLipschitzField (fun t (_ : Matrix (Fin 2) (Fin 2) ℝ) => involuteDeriv ε t) 0 ∧
+      ‖involuteData ε 0 - involuteState 0‖ = distLR 1 (involuteData ε 0) ∧
+      (∀ t, distLR 1 (involuteData ε t) ≤ ε) ∧
+      ∀ t, ‖involuteData ε t - involuteState t‖ = ε * √(1 + t ^ 2)
+```
+
+`Y` is the solution of rank one of the projected equation from a best approximation of `A 0`, the
+distance of `A t` from the matrices of rank one is at most `ε` at all times, and the error of `Y`
+is `ε √(1 + t²)`: it grows with the angle through which the tangent space has turned, while the
+best-approximation error stays below `ε`. The second column of `A` is `ε` times an involute of the
+unit circle, whose velocity `ε t u⊥(t)` is normal at `Y t` at every time. That the DLRA error is
+not bounded by a multiple of the best-approximation error that is uniform in time is known at
+eigenvalue crossings [MusharbashNobileZhou2015, §5.3]; in the family the best approximation of
+rank one stays within `ε` of `A t` and the error is an equality. The lower bound for methods that
+are linear in the increment is not in the core.
+
+A state of rank `k ≥ r` whose result is truncated to rank `r` (buffer modes) has the error
+`distLR r (A t)` plus twice the error of the state of rank `k`
+(`RankInformationUpperBound.norm_sub_le_distLR_add_two_mul`). With the quasi-optimality bound of
+section 3.7 for the rank `k`:
+
+`RankStatePrice.norm_sub_le_distLR_add_two_mul_of_isDLRASolution` in [`LeanDLRA/Research/RankStatePrice.lean`, lines 47–59](../LeanDLRA/Research/RankStatePrice.lean#L47-L59):
+
+```lean
+theorem norm_sub_le_distLR_add_two_mul_of_isDLRASolution {k r : ℕ}
+    {F : ℝ → Matrix m n ℝ → Matrix m n ℝ} {A X X' Y : ℝ → Matrix m n ℝ} {a b L μ ρ θ δ : ℝ}
+    (hY : IsDLRASolution k F Y a b) (hρ : 0 < ρ) (hL : 0 ≤ L) (hF : IsLipschitzField F L)
+    (hA : ODESolution F A a b) (hμ : ∀ t ∈ Ico a b, ‖F t (A t)‖ ≤ μ)
+    (hXc : ContinuousOn X (Icc a b)) (hX : ∀ t ∈ Ico a b, HasDerivWithinAt X (X' t) (Ici t) t)
+    (hXr : ∀ t ∈ Icc a b, (X t).rank = k)
+    (hσ : ∀ t ∈ Icc a b, ρ ≤ (toEuclideanLin (X t)).singularValues (k - 1))
+    (hopt : ∀ t ∈ Icc a b, tangentProjAt (X t) (A t - X t) = 0) (hθ : θ < 1)
+    (hd : ∀ t ∈ Icc a b, ‖X t - A t‖ ≤ θ * ρ) (hδ : ‖Y a - X a‖ ≤ δ) {t : ℝ} (ht : t ∈ Icc a b)
+    {W : Matrix m n ℝ} (hW : ‖W - Y t‖ = distLR r (Y t)) :
+    ‖W - A t‖ ≤ distLR r (A t) + 2 * (‖X t - A t‖ +
+      Real.exp ((L + μ / ρ + μ / ((1 - θ) * ρ)) * (t - a)) *
+        (δ + (L + μ / ((1 - θ) * ρ)) * ∫ s in a..t, ‖X s - A s‖))
+```
+
+the singular value `ρ` and the distance of the curve `X` of rank `k` take the place of those of
+the rank `r`. The device of keeping more modes than needed and truncating the output is that of
+the frequent-directions sketch [GhashamiEtAl2015] (abstract: the bound
+`‖A - π_{B_k}(A)‖² ≤ (1 + k/(ℓ - k)) ‖A - A_k‖²` for a sketch with `ℓ > k` rows).
+
+**Tolerance truncation in time stepping: the rank freezes.** Let `Y_{k+1} = T_ϑ(Z_k)` be a step
+followed by the truncated singular value decomposition at the tolerance rank `epsRank ϑ` (the
+truncation of the rank-adaptive BUG integrator [CerutiKuschLubich2022]). In
+[`Research/DynamicRecompression.lean`](../LeanDLRA/Research/DynamicRecompression.lean):
+
+`DynamicRecompression.rank_truncation_epsRank_le_of_norm_sub_le` in [`LeanDLRA/Research/DynamicRecompression.lean`, lines 74–75](../LeanDLRA/Research/DynamicRecompression.lean#L74-L75):
+
+```lean
+theorem rank_truncation_epsRank_le_of_norm_sub_le {ϑ : ℝ} (hϑ : 0 ≤ ϑ) {Y Z : Matrix m n ℝ}
+    (h : ‖Z - Y‖ ≤ ϑ) : (truncation Z (epsRank ϑ Z)).rank ≤ Y.rank
+```
+
+If the matrix that is truncated lies within `ϑ` of the previous iterate, the rank does not grow:
+the iterate itself is a competitor within the tolerance. For a step-truncation method or an
+augmented BUG step, `‖Z_k - Y_k‖` is at most the step size times a bound of the field. A tolerance
+that does not decrease with the step size therefore freezes the rank, and the error stays above the
+distance of every matrix, in particular of the exact solution, from the matrices of the initial
+rank:
+
+`DynamicRecompression.rank_le_rank_zero_of_forall_norm_sub_le` in [`LeanDLRA/Research/DynamicRecompression.lean`, lines 81–83](../LeanDLRA/Research/DynamicRecompression.lean#L81-L83):
+
+```lean
+theorem rank_le_rank_zero_of_forall_norm_sub_le {ϑ : ℝ} (hϑ : 0 ≤ ϑ) {N : ℕ}
+    {Y Z : ℕ → Matrix m n ℝ} (hY : ∀ k < N, Y (k + 1) = truncation (Z k) (epsRank ϑ (Z k)))
+    (hZ : ∀ k < N, ‖Z k - Y k‖ ≤ ϑ) : ∀ k ≤ N, (Y k).rank ≤ (Y 0).rank
+```
+
+`DynamicRecompression.distLR_le_norm_sub_of_forall_norm_sub_le` in [`LeanDLRA/Research/DynamicRecompression.lean`, lines 96–99](../LeanDLRA/Research/DynamicRecompression.lean#L96-L99):
+
+```lean
+theorem distLR_le_norm_sub_of_forall_norm_sub_le {ϑ : ℝ} (hϑ : 0 ≤ ϑ) {N : ℕ}
+    {Y Z : ℕ → Matrix m n ℝ} (hY : ∀ k < N, Y (k + 1) = truncation (Z k) (epsRank ϑ (Z k)))
+    (hZ : ∀ k < N, ‖Z k - Y k‖ ≤ ϑ) (A : Matrix m n ℝ) {k : ℕ} (hk : k ≤ N) :
+    distLR (Y 0).rank A ≤ ‖A - Y k‖
+```
+
+For step truncation of exact increments `A (k+1) - A k` the error is at most the start error plus
+`k ϑ`, and this is attained:
+
+`DynamicRecompression.norm_sub_le_add_mul_of_stepTruncation` in [`LeanDLRA/Research/DynamicRecompression.lean`, lines 105–108](../LeanDLRA/Research/DynamicRecompression.lean#L105-L108):
+
+```lean
+theorem norm_sub_le_add_mul_of_stepTruncation {ϑ : ℝ} (hϑ : 0 ≤ ϑ) {N : ℕ}
+    {A Y : ℕ → Matrix m n ℝ} (hY : ∀ k < N, Y (k + 1) = truncation (Y k + (A (k + 1) - A k))
+          (epsRank ϑ (Y k + (A (k + 1) - A k)))) :
+    ∀ k ≤ N, ‖A k - Y k‖ ≤ ‖A 0 - Y 0‖ + k * ϑ
+```
+
+`DynamicRecompression.exists_stepTruncation_norm_sub_eq_mul` in [`LeanDLRA/Research/DynamicRecompression.lean`, lines 247–252](../LeanDLRA/Research/DynamicRecompression.lean#L247-L252):
+
+```lean
+theorem exists_stepTruncation_norm_sub_eq_mul {ϑ : ℝ} (hϑ : 0 ≤ ϑ) {N : ℕ} (hN : N * ϑ ≤ 1) :
+    ∃ A Y : ℕ → Matrix (Fin 2) (Fin 2) ℝ,
+      A 0 = diagonal ![1, 0] ∧ Y 0 = A 0 ∧
+      (∀ k, Y (k + 1) = truncation (Y k + (A (k + 1) - A k))
+            (epsRank ϑ (Y k + (A (k + 1) - A k)))) ∧
+      ∀ k ≤ N, (Y k).rank ≤ 1 ∧ ‖A k - Y k‖ = k * ϑ
+```
+
+The start is `diag(1, 0)`, the spectral gap at the cut is one, and `N ϑ ≤ 1`. The term `n ϑ` of
+the error bound of [CerutiKuschLubich2022, Thm. 2] is therefore attained with the constant one for
+a method that decides from the truncated iterate alone
+(`DynamicRecompression.norm_sub_eq_mul_of_stepTruncation` is the version from the start zero). What
+is not shown: the freeze is a statement for the truncation rule `T_ϑ` with a fixed `ϑ` and for
+sequences with `‖Z_k - Y_k‖ ≤ ϑ`; it does not say how a rank-adaptive integrator with a tolerance
+tied to the step size behaves.
+
+**Recompression: the rank sandwich.** Let `V_{k+1} = V_k + h F_k(W_k)` be an explicit Euler
+sequence whose field is evaluated at matrices `W_k` with `‖W_k - V_k‖ ≤ η_k` (in an application
+`W_k` is the iterate `Y_k` plus a reconstruction of the remainder `V_k - Y_k` from a linear
+sketch, and `V_k` is never formed), and let `Y_{k+1} = T_θ(W_k + h F_k(W_k))`. With `ζ_k = η_k +
+E_{k+1}` for any solution `E` of `E_{k+1} ≥ (1 + h L) E_k + h L η_k + δ_k`:
+
+`DynamicRecompression.norm_sub_le_and_epsRank_le_rank_and_rank_le_epsRank` in [`LeanDLRA/Research/DynamicRecompression.lean`, lines 206–220](../LeanDLRA/Research/DynamicRecompression.lean#L206-L220):
+
+```lean
+theorem norm_sub_le_and_epsRank_le_rank_and_rank_le_epsRank
+    {F : ℕ → Matrix m n ℝ → Matrix m n ℝ} {h L θ : ℝ}
+    (hh : 0 ≤ h) (hL : 0 ≤ L) (hθ : 0 ≤ θ)
+    (hF : ∀ k X X', ‖F k X - F k X'‖ ≤ L * ‖X - X'‖) {N : ℕ}
+    {A V W Y : ℕ → Matrix m n ℝ} {δ η E : ℕ → ℝ}
+    (hA : ∀ k < N, ‖A (k + 1) - (A k + h • F k (A k))‖ ≤ δ k)
+    (hV : ∀ k < N, V (k + 1) = V k + h • F k (W k))
+    (hW : ∀ k < N, ‖W k - V k‖ ≤ η k)
+    (hY : ∀ k < N, Y (k + 1) = truncation (W k + h • F k (W k)) (epsRank θ (W k + h • F k (W k))))
+    (hE0 : ‖V 0 - A 0‖ ≤ E 0)
+    (hE : ∀ k < N, (1 + h * L) * E k + h * L * η k + δ k ≤ E (k + 1)) :
+    ∀ k < N, ‖Y (k + 1) - A (k + 1)‖ ≤ θ + (η k + E (k + 1)) ∧
+      epsRank (θ + (η k + E (k + 1))) (A (k + 1)) ≤ (Y (k + 1)).rank ∧
+      (η k + E (k + 1) ≤ θ →
+        (Y (k + 1)).rank ≤ epsRank (θ - (η k + E (k + 1))) (A (k + 1)))
+```
+
+The error is at most `θ + ζ_k`, and the rank of `Y_{k+1}` is between the `(θ + ζ_k)`-rank and the
+`(θ - ζ_k)`-rank of the exact `A (k+1)`. The tolerance `θ` enters once and is not multiplied by the
+number of steps; the reconstruction errors enter through the Lipschitz constant only. The
+statement has the form of the recompression lemma of Bachmayr and Dahmen
+[BachmayrDahmen2013, Lemma 2] for a stationary iteration (for matrices `epsRank_sandwich`).
+
+**Ranks of truncated backward Euler runs through the Loewner order.** In
+[`Research/LoewnerRank.lean`](../LeanDLRA/Research/LoewnerRank.lean), for symmetric positive semidefinite matrices
+`0 ⪯ Y ⪯ X` the `ε`-rank is monotone:
+
+`LoewnerRank.epsRank_le_epsRank_of_posSemidef` in [`LeanDLRA/Research/LoewnerRank.lean`, lines 149–150](../LeanDLRA/Research/LoewnerRank.lean#L149-L150):
+
+```lean
+theorem epsRank_le_epsRank_of_posSemidef {X Y : Matrix n n ℝ} (hY : Y.PosSemidef)
+    (hXY : (X - Y).PosSemidef) {ε : ℝ} (hε : 0 ≤ ε) : epsRank ε Y ≤ epsRank ε X
+```
+
+(`LoewnerRank.distLR_le_distLR_of_posSemidef` is the same for the distance). The proof needs no
+eigenvalues: for a best approximation of `X` with row space spanned by `V`, a generalised Schur
+complement `S` of `Y` satisfies `0 ⪯ S ⪯ Y`, `rank (Y - S) ≤ r` and `S V = 0`. The backward Euler
+step of the differential Lyapunov equation `A' = -PA - AP + F` with `P ⪰ 0`,
+`X₁ + h (P X₁ + X₁ P) = X₀ + h F`, is monotone in the Loewner order
+(`LoewnerRank.posSemidef_of_add_smul_lyapunov`). A truncation `Y_{j+1}` of the step `Ŷ_{j+1}` from
+`Y_j` that is below `Ŷ_{j+1}` in the Loewner order and has at most the `θ`-rank of `Ŷ_{j+1}` (the
+truncated eigenvalue decomposition at the tolerance rank) stays below the untruncated run `X_j`
+and has at most its `θ`-rank:
+
+`LoewnerRank.rank_le_epsRank_of_truncated_lyapunov_run` in [`LeanDLRA/Research/LoewnerRank.lean`, lines 261–271](../LeanDLRA/Research/LoewnerRank.lean#L261-L271):
+
+```lean
+theorem rank_le_epsRank_of_truncated_lyapunov_run {P F : Matrix n n ℝ} {h θ : ℝ}
+    (hP : P.PosSemidef) (hF : F.PosSemidef) (hh : 0 ≤ h) (hθ : 0 ≤ θ) {N : ℕ}
+    {X Y Yh : ℕ → Matrix n n ℝ}
+    (hX : ∀ j < N, X (j + 1) + h • (P * X (j + 1) + X (j + 1) * P) = X j + h • F)
+    (hYh : ∀ j < N, Yh (j + 1) + h • (P * Yh (j + 1) + Yh (j + 1) * P) = Y j + h • F)
+    (hY0 : (Y 0).PosSemidef) (hXY0 : (X 0 - Y 0).PosSemidef)
+    (hYpos : ∀ j < N, (Y (j + 1)).PosSemidef)
+    (hYle : ∀ j < N, (Yh (j + 1) - Y (j + 1)).PosSemidef)
+    (hYrank : ∀ j < N, (Y (j + 1)).rank ≤ epsRank θ (Yh (j + 1))) :
+    ∀ j < N, (Yh (j + 1)).PosSemidef ∧ (X (j + 1) - Yh (j + 1)).PosSemidef ∧
+      (X (j + 1) - Y (j + 1)).PosSemidef ∧ (Y (j + 1)).rank ≤ epsRank θ (X (j + 1))
+```
+
+for every step size and every tolerance. In contrast to the recompression lemma above, the
+tolerance need not exceed the accumulated error. The error obeys, with `P - c 1 ⪰ 0`:
+
+`LoewnerRank.norm_sub_le_of_truncated_lyapunov_run` in [`LeanDLRA/Research/LoewnerRank.lean`, lines 308–315](../LeanDLRA/Research/LoewnerRank.lean#L308-L315):
+
+```lean
+theorem norm_sub_le_of_truncated_lyapunov_run [DecidableEq n] {P F : Matrix n n ℝ} {h c θ : ℝ}
+    (hP : (P - c • (1 : Matrix n n ℝ)).PosSemidef) (hh : 0 ≤ h) (hc : 0 ≤ c) {N : ℕ}
+    {X Y Yh : ℕ → Matrix n n ℝ} {E : ℕ → ℝ}
+    (hX : ∀ j < N, X (j + 1) + h • (P * X (j + 1) + X (j + 1) * P) = X j + h • F)
+    (hYh : ∀ j < N, Yh (j + 1) + h • (P * Yh (j + 1) + Yh (j + 1) * P) = Y j + h • F)
+    (hT : ∀ j < N, ‖Yh (j + 1) - Y (j + 1)‖ ≤ θ) (hE0 : ‖X 0 - Y 0‖ ≤ E 0)
+    (hE : ∀ j < N, E j / (1 + 2 * h * c) + θ ≤ E (j + 1)) :
+    ∀ j ≤ N, ‖X j - Y j‖ ≤ E j
+```
+
+The Sylvester problem `A' = -PA - AQ + G Hᵀ` is the off-diagonal block of the Lyapunov problem with
+`diag(P, Q)` and the forcing `[G; H][G; H]ᵀ`. What is not shown: the truncation is assumed to
+satisfy the two inequalities `0 ⪯ Y_{j+1} ⪯ Ŷ_{j+1}` and the rank bound; the files do not construct
+it for a given implementation.
+
+**Energy of a run of the implicit BUG integrator.** For `F(Z) = -BᵀB Z - Z CᵀC` the S-step of the
+BUG integrator with backward Euler substeps satisfies an energy identity
+(`IsMatrixImplicitBUGStep.energy_eq_inner_of_sylvester`, section 7.7). A truncation by the
+singular value decomposition is a multiplication by an orthogonal projector from the left and one
+from the right, and increases neither the norm nor the stiff energy
+`h (‖B Y‖² + ‖Y Cᵀ‖²)`. In [`Research/ImplicitBUGRunEnergy.lean`](../LeanDLRA/Research/ImplicitBUGRunEnergy.lean):
+
+`half_sq_norm_add_sum_energy_implicitBUG_run_le_of_sylvester` in [`LeanDLRA/Research/ImplicitBUGRunEnergy.lean`, lines 104–114](../LeanDLRA/Research/ImplicitBUGRunEnergy.lean#L104-L114):
+
+```lean
+theorem half_sq_norm_add_sum_energy_implicitBUG_run_le_of_sylvester {N : ℕ}
+    (hstep : ∀ j < N, IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix m n ℝ) =>
+      -(Bᵀ * B * Z) - Z * (Cᵀ * C)) (ε j) (τ j) (ϑ j) (t j) h (U j) (S j) (V j) (K j) (L j)
+      (U' j) (V' j) (S' j) (U (j + 1) * S (j + 1) * (V (j + 1))ᵀ))
+    (hh : 0 ≤ h) (hT : ∀ j < N, IsOrthProjMat (T j)) (hT' : ∀ j < N, IsOrthProjMat (T' j))
+    (hY : ∀ j < N, U (j + 1) * S (j + 1) * (V (j + 1))ᵀ = T j * (U' j * S' j * (V' j)ᵀ))
+    (hY' : ∀ j < N, U (j + 1) * S (j + 1) * (V (j + 1))ᵀ = U' j * S' j * (V' j)ᵀ * T' j) :
+    ‖U N * S N * (V N)ᵀ‖ ^ 2 / 2 + ∑ j ∈ Finset.range N,
+        h * (‖B * (U (j + 1) * S (j + 1) * (V (j + 1))ᵀ)‖ ^ 2 +
+          ‖U (j + 1) * S (j + 1) * (V (j + 1))ᵀ * Cᵀ‖ ^ 2) ≤
+      ‖U 0 * S 0 * (V 0)ᵀ‖ ^ 2 / 2
+```
+
+whatever the bases are and however large `B` and `C` are. If the residual bound of the run theorem
+`norm_implicitBUG_run_sub_le_of_sylvester_residual` has the form `a ‖Yⱼ‖ + b (energy of Yⱼ)^{1/2}`
+(for bases that contain the factors of `k` ADI steps with shifts of an interval, a spectral
+splitting of the ADI residual gives `a` as a Zolotarev number of the interval; arXiv 1609.09494,
+Corollary 3.2, is cited in the docstring for it), the distance to the backward Euler run on the full
+matrix is bounded without any bound of `B` or `C`:
+
+`norm_implicitBUG_run_sub_le_of_sylvester_energy_residual` in [`LeanDLRA/Research/ImplicitBUGRunEnergy.lean`, lines 139–156](../LeanDLRA/Research/ImplicitBUGRunEnergy.lean#L139-L156):
+
+```lean
+theorem norm_implicitBUG_run_sub_le_of_sylvester_energy_residual {N : ℕ}
+    {G : ℕ → Matrix k₁ k₂ ℝ} {X : ℕ → Matrix m n ℝ} {a b : ℝ}
+    (hstep : ∀ j < N, IsMatrixImplicitBUGStep (fun (_ : ℝ) (Z : Matrix m n ℝ) =>
+      -(Bᵀ * B * Z) - Z * (Cᵀ * C)) (ε j) (τ j) (ϑ j) (t j) h (U j) (S j) (V j) (K j) (L j)
+      (U' j) (V' j) (S' j) (U (j + 1) * S (j + 1) * (V (j + 1))ᵀ))
+    (hh : 0 ≤ h) (hT : ∀ j < N, IsOrthProjMat (T j)) (hT' : ∀ j < N, IsOrthProjMat (T' j))
+    (hY : ∀ j < N, U (j + 1) * S (j + 1) * (V (j + 1))ᵀ = T j * (U' j * S' j * (V' j)ᵀ))
+    (hY' : ∀ j < N, U (j + 1) * S (j + 1) * (V (j + 1))ᵀ = U' j * S' j * (V' j)ᵀ * T' j)
+    (hX : ∀ j < N, X (j + 1) + h • (Bᵀ * B * X (j + 1) + X (j + 1) * (Cᵀ * C)) = X j)
+    (ha : 0 ≤ a) (hb : 0 ≤ b)
+    (hres : ∀ j < N, ‖U j * S j * (V j)ᵀ - (U' j * G j * (V' j)ᵀ +
+      h • (Bᵀ * B * (U' j * G j * (V' j)ᵀ) + U' j * G j * (V' j)ᵀ * (Cᵀ * C)))‖ ≤
+        a * ‖U j * S j * (V j)ᵀ‖ +
+          b * √(h * (‖B * (U j * S j * (V j)ᵀ)‖ ^ 2 + ‖U j * S j * (V j)ᵀ * Cᵀ‖ ^ 2))) :
+    ‖U N * S N * (V N)ᵀ - X N‖ ≤
+      ‖U 0 * S 0 * (V 0)ᵀ - X 0‖ + ∑ j ∈ Finset.range N, ϑ j + N * a * ‖U 0 * S 0 * (V 0)ᵀ‖ +
+        b * (√(h * (‖B * (U 0 * S 0 * (V 0)ᵀ)‖ ^ 2 + ‖U 0 * S 0 * (V 0)ᵀ * Cᵀ‖ ^ 2)) +
+          √((N : ℝ) / 2) * ‖U 0 * S 0 * (V 0)ᵀ‖)
+```
+
+The hypothesis `hres` is on the residual of the bases and is not derived here. The run theorem
+is the one of section 7.7.
+
+**Literature.** The two-problem argument of information-based complexity for initial value
+problems with inexact information gives a lower bound of the form of `half_norm_sub_le_max_error`:
+for two data whose noisy-information sets intersect the error is at least half the distance of
+the solutions ([BochacikEtAl2020], proof of Lemma 2; the same bound for deterministic algorithms in
+[CzyzewskaEtAl2022], Theorem 5.3). There every evaluation of the field carries noise of size at
+most `δ`; here the field is exact but known only on the matrices of rank at most `k`, so that at a
+state `Z` it is known up to `L distLR k Z`, and the pair must consist of `L`-Lipschitz fields
+that agree there. The classes in which the bound does not apply (linear fields) have no
+counterpart in those papers. In these terms, values of the field on matrices of rank at most `k`
+are inexact information about the field at the state, of accuracy `L distLR k`, and the lower
+bound `L ∫ distLR k` has the constant one, which is attained. For the full state, as for initial
+value problems with inexact information [CzyzewskaEtAl2022, Theorem 5.3], an Euler method that
+evaluates the field at a best approximation of rank at most `k` of a full state is worst-case
+optimal, here up to the factor `e^{2LT}`; there the constant is unspecified and the noise level
+constant, and the file has the
+level `L distLR k(A(s))` along the solution, the factor `e^{2L(T - s)}` and the lower constant
+one. For the rank freeze: that truncation tolerances must tighten with the step is known
+([BachmayrDolbeaultSachsenmaier2025], §1; [RodgersDektorVenturi2022], Corollary 1); the files show
+that for a fixed tolerance the rank cannot increase once the step moves the iterate by less than
+the tolerance, and that the term `n ϑ` of [CerutiKuschLubich2022] is attained with the constant
+one. The recompression sandwich has the form of [BachmayrDahmen2013, Lemma 2].
+
 ## 4. Steps, runs and the global error
 
 This section is independent of low rank. It contains the argument that turns a bound for the
@@ -2513,6 +2988,13 @@ theorem exists_bugGlobalBound_lt {L B H T ε ρ : ℝ} (hH : 0 < H)
 The smallness condition can be met: if the part of the bound that comes from the normal
 component is smaller than the tube radius, `T e^{L T} c₁ ε < ρ`, and `0 < H`, then there are a
 positive `δ` and a positive `h ≤ H` for which `hsmall` holds.
+
+The `example`s of the matrix integrators use one linear test field, fixed in
+[`Integrators/Matrix/LinearFieldExample.lean`](../LeanDLRA/Integrators/Matrix/LinearFieldExample.lean): `F(t, Y) = M Y + Y Nᵀ + G` on `2 × 2`
+matrices with `M = -E`, `N = 0`, `G = E = e₁ e₁ᵀ`, so that `E` is a stationary point, the start
+value `(5/4) E` of rank one, `K = 10` steps of size `h = 1/100` and the tube radius `4`. The file
+has the hypotheses of the error theorems for it (`L = 1`, `B = 4`, `ε = 1`) and bounds of the
+constants of the bound.
 
 Source: [CerutiLubich2022, Thm. 4]. The paper states the bound for a field that is Lipschitz
 and bounded everywhere and for a given sequence of steps; the form quoted here assumes these
@@ -3765,6 +4247,10 @@ basis vector can gain (`norm_sq_sub_specNorm_sq_le_norm_sq_enrich`).
 
 Source: the integrator is that of Ceruti, Kusch and Lubich, arXiv 2104.05247, whose Theorem 2 is
 `rankAdaptiveBUG_global_error`; the statements of the two files cite no theorem of a paper.
+
+The rank of a tolerance truncation in time stepping: a tolerance `ϑ` that does not decrease with
+the step size freezes the rank, and the term `n ϑ` of the bound of the rank-adaptive integrator
+is attained with the constant one; see [section 3.9](#39-optimality-of-low-rank-time-integration).
 
 ### 6.4 The BUG integrator with explicit Euler substeps
 
@@ -6386,6 +6872,8 @@ above; `ϑ_j` are the truncation tolerances.
 | one-sided, truncation by left projectors | error inside and outside the column space; run bound | `(h μ + γ_j) ‖A_j - T_j A_j‖` per step | [`Research/ImplicitBUGStiffColumnSpace.lean`](../LeanDLRA/Research/ImplicitBUGStiffColumnSpace.lean) |
 | the same, against the best approximation | comparison through angles; counterexample without angles | `‖A - T A‖ ≤ ‖A - P A‖ + s ‖P A‖` | [`Research/ImplicitBUGStiffColumnAngle.lean`](../LeanDLRA/Research/ImplicitBUGStiffColumnAngle.lean) |
 | the same, weighted norm `‖Z S‖` | stationary reference: error not increasing; Frobenius counterexample | factor one | [`Research/ImplicitBUGStiffWeighted.lean`](../LeanDLRA/Research/ImplicitBUGStiffWeighted.lean) |
+| two-sided `-BᵀB Z - Z CᵀC`, runs with truncation by orthogonal projectors | summable stiff energies: `‖Y_N‖²/2 + ∑ h (‖B Y_{j+1}‖² + ‖Y_{j+1} Cᵀ‖²) ≤ ‖Y₀‖²/2`; run bound with residuals `a ‖Y_j‖ + b (energy)^{1/2}` | `N a ‖Y₀‖ + b (E₀^{1/2} + (N/2)^{1/2} ‖Y₀‖)`, `E₀` the stiff energy of `Y₀` | [`Research/ImplicitBUGRunEnergy.lean`](../LeanDLRA/Research/ImplicitBUGRunEnergy.lean), [section 3.9](#39-optimality-of-low-rank-time-integration) |
+| one-sided `M Z - Z CᵀC`, implicit midpoint Galerkin steps, any sequence | run bounds with factor one; Galerkin step quasi-optimal in the energy norm | `1 + τ μ`; local terms computable | [`Research/ImplicitMidpointBUGStiff.lean`](../LeanDLRA/Research/ImplicitMidpointBUGStiff.lean), [section 7.8](#78-implicit-midpoint-galerkin-steps-for-a-stiff-row-operator) |
 | a field `S + G`, any step | comparison of a Galerkin substep with a reference | `(1 - h ℓ)`, defect, block `P S (1 - P) u₁` | [`Stiff/ImplicitGalerkinTangential.lean`](../LeanDLRA/Stiff/ImplicitGalerkinTangential.lean) |
 
 What is not shown. The one-step counterexamples are for `2 × 2` and `3 × 2` matrices of rank `1`.
@@ -6396,6 +6884,9 @@ class and the weighted norm of the last rows are tools for the stationary refere
 for a moving one. The a posteriori bounds are for any sequence and are not bounds for the
 integrator before the residuals are bounded. The constants (`4`, `18`, `5`, `27 / 4`, `9`) are
 those of the proofs.
+
+Runs with truncation for `-BᵀB Z - Z CᵀC` with summable stiff energies are in [section
+3.9](#39-optimality-of-low-rank-time-integration); the implicit midpoint rule is in section 7.8.
 
 Literature. The run device of the sharp-factor rows (compare each step with the backward Euler
 step of the full problem from the same start value, propagate by the contractive full scheme) is
@@ -6422,6 +6913,218 @@ Proposition 5.3), or drop the damping (Koskela and Mena, arXiv 1705.07507); for 
 backward Euler the files bound each propagated residual by the better one-sided resolvent power
 applied to it. The module docstrings cite [CerutiLubich2022] and [CerutiKuschLubich2022] for the
 integrator.
+
+### 7.8 Implicit midpoint Galerkin steps for a stiff row operator
+
+For `F(Z) = M Z - Z CᵀC` with `M` dissipative and bounded by `μ` and `C` arbitrary, the file
+[`Research/ImplicitMidpointBUGStiff.lean`](../LeanDLRA/Research/ImplicitMidpointBUGStiff.lean) studies runs of a BUG-type step whose
+substeps are resolvent solves. The implicit midpoint step of size `2 τ` from `Y` is `2 W - Y`,
+where `W` is the backward Euler step of size `τ` from `Y` (the value at the midpoint). The
+reflection `Y ↦ 2 W - Y` does not increase the Frobenius norm
+(`ImplicitMidpointBUGStiff.sq_norm_two_smul_sub_add_le_of_backwardEuler`: `‖2 W - R‖² + 4 τ ‖W Cᵀ‖²
+≤ ‖R‖²`). So the error of any sequence against a reference that satisfies the implicit midpoint
+rule up to defects `d_j` is the start error plus the defects plus the sum of the local errors,
+with the factor one on the start error and no restriction on the step size:
+
+`ImplicitMidpointBUGStiff.norm_sub_le_add_sum_of_implicitMidpoint` in [`LeanDLRA/Research/ImplicitMidpointBUGStiff.lean`, lines 141–147](../LeanDLRA/Research/ImplicitMidpointBUGStiff.lean#L141-L147):
+
+```lean
+theorem norm_sub_le_add_sum_of_implicitMidpoint {N : ℕ} {Y W X d : ℕ → Matrix m n ℝ}
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hτ : 0 ≤ τ)
+    (hW : ∀ j < N, W j - τ • (M * W j) + τ • (W j * (Cᵀ * C)) = Y j)
+    (hX : ∀ j < N, X (j + 1) - X j - (2 * τ) • (M * ((1 / 2 : ℝ) • (X j + X (j + 1))) -
+      (1 / 2 : ℝ) • (X j + X (j + 1)) * (Cᵀ * C)) = d j) :
+    ‖Y N - X N‖ ≤
+      ‖Y 0 - X 0‖ + ∑ j ∈ range N, (‖d j‖ + ‖Y (j + 1) - ((2 : ℝ) • W j - Y j)‖)
+```
+
+A low-rank step that computes the midpoint value `Ym` by a Galerkin backward Euler step in a space
+of matrices `P Z Q` has twice the error of this Galerkin step as its local error
+(`‖Y (j+1) - (2 Ym j - Y j)‖ ≤ ϑ j`), and the Galerkin step is quasi-optimal in the energy norm
+`(‖Z‖² + τ ‖Z Cᵀ‖²)^{1/2}`:
+
+`ImplicitMidpointBUGStiff.sqrt_sq_norm_galerkin_sub_add_le` in [`LeanDLRA/Research/ImplicitMidpointBUGStiff.lean`, lines 172–180](../LeanDLRA/Research/ImplicitMidpointBUGStiff.lean#L172-L180):
+
+```lean
+theorem sqrt_sq_norm_galerkin_sub_add_le {P : Matrix m m ℝ} {Q : Matrix n n ℝ}
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
+    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (hτ : 0 ≤ τ)
+    (hPt : Pᵀ = P) (hQt : Qᵀ = Q) {Y₀ Yg W Z : Matrix m n ℝ}
+    (gEq : Yg = P * (Y₀ + τ • (M * Yg - Yg * (Cᵀ * C))) * Q) (gP : P * Yg = Yg)
+    (gQ : Yg * Q = Yg) (hW : W - τ • (M * W) + τ • (W * (Cᵀ * C)) = Y₀)
+    (zP : P * Z = Z) (zQ : Z * Q = Z) :
+    √(‖Yg - Z‖ ^ 2 + τ * ‖(Yg - Z) * Cᵀ‖ ^ 2) ≤
+      (1 + τ * μ) * √(‖W - Z‖ ^ 2 + τ * ‖(W - Z) * Cᵀ‖ ^ 2)
+```
+
+Here `Yg` is the Galerkin step, `W` the backward Euler step, and `Z` any matrix in the Galerkin
+space. The constant is `1 + τ μ`, and no singular value and no norm of `C` enters. The run bound
+with a Galerkin space `P j`, `Q j` that contains a matrix `Z j`:
+
+`ImplicitMidpointBUGStiff.norm_galerkinMidpoint_run_sub_le` in [`LeanDLRA/Research/ImplicitMidpointBUGStiff.lean`, lines 317–327](../LeanDLRA/Research/ImplicitMidpointBUGStiff.lean#L317-L327):
+
+```lean
+theorem norm_galerkinMidpoint_run_sub_le
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
+    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (hτ : 0 ≤ τ)
+    (hstep : ∀ j < N, (P j)ᵀ = P j ∧ (Q j)ᵀ = Q j ∧ P j * Ym j = Ym j ∧ Ym j * Q j = Ym j ∧
+      Ym j = P j * (Y j + τ • (M * Ym j - Ym j * (Cᵀ * C))) * Q j ∧ P j * Z j = Z j ∧
+      Z j * Q j = Z j ∧ ‖Y (j + 1) - ((2 : ℝ) • Ym j - Y j)‖ ≤ ϑ j)
+    (hW : ∀ j < N, W j - τ • (M * W j) + τ • (W j * (Cᵀ * C)) = Y j)
+    (hX : ∀ j < N, X (j + 1) - X j - (2 * τ) • (M * ((1 / 2 : ℝ) • (X j + X (j + 1))) -
+      (1 / 2 : ℝ) • (X j + X (j + 1)) * (Cᵀ * C)) = d j) :
+    ‖Y N - X N‖ ≤ ‖Y 0 - X 0‖ + ∑ j ∈ range N, (‖d j‖ + ϑ j +
+      2 * ((2 + τ * μ) * √(‖W j - Z j‖ ^ 2 + τ * ‖(W j - Z j) * Cᵀ‖ ^ 2)))
+```
+
+For bases built from two levels of K- and L-steps the combination `YK + YL - Y₁` of the
+level-two K- and L-steps and the level-one Galerkin step lies in the Galerkin space, and its
+residual in the equation of the full problem is a sum of two terms that are computable along the
+run:
+
+`ImplicitMidpointBUGStiff.sqrt_sq_norm_backwardEuler_sub_combination_add_le` in [`LeanDLRA/Research/ImplicitMidpointBUGStiff.lean`, lines 284–293](../LeanDLRA/Research/ImplicitMidpointBUGStiff.lean#L284-L293):
+
+```lean
+theorem sqrt_sq_norm_backwardEuler_sub_combination_add_le
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hτ : 0 ≤ τ) (yP : P₁ * Y₀ = Y₀)
+    (yQ : Y₀ * Q₁ = Y₀)
+    (kEq : YK = Y₀ + τ • ((M * YK - YK * (Cᵀ * C)) * Q₁)) (kQ : YK * Q₁ = YK)
+    (lEq : YL = Y₀ + τ • (P₁ * (M * YL - YL * (Cᵀ * C)))) (lP : P₁ * YL = YL)
+    (sEq : Y₁ = P₁ * (Y₀ + τ • (M * Y₁ - Y₁ * (Cᵀ * C))) * Q₁) (sP : P₁ * Y₁ = Y₁)
+    (sQ : Y₁ * Q₁ = Y₁) (hW : W - τ • (M * W) + τ • (W * (Cᵀ * C)) = Y₀) :
+    √(‖W - (YK + YL - Y₁)‖ ^ 2 + τ * ‖(W - (YK + YL - Y₁)) * Cᵀ‖ ^ 2) ≤
+      ‖τ • (M * (YL - Y₁) - P₁ * (M * (YL - Y₁)))‖ +
+        ‖τ • ((YK - Y₁) * (Cᵀ * C) - (YK - Y₁) * (Cᵀ * C) * Q₁)‖
+```
+
+`ImplicitMidpointBUGStiff.norm_twoLevelMidpoint_run_sub_le` in [`LeanDLRA/Research/ImplicitMidpointBUGStiff.lean`, lines 353–370](../LeanDLRA/Research/ImplicitMidpointBUGStiff.lean#L353-L370):
+
+```lean
+theorem norm_twoLevelMidpoint_run_sub_le
+    (hdiss : ∀ x : m → ℝ, x ⬝ᵥ M *ᵥ x ≤ 0) (hμ0 : 0 ≤ μ)
+    (hμ : ∀ x : m → ℝ, M *ᵥ x ⬝ᵥ M *ᵥ x ≤ μ ^ 2 * (x ⬝ᵥ x)) (hτ : 0 ≤ τ)
+    (hlevel : ∀ j < N, P₁ j * Y j = Y j ∧ Y j * Q₁ j = Y j ∧
+      YK j = Y j + τ • ((M * YK j - YK j * (Cᵀ * C)) * Q₁ j) ∧ YK j * Q₁ j = YK j ∧
+      YL j = Y j + τ • (P₁ j * (M * YL j - YL j * (Cᵀ * C))) ∧ P₁ j * YL j = YL j ∧
+      Y₁ j = P₁ j * (Y j + τ • (M * Y₁ j - Y₁ j * (Cᵀ * C))) * Q₁ j ∧ P₁ j * Y₁ j = Y₁ j ∧
+      Y₁ j * Q₁ j = Y₁ j)
+    (hcap : ∀ j < N, P j * YK j = YK j ∧ P j * YL j = YL j ∧ P j * Y₁ j = Y₁ j ∧
+      YK j * Q j = YK j ∧ YL j * Q j = YL j ∧ Y₁ j * Q j = Y₁ j)
+    (hstep : ∀ j < N, (P j)ᵀ = P j ∧ (Q j)ᵀ = Q j ∧ P j * Ym j = Ym j ∧ Ym j * Q j = Ym j ∧
+      Ym j = P j * (Y j + τ • (M * Ym j - Ym j * (Cᵀ * C))) * Q j ∧
+      ‖Y (j + 1) - ((2 : ℝ) • Ym j - Y j)‖ ≤ ϑ j)
+    (hX : ∀ j < N, X (j + 1) - X j - (2 * τ) • (M * ((1 / 2 : ℝ) • (X j + X (j + 1))) -
+      (1 / 2 : ℝ) • (X j + X (j + 1)) * (Cᵀ * C)) = d j) :
+    ‖Y N - X N‖ ≤ ‖Y 0 - X 0‖ + ∑ j ∈ range N, (‖d j‖ + ϑ j + 2 * ((2 + τ * μ) *
+      (‖τ • (M * (YL j - Y₁ j) - P₁ j * (M * (YL j - Y₁ j)))‖ +
+        ‖τ • ((YK j - Y₁ j) * (Cᵀ * C) - (YK j - Y₁ j) * (Cᵀ * C) * Q₁ j)‖)))
+```
+
+No constant depends on `C` or on a singular value. What is not shown: a second order in the step
+size is not proved; the local terms of the run bounds are computable, and an a priori bound of
+them of the order `τ³` is open. The bounds are for the field `M Z - Z CᵀC`, not for stiffness on
+both sides, and the bases are hypotheses of the statements. Literature. Second-order error bounds
+that are robust to stiffness (not depending on the Lipschitz constant of the stiff part) are
+published for low-rank Strang splitting ([ScaloneGuglielmi2026], Theorem 1), for projected
+exponential Runge methods ([CarrelVandereycken2023], Theorem 11, with a term for the rank-`r`
+approximation error) and for parametric Gauss and Radau IIA methods, the implicit midpoint rule
+included ([LubichNick2025], Theorem 7.1, against the non-parametric Runge–Kutta values with a
+posteriori defects). For a BUG integrator with an implicit midpoint Galerkin step and resolvent
+solves only, the files give a run bound with the factor one whose local terms are computable and
+uniform in the stiff operator and in the singular values. The run device (compare with the full
+scheme from the same value) is that of [LubichNick2025], as in section 7.7. The module docstring
+cites [CerutiEtAl2024b] for the midpoint BUG integrator with augmented bases and
+[CerutiLubich2022] for the K-, L- and Galerkin steps.
+
+### 7.9 A certified companion encloses the error of a run
+
+Let `A` be a reference, `Y` a run whose error is wanted, and `Y'` a companion (a run of higher rank
+or with smaller steps) with a certified bound `‖Y' - A‖ ≤ β`. In
+[`Stiff/CompanionEnclosure.lean`](../LeanDLRA/Stiff/CompanionEnclosure.lean):
+
+`abs_norm_sub_sub_norm_sub_le_of_norm_sub_le` in [`LeanDLRA/Stiff/CompanionEnclosure.lean`, lines 53–54](../LeanDLRA/Stiff/CompanionEnclosure.lean#L53-L54):
+
+```lean
+theorem abs_norm_sub_sub_norm_sub_le_of_norm_sub_le {y y' a : G} {β : ℝ}
+    (hβ : ‖y' - a‖ ≤ β) : |‖y - a‖ - ‖y - y'‖| ≤ β
+```
+
+that is, `‖Y - Y'‖ - β ≤ ‖Y - A‖ ≤ ‖Y - Y'‖ + β`, in any seminormed group, with the distance
+`‖Y - Y'‖` computed from the factors of `Y` and `Y'`. When the companion is much more accurate
+than the run, the enclosure is narrow even if `β` overestimates the error of the companion by a
+large factor: both sides are within `2 β` of the error of `Y`. The certificate can be any of the
+a posteriori bounds of the library. For a companion sequence against the implicit Euler scheme,
+with the residuals of the companion:
+
+`abs_norm_sub_sub_norm_sub_le_of_implicitEuler` in [`LeanDLRA/Stiff/CompanionEnclosure.lean`, lines 83–89](../LeanDLRA/Stiff/CompanionEnclosure.lean#L83-L89):
+
+```lean
+theorem abs_norm_sub_sub_norm_sub_le_of_implicitEuler {F : ℕ → E → E} {h ℓ : ℝ} {N : ℕ}
+    {A Y Y' : ℕ → E} (hh : 0 ≤ h) (hℓ : h * ℓ < 1)
+    (hF : ∀ k < N, ⟪F k (Y' (k + 1)) - F k (A (k + 1)), Y' (k + 1) - A (k + 1)⟫
+      ≤ ℓ * ‖Y' (k + 1) - A (k + 1)‖ ^ 2)
+    (hA : ∀ k < N, A (k + 1) = A k + h • F k (A (k + 1))) :
+    ∀ n ≤ N, |‖Y n - A n‖ - ‖Y n - Y' n‖| ≤ max 1 (1 - h * ℓ)⁻¹ ^ n * (‖Y' 0 - A 0‖
+      + ∑ k ∈ range n, ‖Y' (k + 1) - Y' k - h • F k (Y' (k + 1))‖)
+```
+
+and with a stepwise defect bound of a continuous curve through the companion's iterates (one-sided
+Lipschitz field) and the recursion `q (n + 1) ≥ gronwallBound (q n) ℓ (η n) h`:
+
+`abs_norm_sub_sub_norm_sub_le_of_defect_steps` in [`LeanDLRA/Stiff/CompanionEnclosure.lean`, lines 117–125](../LeanDLRA/Stiff/CompanionEnclosure.lean#L117-L125):
+
+```lean
+theorem abs_norm_sub_sub_norm_sub_le_of_defect_steps {F : ℝ → E → E} {ℓ : ℝ}
+    (hF : IsOneSidedLipschitzField F ℓ) {t₀ h : ℝ} (hh : 0 ≤ h) {K : ℕ} {A Y' u : ℝ → E}
+    {Y : ℕ → E} (hA : ODESolution F A t₀ (t₀ + K * h))
+    (hc : ContinuousOn Y' (Icc t₀ (t₀ + K * h)))
+    (hd : ∀ t ∈ Ico t₀ (t₀ + K * h), HasDerivWithinAt Y' (u t) (Ici t) t) {η q : ℕ → ℝ}
+    (hη : ∀ n < K, ∀ t ∈ Ico (t₀ + n * h) (t₀ + (n + 1) * h), ‖u t - F t (Y' t)‖ ≤ η n)
+    (h0 : ‖Y' t₀ - A t₀‖ ≤ q 0)
+    (hq : ∀ n < K, gronwallBound (q n) ℓ (η n) h ≤ q (n + 1)) :
+    ∀ n ≤ K, |‖Y n - A (t₀ + n * h)‖ - ‖Y n - Y' (t₀ + n * h)‖| ≤ q n
+```
+
+For an affine field `x ↦ L x + g` the defect of the cubic Hermite interpolant of the iterates on a
+step is an explicit polynomial in `θ ∈ [0, 1]`:
+
+`hermite_defect_eq` in [`LeanDLRA/Stiff/CompanionEnclosure.lean`, lines 227–234](../LeanDLRA/Stiff/CompanionEnclosure.lean#L227-L234):
+
+```lean
+theorem hermite_defect_eq (L : E →ₗ[ℝ] E) {g y₀ y₁ f₀ f₁ : E} (hf₀ : f₀ = L y₀ + g)
+    (hf₁ : f₁ = L y₁ + g) (h θ : ℝ) :
+    ((6 * θ ^ 2 - 6 * θ) / h) • y₀ + (3 * θ ^ 2 - 4 * θ + 1) • f₀
+        + ((6 * θ - 6 * θ ^ 2) / h) • y₁ + (3 * θ ^ 2 - 2 * θ) • f₁
+      - (L ((2 * θ ^ 3 - 3 * θ ^ 2 + 1) • y₀ + (h * (θ ^ 3 - 2 * θ ^ 2 + θ)) • f₀
+        + (3 * θ ^ 2 - 2 * θ ^ 3) • y₁ + (h * (θ ^ 3 - θ ^ 2)) • f₁) + g)
+      = (θ * (1 - θ)) • ((6 / h) • (y₁ - y₀) - (4 : ℝ) • f₀ - (2 : ℝ) • f₁ - h • L f₀
+        + θ • ((2 : ℝ) • f₀ - (2 : ℝ) • f₁ + h • L f₀ + h • L f₁))
+```
+
+The truncated singular value decomposition of the companion, with the certificate
+`‖Y' - T_r(Y')‖ + β`, is never worse than the enclosure for a run of rank at most `r`:
+
+`norm_truncation_sub_le_and_le_norm_sub_add` in [`LeanDLRA/Stiff/CompanionEnclosure.lean`, lines 194–197](../LeanDLRA/Stiff/CompanionEnclosure.lean#L194-L197):
+
+```lean
+theorem norm_truncation_sub_le_and_le_norm_sub_add {Y' A B : Matrix m n ℝ} {r : ℕ} {β : ℝ}
+    (hβ : ‖Y' - A‖ ≤ β) (hB : B.rank ≤ r) :
+    ‖EckartYoung.truncation Y' r - A‖ ≤ ‖Y' - EckartYoung.truncation Y' r‖ + β ∧
+      ‖Y' - EckartYoung.truncation Y' r‖ + β ≤ ‖B - Y'‖ + β
+```
+
+A run certified through the companion at a tolerance has therefore a compressed companion of the
+same rank that is certified at that tolerance as well. What is not shown: `β` is a hypothesis;
+the statements do not say how accurate a companion has to be, and the enclosure is sharp for the
+less accurate of the two sequences only. Literature. The two-sided form is the hierarchical
+(saturation) estimator of reduced-basis and finite-element theory, in which a saturation constant
+`Θ` bounds the error of the finer solution relative to the coarser one (Hain, Ohlberger, Radic
+and Urban, arXiv 1802.03298, Proposition 3.1), with that constant replaced by a certified bound
+of the finer solution; the certified form is the triangle inequality, and error estimation by a
+second solution (reintegration) is classical for ordinary differential equations. Companions of
+higher rank are used in dynamical low-rank approximation as error indicators or for step
+rejection (Hochbruck, Neher and Schrammer, BIT 2023; [CerutiKuschLubich2024]); none of the
+sources read uses one in a certified two-sided enclosure.
 
 ## 8. Tensors
 
@@ -7220,6 +7923,124 @@ Source: Ceruti, Kusch, Lubich and Sulz, arXiv 2412.00858, Theorem 4.5, as cited 
 docstring. The theorem is derived from the projector-level theorem `parTTN_global_error_le`
 ([`LeanDLRA/Tensor/TTN/Abstract/ParallelBUG.lean`](../LeanDLRA/Tensor/TTN/Abstract/ParallelBUG.lean)),
 whose docstring cites the same theorem as [CerutiEtAl2024, Thm. 4.5].
+
+**The factor `√(s - 1)` in place of `s`.** The robust bounds above multiply the doubly normal bound
+`ε` by the number `s` of nodes. The file [`Tensor/TTN/BUGSqrtNodes.lean`](../LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean) replaces this
+factor by `√(s - 1)` for the fixed-rank BUG integrator, on the projector level for frames that
+satisfy the commutation predicate `TTNFrame.IsCoRangeCommuting`
+([`Tensor/TTN/Defs.lean`](../LeanDLRA/Tensor/TTN/Defs.lean)):
+
+`TTNFrame.IsCoRangeCommuting` in [`LeanDLRA/Tensor/TTN/Defs.lean`, lines 25–28](../LeanDLRA/Tensor/TTN/Defs.lean#L25-L28):
+
+```lean
+def TTNFrame.IsCoRangeCommuting : TTNFrame E → Prop
+  | .leaf => True
+  | .node _ _ Q₀ 𝓛 cs =>
+      ∀ i, (∀ M ∈ 𝓛 i, ∀ x, Q₀ i (M x) = M (Q₀ i x)) ∧ (cs i).IsCoRangeCommuting
+```
+
+At every inner node the admissible mode operators of every child commute with the co-range
+projector of that child. Two orthogonalities are used. At one inner node the capture defects of
+the commuting mode projectors of the updated bases add in squares
+(`norm_sub_modeProd_apply_le_sqrt`). Along a branch, the defect `(1 - P₁) A(t₁)` of a child splits
+with the co-range projector `Q₀` of that child into the part `(1 - Q₀)`, the doubly normal part of
+the field (of size `h ε`), and the part `Q₀`, the error of the subtree (of size `η`); if `P₁`
+commutes with `Q₀` the parts are orthogonal:
+
+`kstep_capture_inexact_sqrt` in [`LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean`, lines 55–62](../LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean#L55-L62):
+
+```lean
+theorem kstep_capture_inexact_sqrt (hF : IsLipschitzField F L) (hL : 0 ≤ L)
+    (hB : IsBoundedField F B) (hP₁ : IsOrthProj P₁) (hQ₀ : IsOrthProj Q₀)
+    (hPQ : ∀ x, Q₀ (P₁ x) = P₁ (Q₀ x)) (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
+    (hA : ODESolution F A t₀ t₁) (hA₀ : Q₀ (A t₀) = A t₀)
+    (hK : ODESolution (fun t x => Q₀ (F t x)) YK t₀ t₁) (hK₀ : YK t₀ = A t₀) {K₁ : E} {ηK : ℝ}
+    (hKerr : ‖K₁ - YK t₁‖ ≤ ηK) (hKcap : P₁ K₁ = K₁)
+    (hε : ∀ t ∈ Icc t₀ t₁, ‖(1 - P₁) ((1 - Q₀) (F t K₁))‖ ≤ ε) :
+    ‖(1 - P₁) (A t₁)‖ ≤ √((h * ε) ^ 2 + ηK ^ 2) + h * (4 * L * B * h + L * ηK)
+```
+
+The local error of one step and the global error are:
+
+`ttn_local_error_le_sqrt` in [`LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean`, lines 265–272](../LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean#L265-L272):
+
+```lean
+theorem ttn_local_error_le_sqrt [CompleteSpace E] (ht₁ : t₁ = t₀ + h) (hh : 0 ≤ h)
+    (hL : 0 ≤ L) (hε : 0 ≤ ε) {fr : TTNFrame E} (hfr : fr.IsCoRangeCommuting)
+    (hG : IsLipschitzField G L) (hB : IsBoundedField G B)
+    (hcont : ∀ x, Continuous fun t => G t x) {Y₀ Y₁ : E}
+    (hs : IsTTNBUGStep fr G ε t₀ t₁ Y₀ Y₁) (hA : ODESolution G A t₀ t₁) (hA₀ : A t₀ = Y₀) :
+    ‖Y₁ - A t₁‖ ≤ (Real.exp (L * h) * (1 + L * h)) ^ fr.height *
+      (√((fr.size : ℝ) - 1) * (h * ε) + fr.size * ((Real.exp (L * h) - 1) * (B * h)) +
+        ((fr.size : ℝ) - 1) * (h * (4 * L * B * h)))
+```
+
+`ttn_global_error_le_sqrt` in [`LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean`, lines 420–430](../LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean#L420-L430):
+
+```lean
+theorem ttn_global_error_le_sqrt [CompleteSpace E] (hF : IsLipschitzField F L) (hL : 0 ≤ L)
+    (hB : IsBoundedField F B) (hcont : ∀ x, Continuous fun t => F t x) (hε : 0 ≤ ε)
+    {t₀ h : ℝ} (hh : 0 ≤ h) {N : ℕ} {A : ℝ → E} (hA : ODESolution F A t₀ (t₀ + N * h))
+    {fr : ℕ → TTNFrame E} {Y : ℕ → E} {s ℓ : ℕ} (hfr : ∀ n < N, (fr n).IsCoRangeCommuting)
+    (hsize : ∀ n < N, (fr n).size ≤ s) (hheight : ∀ n < N, (fr n).height ≤ ℓ)
+    (hLh : 2 * L * h * ℓ ≤ 1)
+    (hstep : ∀ n < N, IsTTNBUGStep (fr n) F ε (t₀ + n * h) (t₀ + (n + 1) * h) (Y n) (Y (n + 1)))
+    {δ T : ℝ} (hδ : ‖Y 0 - A t₀‖ ≤ δ) :
+    ∀ n ≤ N, (n : ℝ) * h ≤ T →
+      ‖Y n - A (t₀ + n * h)‖ ≤
+        Real.exp (L * T) * (δ + T * (3 * (√((s : ℝ) - 1) * ε + 6 * s * L * B * h)))
+```
+
+`fr.size` is the number of nodes, `fr.height` the height, `κ = e^{L h}(1 + L h)` is the factor
+per level, and `ttn_local_error_le_sqrt_size` gives `3 h (√(s - 1) ε + 6 s L B h)` for one step
+if `2 L h · height ≤ 1`. The `h`-term keeps the factor `s`. On tensors the commutation holds for
+every basis frame (`DimTree.BasisFrame.isCoRangeCommuting_toTTNFrame`): the projector of a child
+acts on the modes of its subtree and its co-range projector on the other modes. So for a valid
+dimension tree `τ` with `τ.nodeCount` nodes:
+
+`DimTree.BasisFrame.bug_global_error_sqrt` in [`LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean`, lines 592–602](../LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean#L592-L602):
+
+```lean
+theorem bug_global_error_sqrt {τ : DimTree κ} (hv : τ.IsValid) {F : ℝ → Tensor ι → Tensor ι}
+    {L B ε : ℝ} (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)
+    (hcont : ∀ x, Continuous fun t => F t x) (hε : 0 ≤ ε)
+    {t₀ h : ℝ} (hh : 0 ≤ h) (hLh : 2 * L * h * τ.treeHeight ≤ 1) {N : ℕ}
+    {A : ℝ → Tensor ι} (hA : ODESolution F A t₀ (t₀ + N * h)) {f : ℕ → BasisFrame ι τ}
+    {Y : ℕ → Tensor ι}
+    (hstep : ∀ n < N, (f n).IsBUGStep F ε (t₀ + n * h) (t₀ + (n + 1) * h) (Y n) (Y (n + 1)))
+    {δ T : ℝ} (hδ : ‖Y 0 - A t₀‖ ≤ δ) :
+    ∀ n ≤ N, (n : ℝ) * h ≤ T →
+      ‖Y n - A (t₀ + n * h)‖ ≤ Real.exp (L * T) *
+        (δ + T * (3 * (√((τ.nodeCount : ℝ) - 1) * ε + 6 * τ.nodeCount * L * B * h)))
+```
+
+The factor of `ε` cannot be lowered in the local error. For a star with `m` leaves
+(`SqrtNodesExample.starFrame_size`: `m + 1` nodes), orthonormal directions `n i` orthogonal to
+`Y₀` and the constant field `ε ∑ᵢ nᵢ`, the step of the fixed-rank BUG integrator on the star
+frame stays at `Y₀` (`SqrtNodesExample.isTTNBUGStep_starFrame`), while the exact solution has
+moved by
+
+`SqrtNodesExample.norm_sub_starFrame_exact` in [`LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean`, lines 545–546](../LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean#L545-L546):
+
+```lean
+theorem norm_sub_starFrame_exact (hn : Orthonormal ℝ n) (Y₀ : E) {ε h : ℝ} (hε : 0 ≤ ε)
+    (hh : 0 ≤ h) : ‖Y₀ - (Y₀ + h • ε • ∑ i, n i)‖ = √(m : ℝ) * (h * ε)
+```
+
+that is, `√(s - 1) h ε` with `s = m + 1`. What is not shown: the square root is for the
+`ε`-term of the fixed-rank integrator; the rank-adaptive and the parallel integrators keep the
+factor `s`, and the bound for `ε` summed over the nodes with the node-resolved values
+`h √(∑ ε_v²)` is not in the core. The sharpness is shown for the abstract frame, not for tensors.
+
+Literature. The published bounds for tree tensor networks state that their constants depend on
+the tree and on the bounds of the field (Ceruti, Lubich and Walach, [CerutiLubichWalach2021],
+Theorem 6.1; [CerutiLubichSulz2023], Theorem 5.1); the dependence on the tree is not made
+explicit there. A square root of the number of matricizations is the quasi-optimality constant of
+hierarchical singular value truncation (Bachmayr and Dahmen, [BachmayrDahmen2013], Remark 5,
+(45): `κ_P = √m` for the Tucker format and `√(2m - 3)` for the hierarchical format;
+Kieri and Vandereycken [KieriVandereycken2019] for the tensor train singular value decomposition,
+`C_R = √(d - 1)`). The factor of `ε` in the local error of the BUG step is `√(s - 1)`, of the same
+order as this constant; the files do not claim an independence of the tree.
 
 ## 9. Kinetic equations: vocabulary
 
