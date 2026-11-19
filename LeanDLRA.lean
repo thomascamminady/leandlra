@@ -142,6 +142,7 @@ import LeanDLRA.Randomized.ObliqueBUG
 import LeanDLRA.Randomized.RandomizedBUG
 import LeanDLRA.Research.AugmentationRank
 import LeanDLRA.Research.DataDrivenErrorRecursion
+import LeanDLRA.Research.DynamicRecompression
 import LeanDLRA.Research.ExplicitMidpointCapture
 import LeanDLRA.Research.ExplicitMidpointGalerkin
 import LeanDLRA.Research.ExplicitMidpointRun
@@ -152,6 +153,7 @@ import LeanDLRA.Research.FederatedThreeSteps
 import LeanDLRA.Research.FederatedTwoSteps
 import LeanDLRA.Research.ImplicitBUGEnergyProjection
 import LeanDLRA.Research.ImplicitBUGRationalKrylov
+import LeanDLRA.Research.ImplicitBUGRunEnergy
 import LeanDLRA.Research.ImplicitBUGSmoothRows
 import LeanDLRA.Research.ImplicitBUGStiffAugmented
 import LeanDLRA.Research.ImplicitBUGStiffColumnAngle
