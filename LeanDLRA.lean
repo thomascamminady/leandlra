@@ -190,6 +190,7 @@ import LeanDLRA.Research.TwoSidedPadded
 import LeanDLRA.Stability.Conservation
 import LeanDLRA.Stability.Energy
 import LeanDLRA.Stability.NormBalance
+import LeanDLRA.Stiff.CompanionEnclosure
 import LeanDLRA.Stiff.CouplingLocalError
 import LeanDLRA.Stiff.Defs
 import LeanDLRA.Stiff.DualWeightedResidual
