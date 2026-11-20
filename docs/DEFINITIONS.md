@@ -10,7 +10,7 @@ definitions relate to each other is the subject of [CONCEPTS.md](CONCEPTS.md). F
 structures, instances and notations are not listed; they are in the file of their
 structure or type.
 
-The core has 260 modules with 590 definitions (0 of them without a docstring) and 87 private definitions, which are helpers of one file and are not listed.
+The core has 264 modules with 632 definitions (0 of them without a docstring) and 87 private definitions, which are helpers of one file and are not listed.
 
 ## Numbers by folder
 
@@ -33,7 +33,7 @@ The core has 260 modules with 590 definitions (0 of them without a docstring) an
 | `LinearAlgebra/SVD` | 1 | 6 | 0 |
 | `Matrix` | 3 | 16 | 0 |
 | `Randomized` | 3 | 18 | 0 |
-| `Research` | 17 | 135 | 0 |
+| `Research` | 20 | 177 | 0 |
 | `Stability` | 2 | 13 | 0 |
 | `Stiff` | 4 | 27 | 0 |
 | `Stochastic` | 1 | 2 | 0 |
@@ -438,6 +438,17 @@ The core has 260 modules with 590 definitions (0 of them without a docstring) an
 | `LeanDLRA.InformationLowerBoundExample.dirW` | def | [Research/InformationLowerBound.lean:239](../LeanDLRA/Research/InformationLowerBound.lean#L239) | The direction `e₁ e₁ᵀ` of the perturbation. |
 | `LeanDLRA.InformationLowerBoundExample.pairField` | def | [Research/InformationLowerBound.lean:242](../LeanDLRA/Research/InformationLowerBound.lean#L242) | The field `F_c(t, Z) = e₂e₂ᵀ + c dist(Z, M_{≤ 1}) e₁e₁ᵀ`. |
 | `LeanDLRA.InformationLowerBoundExample.pairSol` | def | [Research/InformationLowerBound.lean:247](../LeanDLRA/Research/InformationLowerBound.lean#L247) | The curve `A_c(t) = diag(a + c t²/2, t)`. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.frameB` | def | [Research/InformationLowerBoundGeneral.lean:118](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L118) | The direction `B = u_{k+1} v_{k+1}ᵀ` of the common field. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.frameW` | def | [Research/InformationLowerBoundGeneral.lean:123](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L123) | The direction `W = u₁ v₁ᵀ` of the perturbation. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.frameStart` | def | [Research/InformationLowerBoundGeneral.lean:128](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L128) | The start `A₀ = a (u₁ v₁ᵀ + ⋯ + u_k v_kᵀ)`. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.frameCurve` | def | [Research/InformationLowerBoundGeneral.lean:133](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L133) | The matrix `A₀ + s W + y B = U diag(a + s, a, …, a, y) Vᵀ`. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.frameSol` | def | [Research/InformationLowerBoundGeneral.lean:138](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L138) | The curve `A_c(t) = A₀ + (c t²/2) W + t B`. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.frameDiag` | def | [Research/InformationLowerBoundGeneral.lean:143](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L143) | The diagonal `(a + s, a, …, a, y)` of `frameCurve`. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.frameField` | def | [Research/InformationLowerBoundGeneral.lean:206](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L206) | The field `F_c(t, Z) = B + c dist(Z, M_{≤ k}) W`. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.dissY` | def | [Research/InformationLowerBoundGeneral.lean:402](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L402) | `y(t) = (1 - e^{-μ t}) / μ`, the distance of the dissipative solutions to `M_{≤ k}`. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.dissZ` | def | [Research/InformationLowerBoundGeneral.lean:405](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L405) | `z_c(t) = c (1 - e^{-μ t} - μ t e^{-μ t}) / μ²`. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.dissField` | def | [Research/InformationLowerBoundGeneral.lean:409](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L409) | The field `F_c(t, Z) = μ A₀ + B - μ Z + c dist(Z, M_{≤ k}) W`. |
+| `LeanDLRA.InformationLowerBoundGeneralExample.dissSol` | def | [Research/InformationLowerBoundGeneral.lean:414](../LeanDLRA/Research/InformationLowerBoundGeneral.lean#L414) | The curve `A_c(t) = A₀ + z_c(t) W + y(t) B`. |
 | `LeanDLRA.ErrorOrder.StepData` | structure | [Research/IntegratorErrorOrder.lean:316](../LeanDLRA/Research/IntegratorErrorOrder.lean#L316) | The data of one step of the four integrators for a state-independent field: the old and new values `A₀ = A(t₀)`, `A₁ = A(t₁)`, the old projectors `P₀`, `Q₀`, the new BUG/KSL projectors `P₁` (from the K-step) and `Q₁` (from the L-step), and the augmented projectors `Pa`, `Qa`. |
 | `LeanDLRA.ErrorOrder.StepData.ksl` | def | [Research/IntegratorErrorOrder.lean:339](../LeanDLRA/Research/IntegratorErrorOrder.lean#L339) | Output of the KSL (projector-splitting) step: `P₁ A₁` (`Exactness.ksl_eq_abstract`). |
 | `LeanDLRA.ErrorOrder.StepData.lsk` | def | [Research/IntegratorErrorOrder.lean:342](../LeanDLRA/Research/IntegratorErrorOrder.lean#L342) | Output of the LSK step (L-step first): `Q₁ A₁` (`lsk_eq`). |
@@ -456,6 +467,18 @@ The core has 260 modules with 590 definitions (0 of them without a docstring) an
 | `LeanDLRA.ErrorOrder.Examples.G₁` | def | [Research/IntegratorErrorOrder.lean:555](../LeanDLRA/Research/IntegratorErrorOrder.lean#L555) | The new right projector `V₁V₁ᵀ = v vᵀ / 101`, `v = (10, 1, 0)`, of example 3. |
 | `LeanDLRA.ErrorOrder.Examples.F₁₂` | def | [Research/IntegratorErrorOrder.lean:559](../LeanDLRA/Research/IntegratorErrorOrder.lean#L559) | The augmented right projector onto `span(e₁, e₂) ⊂ ℝ³` of example 3. |
 | `LeanDLRA.ErrorOrder.Examples.ex₃` | def | [Research/IntegratorErrorOrder.lean:563](../LeanDLRA/Research/IntegratorErrorOrder.lean#L563) | **Example 3** (`2 × 3`): `Y₀ = e₁e₁ᵀ`, `A₁ = [[1, 1/10, 0], [1, 0, 1]]`. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.loopNormal` | def | [Research/ObliqueProjectorLowerBound.lean:65](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L65) | The unit normal `u⊥(θ) e₂ᵀ` of `M_1` at `u(θ) e₁ᵀ`. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.loopSide` | def | [Research/ObliqueProjectorLowerBound.lean:69](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L69) | The tangent direction `u(θ) e₂ᵀ` at `u(θ) e₁ᵀ`. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.kerDir` | def | [Research/ObliqueProjectorLowerBound.lean:193](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L193) | The kernel direction `q(θ) = N(θ) - Π(Y(θ)) N(θ)` of the projector at `Y(θ) = u(θ) e₁ᵀ`. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.feedRate` | def | [Research/ObliqueProjectorLowerBound.lean:197](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L197) | The rate `f(θ) = ⟪B(θ), q(θ)⟫` at which the method feeds the tangential error back. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.feedInt` | def | [Research/ObliqueProjectorLowerBound.lean:200](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L200) | `F(x) = ∫₀ˣ f`. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.feedPer` | def | [Research/ObliqueProjectorLowerBound.lean:203](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L203) | The periodic part `p(x) = F(x) - x F(2π) / (2π)` of `F`. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.gain` | def | [Research/ObliqueProjectorLowerBound.lean:206](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L206) | The exponent `G(t) = F(θ₀ + s t) - F(θ₀)`. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.tanErr` | def | [Research/ObliqueProjectorLowerBound.lean:209](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L209) | The tangential error `β(t) = ε e^{G(t)} ∫₀ᵗ e^{-G(r)} dr`. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.restRate` | def | [Research/ObliqueProjectorLowerBound.lean:213](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L213) | The rate `s β(r) (q - f B - N)(θ₀ + s r)` of the remaining part of the error. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.advData` | def | [Research/ObliqueProjectorLowerBound.lean:218](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L218) | The data `A(t) = Y(θ₀ + s t) + β(t) B(θ₀ + s t) + s ε N(θ₀ + s t) + ∫₀ᵗ restRate`. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.advDeriv` | def | [Research/ObliqueProjectorLowerBound.lean:223](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L223) | The velocity of the data, `s u⊥ e₁ᵀ + s β q`. |
+| `LeanDLRA.ObliqueProjectorLowerBoundExample.tangentObliqueProj` | def | [Research/ObliqueProjectorLowerBound.lean:522](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean#L522) | The method `Π_κ(Y) a = a - ⟪N(Y), a⟫ (N(Y) + κ B(Y))` with `N(Y) = [[0, -Y₁₀], [0, Y₀₀]]` and `B(Y) = [[0, Y₀₀], [0, Y₁₀]]`. |
 | `LeanDLRA.AugmentationRank.Examples.pertDir` | def | [Research/PerturbedSylvester.lean:602](../LeanDLRA/Research/PerturbedSylvester.lean#L602) | The direction `E₃₂` of the perturbation. |
 | `LeanDLRA.AugmentationRank.Examples.pertMap` | def | [Research/PerturbedSylvester.lean:606](../LeanDLRA/Research/PerturbedSylvester.lean#L606) | The perturbation `G(Y) = Y₁₁ E₃₂`: Lipschitz with constant `‖E₃₂‖`, not constant, and nonzero at `Y₀ = e₁ e₁ᵀ`. |
 | `LeanDLRA.AugmentationRank.Examples.pertField` | def | [Research/PerturbedSylvester.lean:611](../LeanDLRA/Research/PerturbedSylvester.lean#L611) | The field `F(Y) = E₂₁ Y + Y E₁₂ + Y₁₁ E₃₂`: `sylField` with the perturbation `pertMap`. |
@@ -486,6 +509,25 @@ The core has 260 modules with 590 definitions (0 of them without a docstring) an
 | `LeanDLRA.StochasticDescent.SameBatchExample.Pd` | def | [Research/SameMinibatchAugmentation.lean:336](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L336) | The projector onto `span{e₁, (e₂ + e₃)/√2}`. |
 | `LeanDLRA.StochasticDescent.SameBatchExample.loss` | def | [Research/SameMinibatchAugmentation.lean:459](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L459) | The quadratic loss `ℒ(W) = ½ ‖W - W₀ + G‖²` (identity Hessian, `β = 1`). |
 | `LeanDLRA.StochasticDescent.SameBatchExample.grad` | def | [Research/SameMinibatchAugmentation.lean:462](../LeanDLRA/Research/SameMinibatchAugmentation.lean#L462) | Its gradient `∇ℒ(W) = W - W₀ + G`. |
+| `LeanDLRA.StationaryDominationExample.exA` | def | [Research/StationaryDomination.lean:343](../LeanDLRA/Research/StationaryDomination.lean#L343) | The stacked vector `[1; 1]`. |
+| `LeanDLRA.StationaryDominationExample.exB` | def | [Research/StationaryDomination.lean:346](../LeanDLRA/Research/StationaryDomination.lean#L346) | The stacked vector `[1; -1]`. |
+| `LeanDLRA.StationaryDominationExample.exW₀` | def | [Research/StationaryDomination.lean:349](../LeanDLRA/Research/StationaryDomination.lean#L349) | The stacked factor `W₀ = [3 exA, 0]` of the start. |
+| `LeanDLRA.StationaryDominationExample.exWh` | def | [Research/StationaryDomination.lean:352](../LeanDLRA/Research/StationaryDomination.lean#L352) | The stacked factor `Ŵ₁ = [exA, exB / 2]` of the first step. |
+| `LeanDLRA.StationaryDominationExample.exW₁` | def | [Research/StationaryDomination.lean:355](../LeanDLRA/Research/StationaryDomination.lean#L355) | The truncated stacked factor `W₁ = [exA, 0]`. |
+| `LeanDLRA.StationaryDominationExample.exWf` | def | [Research/StationaryDomination.lean:358](../LeanDLRA/Research/StationaryDomination.lean#L358) | The stacked factor `[G; H] = (3/4) exB` of the forcing. |
+| `LeanDLRA.StationaryDominationExample.exZ` | def | [Research/StationaryDomination.lean:361](../LeanDLRA/Research/StationaryDomination.lean#L361) | The truncation `Z = diag(1, 0)`, the projector onto the first column. |
+| `LeanDLRA.StationaryDominationExample.exX` | def | [Research/StationaryDomination.lean:474](../LeanDLRA/Research/StationaryDomination.lean#L474) | The lifted backward Euler run of the examples: `exW₀ exW₀ᵀ`, then `exWh exWhᵀ`. |
+| `LeanDLRA.StationaryDominationExample.exW` | def | [Research/StationaryDomination.lean:478](../LeanDLRA/Research/StationaryDomination.lean#L478) | The stacked factors of the truncated run of the examples: `exW₀`, then `exW₁`. |
+| `LeanDLRA.StationaryDominationExample.exF₀` | def | [Research/StationaryDomination.lean:481](../LeanDLRA/Research/StationaryDomination.lean#L481) | The right-hand side `t W₀ W₀ᵀ + t⁻¹ (P W₀)(P W₀)ᵀ` with `P = 1` and `t = 1`. |
+| `LeanDLRA.StationaryDominationExample.exS` | def | [Research/StationaryDomination.lean:485](../LeanDLRA/Research/StationaryDomination.lean#L485) | The stationary solution `S = W₀ W₀ᵀ + Wf Wfᵀ / 2` of `S + S = F₀ + Wf Wfᵀ`. |
+| `LeanDLRA.StationaryDominationExample.exP₃` | def | [Research/StationaryDomination.lean:668](../LeanDLRA/Research/StationaryDomination.lean#L668) | The diagonal operator `diag(1, 2, 3)`. |
+| `LeanDLRA.StationaryDominationExample.exV₃` | def | [Research/StationaryDomination.lean:671](../LeanDLRA/Research/StationaryDomination.lean#L671) | The start factor `[1; 1; 1]`. |
+| `LeanDLRA.StationaryDominationExample.exU₃` | def | [Research/StationaryDomination.lean:674](../LeanDLRA/Research/StationaryDomination.lean#L674) | The forcing factor `[0; 0; 1]`. |
+| `LeanDLRA.StationaryDominationExample.exS₃` | def | [Research/StationaryDomination.lean:677](../LeanDLRA/Research/StationaryDomination.lean#L677) | The stationary solution for `P = diag(1, 2, 3)`, `t = 2`, `W₀ = [1; 1; 1]`, `Wf = [0; 0; 1]`. |
+| `LeanDLRA.StationaryDominationExample.exP₂` | def | [Research/StationaryDomination.lean:755](../LeanDLRA/Research/StationaryDomination.lean#L755) | The diagonal operator `diag(1, 2)`. |
+| `LeanDLRA.StationaryDominationExample.exF₂` | def | [Research/StationaryDomination.lean:758](../LeanDLRA/Research/StationaryDomination.lean#L758) | The forcing `[[1, 1], [1, -1]]`, neither positive nor negative semidefinite. |
+| `LeanDLRA.StationaryDominationExample.exG₂` | def | [Research/StationaryDomination.lean:761](../LeanDLRA/Research/StationaryDomination.lean#L761) | A factor of `F₀ = 2 diag(1, 2) - F`. |
+| `LeanDLRA.StationaryDominationExample.exX₂` | def | [Research/StationaryDomination.lean:765](../LeanDLRA/Research/StationaryDomination.lean#L765) | The backward Euler run from `0` with step size `1` for `P = diag(1, 2)` and the forcing `exF₂`: `0`, then `[[1/3, 1/4], [1/4, -1/5]]`. |
 | `LeanDLRA.StiffCouplingExample.E₂₂` | def | [Research/StiffEnergyGalerkin.lean:265](../LeanDLRA/Research/StiffEnergyGalerkin.lean#L265) | The unit matrix `E₂₂` in the stiff column, outside the Galerkin space of `step`. |
 | `LeanDLRA.StiffCouplingExample.decaySol` | def | [Research/StiffEnergyGalerkin.lean:269](../LeanDLRA/Research/StiffEnergyGalerkin.lean#L269) | The exact solution `A(t) = Y₀ + t D + e^{-λ t} E₂₂` of the field of the example, which starts off the start value of `step` and decays in the stiff direction. |
 | `LeanDLRA.StiffGlobalCycle.N` | def | [Research/StiffGlobalCycle.lean:70](../LeanDLRA/Research/StiffGlobalCycle.lean#L70) | The stiff operator `N = -diag(0, λ)`. |

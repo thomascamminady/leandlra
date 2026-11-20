@@ -341,14 +341,18 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Research/ImplicitBUGWeightedRows`](../../LeanDLRA/Research/ImplicitBUGWeightedRows.lean) | The implicit BUG integrator with a stiff row operator: a weighted Lyapunov functional | 14 | [2610.18419](https://arxiv.org/abs/2610.18419) |
 | [`Research/ImplicitMidpointBUGStiff`](../../LeanDLRA/Research/ImplicitMidpointBUGStiff.lean) | Implicit midpoint Galerkin steps for a stiff row operator: run bounds with the factor one | 12 |  |
 | [`Research/InformationLowerBound`](../../LeanDLRA/Research/InformationLowerBound.lean) | A lower bound for methods that evaluate the field on low-rank matrices only | 25 |  |
+| [`Research/InformationLowerBoundGeneral`](../../LeanDLRA/Research/InformationLowerBoundGeneral.lean) | The two-field lower bound for low-rank information in every dimension and rank | 53 |  |
 | [`Research/IntegratorErrorOrder`](../../LeanDLRA/Research/IntegratorErrorOrder.lean) | An error partial order of KSL, BUG, augmented BUG and parallel BUG | 53 |  |
 | [`Research/LoewnerRank`](../../LeanDLRA/Research/LoewnerRank.lean) | Ranks of truncated backward Euler runs through the Loewner order | 12 | [1304.7796](https://arxiv.org/abs/1304.7796) |
+| [`Research/ObliqueProjectorLowerBound`](../../LeanDLRA/Research/ObliqueProjectorLowerBound.lean) | Oblique tangent projectors on `2 × 2` rank-one states: error `2π k ε` at normal component `ε` | 50 |  |
 | [`Research/PerturbedSylvester`](../../LeanDLRA/Research/PerturbedSylvester.lean) | The rank-adaptive BUG step for a Sylvester field with a Lipschitz perturbation | 40 |  |
+| [`Research/PlainTruncationRank`](../../LeanDLRA/Research/PlainTruncationRank.lean) | Ranks of the truncated backward Euler run against the untruncated run | 28 |  |
 | [`Research/RankInformationUpperBound`](../../LeanDLRA/Research/RankInformationUpperBound.lean) | An upper bound for a method that evaluates the field on low-rank matrices only | 10 |  |
 | [`Research/RankOneGalerkinBarrier`](../../LeanDLRA/Research/RankOneGalerkinBarrier.lean) | No Galerkin step in a fixed rank-one space is of second order | 13 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.08607](https://arxiv.org/abs/2402.08607) |
 | [`Research/RankStatePrice`](../../LeanDLRA/Research/RankStatePrice.lean) | The loss of a state of rank `r` along a turning frame, and buffer modes | 13 |  |
 | [`Research/SameMinibatchAugmentation`](../../LeanDLRA/Research/SameMinibatchAugmentation.lean) | Stochastic descent of DLRT: same-minibatch augmentation (draft) | 76 | [2410.18720](https://arxiv.org/abs/2410.18720) |
 | [`Research/StackedTruncation`](../../LeanDLRA/Research/StackedTruncation.lean) | Ranks of a rectangular low-rank backward Euler scheme with stacked-factor truncation | 13 |  |
+| [`Research/StationaryDomination`](../../LeanDLRA/Research/StationaryDomination.lean) | Domination of backward Euler runs by a stationary solution, and ranks free of the step count | 54 | [1407.6208](https://arxiv.org/abs/1407.6208) |
 | [`Research/StiffEnergyGalerkin`](../../LeanDLRA/Research/StiffEnergyGalerkin.lean) | Stiff problems: an energy bound for the Galerkin step without coupling numbers | 10 |  |
 | [`Research/StiffGlobalCycle`](../../LeanDLRA/Research/StiffGlobalCycle.lean) | No stiffness-uniform global bound for the rank-adaptive BUG integrator when the forcing may | 35 |  |
 | [`Research/StiffGlobalVariation`](../../LeanDLRA/Research/StiffGlobalVariation.lean) | The global error of the rank-adaptive BUG integrator grows with the variation of the forcing | 4 |  |
