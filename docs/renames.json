@@ -254,5 +254,12 @@
   "LeanDLRA.Literature.P2609_02721.FaceCoeff.Admissible.mk": "LeanDLRA.Literature.P2609_02721.FaceCoeff.IsDissipativeDivFree.mk",
   "LeanDLRA.Literature.P2609_02721.FaceCoeff.Admissible": "LeanDLRA.Literature.P2609_02721.FaceCoeff.IsDissipativeDivFree",
   "LeanDLRA.Literature.P2609_02721.FaceCoeff.Admissible.div_free": "LeanDLRA.Literature.P2609_02721.FaceCoeff.IsDissipativeDivFree.div_free",
-  "LeanDLRA.Literature.P2112_02695.maxwellian": "LeanDLRA.Kinetic.maxwellian"
+  "LeanDLRA.Literature.P2112_02695.maxwellian": "LeanDLRA.Kinetic.maxwellian",
+  "LeanDLRA.PlainTruncationRank.distLR_zero": "LeanDLRA.distLR_zero",
+  "LeanDLRA.PlainTruncationRank.epsRank_eq_zero_iff": "LeanDLRA.epsRank_eq_zero_iff",
+  "LeanDLRA.PlainTruncationRank.norm_sq_diagonal": "LeanDLRA.norm_sq_diagonal",
+  "LeanDLRA.PlainTruncationRank.norm_mul_diagonal_le": "LeanDLRA.norm_mul_diagonal_le",
+  "LeanDLRA.PlainTruncationRank.distLR_mul_diagonal_le": "LeanDLRA.distLR_mul_diagonal_le",
+  "LeanDLRA.PlainTruncationRank.distLR_diagonal_le_of_abs_le": "LeanDLRA.distLR_diagonal_le_of_abs_le",
+  "LeanDLRA.PlainTruncationRank.epsRank_diagonal_le_of_abs_le": "LeanDLRA.epsRank_diagonal_le_of_abs_le"
 }

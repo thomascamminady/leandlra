@@ -19,9 +19,11 @@ become small.
 ## Main results
 
 * **Basic facts.** `distLR_le_add`, `lipschitzWith_distLR` (`1`-Lipschitz), `distLR_antitone`
-  (monotone in the rank), `le_distLR_of_le_mulVec` (lower bound `c` when `‖A x‖ ≥ c ‖x‖`, a
-  singular-value-free form of `σ_min`), `le_distLR_diagonal`.
-* **OP-RA-03 (rank tracking).** `epsRank ε X = min {k : dist(X, M_{≤ k}) ≤ ε}` and the sandwich
+  (monotone in the rank), `distLR_zero` (`dist(X, M_{≤ 0}) = ‖X‖`), `le_distLR_of_le_mulVec`
+  (lower bound `c` when `‖A x‖ ≥ c ‖x‖`, a singular-value-free form of `σ_min`),
+  `le_distLR_diagonal`.
+* **OP-RA-03 (rank tracking).** `epsRank ε X = min {k : dist(X, M_{≤ k}) ≤ ε}`, zero exactly
+  when `‖X‖ ≤ ε` (`epsRank_eq_zero_iff`), and the sandwich
   `epsRank_sandwich`: `‖X - Y‖ ≤ e ≤ ε ⇒ rank_{ε+e}(Y) ≤ rank_ε(X) ≤ rank_{ε-e}(Y)`; exact rank
   identification near a rank-`(k+1)` target (`epsRank_eq_of_norm_sub_le`, FeDLRT
   [SchotthoferEtAl2025]); geometric convergence to a rank-one equilibrium
@@ -57,6 +59,11 @@ become small.
   set, `isCompact_stiefel`), `distLR_eq_zero_iff`, `distLR_pos_iff`, `exists_best_approx`
   (existence part of Eckart–Young without SVD), `epsRank_le_iff_exists` (`rank_ε(X)` is the
   smallest rank within distance `ε`), `exists_epsRank_approx`, `epsRank_zero`.
+* **Diagonal matrices.** `norm_sq_diagonal` (`‖diag d‖² = ∑ d_i²`); right multiplication by a
+  diagonal matrix with entries in `[-1, 1]` decreases the norm and every distance to `M_{≤ r}`
+  (`norm_mul_diagonal_le`, `distLR_mul_diagonal_le`); entrywise domination `|y_i| ≤ |x_i|`
+  orders the distances and the `ε`-ranks of `diag y` and `diag x`
+  (`distLR_diagonal_le_of_abs_le`, `epsRank_diagonal_le_of_abs_le`).
 * **Fixed-rank truncated augmented BUG.**  `fixedRank_global_error_le`,
   `fixedRank_global_error_le'`: augment, Galerkin step, truncate back to rank `r` with any
   `κ`-quasi-best truncation; the global error is `O(δ + ε + h)` with no tolerance term and no
@@ -165,6 +172,18 @@ lemma distLR_eq_zero_of_card_width_le (h : Fintype.card n ≤ r) : distLR r X = 
 lemma distLR_eq_zero_of_card_height_le (h : Fintype.card m ≤ r) : distLR r X = 0 :=
   distLR_eq_zero_of_rank_le (X.rank_le_card_height.trans h)
 
+/-- The distance to the matrices of rank zero is the norm. -/
+theorem distLR_zero (X : Matrix m n ℝ) : distLR 0 X = ‖X‖ := by
+  classical
+  refine le_antisymm distLR_le_norm (le_distLR_iff.mpr fun Z hZ => ?_)
+  have h0 : Z.rank = 0 := Nat.le_zero.mp hZ
+  rw [Matrix.rank, Submodule.finrank_eq_zero, LinearMap.range_eq_bot] at h0
+  have hZ0 : Z = 0 := by
+    ext i j
+    have := congrArg (fun g => g (Pi.single j 1) i) h0
+    simpa [Matrix.mulVec_single] using this
+  rw [hZ0, sub_zero]
+
 end Basic
 
 /-! ### The `ε`-rank and the rank-tracking sandwich (OP-RA-03) -/
@@ -188,6 +207,11 @@ theorem lt_distLR_of_lt_epsRank (h : k < epsRank ε X) : ε < distLR k X :=
 
 theorem epsRank_le_iff (hε : 0 ≤ ε) : epsRank ε X ≤ k ↔ distLR k X ≤ ε :=
   ⟨fun h => (distLR_antitone h).trans (distLR_epsRank_le hε), epsRank_le_of_distLR_le⟩
+
+/-- The `ε`-rank vanishes exactly when the norm is at most `ε`. -/
+theorem epsRank_eq_zero_iff {ε : ℝ} (hε : 0 ≤ ε) {X : Matrix m n ℝ} :
+    epsRank ε X = 0 ↔ ‖X‖ ≤ ε := by
+  rw [← Nat.le_zero, epsRank_le_iff hε, distLR_zero]
 
 /-- The `ε`-rank never exceeds the rank. -/
 theorem epsRank_le_rank (hε : 0 ≤ ε) : epsRank ε X ≤ X.rank :=
@@ -435,6 +459,95 @@ theorem epsRank_zero : epsRank 0 X = X.rank :=
     (distLR_eq_zero_iff.1 (le_antisymm (distLR_epsRank_le le_rfl) distLR_nonneg))
 
 end Closed
+
+/-! ### Diagonal matrices: norms and entrywise domination -/
+
+section Diagonal
+
+open Matrix
+
+variable {m n : Type*} [Fintype m] [Fintype n]
+
+/-- The squared Frobenius norm of a diagonal matrix. -/
+theorem norm_sq_diagonal [DecidableEq n] (d : n → ℝ) :
+    ‖(diagonal d : Matrix n n ℝ)‖ ^ 2 = ∑ i, d i ^ 2 := by
+  rw [Frobenius.norm_sq_eq_sum]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [Finset.sum_eq_single i]
+  · simp
+  · intro j _ hji
+    simp [Matrix.diagonal_apply_ne _ hji.symm]
+  · simp
+
+/-- Right multiplication by a diagonal matrix with entries in `[-1, 1]` does not increase the
+Frobenius norm. -/
+theorem norm_mul_diagonal_le [DecidableEq n] (M : Matrix m n ℝ) {c : n → ℝ}
+    (hc : ∀ j, |c j| ≤ 1) : ‖M * diagonal c‖ ≤ ‖M‖ := by
+  refine (pow_le_pow_iff_left₀ (norm_nonneg _) (norm_nonneg _) two_ne_zero).mp ?_
+  rw [Frobenius.norm_sq_eq_sum, Frobenius.norm_sq_eq_sum]
+  refine Finset.sum_le_sum fun i _ => Finset.sum_le_sum fun j _ => ?_
+  rw [Matrix.mul_diagonal, mul_pow]
+  have h1 : c j ^ 2 ≤ 1 := by
+    rw [← sq_abs]
+    exact pow_le_one₀ (abs_nonneg _) (hc j)
+  nlinarith [sq_nonneg (M i j)]
+
+/-- Right multiplication by a diagonal matrix with entries in `[-1, 1]` does not increase the
+distance to the matrices of rank at most `r`. -/
+theorem distLR_mul_diagonal_le [DecidableEq n] (M : Matrix m n ℝ) {c : n → ℝ}
+    (hc : ∀ j, |c j| ≤ 1) (r : ℕ) : distLR r (M * diagonal c) ≤ distLR r M := by
+  obtain ⟨Z, hZ, hZd⟩ := exists_best_approx r M
+  calc distLR r (M * diagonal c) ≤ ‖M * diagonal c - Z * diagonal c‖ :=
+        distLR_le_norm_sub ((Matrix.rank_mul_le_left _ _).trans hZ)
+    _ = ‖(M - Z) * diagonal c‖ := by rw [Matrix.sub_mul]
+    _ ≤ ‖M - Z‖ := norm_mul_diagonal_le _ hc
+    _ = distLR r M := hZd
+
+/-- **Entrywise domination of diagonal matrices.** If `|y i| ≤ |x i|` for all `i`, every
+low-rank distance of `diag y` is at most that of `diag x`. -/
+theorem distLR_diagonal_le_of_abs_le [DecidableEq n] {x y : n → ℝ} (hxy : ∀ i, |y i| ≤ |x i|)
+    (r : ℕ) : distLR r (diagonal y : Matrix n n ℝ) ≤ distLR r (diagonal x) := by
+  have hc : ∀ i, |y i / x i| ≤ 1 := fun i => by
+    rw [abs_div]
+    exact div_le_one_of_le₀ (hxy i) (abs_nonneg _)
+  have hy : (diagonal y : Matrix n n ℝ) = diagonal x * diagonal fun i => y i / x i := by
+    rw [Matrix.diagonal_mul_diagonal]
+    congr 1
+    funext i
+    by_cases hx : x i = 0
+    · have h0 : |y i| ≤ 0 := by simpa [hx] using hxy i
+      simp [hx, abs_nonpos_iff.mp h0]
+    · field_simp
+  rw [hy]
+  exact distLR_mul_diagonal_le _ hc r
+
+/-- Entrywise domination of diagonal matrices orders the `ε`-ranks. -/
+theorem epsRank_diagonal_le_of_abs_le [DecidableEq n] {x y : n → ℝ} (hxy : ∀ i, |y i| ≤ |x i|)
+    {θ : ℝ} (hθ : 0 ≤ θ) :
+    epsRank θ (diagonal y : Matrix n n ℝ) ≤ epsRank θ (diagonal x) :=
+  epsRank_le_of_distLR_le ((distLR_diagonal_le_of_abs_le hxy _).trans (distLR_epsRank_le hθ))
+
+/-- The tolerance `‖X‖` gives `ε`-rank zero. -/
+example (X : Matrix (Fin 2) (Fin 3) ℝ) : epsRank ‖X‖ X = 0 :=
+  (epsRank_eq_zero_iff (norm_nonneg X)).mpr le_rfl
+
+/-- Right multiplication by `diag(1/2, -1)` decreases the norm and the distance to rank one. -/
+example (M : Matrix (Fin 3) (Fin 2) ℝ) :
+    ‖M * diagonal (![1 / 2, -1] : Fin 2 → ℝ)‖ ≤ ‖M‖ ∧
+      distLR 1 (M * diagonal (![1 / 2, -1] : Fin 2 → ℝ)) ≤ distLR 1 M := by
+  have hc : ∀ j, |(![1 / 2, -1] : Fin 2 → ℝ) j| ≤ 1 := fun j => by fin_cases j <;> norm_num
+  exact ⟨norm_mul_diagonal_le M hc, distLR_mul_diagonal_le M hc 1⟩
+
+/-- The domination hypothesis holds for `y = (1/2, 0)` and `x = (1, -1)`. -/
+example : distLR 0 (diagonal ![1 / 2, 0] : Matrix (Fin 2) (Fin 2) ℝ) ≤
+      distLR 0 (diagonal ![1, -1]) ∧
+    epsRank (1 / 2) (diagonal ![1 / 2, 0] : Matrix (Fin 2) (Fin 2) ℝ) ≤
+      epsRank (1 / 2) (diagonal ![1, -1]) := by
+  have hxy : ∀ i, |(![1 / 2, 0] : Fin 2 → ℝ) i| ≤ |(![1, -1] : Fin 2 → ℝ) i| := fun i => by
+    fin_cases i <;> norm_num
+  exact ⟨distLR_diagonal_le_of_abs_le hxy 0, epsRank_diagonal_le_of_abs_le hxy (by norm_num)⟩
+
+end Diagonal
 
 /-! ### Robust capture of the exact flow by the low-rank set (OP-EX-02) -/
 

@@ -52,82 +52,11 @@ namespace LeanDLRA.PlainTruncationRank
 
 open LeanDLRA.EckartYoung
 
-/-! ### Distance to rank zero, diagonal matrices -/
+/-! ### `θ`-rank one; the backward Euler step with `P = Q = 1/2` -/
 
 section Tools
 
 variable {m n : Type*} [Fintype m] [Fintype n]
-
-/-- The distance to the matrices of rank zero is the norm. -/
-theorem distLR_zero (X : Matrix m n ℝ) : distLR 0 X = ‖X‖ := by
-  classical
-  have h := WeylSingular.tailNorm_eq_infDist X 0
-  rw [WeylSingular.tailNorm_eq_norm_sub_truncation, truncation_zero, sub_zero] at h
-  exact h.symm
-
-/-- The `ε`-rank vanishes exactly when the norm is at most `ε`. -/
-theorem epsRank_eq_zero_iff {ε : ℝ} (hε : 0 ≤ ε) {X : Matrix m n ℝ} :
-    epsRank ε X = 0 ↔ ‖X‖ ≤ ε := by
-  rw [← Nat.le_zero, epsRank_le_iff hε, distLR_zero]
-
-/-- The squared Frobenius norm of a diagonal matrix. -/
-theorem norm_sq_diagonal [DecidableEq n] (d : n → ℝ) :
-    ‖(diagonal d : Matrix n n ℝ)‖ ^ 2 = ∑ i, d i ^ 2 := by
-  rw [Frobenius.norm_sq_eq_sum]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [Finset.sum_eq_single i]
-  · simp
-  · intro j _ hji
-    simp [Matrix.diagonal_apply_ne _ hji.symm]
-  · simp
-
-/-- Right multiplication by a diagonal matrix with entries in `[-1, 1]` does not increase the
-Frobenius norm. -/
-theorem norm_mul_diagonal_le [DecidableEq n] (M : Matrix m n ℝ) {c : n → ℝ}
-    (hc : ∀ j, |c j| ≤ 1) : ‖M * diagonal c‖ ≤ ‖M‖ := by
-  refine (pow_le_pow_iff_left₀ (norm_nonneg _) (norm_nonneg _) two_ne_zero).mp ?_
-  rw [Frobenius.norm_sq_eq_sum, Frobenius.norm_sq_eq_sum]
-  refine Finset.sum_le_sum fun i _ => Finset.sum_le_sum fun j _ => ?_
-  rw [Matrix.mul_diagonal, mul_pow]
-  have h1 : c j ^ 2 ≤ 1 := by
-    rw [← sq_abs]
-    exact pow_le_one₀ (abs_nonneg _) (hc j)
-  nlinarith [sq_nonneg (M i j)]
-
-/-- Right multiplication by a diagonal matrix with entries in `[-1, 1]` does not increase the
-distance to the matrices of rank at most `r`. -/
-theorem distLR_mul_diagonal_le [DecidableEq n] (M : Matrix m n ℝ) {c : n → ℝ}
-    (hc : ∀ j, |c j| ≤ 1) (r : ℕ) : distLR r (M * diagonal c) ≤ distLR r M := by
-  obtain ⟨Z, hZ, hZd⟩ := exists_best_approx r M
-  calc distLR r (M * diagonal c) ≤ ‖M * diagonal c - Z * diagonal c‖ :=
-        distLR_le_norm_sub ((Matrix.rank_mul_le_left _ _).trans hZ)
-    _ = ‖(M - Z) * diagonal c‖ := by rw [Matrix.sub_mul]
-    _ ≤ ‖M - Z‖ := norm_mul_diagonal_le _ hc
-    _ = distLR r M := hZd
-
-/-- **Entrywise domination of diagonal matrices.** If `|y i| ≤ |x i|` for all `i`, every
-low-rank distance of `diag y` is at most that of `diag x`. -/
-theorem distLR_diagonal_le_of_abs_le [DecidableEq n] {x y : n → ℝ} (hxy : ∀ i, |y i| ≤ |x i|)
-    (r : ℕ) : distLR r (diagonal y : Matrix n n ℝ) ≤ distLR r (diagonal x) := by
-  have hc : ∀ i, |y i / x i| ≤ 1 := fun i => by
-    rw [abs_div]
-    exact div_le_one_of_le₀ (hxy i) (abs_nonneg _)
-  have hy : (diagonal y : Matrix n n ℝ) = diagonal x * diagonal fun i => y i / x i := by
-    rw [Matrix.diagonal_mul_diagonal]
-    congr 1
-    funext i
-    by_cases hx : x i = 0
-    · have h0 : |y i| ≤ 0 := by simpa [hx] using hxy i
-      simp [hx, abs_nonpos_iff.mp h0]
-    · field_simp
-  rw [hy]
-  exact distLR_mul_diagonal_le _ hc r
-
-/-- Entrywise domination of diagonal matrices orders the `ε`-ranks. -/
-theorem epsRank_diagonal_le_of_abs_le [DecidableEq n] {x y : n → ℝ} (hxy : ∀ i, |y i| ≤ |x i|)
-    {θ : ℝ} (hθ : 0 ≤ θ) :
-    epsRank θ (diagonal y : Matrix n n ℝ) ≤ epsRank θ (diagonal x) :=
-  epsRank_le_of_distLR_le ((distLR_diagonal_le_of_abs_le hxy _).trans (distLR_epsRank_le hθ))
 
 /-- If a matrix of rank at most one is within `θ` of `X` and `θ < ‖X‖`, the `θ`-rank of `X`
 is one. -/
