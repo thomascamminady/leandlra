@@ -6,7 +6,7 @@ read the first two sections of [Getting started](GETTING_STARTED.md); the pages 
 core proves are [Main results](MAIN_RESULTS.md) and [Definitions](DEFINITIONS.md).
 
 Every block of code on this page is copied from a file of the repository; the line above the
-block links to the lines. The blocks were compared with the files at commit 42d7cb1 (2026-11-21).
+block links to the lines. The blocks were compared with the files at commit efba248 (2026-11-21).
 
 ## Contents
 
@@ -310,12 +310,19 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
   modes, is in [`Tensor/Tucker/QuasiOptimalityNormalVelocity.lean`](../LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean) and
   [`Tensor/TT/QuasiOptimalityNormalVelocity.lean`](../LeanDLRA/Tensor/TT/QuasiOptimalityNormalVelocity.lean).
 * **By question about optimality:** what any method that uses the field on matrices of rank at
-  most `k` can achieve is in [`Research/InformationLowerBound.lean`](../LeanDLRA/Research/InformationLowerBound.lean) (lower bound) and
+  most `k` can achieve is in [`Research/InformationLowerBound.lean`](../LeanDLRA/Research/InformationLowerBound.lean) (lower bound; all
+  sizes and a dissipative
+  pair in [`Research/InformationLowerBoundGeneral.lean`](../LeanDLRA/Research/InformationLowerBoundGeneral.lean)) and
   [`Research/RankInformationUpperBound.lean`](../LeanDLRA/Research/RankInformationUpperBound.lean) (a full state with the same information);
   what a state of rank `r` costs along a turning tangent space in
-  [`Research/RankStatePrice.lean`](../LeanDLRA/Research/RankStatePrice.lean); the rank of a tolerance truncation in time stepping
-  in [`Research/DynamicRecompression.lean`](../LeanDLRA/Research/DynamicRecompression.lean) and, for Lyapunov equations, in
-  [`Research/LoewnerRank.lean`](../LeanDLRA/Research/LoewnerRank.lean) ([Main results, section
+  [`Research/RankStatePrice.lean`](../LeanDLRA/Research/RankStatePrice.lean) and, for oblique tangent projectors on `2 × 2`
+  matrices, in [`Research/ObliqueProjectorLowerBound.lean`](../LeanDLRA/Research/ObliqueProjectorLowerBound.lean); the rank of a tolerance
+  truncation in time stepping in [`Research/DynamicRecompression.lean`](../LeanDLRA/Research/DynamicRecompression.lean) and, for
+  Lyapunov and Sylvester equations, in [`Research/LoewnerRank.lean`](../LeanDLRA/Research/LoewnerRank.lean),
+  [`Research/StackedTruncation.lean`](../LeanDLRA/Research/StackedTruncation.lean) (stacked-factor truncation),
+  [`Research/StationaryDomination.lean`](../LeanDLRA/Research/StationaryDomination.lean) (ranks that do not depend on the number of
+  steps) and [`Research/PlainTruncationRank.lean`](../LeanDLRA/Research/PlainTruncationRank.lean) (the plain truncation: where a
+  comparison with the untruncated run fails and where it holds) ([Main results, section
   3.9](MAIN_RESULTS.md#39-optimality-of-low-rank-time-integration)). The factor `√(s - 1)` in the
   error bound of the BUG integrator on tree tensor networks is in
   [`Tensor/TTN/BUGSqrtNodes.lean`](../LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean).
