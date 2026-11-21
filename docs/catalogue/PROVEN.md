@@ -48,7 +48,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Matrix/Frobenius`](../../LeanDLRA/Matrix/Frobenius.lean) | The Frobenius inner product on real matrices | 20 |  |
 | [`Matrix/GaugeODE`](../../LeanDLRA/Matrix/GaugeODE.lean) | Gauge-fixed factor ODEs of dynamical low-rank approximation | 46 | [1301.1058](https://arxiv.org/abs/1301.1058) |
 | [`Matrix/Interpolation`](../../LeanDLRA/Matrix/Interpolation.lean) | Oblique (interpolatory / sketched) projectors in dynamical low-rank approximation | 100 |  |
-| [`Matrix/LowRankDistance`](../../LeanDLRA/Matrix/LowRankDistance.lean) | Distance to the low-rank set | 86 |  |
+| [`Matrix/LowRankDistance`](../../LeanDLRA/Matrix/LowRankDistance.lean) | Distance to the low-rank set | 93 |  |
 | [`Matrix/LowRankDistanceFlow`](../../LeanDLRA/Matrix/LowRankDistanceFlow.lean) | Growth of the distance to the matrices of rank at most `r` along the exact flow | 1 |  |
 | [`Matrix/Orthonormal`](../../LeanDLRA/Matrix/Orthonormal.lean) | Orthonormal bases capturing a column space ("QR / orth" step) | 26 | [1301.1058](https://arxiv.org/abs/1301.1058), [2010.02022](https://arxiv.org/abs/2010.02022), [2104.05247](https://arxiv.org/abs/2104.05247), [2304.05660](https://arxiv.org/abs/2304.05660) |
 | [`Matrix/Projectors`](../../LeanDLRA/Matrix/Projectors.lean) | Left, right and tangent-space projectors on matrices | 36 |  |
@@ -346,7 +346,7 @@ only the axioms `propext`, `Classical.choice` and `Quot.sound`.
 | [`Research/LoewnerRank`](../../LeanDLRA/Research/LoewnerRank.lean) | Ranks of truncated backward Euler runs through the Loewner order | 12 | [1304.7796](https://arxiv.org/abs/1304.7796) |
 | [`Research/ObliqueProjectorLowerBound`](../../LeanDLRA/Research/ObliqueProjectorLowerBound.lean) | Oblique tangent projectors on `2 × 2` rank-one states: error `2π k ε` at normal component `ε` | 50 |  |
 | [`Research/PerturbedSylvester`](../../LeanDLRA/Research/PerturbedSylvester.lean) | The rank-adaptive BUG step for a Sylvester field with a Lipschitz perturbation | 40 |  |
-| [`Research/PlainTruncationRank`](../../LeanDLRA/Research/PlainTruncationRank.lean) | Ranks of the truncated backward Euler run against the untruncated run | 28 |  |
+| [`Research/PlainTruncationRank`](../../LeanDLRA/Research/PlainTruncationRank.lean) | Ranks of the truncated backward Euler run against the untruncated run | 21 |  |
 | [`Research/RankInformationUpperBound`](../../LeanDLRA/Research/RankInformationUpperBound.lean) | An upper bound for a method that evaluates the field on low-rank matrices only | 10 |  |
 | [`Research/RankOneGalerkinBarrier`](../../LeanDLRA/Research/RankOneGalerkinBarrier.lean) | No Galerkin step in a fixed rank-one space is of second order | 13 | [2104.05247](https://arxiv.org/abs/2104.05247), [2402.08607](https://arxiv.org/abs/2402.08607) |
 | [`Research/RankStatePrice`](../../LeanDLRA/Research/RankStatePrice.lean) | The loss of a state of rank `r` along a turning frame, and buffer modes | 13 |  |

@@ -12,7 +12,7 @@ other is the subject of [CONCEPTS.md](CONCEPTS.md).
 
 **How to read an entry.** Each entry gives the full Lean name, a link to the file and the lines,
 the statement, one paragraph in words, and the source. The statements are copied from the source
-files and were compared with them at commit e0ce278 (2026-11-21). A theorem is quoted from its
+files and were compared with them at commit 42d7cb1 (2026-11-21). A theorem is quoted from its
 keyword to the `:=` that starts its proof; a definition or structure is quoted completely.
 Arguments that a file declares once for a whole section (with the keyword `variable`), for example
 the field `F`, the constants `L B ε` or the index types `m n` of matrices, are not repeated in the
@@ -5040,7 +5040,7 @@ theorem distLR_flow_le_exp_of_tube (hε : FactoredNormalBoundOn F r (tubeSet A a
     distLR r (Φ t₁) ≤ (t₁ - t₀) * ε * Real.exp (L * (t₁ - t₀))
 ```
 
-`distLR_flow_le_exp` in [`LeanDLRA/Matrix/LowRankDistance.lean`, lines 1365–1369](../LeanDLRA/Matrix/LowRankDistance.lean#L1365-L1369):
+`distLR_flow_le_exp` in [`LeanDLRA/Matrix/LowRankDistance.lean`, lines 1478–1482](../LeanDLRA/Matrix/LowRankDistance.lean#L1478-L1482):
 
 ```lean
 theorem distLR_flow_le_exp (hF : IsLipschitzField F L) (hL : 0 ≤ L) (hB : IsBoundedField F B)

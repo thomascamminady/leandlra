@@ -386,13 +386,13 @@ The core has 264 modules with 632 definitions (0 of them without a docstring) an
 | `LeanDLRA.GaugeODEExample.Adf` | def | [Matrix/GaugeODE.lean:767](../LeanDLRA/Matrix/GaugeODE.lean#L767) | `Ȧ(t)` for `A(t) = eᵗ U(t) V0ᵀ`, of rank one in `ℝ^{2 × 2}`. |
 | `LeanDLRA.GaugeODEExample.E₂₂` | def | [Matrix/GaugeODE.lean:770](../LeanDLRA/Matrix/GaugeODE.lean#L770) | The matrix `e₂ e₂ᵀ`. |
 | `LeanDLRA.sketchCLM` | def | [Matrix/Interpolation.lean:1431](../LeanDLRA/Matrix/Interpolation.lean#L1431) | The two-sided sketch `Z ↦ Θ Z Ωᵀ` as a continuous linear map (Frobenius norms). |
-| `LeanDLRA.swapMat` | def | [Matrix/LowRankDistance.lean:680](../LeanDLRA/Matrix/LowRankDistance.lean#L680) | The constant field `F ≡ [[0, 1], [1, 0]]` of the counterexample (`L = 0`). |
-| `LeanDLRA.cxY₀` | def | [Matrix/LowRankDistance.lean:683](../LeanDLRA/Matrix/LowRankDistance.lean#L683) | The starting value `Y₀ = diag(δ, 0) = e₁ (δ) e₁ᵀ` of rank `≤ 1`. |
-| `LeanDLRA.cxS₀` | def | [Matrix/LowRankDistance.lean:733](../LeanDLRA/Matrix/LowRankDistance.lean#L733) | The coefficient of the counterexample starting value, `S₀ = (δ)`. |
-| `LeanDLRA.rgU` | def | [Matrix/LowRankDistance.lean:839](../LeanDLRA/Matrix/LowRankDistance.lean#L839) | The first unit vector of `ℝ³` as a `3 × 1` matrix. |
-| `LeanDLRA.rgY₀` | def | [Matrix/LowRankDistance.lean:842](../LeanDLRA/Matrix/LowRankDistance.lean#L842) | The three-dimensional example of OP-RA-16 (ii): `Y₀ = e₁ e₁ᵀ` (rank one) and `F ≡ I₃`. |
-| `LeanDLRA.fixedRankDefect` | def | [Matrix/LowRankDistance.lean:1422](../LeanDLRA/Matrix/LowRankDistance.lean#L1422) | The truncation defect of one fixed-rank truncated augmented BUG step: `κ (h ε e^{L h} + h (c₁ ε + c₂ h))`. |
-| `LeanDLRA.exSm` | def | [Matrix/LowRankDistance.lean:1593](../LeanDLRA/Matrix/LowRankDistance.lean#L1593) | The ranks/coefficients of the one-step fixed-rank example: `S₀ = 1`, `S₁ = 2`. |
+| `LeanDLRA.swapMat` | def | [Matrix/LowRankDistance.lean:793](../LeanDLRA/Matrix/LowRankDistance.lean#L793) | The constant field `F ≡ [[0, 1], [1, 0]]` of the counterexample (`L = 0`). |
+| `LeanDLRA.cxY₀` | def | [Matrix/LowRankDistance.lean:796](../LeanDLRA/Matrix/LowRankDistance.lean#L796) | The starting value `Y₀ = diag(δ, 0) = e₁ (δ) e₁ᵀ` of rank `≤ 1`. |
+| `LeanDLRA.cxS₀` | def | [Matrix/LowRankDistance.lean:846](../LeanDLRA/Matrix/LowRankDistance.lean#L846) | The coefficient of the counterexample starting value, `S₀ = (δ)`. |
+| `LeanDLRA.rgU` | def | [Matrix/LowRankDistance.lean:952](../LeanDLRA/Matrix/LowRankDistance.lean#L952) | The first unit vector of `ℝ³` as a `3 × 1` matrix. |
+| `LeanDLRA.rgY₀` | def | [Matrix/LowRankDistance.lean:955](../LeanDLRA/Matrix/LowRankDistance.lean#L955) | The three-dimensional example of OP-RA-16 (ii): `Y₀ = e₁ e₁ᵀ` (rank one) and `F ≡ I₃`. |
+| `LeanDLRA.fixedRankDefect` | def | [Matrix/LowRankDistance.lean:1535](../LeanDLRA/Matrix/LowRankDistance.lean#L1535) | The truncation defect of one fixed-rank truncated augmented BUG step: `κ (h ε e^{L h} + h (c₁ ε + c₂ h))`. |
+| `LeanDLRA.exSm` | def | [Matrix/LowRankDistance.lean:1706](../LeanDLRA/Matrix/LowRankDistance.lean#L1706) | The ranks/coefficients of the one-step fixed-rank example: `S₀ = 1`, `S₁ = 2`. |
 
 ## `LeanDLRA/Randomized`
 
