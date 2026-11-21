@@ -1002,10 +1002,10 @@ The sections above bound the error of a method against the exact solution or aga
 approximation. The files of this section ask how much a method can achieve at all when it uses the
 field only on matrices of low rank, what a method with a full state achieves with the same
 information, what a state of rank `r` costs, and what a tolerance truncation does to the rank of a
-run. `distLR k Z` is the distance of `Z` from the matrices of rank at most `k`
-(`lowRankSet`), `L` is a Lipschitz constant of the field `F` and `A` the exact solution. Norms are
-Frobenius norms. The constants are those of the proofs, and the statements are for the matrix
-case.
+run, for several truncation rules. `distLR k Z` is the distance of `Z` from the matrices of rank
+at most `k` (`lowRankSet`), `L` is a Lipschitz constant of the field `F` and `A` the exact
+solution. Norms are Frobenius norms. The constants are those of the proofs, and the statements
+are for the matrix case.
 
 **A lower bound for the information on matrices of rank at most `k`.** A method of rank `k` for
 `y' = F(t, y)` uses the field only through values `F(t, Z)` at matrices `Z` of rank at most `k`.
@@ -1046,8 +1046,53 @@ to every field: a linear field is determined by its values on the matrices of ra
 
 so no pair of linear fields agrees on them. What is not shown: the bound is for the information,
 that is, for maps that depend on `F` only through its restriction to the matrices of rank at most
-`k`; it is not a bound for DLRA or for a method that evaluates `F` elsewhere. The pair is for
-`2 × 2` matrices and rank one, and polynomial fields are not treated.
+`k`; it is not a bound for DLRA or for a method that evaluates `F` elsewhere. The pair of this
+paragraph is for `2 × 2` matrices and rank one (all sizes are treated below), and polynomial fields
+are not treated.
+
+**All sizes and ranks, and a dissipative pair.** In
+@file(LeanDLRA/Research/InformationLowerBoundGeneral.lean) the pair is given for `m × n` matrices
+and every rank `k` with `1 ≤ k`, `k + 1 ≤ m` and `k + 1 ≤ n`. Two matrices `U`, `V` with `k + 1`
+orthonormal columns embed the diagonal construction of size `k + 1`: with `W = u₁ v₁ᵀ` and
+`B = u_{k+1} v_{k+1}ᵀ` the fields are `F_c(t, Z) = B + c distLR k Z · W` and the solutions are
+`A_c(t) = U diag(a + c t²/2, a, …, a, t) Vᵀ`, as long as `T + |c| T²/2 ≤ a`. The distance of
+`U diag(d) Vᵀ` from the matrices of rank at most `r` is at least `min |dᵢ|`
+(`InformationLowerBoundGeneral.le_distLR_mul_diagonal_mul_transpose`), which gives
+`distLR k (A_c(t)) = t`.
+
+@stmt LeanDLRA/Research/InformationLowerBoundGeneral.lean exists_lowRank_information_pair InformationLowerBoundGeneral.exists_lowRank_information_pair
+
+The two fields are `L`-Lipschitz and agree on the matrices of rank at most `k`, the solutions start
+at the same matrix of rank at most `k`, and every output that depends on the field only through
+these matrices has the error `L ∫₀ᵀ distLR k (A₁(s)) ds` or more for one of the two fields. The
+`example` of the file is the case of `3 × 4` matrices, `k = 2`, `L = T = 1` and `a = 2`. The
+version with an explicit frame is
+`InformationLowerBoundGeneralExample.mul_integral_distLR_le_max_error`, and
+`InformationLowerBoundGeneralExample.norm_frameSol_sub_central` gives the error `|c| T²/2` of the
+output `A(0) + T B` for both fields, as in the `2 × 2` pair above.
+
+The second pair of the file is dissipative. With `G(Z) = μ A₀ + B - μ Z` and the fields
+`F_± = G ± L distLR k(·) W`, `0 ≤ L` and `0 < μ`, the fields are one-sided Lipschitz with the
+constant `L - μ` (`InformationLowerBoundGeneralExample.isOneSidedLipschitzField_dissField`),
+Lipschitz with the constant `μ + L`, and agree on the matrices of rank at most `k`. The solutions
+are `A_±(t) = A₀ ± z(t) W + y(t) B` with `y(t) = (1 - e^{-μ t})/μ` and
+`z(t) = L (1 - e^{-μ t} - μ t e^{-μ t})/μ²`. For `1/μ + L/μ² ≤ a`:
+
+@stmt LeanDLRA/Research/InformationLowerBoundGeneral.lean mul_integral_exp_distLR_le_max_error InformationLowerBoundGeneralExample.mul_integral_exp_distLR_le_max_error
+
+and the term of the lower bound is at most `L / μ` times the distance at the final time:
+
+@stmt LeanDLRA/Research/InformationLowerBoundGeneral.lean mul_integral_exp_distLR_dissSol_le InformationLowerBoundGeneralExample.mul_integral_exp_distLR_dissSol_le
+
+For this pair the forced error is therefore at most `L / μ` times the best-approximation error at
+the final time; it is not of the size `L ∫ distLR`. The weight `e^{-μ (T - s)}` is not the weight
+`e^{ℓ (T - s)}`, `ℓ = L - μ`, of the usual upper bounds for one-sided Lipschitz fields (the two
+differ by the factor `e^{L (T - s)}`), so the lower bound is not shown to match an upper bound.
+What is not shown: `k = 0` is excluded (the construction needs `W ⊥ B`); the sharpness is the
+identity for the pair only, the general upper bound is
+`InformationLowerBound.norm_sub_affine_le_integral_distLR`; the dissipative pair is one family and
+gives no upper bound for the dissipative class; two further pairs of the paper (one with `W = B`,
+one by a determinant) are not in the core.
 
 **A full state with the same information.** A method that evaluates `F` only at matrices of rank at
 most `k` but keeps a full matrix as its state has an error bound of the same form. If a curve `Z`
@@ -1093,8 +1138,45 @@ best-approximation error stays below `ε`. The second column of `A` is `ε` time
 unit circle, whose velocity `ε t u⊥(t)` is normal at `Y t` at every time. That the DLRA error is
 not bounded by a multiple of the best-approximation error that is uniform in time is known at
 eigenvalue crossings [MusharbashNobileZhou2015, §5.3]; in the family the best approximation of
-rank one stays within `ε` of `A t` and the error is an equality. The lower bound for methods that
-are linear in the increment is not in the core.
+rank one stays within `ε` of `A t` and the error is an equality. A lower bound for a class of
+methods of rank one is stated next.
+
+**Oblique tangent projectors on rank-one states.** The family above is one in which the projected
+equation loses `ε` per radian of turning. In
+@file(LeanDLRA/Research/ObliqueProjectorLowerBound.lean) the same is shown for a class of methods,
+for `2 × 2` matrices, rank one and a field `Ȧ` without dependence on the state (`L = 0`). A method
+of the form `Ẏ = Π(Y) Ȧ` has `Π(Y)` linear, the identity on the tangent space `{X : ⟪N, X⟫ = 0}`
+and with range in it (an oblique projector onto the tangent space; the projected equation is the
+orthogonal one). The hypotheses are imposed only along the circle of states `Y(θ) = u(θ) e₁ᵀ`,
+`u(θ) = (cos θ, sin θ)`, with the unit normal `N(θ) = u⊥(θ) e₂ᵀ`, together with the continuity of
+`θ ↦ Π(Y(θ)) N(θ)`:
+
+@stmt LeanDLRA/Research/ObliqueProjectorLowerBound.lean exists_data_two_pi_mul_le_norm_sub ObliqueProjectorLowerBound.exists_data_two_pi_mul_le_norm_sub
+
+For every method of the class and every `ε ≥ 0`, `k : ℕ`, there are data of initial error `ε` whose
+normal component `⟪N(Y), A - Y⟫` stays `±ε`, while the state turns by `2π k`, and on which the error
+is at least `2π k ε` at the end. The data depend on the method. Here `ε` is the normal component of
+the error, not the distance of `A` from the matrices of rank one: for a general `Π` nothing is
+proved about `distLR 1 (A t)`, and when `distLR 1 (A (2π k)) ≥ 2π k ε` the bound holds for every
+matrix of rank one and says nothing about the method. The last conjunct gives the distance in a
+subclass: if `Π(Y(θ)) N(θ)` has a zero left column for every `θ`, as for the family
+`ObliqueProjectorLowerBoundExample.tangentObliqueProj κ`, `Π_κ(Y) a = a - ⟪N, a⟫ (N + κ B)`, whose
+member `κ = 0` is the orthogonal projection on the circle, then `distLR 1 (A t) ≤ ε` for all `t`.
+In that subclass `ε` bounds the best-approximation error and the method loses at least `ε` per
+radian of turning, as the projected equation does on the family of
+@file(LeanDLRA/Research/RankStatePrice.lean). The `example` of the file is the member `κ = 1/2`
+(not the orthogonal projection) with `ε = 1/10` and one turn.
+
+What is not shown: only `2 × 2` matrices, rank one and `L = 0`, in continuous time; the reduction
+of one-step maps `Y₊ = Φ(Y, ΔA)` that are `C¹` in `ΔA` to this form; a version with discrete
+steps; the uniqueness of the solution of the method (`Y` is shown to be a solution); general
+sizes and ranks; a bound in terms of the best-approximation error for a general `Π` (that link is
+to leading order in `ε` and on paper only); and the upper bound for the projected equation in this
+class. Literature: oblique (interpolatory) projectors as methods are published, with an upper
+bound in the normal component of the field and constants `C_{m,r} C_{n,r}`
+[CarrelEtAl2025, Thm. 10]; no published lower bound for a class of low-rank methods was found in
+the sources read, and continuity is imposed as in width theory, where without it maps without
+stability are allowed.
 
 A state of rank `k ≥ r` whose result is truncated to rank `r` (buffer modes) has the error
 `distLR r (A t)` plus twice the error of the state of rank `k`
@@ -1183,6 +1265,162 @@ The Sylvester problem `A' = -PA - AQ + G Hᵀ` is the off-diagonal block of the 
 satisfy the two inequalities `0 ⪯ Y_{j+1} ⪯ Ŷ_{j+1}` and the rank bound; the files do not construct
 it for a given implementation.
 
+**A rectangular scheme with stacked-factor truncation.** The Sylvester problem
+`A' = -PA - AQ + G Hᵀ` with `P ⪰ 0`, `Q ⪰ 0` is the off-diagonal block of the Lyapunov problem with
+`diag(P, Q)` and the forcing `[G; H][G; H]ᵀ`. A low-rank scheme for the `m × n` unknown stores a
+factor pair `(L, R)`, `Y = L Rᵀ`, and carries the positive semidefinite matrix `W Wᵀ` of the
+stacked factor `W = [L; R]` along: its off-diagonal block is `Y`
+(`StackedTruncation.toBlocks₁₂_mul_transpose`), a backward Euler step of the Lyapunov problem for
+`W Wᵀ` is a backward Euler step of the Sylvester problem for `Y`
+(`StackedTruncation.toBlocks₁₂_add_smul_lyapunov`), and the rank of the block is at most the rank of
+the whole (`StackedTruncation.rank_toBlocks₁₂_le`). Stacked-factor truncation replaces the step
+`Ŵ = [L̂; R̂]` by `W = Ŵ Z` with `Z Zᵀ ⪯ 1`, for instance the orthogonal projector onto leading
+eigenvectors of the Gram matrix `ŴᵀŴ = L̂ᵀL̂ + R̂ᵀR̂`
+(`StackedTruncation.posSemidef_one_sub_mul_transpose`). It only removes a positive semidefinite
+part of `Ŵ Ŵᵀ` (`StackedTruncation.posSemidef_mul_transpose_sub_mul_transpose`); the truncated
+singular value decomposition of `L̂ R̂ᵀ` is in general not of this form. In
+@file(LeanDLRA/Research/StackedTruncation.lean) the computed iterates therefore stay below the
+untruncated lifted run in the Loewner order, and the argument of the previous paragraph applies to
+the lifted run:
+
+@stmt LeanDLRA/Research/StackedTruncation.lean rank_le_epsRank_of_stacked_sylvester_run StackedTruncation.rank_le_epsRank_of_stacked_sylvester_run
+
+The off-diagonal block of `X` is the backward Euler run of the Sylvester problem, and the computed
+iterates have `rank (L_j R_jᵀ) ≤ rank_θ(X_j)` for every step size and every tolerance. If
+`P ⪰ c`, `Q ⪰ c ≥ 0` and every truncation changes `Ŵ Ŵᵀ` by at most `θ`, the error is bounded
+through the lifted run (the factor `√2` is the norm of the off-diagonal block of a symmetric
+matrix, `StackedTruncation.two_mul_norm_toBlocks₁₂_sq_le`):
+
+@stmt LeanDLRA/Research/StackedTruncation.lean norm_sub_le_of_stacked_sylvester_run StackedTruncation.norm_sub_le_of_stacked_sylvester_run
+
+What is not shown: the truncation rule is a hypothesis (`hW`, `hZ`, `hZrank`, `hT`). That the
+leading eigenvectors of `ŴᵀŴ` give a `Z` with `rank Z = rank_θ(Ŵ Ŵᵀ)` and tail at most `θ` is not
+proved.
+
+**Ranks that do not depend on the number of steps.** In
+@file(LeanDLRA/Research/StationaryDomination.lean) let `P ⪰ 0` and let `S` satisfy the stationary
+Lyapunov equation `P S + S P = F₀ + F` with `F₀ ⪰ 0`. A backward Euler run of the differential
+Lyapunov equation `A' = -PA - AP + F` that starts below `S` stays below `S`:
+
+@stmt LeanDLRA/Research/StationaryDomination.lean posSemidef_sub_of_lyapunov_run StationaryDomination.posSemidef_sub_of_lyapunov_run
+
+No sign condition on `F` is needed: the difference `S - X_j` is a backward Euler run with the
+forcing `F₀ ⪰ 0`, and the resolvent is positive
+(`LoewnerRank.posSemidef_of_add_smul_lyapunov`). If `P ⪰ c > 0` and `F ⪰ 0`, the start condition
+`X₀ ⪯ S` follows from `P X₀ + X₀ P ⪯ F₀` (`StationaryDomination.posSemidef_sub_of_lyapunov_le`),
+because the inverse of `M ↦ P M + M P` is positive (`StationaryDomination.posSemidef_of_lyapunov`),
+and the stationary equation has exactly one solution (`StationaryDomination.existsUnique_lyapunov`).
+For a start `X₀ = W₀ W₀ᵀ` and `t > 0` the right-hand side `F₀ = t W₀ W₀ᵀ + t⁻¹ (P W₀)(P W₀)ᵀ` has
+rank at most twice the number of columns of `W₀`, so a stationary majorant with a right-hand side
+of low rank exists:
+
+@stmt LeanDLRA/Research/StationaryDomination.lean exists_lyapunov_posSemidef_sub StationaryDomination.exists_lyapunov_posSemidef_sub
+
+With the order argument for truncated runs of the previous paragraphs and the monotonicity of the
+`ε`-rank in the Loewner order, the ranks of the truncated iterates are bounded by the `θ`-rank of
+`S`:
+
+@stmt LeanDLRA/Research/StationaryDomination.lean rank_le_epsRank_of_truncated_lyapunov_run_of_stationary StationaryDomination.rank_le_epsRank_of_truncated_lyapunov_run_of_stationary
+
+for every step size and every tolerance. The matrix `S` depends on neither the step size nor the
+number of steps. The truncated iterates `Y_{j+1}` are assumed positive semidefinite (`hYpos`), and
+the start is excluded: for `θ ≥ ‖S‖` the bound is `0`, while `Y₀` need not vanish. The same holds
+for the stacked-factor scheme with a stationary solution of the lifted problem
+(`StationaryDomination.rank_le_epsRank_of_stacked_sylvester_run_of_stationary`).
+
+For the Sylvester problem with `P ⪰ α`, `Q ⪰ β` and `a = α + β ≥ 0` (neither `P` nor `Q` needs to
+be positive semidefinite), the shift `σ = (β - α)/2` gives the lifted operator
+`diag(P + σ, Q - σ)` with both blocks `⪰ a/2`, and the shift does not change the off-diagonal block
+(`StackedTruncation.shift_mul_add_mul_shift`). The end-to-end statement collects the run, the
+rank bound and the error bound:
+
+@stmt LeanDLRA/Research/StationaryDomination.lean rank_le_epsRank_and_norm_sub_le_of_shifted_lift StationaryDomination.rank_le_epsRank_and_norm_sub_le_of_shifted_lift
+
+What is not shown: a bound for `rank_θ(S)` itself, through the approximation of `1 / x` by
+exponential sums [DahmenDeVoreGrasedyckSuli2014, Lemma 5] (for the singular value decay of
+Lyapunov solutions see also Stillfjord, arXiv 1804.02197, Thm. 3), is a citation and not in the
+core: the files prove that `S` exists, is unique and dominates every run, and that its right-hand
+side has rank at most `2 r₀ + r_f`. The truncation rule is a hypothesis, as above. Inexact solves
+of the resolvent, time dependent forcing, semilinear terms and tensors are not treated, and the
+examples of the file are runs with one step. Literature: the ingredients are classical, namely the
+positivity of the inverse of the Lyapunov operator and of the backward Euler resolvent, the
+comparison with a stationary supersolution, the embedding of a Sylvester equation as a block of a
+Lyapunov equation, and the approximability of the inverse of the Lyapunov operator by exponential
+sums for a right-hand side of low rank. The composition, a bound of the rank of the computed
+iterates of a truncated backward Euler scheme by `rank_θ(S)` for every step size, tolerance and
+number of steps, was not found in the sources read; the monotone-iteration literature for Lyapunov
+and Riccati equations was not read. No claim of novelty is made.
+
+**The plain truncation does not obey a fixed fraction of the tolerance.** Let `Ŷ_{j+1}` be the
+backward Euler step of `A' = -(P A + A Q) + F` from `Y_j`, let `Y_{j+1} = T_θ(Ŷ_{j+1})` be the
+truncated singular value decomposition at the Frobenius tolerance `θ` (rank `epsRank θ`), and let
+`X_j` be the untruncated backward Euler run with `X₀ = Y₀`. The question is whether
+`rank Y_j ≤ rank_δ(X_j)` for `δ` a fraction of `θ`, where `rank_δ` is `epsRank δ`. This is not the
+scheme of the previous paragraphs: the truncated singular value decomposition of `L̂ R̂ᵀ` is in
+general not a stacked-factor truncation. In @file(LeanDLRA/Research/StackedTruncation.lean), for
+scalar problems (`1 × 1` matrices, `P = Q = 1/2`) with a sign change, no fixed fraction `c θ`
+of the tolerance works:
+
+@stmt LeanDLRA/Research/StackedTruncation.lean exists_plain_rank_gt_epsRank StackedTruncation.exists_plain_rank_gt_epsRank
+
+Step one lands on `-θ` and is truncated to zero, so that the truncated run is ahead of the
+untruncated one by `θ/(1 + h)` when both become positive. The step size of the instance is
+`h = c/4`: the statement refutes a fixed fraction for every `c > 0`, and it says nothing about
+fractions of the form `θ h a/(1 + h a)` that depend on the step size (`a = λ_min(P) + λ_min(Q)`).
+For these, with `a = 1` in the following statements (`P = Q = 1/2`, `θ = 1`), the comparison is
+refuted for `2 × 2` matrices at every step size, with a factor `κ` in front. In
+@file(LeanDLRA/Research/PlainTruncationRank.lean):
+
+@stmt LeanDLRA/Research/PlainTruncationRank.lean exists_plain_rank_gt_epsRank_mul_step_fraction PlainTruncationRank.exists_plain_rank_gt_epsRank_mul_step_fraction
+
+For every `h > 0` there are diagonal `2 × 2` data and a factor `1/2 < κ < 1` such that `Y₃` has
+rank one while `‖X₃‖ ≤ κ h/(1 + h)`. The lower bound `1/2 < κ` is what makes the `epsRank`
+conjunct say this: for a negative tolerance `epsRank` is `0` for every matrix. The mechanism
+involves two modes that are removed in different steps: one is removed with the whole
+tolerance, the other shares the tolerance with the returning mode one, the accumulated error
+exceeds `θ`, and both modes are released in the third step. This family lies on a tie
+(`‖Ŷ₂‖ = θ`); `PlainTruncationRank.exists_plain_rank_gt_epsRank_of_params` has the parameters free,
+and the `example` after it is an instance with `h = 1/4`, `κ = 99/100` and no ties. At a single
+step size no fraction at all works:
+
+@stmt LeanDLRA/Research/PlainTruncationRank.lean exists_plain_rank_gt_rank PlainTruncationRank.exists_plain_rank_gt_rank
+
+With `h = 1/9` there are `2 × 2` data for which `Y₃` has rank two while `X₃` has rank at most one.
+Hence `rank Y₃ > rank_δ(X₃)` for every `δ ≥ 0`: at this step size no positive fraction of the
+tolerance repairs the comparison. Here `P` and `Q` are multiples of the identity, and what has no
+common singular basis is the pair `(X₀, F)`; the singular vectors of truncated steps one and two
+are rotated against each other, and the two removed parts add up to a matrix whose smallest singular
+value exceeds the tolerance. The instance is one step size; nothing follows for other step sizes.
+The statements show that the comparison with a fraction of the tolerance fails for the plain
+scheme in the forms above, not that no rank bound holds for it.
+
+The comparison does hold for decoupled modes with a sign condition. If `P`, `Q`, `F` and the
+iterates are diagonal, the truncation removes diagonal entries, and every mode starts between zero
+and the untruncated run on the side of its forcing (for instance `X₀ = Y₀ = 0`), then every entry
+of `Ŷ_j` is dominated by the entry of `X_j`, all low-rank distances of `Ŷ_j` are at most those of
+`X_j`, and the rank is bounded with the full tolerance:
+
+@stmt LeanDLRA/Research/PlainTruncationRank.lean abs_le_abs_of_decoupled_run PlainTruncationRank.abs_le_abs_of_decoupled_run
+
+@stmt LeanDLRA/Research/PlainTruncationRank.lean rank_le_epsRank_of_decoupled_run PlainTruncationRank.rank_le_epsRank_of_decoupled_run
+
+The distances are compared in `distLR_diagonal_le_of_abs_le`. That the
+truncation removes diagonal entries is assumed (`hy`, `hrank`): on ties the truncated singular
+value decomposition of a diagonal matrix need not be diagonal, and the family for every `h` above
+starts on the other side of zero.
+
+What is not shown: the comparison for non-commuting data with `X₀ = Y₀ = 0` is open (no violation
+was found in numerical chains, and the domination of the tails was found numerically to fail for
+such data, so the proof above does not extend); for decoupled modes without the sign condition,
+cascades with more modes refute smaller fractions than the family above (numerics and one exact
+instance, not in the core), and whether the comparison holds there with some constant `c ≤ 1/√2`
+times `θ h a/(1 + h a)` is open; the comparison for vectors (one of the two dimensions equal to
+one) and at steps one and two of every problem, which rests on the Lipschitz argument for the
+tails (`epsRank_le_sub`), is not a run statement in the core; and for `h a > 1` the Lipschitz
+argument gives a positive fraction of the tolerance for every problem, which is not stated in the
+core either. The stacked-factor rule above is the variant of the scheme for which a rank bound is
+in the core.
+
 **Energy of a run of the implicit BUG integrator.** For `F(Z) = -BᵀB Z - Z CᵀC` the S-step of the
 BUG integrator with backward Euler substeps satisfies an energy identity
 (`IsMatrixImplicitBUGStep.energy_eq_inner_of_sylvester`, section 7.7). A truncation by the
@@ -1225,6 +1463,11 @@ one. For the rank freeze: that truncation tolerances must tighten with the step 
 that for a fixed tolerance the rank cannot increase once the step moves the iterate by less than
 the tolerance, and that the term `n ϑ` of [CerutiKuschLubich2022] is attained with the constant
 one. The recompression sandwich has the form of [BachmayrDahmen2013, Lemma 2].
+
+The pair for all sizes is the embedding of the `2 × 2` pair, not another device. The dissipative
+pair and its weighted identity were not compared with any source beyond these papers; sources on
+information-based complexity that were not read (Traub, Wasilkowski and Woźniakowski; Kacewicz;
+Plaskota) may contain the device for classes of one-sided Lipschitz fields.
 
 ## 4. Steps, runs and the global error
 

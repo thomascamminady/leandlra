@@ -236,12 +236,19 @@ not in [Definitions](DEFINITIONS.md), it may be in the catalogue; see section 8.
   modes, is in @file(LeanDLRA/Tensor/Tucker/QuasiOptimalityNormalVelocity.lean) and
   @file(LeanDLRA/Tensor/TT/QuasiOptimalityNormalVelocity.lean).
 * **By question about optimality:** what any method that uses the field on matrices of rank at
-  most `k` can achieve is in @file(LeanDLRA/Research/InformationLowerBound.lean) (lower bound) and
+  most `k` can achieve is in @file(LeanDLRA/Research/InformationLowerBound.lean) (lower bound; all
+  sizes and a dissipative
+  pair in @file(LeanDLRA/Research/InformationLowerBoundGeneral.lean)) and
   @file(LeanDLRA/Research/RankInformationUpperBound.lean) (a full state with the same information);
   what a state of rank `r` costs along a turning tangent space in
-  @file(LeanDLRA/Research/RankStatePrice.lean); the rank of a tolerance truncation in time stepping
-  in @file(LeanDLRA/Research/DynamicRecompression.lean) and, for Lyapunov equations, in
-  @file(LeanDLRA/Research/LoewnerRank.lean) ([Main results, section
+  @file(LeanDLRA/Research/RankStatePrice.lean) and, for oblique tangent projectors on `2 × 2`
+  matrices, in @file(LeanDLRA/Research/ObliqueProjectorLowerBound.lean); the rank of a tolerance
+  truncation in time stepping in @file(LeanDLRA/Research/DynamicRecompression.lean) and, for
+  Lyapunov and Sylvester equations, in @file(LeanDLRA/Research/LoewnerRank.lean),
+  @file(LeanDLRA/Research/StackedTruncation.lean) (stacked-factor truncation),
+  @file(LeanDLRA/Research/StationaryDomination.lean) (ranks that do not depend on the number of
+  steps) and @file(LeanDLRA/Research/PlainTruncationRank.lean) (the plain truncation: where a
+  comparison with the untruncated run fails and where it holds) ([Main results, section
   3.9](MAIN_RESULTS.md#39-optimality-of-low-rank-time-integration)). The factor `√(s - 1)` in the
   error bound of the BUG integrator on tree tensor networks is in
   @file(LeanDLRA/Tensor/TTN/BUGSqrtNodes.lean).
